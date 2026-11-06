@@ -91,10 +91,12 @@ Everything else comes from orchestrator → satellite **runtime-config** Sync pa
 |-------|---------|
 | `organizationId` | Bind (also via bind API) |
 | `orchestratorEventUrl` | Live orch base for events / S2S |
-| `publicBaseUrl` | Public orch / launcher base |
+| `publicBaseUrl` | **This satellite process** public URL (`SatelliteEndpoint.baseUrl`) — SHARED pool membership (`satellite-pool/members`) matches on it |
+| `satellitePublicBaseUrl` | Alias of self URL (same as `publicBaseUrl`) |
+| `orchestratorPublicBaseUrl` | Public orch / launcher base (optional; **not** used for pool self-discovery) |
 | `platformSuperAdminEmails` | PSA list |
 | `ssoSharedSecret` | SSO HMAC material |
-| `satelliteEventServiceToken` | Event / internal Bearer |
+| `satelliteEventServiceToken` | Event / internal Bearer — **one non-folklore** shared secret on orch + SHARED sats (never `change-me` / empty); folklore values are omitted from Sync/desired-state |
 | `activeModules` / `hotelModules` | Entitlement cache |
 | `deploymentTopology` | SHARED \| DEDICATED \| ONPREM (**informational** — never skip tenant filter) |
 | `edition` | Subscription / plan label string |

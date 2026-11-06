@@ -190,6 +190,24 @@ describe("open attendance helpers (CLI-62)", () => {
     expect(extra).toBe("2026-11-02");
   });
 
+  it("honors dailyUseCap even when distinct-code cap still has room", () => {
+    const book = blank();
+    noteOpenAttendanceDay(book.codesOnDay, book.packageCodesOnDay, "2026-11-02", "PHY-A", true, "PHYSIO");
+    noteOpenAttendanceDay(book.codesOnDay, book.packageCodesOnDay, "2026-11-02", "PHY-B", true, "PHYSIO");
+    const next = pickOpenAttendanceDay({
+      procedureCode: "PHY-C",
+      inPackage: true,
+      quotaKey: "PHYSIO",
+      dailyCap: 3,
+      dailyUseCap: 2,
+      startYmd: "2026-11-02",
+      horizonEndYmd: "2026-11-06",
+      workingYmds: days,
+      ...book,
+    });
+    expect(next).toBe("2026-11-03");
+  });
+
   it("splits open attendance into one day queue and two arrival halves", () => {
     const bands = summarizeOpenAttendanceBands(
       [

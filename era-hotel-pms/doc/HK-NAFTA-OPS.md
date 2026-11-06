@@ -283,14 +283,18 @@ Revenue code is always **`LAUNDRY`** (18% tax tag already seeded). Tours (`TOUR`
 
 ### 9.1 Intake windows and due time (Asia/Baku)
 
-| Service | Accept window | Same-day return |
-|---------|---------------|-----------------|
-| Wash | 09:00–17:00 | if accepted **before 10:00** → due 17:00 same day |
-| Iron | 09:00–20:00 | if accepted **before 10:00** → due 17:00 same day |
+Policy on `/settings/policies#hk` (`HkHotelPolicy`), not hardcoded:
 
-After 10:00, still accept until the window closes; due = **next working day** 17:00. Mixed ticket: wash lines cannot be added after 17:00; iron-only until 20:00; `dueAt` = latest of the lines. No intake Sunday / labour holiday (production calendar).
+| Setting | Nafta default |
+|---------|---------------|
+| Intake mode | `WINDOW` |
+| Intake hours | 09:00–17:00 |
+| Closed days | Sunday + labour calendar (`EXCEPT_SUNDAY_AND_CALENDAR`) |
+| Due promise | `BY_HOUR`: before cutoff 10:00 → due 17:00 same day; else next open day 17:00. `NONE` = no due stamp |
 
-**Express:** hotel setting, **off at Nafta**. Other hotels may enable it. Surcharge shape (`percent` vs fixed) is **TBD** — do not hardcode +50%. Disabled or missing surcharge ⇒ Express cannot be selected.
+`ANY` accepts any hour on open days. Catalog prices and express live on `/settings/laundry-catalog`.
+
+**Express:** hotel switch, **off at Nafta**. When on, ticket math uses **per-item** `expressWashPrice` / `expressIronPrice` (null = that express service not offered). Legacy `laundryExpressPercent` is unused.
 
 ### 9.2 Two forms, same layout, two instances
 
@@ -323,6 +327,8 @@ Void/correct after POSTED: void the folio charge (ticket VOIDED), same as other 
 |-------|------|
 | `/hk/laundry` | Accept, process, Delivered + return file (primary post), void IN_PLANT |
 | `/fo/laundry` | Queue in plant vs already posted; amount column; fallback Delivered + void IN_PLANT |
+| `/settings/laundry-catalog` | Item names az/ru/en + wash/iron/express prices (empty = not offered); Nafta blank seed insert-missing |
+| `/settings/policies#hk` | Linen/deep + laundry intake/due/express switch |
 
 Laundry plant uses ticket volume only as a **load hint**, not room credits.
 
@@ -338,7 +344,9 @@ Laundry plant uses ticket volume only as a **load hint**, not room credits.
 | `/hk/mobile` | My floors today + outcome codes |
 | `/hk/forecast` | 1/7/14/30 day load |
 | `/hk/laundry` | Accept → IN_PLANT; Delivered + return form → `LAUNDRY`; void IN_PLANT |
-| `/fo/laundry` | Same tickets + amount; fallback Delivered or void IN_PLANT (no invent) |
+| `/fo/laundry` | Same tickets + amount (express = per-item prices); fallback Delivered or void IN_PLANT (no invent) |
+| `/settings/laundry-catalog` | Catalog CRUD + Nafta blank seed (insert-missing) |
+| `/settings/policies#hk` | Laundry intake/due/express |
 | `/hk/minibar`, `/hk/lost-and-found`, `/hk/closed-rooms` | Minibar posts consumption to the in-house folio (catalog/postings via filter + modals). Lost & found stores room number and a photo. Closed rooms: one grid with kind filter (OOO/OOS), close in modal, return secondary. |
 
 Sidebar groups (URLs unchanged): floor work (`/hk`, `/hk/rooms`, Skip/Sleep, closed rooms) stay top-level with mobile and forecast; **HK staff** = maids → roster → rotation; **Minibar** = minibar + `/settings/stock` (not `/hk/consumption`); **Guest services** = laundry + lost & found. Empty secondary screens keep table chrome and a next-step empty state. Secondary HK tables/cards use kit `DATA_TABLE_SHELL_CLASS` / `CARD_CONTAINER_CLASS` (`rounded-2xl`), not hand-rolled `rounded` boxes.
@@ -371,7 +379,7 @@ No Scaffold ✅ / SHIPPED / Pilot-ready on this deepen without UAT-SMOKE UI evid
 - **Q Saati** meaning (empty in the 22.08 export).
 - When to start ƏG roster pressure (setting; 1 Nov is a candidate).
 - Exact Nafta building/wing list for `Konumu`: **one building** — use `floor` + `location` only (no wing catalog).
-- Express laundry surcharge (`percent` vs fixed) for non-Nafta hotels.
+- Per-item express price lists for hotels that enable express (catalog rows; not a global %).
 
 ---
 

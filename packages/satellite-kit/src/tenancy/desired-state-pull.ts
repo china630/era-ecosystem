@@ -109,9 +109,13 @@ function processWideConfigFromPayload(
   if (typeof raw.orchestratorEventUrl === "string") {
     next.orchestratorEventUrl = raw.orchestratorEventUrl;
   }
-  if (typeof raw.publicBaseUrl === "string") {
-    next.publicBaseUrl = raw.publicBaseUrl;
-  }
+  // Prefer explicit self URL; never treat orch public as this process identity.
+  const selfUrl =
+    (typeof raw.satellitePublicBaseUrl === "string" &&
+      raw.satellitePublicBaseUrl.trim()) ||
+    (typeof raw.publicBaseUrl === "string" && raw.publicBaseUrl.trim()) ||
+    "";
+  if (selfUrl) next.publicBaseUrl = selfUrl;
   if (Array.isArray(raw.platformSuperAdminEmails)) {
     next.platformSuperAdminEmails = raw.platformSuperAdminEmails.filter(
       (e): e is string => typeof e === "string",

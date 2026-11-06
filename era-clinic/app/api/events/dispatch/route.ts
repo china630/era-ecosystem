@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { isSatelliteEvent } from "@era/contracts";
 import {
   assertEnvServiceToken,
+  assertRevenueEventForPublish,
   organizationIdOnIncomingRequest,
   publishToOrchestratorGateway,
 } from "@era/satellite-kit";
@@ -45,6 +46,16 @@ export async function POST(req: Request) {
       { ok: false, error: "Unknown or invalid satellite event type" },
       { status: 400 },
     );
+  }
+  try {
+    await assertRevenueEventForPublish({
+      organizationId,
+      fromSatelliteKey: "industry_clinic",
+      eventType: String(event.type),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Revenue channel disabled";
+    return NextResponse.json({ ok: false, error: message }, { status: 403 });
   }
   const result = await publishToOrchestratorGateway(event as Record<string, unknown>);
   if (!result.ok) {

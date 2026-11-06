@@ -85,7 +85,13 @@
     "receipt": "Çek",
     "online": "Onlayn",
     "queued": "{count} növbədə",
-    "offlineMode": "Oflayn rejim — ödənişlər lokal növbəyə düşür"
+    "offlineMode": "Oflayn rejim — ödənişlər lokal növbəyə düşür",
+    "roomCharge": "Otağa yaz (folio)",
+    "roomNumber": "Otaq nömrəsi",
+    "roomNumberRequired": "Folio üçün otaq nömrəsi lazımdır",
+    "channelFolioOff": "Folio kanalı bağlıdır — otaq yazısı mümkün deyil",
+    "channelFolioOffHint": "Folio post kanalı söndürülüb (Admin → Bağlantılar).",
+    "channelSettlementOff": "Settlement kanalı bağlıdır — resepsiyaya göndərmə rədd ediləcək."
   },
   "auth": {
     "loginFailed": "Giriş uğursuz oldu",
@@ -297,7 +303,7 @@
   },
   "adminLinks": {
     "title": "İnteqrasiya əlaqələri",
-    "subtitle": "Bu təşkilat üçün pul marşrutu və peer kanallar.",
+    "subtitle": "Peer siyasət kənarları (folio / settlement / revenue) — mesajlaşma deyil. Pul marşrutu bu peykdədir.",
     "moneyTitle": "Pul marşrutu",
     "moneyLine": "Rejim {mode} · fiskal {fiscal} · gəlir {revenue} · ana {parent}",
     "moneyUnknown": "İş rejimi əlçatan deyil",
@@ -328,6 +334,12 @@
     "managedPlatform": "Platforma",
     "managedAcceptor": "Qəbul edən",
     "legacyTitle": "Köhnə körpülər",
-    "legacyHint": "Yalnız CODE_LEGACY göstərişi — canlı gate deyil."
+    "legacyHint": "Yalnız CODE_LEGACY göstərişi — canlı gate deyil.",
+    "enable": "Gələn kanalı aktiv et",
+    "flowFolio": "Peer folio-ya (otaq / qonaq hesabı) məbləğ yazır.",
+    "flowSettlement": "Eyni stay/ticket üçün peer peyklər arasında hesablaşma.",
+    "flowRevenue": "Gəlir hadisələrini Finance-ə (GL / hesabat) ötürür.",
+    "flowRead": "Peer-dən yalnız status oxuma (pul hərəkəti yox).",
+    "flowOpsHandoff": "Peer-lər arasında əməliyyat təhvil-təslimi."
   }
 }

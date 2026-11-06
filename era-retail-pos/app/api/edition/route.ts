@@ -7,10 +7,12 @@ export async function GET() {
     if (!(await getSatelliteSession())) return jsonError("Unauthorized", 401);
     let folioPostEnabled = false;
     let settlementEnabled = false;
+    let hotelLinked = false;
     try {
       const { checkChannelEnabledLive } = await import("@era/satellite-kit");
       const hotelOrg = await hotelOrganizationId();
       const retailOrg = requestOrganizationId();
+      hotelLinked = Boolean(hotelOrg && retailOrg);
       if (hotelOrg && retailOrg) {
         const [folio, settlement] = await Promise.all([
           checkChannelEnabledLive({
@@ -34,8 +36,9 @@ export async function GET() {
     } catch {
       folioPostEnabled = false;
       settlementEnabled = false;
+      hotelLinked = false;
     }
-    return jsonOk({ folioPostEnabled, settlementEnabled });
+    return jsonOk({ folioPostEnabled, settlementEnabled, hotelLinked });
   } catch (err) {
     return handleRouteError(err);
   }

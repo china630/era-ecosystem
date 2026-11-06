@@ -106,6 +106,7 @@ export default function WorkingHoursPage() {
   const [chip, setChip] = useState("schedule");
   const [work, setWork] = useState<WorkHours | null>(null);
   const [draft, setDraft] = useState<WorkHours | null>(null);
+  const [scheduleLoadError, setScheduleLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [editSchedule, setEditSchedule] = useState(false);
 
@@ -113,12 +114,14 @@ export default function WorkingHoursPage() {
   const [calYear, setCalYear] = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
   const [days, setDays] = useState<ClinicDayRow[]>([]);
+  const [calendarLoadError, setCalendarLoadError] = useState<string | null>(null);
   const [selectedYmd, setSelectedYmd] = useState("");
   const [dayKind, setDayKind] = useState<"WORKING" | "SHORT" | "CLOSED">("WORKING");
   const [dayStart, setDayStart] = useState("9");
   const [dayEnd, setDayEnd] = useState("17");
 
   const [peaks, setPeaks] = useState<PeakRow[]>([]);
+  const [peaksLoadError, setPeaksLoadError] = useState<string | null>(null);
   const [peakOpen, setPeakOpen] = useState(false);
   const [peakDraft, setPeakDraft] = useState<PeakDraft>({
     fromYmd: "",
@@ -140,9 +143,21 @@ export default function WorkingHoursPage() {
     const res = await fetch("/api/admin/settings");
     const data = await res.json();
     if (!res.ok) {
+      setWork(null);
+      setDraft(null);
+      const detail =
+        typeof data?.error === "string"
+          ? data.error
+          : typeof data?.message === "string"
+            ? data.message
+            : res.status === 403
+              ? t("loadForbidden")
+              : t("scheduleLoadError");
+      setScheduleLoadError(detail);
       showApiError(data, t("title"));
       return;
     }
+    setScheduleLoadError(null);
     const row = data.data ?? data;
     const next: WorkHours = {
       dayStartHour: row.dayStartHour ?? 9,
@@ -163,9 +178,21 @@ export default function WorkingHoursPage() {
     const res = await fetch(`/api/admin/clinic-days?from=${from}&to=${to}`);
     const data = await res.json();
     if (!res.ok) {
+      setDays([]);
+      setSelectedYmd("");
+      const detail =
+        typeof data?.error === "string"
+          ? data.error
+          : typeof data?.message === "string"
+            ? data.message
+            : res.status === 403
+              ? t("loadForbidden")
+              : t("calendarLoadError");
+      setCalendarLoadError(detail);
       showApiError(data, t("chipCalendar"));
       return;
     }
+    setCalendarLoadError(null);
     setDays((data.data ?? data) as ClinicDayRow[]);
   }, [calYear, calMonth, t]);
 
@@ -173,9 +200,20 @@ export default function WorkingHoursPage() {
     const res = await fetch("/api/admin/peak-rules");
     const data = await res.json();
     if (!res.ok) {
+      setPeaks([]);
+      const detail =
+        typeof data?.error === "string"
+          ? data.error
+          : typeof data?.message === "string"
+            ? data.message
+            : res.status === 403
+              ? t("loadForbidden")
+              : t("peaksLoadError");
+      setPeaksLoadError(detail);
       showApiError(data, t("chipPeaks"));
       return;
     }
+    setPeaksLoadError(null);
     setPeaks((data.data ?? data) as PeakRow[]);
   }, [t]);
 
@@ -350,8 +388,26 @@ export default function WorkingHoursPage() {
         ]}
       />
 
-      {chip === "schedule" && work ? (
+      {chip === "schedule" ? (
         <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+          {scheduleLoadError ? (
+            <div
+              role="alert"
+              className="rounded border border-[#E74C3C]/40 bg-[#FDEDEC] px-3 py-2 text-[13px] text-[#922B21]"
+            >
+              <p>{t("scheduleLoadError")}</p>
+              <p className={`mt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>{scheduleLoadError}</p>
+              <button
+                type="button"
+                className={`${SECONDARY_BUTTON_CLASS} mt-2`}
+                onClick={() => void loadSchedule()}
+              >
+                {t("retryLoad")}
+              </button>
+            </div>
+          ) : null}
+          {!scheduleLoadError && work ? (
+            <>
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-[13px] font-semibold text-[#2C3E50]">{t("chipSchedule")}</h2>
             <button
@@ -385,6 +441,8 @@ export default function WorkingHoursPage() {
             </table>
           </div>
           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("saturdayIsShort")}</p>
+            </>
+          ) : null}
         </section>
       ) : null}
 
@@ -422,6 +480,24 @@ export default function WorkingHoursPage() {
                 <ChevronRight className="h-4 w-4" aria-hidden />
               </button>
             </div>
+            {calendarLoadError ? (
+              <div
+                role="alert"
+                className="rounded border border-[#E74C3C]/40 bg-[#FDEDEC] px-3 py-2 text-[13px] text-[#922B21]"
+              >
+                <p>{t("calendarLoadError")}</p>
+                <p className={`mt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>{calendarLoadError}</p>
+                <button
+                  type="button"
+                  className={`${SECONDARY_BUTTON_CLASS} mt-2`}
+                  onClick={() => void loadMonth()}
+                >
+                  {t("retryLoad")}
+                </button>
+              </div>
+            ) : null}
+            {!calendarLoadError ? (
+              <>
             <div className={`grid grid-cols-7 gap-1 text-center text-[11px] ${TEXT_MUTED_CLASS}`}>
               {CAL_WEEKDAY_KEYS.map((key) => (
                 <div key={key}>{ts(`weekday_${key}`)}</div>
@@ -505,6 +581,8 @@ export default function WorkingHoursPage() {
               </div>
             ) : null}
             <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("calendarHint")}</p>
+              </>
+            ) : null}
           </div>
           <ClinicDayPanel />
         </section>
@@ -517,6 +595,7 @@ export default function WorkingHoursPage() {
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
+              disabled={Boolean(peaksLoadError)}
               onClick={() => {
                 setPeakDraft({
                   fromYmd: "",
@@ -533,6 +612,24 @@ export default function WorkingHoursPage() {
               {t("peakAdd")}
             </button>
           </div>
+          {peaksLoadError ? (
+            <div
+              role="alert"
+              className="rounded border border-[#E74C3C]/40 bg-[#FDEDEC] px-3 py-2 text-[13px] text-[#922B21]"
+            >
+              <p>{t("peaksLoadError")}</p>
+              <p className={`mt-1 text-[12px] ${TEXT_MUTED_CLASS}`}>{peaksLoadError}</p>
+              <button
+                type="button"
+                className={`${SECONDARY_BUTTON_CLASS} mt-2`}
+                onClick={() => void loadPeaks()}
+              >
+                {t("retryLoad")}
+              </button>
+            </div>
+          ) : null}
+          {!peaksLoadError ? (
+            <>
           <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("peakHint")}</p>
           <p className="text-[13px]">
             <Link href="/admin/master-data?tab=procedureTypes" className={LINK_ACCENT_CLASS}>
@@ -591,6 +688,8 @@ export default function WorkingHoursPage() {
               </tbody>
             </table>
           </div>
+            </>
+          ) : null}
         </section>
       ) : null}
 

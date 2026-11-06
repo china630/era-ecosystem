@@ -1,27 +1,35 @@
 "use client";
 
-import { GHOST_BUTTON_CLASS } from "./tokens/components";
+import { SECONDARY_BUTTON_CLASS, DANGER_BUTTON_CLASS } from "./tokens/components";
 
 export type ChannelEdgeCardProps = {
+  /** Peer path title (from → to). Secondary to kind + flow. */
   title: string;
+  /** Channel kind — primary signal. */
   kindLabel: string;
+  /** Short flow description (en/az/ru via caller). */
+  flowBlurb?: string;
   managedLabel: string;
   enabled: boolean;
   onLabel: string;
   offLabel: string;
-  /** Technical keys under the title (optional). */
+  /** Technical keys under the peer title (optional, mono). */
   detail?: string;
   actionLabel?: string;
   onAction?: () => void;
+  /** Explicit enable/disable control — not ghost. */
+  actionTone?: "secondary" | "danger";
 };
 
 /**
  * One integration-channel row for SA / SatAdmin links screens.
+ * Kind + flow blurb are the main signal; keys and managed chips are secondary.
  * Display-only chips — not a CatalogField pick-list.
  */
 export function ChannelEdgeCard({
   title,
   kindLabel,
+  flowBlurb,
   managedLabel,
   enabled,
   onLabel,
@@ -29,19 +37,17 @@ export function ChannelEdgeCard({
   detail,
   actionLabel,
   onAction,
+  actionTone = "secondary",
 }: ChannelEdgeCardProps) {
+  const actionClass =
+    actionTone === "danger" ? DANGER_BUTTON_CLASS : SECONDARY_BUTTON_CLASS;
+
   return (
     <li className="rounded-lg border border-[#EBEDF0] bg-white px-3 py-2.5">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-sm font-medium text-[#34495E]">{title}</p>
-          {detail ? (
-            <p className="font-mono text-[11px] text-[#95A5A6]">{detail}</p>
-          ) : null}
-          <div className="flex flex-wrap gap-1.5 pt-0.5">
-            <span className="rounded-full bg-[#EEF2F7] px-2 py-0.5 text-[11px] font-medium text-[#475569]">
-              {kindLabel}
-            </span>
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-[#34495E]">{kindLabel}</p>
             <span
               className={
                 enabled
@@ -55,9 +61,16 @@ export function ChannelEdgeCard({
               {managedLabel}
             </span>
           </div>
+          {flowBlurb ? (
+            <p className="text-sm leading-snug text-[#5D6D7E]">{flowBlurb}</p>
+          ) : null}
+          <p className="text-xs text-[#7F8C8D]">{title}</p>
+          {detail ? (
+            <p className="font-mono text-[11px] text-[#95A5A6]">{detail}</p>
+          ) : null}
         </div>
         {actionLabel && onAction ? (
-          <button type="button" className={GHOST_BUTTON_CLASS} onClick={onAction}>
+          <button type="button" className={actionClass} onClick={onAction}>
             {actionLabel}
           </button>
         ) : null}

@@ -1070,7 +1070,7 @@
   },
   "adminLinks": {
     "title": "İnteqrasiya bağlantıları",
-    "subtitle": "Pul marşrutu və peer kanallar (bu F&B org).",
+    "subtitle": "Peer siyasət kənarları (folio / settlement / revenue) — mesajlaşma deyil. Pul marşrutu bu peykdədir.",
     "moneyTitle": "Pul marşrutu",
     "moneyLine": "Rejim {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
     "moneyUnknown": "Operating mode əlçatan deyil",
@@ -1096,7 +1096,13 @@
     "managedPlatform": "Platform",
     "managedAcceptor": "Acceptor",
     "legacyTitle": "Köhnə körpülər",
-    "legacyHint": "Yalnız CODE_LEGACY göstərişi — canlı gate deyil."
+    "legacyHint": "Yalnız CODE_LEGACY göstərişi — canlı gate deyil.",
+    "enable": "Gələn kanalı aktiv et",
+    "flowFolio": "Peer folio-ya (otaq / qonaq hesabı) məbləğ yazır.",
+    "flowSettlement": "Eyni stay/ticket üçün peer peyklər arasında hesablaşma.",
+    "flowRevenue": "Gəlir hadisələrini Finance-ə (GL / hesabat) ötürür.",
+    "flowRead": "Peer-dən yalnız status oxuma (pul hərəkəti yox).",
+    "flowOpsHandoff": "Peer-lər arasında əməliyyat təhvil-təslimi."
   },
   "cedvel": {
     "title": "F&B həftəlik cədvəl",

@@ -15,6 +15,8 @@ type BlockTranslator = (
 export type PackageAssignBlockDetail = {
   nights?: number | null;
   minNights?: number | null;
+  /** Original instantiate error. Shown instead of the generic template hint. */
+  message?: string | null;
 };
 
 /** Localized reason when package balances cannot open. */
@@ -52,6 +54,7 @@ export function packageAssignBlockText(
     case "TEMPLATE_NOT_FOUND":
       return t("packageAssignTemplateNotFound", { code: pin });
     case "INSTANTIATE_FAILED":
+      if (detail?.message?.trim()) return detail.message.trim();
       return t("packageAssignInstantiateFailed", { code: pin });
     case "NO_PROGRAM":
       return t("packageAssignNoProgram");

@@ -10,23 +10,27 @@ import {
   ModalShell,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { applyGuestPhonePolish } from '@/lib/guest-phone-polish';
 
 export type CollectionKind = 'document' | 'contact' | 'address';
 
 const DOC_TYPES = ['PASSPORT', 'ID_CARD', 'FIN', 'VISA', 'OTHER'] as const;
 const CONTACT_KINDS = ['MOBILE', 'PHONE', 'EMAIL', 'WHATSAPP'] as const;
+const PHONE_CONTACT_KINDS = new Set(['MOBILE', 'PHONE', 'WHATSAPP']);
 const ADDRESS_KINDS = ['HOME', 'WORK', 'OTHER'] as const;
 
 export function GuestCardCollectionModal({
   open,
   kind,
   guestId,
+  nationality = '',
   onClose,
   onSaved,
 }: {
   open: boolean;
   kind: CollectionKind;
   guestId: string;
+  nationality?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -48,6 +52,20 @@ export function GuestCardCollectionModal({
   const docOptions = DOC_TYPES.map((code) => ({ value: code, label: t(`docType.${code}`) }));
   const contactOptions = CONTACT_KINDS.map((code) => ({ value: code, label: t(`contactKind.${code}`) }));
   const addressOptions = ADDRESS_KINDS.map((code) => ({ value: code, label: t(`addressKind.${code}`) }));
+
+  function polishContactValueIfPhone(raw: string): string {
+    if (!PHONE_CONTACT_KINDS.has(contactKind)) return raw.trim();
+    const polished = applyGuestPhonePolish(raw, nationality, (key) => t(key));
+    if (polished.status === 'polished') {
+      setContactValue(polished.display);
+    }
+    return polished.display;
+  }
+
+  function onContactValueBlur() {
+    if (!PHONE_CONTACT_KINDS.has(contactKind) || !contactValue.trim()) return;
+    polishContactValueIfPhone(contactValue);
+  }
 
   async function submit() {
     setBusy(true);
@@ -74,8 +92,9 @@ export function GuestCardCollectionModal({
           showApiError({ error: tc('requiredNamed', { field: t('grid.contact') }) });
           return;
         }
+        const valueOut = polishContactValueIfPhone(contactValue);
         url = `/api/guests/${guestId}/contacts`;
-        body = { kind: contactKind, value: contactValue.trim(), isPrimary };
+        body = { kind: contactKind, value: valueOut, isPrimary };
       } else {
         if (!line1.trim()) {
           showApiError({ error: tc('requiredNamed', { field: t('grid.address') }) });
@@ -161,6 +180,7 @@ export function GuestCardCollectionModal({
             preset={contactKind === 'EMAIL' ? 'longText' : 'phone'}
             value={contactValue}
             onChange={(e) => setContactValue(e.target.value)}
+            onBlur={onContactValueBlur}
             required
           />
           <label className="flex items-center gap-2 text-[13px]">

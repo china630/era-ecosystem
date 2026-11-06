@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CatalogField,
   DATA_TABLE_CLASS,
@@ -20,8 +20,20 @@ import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { formatLaundryPieces, laundryTicketAmount, type LaundryLineView } from '@/lib/laundry-pieces';
+import { laundryItemDisplayName, pickLaundryUnitPrices } from '@/lib/services/laundry-catalog';
 
-type Item = { id: string; code: string; name: string; washPrice: number; ironPrice: number };
+type Item = {
+  id: string;
+  code: string;
+  name: string;
+  nameAz?: string | null;
+  nameRu?: string | null;
+  nameEn?: string | null;
+  washPrice: number | null;
+  ironPrice: number | null;
+  expressWashPrice?: number | null;
+  expressIronPrice?: number | null;
+};
 type Stay = {
   id: string;
   roomId: string | null;
@@ -42,20 +54,22 @@ type Ticket = {
 };
 
 function money(n: number | string | null | undefined) {
+  if (n == null || n === '') return '—';
   const v = Number(n);
-  return `${(Number.isFinite(v) ? v : 0).toFixed(2)} AZN`;
+  if (!Number.isFinite(v)) return '—';
+  return `${v.toFixed(2)} AZN`;
 }
 
 export default function HkLaundryPage() {
   const t = useTranslations('housekeeping');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const [items, setItems] = useState<Item[]>([]);
   const [stays, setStays] = useState<Stay[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [roomId, setRoomId] = useState('');
   const [express, setExpress] = useState(false);
   const [expressEnabled, setExpressEnabled] = useState(false);
-  const [expressPercent, setExpressPercent] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [scanByTicket, setScanByTicket] = useState<Record<string, string>>({});
@@ -72,9 +86,6 @@ export default function HkLaundryPage() {
     setStays(json.stays ?? []);
     setTickets(json.tickets ?? []);
     setExpressEnabled(Boolean(json.laundryExpressEnabled));
-    setExpressPercent(
-      typeof json.laundryExpressPercent === 'number' ? json.laundryExpressPercent : null,
-    );
   }, [tc]);
 
   useEffect(() => {
@@ -85,7 +96,14 @@ export default function HkLaundryPage() {
   const stay = assignedStays.find((s) => s.roomId === roomId);
 
   function pieces(tk: Ticket) {
-    return formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }) || '—';
+    return (
+      formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }, locale) ||
+      '—'
+    );
+  }
+
+  function unitPrices(item: Item) {
+    return pickLaundryUnitPrices(item, express);
   }
 
   function bump(id: string, key: 'wash' | 'iron', delta: number) {
@@ -101,7 +119,9 @@ export default function HkLaundryPage() {
 
   function lineSum(item: Item, key: 'wash' | 'iron') {
     const count = qty[item.id]?.[key] ?? 0;
-    const price = Number(key === 'wash' ? item.washPrice : item.ironPrice) || 0;
+    const prices = unitPrices(item);
+    const price = key === 'wash' ? prices.washPrice : prices.ironPrice;
+    if (price == null) return 0;
     return Math.round(count * price * 100) / 100;
   }
 
@@ -111,21 +131,19 @@ export default function HkLaundryPage() {
     let washSum = 0;
     let ironSum = 0;
     for (const item of items) {
-      const w = qty[item.id]?.wash ?? 0;
-      const i = qty[item.id]?.iron ?? 0;
+      const prices = pickLaundryUnitPrices(item, express);
+      const w = prices.washPrice == null ? 0 : qty[item.id]?.wash ?? 0;
+      const i = prices.ironPrice == null ? 0 : qty[item.id]?.iron ?? 0;
       washQty += w;
       ironQty += i;
-      washSum += w * (Number(item.washPrice) || 0);
-      ironSum += i * (Number(item.ironPrice) || 0);
+      if (prices.washPrice != null) washSum += w * prices.washPrice;
+      if (prices.ironPrice != null) ironSum += i * prices.ironPrice;
     }
     washSum = Math.round(washSum * 100) / 100;
     ironSum = Math.round(ironSum * 100) / 100;
-    let grand = Math.round((washSum + ironSum) * 100) / 100;
-    if (express && expressPercent && expressPercent > 0) {
-      grand = Math.round(grand * (1 + expressPercent / 100) * 100) / 100;
-    }
+    const grand = Math.round((washSum + ironSum) * 100) / 100;
     return { washQty, ironQty, washSum, ironSum, grand };
-  }, [items, qty, express, expressPercent]);
+  }, [items, qty, express]);
 
   function closeModal() {
     setOpen(false);
@@ -137,11 +155,14 @@ export default function HkLaundryPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const lines = items
-      .map((i) => ({
-        itemId: i.id,
-        washQty: qty[i.id]?.wash ?? 0,
-        ironQty: qty[i.id]?.iron ?? 0,
-      }))
+      .map((i) => {
+        const prices = pickLaundryUnitPrices(i, express);
+        return {
+          itemId: i.id,
+          washQty: prices.washPrice == null ? 0 : qty[i.id]?.wash ?? 0,
+          ironQty: prices.ironPrice == null ? 0 : qty[i.id]?.iron ?? 0,
+        };
+      })
       .filter((l) => l.washQty > 0 || l.ironQty > 0);
     if (!roomId || lines.length === 0) return;
     setBusy(true);
@@ -199,10 +220,7 @@ export default function HkLaundryPage() {
   }
 
   function ticketAmount(tk: Ticket) {
-    return laundryTicketAmount(tk.lines, {
-      express: Boolean(tk.express),
-      expressPercent,
-    });
+    return laundryTicketAmount(tk.lines, { express: Boolean(tk.express) });
   }
 
   function qtyCell(id: string, key: 'wash' | 'iron') {
@@ -337,21 +355,47 @@ export default function HkLaundryPage() {
                   {items.length === 0 ? (
                     <tr className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS} colSpan={7}>
-                        {t('laundryCatalogEmpty')}
+                        <p className="m-0">{t('laundryCatalogEmpty')}</p>
+                        <a
+                          className="mt-1 inline-block text-[13px] text-[#2980B9] hover:underline"
+                          href="/settings/laundry-catalog"
+                        >
+                          {t('laundryCatalogLink')}
+                        </a>
                       </td>
                     </tr>
                   ) : (
-                    items.map((i) => (
-                      <tr key={i.id} className={DATA_TABLE_TR_CLASS}>
-                        <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{i.name}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{qtyCell(i.id, 'wash')}</td>
-                        <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{money(i.washPrice)}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{money(lineSum(i, 'wash'))}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{qtyCell(i.id, 'iron')}</td>
-                        <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{money(i.ironPrice)}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{money(lineSum(i, 'iron'))}</td>
-                      </tr>
-                    ))
+                    items.map((i) => {
+                      const prices = unitPrices(i);
+                      const washOffered = prices.washPrice != null;
+                      const ironOffered = prices.ironPrice != null;
+                      if (!washOffered && !ironOffered) return null;
+                      return (
+                        <tr key={i.id} className={DATA_TABLE_TR_CLASS}>
+                          <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>
+                            {laundryItemDisplayName(i, locale)}
+                          </td>
+                          <td className={DATA_TABLE_TD_CLASS}>
+                            {washOffered ? qtyCell(i.id, 'wash') : '—'}
+                          </td>
+                          <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                            {washOffered ? money(prices.washPrice) : '—'}
+                          </td>
+                          <td className={DATA_TABLE_TD_CLASS}>
+                            {washOffered ? money(lineSum(i, 'wash')) : '—'}
+                          </td>
+                          <td className={DATA_TABLE_TD_CLASS}>
+                            {ironOffered ? qtyCell(i.id, 'iron') : '—'}
+                          </td>
+                          <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                            {ironOffered ? money(prices.ironPrice) : '—'}
+                          </td>
+                          <td className={DATA_TABLE_TD_CLASS}>
+                            {ironOffered ? money(lineSum(i, 'iron')) : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                   <tr className={`${DATA_TABLE_TR_CLASS} bg-[#F8FAFB] font-medium`}>
                     <td className={DATA_TABLE_TD_CLASS}>{t('laundryTotalRow')}</td>
@@ -368,9 +412,7 @@ export default function HkLaundryPage() {
           </div>
           <p className="text-sm font-semibold text-[#34495E]">
             {t('laundryGrandTotal')}: {money(totals.grand)}
-            {express && expressPercent && expressPercent > 0
-              ? ` (${t('express')} +${expressPercent}%)`
-              : ''}
+            {express ? ` (${t('express')})` : ''}
           </p>
           <p className="text-xs text-[#7F8C8D]">{t('laundryPreviewHint')}</p>
         </form>

@@ -73,6 +73,8 @@ export type ResourceDayMatrixLabels = {
   legendOpenQueue?: string;
   openQueueBefore?: (lane: OpenAttendanceLane) => string;
   openQueueAfter?: (lane: OpenAttendanceLane) => string;
+  /** Short mark for the second and later cabins of the same procedure. */
+  openQueueMark?: (lane: OpenAttendanceLane, which: "morning" | "afternoon") => string;
   /** Localized status chip on the bar (PENDING_PAY → unpaid, etc.). */
   statusLabel: (status: string) => string;
 };
@@ -334,6 +336,15 @@ export function ResourceDayMatrix({
   const baseSlots = filtered[0]?.slots ?? resources[0]?.slots ?? [];
   const timeSlots = filterSlotsByHorizon(baseSlots, date, timeHorizon, dayStartHour);
   const colCount = timeSlots.length;
+  const fullQueueRowIds = new Set<string>();
+  const seenQueueCode = new Set<string>();
+  for (const row of filtered) {
+    for (const lane of openLanes) {
+      if (!lane.resourceCodes.includes(row.code) || seenQueueCode.has(lane.procedureCode)) continue;
+      seenQueueCode.add(lane.procedureCode);
+      fullQueueRowIds.add(row.resourceId);
+    }
+  }
   const isToday = date === todayBakuYmd();
   const nowLineLeft =
     isToday && timeHorizon === "full"
@@ -390,7 +401,7 @@ export function ResourceDayMatrix({
                 {
                   id: "open-queue",
                   label: labels.legendOpenQueue,
-                  swatchClassName: "bg-violet-100 border-violet-300",
+                  swatchClassName: "bg-violet-200 border-violet-400",
                 },
               ]
             : []),
@@ -424,15 +435,18 @@ export function ResourceDayMatrix({
                 const segments = buildSegments(rowSlots);
                 const lanes = openLanes.filter((lane) => lane.resourceCodes.includes(row.code));
                 const halves = halfRanges(rowSlots);
-                const laneTitle = (which: "morning" | "afternoon") =>
+                const laneText = (which: "morning" | "afternoon", full: boolean) =>
                   lanes
-                    .map((lane) =>
-                      which === "morning"
+                    .map((lane) => {
+                      if (!full && labels.openQueueMark) return labels.openQueueMark(lane, which);
+                      return which === "morning"
                         ? labels.openQueueBefore?.(lane)
-                        : labels.openQueueAfter?.(lane),
-                    )
+                        : labels.openQueueAfter?.(lane);
+                    })
                     .filter(Boolean)
                     .join("\n");
+                const showFullQueue = fullQueueRowIds.has(row.resourceId);
+                const rowMin = lanes.length > 0 ? "min-h-[4.75rem]" : "min-h-[3.25rem]";
                 return (
                   <div key={row.resourceId} className="contents">
                     <div className="sticky left-0 z-10 flex items-center border-b border-r border-[#D5DADF] bg-white px-2 py-1 text-[12px] font-semibold text-[#34495E]">
@@ -450,20 +464,22 @@ export function ResourceDayMatrix({
                     {lanes.length > 0
                       ? (["morning", "afternoon"] as const).map((which) => {
                           const range = halves[which];
-                          const text = laneTitle(which);
+                          const text = laneText(which, showFullQueue);
                           if (!range || !text) return null;
                           const [from, to] = range;
                           return (
                             <div
                               key={`${row.resourceId}-queue-${which}`}
-                              className="pointer-events-none absolute inset-y-0 z-0 flex items-center overflow-hidden border-y border-violet-200 bg-violet-100/80 px-1 text-[10px] leading-tight text-violet-950"
+                              className="pointer-events-none absolute inset-y-0 z-0 flex items-center overflow-hidden border-y border-violet-300 bg-violet-200 px-1.5 text-sm font-semibold leading-snug text-violet-950"
                               style={{
                                 left: `${(from / colCount) * 100}%`,
                                 width: `${((to - from) / colCount) * 100}%`,
                               }}
-                              title={text}
+                              title={laneText(which, true)}
                             >
-                              <span className="truncate">{text.split("\n").join(" · ")}</span>
+                              <span className={showFullQueue ? "line-clamp-3" : "truncate"}>
+                                {laneText(which, showFullQueue).split("\n").join(" · ")}
+                              </span>
                             </div>
                           );
                         })
@@ -473,7 +489,7 @@ export function ResourceDayMatrix({
                         return (
                           <div
                             key={`${row.resourceId}-${seg.kind}-${seg.slot.time}`}
-                            className="relative z-[1] min-h-[3.25rem] border-b border-r border-slate-300 bg-slate-200/80"
+                            className={`relative z-[1] ${rowMin} border-b border-r border-slate-300 bg-slate-200/80`}
                             style={{ gridColumn: "span 1" }}
                             title={
                               seg.kind === "lunch"
@@ -487,7 +503,7 @@ export function ResourceDayMatrix({
                         return (
                           <div
                             key={`${row.resourceId}-blocked-${seg.slot.time}`}
-                            className="relative z-[1] min-h-[3.25rem] border-b border-r border-amber-300 bg-amber-50"
+                            className={`relative z-[1] ${rowMin} border-b border-r border-amber-300 bg-amber-50`}
                             style={{ gridColumn: "span 1" }}
                             title={labels.legendBlocked}
                           />
@@ -497,7 +513,7 @@ export function ResourceDayMatrix({
                         return (
                           <div
                             key={`${row.resourceId}-${seg.slot.time}`}
-                            className={`relative z-[1] min-h-[3.25rem] border-b border-r ${
+                            className={`relative z-[1] ${rowMin} border-b border-r ${
                               lanes.length > 0
                                 ? "border-violet-100 bg-transparent"
                                 : "border-emerald-100 bg-emerald-50/80"
@@ -520,7 +536,7 @@ export function ResourceDayMatrix({
                           onDragStart={() => {
                             if (slot.procedureOrderId) onDragStart?.(slot.procedureOrderId);
                           }}
-                          className={`relative z-[1] min-h-[3.25rem] cursor-pointer overflow-hidden border-b border-r px-1 py-0.5 text-[10px] leading-tight ${barClass(slot.status)} ${scheduled ? "cursor-grab" : ""}`}
+                          className={`relative z-[1] ${rowMin} cursor-pointer overflow-hidden border-b border-r px-1 py-0.5 text-[10px] leading-tight ${barClass(slot.status)} ${scheduled ? "cursor-grab" : ""}`}
                           style={{ gridColumn: `span ${span}` }}
                           title={`${slot.patientName ?? ""} ${slot.procedureCode ?? ""}${
                             slot.status ? ` · ${labels.statusLabel(slot.status)}` : ""

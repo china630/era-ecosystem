@@ -394,14 +394,23 @@ export async function placeConfirmedProcedures(
       where: { id: episodeId },
       select: { anamnesisText: true },
     });
-    const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
+    const { episodeAnamnesisDenied } = await import(
       "@/domain/sanatorium/episode-gates"
     );
     const denied = episodeAnamnesisDenied(episode?.anamnesisText);
     if (denied) {
-      const err = new Error(denied);
-      (err as Error & { code?: string }).code = ANAMNESIS_REQUIRED;
-      throw err;
+      return {
+        placed: 0,
+        placedIds: [],
+        missingCabinNames: [],
+        failures: orders.map((order) => ({
+          orderId: order.id,
+          procedureCode: order.procedureCode,
+          procedureName: order.procedureName,
+          reason: "anamnesis",
+          ymd: bakuDateKey(order.scheduledAt),
+        })),
+      };
     }
   }
   const rules = await prisma.procedureRule.findMany();
@@ -577,6 +586,7 @@ export async function placeConfirmedProcedures(
         return {
           quotaKey: quota.quotaKey,
           dailyCap: order.inPackage ? quota.dailyCap : quota.shareGuestDayCap ? quota.dailyCap : null,
+          dailyUseCap: order.inPackage ? quota.dailyUseCap : null,
           shareGuestDayCap: quota.shareGuestDayCap,
         };
       })(),

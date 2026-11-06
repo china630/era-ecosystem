@@ -128,6 +128,21 @@ export async function patchGuestFull(
     if (!unlockOnly) throw new Error('Guest card is locked');
   }
 
+  const { persistGuestPhone } = await import('@/lib/guest-phone-server');
+  const nextNationality =
+    nationality !== undefined ? nationality : existing?.nationality ?? null;
+  let phoneOut =
+    phone !== undefined ? persistGuestPhone(phone, nextNationality) : undefined;
+  // Nationality-only PATCH: re-polish ops-cache phone so API cannot leave a national number stale.
+  if (
+    phoneOut === undefined &&
+    nationality !== undefined &&
+    existing?.phone?.trim()
+  ) {
+    const rePolished = persistGuestPhone(existing.phone, nextNationality);
+    if (rePolished !== existing.phone) phoneOut = rePolished;
+  }
+
   if (firstName !== undefined) {
     const gaps = guestIdentityGaps({
       firstName: firstName ?? existing?.firstName,
@@ -175,7 +190,7 @@ export async function patchGuestFull(
           nationalIdFin: nationalIdFin ?? undefined,
           passportNumber: passportNumber ?? undefined,
           nationality: nationality ?? existing.nationality,
-          phone: phone ?? existing.phone,
+          phone: phoneOut !== undefined ? phoneOut : existing.phone,
           globalPersonId: existing.globalPersonId,
           sex: sex !== undefined ? sex : existing.sex,
           birthDate: birthDate !== undefined ? birthDate : existing.birthDate,
@@ -220,7 +235,7 @@ export async function patchGuestFull(
       ...(lastName !== undefined ? { lastName } : {}),
       ...(composedFullName !== undefined ? { fullName: composedFullName } : {}),
       ...(nationality !== undefined ? { nationality } : {}),
-      ...(phone !== undefined ? { phone } : {}),
+      ...(phoneOut !== undefined ? { phone: phoneOut } : {}),
       birthDate: birthDate === undefined ? undefined : birthDate ? new Date(birthDate) : null,
       visaExpiry:
         visaExpiry === undefined ? undefined : visaExpiry ? new Date(visaExpiry) : null,
@@ -238,6 +253,20 @@ export async function patchGuestFull(
             : toDecimal(bonusPercent),
     },
   });
+  if (phoneOut !== undefined && phoneOut) {
+    const phoneKinds = ['MOBILE', 'PHONE', 'WHATSAPP'] as const;
+    const primary = await prisma.guestContact.findFirst({
+      where: { guestId: id, kind: { in: [...phoneKinds] } },
+      orderBy: { isPrimary: 'desc' },
+    });
+    if (primary && primary.value !== phoneOut) {
+      await prisma.guestContact.update({
+        where: { id: primary.id },
+        data: { value: phoneOut },
+      });
+    }
+  }
+
   if (nameChanged || demoChanged) {
     const { syncGuestNameToOpenStays } = await import('@/lib/services/guest-name-sync.service');
     await syncGuestNameToOpenStays(id, { pushDemographics: true }).catch((error) =>

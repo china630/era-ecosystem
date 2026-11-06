@@ -200,25 +200,30 @@ export async function listGuests(
 }
 
 export async function createGuest(input: CreateGuestInput) {
+  const { persistGuestPhone } = await import('@/lib/guest-phone-server');
+  const phone = persistGuestPhone(input.phone, input.nationality);
+  const withPhone = { ...input, phone: phone ?? undefined };
+
   const globalPersonId =
-    input.globalPersonId?.trim() ||
+    withPhone.globalPersonId?.trim() ||
     (await linkGuestPersonIdentity({
-      firstName: input.firstName,
-      middleName: input.middleName,
-      lastName: input.lastName,
-      fullName: input.fullName,
-      nationalIdFin: input.nationalIdFin,
-      passportNumber: input.passportNumber,
-      nationality: input.nationality,
-      phone: input.phone,
-      sex: input.sex,
-      birthDate: input.birthDate,
+      firstName: withPhone.firstName,
+      middleName: withPhone.middleName,
+      lastName: withPhone.lastName,
+      fullName: withPhone.fullName,
+      nationalIdFin: withPhone.nationalIdFin,
+      passportNumber: withPhone.passportNumber,
+      nationality: withPhone.nationality,
+      phone: withPhone.phone,
+      sex: withPhone.sex,
+      birthDate: withPhone.birthDate,
     }));
 
-  assertGuestMdmStrict(input, globalPersonId);
+  assertGuestMdmStrict(withPhone, globalPersonId);
 
-  const data = normalizeGuestInput(input);
+  const data = normalizeGuestInput(withPhone);
   if (globalPersonId) data.globalPersonId = globalPersonId;
+  data.phone = phone;
 
   return prisma.guest.create({
     data: {

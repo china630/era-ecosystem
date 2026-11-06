@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   channelEdgeTitle,
+  labelChannelFlowBlurb,
   labelChannelKind,
   labelChannelManagedBy,
   labelSatelliteKey,
@@ -61,10 +62,16 @@ export type SatelliteAdminLinksLabels = {
   kindRevenue: string;
   kindRead: string;
   kindOpsHandoff?: string;
+  flowFolio?: string;
+  flowSettlement?: string;
+  flowRevenue?: string;
+  flowRead?: string;
+  flowOpsHandoff?: string;
   managedPlatform: string;
   managedAcceptor: string;
   legacyTitle?: string;
   legacyHint?: string;
+  enable?: string;
 };
 
 export type SatelliteAdminLinksPanelsProps = {
@@ -75,6 +82,7 @@ export type SatelliteAdminLinksPanelsProps = {
   error?: string | null;
   loading?: boolean;
   onDisableInbound?: (channelId: string) => void | Promise<void>;
+  onEnableInbound?: (channelId: string) => void | Promise<void>;
   /** Optional display-only CODE_LEGACY rows (never enables gates). */
   legacyHints?: readonly ChannelLegacyHint[];
   /** When false, omit PageHeader (host already rendered one). */
@@ -122,6 +130,26 @@ function useLinkLabelFns(labels: SatelliteAdminLinksLabels) {
     [labels],
   );
 
+  const flowBlurb = useCallback(
+    (kind: string) => {
+      switch (kind) {
+        case "FOLIO_POST":
+          return labels.flowFolio ?? labelChannelFlowBlurb(kind);
+        case "SETTLEMENT":
+          return labels.flowSettlement ?? labelChannelFlowBlurb(kind);
+        case "REVENUE_EVENT":
+          return labels.flowRevenue ?? labelChannelFlowBlurb(kind);
+        case "READ_STATUS":
+          return labels.flowRead ?? labelChannelFlowBlurb(kind);
+        case "OPS_HANDOFF":
+          return labels.flowOpsHandoff ?? labelChannelFlowBlurb(kind);
+        default:
+          return labelChannelFlowBlurb(kind);
+      }
+    },
+    [labels],
+  );
+
   const managedLabel = useCallback(
     (managedBy: string) => {
       if (managedBy === "PLATFORM") return labels.managedPlatform;
@@ -131,7 +159,34 @@ function useLinkLabelFns(labels: SatelliteAdminLinksLabels) {
     [labels],
   );
 
-  return { satLabel, kindLabel, managedLabel };
+  return { satLabel, kindLabel, flowBlurb, managedLabel };
+}
+
+function peerGroupKey(
+  row: SatelliteAdminLinksChannelRow,
+  direction: "outbound" | "inbound",
+): string {
+  return direction === "outbound" ? row.toSatelliteKey : row.fromSatelliteKey;
+}
+
+function groupByPeer(
+  rows: SatelliteAdminLinksChannelRow[],
+  direction: "outbound" | "inbound",
+): Array<{ peerKey: string; channels: SatelliteAdminLinksChannelRow[] }> {
+  const order: string[] = [];
+  const map = new Map<string, SatelliteAdminLinksChannelRow[]>();
+  for (const row of rows) {
+    const key = peerGroupKey(row, direction);
+    if (!map.has(key)) {
+      order.push(key);
+      map.set(key, []);
+    }
+    map.get(key)!.push(row);
+  }
+  return order.map((peerKey) => ({
+    peerKey,
+    channels: map.get(peerKey)!,
+  }));
 }
 
 /** Presentational money + inbound/outbound channel cards (shared by industry + finance). */
@@ -144,11 +199,14 @@ export function SatelliteAdminLinksPanels(props: SatelliteAdminLinksPanelsProps)
     error = null,
     loading = false,
     onDisableInbound,
+    onEnableInbound,
     legacyHints,
     showHeader = true,
   } = props;
-  const { satLabel, kindLabel, managedLabel } = useLinkLabelFns(labels);
+  const { satLabel, kindLabel, flowBlurb, managedLabel } = useLinkLabelFns(labels);
   const hints = legacyHints ?? CHANNEL_LEGACY_HINTS;
+  const outboundGroups = groupByPeer(outbound, "outbound");
+  const inboundGroups = groupByPeer(inbound, "inbound");
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
@@ -175,65 +233,92 @@ export function SatelliteAdminLinksPanels(props: SatelliteAdminLinksPanelsProps)
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
           <h2 className="text-sm font-semibold text-[#34495E]">{labels.outbound}</h2>
-          <ul className="space-y-2">
-            {outbound.map((c) => (
-              <ChannelEdgeCard
-                key={c.id}
-                title={channelEdgeTitle({
-                  fromKey: c.fromSatelliteKey,
-                  toKey: c.toSatelliteKey,
-                  fromOrgName: c.fromOrgName,
-                  toOrgName: c.toOrgName,
-                  direction: "outbound",
-                  labelSat: satLabel,
-                })}
-                detail={`${c.fromSatelliteKey} → ${c.toSatelliteKey}`}
-                kindLabel={kindLabel(c.kind)}
-                managedLabel={managedLabel(c.managedBy)}
-                enabled={c.enabled}
-                onLabel={labels.on}
-                offLabel={labels.off}
-              />
-            ))}
-            {outbound.length === 0 ? (
-              <li className="text-sm text-[#7F8C8D]">{labels.empty}</li>
-            ) : null}
-          </ul>
+          {outboundGroups.map((group) => (
+            <div key={`out-${group.peerKey}`} className="space-y-2">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-[#95A5A6]">
+                {satLabel(group.peerKey)}
+              </h3>
+              <ul className="space-y-2">
+                {group.channels.map((c) => (
+                  <ChannelEdgeCard
+                    key={c.id}
+                    title={channelEdgeTitle({
+                      fromKey: c.fromSatelliteKey,
+                      toKey: c.toSatelliteKey,
+                      fromOrgName: c.fromOrgName,
+                      toOrgName: c.toOrgName,
+                      direction: "outbound",
+                      labelSat: satLabel,
+                    })}
+                    detail={`${c.fromSatelliteKey} → ${c.toSatelliteKey}`}
+                    kindLabel={kindLabel(c.kind)}
+                    flowBlurb={flowBlurb(c.kind)}
+                    managedLabel={managedLabel(c.managedBy)}
+                    enabled={c.enabled}
+                    onLabel={labels.on}
+                    offLabel={labels.off}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
+          {outbound.length === 0 ? (
+            <p className="text-sm text-[#7F8C8D]">{labels.empty}</p>
+          ) : null}
         </section>
         <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
           <h2 className="text-sm font-semibold text-[#34495E]">{labels.inbound}</h2>
-          <ul className="space-y-2">
-            {inbound.map((c) => (
-              <ChannelEdgeCard
-                key={c.id}
-                title={channelEdgeTitle({
-                  fromKey: c.fromSatelliteKey,
-                  toKey: c.toSatelliteKey,
-                  fromOrgName: c.fromOrgName,
-                  toOrgName: c.toOrgName,
-                  direction: "inbound",
-                  labelSat: satLabel,
+          {inboundGroups.map((group) => (
+            <div key={`in-${group.peerKey}`} className="space-y-2">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-[#95A5A6]">
+                {satLabel(group.peerKey)}
+              </h3>
+              <ul className="space-y-2">
+                {group.channels.map((c) => {
+                  const canDisable = c.enabled && onDisableInbound;
+                  const canEnable = !c.enabled && onEnableInbound;
+                  return (
+                    <ChannelEdgeCard
+                      key={c.id}
+                      title={channelEdgeTitle({
+                        fromKey: c.fromSatelliteKey,
+                        toKey: c.toSatelliteKey,
+                        fromOrgName: c.fromOrgName,
+                        toOrgName: c.toOrgName,
+                        direction: "inbound",
+                        labelSat: satLabel,
+                      })}
+                      detail={`${c.fromSatelliteKey} → ${c.toSatelliteKey}`}
+                      kindLabel={kindLabel(c.kind)}
+                      flowBlurb={flowBlurb(c.kind)}
+                      managedLabel={managedLabel(c.managedBy)}
+                      enabled={c.enabled}
+                      onLabel={labels.on}
+                      offLabel={labels.off}
+                      actionLabel={
+                        canDisable
+                          ? labels.disable
+                          : canEnable
+                            ? labels.enable ?? labels.on
+                            : undefined
+                      }
+                      actionTone={canDisable ? "danger" : "secondary"}
+                      onAction={
+                        canDisable
+                          ? () => void onDisableInbound!(c.id)
+                          : canEnable
+                            ? () => void onEnableInbound!(c.id)
+                            : undefined
+                      }
+                    />
+                  );
                 })}
-                detail={`${c.fromSatelliteKey} → ${c.toSatelliteKey}`}
-                kindLabel={kindLabel(c.kind)}
-                managedLabel={managedLabel(c.managedBy)}
-                enabled={c.enabled}
-                onLabel={labels.on}
-                offLabel={labels.off}
-                actionLabel={
-                  c.enabled && onDisableInbound ? labels.disable : undefined
-                }
-                onAction={
-                  c.enabled && onDisableInbound
-                    ? () => void onDisableInbound(c.id)
-                    : undefined
-                }
-              />
-            ))}
-            {inbound.length === 0 ? (
-              <li className="text-sm text-[#7F8C8D]">{labels.empty}</li>
-            ) : null}
-          </ul>
+              </ul>
+            </div>
+          ))}
+          {inbound.length === 0 ? (
+            <p className="text-sm text-[#7F8C8D]">{labels.empty}</p>
+          ) : null}
         </section>
       </div>
 
@@ -301,30 +386,29 @@ export function satelliteAdminLinksLabelsFromT(
     kindSettlement: t("kindSettlement"),
     kindRevenue: t("kindRevenue"),
     kindRead: t("kindRead"),
-    kindOpsHandoff: (() => {
-      const tt = t as unknown as { has?: (key: string) => boolean };
-      if (typeof tt.has === "function" && tt.has("kindOpsHandoff")) {
-        return t("kindOpsHandoff");
-      }
-      return undefined;
-    })(),
+    kindOpsHandoff: optionalT(t, "kindOpsHandoff"),
+    flowFolio: optionalT(t, "flowFolio"),
+    flowSettlement: optionalT(t, "flowSettlement"),
+    flowRevenue: optionalT(t, "flowRevenue"),
+    flowRead: optionalT(t, "flowRead"),
+    flowOpsHandoff: optionalT(t, "flowOpsHandoff"),
     managedPlatform: t("managedPlatform"),
     managedAcceptor: t("managedAcceptor"),
-    legacyTitle: (() => {
-      const tt = t as unknown as { has?: (key: string) => boolean };
-      if (typeof tt.has === "function" && tt.has("legacyTitle")) {
-        return t("legacyTitle");
-      }
-      return undefined;
-    })(),
-    legacyHint: (() => {
-      const tt = t as unknown as { has?: (key: string) => boolean };
-      if (typeof tt.has === "function" && tt.has("legacyHint")) {
-        return t("legacyHint");
-      }
-      return undefined;
-    })(),
+    legacyTitle: optionalT(t, "legacyTitle"),
+    legacyHint: optionalT(t, "legacyHint"),
+    enable: optionalT(t, "enable"),
   };
+}
+
+function optionalT(
+  t: (key: string, values?: Record<string, string>) => string,
+  key: string,
+): string | undefined {
+  const tt = t as unknown as { has?: (k: string) => boolean };
+  if (typeof tt.has === "function" && tt.has(key)) {
+    return t(key);
+  }
+  return undefined;
 }
 
 /**
@@ -368,10 +452,10 @@ export function SatelliteAdminLinksPage(props: SatelliteAdminLinksPageProps) {
     void load();
   }, [load]);
 
-  const onDisableInbound = useCallback(
-    async (channelId: string) => {
+  const patchEnabled = useCallback(
+    async (channelId: string, enabled: boolean) => {
       const body =
-        patchBody?.(channelId, false) ?? { channelId, enabled: false };
+        patchBody?.(channelId, enabled) ?? { channelId, enabled };
       const url =
         patchPathStyle === "path" ? `${apiPath}/${channelId}` : apiPath;
       const res = await fetchImpl(url, {
@@ -388,6 +472,16 @@ export function SatelliteAdminLinksPage(props: SatelliteAdminLinksPageProps) {
     [apiPath, fetchImpl, labels.saveFailed, load, patchBody, patchPathStyle],
   );
 
+  const onDisableInbound = useCallback(
+    (channelId: string) => patchEnabled(channelId, false),
+    [patchEnabled],
+  );
+
+  const onEnableInbound = useCallback(
+    (channelId: string) => patchEnabled(channelId, true),
+    [patchEnabled],
+  );
+
   const hints = useMemo(
     () => legacyHints ?? CHANNEL_LEGACY_HINTS,
     [legacyHints],
@@ -402,6 +496,7 @@ export function SatelliteAdminLinksPage(props: SatelliteAdminLinksPageProps) {
       error={error}
       loading={loading}
       onDisableInbound={onDisableInbound}
+      onEnableInbound={onEnableInbound}
       legacyHints={hints}
     />
   );

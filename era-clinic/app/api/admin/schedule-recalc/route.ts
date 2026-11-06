@@ -8,6 +8,7 @@ const bodySchema = z.object({
   episodeId: z.string().optional(),
 });
 
+/** Bulk schedule moves — platform super-admin only (not CLINIC_ADMIN / settings). */
 export async function POST(req: Request) {
   try {
     const session = await getSatelliteSession();

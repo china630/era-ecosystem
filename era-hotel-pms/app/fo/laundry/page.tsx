@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CatalogField,
   DatePicker,
@@ -37,8 +37,8 @@ const STATUS_ALL = 'ALL';
 export default function FoLaundryPage() {
   const t = useTranslations('housekeeping');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [expressPercent, setExpressPercent] = useState<number | null>(null);
   const [scanByTicket, setScanByTicket] = useState<Record<string, string>>({});
   const [guestQ, setGuestQ] = useState('');
   const [roomQ, setRoomQ] = useState('');
@@ -56,9 +56,6 @@ export default function FoLaundryPage() {
       return;
     }
     setTickets(json.tickets ?? []);
-    setExpressPercent(
-      typeof json.laundryExpressPercent === 'number' ? json.laundryExpressPercent : null,
-    );
   }, [tc]);
 
   useEffect(() => {
@@ -119,7 +116,6 @@ export default function FoLaundryPage() {
   function ticketAmount(tk: Ticket) {
     return laundryTicketAmount(tk.lines, {
       express: Boolean(tk.express),
-      expressPercent,
     });
   }
 
@@ -196,9 +192,9 @@ export default function FoLaundryPage() {
             header: t('laundryPieces'),
             sortable: true,
             sortValue: (tk) =>
-              formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }),
+              formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }, locale),
             render: (tk) =>
-              formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }) || '—',
+              formatLaundryPieces(tk.lines, { wash: t('laundryWash'), iron: t('laundryIron') }, locale) || '—',
           },
           {
             key: 'amount',
