@@ -18,6 +18,7 @@ import {
   programTemplateInclude,
 } from "@/domain/sanatorium/program-template-admin";
 import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
+import { resolveDailyDistinctCap } from "@/domain/sanatorium/daily-package-cap";
 
 export async function instantiateProgramFromTemplate(input: {
   episodeId: string;
@@ -249,6 +250,7 @@ export function resolveBlockQuotaTotal(input: {
     blockQuotaMode?: string | null;
     quotaPerNight?: unknown;
     quotaPerWeek?: number | null;
+    dailyDistinctCap?: number | null;
   };
   knots: Array<{ nights: number; procedureCode: string; qty: number }>;
   minNights?: number | null;
@@ -297,6 +299,14 @@ export function resolveBlockQuotaTotal(input: {
       quotaBasis:
         input.procedure.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
     });
+  }
+  if (input.procedure.quotaBasis !== "PER_STAY") {
+    const perDay = resolveDailyDistinctCap(
+      input.procedure.kind,
+      input.procedure.dailyDistinctCap,
+    );
+    const procedureDays = nonSundayStayNights(input.checkIn, input.endsOn);
+    quotaTotal = Math.min(quotaTotal, procedureDays * perDay);
   }
   return quotaTotal;
 }
