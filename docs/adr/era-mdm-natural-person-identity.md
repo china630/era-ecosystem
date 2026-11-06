@@ -31,7 +31,7 @@ On `GlobalNaturalPerson`:
 
 **nationality:** ISO 3166-1 alpha-2 **citizenship** (`KZ`), not ethnicity. `OTHER` / garbage → do not write (do not overwrite a valid ISO). No ethnicity field on person.
 
-**phone / email:** contact ciphers only (`phoneCipher`, `emailCipher`) — **not** resolve match keys. Empty string does not clear. Email is not `User.email` (platform login).
+**phone / email:** contact ciphers only (`phoneCipher`, `emailCipher`) — **not** resolve match keys. Empty string does not clear. Email is not `User.email` (platform login). Hotel ops cache polishes guest phone to E.164 before resolve/link when possible — [hotel-guest-pii-ops-cache.md](./hotel-guest-pii-ops-cache.md) § Phone normalize; international numbers are never rewritten from nationality alone.
 
 **Identifiers:** `PersonIdentifier` (`AZ_FIN`, `PASSPORT`, …). Passport `issuingCountry` is document SoR — do not substitute person `nationality`. Missing passport country last-resort `"AZ"` (satellites should send blank country; debt for hotel/clinic/finance steps).
 
