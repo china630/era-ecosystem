@@ -19,7 +19,8 @@ import { GuestCardActionGrid } from '@/components/guest-card/GuestCardActionGrid
 import { GuestCardActions } from '@/components/guest-card/GuestCardActions';
 import { GuestCardCrmDialog } from '@/components/guest-card/GuestCardCrmDialog';
 import { crmTabButtons, reservationDetailsButtons } from '@/lib/guest-crm-config';
-import { GuestCardIdReaderModal, type IdReaderPayload } from '@/components/guest-card/GuestCardIdReaderModal';
+import { PassportScanModal } from '@/components/guest-card/PassportScanModal';
+import { useAuth } from '@/hooks/useAuth';
 import { guestComposedFullName, splitStoredFullName } from '@/lib/guest-identity.shared';
 import { guestIdentityGaps, type IdentityField } from '@/lib/guest-stay-requirements';
 import { pickPrimaryContact, pickPrimaryDocument } from '@/lib/guest-card-primary';
@@ -77,6 +78,7 @@ export default function GuestCardModal({
   openIdReaderOnOpen?: boolean;
 }) {
   const t = useTranslations('guestCard');
+  const { isPlatformSuperAdmin } = useAuth();
   const tc = useTranslations('common');
   const [tab, setTab] = useState<GuestTabId>('identity');
   const [loading, setLoading] = useState(true);
@@ -314,9 +316,9 @@ export default function GuestCardModal({
       setIdReaderOpen(false);
       return;
     }
-    if (!openIdReaderOnOpen) return;
+    if (!openIdReaderOnOpen || !isPlatformSuperAdmin) return;
     setIdReaderOpen(true);
-  }, [open, openIdReaderOnOpen, guestId]);
+  }, [open, openIdReaderOnOpen, guestId, isPlatformSuperAdmin]);
 
   const crmActions = crmTabButtons(guestId, crmBadges);
   const resActions = reservationDetailsButtons(guestId, crmBadges);
@@ -584,7 +586,9 @@ export default function GuestCardModal({
           }
           onToggleLock={() => void toggleGuestLock()}
           onPrint={printCard}
-          onIdReader={isLocked ? undefined : () => setIdReaderOpen(true)}
+          onIdReader={
+            isPlatformSuperAdmin && !isLocked ? () => setIdReaderOpen(true) : undefined
+          }
         />
       }
       footer={
@@ -773,48 +777,24 @@ export default function GuestCardModal({
           </div>
         </>
       )}
-      <GuestCardIdReaderModal
+      <PassportScanModal
         open={idReaderOpen}
+        currentGuestId={activeId}
         onClose={() => setIdReaderOpen(false)}
-        onApply={(data: IdReaderPayload) => {
-          if (data.firstName) setFirstName(data.firstName);
-          if (data.lastName) setLastName(data.lastName);
-          if (data.fullName) setFullName(data.fullName);
-          if (data.nationality) setNationality(data.nationality);
-          if (data.gender) setSex(data.gender);
-          if (data.sex) setSex(data.sex);
-          setTransientIdentity((f) => ({
-            ...f,
-            passportNumber: data.passportNumber ?? f.passportNumber,
-            nationalIdFin: data.nationalIdFin ?? f.nationalIdFin,
-          }));
-          setDetailFields((f) => ({
-            ...f,
-            birthDate: data.birthDate ?? f.birthDate,
-          }));
-          showSuccess(t('idReaderApplied'));
-          if (activeId && data.passportNumber) {
-            void fetch(`/api/guests/${activeId}/documents`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                docType: 'PASSPORT',
-                docNumber: data.passportNumber,
-                isPrimary: true,
-              }),
-            }).then(() => void loadAux(activeId));
+        onDone={(guest) => {
+          setIdReaderOpen(false);
+          if (!activeId || guest.id !== activeId) {
+            setHeldId(guest.id);
+            onCreated?.(guest.id, {
+              fullName: `${guest.firstName} ${guest.lastName}`.trim(),
+              firstName: guest.firstName,
+              lastName: guest.lastName,
+              birthDate: guest.birthDate,
+            });
+            return;
           }
-          if (activeId && data.nationalIdFin) {
-            void fetch(`/api/guests/${activeId}/documents`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                docType: 'FIN',
-                docNumber: data.nationalIdFin,
-                isPrimary: !data.passportNumber,
-              }),
-            }).then(() => void loadAux(activeId));
-          }
+          void load();
+          onSaved?.(guest.id);
         }}
       />
       <GuestCardCrmDialog

@@ -19,7 +19,7 @@ Actual departure calendar date (Asia/Baku) **before** `checkOutDate` → unused 
 
 ### D2 — Folio corrections
 
-Void nightly lodging (`ROOM` / package / `PKG`…) on unused `businessDate`s on **any OPEN folio**. Non-medical check-in **lump**: partial void + repost remaining qty. Do not reverse F&B/extras/clinic hub.
+Void nightly lodging (`ROOM` / package / `PKG`…) on unused `businessDate`s on **any OPEN folio**. Non-medical check-in **lump**: partial void + repost remaining qty. Do not reverse F&B/extras/clinic hub. Do not reverse a compliment or house-use credit (`comp-stay:`, `house-use:`) or a void marker (`void-`).
 
 ### D3 — Refund amount
 

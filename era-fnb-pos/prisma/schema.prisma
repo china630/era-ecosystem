@@ -698,3 +698,76 @@ model SatelliteAuditLog {
   @@index([organizationId, createdAt])
   @@map("satellite_audit_logs")
 }
+
+/// F&B weekly person × day cədvəl (WEEK_PERSON). PIN StaffRoster is separate.
+enum FnbDutyWeekStatus {
+  DRAFT
+  APPROVED
+}
+
+model FnbDutyShiftCode {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  code           String
+  label          String
+  startTime      String?  @map("start_time")
+  endTime        String?  @map("end_time")
+  sortOrder      Int      @default(0) @map("sort_order")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("fnb_duty_shift_codes")
+}
+
+model FnbDutyScheduleBinding {
+  id             String   @id @default(cuid())
+  organizationId String   @unique @map("organization_id")
+  orgUnitIds     String[] @default([]) @map("org_unit_ids")
+  positionIds    String[] @default([]) @map("position_ids")
+  outletIds      String[] @default([]) @map("outlet_ids")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("fnb_duty_schedule_bindings")
+}
+
+model FnbDutyScheduleWeek {
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  weekStart      DateTime          @map("week_start") @db.Date
+  status         FnbDutyWeekStatus @default(DRAFT)
+  cells          FnbDutyScheduleCell[]
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@unique([organizationId, weekStart])
+  @@index([organizationId])
+  @@map("fnb_duty_schedule_weeks")
+}
+
+model FnbDutyScheduleCell {
+  id             String               @id @default(cuid())
+  organizationId String               @map("organization_id")
+  weekId         String               @map("week_id")
+  week           FnbDutyScheduleWeek  @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  workDate       DateTime             @map("work_date") @db.Date
+  globalPersonId String               @map("global_person_id")
+  personName     String               @map("person_name")
+  positionName   String?              @map("position_name")
+  orgUnitId      String?              @map("org_unit_id")
+  orgUnitName    String?              @map("org_unit_name")
+  positionId     String?              @map("position_id")
+  outletId       String?              @map("outlet_id")
+  outletName     String?              @map("outlet_name")
+  shiftCode      String               @map("shift_code")
+  orphaned       Boolean              @default(false)
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+
+  @@unique([weekId, workDate, globalPersonId])
+  @@index([organizationId, weekId])
+  @@map("fnb_duty_schedule_cells")
+}

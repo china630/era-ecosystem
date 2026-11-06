@@ -389,6 +389,21 @@ export async function patchReservationFull(
   const requestedRoomId =
     typeof data.roomId === 'string' && data.roomId !== existing.roomId ? data.roomId : null;
   if (requestedRoomId) {
+    const targetDoor = await prisma.room.findUnique({
+      where: { id: requestedRoomId },
+      select: { roomTypeId: true },
+    });
+    const { doorTypeNeedsSettlement, isClassSettlement, RoomTypeSettlementRequiredError } =
+      await import('@/lib/services/room-move-request.service');
+    const chargedForMove =
+      typeof data.roomTypeId === 'string' ? data.roomTypeId : existing.roomTypeId;
+    if (
+      targetDoor &&
+      doorTypeNeedsSettlement(chargedForMove, null, targetDoor.roomTypeId) &&
+      !isClassSettlement(settlement)
+    ) {
+      throw new RoomTypeSettlementRequiredError();
+    }
     if (existing.roomId) data.roomId = existing.roomId;
     else delete data.roomId;
   }
@@ -434,7 +449,7 @@ export async function patchReservationFull(
         chargedRoomTypeId: typeId,
         givenRoomTypeId: data.givenRoomTypeId !== undefined ? data.givenRoomTypeId : existing.givenRoomTypeId,
         doorRoomTypeId: room.roomTypeId,
-        compUpgrade: false,
+        compUpgrade: (await import('@/lib/room-move-settlement')).isClassSettlement(settlement),
       });
       if (!allowed.ok) throw new Error(allowed.error);
     }
@@ -683,18 +698,6 @@ export async function patchReservationFull(
         toRoomId: data.roomId,
         status: existing.status,
         checkIn: checkIn,
-      });
-    }
-  }
-
-  if (notes) {
-    for (const [noteType, text] of Object.entries(notes) as [string, string][]) {
-      await prisma.reservationNote.upsert({
-        where: {
-          reservationId_noteType: { reservationId: id, noteType },
-        },
-        create: { reservationId: id, noteType, text: text ?? '' },
-        update: { text: text ?? '' },
       });
     }
   }
@@ -1063,8 +1066,6 @@ export async function patchReservationFull(
     }
   }
 
-  const after = await loadReservationAuditSnapshot(id);
-  await recordReservationDiff(id, 'UPDATE', before, after, audit);
   let movePending = false;
   if (requestedRoomId) {
     const { reservationNamesIncomplete } = await import('@/lib/reservation-names');
@@ -1088,6 +1089,19 @@ export async function patchReservationFull(
     });
     movePending = moved.pending;
   }
+  if (notes) {
+    for (const [noteType, text] of Object.entries(notes) as [string, string][]) {
+      await prisma.reservationNote.upsert({
+        where: {
+          reservationId_noteType: { reservationId: id, noteType },
+        },
+        create: { reservationId: id, noteType, text: text ?? '' },
+        update: { text: text ?? '' },
+      });
+    }
+  }
+  const after = await loadReservationAuditSnapshot(id);
+  await recordReservationDiff(id, 'UPDATE', before, after, audit);
   const full = await getReservationFull(id);
   return movePending ? { ...full, movePending: true } : full;
 }

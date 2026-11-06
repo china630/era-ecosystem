@@ -1628,7 +1628,8 @@ exports.SatelliteChannelKind = exports.$Enums.SatelliteChannelKind = {
   FOLIO_POST: 'FOLIO_POST',
   SETTLEMENT: 'SETTLEMENT',
   REVENUE_EVENT: 'REVENUE_EVENT',
-  READ_STATUS: 'READ_STATUS'
+  READ_STATUS: 'READ_STATUS',
+  OPS_HANDOFF: 'OPS_HANDOFF'
 };
 
 exports.SatelliteChannelManagedBy = exports.$Enums.SatelliteChannelManagedBy = {

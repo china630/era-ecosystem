@@ -21,6 +21,7 @@ export const AUTH_ONLY_API_ROUTES: readonly string[] = [
   "/api/auth/me",
   "/api/auth/session/refresh-permissions",
   "/api/platform/billing-snapshot",
+  "/api/edition",
 ];
 
 /** Staff routes that check their own credential instead of `getSatelliteSession()`. */
@@ -37,6 +38,7 @@ export const API_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/api/admin/products/*", [P.HOTEL_REVENUE_CODES]],
   ["/api/admin/outlets", [P.HOTEL_REVENUE_CODES]],
   ["/api/admin/outlets/*", [P.HOTEL_REVENUE_CODES]],
+  ["/api/admin/links", [P.ADMIN_SETTINGS]],
   ["/api/admin/**", [P.ACCESS_MANAGE]],
   ["/api/receipts/*/lines/*/void", [P.RECEIPTS_VOID_LINE]],
   ["/api/receipts/*/void", [P.RECEIPTS_VOID_LINE]],

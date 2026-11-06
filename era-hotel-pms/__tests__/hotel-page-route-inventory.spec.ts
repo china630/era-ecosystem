@@ -60,6 +60,21 @@ describe("hotel page route inventory (Wave 1 fail-closed)", () => {
     expect(routePermissions("/hk")).toEqual([PERMISSIONS.SCREEN_HK]);
   });
 
+  it("schedules hub and department boards map to SCREEN_SCHEDULES", () => {
+    expect(routePermissions("/schedules")).toEqual([
+      PERMISSIONS.SCREEN_SCHEDULES,
+    ]);
+    expect(routePermissions("/schedules/reception")).toEqual([
+      PERMISSIONS.SCREEN_SCHEDULES,
+    ]);
+    expect(routePermissions("/schedules/security")).toEqual([
+      PERMISSIONS.SCREEN_SCHEDULES,
+    ]);
+    expect(routePermissions("/schedules/engineering")).toEqual([
+      PERMISSIONS.SCREEN_SCHEDULES,
+    ]);
+  });
+
   it("mutation audit /admin/audit uses reports grants, not SCREEN_ADMIN", () => {
     expect(routePermissions("/admin/audit")).toEqual([
       PERMISSIONS.SCREEN_REPORTS,
@@ -67,4 +82,11 @@ describe("hotel page route inventory (Wave 1 fail-closed)", () => {
     ]);
     expect(routePermissions("/admin/users")).toEqual([PERMISSIONS.SCREEN_ADMIN]);
   });
+
+  it("CP-CHANNELS /admin/links uses SCREEN_SETTINGS, not SCREEN_ADMIN", () => {
+    expect(routePermissions("/admin/links")).toEqual([
+      PERMISSIONS.SCREEN_SETTINGS,
+    ]);
+  });
 });
+

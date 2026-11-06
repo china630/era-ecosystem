@@ -217,9 +217,13 @@ export function DiagnosticsAssignModal({
                 titleAz?: string;
                 titleRu?: string;
                 titleEn?: string;
+                packageOnly?: boolean;
+                categoryActive?: boolean;
               }) => ({
                 code: s.code,
                 kind: s.kind,
+                packageOnly: s.packageOnly === true,
+                categoryActive: s.categoryActive !== false,
                 title:
                   s.title && typeof s.title === "object"
                     ? s.title
@@ -781,19 +785,36 @@ export function DiagnosticsAssignModal({
                         <div className="min-w-0 font-medium">
                           {nameByCode.get(lane.code) || lane.title}
                         </div>
-                        {!lane.pkgLocked &&
-                        lane.pkgDraftKey &&
-                        lane.extraQty < 1 &&
-                        lane.pendingIds.length < 1 ? (
+                        {lane.pendingIds.length > 0 ||
+                        lane.extraDraftKey ||
+                        (lane.pkgDraftKey && !lane.pkgLocked) ? (
                           <button
                             type="button"
-                            className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
+                            className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6 shrink-0`}
                             disabled={busy}
-                            onClick={() =>
-                              setPkgDraft((prev) =>
-                                prev.filter((d) => d.key !== lane.pkgDraftKey),
-                              )
-                            }
+                            onClick={() => {
+                              const pendingId =
+                                lane.pendingIds[lane.pendingIds.length - 1];
+                              if (pendingId) {
+                                setPendingDrop((prev) =>
+                                  new Set(prev).add(pendingId),
+                                );
+                                return;
+                              }
+                              if (lane.extraDraftKey) {
+                                setExtraDraft((prev) =>
+                                  prev.filter(
+                                    (d) => d.key !== lane.extraDraftKey,
+                                  ),
+                                );
+                                return;
+                              }
+                              if (lane.pkgDraftKey) {
+                                setPkgDraft((prev) =>
+                                  prev.filter((d) => d.key !== lane.pkgDraftKey),
+                                );
+                              }
+                            }}
                             aria-label={tc("delete")}
                           >
                             <Trash2 className="h-3.5 w-3.5" aria-hidden />
@@ -832,20 +853,25 @@ export function DiagnosticsAssignModal({
                               Boolean(lane.pkgLocked) || !lane.pkgDraftKey,
                             )
                           )}
-                          <span className="tabular-nums text-[12px]">
-                            0.00
-                          </span>
                         </div>
                       ) : null}
-                      {lane.extraQty > 0 ? (
-                        <div className="flex items-center justify-between gap-2 py-1">
-                          <span className={TEXT_MUTED_CLASS}>
-                            {t("extraLine")}
+                      <div className="flex items-center justify-between gap-2 py-1">
+                        <span className={TEXT_MUTED_CLASS}>
+                          {t("extraLine")}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-right text-[12px] tabular-nums">
+                            {lane.extraUnit.toFixed(2)}
+                            <span className={`block ${TEXT_MUTED_CLASS}`}>
+                              {(lane.extraUnit * lane.extraQty).toFixed(2)}
+                            </span>
                           </span>
-                          {lane.extraDraftKey ? (
-                            stepper(
-                              lane.extraQty - lane.pendingIds.length,
-                              () => {
+                          {stepper(
+                            lane.extraQty,
+                            () => {
+                              const draftQty =
+                                lane.extraQty - lane.pendingIds.length;
+                              if (lane.extraDraftKey && draftQty > 0) {
                                 setExtraDraft((prev) =>
                                   prev
                                     .map((d) =>
@@ -855,61 +881,56 @@ export function DiagnosticsAssignModal({
                                     )
                                     .filter((d) => d.qty > 0),
                                 );
-                              },
-                              () => {
-                                const draft = extraDraft.find(
-                                  (d) => d.key === lane.extraDraftKey,
+                                return;
+                              }
+                              const pendingId =
+                                lane.pendingIds[lane.pendingIds.length - 1];
+                              if (pendingId) {
+                                setPendingDrop((prev) =>
+                                  new Set(prev).add(pendingId),
                                 );
-                                if (draft) {
-                                  addCatalogExtra(
-                                    draft.serviceCode,
-                                    draft.title,
-                                    draft.kind,
+                              }
+                            },
+                            () => {
+                              if (readOnly || busy) return;
+                              const code = lane.code;
+                              const title =
+                                nameByCode.get(code) || lane.title;
+                              const amountNet = unitOf(code);
+                              const scheduledAt =
+                                lane.kind === "visit"
+                                  ? buildVisitScheduledAt(visitDate, visitTime)
+                                  : undefined;
+                              setExtraDraft((prev) => {
+                                const hit = prev.find(
+                                  (d) => d.serviceCode === code,
+                                );
+                                if (hit) {
+                                  return prev.map((d) =>
+                                    d.key === hit.key
+                                      ? { ...d, qty: d.qty + 1 }
+                                      : d,
                                   );
                                 }
-                              },
-                              false,
-                              false,
-                            )
-                          ) : (
-                            <span className="tabular-nums">{lane.extraQty}</span>
+                                return [
+                                  ...prev,
+                                  {
+                                    key: `x:${code}:${Date.now()}`,
+                                    serviceCode: code,
+                                    title,
+                                    qty: 1,
+                                    kind: lane.kind,
+                                    amountNet,
+                                    scheduledAt,
+                                  },
+                                ];
+                              });
+                            },
+                            false,
+                            lane.extraQty < 1,
                           )}
-                          <span className="tabular-nums text-[12px]">
-                            {(lane.extraUnit * lane.extraQty).toFixed(2)}
-                          </span>
-                          {lane.pendingIds.length > 0 ? (
-                            <button
-                              type="button"
-                              className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                              disabled={busy}
-                              onClick={() => {
-                                const id = lane.pendingIds[lane.pendingIds.length - 1];
-                                if (!id) return;
-                                setPendingDrop((prev) => new Set(prev).add(id));
-                              }}
-                              aria-label={tc("delete")}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                            </button>
-                          ) : lane.extraDraftKey ? (
-                            <button
-                              type="button"
-                              className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                              disabled={busy}
-                              onClick={() =>
-                                setExtraDraft((prev) =>
-                                  prev.filter(
-                                    (d) => d.key !== lane.extraDraftKey,
-                                  ),
-                                )
-                              }
-                              aria-label={tc("delete")}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                            </button>
-                          ) : null}
                         </div>
-                      ) : null}
+                      </div>
                       {lane.kind === "visit" && lane.extraDraftKey ? (
                         <div className="flex flex-wrap items-end gap-2 pt-1">
                           <DatePicker

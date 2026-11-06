@@ -40,6 +40,8 @@ Card save, an Elektra upsert, and an OTA modify move `ratePlanId` on slices that
 
 Meal plan (BB/FB) is not this mode. A zero nightly price is legal only for `COMP` and `HOUSE`.
 
+The same zero applies to a medical package night, not only a room night. Unposted nights in the compose grid are stored as 0, including a night the desk had fixed by hand. Night audit, a manual room post, and missed-night catch-up post 0 even when a stored night still shows a tariff. A posted night's stored tariff is left as it was. Setting compliment writes a credit against lodging already on the folio (room, package, rate adjustment). Setting house use writes a credit against every open charge so the guest balance is 0. Compliment extras stay payable. The day document counts a compliment lodging line as comp, and any house-use line as house use.
+
 ## Check-in and clinic
 
 Clinic receives a guest at check-in when that guest has an explicit medical package, and again when that package changes on an in-house stay. Saving a reservation that is not yet in house does not open a clinic episode. The tariff does not fill a package the receptionist left empty. `WALKIN` hides the package column and does not send clinic.

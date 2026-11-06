@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
   UseGuards,
 } from "@nestjs/common";
 import { CP_PERMISSION } from "../auth/cp-permissions";
@@ -26,11 +27,29 @@ export class AdminChannelsController {
     return this.channels.listForOrganization(orgId);
   }
 
+  @Post("resync")
+  async resync(@Param("orgId", ParseUUIDPipe) orgId: string) {
+    await this.channels.syncPlatformChannels(orgId);
+    return this.channels.listForOrganization(orgId);
+  }
+
   @Patch(":channelId")
   patch(
     @Param("channelId", ParseUUIDPipe) channelId: string,
     @Body() body: PatchChannelDto,
   ) {
     return this.channels.adminPatch(channelId, body);
+  }
+}
+
+@UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
+@RequirePermissions(CP_PERMISSION.ADMIN_PLATFORM)
+@Controller("v1/admin/channels")
+export class AdminChannelsBatchController {
+  constructor(private readonly channels: SatelliteChannelsService) {}
+
+  @Post("resync-all")
+  resyncAll() {
+    return this.channels.syncPlatformChannelsAll();
   }
 }

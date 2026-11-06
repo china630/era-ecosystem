@@ -58,6 +58,22 @@ jest.mock("@era/satellite-kit", () => ({
   resolvePeerSatelliteBaseUrl: jest
     .fn()
     .mockResolvedValue({ baseUrl: "http://hotel.test", source: "env" }),
+  checkChannelEnabledLive: jest.fn().mockResolvedValue(true),
+  assertRevenueEventChannelEnabled: jest.fn().mockResolvedValue(undefined),
+  assertRevenueEventForPublish: jest.fn().mockResolvedValue(undefined),
+  REVENUE_EVENT_TYPES: new Set([
+    "SATELLITE_CLINIC_VISIT_COMPLETED",
+    "SATELLITE_CLINIC_PROCEDURE_COMPLETED",
+    "SATELLITE_CLINIC_LAB_ORDER_COMPLETED",
+    "SATELLITE_CLINIC_WARD_DAY_CHARGE",
+  ]),
+  SatelliteChannelDisabledError: class SatelliteChannelDisabledError extends Error {
+    code = "SATELLITE_CHANNEL_DISABLED";
+    constructor(kind: string) {
+      super(`Integration channel ${kind} is disabled or missing`);
+      this.name = "SatelliteChannelDisabledError";
+    }
+  },
 }));
 
 jest.mock("@/lib/request-organization", () => ({

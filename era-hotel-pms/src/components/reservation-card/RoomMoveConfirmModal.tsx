@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CatalogField } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
-import type { ClassSettlement } from '@/lib/room-move-settlement';
+import { classSettlementChoices, type ClassSettlement } from '@/lib/room-move-settlement';
 
 const REASONS: RoomMoveReason[] = ['GUEST_REFUSED', 'DID_NOT_OCCUPY', 'HOTEL'];
-const SETTLEMENTS: ClassSettlement[] = ['HOTEL', 'GUEST_PAY', 'HOTEL_REFUND', 'GUEST_CHEAPER'];
 
 export function RoomMoveConfirmModal({
   open,
@@ -17,6 +16,8 @@ export function RoomMoveConfirmModal({
   busy,
   askReason,
   askSettlement,
+  chargedNightly,
+  doorNightly,
 }: {
   open: boolean;
   onClose: () => void;
@@ -24,10 +25,19 @@ export function RoomMoveConfirmModal({
   busy?: boolean;
   askReason: boolean;
   askSettlement: boolean;
+  chargedNightly?: number | null;
+  doorNightly?: number | null;
 }) {
   const t = useTranslations('reservationCard');
+  const choiceKey = classSettlementChoices(chargedNightly, doorNightly).join(',');
+  const choices = choiceKey.split(',') as ClassSettlement[];
   const [reason, setReason] = useState<RoomMoveReason>('GUEST_REFUSED');
-  const [settlement, setSettlement] = useState<ClassSettlement>('HOTEL');
+  const [settlement, setSettlement] = useState<ClassSettlement>(choices[0] ?? 'HOTEL');
+  useEffect(() => {
+    if (!open) return;
+    const next = (choiceKey.split(',')[0] ?? 'HOTEL') as ClassSettlement;
+    setSettlement(next);
+  }, [open, choiceKey]);
 
   return (
     <EraModal
@@ -73,9 +83,9 @@ export function RoomMoveConfirmModal({
             value={settlement}
             onChange={(v) => {
               const next = String(Array.isArray(v) ? (v[0] ?? '') : v) as ClassSettlement;
-              if (SETTLEMENTS.includes(next)) setSettlement(next);
+              if (choices.includes(next)) setSettlement(next);
             }}
-            options={SETTLEMENTS.map((code) => ({
+            options={choices.map((code) => ({
               value: code,
               label: t(
                 code === 'HOTEL'

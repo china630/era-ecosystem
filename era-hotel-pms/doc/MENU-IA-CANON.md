@@ -14,7 +14,7 @@ Related: [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md) · [HotelOps
 1. **Section = role / shift** (FO, Front Cash, Night Audit, HK, Distribution…).
 2. **Items = working screens** for that shift (keep sidebar short; long report lists live in hubs).
 3. **One screen → one primary home** in the sidebar; secondary deep links OK.
-4. **Canonical URLs by section** — FO always `/fo/*`, Housekeeping always `/hk/*`.
+4. **Canonical URLs by section** — FO always `/fo/*`, Housekeeping always `/hk/*`, department schedules `/schedules/*` (HK roster stays `/hk/roster`).
 5. **Finance / F&B POS / Clinic** — external / deep link only (not shift submenus).
 6. **Settings = `/settings/*`**, not `/admin` (avoid confusion with platform SuperAdmin).
 
@@ -117,6 +117,22 @@ Sidebar order (top level, then groups). URLs stay flat under `/hk/*`.
 First open on secondary HK screens shows table/board chrome and an empty-state next step (not a bare page).
 
 Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
+
+---
+
+### 2.4b Schedules — `/schedules/*` (+ HK roster link)
+
+Department duty boards (Workforce people). Type catalog: [ADR hotel-department-duty-schedules](../../docs/adr/hotel-department-duty-schedules.md).
+
+| Menu item | URL | Description |
+|-----------|-----|-------------|
+| All schedules | `/schedules` | Hub: HK + reception + security + engineering (ops labels) |
+| HK roster | `/hk/roster` | Existing `WEEK_ZONE` (also under Housekeeping) |
+| Reception roster | `/schedules/reception` | `WEEK_POST` desk posts × day; chip assign; week chrome; copy previous week; Board settings (binding + posts) |
+| Security roster | `/schedules/security` | `WEEK_POST` gate / patrol; same UX as reception |
+| Technical roster | `/schedules/engineering` | `WEEK_CREW` building zones; not work orders; same UX |
+
+Screen permission: `screen:schedules` (API `api:duty_schedules.manage`). Clinic `MONTH_DUTY` is not hosted here. UAT-SMOKE §34b open — not SHIPPED.
 
 ---
 
@@ -227,6 +243,7 @@ Deep clinical / lab → **Clinic** (external).
 | Outbound events | `/settings/integration` | Event toggles and URLs |
 | Revenue codes | `/settings/integration?view=gl` | Revenue code → GL |
 | Outbound journal | `/settings/integration?view=journal` | Sent events |
+| Channel links | `/admin/links` | CP-CHANNELS vitrine (PLATFORM/ACCEPTOR); Settings grant, not SCREEN_ADMIN |
 | Audit viewer | `/admin/audit` | Canonical filters (entityType default HTTP_MUTATION, entityId, action, userId, dates). Page grant = reports, not admin. Stay journal on the card is Layer B only. HOT-AUD-01 UAT open |
 | Import | `/settings/import` | Column profile includes Elektraweb; the screen name is Import |
 

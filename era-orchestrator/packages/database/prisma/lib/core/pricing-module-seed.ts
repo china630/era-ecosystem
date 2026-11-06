@@ -331,6 +331,14 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     satelliteKey: "industry_hotel_pms",
   },
   {
+    key: "hotel_passport_scan",
+    name: "Passport MRZ scan",
+    pricePerMonth: 19,
+    sortOrder: 1126,
+    isPremium: true,
+    satelliteKey: "industry_hotel_pms",
+  },
+  {
     key: "hotel_guest_experience",
     name: "Guest Profiles & Tasks",
     pricePerMonth: 29,

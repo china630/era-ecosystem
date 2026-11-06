@@ -134,7 +134,8 @@
     "forbidden": "Bu səhifəyə girişiniz yoxdur"
   },
   "nav": {
-    "access": "Giriş hüquqları"
+    "access": "Giriş hüquqları",
+    "links": "Əlaqələr"
   },
   "settingsAccess": {
     "title": "Rollar və giriş",
@@ -188,5 +189,40 @@
       "api_subcontractor_claims": "Subpodratçı tələbləri",
       "admin_access_manage": "Rolları və girişi idarə et"
     }
+  },
+  "adminLinks": {
+    "title": "İnteqrasiya əlaqələri",
+    "subtitle": "Bu təşkilat üçün pul marşrutu və peer kanallar.",
+    "moneyTitle": "Pul marşrutu",
+    "moneyLine": "Rejim {mode} · fiskal {fiscal} · gəlir {revenue} · ana {parent}",
+    "moneyUnknown": "İş rejimi əlçatan deyil",
+    "outbound": "Gedən",
+    "inbound": "Gələn",
+    "empty": "Kanal yoxdur (PLATFORM sync rejim və entitlement-lərdən sonra).",
+    "on": "açıq",
+    "off": "bağlı",
+    "disable": "Gələni söndür",
+    "loadFailed": "Əlaqələr yüklənmədi",
+    "saveFailed": "Kanal yenilənmədi",
+    "loading": "Yüklənir…",
+    "kindFolio": "Folio post",
+    "kindSettlement": "Settlement",
+    "kindRevenue": "Gəlir hadisəsi",
+    "kindRead": "Status oxu",
+    "kindOpsHandoff": "Ops handoff",
+    "satHotel": "Otel",
+    "satClinic": "Klinika",
+    "satFnb": "F&B",
+    "satRetail": "Retail",
+    "satAuto": "Avto",
+    "satWholesale": "Topdan",
+    "satLogistics": "Logistika",
+    "satConstruction": "Tikinti",
+    "satCrm": "CRM",
+    "satFinance": "Maliyyə",
+    "managedPlatform": "Platforma",
+    "managedAcceptor": "Qəbul edən",
+    "legacyTitle": "Köhnə körpülər",
+    "legacyHint": "Yalnız CODE_LEGACY göstərişi — canlı gate deyil."
   }
 }

@@ -35,6 +35,7 @@ export default function WholesaleOpsShell({ children }: { children: React.ReactN
         permission: P.SCREEN_ADMIN_IMPORT_ORDERS,
       },
       { href: "/admin/settings", label: t("settings"), icon: Settings, permission: P.SCREEN_ADMIN_SETTINGS },
+      { href: "/admin/links", label: t("links"), icon: Settings, permission: P.SCREEN_ADMIN_SETTINGS },
       {
         href: "/admin/access",
         label: t("access"),

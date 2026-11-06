@@ -98,8 +98,6 @@ export function PrintShell({
       {blankDates ? (
         <p className="mb-3 text-center text-[11px]">
           <span className="font-semibold">{printLabel(lang, "sampleReceived")}:</span>{" "}
-          {blankDates.sampleReceived ?? "—"}
-          <span className="mx-2">·</span>
           {blankDates.resultDate}
         </p>
       ) : null}

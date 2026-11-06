@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ClinicDayPanel } from "@/components/admin/ClinicDayPanel";
 import { loadHotelRevenueCodes } from "@/lib/hotel-revenue-client";
 import {
   ALL_CLINIC_PRESETS,
@@ -20,6 +19,7 @@ import {
   Field,
   FilterChips,
   FORM_STACK_CLASS,
+  LINK_ACCENT_CLASS,
   MODAL_CHECKBOX_CLASS,
   MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
@@ -255,15 +255,6 @@ export default function ClinicAdminSettingsPage() {
     });
   }
 
-  function toggleClosedWeekday(day: number) {
-    setDraftWork((prev) => {
-      const set = new Set(prev.closedWeekdays);
-      if (set.has(day)) set.delete(day);
-      else set.add(day);
-      return { ...prev, closedWeekdays: [...set].sort((a, b) => a - b) };
-    });
-  }
-
   async function save() {
     const res = await fetch("/api/admin/settings", {
       method: "PATCH",
@@ -346,10 +337,6 @@ export default function ClinicAdminSettingsPage() {
     }
   }
 
-  const closedLabel = workHours.closedWeekdays
-    .map((d) => t(`weekday_${WEEKDAY_KEYS[d]}`))
-    .join(", ");
-
   return (
     <>
       <PageHeader
@@ -377,7 +364,6 @@ export default function ClinicAdminSettingsPage() {
           { id: "print", label: t("chipPrint") },
         ]}
       />
-      {chip === "day" ? <ClinicDayPanel /> : null}
       {chip === "labs" ? <PrintSettingsPanel part="signers" /> : null}
       {chip === "print" ? <PrintSettingsPanel part="brand" /> : null}
       {chip === "labs" || chip === "print" ? null : (
@@ -418,26 +404,12 @@ export default function ClinicAdminSettingsPage() {
             </td>
           </tr>
           <tr data-chip="day" className="border-b">
-            <td className="p-3 font-medium">{t("dayStartHour")}</td>
-            <td className="p-3">{workHours.dayStartHour}:00</td>
-          </tr>
-          <tr data-chip="day" className="border-b">
-            <td className="p-3 font-medium">{t("dayEndHour")}</td>
-            <td className="p-3">{workHours.dayEndHour}:00</td>
-          </tr>
-          <tr data-chip="day" className="border-b">
-            <td className="p-3 font-medium">{t("lunchHours")}</td>
+            <td className="p-3 font-medium">{t("workingHoursTitle")}</td>
             <td className="p-3">
-              {workHours.lunchStartHour}:00 – {workHours.lunchEndHour}:00
+              <Link href="/admin/working-hours" className={LINK_ACCENT_CLASS}>
+                {t("openWorkingHours")}
+              </Link>
             </td>
-          </tr>
-          <tr data-chip="day" className="border-b">
-            <td className="p-3 font-medium">{t("saturdayEndHour")}</td>
-            <td className="p-3">{workHours.saturdayEndHour}:00</td>
-          </tr>
-          <tr data-chip="day" className="border-b">
-            <td className="p-3 font-medium">{t("shortenedDayEndHour")}</td>
-            <td className="p-3">{workHours.shortenedDayEndHour}:00</td>
           </tr>
           <tr data-chip="baths" className="border-b">
             <td className="p-3 font-medium">{t("bathModesTitle")}</td>
@@ -462,10 +434,6 @@ export default function ClinicAdminSettingsPage() {
           <tr data-chip="baths" className="border-b">
             <td className="p-3 font-medium">{t("weeklyNaftalanCap")}</td>
             <td className="p-3">{workHours.weeklyNaftalanCap}</td>
-          </tr>
-          <tr data-chip="day" className="border-b">
-            <td className="p-3 font-medium">{t("closedWeekdays")}</td>
-            <td className="p-3">{closedLabel || "—"}</td>
           </tr>
           <tr data-chip="money" className="border-b">
             <td className="p-3 font-medium">{t("hotelFolioRevenueCode")}</td>
@@ -500,14 +468,6 @@ export default function ClinicAdminSettingsPage() {
           <tr data-chip="money" className="border-b">
             <td className="p-3 font-medium">{t("doctorBonusPercentWalkIn")}</td>
             <td className="p-3">{schedDefaults.doctorBonusPercentWalkIn}%</td>
-          </tr>
-          <tr data-chip="day" className="border-b">
-            <td className="p-3 font-medium">{t("peakModeEnabled")}</td>
-            <td className="p-3">{schedDefaults.peakModeEnabled ? "Yes" : "No"}</td>
-          </tr>
-          <tr data-chip="day" className="border-b">
-            <td className="p-3 font-medium">{t("peakDayEndHour")}</td>
-            <td className="p-3">{schedDefaults.peakDayEndHour}:00</td>
           </tr>
           <tr data-chip="card" className="border-b">
             <td className="p-3 font-medium">{t("cardResultsPreview")}</td>
@@ -548,52 +508,14 @@ export default function ClinicAdminSettingsPage() {
             ))}
           </fieldset>
           </div>
-          <fieldset className={`grid gap-3 text-[13px] sm:grid-cols-2 ${chip === "day" || chip === "baths" ? "" : "hidden"}`}>
-            <legend className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>{t("workingHoursTitle")}</legend>
-            <div className={chip === "day" ? "contents" : "hidden"}>
-            {(
-              [
-                ["dayStartHour", "dayStartHour"],
-                ["dayEndHour", "dayEndHour"],
-                ["saturdayEndHour", "saturdayEndHour"],
-                ["shortenedDayEndHour", "shortenedDayEndHour"],
-                ["lunchStartHour", "lunchStartHour"],
-                ["lunchEndHour", "lunchEndHour"],
-              ] as const
-            ).map(([key, labelKey]) => (
-              <Field
-                key={key}
-                label={t(labelKey)}
-                preset="count"
-                type="number"
-                min={0}
-                max={23}
-                value={draftWork[key]}
-                onChange={(e) =>
-                  setDraftWork((prev) => ({
-                    ...prev,
-                    [key]: Number(e.target.value) || prev[key],
-                  }))
-                }
-              />
-            ))}
-            <div className="sm:col-span-2">
-              <p className={`${MODAL_FIELD_LABEL_CLASS} mb-2`}>{t("closedWeekdays")}</p>
-              <div className="flex flex-wrap gap-3">
-                {WEEKDAY_KEYS.map((key, idx) => (
-                  <label key={key} className="flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      className={MODAL_CHECKBOX_CLASS}
-                      checked={draftWork.closedWeekdays.includes(idx)}
-                      onChange={() => toggleClosedWeekday(idx)}
-                    />
-                    {t(`weekday_${key}`)}
-                  </label>
-                ))}
-              </div>
-            </div>
-            </div>
+          <div className={chip === "day" ? "space-y-2" : "hidden"}>
+            <p className="text-[13px] text-[#7F8C8D]">{t("workingHoursMovedHint")}</p>
+            <Link href="/admin/working-hours" className={SECONDARY_BUTTON_CLASS}>
+              {t("openWorkingHours")}
+            </Link>
+          </div>
+          <fieldset className={`grid gap-3 text-[13px] sm:grid-cols-2 ${chip === "baths" ? "" : "hidden"}`}>
+            <legend className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>{t("bathModesTitle")}</legend>
             <div className={`space-y-2 sm:col-span-2 ${chip === "baths" ? "" : "hidden"}`}>
               <p className={MODAL_FIELD_LABEL_CLASS}>{t("bathModesTitle")}</p>
               {draftWork.bathDayModes.map((row, index) => (
@@ -909,33 +831,6 @@ export default function ClinicAdminSettingsPage() {
                   v === "ON_CHECKIN" ? "ON_CHECKIN" : "AFTER_CHECKUP",
               }));
             }}
-          />
-          </div>
-          <div className={chip === "day" ? "contents" : "hidden"}>
-          <label className="flex items-center gap-2 text-[13px]">
-            <input
-              type="checkbox"
-              className={MODAL_CHECKBOX_CLASS}
-              checked={draftSched.peakModeEnabled}
-              onChange={(e) =>
-                setDraftSched((prev) => ({ ...prev, peakModeEnabled: e.target.checked }))
-              }
-            />
-            {t("peakModeEnabled")}
-          </label>
-          <Field
-            label={t("peakDayEndHour")}
-            preset="count"
-            type="number"
-            min={1}
-            max={24}
-            value={draftSched.peakDayEndHour}
-            onChange={(e) =>
-              setDraftSched((prev) => ({
-                ...prev,
-                peakDayEndHour: Number(e.target.value) || prev.peakDayEndHour,
-              }))
-            }
           />
           </div>
           <div className={chip === "money" ? "contents" : "hidden"}>

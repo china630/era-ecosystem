@@ -8,7 +8,14 @@ import {
 import { bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 
 function day(ymd: string, working: boolean): ClinicDay {
-  return { ymd, working, endHour: working ? 17 : 0 };
+  return {
+    ymd,
+    working,
+    kind: working ? "working" : "closed",
+    startHour: working ? 9 : 0,
+    endHour: working ? 17 : 0,
+    overridden: false,
+  };
 }
 
 describe("nextWorkingYmd", () => {

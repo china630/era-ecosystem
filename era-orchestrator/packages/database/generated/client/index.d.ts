@@ -848,7 +848,8 @@ export const SatelliteChannelKind: {
   FOLIO_POST: 'FOLIO_POST',
   SETTLEMENT: 'SETTLEMENT',
   REVENUE_EVENT: 'REVENUE_EVENT',
-  READ_STATUS: 'READ_STATUS'
+  READ_STATUS: 'READ_STATUS',
+  OPS_HANDOFF: 'OPS_HANDOFF'
 };
 
 export type SatelliteChannelKind = (typeof SatelliteChannelKind)[keyof typeof SatelliteChannelKind]

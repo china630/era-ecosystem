@@ -2,8 +2,19 @@ import {
   SATELLITE_FB_SALE_COMPLETED,
   SATELLITE_FB_SHIFT_CLOSED,
 } from "@era/contracts";
+import { assertRevenueEventForPublish } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
+import { requestOrganizationId } from "@/lib/request-organization";
+
+/** Preflight for LOCAL_CASHIER pay / Z-close — call before mutating ticket/shift. */
+export async function assertFbRevenueChannel(eventType: string) {
+  await assertRevenueEventForPublish({
+    organizationId: requestOrganizationId(),
+    fromSatelliteKey: "industry_fnb_pos",
+    eventType,
+  });
+}
 
 /** Emit revenue journal event for local cashier pays only (never folio/hub). */
 export async function dispatchFbSaleCompleted(opts: {
@@ -15,6 +26,7 @@ export async function dispatchFbSaleCompleted(opts: {
   receiptId: string;
   lineCount: number;
 }) {
+  await assertFbRevenueChannel(SATELLITE_FB_SALE_COMPLETED);
   const openShift = await prisma.posShift.findFirst({
     where: { outletId: opts.outletId, status: "OPEN" },
     orderBy: { openedAt: "desc" },
@@ -44,6 +56,7 @@ export async function dispatchFbShiftClosed(opts: {
   openedAt: Date;
   closedAt: Date;
 }) {
+  await assertFbRevenueChannel(SATELLITE_FB_SHIFT_CLOSED);
   const closedTickets = await prisma.ticket.findMany({
     where: {
       outletId: opts.outletId,

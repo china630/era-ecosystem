@@ -31,6 +31,7 @@ const patchSchema = z.object({
   lunchEndHour: z.number().int().min(1).max(24).optional(),
   closedWeekdays: z.array(z.number().int().min(0).max(6)).optional(),
   saturdayEndHour: z.number().int().min(1).max(24).optional(),
+  shortenedDayStartHour: z.number().int().min(0).max(23).optional(),
   shortenedDayEndHour: z.number().int().min(1).max(24).optional(),
   bathDayModes: z
     .array(

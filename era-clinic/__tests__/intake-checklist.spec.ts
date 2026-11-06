@@ -28,8 +28,8 @@ const template = {
       procedureCode: "CARDIO-ECG",
       procedureName: "EKQ",
       assignMode: "AUTO_ON_OPEN",
-      kind: "CUSTOM",
-      fulfillment: "PROCEDURE_ORDER",
+      kind: "LAB",
+      fulfillment: "LAB_ORDER",
       sortOrder: 1,
     },
     {
@@ -64,6 +64,11 @@ const template = {
       fulfillment: "VISIT",
       sortOrder: 4,
     },
+  ],
+  blockMembers: [
+    { blockCode: "CARDIO-ECG", procedureCode: "CARDIO-ECG" },
+    { blockCode: "LAB-CBC", procedureCode: "LAB-CBC" },
+    { blockCode: "GYN", procedureCode: "VISIT-GYN" },
   ],
 };
 

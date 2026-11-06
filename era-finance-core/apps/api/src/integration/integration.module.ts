@@ -13,6 +13,7 @@ import { NotificationModule } from "../notifications/notification.module";
 import { HotelDayDocumentController } from "./hotel-day-document.controller";
 import { HotelDayDocumentInternalController } from "./hotel-day-document.internal.controller";
 import { HotelCommissionOffsetController } from "./hotel-commission-offset.controller";
+import { SatelliteChannelsController } from "./satellite-channels.controller";
 import { QaimeDayCloseInternalController } from "./qaime-day-close.internal.controller";
 import { SatelliteEventDispatchService } from "./satellite-event-dispatch.service";
 import { SatelliteEventIdempotencyService } from "./satellite-event-idempotency.service";
@@ -29,6 +30,7 @@ import { FinanceAccountingAdapterService } from "./accounting-adapter.service";
     HotelDayDocumentController,
     HotelDayDocumentInternalController,
     HotelCommissionOffsetController,
+    SatelliteChannelsController,
     QaimeDayCloseInternalController,
   ],
   imports: [

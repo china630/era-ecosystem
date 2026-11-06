@@ -30,6 +30,7 @@ export default function AutoServiceOpsShell({ children }: { children: React.Reac
       { href: "/work-orders", label: t("workOrders"), icon: Wrench, permission: P.SCREEN_WORK_ORDERS },
       { href: "/appointments", label: t("appointments"), icon: Calendar, permission: P.SCREEN_APPOINTMENTS },
       { href: "/admin/settings", label: t("settings"), icon: Settings, anyPermission: settings },
+      { href: "/admin/links", label: t("links"), icon: Settings, anyPermission: settings },
       {
         href: "/admin/access",
         label: t("access"),

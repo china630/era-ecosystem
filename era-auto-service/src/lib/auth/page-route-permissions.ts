@@ -13,6 +13,7 @@ export const PAGE_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/work-orders", [P.SCREEN_WORK_ORDERS]],
   ["/appointments", [P.SCREEN_APPOINTMENTS]],
   ["/admin/settings", [P.SCREEN_ADMIN_SETTINGS, P.ADMIN_SETTINGS]],
+  ["/admin/links", [P.SCREEN_ADMIN_SETTINGS, P.ADMIN_SETTINGS]],
   ["/admin/access", [P.SCREEN_ADMIN_ACCESS, P.ACCESS_MANAGE]],
 ];
 

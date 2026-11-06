@@ -298,6 +298,33 @@ function SystemCard({
   );
 }
 
+type StructureSummary = {
+  departments: number;
+  systems: number;
+  outlets: number;
+};
+
+function countStructure(tree: {
+  organization?: { satellites?: { outlets?: unknown[] }[] };
+  departments?: { satellites?: { outlets?: unknown[] }[] }[];
+}): StructureSummary {
+  const orgs = [tree.organization, ...(tree.departments ?? [])].filter(Boolean) as {
+    satellites?: { outlets?: unknown[] }[];
+  }[];
+  let systems = 0;
+  let outlets = 0;
+  for (const o of orgs) {
+    const sats = o.satellites ?? [];
+    systems += sats.length;
+    for (const s of sats) outlets += (s.outlets ?? []).length;
+  }
+  return {
+    departments: (tree.departments ?? []).length,
+    systems,
+    outlets,
+  };
+}
+
 export default function WorkspacePage() {
   const { ready, user } = useRequireAuth();
   const { snapshot, loading, refresh } = useSubscription();
@@ -310,10 +337,33 @@ export default function WorkspacePage() {
   const [connectingKey, setConnectingKey] = useState<WorkspaceSystemKey | null>(null);
   const [modulesModalKey, setModulesModalKey] = useState<WorkspaceSystemKey | null>(null);
   const [settingsModalKey, setSettingsModalKey] = useState<WorkspaceSystemKey | null>(null);
+  const [structureSummary, setStructureSummary] = useState<StructureSummary | null>(null);
 
   useEffect(() => {
     void fetchPublicPricingSnapshot().then(setPricing);
   }, []);
+
+  useEffect(() => {
+    if (!ready || !user?.organizationId) {
+      setStructureSummary(null);
+      return;
+    }
+    const access = getOrchAccessToken();
+    if (!access) return;
+    let cancelled = false;
+    void orchFetch("/v1/structure/tree", { token: access })
+      .then(async (res) => {
+        if (!res.ok || cancelled) return;
+        const tree = (await res.json()) as Parameters<typeof countStructure>[0];
+        if (!cancelled) setStructureSummary(countStructure(tree));
+      })
+      .catch(() => {
+        if (!cancelled) setStructureSummary(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user?.organizationId, snapshot?.satelliteEntitlements?.length]);
 
   const primaryKeys = SANATORIUM_SYSTEM_KEYS;
 
@@ -472,6 +522,23 @@ export default function WorkspacePage() {
             {t("appCommsHub")}
           </Link>
         </div>
+        {structureSummary ? (
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#5D6D7E]">
+            <span>
+              {t("structureSummary", {
+                departments: structureSummary.departments,
+                systems: structureSummary.systems,
+                outlets: structureSummary.outlets,
+              })}
+            </span>
+            <Link
+              href="/workspace/structure"
+              className="font-medium text-[#2980B9] underline-offset-2 hover:underline"
+            >
+              {t("manageStructure")}
+            </Link>
+          </div>
+        ) : null}
       </section>
       <section>
         <div className="mb-3 flex items-center justify-between gap-2">

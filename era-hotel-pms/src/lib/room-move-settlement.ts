@@ -5,16 +5,29 @@ export function isClassSettlement(value: unknown): value is ClassSettlement {
   return typeof value === 'string' && (CLASS_SETTLEMENTS as readonly string[]).includes(value);
 }
 
-/** Door class differs from both the charged type and the already-given type. */
+/** Door class differs from the charged type. The given type does not skip the question. */
 export function doorTypeNeedsSettlement(
   chargedRoomTypeId: string | null | undefined,
-  givenRoomTypeId: string | null | undefined,
+  _givenRoomTypeId: string | null | undefined,
   doorRoomTypeId: string | null | undefined,
 ): boolean {
   if (!chargedRoomTypeId || !doorRoomTypeId) return false;
-  if (doorRoomTypeId === chargedRoomTypeId) return false;
-  if (givenRoomTypeId && doorRoomTypeId === givenRoomTypeId) return false;
-  return true;
+  return doorRoomTypeId !== chargedRoomTypeId;
+}
+
+/** Higher door price: hotel covers or guest pays. Lower: refund or guest takes the cheaper class. */
+export function classSettlementChoices(
+  chargedNightly: number | null | undefined,
+  doorNightly: number | null | undefined,
+): ClassSettlement[] {
+  if (
+    chargedNightly != null &&
+    doorNightly != null &&
+    doorNightly < chargedNightly
+  ) {
+    return ['HOTEL_REFUND', 'GUEST_CHEAPER'];
+  }
+  return ['HOTEL', 'GUEST_PAY'];
 }
 
 export function settlementNote(settlement: ClassSettlement): string {

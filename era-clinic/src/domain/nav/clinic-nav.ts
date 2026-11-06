@@ -29,6 +29,7 @@ import {
   Wrench,
   Grid3x3,
   CalendarRange,
+  Clock,
   Trash2,
   Link2,
 } from "lucide-react";
@@ -429,6 +430,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     href: "/admin/settings",
     labelKey: "settings",
     icon: Settings,
+    group: "platform",
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+  },
+  {
+    href: "/admin/working-hours",
+    labelKey: "workingHours",
+    icon: Clock,
     group: "platform",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   },

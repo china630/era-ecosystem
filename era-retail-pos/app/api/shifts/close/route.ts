@@ -1,8 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { SATELLITE_RETAIL_SHIFT_CLOSED } from "@era/contracts";
+import { assertRevenueEventForPublish } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
+import { requestOrganizationId } from "@/lib/request-organization";
 import { resolveOutletPreset } from "@/lib/retail-preset";
 import { prisma } from "@/lib/prisma";
 
@@ -30,6 +32,13 @@ export async function POST(req: Request) {
     })) as ShiftForClose | null;
     if (!shift) return jsonError("Shift not found", 404);
     if (shift.status === "CLOSED") return jsonOk(shift);
+
+    // Fail-closed before Z-close (sibling of F&B SATELLITE_FB_SHIFT_CLOSED).
+    await assertRevenueEventForPublish({
+      organizationId: requestOrganizationId(),
+      fromSatelliteKey: "industry_retail",
+      eventType: SATELLITE_RETAIL_SHIFT_CLOSED,
+    });
 
     const closed = await prisma.shift.update({
       where: { id: shift.id },

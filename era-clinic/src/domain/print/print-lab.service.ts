@@ -6,7 +6,7 @@ import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/p
 import { formatNameAndCode } from "@/lib/display-code";
 import { bakuDateKey } from "@/lib/baku-day";
 import { signerForModality } from "@/domain/print/print-modality-signer";
-import { formatNormDisplay } from "@/lib/lab-analyte-norms";
+import { formatNormDisplay, isCatalogNormEcho } from "@/lib/lab-analyte-norms";
 import { isUnsetLabValue } from "@/lib/lab-result-flags";
 
 export type PrintLabRow = {
@@ -28,7 +28,19 @@ export type PrintLabDocument = {
   signatureLab: string | null;
   sampleReceived: string | null;
   resultDate: string;
+  /** Express card tests (HBsAg / HCV / syphilis) need the PCR confirmation note. */
+  expressCardNote: boolean;
 };
+
+const EXPRESS_CARD_CODES = new Set([
+  "HBSAG",
+  "LAB-HBSAG",
+  "HCV",
+  "ANTI-HCV",
+  "LAB-HCV",
+  "RPR",
+  "LAB-SYPHILIS",
+]);
 
 export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Promise<PrintLabDocument | null> {
   const order = await prisma.labOrder.findUnique({
@@ -78,6 +90,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
   const titleParts: string[] = [];
   const sectionMap = new Map<string, PrintLabRow[]>();
   let no = 1;
+  let expressCardNote = false;
 
   for (const item of order.items) {
     const svc = item.diagnosticService;
@@ -109,6 +122,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
       const code = analyte?.code ?? saved?.code ?? "";
       if (!code || seen.has(code)) continue;
       seen.add(code);
+      if (EXPRESS_CARD_CODES.has(code.toUpperCase())) expressCardNote = true;
       const section = analyte?.section ?? null;
       const sectionKey = section ?? "_default";
       let value = saved?.value ?? "";
@@ -122,7 +136,16 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
         }
       }
       const shown = String(value ?? "").trim();
-      const unset = shown === "" || isUnsetLabValue(shown);
+      const normSource = {
+        normTextEn: saved?.normTextEn ?? analyte?.normTextEn,
+        normTextRu: saved?.normTextRu ?? analyte?.normTextRu,
+        normTextAz: saved?.normTextAz ?? analyte?.normTextAz,
+        refMin: saved?.refMin ?? analyte?.refMin,
+        refMax: saved?.refMax ?? analyte?.refMax,
+        unit: saved?.unit ?? analyte?.unit,
+      };
+      const unset =
+        shown === "" || isUnsetLabValue(shown) || isCatalogNormEcho(shown, normSource);
       const catalogLabel = analyte
         ? pickL10n(
             {
@@ -137,14 +160,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
       const norm = unset
         ? "—"
         : formatNormDisplay(
-          {
-            normTextEn: saved?.normTextEn ?? analyte?.normTextEn,
-            normTextRu: saved?.normTextRu ?? analyte?.normTextRu,
-            normTextAz: saved?.normTextAz ?? analyte?.normTextAz,
-            refMin: saved?.refMin ?? analyte?.refMin,
-            refMax: saved?.refMax ?? analyte?.refMax,
-            unit: saved?.unit ?? analyte?.unit,
-          },
+          normSource,
           {
             lang,
             chosen: {
@@ -189,5 +205,6 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
     ),
     sampleReceived: order.collectedAt ? bakuDateKey(order.collectedAt) : null,
     resultDate: bakuDateKey(order.completedAt ?? order.publishedAt ?? order.resultDate ?? order.createdAt),
+    expressCardNote,
   };
 }

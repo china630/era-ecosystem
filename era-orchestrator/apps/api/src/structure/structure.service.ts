@@ -2,19 +2,25 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { CommercialOutletStatus, OrgOperatingMode } from "@era365/database";
 import { AccessControlService } from "../access/access-control.service";
+import { SatelliteChannelsService } from "../channels/satellite-channels.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreateCommercialOutletDto } from "./dto/structure-outlet.dto";
 import type { UpdateCommercialOutletDto } from "./dto/structure-outlet.dto";
 
 @Injectable()
 export class StructureService {
+  private readonly log = new Logger(StructureService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: AccessControlService,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async assertMember(userId: string, organizationId: string): Promise<void> {
@@ -193,6 +199,16 @@ export class StructureService {
         data: { enabled: !suspend },
       });
     });
+    try {
+      const channels = this.moduleRef.get(SatelliteChannelsService, {
+        strict: false,
+      });
+      if (channels) await channels.syncPlatformChannels(organizationId);
+    } catch (err) {
+      this.log.warn(
+        `Channel sync after suspend failed for ${organizationId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
     return {
       organizationId,
       satelliteKey,

@@ -331,7 +331,10 @@ export default function WalkInPartiesPage() {
         );
         setVisits(
           items
-            .filter((item) => item.kind === "visit" && item.categoryActive !== false)
+            .filter(
+              (item) =>
+                item.kind === "visit" && item.categoryActive !== false && !item.packageOnly,
+            )
             .map((item) => ({ value: item.serviceCode || item.code, label: labelOf(item) })),
         );
       }

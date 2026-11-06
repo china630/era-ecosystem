@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type { ReservationStatus } from '@prisma/client';
-import { postCharge } from '@/lib/services/folio.service';
+import { offsetFreeStayCharges, postCharge } from '@/lib/services/folio.service';
+import { dayQtyPurpose } from '@/lib/stay-billing';
 import { roomChargeNote } from '@/lib/folio-charge-note';
 import { requireRevenueCodeByRole } from '@/lib/revenue-code-token';
 import { dispatchNightAuditClosed } from '@/lib/integration/event-dispatcher';
@@ -118,12 +119,6 @@ function vatRateOf(taxTag: string | null, systemRole: string | null): number {
   return parsed;
 }
 
-function purposeForCharge(billingMode: string | null | undefined, amount: number): QtyPurpose {
-  if (billingMode === 'HOUSE') return 'house_use';
-  if (billingMode === 'COMP' && amount === 0) return 'comp';
-  return 'sale';
-}
-
 /** Money and quantity are separate. A zero amount drops revenue only. */
 async function collectDayDocument(date: Date) {
   const charges = await prisma.folioCharge.findMany({
@@ -178,7 +173,7 @@ async function collectDayDocument(date: Date) {
       charge.sku,
       charge.stockQty,
       charge.warehouseCode,
-      purposeForCharge(charge.folio.reservation.billingMode, amount),
+      dayQtyPurpose(charge.folio.reservation.billingMode, amount, charge.revenueCode.systemRole),
     );
   }
   const pendingWithoutCode = pending.filter(
@@ -530,6 +525,9 @@ async function executeLockedNightAudit() {
     });
 
     for (const res of inHouse) {
+      if (res.billingMode === 'COMP' || res.billingMode === 'HOUSE') {
+        await offsetFreeStayCharges(res.id);
+      }
       if (hotelDateKey(res.checkOutDate) <= hotelDateKey(date)) {
         steps.push(`Step 3: Stay ended — reservation ${res.id}; night not posted`);
         continue;

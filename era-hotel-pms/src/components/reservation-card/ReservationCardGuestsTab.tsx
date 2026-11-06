@@ -414,17 +414,19 @@ export function ReservationCardGuestsTab({
             ) : null}
             {menuOpenIdx === row._idx ? (
               <div className={`${DROPDOWN_PANEL_CLASS} right-0 z-20`}>
-                <button
-                  type="button"
-                  className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
-                  onClick={() => {
-                    setMenuOpenIdx(null);
-                    onScanId?.(row.guestId ?? null, row._idx);
-                  }}
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                  {t('scanId')}
-                </button>
+                {onScanId ? (
+                  <button
+                    type="button"
+                    className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
+                    onClick={() => {
+                      setMenuOpenIdx(null);
+                      onScanId(row.guestId ?? null, row._idx);
+                    }}
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                    {t('scanId')}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}

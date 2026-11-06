@@ -3,43 +3,21 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  CARD_CONTAINER_CLASS,
   CatalogField,
-  DatePicker,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
-import { useClinicAuth } from "@/hooks/useClinicAuth";
 
+/**
+ * Recalc / reseat tools only. Day kind and hours live on `/admin/working-hours` calendar chip.
+ */
 export function ClinicDayPanel() {
   const t = useTranslations("adminSettings");
-  const tc = useTranslations("common");
-  const { auth } = useClinicAuth();
-  const [dayYmd, setDayYmd] = useState("");
-  const [closed, setClosed] = useState(true);
   const [episodeId, setEpisodeId] = useState("");
   const [busy, setBusy] = useState(false);
-  if (!auth?.isPlatformSuperAdmin) return null;
-
-  async function saveDay() {
-    setBusy(true);
-    try {
-      const res = await fetch("/api/admin/clinic-days", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dayYmd, closed, endHour: null }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showApiError(data, t("clinicDaySaved"));
-        return;
-      }
-      showSuccess(t("clinicDaySaved"));
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function recalc(apply: boolean) {
     setBusy(true);
@@ -91,23 +69,9 @@ export function ClinicDayPanel() {
   }
 
   return (
-    <section className="mt-4 space-y-2 rounded-lg border border-[#D5DADF] bg-white p-4">
+    <section className={`${CARD_CONTAINER_CLASS} mt-4 space-y-3 p-4`}>
       <h2 className="text-sm font-medium">{t("recalcSchedule")}</h2>
       <div className="flex flex-wrap items-end gap-2">
-        <DatePicker label={tc("date")} placeholder={tc("datePlaceholder")} value={dayYmd} onChange={setDayYmd} />
-        <CatalogField
-          kind="CLOSED_SMALL"
-          label={t("closedWeekdays")}
-          value={closed ? "closed" : "open"}
-          onChange={(value) => setClosed(value === "closed")}
-          options={[
-            { value: "closed", label: t("clinicDayClosed") },
-            { value: "open", label: t("clinicDayOpen") },
-          ]}
-        />
-        <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy || !dayYmd} onClick={() => void saveDay()}>
-          {t("clinicDaySave")}
-        </button>
         <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={() => void recalc(false)}>
           {t("recalcSchedulePreview")}
         </button>
@@ -115,7 +79,7 @@ export function ClinicDayPanel() {
           {t("recalcSchedule")}
         </button>
       </div>
-      <div className="flex flex-wrap items-end gap-2 pt-2">
+      <div className="flex flex-wrap items-end gap-2 border-t border-[#D5DADF] pt-3">
         <CatalogField
           kind="FREE_TEXT"
           label={t("reseatEpisodeId")}

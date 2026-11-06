@@ -1,18 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Banknote, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { Banknote, ChevronDown, ChevronRight, Printer, Trash2 } from "lucide-react";
+import { addBakuDays, todayBakuYmd } from "@era/satellite-kit/time";
 import { OccupiedRoomFilter } from "@/components/sanatorium/OccupiedRoomFilter";
 import { bakuDateTimeDisplay } from "@/lib/baku-day";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
+  DatePicker,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TH_RIGHT_CLASS,
-  DATA_TABLE_TR_CLASS,
   EraListFilterBar,
   EraListWorkspace,
   Field,
@@ -36,6 +37,7 @@ type ExtraRow = {
   amountNet: number;
   patientOrigin: string;
   scheduledAt: string;
+  extraTicketIssuedAt?: string | null;
   resourceId?: string | null;
   patientRefId: string;
   patientName: string;
@@ -43,7 +45,22 @@ type ExtraRow = {
   roomNumber?: string | null;
   clinicalEpisodeId?: string | null;
   status?: string;
+  bucket?: "due" | "overdue" | "noshow" | "issued";
+  printPath?: string | null;
 };
+
+type ListScope = "due" | "overdue" | "noshow" | "issued" | "all";
+
+const UNPAID_ROW_CLASS =
+  "border-b border-[#D5DADF] bg-white transition-colors hover:bg-[#F1F5F9]";
+const PAID_ROW_CLASS =
+  "border-b border-[#D5DADF] bg-amber-50 transition-colors hover:bg-amber-100";
+
+function extraRowClass(paid: boolean, locked: boolean): string {
+  return [paid ? PAID_ROW_CLASS : UNPAID_ROW_CLASS, locked ? "opacity-60" : ""]
+    .filter(Boolean)
+    .join(" ");
+}
 
 type PatientGroup = {
   patientRefId: string;
@@ -60,6 +77,10 @@ export default function ExtraTicketsPage() {
   const locale = useLocale();
   const [dualRun, setDualRun] = useState(false);
   const [needsFilter, setNeedsFilter] = useState(true);
+  const [needsDates, setNeedsDates] = useState(false);
+  const [scope, setScope] = useState<ListScope>("due");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [rows, setRows] = useState<ExtraRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -72,16 +93,21 @@ export default function ExtraTicketsPage() {
   const qDebounced = useDebouncedValue(q, 300);
 
   const load = useCallback(async () => {
-    const params = new URLSearchParams({ locale });
+    const params = new URLSearchParams({ locale, scope });
     if (room.trim()) params.set("room", room.trim());
     if (qDebounced.trim()) params.set("q", qDebounced.trim());
+    if (scope !== "due") {
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+    }
     const res = await fetch(`/api/procedures/issue-ticket?${params}`);
     const d = await res.json();
     const payload = d.data ?? d;
     setDualRun(!!payload.dualRun);
     setNeedsFilter(!!payload.needsFilter);
+    setNeedsDates(!!payload.needsDates);
     setRows((payload.orders ?? []) as ExtraRow[]);
-  }, [locale, room, qDebounced]);
+  }, [locale, room, qDebounced, scope, dateFrom, dateTo]);
 
   useEffect(() => {
     void load();
@@ -118,13 +144,17 @@ export default function ExtraTicketsPage() {
     const out: PatientGroup[] = [];
     for (const [patientRefId, items] of map) {
       const first = items[0]!;
+      const allIssued = items.every((item) => item.bucket === "issued");
       out.push({
         patientRefId,
         patientName: first.patientName,
         refCode: first.refCode,
         roomNumber: [...new Set(items.map((row) => row.roomNumber?.trim()).filter(Boolean))].join(", "),
         items,
-        total: items.reduce((sum, row) => sum + Number(row.amountNet || 0), 0),
+        total: items.reduce((sum, row) => {
+          if (row.bucket === "issued" && !allIssued) return sum;
+          return sum + Number(row.amountNet || 0);
+        }, 0),
       });
     }
     return out;
@@ -162,7 +192,9 @@ export default function ExtraTicketsPage() {
       return;
     }
     setLockHint(false);
-    const ids = group.items.map((row) => row.id);
+    const ids = group.items
+      .filter((row) => row.bucket === "due" || row.bucket === "overdue" || !row.bucket)
+      .map((row) => row.id);
     const allOn = ids.every((id) => selected.has(id));
     setSelected((prev) => {
       const next = new Set(prev);
@@ -194,7 +226,36 @@ export default function ExtraTicketsPage() {
     setQ("");
     setRoom("");
     setOrigin("");
+    setScope("due");
+    setDateFrom("");
+    setDateTo("");
   }
+
+  function changeScope(next: ListScope) {
+    setScope(next);
+    setSelected(new Set());
+    if (next === "due") return;
+    const today = todayBakuYmd();
+    if (!dateFrom || !dateTo) {
+      if (next === "overdue") {
+        setDateFrom(addBakuDays(today, -30));
+        setDateTo(addBakuDays(today, -1));
+      } else {
+        setDateFrom(today);
+        setDateTo(today);
+      }
+    }
+  }
+
+  const payable = scope === "due" || scope === "overdue" || scope === "all";
+  const scopeOptions = useMemo(
+    () =>
+      (["due", "overdue", "noshow", "issued", "all"] as const).map((id) => ({
+        value: id,
+        label: t(`scope.${id}`),
+      })),
+    [t],
+  );
 
   async function issue(orderIds: string[]) {
     if (!orderIds.length) return;
@@ -332,14 +393,16 @@ export default function ExtraTicketsPage() {
                   {lockHint ? (
                     <p className="max-w-xs text-right text-[12px] text-amber-800">{t("mixedPatient")}</p>
                   ) : null}
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    disabled={busy || selected.size === 0}
-                    onClick={() => void issue([...selected])}
-                  >
-                    {t("pay")}
-                  </button>
+                  {payable ? (
+                    <button
+                      type="button"
+                      className={PRIMARY_BUTTON_CLASS}
+                      disabled={busy || selected.size === 0}
+                      onClick={() => void issue([...selected])}
+                    >
+                      {t("pay")}
+                    </button>
+                  ) : null}
                 </div>
             }
           >
@@ -364,6 +427,31 @@ export default function ExtraTicketsPage() {
               options={originOptions}
               emptyLabel={tc("all")}
             />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("filterScope")}
+              value={scope}
+              onChange={(v) => changeScope((v as ListScope) || "due")}
+              options={scopeOptions}
+            />
+            {scope !== "due" ? (
+              <>
+                <DatePicker
+                  label={t("filterDateFrom")}
+                  value={dateFrom}
+                  onChange={setDateFrom}
+                  placeholder={tc("datePlaceholder")}
+                  openCalendarLabel={tc("openCalendar")}
+                />
+                <DatePicker
+                  label={t("filterDateTo")}
+                  value={dateTo}
+                  onChange={setDateTo}
+                  placeholder={tc("datePlaceholder")}
+                  openCalendarLabel={tc("openCalendar")}
+                />
+              </>
+            ) : null}
           </EraListFilterBar>
         }
         table={
@@ -374,6 +462,7 @@ export default function ExtraTicketsPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("patient")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("filterRoom")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("when")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("paidAt")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedure")}</th>
                 <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("amount")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("origin")}</th>
@@ -382,18 +471,32 @@ export default function ExtraTicketsPage() {
             </thead>
             <tbody>
               {groups.length === 0 ? (
-                <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={8} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
-                    {needsFilter ? t("pickRoomOrName") : rows.length === 0 ? t("empty") : t("noMatch")}
+                <tr className={UNPAID_ROW_CLASS}>
+                  <td colSpan={9} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
+                    {needsFilter
+                      ? t("pickRoomOrName")
+                      : needsDates
+                        ? t("pickDates")
+                        : rows.length === 0
+                          ? t("empty")
+                          : t("noMatch")}
                   </td>
                 </tr>
               ) : (
                 groups.map((group) => {
-                  const ids = group.items.map((row) => row.id);
+                  const ids = group.items
+                    .filter(
+                      (row) =>
+                        payable &&
+                        (row.bucket === "due" || row.bucket === "overdue" || !row.bucket),
+                    )
+                    .map((row) => row.id);
                   const selectedCount = ids.filter((id) => selected.has(id)).length;
                   const allOn = selectedCount === ids.length && ids.length > 0;
                   const someOn = selectedCount > 0 && !allOn;
                   const locked = patientLocked(group.patientRefId);
+                  const allPaid =
+                    group.items.length > 0 && group.items.every((row) => row.bucket === "issued");
                   const open = expanded.has(group.patientRefId);
                   return (
                     <PatientBlock
@@ -403,15 +506,23 @@ export default function ExtraTicketsPage() {
                       allOn={allOn}
                       someOn={someOn}
                       locked={locked}
+                      allPaid={allPaid}
                       busy={busy}
                       selected={selected}
                       patientLabel={t("selectPatient")}
                       procedureCountLabel={t("procedureCount", { count: group.items.length })}
                       payLabel={t("pay")}
                       payRowLabel={t("payRow")}
+                      reprintLabel={t("reprint")}
                       cancelRowLabel={t("cancelRow")}
+                      canSelect={ids.length > 0}
                       originLabel={originLabel}
                       kindLabel={kindLabel}
+                      bucketLabel={(bucket) => (bucket ? t(`bucket.${bucket}`) : "")}
+                      showBucket={scope !== "due"}
+                      rowPayable={(row) =>
+                        payable && (row.bucket === "due" || row.bucket === "overdue" || !row.bucket)
+                      }
                       onTogglePatient={() => togglePatient(group)}
                       onToggleExpanded={() => toggleExpanded(group.patientRefId)}
                       onToggleProcedure={toggleProcedure}
@@ -423,6 +534,9 @@ export default function ExtraTicketsPage() {
                         void issue([id]);
                       }}
                       onCancel={setCancelAskId}
+                      onReprint={(path) => {
+                        window.open(path, "_blank", "noopener");
+                      }}
                     />
                   );
                 })
@@ -460,44 +574,58 @@ function PatientBlock({
   allOn,
   someOn,
   locked,
+  allPaid,
   busy,
   selected,
   patientLabel,
   procedureCountLabel,
   payLabel,
   payRowLabel,
+  reprintLabel,
   cancelRowLabel,
+  canSelect,
   originLabel,
   kindLabel,
+  bucketLabel,
+  showBucket,
+  rowPayable,
   onTogglePatient,
   onToggleExpanded,
   onToggleProcedure,
   onPay,
   onCancel,
+  onReprint,
 }: {
   group: PatientGroup;
   open: boolean;
   allOn: boolean;
   someOn: boolean;
   locked: boolean;
+  allPaid: boolean;
   busy: boolean;
   selected: Set<string>;
   patientLabel: string;
   procedureCountLabel: string;
   payLabel: string;
   payRowLabel: string;
+  reprintLabel: string;
   cancelRowLabel: string;
+  canSelect: boolean;
   originLabel: (code: string) => string;
   kindLabel: (kind?: ExtraRow["kind"]) => string;
+  bucketLabel: (bucket?: ExtraRow["bucket"]) => string;
+  showBucket: boolean;
+  rowPayable: (row: ExtraRow) => boolean;
   onTogglePatient: () => void;
   onToggleExpanded: () => void;
   onToggleProcedure: (row: ExtraRow) => void;
   onPay: (id: string) => void;
   onCancel: (id: string) => void;
+  onReprint: (path: string) => void;
 }) {
   return (
     <>
-      <tr className={locked ? `${DATA_TABLE_TR_CLASS} opacity-60` : DATA_TABLE_TR_CLASS}>
+      <tr className={extraRowClass(allPaid, locked)}>
         <td className={DATA_TABLE_TD_CLASS}>
           <input
             ref={(el) => {
@@ -505,7 +633,7 @@ function PatientBlock({
             }}
             type="checkbox"
             checked={allOn}
-            disabled={busy}
+            disabled={busy || !canSelect}
             aria-label={patientLabel}
             onChange={onTogglePatient}
           />
@@ -530,6 +658,7 @@ function PatientBlock({
         </td>
         <td className={DATA_TABLE_TD_CLASS}>{group.roomNumber || "—"}</td>
         <td className={DATA_TABLE_TD_CLASS} />
+        <td className={DATA_TABLE_TD_CLASS} />
         <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>{procedureCountLabel}</td>
         <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
           {group.total.toFixed(2)} AZN
@@ -539,26 +668,34 @@ function PatientBlock({
       </tr>
       {open
         ? group.items.map((row) => (
-            <tr key={row.id} className={locked ? `${DATA_TABLE_TR_CLASS} opacity-60` : DATA_TABLE_TR_CLASS}>
+            <tr key={row.id} className={extraRowClass(row.bucket === "issued", locked)}>
               <td className={DATA_TABLE_TD_CLASS} />
               <td className={DATA_TABLE_TD_CLASS}>
-                <input
-                  type="checkbox"
-                  className="ml-6"
-                  checked={selected.has(row.id)}
-                  disabled={busy}
-                  aria-label={payLabel}
-                  onChange={() => onToggleProcedure(row)}
-                />
+                {rowPayable(row) ? (
+                  <input
+                    type="checkbox"
+                    className="ml-6"
+                    checked={selected.has(row.id)}
+                    disabled={busy}
+                    aria-label={payLabel}
+                    onChange={() => onToggleProcedure(row)}
+                  />
+                ) : null}
               </td>
               <td className={DATA_TABLE_TD_CLASS}>{row.roomNumber || "—"}</td>
               <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap tabular-nums`}>
                 {row.scheduledAt ? bakuDateTimeDisplay(row.scheduledAt) : "—"}
               </td>
+              <td className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap tabular-nums`}>
+                {row.extraTicketIssuedAt ? bakuDateTimeDisplay(row.extraTicketIssuedAt) : "—"}
+              </td>
               <td className={DATA_TABLE_TD_CLASS}>
                 <span className={`mr-2 text-[11px] uppercase tracking-wide ${TEXT_MUTED_CLASS}`}>
                   {kindLabel(row.kind)}
                 </span>
+                {showBucket && row.bucket ? (
+                  <span className="mr-2 text-[11px] text-amber-800">{bucketLabel(row.bucket)}</span>
+                ) : null}
                 {row.procedureName}
               </td>
               <td className={`${DATA_TABLE_TD_CLASS} text-right tabular-nums`}>
@@ -566,26 +703,41 @@ function PatientBlock({
               </td>
               <td className={DATA_TABLE_TD_CLASS}>{originLabel(row.patientOrigin)}</td>
               <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
-                <button
-                  type="button"
-                  className={TABLE_ROW_ICON_BTN_CLASS}
-                  disabled={busy}
-                  aria-label={payRowLabel}
-                  title={payRowLabel}
-                  onClick={() => onPay(row.id)}
-                >
-                  <Banknote className={`h-4 w-4 ${TEXT_SUCCESS_CLASS}`} aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className={TABLE_ROW_ICON_BTN_CLASS}
-                  disabled={busy}
-                  aria-label={cancelRowLabel}
-                  title={cancelRowLabel}
-                  onClick={() => onCancel(row.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                </button>
+                {rowPayable(row) ? (
+                  <>
+                    <button
+                      type="button"
+                      className={TABLE_ROW_ICON_BTN_CLASS}
+                      disabled={busy}
+                      aria-label={payRowLabel}
+                      title={payRowLabel}
+                      onClick={() => onPay(row.id)}
+                    >
+                      <Banknote className={`h-4 w-4 ${TEXT_SUCCESS_CLASS}`} aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      className={TABLE_ROW_ICON_BTN_CLASS}
+                      disabled={busy}
+                      aria-label={cancelRowLabel}
+                      title={cancelRowLabel}
+                      onClick={() => onCancel(row.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                    </button>
+                  </>
+                ) : null}
+                {row.printPath ? (
+                  <button
+                    type="button"
+                    className={TABLE_ROW_ICON_BTN_CLASS}
+                    aria-label={reprintLabel}
+                    title={reprintLabel}
+                    onClick={() => onReprint(row.printPath!)}
+                  >
+                    <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                  </button>
+                ) : null}
               </td>
             </tr>
           ))

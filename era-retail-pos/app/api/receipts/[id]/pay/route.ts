@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SATELLITE_RETAIL_SALE_COMPLETED } from "@era/contracts";
+import { assertRevenueEventForPublish } from "@era/satellite-kit";
 import { jsonOk, jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
@@ -189,6 +190,15 @@ export async function POST(
         : "OWN_FISCAL";
     }
 
+    // Local / fiscal sale → Finance. Room charge is FOLIO only (no REVENUE_EVENT).
+    if (!isRoomCharge) {
+      await assertRevenueEventForPublish({
+        organizationId: orgId,
+        fromSatelliteKey: "industry_retail",
+        eventType: SATELLITE_RETAIL_SALE_COMPLETED,
+      });
+    }
+
     const paid = await prisma.receipt.update({
       where: { id },
       data: {
@@ -207,23 +217,25 @@ export async function POST(
 
     const presetRaw = receipt.outlet.preset ?? "grocery";
     const preset = isRetailPreset(presetRaw) ? presetRaw : "grocery";
-    await dispatchSatelliteEvent({
-      type: SATELLITE_RETAIL_SALE_COMPLETED,
-      payload: {
-        outletId: receipt.outletId,
-        registerId: receipt.registerId,
-        shiftId: receipt.shiftId,
-        receiptId: receipt.id,
-        preset,
-        amountNet,
-        currency: "AZN",
-        paymentMethod: body.paymentMethod,
-        lineCount: receipt.lines.length,
-        customerPhone: body.customerPhone?.trim(),
-        loyaltyRef: body.loyaltyRef?.trim(),
-        promoCode: receipt.promoCode ?? undefined,
-      },
-    });
+    if (!isRoomCharge) {
+      await dispatchSatelliteEvent({
+        type: SATELLITE_RETAIL_SALE_COMPLETED,
+        payload: {
+          outletId: receipt.outletId,
+          registerId: receipt.registerId,
+          shiftId: receipt.shiftId,
+          receiptId: receipt.id,
+          preset,
+          amountNet,
+          currency: "AZN",
+          paymentMethod: body.paymentMethod,
+          lineCount: receipt.lines.length,
+          customerPhone: body.customerPhone?.trim(),
+          loyaltyRef: body.loyaltyRef?.trim(),
+          promoCode: receipt.promoCode ?? undefined,
+        },
+      });
+    }
 
     const organizationId = requestOrganizationId();
     const recipient =

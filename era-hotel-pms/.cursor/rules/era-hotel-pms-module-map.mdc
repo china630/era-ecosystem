@@ -7,7 +7,7 @@ Entitlement keys: `hotel_distribution`, `hotel_banquets` (see `docs/adr/hotel-mo
 **SaaS Wave 4 cron:** `PUT /api/service/recurring`, `POST /api/cron/auto-bar`, allotment cutoff, email-cron → `runCronForEachTenant` + `byOrganization` (SHARED: orch pool registry in the kit, 503 when unavailable; DEDICATED/ONPREM: process org). Not sellable SHARED pool.
 ## Menu IA canon
 
-SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/hk/*`, Cash=`/front-cash/*`, NA=`/night-audit/*`, Distribution=`/distribution/*`, Settings=`/settings/*`.
+SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/hk/*`, Schedules=`/schedules/*`, Cash=`/front-cash/*`, NA=`/night-audit/*`, Distribution=`/distribution/*`, Settings=`/settings/*`.
 
 ## hotel_housekeeping (Nafta deepen — coded, not SHIPPED)
 
@@ -17,7 +17,10 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/rooms` | `GET /api/rooms`, `POST /api/housekeeping/condition` | Hotel-wide cleanliness board. Occupied door accepts Dirty/Pickup/Clean from HK; Inspected stays vacant-only |
 | `/hk/maids` | `GET/POST /api/housekeeping/maids`, `GET /api/housekeeping/personnel` (CP picker: name, org unit, position) | Link CP employment; org-unit filter; `Name (position)`; change department; unlink (soft); hotel stores HK department and ƏG |
 | `/hk/mobile` | sheet + `POST /api/housekeeping/outcome` + `POST /api/housekeeping/discrepancy` | Auto-select self when session name matches rotation; outcomes including İstəmədi; Skip/Sleep; empty CTA to rotation |
-| `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week filter; Propose PRIMARY / Accrue ƏG SECONDARY; E/L/N/OFF/ƏG cells |
+| `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week filter; Propose PRIMARY / Accrue ƏG SECONDARY; E/L/N/OFF/ƏG cells. Type `WEEK_ZONE` in [ADR hotel-department-duty-schedules](../../../docs/adr/hotel-department-duty-schedules.md); Schedules nav also links here |
+| `/schedules` | `GET /api/duty-schedules/catalog` | Hub: HK + reception + security + engineering |
+| `/schedules/reception` `/schedules/security` | `GET/POST /api/duty-schedules/:dept/week` (+ copyPreviousWeek), binding, personnel, axes | `WEEK_POST`; in-cell assign; Workforce picker; one person ≠ two posts same day; draft/approve; UAT §34b open |
+| `/schedules/engineering` | same APIs (`ENGINEERING`) | `WEEK_CREW`; crew zones; does not replace work orders |
 | `/hk/rotation` | `GET/POST /api/housekeeping/rotation` | Date filter; Rotate PRIMARY; Swap in modal; pairs 2–11 on one grid |
 | `/hk/laundry` | `GET/POST /api/housekeeping/laundry` | Wash/iron qty + price/sum preview; Accept → IN_PLANT; Delivered → folio `LAUNDRY`; void IN_PLANT on grid |
 | `/fo/laundry` | same API + Delivered/void | FO fallback grid + amount (incl. express %); Delivered or void IN_PLANT; no invent |
@@ -107,6 +110,7 @@ Cross-app: fb-pos tickets with `beoId` — extras only on event day; base packag
 | Guest card Details tab | `GET /api/mdm/person-ops-profile?globalPersonId=` | Masked FIN/passport from MDM |
 | Guest card merge | `POST /api/mdm/person-merge` | Foreigner → citizen FIN merge |
 | Guest create/edit | `POST /api/guests`, `PATCH /api/guests/:id/full` | Transient identity → `linkPersonIdentity`; no local FIN/passport columns |
+| Passport MRZ | `POST /api/guests/mrz-match` | Super-admin only. Crop on guest card and stay guest row. `GuestDocument.mrzNameField` stores raw ICAO name. Match: raw MRZ → passport → exact name → translit/typo/metaphone confirm-only. Catalog `hotel_passport_scan` does not unlock the button |
 | Guest list | `GET /api/guests?q=&page=&pageSize=` | Paged `{ items, total, page, pageSize }`; UI `EraListWorkspace` |
 
 Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYSTEM_URLS.md`).
@@ -220,7 +224,7 @@ SSOT: [`doc/MANAGEMENT-REPORTS-CATALOG.md`](../../doc/MANAGEMENT-REPORTS-CATALOG
 |-------|-----|------|
 | `/reports` | `GET /api/reports/{slug}/layout?from&to&lang[&dim]` → `{ layout }`, `GET .../pdf`, `GET .../xlsx` | One workspace: grouped list, Start/End always visible, period radios (manual edit clears the radio), Show, PDF and Excel. Screen, PDF and Excel render the same `ReportLayout` sections (`src/lib/reports/layouts/*`). `GET /api/reports/{slug}` is an alias of `/layout`, shadowed by static routes such as `guest-demographics`. Category hubs and old slug URLs redirect here. |
 | `/reports/analytics` | booking analytics API | Under Reports (not a catalog slug, no PDF). Booking sources, cancellations, guest demographics |
-| `/reports/guest-dedup` | `GET /api/admin/guest-dedup/summary`, `POST /api/admin/guest-dedup/merge`, `POST /api/admin/guest-dedup/dismiss`, `PATCH /api/guests/:id/full` | Duplicate groups by phone, registry person, passport, FIN, email, name plus birth date, surname plus birth date, surname plus the last 9 phone digits, or document plus citizenship. Filter by rule. Edit first name, last name, phone, and birth date on the card; passport and FIN stay read-only. Keep-this-card merges the others. Not-the-same-people hides the group. Read = `REPORTS_READ`; merge, dismiss, and edit = `RESERVATIONS_WRITE` |
+| `/reports/guest-dedup` | `GET /api/admin/guest-dedup/summary`, `POST /api/admin/guest-dedup/merge`, `POST /api/admin/guest-dedup/dismiss`, `PATCH /api/guests/:id/full` | Duplicate groups by phone, registry person, passport, FIN, email, name plus birth date (case and hyphens folded), surname plus birth date, surname plus the last 9 phone digits, document plus citizenship, one-letter name slip, or Latin metaphone. A shared passport with different names is flagged. Filter by rule. Edit first name, last name, phone, and birth date on the card; passport and FIN stay read-only. Keep-this-card merges the others. Not-the-same-people hides the group. Read = `REPORTS_READ`; merge, dismiss, and edit = `RESERVATIONS_WRITE` |
 | `/reports/occupancy/grid` | `GET /api/reports/occupancy` | Under Reports (not Tools). Room-type occupancy grid, color legend (not a catalog slug) |
 | `/reports/nightly-pack` | `GET /api/reports/{slug}/layout`, `GET /api/reports/pack/download?businessDate=&lang=` | Morning pack: nine forms for the last closed audit (each on its `resolveDateMode` ending on that day), including `police-list`, ZIP for that date |
 | `/settings/policies#reports` | `GET/PUT /api/admin/report-pack` | SatAdmin pack membership. `/settings/report-pack` redirects here |

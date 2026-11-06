@@ -102,6 +102,8 @@ type ScanRule = {
 type ScanRotationRule = Parameters<typeof evaluateRotationRules>[0]["rules"][number];
 type ScanCompatRule = Parameters<typeof validateProcedureCompatibilityRules>[0]["rules"][number];
 
+export type DayHourWindow = { startHour: number; endHour: number };
+
 export type ScanOrder = {
   id: string;
   organizationId: string;
@@ -116,6 +118,11 @@ export type ScanOrder = {
   afterLunchAllowed: boolean;
   beforeLunchAllowed: boolean;
   typeHours: TenantWorkHours;
+  /**
+   * Per-civil-day bookable hours from the working-time resolver.
+   * When set, nextOpenSlot / evaluateCandidateSlot use this map instead of a single dayEndHour.
+   */
+  dayWindowByYmd?: Map<string, DayHourWindow>;
   physicalRole: "LOCATION" | "EQUIPMENT";
   resources: ScanResource[];
   staffMode: "HARD" | "SOFT";
@@ -219,34 +226,45 @@ function snapUpToSlot(cursor: Date, slotMinutes: number): Date {
   return bakuWallTime(cursor, hour, snapped);
 }
 
+function windowForDay(
+  order: Pick<ScanOrder, "typeHours" | "dayEndHour" | "dayWindowByYmd">,
+  ymd: string,
+): DayHourWindow {
+  const mapped = order.dayWindowByYmd?.get(ymd);
+  if (mapped) return mapped;
+  return { startHour: order.typeHours.dayStartHour, endHour: order.dayEndHour };
+}
+
 function nextOpenSlot(
   cursor: Date,
-  hours: TenantWorkHours,
-  dayEndHour: number,
+  order: Pick<ScanOrder, "typeHours" | "dayEndHour" | "dayWindowByYmd">,
   closed: Set<string>,
   horizonEndYmd: string,
   slotMinutes: number,
   noonCheckoutYmd?: string,
 ): Date | null {
+  const hours = order.typeHours;
   let d = snapUpToSlot(cursor, slotMinutes);
   for (let i = 0; i < 400; i++) {
-    if (bakuDateKey(d) >= horizonEndYmd) return null;
+    const ymd = bakuDateKey(d);
+    if (ymd >= horizonEndYmd) return null;
     d = skipLunch(d, hours);
+    const win = windowForDay(order, ymd);
     const endHour =
-      noonCheckoutYmd && bakuDateKey(d) === noonCheckoutYmd
-        ? Math.min(dayEndHour, 12)
-        : dayEndHour;
+      noonCheckoutYmd && ymd === noonCheckoutYmd ? Math.min(win.endHour, 12) : win.endHour;
     if (bakuHourMinute(d).hour >= endHour) {
-      const nextYmd = addBakuDays(bakuDateKey(d), 1);
-      d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
+      const nextYmd = addBakuDays(ymd, 1);
+      const nextWin = windowForDay(order, nextYmd);
+      d = bakuWallTime(bakuDayBounds(nextYmd).start, nextWin.startHour);
       continue;
     }
-    if (bakuHourMinute(d).hour < hours.dayStartHour) {
-      d = bakuWallTime(d, hours.dayStartHour);
+    if (bakuHourMinute(d).hour < win.startHour) {
+      d = bakuWallTime(d, win.startHour);
     }
-    if (closed.has(bakuDateKey(d))) {
-      const nextYmd = addBakuDays(bakuDateKey(d), 1);
-      d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
+    if (closed.has(ymd)) {
+      const nextYmd = addBakuDays(ymd, 1);
+      const nextWin = windowForDay(order, nextYmd);
+      d = bakuWallTime(bakuDayBounds(nextYmd).start, nextWin.startHour);
       continue;
     }
     return d;
@@ -256,16 +274,16 @@ function nextOpenSlot(
 
 function nextMorning(
   from: Date,
-  hours: TenantWorkHours,
-  dayEndHour: number,
+  order: Pick<ScanOrder, "typeHours" | "dayEndHour" | "dayWindowByYmd">,
   closed: Set<string>,
   horizonEndYmd: string,
   slotMinutes: number,
   noonCheckoutYmd?: string,
 ): Date | null {
   const nextYmd = addBakuDays(bakuDateKey(from), 1);
-  const d = bakuWallTime(bakuDayBounds(nextYmd).start, hours.dayStartHour);
-  return nextOpenSlot(d, hours, dayEndHour, closed, horizonEndYmd, slotMinutes, noonCheckoutYmd);
+  const nextWin = windowForDay(order, nextYmd);
+  const d = bakuWallTime(bakuDayBounds(nextYmd).start, nextWin.startHour);
+  return nextOpenSlot(d, order, closed, horizonEndYmd, slotMinutes, noonCheckoutYmd);
 }
 
 function staffBusy(
@@ -424,11 +442,12 @@ export function evaluateCandidateSlot(
 
   const startHm = bakuHourMinute(slotStart);
   const endHm = bakuHourMinute(slotEnd);
-  if (startHm.hour < order.typeHours.dayStartHour) return fail("no_slot");
+  const win = windowForDay(order, ymd);
+  if (startHm.hour < win.startHour) return fail("no_slot");
   const endLimit =
     input.noonCheckoutYmd && ymd === input.noonCheckoutYmd
-      ? Math.min(order.dayEndHour, 12)
-      : order.dayEndHour;
+      ? Math.min(win.endHour, 12)
+      : win.endHour;
   if (endHm.hour > endLimit || (endHm.hour === endLimit && endHm.minute > 0)) {
     return fail("no_slot");
   }
@@ -608,11 +627,13 @@ export function scanProcedureSlots(input: {
       continue;
     }
 
-    const searchFrom = pinSearchFrom(input.now, order.pinYmd, order.typeHours.dayStartHour);
+    const pinStartHour = order.pinYmd
+      ? windowForDay(order, order.pinYmd).startHour
+      : order.typeHours.dayStartHour;
+    const searchFrom = pinSearchFrom(input.now, order.pinYmd, pinStartHour);
     let slotStart = nextOpenSlot(
       searchFrom,
-      order.typeHours,
-      order.dayEndHour,
+      order,
       input.closedYmds,
       input.horizonEndYmd,
       input.slotMinutes,
@@ -621,8 +642,7 @@ export function scanProcedureSlots(input: {
     if (slotStart && !order.afterLunchAllowed && bakuHourMinute(slotStart).hour >= order.typeHours.lunchEndHour) {
       slotStart = nextMorning(
         slotStart,
-        order.typeHours,
-        order.dayEndHour,
+        order,
         input.closedYmds,
         input.horizonEndYmd,
         input.slotMinutes,
@@ -632,8 +652,7 @@ export function scanProcedureSlots(input: {
     if (slotStart && !order.beforeLunchAllowed && bakuHourMinute(slotStart).hour < order.typeHours.lunchEndHour) {
       slotStart = nextOpenSlot(
         bakuWallTime(slotStart, order.typeHours.lunchEndHour),
-        order.typeHours,
-        order.dayEndHour,
+        order,
         input.closedYmds,
         input.horizonEndYmd,
         input.slotMinutes,
@@ -661,14 +680,13 @@ export function scanProcedureSlots(input: {
       }
       slotStart = avoidLunchOverlap(slotStart, order.durationMin, order.typeHours);
       if (!order.afterLunchAllowed && bakuHourMinute(slotStart).hour >= order.typeHours.lunchEndHour) {
-        slotStart = nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd);
+        slotStart = nextMorning(slotStart, order, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd);
         continue;
       }
       if (!order.beforeLunchAllowed && bakuHourMinute(slotStart).hour < order.typeHours.lunchEndHour) {
         slotStart = nextOpenSlot(
           bakuWallTime(slotStart, order.typeHours.lunchEndHour),
-          order.typeHours,
-          order.dayEndHour,
+          order,
           input.closedYmds,
           input.horizonEndYmd,
           input.slotMinutes,
@@ -712,11 +730,10 @@ export function scanProcedureSlots(input: {
             verdict.reason === "no_staff" ||
             verdict.reason === "closed");
         slotStart = jumpMorning
-          ? nextMorning(slotStart, order.typeHours, order.dayEndHour, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd)
+          ? nextMorning(slotStart, order, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd)
           : nextOpenSlot(
               addMinutes(slotStart, input.slotMinutes),
-              order.typeHours,
-              order.dayEndHour,
+              order,
               input.closedYmds,
               input.horizonEndYmd,
               input.slotMinutes,

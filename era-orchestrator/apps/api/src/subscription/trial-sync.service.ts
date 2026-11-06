@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { Prisma } from "@era365/database";
+import { SatelliteChannelsService } from "../channels/satellite-channels.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SatelliteConnectService } from "./satellite-connect.service";
 import { TrialCatalogService } from "./trial-catalog.service";
@@ -18,12 +20,28 @@ function maxDate(a: Date | null | undefined, b: Date | null | undefined): Date |
 
 @Injectable()
 export class TrialSyncService {
+  private readonly log = new Logger(TrialSyncService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly catalog: TrialCatalogService,
     private readonly connect: SatelliteConnectService,
     private readonly systemConfig: SystemConfigService,
+    private readonly moduleRef: ModuleRef,
   ) {}
+
+  private async syncChannelsBestEffort(organizationId: string): Promise<void> {
+    try {
+      const channels = this.moduleRef.get(SatelliteChannelsService, {
+        strict: false,
+      });
+      if (channels) await channels.syncPlatformChannels(organizationId);
+    } catch (err) {
+      this.log.warn(
+        `Channel sync after trial change failed for ${organizationId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
 
   async patchOrgTrial(
     organizationId: string,
@@ -90,6 +108,7 @@ export class TrialSyncService {
       }
     });
 
+    await this.syncChannelsBestEffort(organizationId);
     return this.getTrialTree(organizationId);
   }
 
@@ -158,6 +177,7 @@ export class TrialSyncService {
 
     await this.syncSatelliteFromModules(organizationId, satelliteKey);
     await this.syncOrgFromSatellites(organizationId);
+    await this.syncChannelsBestEffort(organizationId);
     return this.getTrialTree(organizationId);
   }
 
@@ -183,6 +203,7 @@ export class TrialSyncService {
       await this.syncSatelliteFromModules(organizationId, satelliteKey);
     }
     await this.syncOrgFromSatellites(organizationId);
+    await this.syncChannelsBestEffort(organizationId);
     return this.getTrialTree(organizationId);
   }
 

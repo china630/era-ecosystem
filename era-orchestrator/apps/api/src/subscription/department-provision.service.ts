@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { Prisma } from "@era365/database";
+import { SatelliteChannelsService } from "../channels/satellite-channels.service";
 import { PrismaService } from "../prisma/prisma.service";
 
 /**
@@ -8,7 +10,12 @@ import { PrismaService } from "../prisma/prisma.service";
  */
 @Injectable()
 export class DepartmentProvisionService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly log = new Logger(DepartmentProvisionService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly moduleRef: ModuleRef,
+  ) {}
 
   async snapshotFromParent(
     departmentOrgId: string,
@@ -98,5 +105,16 @@ export class DepartmentProvisionService {
         data: { activeModules: [...parentSub.activeModules] },
       });
     });
+
+    try {
+      const channels = this.moduleRef.get(SatelliteChannelsService, {
+        strict: false,
+      });
+      if (channels) await channels.syncPlatformChannels(departmentOrgId);
+    } catch (err) {
+      this.log.warn(
+        `Channel sync after department provision failed for ${departmentOrgId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 }

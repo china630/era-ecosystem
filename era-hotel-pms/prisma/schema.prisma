@@ -1446,6 +1446,8 @@ model GuestDocument {
   isPrimary         Boolean  @default(false)
   issuedAt          DateTime?
   expiresAt         DateTime?
+  /** Raw ICAO name field, e.g. ERIKSSON<<ANNA<MARIA — search key for passport scan. */
+  mrzNameField      String?
   createdAt         DateTime @default(now())
 
   @@index([guestId])
@@ -3766,4 +3768,113 @@ model ClinicLifecycleOutbox {
   @@unique([organizationId, dedupeKey])
   @@index([ackedAt, nextAttemptAt])
   @@map("clinic_lifecycle_outbox")
+}
+
+/// Department duty schedules (ADR hotel-department-duty-schedules)
+enum DutyScheduleTypeCode {
+  WEEK_ZONE
+  WEEK_POST
+  WEEK_CREW
+  WEEK_PERSON
+  MONTH_DUTY
+}
+
+enum DutyScheduleDept {
+  HOUSEKEEPING
+  RECEPTION
+  SECURITY
+  ENGINEERING
+}
+
+enum DutyScheduleWeekStatus {
+  DRAFT
+  APPROVED
+}
+
+/// Shift / cell code catalog (hours live on the code, not the cell).
+model DutyShiftCode {
+  id             String   @id @default(uuid())
+  organizationId String
+  code           String
+  label          String
+  startTime      String?
+  endTime        String?
+  sortOrder      Int      @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+/// Which schedule type + Workforce org units / positions feed a hotel department board.
+model DutyScheduleBinding {
+  id             String               @id @default(uuid())
+  organizationId String
+  dept           DutyScheduleDept
+  typeCode       DutyScheduleTypeCode
+  orgUnitIds     String[]             @default([])
+  positionIds    String[]             @default([])
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@unique([organizationId, dept])
+  @@index([organizationId])
+}
+
+/// Post (WEEK_POST) or crew zone (WEEK_CREW) axis row for a department board.
+model DutyScheduleAxis {
+  id             String            @id @default(uuid())
+  organizationId String
+  dept           DutyScheduleDept
+  code           String
+  name           String
+  kind           String            @default("POST")
+  sortOrder      Int               @default(0)
+  active         Boolean           @default(true)
+  cells          DutyScheduleCell[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([organizationId, dept, code])
+  @@index([organizationId, dept])
+}
+
+model DutyScheduleWeek {
+  id             String                  @id @default(uuid())
+  organizationId String
+  dept           DutyScheduleDept
+  weekStart      DateTime                @db.Date
+  status         DutyScheduleWeekStatus  @default(DRAFT)
+  cells          DutyScheduleCell[]
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@unique([organizationId, dept, weekStart])
+  @@index([organizationId, dept])
+}
+
+model DutyScheduleCell {
+  id             String            @id @default(uuid())
+  organizationId String
+  weekId         String
+  week           DutyScheduleWeek  @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  workDate       DateTime          @db.Date
+  axisId         String
+  axis           DutyScheduleAxis  @relation(fields: [axisId], references: [id], onDelete: Restrict)
+  globalPersonId String
+  personName     String
+  orgUnitId      String?
+  orgUnitName    String?
+  positionId     String?
+  positionName   String?
+  shiftCode      String
+  orphaned       Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([weekId, workDate, axisId, globalPersonId])
+  @@index([organizationId, weekId])
+  @@index([organizationId, workDate, globalPersonId])
 }

@@ -31,6 +31,7 @@ export default function CrmOpsShell({ children }: { children: React.ReactNode })
       { href: "/inbox", label: t("inbox"), icon: Inbox, permission: P.SCREEN_INBOX },
       { href: "/admin/import", label: t("import"), icon: Upload, permission: P.ADMIN_IMPORT },
       { href: "/admin/settings", label: t("settings"), icon: Settings, permission: P.ADMIN_PIPELINE },
+      { href: "/admin/links", label: t("links"), icon: Settings, permission: P.ADMIN_PIPELINE },
       {
         href: "/admin/access",
         label: t("access"),

@@ -356,6 +356,7 @@ export default function SanatoriumResourcesPage() {
         legendCompleted: t("legendCompleted"),
         legendBlocked: t("legendBlocked"),
         legendLunch: t("legendLunch"),
+        legendOutside: t("legendOutside"),
         statusLabel: (status) => procedureStatusLabel(t, status),
       }}
       onDragStart={setDragOrderId}

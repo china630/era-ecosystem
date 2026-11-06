@@ -520,7 +520,12 @@ async function loadEpisodeForAssign(
         include: {
           procedureLines: true,
           quotaTransfers: { orderBy: { createdAt: "asc" } },
-          template: { include: { procedures: { orderBy: [{ sortOrder: "asc" }, { procedureCode: "asc" }] } } },
+          template: {
+            include: {
+              procedures: { orderBy: [{ sortOrder: "asc" }, { procedureCode: "asc" }] },
+              blockMembers: true,
+            },
+          },
         },
       },
       patientRef: true,
@@ -674,7 +679,7 @@ export async function getPackageAssignSnapshot(
   {
     const {
       healUnstampedPackageAutoLabs,
-      resolveAutoBlockServiceCode,
+      resolveAutoBlockServiceCodes,
       effectiveAutoFulfillment,
     } = await import("@/domain/sanatorium/package-auto-apply.service");
     const sex = episode.patientRef?.sex ?? null;
@@ -700,23 +705,26 @@ export async function getPackageAssignSnapshot(
         ),
       };
       if (block.fulfillment !== "LAB_ORDER") continue;
-      const serviceCode = resolveAutoBlockServiceCode(block.procedureCode, sex);
-      if (!serviceCode) continue;
-      autoLabBlocks.push({
-        procedureCode: block.procedureCode,
-        quotaTotal: Number(
-          "quotaTotal" in raw ? (raw as { quotaTotal?: number }).quotaTotal : 1,
-        ) || 1,
-        serviceCode,
-      });
-    }
-    for (const code of ["LAB-CBC", "LAB-URINE"] as const) {
-      if (autoLabBlocks.some((row) => row.serviceCode === code)) continue;
-      autoLabBlocks.push({
-        procedureCode: code,
-        quotaTotal: 1,
-        serviceCode: code,
-      });
+      const serviceCodes = resolveAutoBlockServiceCodes(
+        block.procedureCode,
+        snapMeta?.members?.length
+          ? snapMeta.members
+          : snapMeta
+            ? []
+            : (instance.template?.blockMembers ?? []),
+      );
+      const quotaTotal =
+        Math.max(
+          Number("quotaTotal" in raw ? (raw as { quotaTotal?: number }).quotaTotal : 1) || 1,
+          serviceCodes.length,
+        );
+      for (const serviceCode of serviceCodes) {
+        autoLabBlocks.push({
+          procedureCode: block.procedureCode,
+          quotaTotal,
+          serviceCode,
+        });
+      }
     }
     if (autoLabBlocks.length > 0) {
       await healUnstampedPackageAutoLabs({
@@ -2708,8 +2716,7 @@ async function assignPackageStudies(
     const serviceCode =
       (picked && (members.length === 0 || members.includes(picked)) ? picked : "") ||
       (members.length === 1 ? members[0] : "") ||
-      (members.includes(line.procedureCode) ? line.procedureCode : "") ||
-      (members.length === 0 && !quota.startsWith("BLK-") ? quota : "");
+      (members.includes(line.procedureCode) ? line.procedureCode : "");
     if (!serviceCode || serviceCode.startsWith("BLK-")) {
       throw new PackageAssignError(
         `Block ${quota} has no catalog service to book`,

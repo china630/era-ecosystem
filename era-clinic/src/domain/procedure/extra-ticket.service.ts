@@ -12,10 +12,15 @@ import {
   resolveClinicCutoverOrgId,
 } from "@/domain/physio/clinic-cutover.service";
 import {
+  classifyExtraListBucket,
+  dueDeskKeepsIssuedToday,
+  extraListBucketMatches,
   extraNeedsPaperTicket,
   extraTicketIdForOrder,
   extraTicketPrintPath,
   isClinicElektrawebDualRun,
+  type ExtraListBucket,
+  type ExtraListScope,
 } from "@/domain/procedure/extra-ticket";
 import { enterRequestTenant } from "@/lib/request-organization";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
@@ -35,6 +40,9 @@ export type ExtraTicketListRow = {
   clinicalEpisode: { roomNumber: string | null } | null;
   status: string;
   extraTicketIssuedAt: Date | null;
+  extraTicketId: string | null;
+  bucket: ExtraListBucket;
+  printPath: string | null;
 };
 
 function diagnosticTitle(
@@ -56,11 +64,20 @@ function diagnosticTitle(
 
 export async function listExtrasAwaitingTicket(
   organizationId?: string | null,
-  filter?: { room?: string | null; q?: string | null; locale?: string | null },
+  filter?: {
+    room?: string | null;
+    q?: string | null;
+    locale?: string | null;
+    scope?: ExtraListScope | null;
+    dateFrom?: string | null;
+    dateTo?: string | null;
+  },
 ): Promise<{
   dualRun: boolean;
   orders: ExtraTicketListRow[];
   needsFilter: boolean;
+  needsDates: boolean;
+  scope: ExtraListScope;
 }> {
   const orgId = resolveClinicCutoverOrgId(organizationId);
   enterSatelliteTenant({ organizationId: orgId });
@@ -68,10 +85,33 @@ export async function listExtrasAwaitingTicket(
   const room = filter?.room?.trim() ?? "";
   const q = filter?.q?.trim() ?? "";
   const locale = filter?.locale ?? "az";
+  const scope: ExtraListScope = filter?.scope ?? "due";
   if (!room && !q) {
-    return { dualRun, orders: [], needsFilter: true };
+    return { dualRun, orders: [], needsFilter: true, needsDates: false, scope };
   }
-  const { start } = bakuDayBounds(todayBakuYmd());
+  const todayBounds = bakuDayBounds(todayBakuYmd());
+  const todayStart = todayBounds.start;
+  const todayEnd = todayBounds.end;
+  let rangeStart = todayStart;
+  let rangeEnd: Date | null = null;
+  if (scope !== "due") {
+    const from = filter?.dateFrom?.trim() ?? "";
+    const to = filter?.dateTo?.trim() ?? "";
+    if (!from || !to) {
+      return { dualRun, orders: [], needsFilter: false, needsDates: true, scope };
+    }
+    try {
+      rangeStart = bakuDayBounds(from).start;
+      rangeEnd = bakuDayBounds(to).end;
+    } catch {
+      return { dualRun, orders: [], needsFilter: false, needsDates: true, scope };
+    }
+    if (rangeEnd.getTime() <= rangeStart.getTime()) {
+      return { dualRun, orders: [], needsFilter: false, needsDates: true, scope };
+    }
+  }
+  const start = todayStart;
+  const history = scope !== "due";
   const roomFilter = room ? { clinicalEpisode: { roomNumber: room } } : {};
   const qMode = "insensitive" as const;
   const patientNameQ = q
@@ -84,16 +124,36 @@ export async function listExtrasAwaitingTicket(
   const [procedures, labs, visits] = await Promise.all([
     prisma.procedureOrder.findMany({
       where: {
-        extraTicketIssuedAt: null,
         importedHistorical: false,
-        scheduledAt: { gte: start },
-        OR: [
-          { status: "PENDING_PAY" },
-          {
-            status: { in: ["PROPOSED", "SCHEDULED"] },
-            amountNet: { gt: 0 },
-          },
-        ],
+        ...(history
+          ? {
+              status: { not: "CANCELLED" },
+              OR: [
+                { scheduledAt: { gte: rangeStart, lt: rangeEnd! } },
+                { extraTicketIssuedAt: { gte: rangeStart, lt: rangeEnd! } },
+              ],
+            }
+          : {
+              OR: [
+                {
+                  extraTicketIssuedAt: null,
+                  scheduledAt: { gte: start },
+                  OR: [
+                    { status: "PENDING_PAY" },
+                    {
+                      status: { in: ["PROPOSED", "SCHEDULED"] },
+                      amountNet: { gt: 0 },
+                    },
+                  ],
+                },
+                {
+                  extraTicketIssuedAt: { not: null },
+                  scheduledAt: { gte: start, lt: todayEnd },
+                  status: { not: "CANCELLED" },
+                  amountNet: { gt: 0 },
+                },
+              ],
+            }),
         ...roomFilter,
         ...(q
           ? {
@@ -111,14 +171,47 @@ export async function listExtrasAwaitingTicket(
       },
       include: { patientRef: true, clinicalEpisode: { select: { roomNumber: true } } },
       orderBy: { scheduledAt: "asc" },
+      take: 400,
     }),
     prisma.labOrder.findMany({
       where: {
         amountNet: { gt: 0 },
-        settledAt: null,
         inPackage: false,
         status: { not: "CANCELLED" },
         NOT: { episode: { status: "CLOSED" } },
+        ...(history
+          ? {
+              OR: [
+                { scheduledCollectionAt: { gte: rangeStart, lt: rangeEnd! } },
+                {
+                  scheduledCollectionAt: null,
+                  createdAt: { gte: rangeStart, lt: rangeEnd! },
+                },
+                { settledAt: { gte: rangeStart, lt: rangeEnd! } },
+              ],
+            }
+          : {
+              OR: [
+                {
+                  settledAt: null,
+                  OR: [
+                    { scheduledCollectionAt: { gte: start } },
+                    { scheduledCollectionAt: null, createdAt: { gte: start } },
+                  ],
+                },
+                {
+                  settledAt: { not: null },
+                  paymentReceiptRef: { not: null },
+                  OR: [
+                    { scheduledCollectionAt: { gte: start, lt: todayEnd } },
+                    {
+                      scheduledCollectionAt: null,
+                      createdAt: { gte: start, lt: todayEnd },
+                    },
+                  ],
+                },
+              ],
+            }),
         ...(room
           ? {
               AND: [
@@ -173,12 +266,42 @@ export async function listExtrasAwaitingTicket(
         },
       },
       orderBy: { createdAt: "asc" },
+      take: 400,
     }),
     prisma.visit.findMany({
       where: {
         amountNet: { gt: 0 },
-        settledAt: null,
         status: { not: "CANCELLED" },
+        ...(history
+          ? {
+              OR: [
+                { appointment: { scheduledAt: { gte: rangeStart, lt: rangeEnd! } } },
+                { appointment: null, createdAt: { gte: rangeStart, lt: rangeEnd! } },
+                { settledAt: { gte: rangeStart, lt: rangeEnd! } },
+              ],
+            }
+          : {
+              OR: [
+                {
+                  settledAt: null,
+                  OR: [
+                    { appointment: { scheduledAt: { gte: start } } },
+                    { appointment: null, createdAt: { gte: start } },
+                  ],
+                },
+                {
+                  settledAt: { not: null },
+                  paymentReceiptRef: { not: null },
+                  OR: [
+                    { appointment: { scheduledAt: { gte: start, lt: todayEnd } } },
+                    {
+                      appointment: null,
+                      createdAt: { gte: start, lt: todayEnd },
+                    },
+                  ],
+                },
+              ],
+            }),
         NOT: [
           { serviceLines: { some: { inPackage: true } } },
           { clinicalEpisode: { status: "CLOSED" } },
@@ -224,30 +347,64 @@ export async function listExtrasAwaitingTicket(
         appointment: { select: { scheduledAt: true } },
       },
       orderBy: { createdAt: "asc" },
+      take: 400,
     }),
   ]);
 
-  const orders: ExtraTicketListRow[] = [
-    ...procedures.map((o) => ({
-      id: o.id,
-      kind: "procedure" as const,
-      procedureCode: o.procedureCode,
-      procedureName: o.procedureName,
-      amountNet: Number(o.amountNet),
-      patientOrigin: o.patientOrigin,
-      scheduledAt: o.scheduledAt,
-      resourceId: o.resourceId,
-      patientRefId: o.patientRefId,
-      patientRef: o.patientRef,
-      clinicalEpisodeId: o.clinicalEpisodeId ?? null,
-      clinicalEpisode: o.clinicalEpisode,
-      status: o.status,
-      extraTicketIssuedAt: o.extraTicketIssuedAt,
-    })),
+  function decorate(row: Omit<ExtraTicketListRow, "bucket" | "printPath">): ExtraTicketListRow | null {
+    const bucket = classifyExtraListBucket({
+      status: row.status,
+      scheduledAt: row.scheduledAt,
+      issuedAt: row.extraTicketIssuedAt,
+      todayStart,
+    });
+    const keepIssuedToday =
+      scope === "due" &&
+      bucket === "issued" &&
+      dueDeskKeepsIssuedToday({
+        scheduledAt: row.scheduledAt,
+        todayStart,
+        todayEnd,
+      });
+    if (!bucket || (!extraListBucketMatches(scope, bucket) && !keepIssuedToday)) return null;
+    if (bucket === "due" || bucket === "overdue") {
+      if (row.status === "COMPLETED") return null;
+      if (row.amountNet <= 0 && row.status !== "PENDING_PAY") return null;
+    }
+    return {
+      ...row,
+      bucket,
+      printPath: row.extraTicketId
+        ? extraTicketPrintPath(row.extraTicketId, orgId)
+        : null,
+    };
+  }
+
+  const orders = [
+    ...procedures.map((o) =>
+      decorate({
+        id: o.id,
+        kind: "procedure" as const,
+        procedureCode: o.procedureCode,
+        procedureName: o.procedureName,
+        amountNet: Number(o.amountNet),
+        patientOrigin: o.patientOrigin,
+        scheduledAt: o.scheduledAt,
+        resourceId: o.resourceId,
+        patientRefId: o.patientRefId,
+        patientRef: o.patientRef,
+        clinicalEpisodeId: o.clinicalEpisodeId ?? null,
+        clinicalEpisode: o.clinicalEpisode,
+        status: o.status,
+        extraTicketIssuedAt: o.extraTicketIssuedAt,
+        extraTicketId: o.extraTicketId,
+      }),
+    ),
     ...labs.map((o) => {
       const svc = o.items[0]?.diagnosticService;
       const code = o.items[0]?.serviceCode || o.testCode;
-      return {
+      const paid = Boolean(o.settledAt && o.paymentReceiptRef);
+      return decorate({
         id: o.id,
         kind: "lab" as const,
         procedureCode: code,
@@ -260,13 +417,15 @@ export async function listExtrasAwaitingTicket(
         patientRef: o.patientRef,
         clinicalEpisodeId: o.clinicalEpisodeId ?? null,
         clinicalEpisode: o.episode,
-        status: "AWAITING_PAYMENT",
-        extraTicketIssuedAt: null,
-      };
+        status: paid ? "PAID" : "AWAITING_PAYMENT",
+        extraTicketIssuedAt: paid ? o.settledAt : null,
+        extraTicketId: null,
+      });
     }),
     ...visits.map((v) => {
       const line = v.serviceLines[0];
-      return {
+      const paid = Boolean(v.settledAt && v.paymentReceiptRef);
+      return decorate({
         id: v.id,
         kind: "visit" as const,
         procedureCode: line?.serviceCode ?? "VISIT",
@@ -279,13 +438,16 @@ export async function listExtrasAwaitingTicket(
         patientRef: v.patientRef,
         clinicalEpisodeId: v.clinicalEpisodeId ?? null,
         clinicalEpisode: v.clinicalEpisode,
-        status: "AWAITING_PAYMENT",
-        extraTicketIssuedAt: null,
-      };
+        status: paid ? "PAID" : "AWAITING_PAYMENT",
+        extraTicketIssuedAt: paid ? v.settledAt : null,
+        extraTicketId: null,
+      });
     }),
-  ].sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
+  ]
+    .filter((row): row is ExtraTicketListRow => row != null)
+    .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
 
-  return { dualRun, orders, needsFilter: false };
+  return { dualRun, orders, needsFilter: false, needsDates: false, scope };
 }
 
 export async function issueExtraTickets(

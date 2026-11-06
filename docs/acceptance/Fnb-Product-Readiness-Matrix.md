@@ -10,6 +10,10 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-05 staff cədvəl):** FNB-CEDVEL-01 SCREEN/API (not SHOW). AC-FNB-CEDVEL 🟡 out of BE rollup. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index S-CEDVEL [~]; `fnb.yaml` untouched. Second-pass: cedvel API `denyUnlessPermission` + binding `orgUnitOptions` — no Gate/Demo/Pilot/Sell flip.
+
+**Closeout (2026-11-06 cedvel UX deepen):** FNB-CEDVEL-01 stays SCREEN/API (click-cell shift, week chrome, copy week) — **not SHOW**. AC-FNB-CEDVEL 🟡. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `fnb.yaml` untouched. Second-pass: copy replace guard — no Gate/Demo/Pilot/Sell flip.
+
 ---
 
 ## Line summary (SSOT readiness)
@@ -35,6 +39,7 @@
 | Buffet cost attribution | `/admin/settings` (Finance web URL) + `/admin/buffet/*` · Finance `/inventory/buffet-food-cost` | 🟡 SCREEN (KPI planks; Hotel/HR via peer/orch not Settings URLs; punchlist open — not SHOW) |
 | Outlets (multi-café) | `/select-outlet` + `/admin/settings` caps/shape/DELETE; Floor till-only; Buffet cap filter; pay `printChrome` | 🟡 SCREEN (FNB-09; staging RESTAURANT→NAFTANI 2026-10-29; UAT FB-OUTLET-01 open — not SHOW) |
 | Mutation audit (FNB-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (CatalogField incl. PosShift) | SCREEN / 🟡 — Layer A + Wave B PAY/DEFER_HUB/PosShift + Wave E compound index (2026-10-29); UAT open — not SHOW; hash-chain deferred. Does not move Gate, Demo, Pilot, or Sell |
+| Staff cədvəl (FNB-CEDVEL-01) | `/admin/cedvel` | SCREEN / 🟡 — WEEK_PERSON click-cell + week chrome; PIN `StaffRoster` separate; UAT open — not SHOW. Does not move Gate, Demo, Pilot, or Sell |
 
 Admin modal CRUD is in place for menu, tables, settings (incl. create outlet), daily-menu board, and buffet planner (submenu + composition/copy/spawn); RBAC matrix is SCREEN engineering — sell/show remains 🟡 until live sign-off.
 

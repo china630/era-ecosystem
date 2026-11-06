@@ -200,6 +200,8 @@ export default function SuperAdminOrgHubPage() {
           return t("kindRevenue");
         case "READ_STATUS":
           return t("kindRead");
+        case "OPS_HANDOFF":
+          return t("kindOpsHandoff");
         default:
           return labelChannelKind(kind);
       }
@@ -247,6 +249,7 @@ export default function SuperAdminOrgHubPage() {
   >([]);
   const [channelsOut, setChannelsOut] = useState<ChannelRow[]>([]);
   const [channelsIn, setChannelsIn] = useState<ChannelRow[]>([]);
+  const [resyncingChannels, setResyncingChannels] = useState(false);
 
   const showHotelBridge =
     industries.includes("hotel") ||
@@ -392,6 +395,31 @@ export default function SuperAdminOrgHubPage() {
     }
     setMessage(t("channelsSaved"));
     await reload();
+  }
+
+  async function resyncChannels() {
+    if (!token) return;
+    setMessage("");
+    setResyncingChannels(true);
+    try {
+      const res = await orchFetch(
+        `/v1/admin/organizations/${orgId}/channels/resync`,
+        { token, method: "POST" },
+      );
+      if (!res.ok) {
+        setMessage(t("channelsResyncFailed", { status: res.status }));
+        return;
+      }
+      const body = (await res.json()) as {
+        outbound?: ChannelRow[];
+        inbound?: ChannelRow[];
+      };
+      setChannelsOut(body.outbound ?? []);
+      setChannelsIn(body.inbound ?? []);
+      setMessage(t("channelsResynced"));
+    } finally {
+      setResyncingChannels(false);
+    }
   }
 
   async function saveEndpoint(key: string) {
@@ -712,8 +740,20 @@ export default function SuperAdminOrgHubPage() {
       </section>
 
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        <h2 className="font-medium text-[#34495E]">{t("channelsTitle")}</h2>
-        <p className="text-xs text-[#7F8C8D]">{t("channelsHint")}</p>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h2 className="font-medium text-[#34495E]">{t("channelsTitle")}</h2>
+            <p className="text-xs text-[#7F8C8D]">{t("channelsHint")}</p>
+          </div>
+          <button
+            type="button"
+            className={GHOST_BUTTON_CLASS}
+            disabled={resyncingChannels}
+            onClick={() => void resyncChannels()}
+          >
+            {resyncingChannels ? t("channelsResyncing") : t("channelsResync")}
+          </button>
+        </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
             <h3 className="mb-2 text-sm font-medium text-[#5D6D7E]">{t("channelsOutbound")}</h3>

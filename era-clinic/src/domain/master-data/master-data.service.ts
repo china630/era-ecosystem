@@ -159,6 +159,7 @@ export async function createResource(data: {
   kind: ResourceKind;
   capacity?: number;
   roomId?: string | null;
+  extendedStartHour?: number | null;
   extendedEndHour?: number | null;
   sexAudience?: "MALE" | "FEMALE" | "ANY";
 }) {
@@ -172,6 +173,7 @@ export async function updateResource(
     kind?: ResourceKind;
     capacity?: number;
     roomId?: string | null;
+    extendedStartHour?: number | null;
     extendedEndHour?: number | null;
     sexAudience?: "MALE" | "FEMALE" | "ANY";
   },
@@ -233,6 +235,7 @@ export async function createProcedureType(data: {
   resourceCode?: string | null;
   bodyPart?: string | null;
   afterLunchAllowed?: boolean;
+  extendedStartHour?: number | null;
   extendedEndHour?: number | null;
   needsSite?: boolean;
   openAttendance?: boolean;
@@ -319,6 +322,7 @@ export async function updateProcedureType(
     resourceCode?: string | null;
     bodyPart?: string | null;
     afterLunchAllowed?: boolean;
+    extendedStartHour?: number | null;
     extendedEndHour?: number | null;
     needsSite?: boolean;
     openAttendance?: boolean;

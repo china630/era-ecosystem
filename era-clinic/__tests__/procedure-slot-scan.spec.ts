@@ -16,6 +16,7 @@ const hours: TenantWorkHours = {
   lunchEndHour: 14,
   closedWeekdays: [0],
   saturdayEndHour: 13,
+  shortenedDayStartHour: 9,
   shortenedDayEndHour: 13,
   peakModeEnabled: false,
   peakDayEndHour: 17,

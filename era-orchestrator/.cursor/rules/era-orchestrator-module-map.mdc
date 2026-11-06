@@ -38,8 +38,8 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/` | `app/page.tsx` | Guest marketing hub (no app shell); authed → `/workspace` |
 | `/organizations` | `app/organizations/page.tsx` | Org hub; `CreateOrganizationModal`; company-less onboarding gate auto-opens create modal; lists pending invites with Accept; link to `/holdings` |
 | `/holdings` | `app/holdings/page.tsx` | Holding SoT: create, attach/detach orgs, report-access members; API `v1/holdings/*` |
-| `/workspace` | `app/workspace/page.tsx` | Control Home: Platform apps strip + Systems tiles (Open / Modules / Settings). `POST connect-satellite`, `POST billing/toggle-module` (+ 7d SKU grace). Home org via `POST /auth/home-organization` |
-| `/workspace/structure` | `app/workspace/structure/page.tsx` | Org → Dept → Sat → Outlet tree; sat/outlet suspend; commercial outlet create. APIs `GET/POST /v1/structure/*` |
+| `/workspace` | `app/workspace/page.tsx` | Control Home: Platform apps strip + structure summary counts + Systems tiles (Open / Modules / Settings). `POST connect-satellite`, `POST billing/toggle-module` (+ 7d SKU grace). Home org via `POST /auth/home-organization` |
+| `/workspace/structure` | `app/workspace/structure/page.tsx` | Owner hierarchical Org → Dept → System → Outlet; dept `switch-organization`; CatalogField sat select; outlet CRUD; sat/outlet suspend; Open sat SSO. APIs `GET/POST/PATCH/DELETE /v1/structure/*` (CP billing registration — ops materialize is sat→CP upsert) |
 | `/workspace/comms-hub` | `app/workspace/comms-hub/page.tsx` | Comms Hub slot stub (active-org scoped); full inbox later |
 | `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch via registry `GET /v1/satellites/launch-url` then ticket; env fallback; not entitled → pricing link |
 | `/settings` | `app/settings/page.tsx` | Settings hub |
@@ -100,6 +100,8 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `PATCH/DELETE /v1/structure/outlets/:id` | `structure.controller.ts` — outlet update/retire |
 | `POST /internal/v1/structure/outlets/upsert` | `structure-internal.controller.ts` — F&B/retail register commercial outlet (service token) |
 | `GET/PATCH /v1/admin/organizations/:id/channels` | `admin-channels.controller.ts` — SA integration channels |
+| `POST /v1/admin/organizations/:id/channels/resync` | `admin-channels.controller.ts` — SA recompute PLATFORM edges (+ children) |
+| `POST /v1/admin/channels/resync-all` | `AdminChannelsBatchController` — lab/staging backfill all orgs |
 | `GET/PATCH /platform/v1/channels` | `platform-channels.controller.ts` — org JWT list + acceptor disable |
 | `GET/PATCH /v1/internal/channels` (+ `/check`) | `internal-channels.controller.ts` — satellite BFF + live gate (service token) |
 | `POST /auth/home-organization` | `auth` / membership — set `isHome` for Control Home default org |

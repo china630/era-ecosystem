@@ -6,7 +6,14 @@ jest.mock("@/domain/planning/clinic-day", () => {
   return {
     ...actual,
     listClinicDays: jest.fn(async (fromYmd: string) => [
-      { ymd: fromYmd, working: true, endHour: 17 },
+      {
+        ymd: fromYmd,
+        working: true,
+        kind: "working" as const,
+        startHour: 9,
+        endHour: 17,
+        overridden: false,
+      },
     ]),
   };
 });

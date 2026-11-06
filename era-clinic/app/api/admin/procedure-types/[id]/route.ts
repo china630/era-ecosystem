@@ -16,6 +16,7 @@ const updateSchema = z.object({
   resourceCode: z.string().nullable().optional(),
   bodyPart: z.string().min(1).nullable().optional(),
   afterLunchAllowed: z.boolean().optional(),
+  extendedStartHour: z.number().int().min(0).max(23).nullable().optional(),
   extendedEndHour: z.number().int().min(1).max(24).nullable().optional(),
   needsSite: z.boolean().optional(),
   openAttendance: z.boolean().optional(),

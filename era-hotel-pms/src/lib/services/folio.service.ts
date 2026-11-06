@@ -1,4 +1,4 @@
-import { shouldOffsetHouseUse } from '@/lib/stay-billing';
+import { chargeNeedsFreeStayOffset, freeStayOffsetRef, shouldOffsetHouseUse } from '@/lib/stay-billing';
 import { prisma } from '@/lib/prisma';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { requestOrganizationId } from '@/lib/request-organization';
@@ -197,6 +197,58 @@ export async function postCharge(input: {
     refs: { chargeId: charge.id, folioId: folio.id },
   });
   return charge;
+}
+
+/** Credit lodging already posted on a compliment, or every open charge on house use. */
+export async function offsetFreeStayCharges(reservationId: string) {
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    select: { billingMode: true },
+  });
+  if (reservation?.billingMode !== 'COMP' && reservation?.billingMode !== 'HOUSE') return;
+  const mode = reservation.billingMode;
+  const charges = await prisma.folioCharge.findMany({
+    where: { folio: { reservationId } },
+    include: { revenueCode: true },
+  });
+  const existingRefs = new Set(
+    charges.map((row) => row.externalRef).filter((ref): ref is string => Boolean(ref)),
+  );
+  const businessDate = await getCurrentBusinessDate();
+  let wrote = false;
+  for (const charge of charges) {
+    const amount = decimalToNumber(charge.amount);
+    if (
+      !chargeNeedsFreeStayOffset({
+        billingMode: mode,
+        systemRole: charge.revenueCode.systemRole,
+        amount,
+        externalRef: charge.externalRef,
+        chargeId: charge.id,
+        existingRefs,
+      })
+    ) {
+      continue;
+    }
+    const marker = freeStayOffsetRef(charge.id, mode);
+    const offset = await prisma.folioCharge.create({
+      data: {
+        folioId: charge.folioId,
+        revenueCodeId: charge.revenueCodeId,
+        departmentId: charge.departmentId,
+        amount: toDecimal(-amount),
+        qty: charge.qty,
+        stockQty: 0,
+        description: `${charge.description ?? ''} (${mode === 'HOUSE' ? 'house use' : 'compliment'})`.trim(),
+        businessDate,
+        externalRef: marker,
+      },
+    });
+    existingRefs.add(marker);
+    wrote = true;
+    fireAndForgetDispatch(dispatchFolioChargePosted(offset.id));
+  }
+  if (wrote) await recalcReservationTotal(reservationId);
 }
 
 /** One row per payment and charge. A second pass skips the pair instead of throwing. */
@@ -1130,6 +1182,7 @@ export async function listFolios(reservationId?: string) {
   if (reservationId) {
     const { foldLooseGuestFolioOntoPrimary } = await import('@/lib/services/booking-folio.service');
     await foldLooseGuestFolioOntoPrimary(reservationId);
+    await offsetFreeStayCharges(reservationId);
   }
   return prisma.folio.findMany({
     where: reservationId ? { reservationId } : undefined,

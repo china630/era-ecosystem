@@ -455,6 +455,24 @@ export async function publishEvent(
     if (await checkIdempotency(envelope.correlationId)) {
       return { dispatched: true, correlationId: envelope.correlationId, attempts: 0 };
     }
+    try {
+      const { assertRevenueEventForPublish } = await import('@era/satellite-kit');
+      await assertRevenueEventForPublish({
+        organizationId,
+        fromSatelliteKey: 'industry_hotel_pms',
+        eventType: envelope.eventType,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'REVENUE_EVENT channel disabled';
+      appendFailedLog(envelope, msg);
+      await logOutboundEvent(envelope, 'FAILED', 0, msg);
+      return {
+        dispatched: false,
+        correlationId: envelope.correlationId,
+        error: msg,
+        attempts: 0,
+      };
+    }
     await logOutboundEvent(envelope, 'PENDING', 0);
     let gateway: { ok: boolean; status?: number; error?: string };
     try {

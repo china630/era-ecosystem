@@ -21,10 +21,14 @@ export type SchedulingSettings = {
   lunchStartHour: number;
   lunchEndHour: number;
   closedWeekdays: number[];
+  /** Legacy; Saturday uses shortenedDay* hours. Kept for settings round-trip. */
   saturdayEndHour: number;
+  shortenedDayStartHour: number;
   shortenedDayEndHour: number;
   defaultProcedureGapMinutes: number;
+  /** Legacy bridge: OWN_ONLY on working days when the peak journal has no covering row. */
   peakModeEnabled: boolean;
+  /** Deprecated clinic-wide peak end; ignored by the window resolver. */
   peakDayEndHour: number;
   bathDayModesJson: string | null;
   defaultBathMode: string;
@@ -41,6 +45,7 @@ export type TenantWorkHours = Pick<
   | "lunchEndHour"
   | "closedWeekdays"
   | "saturdayEndHour"
+  | "shortenedDayStartHour"
   | "shortenedDayEndHour"
   | "peakModeEnabled"
   | "peakDayEndHour"
@@ -57,6 +62,7 @@ export const SANATORIUM_DEFAULT_SETTINGS: SchedulingSettings = {
   lunchEndHour: 14,
   closedWeekdays: [0],
   saturdayEndHour: 13,
+  shortenedDayStartHour: 9,
   shortenedDayEndHour: 13,
   defaultProcedureGapMinutes: 5,
   peakModeEnabled: false,
@@ -75,6 +81,7 @@ export const DEFAULT_WORK_HOURS: TenantWorkHours = {
   lunchEndHour: 14,
   closedWeekdays: [0],
   saturdayEndHour: 13,
+  shortenedDayStartHour: 9,
   shortenedDayEndHour: 13,
   peakModeEnabled: false,
   peakDayEndHour: 22,
@@ -88,6 +95,7 @@ function workHoursFromTenant(tenant: Awaited<ReturnType<typeof getDefaultTenant>
     lunchEndHour: tenant.lunchEndHour,
     closedWeekdays: tenant.closedWeekdays ?? [0],
     saturdayEndHour: tenant.saturdayEndHour ?? 13,
+    shortenedDayStartHour: tenant.shortenedDayStartHour ?? tenant.dayStartHour ?? 9,
     shortenedDayEndHour: tenant.shortenedDayEndHour ?? 13,
     peakModeEnabled: tenant.peakModeEnabled ?? false,
     peakDayEndHour: tenant.peakDayEndHour ?? 22,
@@ -113,21 +121,19 @@ export async function getSchedulingSettings(): Promise<SchedulingSettings> {
 }
 
 /**
- * Effective day end for a procedure/resource under peak mode.
- * Without peak mode, always tenant dayEndHour.
+ * @deprecated Prefer resolveProcedureDayWindow. Kept for tests that only need
+ * a single end hour without a calendar day. Ignores peakDayEndHour (no clinic-wide 22).
  */
 export function resolveEffectiveDayEndHour(
   hours: TenantWorkHours,
   opts?: { procedureExtendedEndHour?: number | null; resourceExtendedEndHour?: number | null },
 ): number {
   if (!hours.peakModeEnabled) return hours.dayEndHour;
-  const overrides = [
-    opts?.procedureExtendedEndHour,
-    opts?.resourceExtendedEndHour,
-    hours.peakDayEndHour,
-  ].filter((v): v is number => typeof v === "number" && v > 0);
-  if (overrides.length === 0) return hours.dayEndHour;
-  return Math.max(hours.dayEndHour, ...overrides);
+  const own = [opts?.procedureExtendedEndHour, opts?.resourceExtendedEndHour].filter(
+    (v): v is number => typeof v === "number" && v > 0,
+  );
+  if (own.length === 0) return hours.dayEndHour;
+  return Math.max(hours.dayEndHour, ...own);
 }
 
 export function bathPolicyFromSettings(settings: SchedulingSettings): BathPlanPolicy {
