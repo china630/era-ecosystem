@@ -127,6 +127,22 @@ export function isUnsetLabValue(value: string | null | undefined): boolean {
   return trimmed === "—" || trimmed === "-" || trimmed === "–";
 }
 
+/**
+ * Guest lab print (CLI-34): omit empty / dash / catalog-range echo rows.
+ * Surviving rows are renumbered 1…N in the print loader.
+ */
+export function omitEmptyLabPrintValue(
+  shown: string,
+  normSource: AnalyteNormSource,
+): boolean {
+  const trimmed = String(shown ?? "").trim();
+  return (
+    trimmed === "" ||
+    isUnsetLabValue(trimmed) ||
+    isCatalogNormEcho(trimmed, normSource)
+  );
+}
+
 function enrichOne(line: ResultLineInput): ResultLineInput {
   if (isUnsetLabValue(line.value) || isCatalogNormEcho(line.value, line)) {
     return {

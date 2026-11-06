@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { bakuDateDisplay, bakuDateTimeDisplay } from "@/lib/baku-day";
+import { bakuDateDisplay, bakuDateKey, bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
 import { getClinicSettings } from "@/domain/settings/settings.service";
 import {
   printsProcedureClock,
@@ -20,7 +20,10 @@ import {
 } from "@/domain/catalog/catalog-display-name.service";
 import { PRINT_PROCEDURE_STATUSES } from "@/domain/print/print-procedures.service";
 import { parseCpoePayload, pickPayloadTitle } from "@/domain/cpoe/cpoe-payload";
-import { todayBakuYmd } from "@/lib/baku-day";
+import {
+  compareOpenUnseatedFirst,
+  isOpenUnseatedOrder,
+} from "@/domain/procedure/open-attendance-order";
 
 export type PrintEpisodeLine = {
   when: string;
@@ -211,8 +214,24 @@ export async function buildEpisodeSummaryPrint(
     };
   });
 
-  const procedures = procedureOrders.map((order) => {
-    const openUnseated = order.schedulingMode === "OPEN" && !order.resourceId;
+  const sortedProcedures = [...procedureOrders].sort((a, b) => {
+    const da = bakuDateKey(a.scheduledAt);
+    const db = bakuDateKey(b.scheduledAt);
+    if (da !== db) return a.scheduledAt.getTime() - b.scheduledAt.getTime();
+    return compareOpenUnseatedFirst(
+      {
+        openUnseated: isOpenUnseatedOrder(a),
+        atMs: a.scheduledAt.getTime(),
+      },
+      {
+        openUnseated: isOpenUnseatedOrder(b),
+        atMs: b.scheduledAt.getTime(),
+      },
+    );
+  });
+
+  const procedures = sortedProcedures.map((order) => {
+    const openUnseated = isOpenUnseatedOrder(order);
     const seated = !openUnseated && printsProcedureClock(order.status, order.resourceId);
     const room = seated
       ? (order.resource?.room?.name ?? order.resource?.name ?? order.resource?.code ?? "")

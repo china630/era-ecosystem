@@ -4,21 +4,29 @@ import { linkExistingAutoOrdersToPackage } from "@/domain/sanatorium/package-aut
 import { episodeAnamnesisDenied } from "@/domain/sanatorium/episode-gates";
 import { episodeCareTeamDenied } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
+import { QuotaBelowMinError } from "@/lib/program-quota";
+
+export type Day1ProgramFailReason =
+  | "ALREADY_OPEN"
+  | "NO_ANAMNESIS"
+  | "NO_COMPLAINT"
+  | "NO_DIAGNOSIS"
+  | "NO_PROGRAM_CODE"
+  | "NO_CARE_TEAM"
+  | "NOT_OPEN"
+  | "NOT_FOUND"
+  | "TEMPLATE_NOT_FOUND"
+  | "PACKAGE_NIGHTS_BELOW_MIN"
+  | "INSTANTIATE_FAILED";
 
 export type Day1ProgramResult =
   | { opened: true; programCode: string }
   | {
       opened: false;
-      reason:
-        | "ALREADY_OPEN"
-        | "NO_ANAMNESIS"
-        | "NO_COMPLAINT"
-        | "NO_DIAGNOSIS"
-        | "NO_PROGRAM_CODE"
-        | "NO_CARE_TEAM"
-        | "NOT_OPEN"
-        | "NOT_FOUND"
-        | "INSTANTIATE_FAILED";
+      reason: Day1ProgramFailReason;
+      programCode?: string;
+      nights?: number;
+      minNights?: number;
     };
 
 function isUniqueViolation(err: unknown): boolean {
@@ -27,6 +35,16 @@ function isUniqueViolation(err: unknown): boolean {
     err !== null &&
     "code" in err &&
     (err as { code?: string }).code === "P2002"
+  );
+}
+
+function isTemplateMissing(err: unknown, programCode: string): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  return (
+    msg.includes("not found") &&
+    msg.includes("template") &&
+    msg.includes(programCode.toLowerCase())
   );
 }
 
@@ -96,7 +114,19 @@ export async function tryOpenProgramAfterTherapistStage(
     if (isUniqueViolation(err)) {
       return { opened: false, reason: "ALREADY_OPEN" };
     }
+    if (err instanceof QuotaBelowMinError) {
+      return {
+        opened: false,
+        reason: "PACKAGE_NIGHTS_BELOW_MIN",
+        programCode,
+        nights: err.nights,
+        minNights: err.minNights,
+      };
+    }
+    if (isTemplateMissing(err, programCode)) {
+      return { opened: false, reason: "TEMPLATE_NOT_FOUND", programCode };
+    }
     console.error("[day1] tryOpenProgramAfterTherapistStage", episodeId, err);
-    return { opened: false, reason: "INSTANTIATE_FAILED" };
+    return { opened: false, reason: "INSTANTIATE_FAILED", programCode };
   }
 }

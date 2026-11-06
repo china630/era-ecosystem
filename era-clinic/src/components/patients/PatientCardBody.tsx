@@ -9,7 +9,7 @@ import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSec
 import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses";
 import { PatientCardComplaints } from "@/components/patients/PatientCardComplaints";
 import { PatientCardAnamnesis } from "@/components/patients/PatientCardAnamnesis";
-import { day1ProgramToastKey } from "@/lib/day1-program-toast";
+import { day1ProgramToast } from "@/lib/day1-program-toast";
 import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
@@ -333,10 +333,21 @@ export function PatientCardBody({
   }
 
   function applyDay1Toast(payload: unknown) {
-    const key = day1ProgramToastKey(
-      payload as Parameters<typeof day1ProgramToastKey>[0],
+    const toast = day1ProgramToast(
+      payload as Parameters<typeof day1ProgramToast>[0],
     );
-    if (key) showSuccess(t(key));
+    if (!toast) return;
+    if (toast.tone === "success") {
+      showSuccess(t(toast.key));
+      return;
+    }
+    const text =
+      toast.key === "day1PackageNightsBelowMin"
+        ? t(toast.key, toast.values)
+        : toast.key === "day1TemplateNotFound"
+          ? t(toast.key, toast.values)
+          : t(toast.key);
+    showApiError({ error: text }, text);
   }
 
   async function lookupMdm() {
