@@ -23,9 +23,13 @@ export type QuotaForInput = {
 
 export class QuotaBelowMinError extends Error {
   readonly status = 400;
+  readonly nights: number;
+  readonly minNights: number;
   constructor(nights: number, minNights: number) {
     super(`Stay nights ${nights} below package minimum ${minNights}`);
     this.name = "QuotaBelowMinError";
+    this.nights = nights;
+    this.minNights = minNights;
   }
 }
 

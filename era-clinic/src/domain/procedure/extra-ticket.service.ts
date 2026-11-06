@@ -112,7 +112,34 @@ export async function listExtrasAwaitingTicket(
   }
   const start = todayStart;
   const history = scope !== "due";
-  const roomFilter = room ? { clinicalEpisode: { roomNumber: room } } : {};
+  /** Desk is for guests still on an open course (in-house or walk-in). Checkout → CLOSED → hidden in every scope. */
+  const openEpisode = { status: "OPEN" as const };
+  const roomFilter = room
+    ? { clinicalEpisode: { status: "OPEN" as const, roomNumber: room } }
+    : { clinicalEpisode: openEpisode };
+  const labRoomFilter = room
+    ? {
+        AND: [
+          { episode: openEpisode },
+          {
+            OR: [{ roomNumber: room }, { episode: { roomNumber: room } }],
+          },
+        ],
+      }
+    : { episode: openEpisode };
+  const visitRoomFilter = room
+    ? {
+        AND: [
+          { clinicalEpisode: openEpisode },
+          {
+            OR: [
+              { roomNumber: room },
+              { clinicalEpisode: { roomNumber: room } },
+            ],
+          },
+        ],
+      }
+    : { clinicalEpisode: openEpisode };
   const qMode = "insensitive" as const;
   const patientNameQ = q
     ? [
@@ -125,6 +152,7 @@ export async function listExtrasAwaitingTicket(
     prisma.procedureOrder.findMany({
       where: {
         importedHistorical: false,
+        ...roomFilter,
         ...(history
           ? {
               status: { not: "CANCELLED" },
@@ -154,7 +182,6 @@ export async function listExtrasAwaitingTicket(
                 },
               ],
             }),
-        ...roomFilter,
         ...(q
           ? {
               AND: [
@@ -178,7 +205,7 @@ export async function listExtrasAwaitingTicket(
         amountNet: { gt: 0 },
         inPackage: false,
         status: { not: "CANCELLED" },
-        NOT: { episode: { status: "CLOSED" } },
+        ...labRoomFilter,
         ...(history
           ? {
               OR: [
@@ -212,18 +239,6 @@ export async function listExtrasAwaitingTicket(
                 },
               ],
             }),
-        ...(room
-          ? {
-              AND: [
-                {
-                  OR: [
-                    { roomNumber: room },
-                    { episode: { roomNumber: room } },
-                  ],
-                },
-              ],
-            }
-          : {}),
         ...(q
           ? {
               AND: [
@@ -272,6 +287,7 @@ export async function listExtrasAwaitingTicket(
       where: {
         amountNet: { gt: 0 },
         status: { not: "CANCELLED" },
+        ...visitRoomFilter,
         ...(history
           ? {
               OR: [
@@ -302,22 +318,7 @@ export async function listExtrasAwaitingTicket(
                 },
               ],
             }),
-        NOT: [
-          { serviceLines: { some: { inPackage: true } } },
-          { clinicalEpisode: { status: "CLOSED" } },
-        ],
-        ...(room
-          ? {
-              AND: [
-                {
-                  OR: [
-                    { roomNumber: room },
-                    { clinicalEpisode: { roomNumber: room } },
-                  ],
-                },
-              ],
-            }
-          : {}),
+        NOT: [{ serviceLines: { some: { inPackage: true } } }],
         ...(q
           ? {
               AND: [

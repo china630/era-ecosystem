@@ -6,8 +6,8 @@ import { composePrintPatientStrip, loadPrintEpisodeStay } from "@/domain/print/p
 import { formatNameAndCode } from "@/lib/display-code";
 import { bakuDateKey } from "@/lib/baku-day";
 import { signerForModality } from "@/domain/print/print-modality-signer";
-import { formatNormDisplay, isCatalogNormEcho } from "@/lib/lab-analyte-norms";
-import { isUnsetLabValue } from "@/lib/lab-result-flags";
+import { formatNormDisplay, type AnalyteNormSource } from "@/lib/lab-analyte-norms";
+import { omitEmptyLabPrintValue } from "@/lib/lab-result-flags";
 
 export type PrintLabRow = {
   no: number;
@@ -122,7 +122,6 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
       const code = analyte?.code ?? saved?.code ?? "";
       if (!code || seen.has(code)) continue;
       seen.add(code);
-      if (EXPRESS_CARD_CODES.has(code.toUpperCase())) expressCardNote = true;
       const section = analyte?.section ?? null;
       const sectionKey = section ?? "_default";
       let value = saved?.value ?? "";
@@ -136,7 +135,7 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
         }
       }
       const shown = String(value ?? "").trim();
-      const normSource = {
+      const normSource: AnalyteNormSource = {
         normTextEn: saved?.normTextEn ?? analyte?.normTextEn,
         normTextRu: saved?.normTextRu ?? analyte?.normTextRu,
         normTextAz: saved?.normTextAz ?? analyte?.normTextAz,
@@ -144,8 +143,8 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
         refMax: saved?.refMax ?? analyte?.refMax,
         unit: saved?.unit ?? analyte?.unit,
       };
-      const unset =
-        shown === "" || isUnsetLabValue(shown) || isCatalogNormEcho(shown, normSource);
+      if (omitEmptyLabPrintValue(shown, normSource)) continue;
+      if (EXPRESS_CARD_CODES.has(code.toUpperCase())) expressCardNote = true;
       const catalogLabel = analyte
         ? pickL10n(
             {
@@ -157,26 +156,22 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
           )
         : code;
       const label = saved?.label?.trim() || catalogLabel;
-      const norm = unset
-        ? "—"
-        : formatNormDisplay(
-          normSource,
-          {
-            lang,
-            chosen: {
-              refMin: saved?.refMin ?? analyte?.refMin ?? undefined,
-              refMax: saved?.refMax ?? analyte?.refMax ?? undefined,
-            },
+      const norm =
+        formatNormDisplay(normSource, {
+          lang,
+          chosen: {
+            refMin: saved?.refMin ?? analyte?.refMin ?? undefined,
+            refMax: saved?.refMax ?? analyte?.refMax ?? undefined,
           },
-        ) || "—";
+        }) || "—";
       const row: PrintLabRow = {
         no: no++,
         code,
         label,
-        value: shown || "—",
+        value: shown,
         unit: saved?.unit ?? analyte?.unit ?? "",
         norm,
-        flag: unset ? "—" : saved?.flag || "—",
+        flag: saved?.flag || "—",
         section,
       };
       const list = sectionMap.get(sectionKey) ?? [];
@@ -185,11 +180,13 @@ export async function buildLabOrderPrint(orderId: string, lang: PrintLang): Prom
     }
   }
 
-  const sections = [...sectionMap.entries()].map(([key, rows]) => ({
-    key,
-    title: key === "_default" ? "" : key,
-    rows,
-  }));
+  const sections = [...sectionMap.entries()]
+    .filter(([, rows]) => rows.length > 0)
+    .map(([key, rows]) => ({
+      key,
+      title: key === "_default" ? "" : key,
+      rows,
+    }));
 
   return {
     branding,
