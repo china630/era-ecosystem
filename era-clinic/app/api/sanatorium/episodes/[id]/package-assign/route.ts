@@ -92,8 +92,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let session: Awaited<ReturnType<typeof getSatelliteSession>> = null;
   try {
-    const session = await getSatelliteSession();
+    session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,
@@ -153,7 +154,6 @@ export async function POST(
         ? (err as { code: string }).code
         : "PLACE_FAILED";
     try {
-      const session = await getSatelliteSession();
       const { id } = await params;
       if (session) {
         await recordClinicAudit(
