@@ -61,6 +61,24 @@ export {
   ORG_SLICE_NOTE_HOTEL_V1,
 } from "../../../packages/satellite-kit/dist/placement/slice-export.js";
 
+/** Barrel mock cannot load the kit phone module (Jest compiles that CJS to an empty export). */
+export function normalizePersonPhone(input: { raw: string; nationalityIso?: string | null }) {
+  const raw = String(input.raw ?? "").trim();
+  if (!raw) {
+    return { status: "empty" as const, display: "", e164: null, reasonKey: "empty" };
+  }
+  if (raw.startsWith("+")) {
+    return { status: "unchanged" as const, display: raw, e164: raw, reasonKey: "unchanged" };
+  }
+  return { status: "unchanged" as const, display: raw, e164: null, reasonKey: "unchanged" };
+}
+
+export function personPhoneDedupDigits(raw: string) {
+  return String(raw ?? "").replace(/\D/g, "");
+}
+
+export const PERSON_PHONE_POLISH_REGIONS = ["AZ", "KZ", "RU", "TR"] as const;
+
 export {
   normalizeListPagination,
   parsePaginatedList,
