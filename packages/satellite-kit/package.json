@@ -78,6 +78,10 @@
       "types": "./dist/integration/person-name.d.ts",
       "default": "./dist/integration/person-name.js"
     },
+    "./phone": {
+      "types": "./dist/phone/normalize-person-phone.d.ts",
+      "default": "./dist/phone/normalize-person-phone.js"
+    },
     "./time": {
       "types": "./dist/time/baku.d.ts",
       "default": "./dist/time/baku.js"

@@ -1,4 +1,4 @@
-import { normalizePersonPhone } from '@era/satellite-kit';
+import { normalizePersonPhone } from '@era/satellite-kit/phone';
 import { showWarning } from '@era/satellite-kit/ui';
 
 export type GuestPhonePolishToast = (key: 'phoneNeedsRegion' | 'phoneConflict' | 'phoneInvalid') => string;
