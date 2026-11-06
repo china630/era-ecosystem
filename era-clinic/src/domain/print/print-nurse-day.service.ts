@@ -12,6 +12,10 @@ import {
   loadCatalogDisplayNameMap,
   resolveOrderDisplayName,
 } from "@/domain/catalog/catalog-display-name.service";
+import {
+  compareOpenUnseatedFirst,
+  isOpenUnseatedOrder,
+} from "@/domain/procedure/open-attendance-order";
 
 export type NurseDayPrintRow = {
   no: number;
@@ -125,12 +129,18 @@ export async function buildNurseDayPrint(input: {
     },
     orderBy: [{ scheduledAt: "asc" }, { createdAt: "asc" }],
   });
-  orders.sort((a, b) => {
-    const aOpen = a.schedulingMode === "OPEN" && !a.resourceId ? 1 : 0;
-    const bOpen = b.schedulingMode === "OPEN" && !b.resourceId ? 1 : 0;
-    if (aOpen !== bOpen) return aOpen - bOpen;
-    return a.scheduledAt.getTime() - b.scheduledAt.getTime();
-  });
+  orders.sort((a, b) =>
+    compareOpenUnseatedFirst(
+      {
+        openUnseated: isOpenUnseatedOrder(a),
+        atMs: a.scheduledAt.getTime(),
+      },
+      {
+        openUnseated: isOpenUnseatedOrder(b),
+        atMs: b.scheduledAt.getTime(),
+      },
+    ),
+  );
 
   const catalogNames = await loadCatalogDisplayNameMap(
     orders.map((order) => order.procedureCode),

@@ -6,7 +6,12 @@ import {
   orderCountsForWallClockRest,
   orderIsTodayBaku,
   pickOpenAttendanceDay,
+  summarizeOpenAttendanceBands,
 } from "@/domain/procedure/open-attendance";
+import {
+  compareOpenUnseatedFirst,
+  isOpenUnseatedOrder,
+} from "@/domain/procedure/open-attendance-order";
 import { parseBakuDateTime } from "@/lib/baku-day";
 
 describe("open attendance helpers (CLI-62)", () => {
@@ -14,6 +19,23 @@ describe("open attendance helpers (CLI-62)", () => {
     expect(isOpenSchedulingMode("OPEN")).toBe(true);
     expect(isOpenSchedulingMode("FIXED")).toBe(false);
     expect(isOpenSchedulingMode(null)).toBe(false);
+  });
+
+  it("sorts OPEN unseated before timed rows within a day", () => {
+    expect(
+      isOpenUnseatedOrder({ schedulingMode: "OPEN", resourceId: null }),
+    ).toBe(true);
+    expect(
+      isOpenUnseatedOrder({ schedulingMode: "OPEN", resourceId: "c1" }),
+    ).toBe(false);
+    const rows = [
+      { openUnseated: false, atMs: 100, id: "bath" },
+      { openUnseated: true, atMs: 50, id: "ozone" },
+      { openUnseated: false, atMs: 200, id: "massage" },
+      { openUnseated: true, atMs: 80, id: "gym" },
+    ];
+    rows.sort(compareOpenUnseatedFirst);
+    expect(rows.map((r) => r.id)).toEqual(["ozone", "gym", "bath", "massage"]);
   });
 
   it("OPEN unseated day-bucket does not count for wall-clock rest", () => {
@@ -166,6 +188,55 @@ describe("open attendance helpers (CLI-62)", () => {
     expect(day).toBe("2026-11-02");
     expect(secondPackage).toBe("2026-11-03");
     expect(extra).toBe("2026-11-02");
+  });
+
+  it("splits open attendance into one day queue and two arrival halves", () => {
+    const bands = summarizeOpenAttendanceBands(
+      [
+        {
+          procedureCode: "SVC-SOLLYUKS",
+          procedureName: "Sollyuks",
+          status: "SCHEDULED",
+          resourceId: null,
+          checkedInAt: null,
+          procedureTypeId: "t1",
+        },
+        {
+          procedureCode: "SVC-SOLLYUKS",
+          procedureName: "Sollyuks",
+          status: "COMPLETED",
+          resourceId: "r1",
+          checkedInAt: new Date("2026-11-06T05:00:00.000Z"),
+          procedureTypeId: "t1",
+        },
+        {
+          procedureCode: "SVC-SOLLYUKS",
+          procedureName: "Sollyuks",
+          status: "CHECKED_IN",
+          resourceId: "r2",
+          checkedInAt: new Date("2026-11-06T10:30:00.000Z"),
+          procedureTypeId: "t1",
+        },
+      ],
+      new Map([["t1", ["WO-ROOM-2", "WO-ROOM-3"]]]),
+      new Map([
+        ["WO-ROOM-2", 1],
+        ["WO-ROOM-3", 1],
+      ]),
+      13,
+    );
+    expect(bands).toEqual([
+      {
+        procedureCode: "SVC-SOLLYUKS",
+        procedureName: "Sollyuks",
+        resourceCodes: ["WO-ROOM-2", "WO-ROOM-3"],
+        waiting: 1,
+        inCabin: 1,
+        arrivedBeforeLunch: 1,
+        arrivedAfterLunch: 1,
+        capacity: 2,
+      },
+    ]);
   });
 
   it("orderIsTodayBaku compares calendar days", () => {

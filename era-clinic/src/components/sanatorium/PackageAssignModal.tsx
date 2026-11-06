@@ -102,6 +102,8 @@ type PackageBlockReason =
   | "NO_COMPLAINT"
   | "NO_DIAGNOSIS"
   | "NO_CARE_TEAM"
+  | "TEMPLATE_NOT_FOUND"
+  | "PACKAGE_NIGHTS_BELOW_MIN"
   | "INSTANTIATE_FAILED";
 
 type DraftLine = {
@@ -383,6 +385,8 @@ export function PackageAssignModal({
       "NO_COMPLAINT",
       "NO_DIAGNOSIS",
       "NO_CARE_TEAM",
+      "TEMPLATE_NOT_FOUND",
+      "PACKAGE_NIGHTS_BELOW_MIN",
       "INSTANTIATE_FAILED",
     ];
     const block = known.includes(payload.blockReason) ? payload.blockReason : null;
@@ -391,6 +395,12 @@ export function PackageAssignModal({
       tPhysio,
       block,
       typeof payload.packageCode === "string" ? payload.packageCode : "",
+      {
+        nights:
+          typeof payload.blockNights === "number" ? payload.blockNights : null,
+        minNights:
+          typeof payload.blockMinNights === "number" ? payload.blockMinNights : null,
+      },
     );
     if (blockText) {
       setError(blockText);

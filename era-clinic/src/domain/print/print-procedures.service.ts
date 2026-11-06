@@ -22,6 +22,10 @@ import {
   loadCatalogDisplayNameMap,
   resolveOrderDisplayName,
 } from "@/domain/catalog/catalog-display-name.service";
+import {
+  compareOpenUnseatedFirst,
+  isOpenUnseatedOrder,
+} from "@/domain/procedure/open-attendance-order";
 
 export { episodeCareTeamPrintName } from "@/domain/print/print-patient-strip";
 
@@ -218,15 +222,21 @@ export async function buildProceduresPrint(
     },
     orderBy: [{ scheduledAt: "asc" }, { createdAt: "asc" }],
   });
-  // OPEN unseated rows sort to the end of each calendar day.
+  // OPEN unseated (free attendance) first within each calendar day, then timed rows.
   orders.sort((a, b) => {
     const da = bakuDate(a.scheduledAt);
     const db = bakuDate(b.scheduledAt);
     if (da !== db) return a.scheduledAt.getTime() - b.scheduledAt.getTime();
-    const aOpen = a.schedulingMode === "OPEN" && !a.resourceId ? 1 : 0;
-    const bOpen = b.schedulingMode === "OPEN" && !b.resourceId ? 1 : 0;
-    if (aOpen !== bOpen) return aOpen - bOpen;
-    return a.scheduledAt.getTime() - b.scheduledAt.getTime();
+    return compareOpenUnseatedFirst(
+      {
+        openUnseated: isOpenUnseatedOrder(a),
+        atMs: a.scheduledAt.getTime(),
+      },
+      {
+        openUnseated: isOpenUnseatedOrder(b),
+        atMs: b.scheduledAt.getTime(),
+      },
+    );
   });
 
   const listIds = [

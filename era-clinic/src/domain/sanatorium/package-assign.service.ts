@@ -573,8 +573,13 @@ export async function getPackageAssignSnapshot(
     | "NO_COMPLAINT"
     | "NO_DIAGNOSIS"
     | "NO_CARE_TEAM"
+    | "TEMPLATE_NOT_FOUND"
+    | "PACKAGE_NIGHTS_BELOW_MIN"
     | "INSTANTIATE_FAILED"
     | null;
+  /** Stay nights vs package min when blockReason is PACKAGE_NIGHTS_BELOW_MIN. */
+  blockNights: number | null;
+  blockMinNights: number | null;
   /** poolCode → eligible real SKUs for the picker */
   poolEligible: Record<string, PoolEligibleSku[]>;
   /** Pinned package identity for support (code + version). */
@@ -603,6 +608,8 @@ export async function getPackageAssignSnapshot(
         assignedStudies: [],
         softWarnDay1: null,
         blockReason: "NO_PROGRAM_CODE",
+        blockNights: null,
+        blockMinNights: null,
         poolEligible: {},
         packageCode: null,
         packageVersion: null,
@@ -623,13 +630,18 @@ export async function getPackageAssignSnapshot(
       });
     }
     if (!episode.programInstance) {
+      const knownFail =
+        !opened.opened &&
+        (opened.reason === "NO_ANAMNESIS" ||
+          opened.reason === "NO_COMPLAINT" ||
+          opened.reason === "NO_DIAGNOSIS" ||
+          opened.reason === "NO_CARE_TEAM" ||
+          opened.reason === "TEMPLATE_NOT_FOUND" ||
+          opened.reason === "PACKAGE_NIGHTS_BELOW_MIN" ||
+          opened.reason === "INSTANTIATE_FAILED");
       const reason = opened.opened
         ? "INSTANTIATE_FAILED"
-        : opened.reason === "NO_ANAMNESIS" ||
-            opened.reason === "NO_COMPLAINT" ||
-            opened.reason === "NO_DIAGNOSIS" ||
-            opened.reason === "NO_CARE_TEAM" ||
-            opened.reason === "INSTANTIATE_FAILED"
+        : knownFail
           ? opened.reason
           : "NO_PROGRAM";
       return {
@@ -639,6 +651,14 @@ export async function getPackageAssignSnapshot(
         assignedStudies: [],
         softWarnDay1: null,
         blockReason: reason,
+        blockNights:
+          !opened.opened && opened.reason === "PACKAGE_NIGHTS_BELOW_MIN"
+            ? (opened.nights ?? null)
+            : null,
+        blockMinNights:
+          !opened.opened && opened.reason === "PACKAGE_NIGHTS_BELOW_MIN"
+            ? (opened.minNights ?? null)
+            : null,
         poolEligible: {},
         packageCode: episode.programCode?.trim() || null,
         packageVersion: null,
@@ -1093,6 +1113,8 @@ export async function getPackageAssignSnapshot(
     assignedStudies,
     softWarnDay1,
     blockReason: null,
+    blockNights: null,
+    blockMinNights: null,
     poolEligible,
     packageCode: instance.programCode,
     packageVersion:

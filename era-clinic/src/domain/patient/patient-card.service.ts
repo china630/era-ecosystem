@@ -23,6 +23,7 @@ import { printLabel } from "@/domain/print/print-labels";
 import type { PrintLang } from "@/domain/print/print-types";
 import { labOrderVisibleToLabWhere } from "@/domain/lab/lab-order-pay-gate";
 import { listPendingDiagnostics } from "@/domain/sanatorium/diagnostics-extras.service";
+import { compareOpenUnseatedFirst } from "@/domain/procedure/open-attendance-order";
 
 const RESULT_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const PENDING_LAB_STATUSES = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
@@ -184,8 +185,17 @@ function groupDays(
   return sortedKeys.map((date) => ({
     date,
     labelHint: date === todayKey ? "today" : date > todayKey ? "upcoming" : "past",
-    events: (dayMap.get(date) ?? []).sort(
-      (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
+    events: (dayMap.get(date) ?? []).sort((a, b) =>
+      compareOpenUnseatedFirst(
+        {
+          openUnseated: Boolean(a.openAttendance),
+          atMs: new Date(a.at).getTime(),
+        },
+        {
+          openUnseated: Boolean(b.openAttendance),
+          atMs: new Date(b.at).getTime(),
+        },
+      ),
     ),
   }));
 }
