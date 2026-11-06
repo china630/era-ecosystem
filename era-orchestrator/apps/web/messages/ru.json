@@ -2573,15 +2573,27 @@
   },
   "commsHub": {
     "title": "Comms Hub",
-    "subtitle": "Центральные коммуникации активной организации",
+    "subtitle": "Внутренняя переписка организации — не каналы folio/revenue сателлитов.",
     "scopedOrg": "Контекст активной организации:",
     "comingSoon": "Inbox появится после волны топологии и биллинга оркестратора.",
-    "shellHint": "Локальные черновики — не каналы интеграции сателлитов (folio/revenue).",
+    "shellHint": "Серверный inbox активной организации. Не путать с каналами интеграции SuperAdmin.",
     "inboxTitle": "Треды",
-    "inboxEmpty": "Черновиков пока нет — напишите справа.",
+    "inboxEmpty": "Пока нет тредов — создайте с получателями справа.",
     "composeTitle": "Написать",
     "subjectLabel": "Тема",
     "bodyLabel": "Сообщение",
-    "composeSubmit": "Сохранить черновик"
+    "composeSubmit": "Отправить",
+    "recipientsLabel": "Получатели",
+    "recipientsHint": "Только участники организации",
+    "markRead": "Прочитано",
+    "replyLabel": "Ответ",
+    "replySubmit": "Ответить",
+    "threadEmpty": "Выберите тред",
+    "loadFailed": "Не удалось загрузить inbox",
+    "sendFailed": "Не удалось отправить",
+    "membersLoadFailed": "Не удалось загрузить участников",
+    "loading": "Загрузка…",
+    "unreadBadge": "новое",
+    "authorYou": "вы"
   }
 }

@@ -162,6 +162,8 @@ export class NotificationsDispatchService {
     input: { recipient: string; subject: string; body: string },
   ): Promise<Record<string, unknown>> {
     switch (channel) {
+      case NotificationChannel.IN_APP:
+        return { delivered: "in_app", recipient: input.recipient };
       case NotificationChannel.EMAIL: {
         const result = await this.emailAdapter.send({
           to: input.recipient,

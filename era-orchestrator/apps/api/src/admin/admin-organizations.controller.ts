@@ -24,7 +24,17 @@ export class AdminOrganizationsController {
     @Query("q") q?: string,
     @Query("page", new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query("pageSize", new DefaultValuePipe(25), ParseIntPipe) pageSize?: number,
+    @Query("operatingMode") operatingMode?: string,
+    @Query("deploymentTopology") deploymentTopology?: string,
+    @Query("billingStatus") billingStatus?: string,
   ) {
-    return this.orgs.list({ q, page, pageSize });
+    return this.orgs.list({
+      q,
+      page,
+      pageSize,
+      operatingMode,
+      deploymentTopology,
+      billingStatus,
+    });
   }
 }

@@ -1,5 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma } from "@era365/database";
+import {
+  BillingStatus,
+  DeploymentTopology,
+  OrgOperatingMode,
+  Prisma,
+} from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { blindIndexForVoen } from "../common/utils/voen-blind-index";
 
@@ -7,7 +12,14 @@ import { blindIndexForVoen } from "../common/utils/voen-blind-index";
 export class AdminOrganizationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(opts: { q?: string; page?: number; pageSize?: number }) {
+  async list(opts: {
+    q?: string;
+    page?: number;
+    pageSize?: number;
+    operatingMode?: string;
+    deploymentTopology?: string;
+    billingStatus?: string;
+  }) {
     const page = Math.max(1, opts.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, opts.pageSize ?? 25));
     const q = (opts.q ?? "").trim();
@@ -32,6 +44,22 @@ export class AdminOrganizationsService {
         });
       }
       where.OR = or;
+    }
+
+    const mode = (opts.operatingMode ?? "").trim().toUpperCase();
+    if (mode && Object.values(OrgOperatingMode).includes(mode as OrgOperatingMode)) {
+      where.operatingMode = mode as OrgOperatingMode;
+    }
+    const topology = (opts.deploymentTopology ?? "").trim().toUpperCase();
+    if (
+      topology &&
+      Object.values(DeploymentTopology).includes(topology as DeploymentTopology)
+    ) {
+      where.deploymentTopology = topology as DeploymentTopology;
+    }
+    const billing = (opts.billingStatus ?? "").trim().toUpperCase();
+    if (billing && Object.values(BillingStatus).includes(billing as BillingStatus)) {
+      where.billingStatus = billing as BillingStatus;
     }
 
     const [total, rows] = await Promise.all([

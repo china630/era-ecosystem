@@ -2576,15 +2576,27 @@
   },
   "commsHub": {
     "title": "Comms Hub",
-    "subtitle": "Central communications for the active organization",
+    "subtitle": "Org messaging inbox — not satellite folio/revenue channels.",
     "scopedOrg": "Scoped to active organization:",
     "comingSoon": "Inbox and channels land after the orchestrator topology and billing wave.",
-    "shellHint": "Local draft shell only — not satellite integration channels (folio/revenue).",
+    "shellHint": "Server inbox for the active organization. Separate from SuperAdmin integration channels.",
     "inboxTitle": "Threads",
-    "inboxEmpty": "No drafts yet — compose on the right.",
+    "inboxEmpty": "No threads yet — compose with recipients on the right.",
     "composeTitle": "Compose",
     "subjectLabel": "Subject",
     "bodyLabel": "Message",
-    "composeSubmit": "Save draft"
+    "composeSubmit": "Send",
+    "recipientsLabel": "Recipients",
+    "recipientsHint": "Org members only",
+    "markRead": "Mark read",
+    "replyLabel": "Reply",
+    "replySubmit": "Send reply",
+    "threadEmpty": "Select a thread",
+    "loadFailed": "Could not load inbox",
+    "sendFailed": "Could not send",
+    "membersLoadFailed": "Could not load members",
+    "loading": "Loading…",
+    "unreadBadge": "new",
+    "authorYou": "you"
   }
 }

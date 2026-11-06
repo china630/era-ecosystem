@@ -29,6 +29,10 @@ import { NotificationsService } from "./notifications.service";
     WhatsappBusinessAdapter,
     SmsAdapter,
   ],
-  exports: [NotificationsService, NotificationsDispatchService],
+  exports: [
+    NotificationsService,
+    NotificationsDispatchService,
+    NotificationsOutboxWorker,
+  ],
 })
 export class NotificationsModule {}

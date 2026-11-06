@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { bakuDateDisplay, bakuDateKey } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DatePicker,
   GHOST_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
@@ -14,6 +14,7 @@ import {
 } from "@era/satellite-kit/ui";
 import { useAuth } from "@/lib/auth-context";
 import { orchFetch } from "@/lib/orch-api";
+import { useOrgShell } from "../org-shell";
 
 type Topology = "SHARED" | "DEDICATED" | "ONPREM";
 type Tier = "TIER_0" | "TIER_1" | "TIER_2" | "TIER_3";
@@ -61,10 +62,25 @@ function fromDateInput(value: string): string {
   return `${value}T23:59:59.999Z`;
 }
 
+const TOPOLOGY_OPTIONS = [
+  { value: "SHARED", labelKey: "topologyShared" as const },
+  { value: "DEDICATED", labelKey: "topologyDedicated" as const },
+  { value: "ONPREM", labelKey: "topologyOnprem" as const },
+];
+
+const TIER_OPTIONS = [
+  { value: "TIER_0", label: "TIER_0" },
+  { value: "TIER_1", label: "TIER_1" },
+  { value: "TIER_2", label: "TIER_2" },
+  { value: "TIER_3", label: "TIER_3" },
+];
+
 export default function OrgSubscriptionAdminPage() {
   const params = useParams();
   const orgId = String(params.orgId ?? "");
   const { token } = useAuth();
+  const { reloadHeader } = useOrgShell();
+  const t = useTranslations("superAdmin.orgLicense");
   const tc = useTranslations("superAdmin.orgBillingCoverage");
   const tCommon = useTranslations("common");
   const [tree, setTree] = useState<TrialTree | null>(null);
@@ -80,6 +96,7 @@ export default function OrgSubscriptionAdminPage() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [tier, setTier] = useState<Tier>("TIER_0");
   const [quotaJson, setQuotaJson] = useState("");
+  const [quotasOpen, setQuotasOpen] = useState(false);
   const [satDates, setSatDates] = useState<Record<string, string>>({});
   const [modDates, setModDates] = useState<Record<string, string>>({});
 
@@ -92,7 +109,7 @@ export default function OrgSubscriptionAdminPage() {
         token,
       });
       if (!res.ok) {
-        setError(`Load failed (${res.status})`);
+        setError(t("loadFailed", { status: res.status }));
         setTree(null);
         return;
       }
@@ -125,7 +142,7 @@ export default function OrgSubscriptionAdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, orgId]);
+  }, [token, orgId, t]);
 
   useEffect(() => {
     void reload();
@@ -142,10 +159,11 @@ export default function OrgSubscriptionAdminPage() {
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        setError(`Save failed (${res.status})`);
+        setError(t("saveFailed", { status: res.status }));
         return;
       }
       await reload();
+      await reloadHeader();
     } finally {
       setSaving(false);
     }
@@ -162,10 +180,11 @@ export default function OrgSubscriptionAdminPage() {
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        setError(`Subscription patch failed (${res.status})`);
+        setError(t("subscriptionPatchFailed", { status: res.status }));
         return;
       }
       await reload();
+      await reloadHeader();
     } finally {
       setSaving(false);
     }
@@ -190,6 +209,7 @@ export default function OrgSubscriptionAdminPage() {
         return;
       }
       await reload();
+      await reloadHeader();
     } finally {
       setSaving(false);
     }
@@ -209,10 +229,11 @@ export default function OrgSubscriptionAdminPage() {
         }),
       });
       if (!res.ok) {
-        setError(`Topology save failed (${res.status})`);
+        setError(t("topologySaveFailed", { status: res.status }));
         return;
       }
       await reload();
+      await reloadHeader();
     } finally {
       setSaving(false);
     }
@@ -224,7 +245,7 @@ export default function OrgSubscriptionAdminPage() {
       return;
     }
     if (!dateValue) {
-      setError("Set an end date or check perpetual.");
+      setError(t("dateOrPerpetual"));
       return;
     }
     await patchTrial({
@@ -243,7 +264,7 @@ export default function OrgSubscriptionAdminPage() {
         try {
           quotaOverrides = JSON.parse(quotaJson) as Record<string, unknown>;
         } catch {
-          setError("Quota overrides must be valid JSON.");
+          setError(t("quotaJsonInvalid"));
           return;
         }
       }
@@ -253,7 +274,7 @@ export default function OrgSubscriptionAdminPage() {
         body: JSON.stringify({ quotaOverrides }),
       });
       if (!res.ok) {
-        setError(`Quota save failed (${res.status})`);
+        setError(t("quotaSaveFailed", { status: res.status }));
         return;
       }
       await reload();
@@ -276,7 +297,7 @@ export default function OrgSubscriptionAdminPage() {
         { token, method: "PATCH", body: JSON.stringify(body) },
       );
       if (!res.ok) {
-        setError(`Satellite trial save failed (${res.status})`);
+        setError(t("satTrialSaveFailed", { status: res.status }));
         return;
       }
       await reload();
@@ -299,7 +320,7 @@ export default function OrgSubscriptionAdminPage() {
         { token, method: "PATCH", body: JSON.stringify(body) },
       );
       if (!res.ok) {
-        setError(`Module trial save failed (${res.status})`);
+        setError(t("modTrialSaveFailed", { status: res.status }));
         return;
       }
       await reload();
@@ -310,68 +331,24 @@ export default function OrgSubscriptionAdminPage() {
 
   const expiryIso = tree?.org.trialExpiresAt ?? tree?.org.expiresAt ?? null;
   const untilLabel = neverExpires
-    ? "Perpetual (no expiry)"
+    ? t("perpetualLabel")
     : expiryIso
       ? bakuDateDisplay(expiryIso)
       : "—";
 
   return (
-    <div>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Link href="/orgs" className={GHOST_BUTTON_CLASS}>
-          ← Organizations
-        </Link>
-        <Link href={`/orgs/${orgId}`} className={GHOST_BUTTON_CLASS}>
-          Org hub
-        </Link>
-        <h1 className="text-lg font-semibold text-[#34495E]">Org license / trial</h1>
-      </div>
-      {loading ? <p className="text-sm text-[#7F8C8D]">Loading…</p> : null}
+    <div className="space-y-4">
+      {loading ? <p className="text-sm text-[#7F8C8D]">{t("loading")}</p> : null}
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {tree ? (
         <>
-          <div className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
-            <p className="font-semibold text-[#34495E]">{tree.organizationName}</p>
-            <p className="mt-1 text-xs text-[#7F8C8D]">{tree.organizationId}</p>
-            <p className="mt-2 text-sm">
-              Access until: <strong>{untilLabel}</strong>
-              {tree.org.isTrial ? " · trial" : " · paid / contract"}
+          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+            <h2 className="text-sm font-semibold text-[#34495E]">{t("summaryTitle")}</h2>
+            <p className="text-sm text-[#34495E]">
+              {t("accessUntil")}: <strong>{untilLabel}</strong>
+              {tree.org.isTrial ? ` · ${t("trial")}` : ` · ${t("paid")}`}
             </p>
-
-            <label className="mt-4 block text-xs font-medium text-[#7F8C8D]">
-              Deployment topology
-            </label>
-            <select
-              className={`${MODAL_INPUT_CLASS} mt-1 max-w-xs`}
-              value={topology}
-              onChange={(e) => setTopology(e.target.value as Topology)}
-            >
-              <option value="SHARED">SHARED — system trial default</option>
-              <option value="DEDICATED">DEDICATED — no trial default</option>
-              <option value="ONPREM">ONPREM — perpetual default</option>
-            </select>
             <label className="mt-2 flex items-center gap-2 text-sm text-[#34495E]">
-              <input
-                type="checkbox"
-                checked={applyDefault}
-                onChange={(e) => setApplyDefault(e.target.checked)}
-              />
-              Apply topology license default (rewrites dates)
-            </label>
-            <p className="mt-1 text-xs text-[#95A5A6]">
-              ONPREM dates apply when the control plane is reachable (cloud orch +
-              tunnel). Air-gap is contractual / offline lease — not a remote kill switch.
-            </p>
-            <button
-              type="button"
-              className={`${GHOST_BUTTON_CLASS} mt-2`}
-              disabled={saving}
-              onClick={() => void saveTopology()}
-            >
-              Save topology
-            </button>
-
-            <label className="mt-6 flex items-center gap-2 text-sm text-[#34495E]">
               <input
                 type="checkbox"
                 checked={neverExpires}
@@ -381,32 +358,32 @@ export default function OrgSubscriptionAdminPage() {
                   if (on) setIsTrial(false);
                 }}
               />
-              Perpetual — no expiry
+              {t("perpetual")}
             </label>
-            <label className="mt-2 flex items-center gap-2 text-sm text-[#34495E]">
+            <label className="flex items-center gap-2 text-sm text-[#34495E]">
               <input
                 type="checkbox"
                 checked={isTrial}
                 disabled={neverExpires}
                 onChange={(e) => setIsTrial(e.target.checked)}
               />
-              Mark as trial
+              {t("markTrial")}
             </label>
             <DatePicker
-              label="License / trial end"
+              label={t("licenseEnd")}
               value={dateValue}
               onChange={setDateValue}
               placeholder={tCommon("datePlaceholder")}
               disabled={neverExpires}
             />
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}
                 disabled={saving}
                 onClick={() => void saveLicense()}
               >
-                Save license
+                {t("saveLicense")}
               </button>
               <button
                 type="button"
@@ -414,7 +391,7 @@ export default function OrgSubscriptionAdminPage() {
                 disabled={saving}
                 onClick={() => void patchTrial({ shiftMonths: 1 })}
               >
-                +1 month
+                {t("plusMonth")}
               </button>
               <button
                 type="button"
@@ -422,29 +399,47 @@ export default function OrgSubscriptionAdminPage() {
                 disabled={saving}
                 onClick={() => void patchTrial({ shiftMonths: -1 })}
               >
-                −1 month
-              </button>
-              <button
-                type="button"
-                className={GHOST_BUTTON_CLASS}
-                disabled={saving}
-                onClick={() =>
-                  void orchFetch(
-                    `/v1/admin/organizations/${orgId}/connect-preset/sanatorium`,
-                    { token: token!, method: "POST" },
-                  ).then(() => reload())
-                }
-              >
-                Nafta preset (connect bundle)
+                {t("minusMonth")}
               </button>
             </div>
-          </div>
+          </section>
+
+          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+            <h2 className="text-sm font-semibold text-[#34495E]">{t("topologyTitle")}</h2>
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("topologyLabel")}
+              value={topology}
+              onChange={(next) => setTopology(next as Topology)}
+              options={TOPOLOGY_OPTIONS.map((o) => ({
+                value: o.value,
+                label: t(o.labelKey),
+              }))}
+            />
+            <label className="flex items-center gap-2 text-sm text-[#34495E]">
+              <input
+                type="checkbox"
+                checked={applyDefault}
+                onChange={(e) => setApplyDefault(e.target.checked)}
+              />
+              {t("applyTopologyDefault")}
+            </label>
+            <p className="text-xs text-[#95A5A6]">{t("topologyHint")}</p>
+            <button
+              type="button"
+              className={GHOST_BUTTON_CLASS}
+              disabled={saving}
+              onClick={() => void saveTopology()}
+            >
+              {t("saveTopology")}
+            </button>
+          </section>
 
           <section
-            className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}
+            className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}
             data-testid="billing-coverage"
           >
-            <h2 className="text-sm font-semibold">{tc("title")}</h2>
+            <h2 className="text-sm font-semibold text-[#34495E]">{tc("title")}</h2>
             <p className="text-sm text-[#34495E]">
               {tc("status")}:{" "}
               <strong
@@ -496,62 +491,85 @@ export default function OrgSubscriptionAdminPage() {
             </div>
           </section>
 
-          <section className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}>
-            <h2 className="text-sm font-semibold">Block / tier</h2>
+          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+            <h2 className="text-sm font-semibold text-[#34495E]">{t("blockTierTitle")}</h2>
             <label className="flex items-center gap-2 text-sm text-[#34495E]">
               <input
                 type="checkbox"
                 checked={isBlocked}
                 onChange={(e) => setIsBlocked(e.target.checked)}
               />
-              Block subscription access
+              {t("blockAccess")}
             </label>
-            <label className="block text-xs font-medium text-[#7F8C8D]">
-              Current tier
-            </label>
-            <select
-              className={`${MODAL_INPUT_CLASS} max-w-xs`}
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("tierLabel")}
               value={tier}
-              onChange={(e) => setTier(e.target.value as Tier)}
-            >
-              <option value="TIER_0">TIER_0</option>
-              <option value="TIER_1">TIER_1</option>
-              <option value="TIER_2">TIER_2</option>
-              <option value="TIER_3">TIER_3</option>
-            </select>
+              onChange={(next) => setTier(next as Tier)}
+              options={TIER_OPTIONS}
+            />
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
               disabled={saving}
               onClick={() => void patchSubscription({ isBlocked, tier, isTrial })}
             >
-              Save block / tier
+              {t("saveBlockTier")}
             </button>
           </section>
 
-          <section className={`${CARD_CONTAINER_CLASS} mb-4 space-y-3 p-4`}>
-            <h2 className="text-sm font-semibold">Quota overrides (JSON)</h2>
-            <textarea
-              className={`${MODAL_INPUT_CLASS} min-h-[8rem] font-mono text-xs`}
-              value={quotaJson}
-              onChange={(e) => setQuotaJson(e.target.value)}
-              placeholder='{"employees": 50}'
-            />
+          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
             <button
               type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={saving}
-              onClick={() => void saveQuotas()}
+              className="text-sm font-semibold text-[#2980B9]"
+              onClick={() => setQuotasOpen((v) => !v)}
             >
-              Save quotas
+              {quotasOpen ? t("quotasHide") : t("quotasShow")}
+            </button>
+            {quotasOpen ? (
+              <>
+                <p className="text-xs text-[#95A5A6]">{t("quotasHint")}</p>
+                <textarea
+                  className={`${MODAL_INPUT_CLASS} min-h-[8rem] font-mono text-xs`}
+                  value={quotaJson}
+                  onChange={(e) => setQuotaJson(e.target.value)}
+                  placeholder='{"employees": 50}'
+                />
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={saving}
+                  onClick={() => void saveQuotas()}
+                >
+                  {t("saveQuotas")}
+                </button>
+              </>
+            ) : null}
+          </section>
+
+          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+            <h2 className="text-sm font-semibold text-[#34495E]">{t("presetTitle")}</h2>
+            <p className="text-xs text-[#95A5A6]">{t("presetHint")}</p>
+            <button
+              type="button"
+              className={GHOST_BUTTON_CLASS}
+              disabled={saving}
+              onClick={() =>
+                void orchFetch(
+                  `/v1/admin/organizations/${orgId}/connect-preset/sanatorium`,
+                  { token: token!, method: "POST" },
+                ).then(() => reload())
+              }
+            >
+              {t("naftaPreset")}
             </button>
           </section>
 
-          <section className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
-            <h2 className="mb-2 text-sm font-semibold">Satellites</h2>
+          <section className={`${CARD_CONTAINER_CLASS} p-4`}>
+            <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t("satellitesTitle")}</h2>
             <ul className="space-y-3 text-sm">
               {tree.satellites.length === 0 ? (
-                <li className="text-[#7F8C8D]">None connected</li>
+                <li className="text-[#7F8C8D]">{t("satellitesEmpty")}</li>
               ) : (
                 tree.satellites.map((s) => (
                   <li
@@ -562,7 +580,7 @@ export default function OrgSubscriptionAdminPage() {
                       <strong>{s.name}</strong>
                       <div className="text-xs text-[#7F8C8D]">{s.satelliteKey}</div>
                       {s.trialOverridden ? (
-                        <span className="text-xs text-amber-700">overridden</span>
+                        <span className="text-xs text-amber-700">{t("overridden")}</span>
                       ) : null}
                     </div>
                     <DatePicker
@@ -582,7 +600,7 @@ export default function OrgSubscriptionAdminPage() {
                       disabled={saving}
                       onClick={() => void saveSatelliteTrial(s.satelliteKey)}
                     >
-                      Save
+                      {t("save")}
                     </button>
                     <button
                       type="button"
@@ -608,7 +626,7 @@ export default function OrgSubscriptionAdminPage() {
                         })();
                       }}
                     >
-                      Perpetual
+                      {t("perpetual")}
                     </button>
                   </li>
                 ))
@@ -617,7 +635,7 @@ export default function OrgSubscriptionAdminPage() {
           </section>
 
           <section className={`${CARD_CONTAINER_CLASS} p-4`}>
-            <h2 className="mb-2 text-sm font-semibold">Modules</h2>
+            <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t("modulesTitle")}</h2>
             <ul className="max-h-80 space-y-2 overflow-y-auto text-xs">
               {tree.modules.map((m) => (
                 <li
@@ -626,7 +644,7 @@ export default function OrgSubscriptionAdminPage() {
                 >
                   <span className="min-w-[10rem] font-mono">{m.moduleKey}</span>
                   {m.trialOverridden ? (
-                    <span className="text-amber-700">overridden</span>
+                    <span className="text-amber-700">{t("overridden")}</span>
                   ) : null}
                   <DatePicker
                     label={m.moduleKey}
@@ -645,7 +663,7 @@ export default function OrgSubscriptionAdminPage() {
                     disabled={saving}
                     onClick={() => void saveModuleTrial(m.moduleKey)}
                   >
-                    Save
+                    {t("save")}
                   </button>
                 </li>
               ))}

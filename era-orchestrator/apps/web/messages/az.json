@@ -2574,15 +2574,27 @@
   },
   "commsHub": {
     "title": "Comms Hub",
-    "subtitle": "Aktiv təşkilat üçün mərkəzi kommunikasiya",
+    "subtitle": "Təşkilat mesajlaşması — peyk folio/revenue kanalları deyil.",
     "scopedOrg": "Aktiv təşkilat konteksti:",
     "comingSoon": "Inbox orchestrator topologiya və billing dalğasından sonra gələcək.",
-    "shellHint": "Yalnız lokal qaralama — satellit inteqrasiya kanalları deyil (folio/revenue).",
+    "shellHint": "Aktiv təşkilat üçün server inbox. SuperAdmin inteqrasiya kanallarından ayrıdır.",
     "inboxTitle": "Threadlər",
-    "inboxEmpty": "Hələ qaralama yoxdur — sağda yazın.",
+    "inboxEmpty": "Hələ thread yoxdur — sağda alıcılarla yaradın.",
     "composeTitle": "Yaz",
     "subjectLabel": "Mövzu",
     "bodyLabel": "Mesaj",
-    "composeSubmit": "Qaralamanı saxla"
+    "composeSubmit": "Göndər",
+    "recipientsLabel": "Alıcılar",
+    "recipientsHint": "Yalnız təşkilat üzvləri",
+    "markRead": "Oxunub",
+    "replyLabel": "Cavab",
+    "replySubmit": "Cavab göndər",
+    "threadEmpty": "Thread seçin",
+    "loadFailed": "Inbox yüklənmədi",
+    "sendFailed": "Göndərilmədi",
+    "membersLoadFailed": "Üzvlər yüklənmədi",
+    "loading": "Yüklənir…",
+    "unreadBadge": "yeni",
+    "authorYou": "siz"
   }
 }

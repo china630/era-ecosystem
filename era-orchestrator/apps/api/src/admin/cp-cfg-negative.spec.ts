@@ -157,6 +157,8 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
     expect(body.ssoSharedSecret).toBeUndefined();
     expect(body.satelliteEventServiceToken).toBeUndefined();
     expect(body.orchestratorEventUrl).toBe("http://orchestrator:4000");
+    expect(body.orchestratorPublicBaseUrl).toBe("https://api.era-365.online");
+    expect(body.publicBaseUrl).toBeUndefined();
   });
 
   it("resolveSatelliteEventUrl uses docker DNS when ERA_IN_DOCKER even if public HTTPS is set", () => {
@@ -219,7 +221,12 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
         }),
       },
       satelliteEndpoint: {
-        findUnique: jest.fn().mockResolvedValue({ enabled: true }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({
+            enabled: true,
+            baseUrl: "https://clinic.era-365.online",
+          }),
       },
       organizationSubscription: {
         findUnique: jest.fn().mockResolvedValue(null),
@@ -262,5 +269,76 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
     expect(res.config.ssoSharedSecret).toBeUndefined();
     expect(res.config.satelliteEventServiceToken).toBeUndefined();
     expect(res.config.updatedBy).toBe("orchestrator-desired-state");
+    expect(res.config.publicBaseUrl).toBe("https://clinic.era-365.online");
+    expect(res.config.satellitePublicBaseUrl).toBe(
+      "https://clinic.era-365.online",
+    );
+    expect(res.config.orchestratorPublicBaseUrl).toBeUndefined();
+  });
+
+  it("getDesiredState does not use orch public as satellite self URL", async () => {
+    const orgId = "00000000-0000-4000-8000-000000000001";
+    const prisma = {
+      organization: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: orgId,
+          deploymentTopology: "SHARED",
+          subscriptionPlan: null,
+          publicOrgNumber: null,
+          deletedAt: null,
+          settings: null,
+          operatingMode: "STANDALONE",
+          fiscalRouting: "OWN",
+          parentOrgId: null,
+        }),
+      },
+      satelliteEndpoint: {
+        findUnique: jest.fn().mockResolvedValue({
+          enabled: true,
+          baseUrl: "https://clinic.era-365.online",
+        }),
+      },
+      organizationSubscription: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      elektrawebBridgePolicy: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      clinicCutoverPolicy: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      fiscalHardwareDevice: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      orgPaymentMethod: {
+        count: jest.fn().mockResolvedValue(1),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    };
+    const config = {
+      get: (key: string) => {
+        if (key === "ERA_PUBLIC_ORCHESTRATOR_URL") {
+          return "https://api.era-365.online";
+        }
+        if (key === "ERA_ORCHESTRATOR_INTERNAL_URL") {
+          return "http://orchestrator:4000";
+        }
+        return undefined;
+      },
+    } as unknown as ConfigService;
+    const svc = new SatelliteOrgBindSyncService(
+      prisma as never,
+      {} as never,
+      config,
+      { getSnapshot: jest.fn().mockResolvedValue(null) } as never,
+    );
+    const res = await svc.getDesiredState({
+      organizationId: orgId,
+      satelliteKey: "industry_clinic",
+    });
+    expect(res.config.publicBaseUrl).toBe("https://clinic.era-365.online");
+    expect(res.config.orchestratorPublicBaseUrl).toBe(
+      "https://api.era-365.online",
+    );
   });
 });

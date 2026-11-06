@@ -119,6 +119,8 @@ enum NotificationChannel {
   EMAIL
   WHATSAPP
   SMS
+  /// Bell / Control Home only — no external provider.
+  IN_APP
 }
 
 enum NotificationOutboxStatus {
@@ -1952,6 +1954,7 @@ model Organization {
   moduleGraces                   OrganizationModuleGrace[]
   channelsFrom                   OrganizationSatelliteChannel[] @relation("ChannelFromOrg")
   channelsTo                     OrganizationSatelliteChannel[] @relation("ChannelToOrg")
+  commsThreads                   CommsThread[]
   workforceAssignments WorkforceAssignment[]
   workforceEmployments WorkforceEmployment[]
   workforceTimesheets  WorkforceTimesheet[]
@@ -2184,8 +2187,57 @@ model User {
   ownedOrganizations Organization[] @relation("OrganizationOwner")
   holdings          Holding[]
   holdingMemberships HoldingMembership[]
+  commsThreadsAuthored CommsThread[]      @relation("CommsThreadAuthor")
+  commsMessagesAuthored CommsMessage[]    @relation("CommsMessageAuthor")
+  commsParticipations CommsParticipant[]  @relation("CommsParticipantUser")
 
   @@map("users")
+}
+
+/// Org-scoped Control Home messaging (CP-COMMS-01). Not satellite integration channels.
+model CommsThread {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  subject        String   @db.VarChar(256)
+  authorUserId   String   @map("author_user_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author         User         @relation("CommsThreadAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  messages       CommsMessage[]
+  participants   CommsParticipant[]
+
+  @@index([organizationId, updatedAt])
+  @@index([authorUserId])
+  @@map("comms_threads")
+}
+
+model CommsMessage {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  threadId     String   @map("thread_id") @db.Uuid
+  authorUserId String   @map("author_user_id") @db.Uuid
+  body         String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  thread       CommsThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author       User        @relation("CommsMessageAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+
+  @@index([threadId, createdAt])
+  @@index([authorUserId])
+  @@map("comms_messages")
+}
+
+model CommsParticipant {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  threadId  String    @map("thread_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  readAt    DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  thread    CommsThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user      User        @relation("CommsParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+  @@index([userId, readAt])
+  @@map("comms_participants")
 }
 
 /// Multi-entity holding group (control-plane SoT). Distinct from DEPARTMENT parentOrgId routing.
