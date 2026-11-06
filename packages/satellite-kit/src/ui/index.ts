@@ -187,6 +187,7 @@ export {
 export {
   channelEdgeTitle,
   labelChannelKind,
+  labelChannelFlowBlurb,
   labelChannelManagedBy,
   labelSatelliteKey,
 } from "../integration/satellite-channels-display";

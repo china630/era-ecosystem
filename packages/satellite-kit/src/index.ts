@@ -712,3 +712,12 @@ export {
   setCachedOrgProfile,
   clearOrgProfileCacheForTests,
 } from "./organization/org-profile-cache";
+
+export {
+  normalizePersonPhone,
+  personPhoneDedupDigits,
+  PERSON_PHONE_POLISH_REGIONS,
+  type NormalizePersonPhoneResult,
+  type NormalizePersonPhoneStatus,
+  type PersonPhonePolishRegion,
+} from "./phone/normalize-person-phone";
