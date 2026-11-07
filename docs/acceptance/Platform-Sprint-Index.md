@@ -38,12 +38,12 @@ Current rollup: Gate ✅ (scaffold only) · BE 🟡 (TOPO **in** rollup — Plac
 | S-WF-JOB-CHART-DND | Drag-edit org chart (`/org-chart`) | [ ] | Deferred debt — same ADR. Chart read-only; forms edit parents. |
 | S-NEST-API | Industry satellite API Nest cutover (hotel first) | [ ] | **P0 platform debt** recorded 2026-10-28 — [ADR](../adr/industry-satellite-api-nest-migration.md). Not started. Out of Gate/BE rollup until scheduled; mutation-audit uses fail-closed Next ([mutation-audit-depth](../../.cursor/plans/mutation-audit-depth.plan.md)) |
 | S-CONTROL-HOME | Control Home + topology + 7d grace + SA cutover | [~] | 2026-11-03 API+SCREEN + closeout; **2026-11-05** Structure owner UX + Home summary + second-pass (token/label/create guard; UAT-SMOKE UI rows; lab signoff; CP→sat materialize open). Gate/BE/Pilot/edition **unchanged** (`mvp`, TOPO paints BE 🟡). UAT/SHOW open |
-| S-CHANNELS | Satellite integration channels (CP-CHANNELS-01) | [~] | 2026-11-06 second-pass — retail/clinic sibling preflights + `RETAIL_SHIFT_CLOSED` allowlist. Still not Scaffold ✅; sell/`ga` unchanged |
-| S-CHANNELS-LINKS-REST | `/admin/links` retail + finance + auto (+ wholesale/logistics/construction/CRM) | [x] | 2026-11-06 — kit wrappers + hotel OpsShell SETTINGS + finance panels/i18n |
-| S-CHANNELS-RETAIL-GATE | Retail FOLIO_POST/SETTLEMENT fail-closed | [x] | 2026-11-05 — `pms-bridge-client` + `/api/edition` (AUTH_ONLY) |
-| S-CHANNELS-REVENUE | `REVENUE_EVENT` fail-closed on finance dispatch | [x] | 2026-11-06 — assert before F&B CLOSE/Z-close; retail PAID/return/hub-settle/Z-close; clinic visit/procedure/lab/hub-settle; room-charge skips revenue |
-| S-CHANNELS-OPS-HANDOFF | `OPS_HANDOFF` wholesale→retail PLATFORM pair | [~] | 2026-11-05 — enum + desired edges; call-site assert waits first S2S client |
-| S-CHANNELS-READ-LEGACY | `READ_STATUS` + UI `CODE_LEGACY` | [~] | 2026-11-06 — `CHANNEL_LEGACY_HINTS` + legacyTitle/Hint i18n on sats/finance; `READ_STATUS` PLATFORM rows still none |
-| S-COMMS-HUB | Messaging Comms Hub (CP-COMMS-01) | [~] | 2026-11-05 — ADR + minimal list/compose shell; not product inbox |
+| S-CHANNELS | Satellite integration channels (CP-CHANNELS-01) | [~] | 2026-11-06 peer-links parity — 10 mesh sats `/admin/links` + ChannelEdgeCard UX; SHARED pool self-URL smoke; retail POS edition hide/disable folio+settlement like F&B. Still not Scaffold ✅ (human UAT → SHOW/SHIPPED **out of wave**); Auto FOLIO PLATFORM = CODE_LEGACY only; sell/`ga` unchanged |
+| S-CHANNELS-LINKS-REST | `/admin/links` retail + finance + auto (+ wholesale/logistics/construction/CRM) | [x] | 2026-11-06 — kit wrappers + hotel OpsShell SETTINGS + finance panels/i18n; mesh parity checklist closed |
+| S-CHANNELS-RETAIL-GATE | Retail FOLIO_POST/SETTLEMENT fail-closed | [x] | 2026-11-06 — bridge + `/api/edition` + POS UI reads `folioPostEnabled`/`settlementEnabled` (parity with F&B OrdersPanel) |
+| S-CHANNELS-REVENUE | `REVENUE_EVENT` fail-closed on finance dispatch | [x] | 2026-11-06 — assert before F&B CLOSE/Z-close + hub settlement-confirmed; retail PAID/return/hub-settle/Z-close + events/dispatch; clinic visit/procedure/lab/hub-settle + events/dispatch; room-charge skips revenue |
+| S-CHANNELS-OPS-HANDOFF | `OPS_HANDOFF` wholesale→retail PLATFORM pair | [~] | Deferred honest: enum + desired edges landed; `assertChannelEnabled` waits first S2S call-site — do not invent consumers |
+| S-CHANNELS-READ-LEGACY | `READ_STATUS` + UI `CODE_LEGACY` | [~] | Deferred honest: `CHANNEL_LEGACY_HINTS` UI only; `READ_STATUS` PLATFORM rows still none |
+| S-COMMS-HUB | Messaging Comms Hub (CP-COMMS-01) | [~] | 2026-11-06 — `comms_*` + `IN_APP` migrated on stand; Nest `/v1/comms/*` + Control Home inbox (create/reply/recipients); IN_APP outbox scoped to JWT user; orch image next ship; orch-only; COVERAGE SCREEN not SHIPPED (UAT open, not wave goal) |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

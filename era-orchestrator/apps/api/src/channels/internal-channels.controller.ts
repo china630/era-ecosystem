@@ -11,8 +11,11 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SatelliteChannelKind } from "@era365/database";
+import { Public } from "../auth/decorators/public.decorator";
 import { SatelliteChannelsService } from "./satellite-channels.service";
 
+/** S2S channel gate. Skip the user JWT guard; `assertServiceToken` is the auth. */
+@Public()
 @Controller("v1/internal/channels")
 export class InternalChannelsController {
   constructor(

@@ -29,6 +29,7 @@ import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import {
   ResourceDayMatrix,
   cabinLabel,
+  type OpenAttendanceLane,
   type Slot,
   type ResourceRow,
   type TimeHorizon,
@@ -99,11 +100,7 @@ export default function SanatoriumResourcesPage() {
   const [orderCard, setOrderCard] = useState<OrderCard | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [dayClosed, setDayClosed] = useState(false);
-  const [openForesight, setOpenForesight] = useState<{
-    waiting: number;
-    inCabin: number;
-    capacity: number;
-  } | null>(null);
+  const [openLanes, setOpenLanes] = useState<OpenAttendanceLane[]>([]);
   const [checkInBusy, setCheckInBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -114,16 +111,8 @@ export default function SanatoriumResourcesPage() {
     const payload = data.data ?? data;
     setDayClosed(payload.closed === true);
     setResources(payload.resources ?? []);
-    const oa = payload.openAttendance;
-    setOpenForesight(
-      oa && (oa.waiting > 0 || oa.inCabin > 0)
-        ? {
-            waiting: Number(oa.waiting) || 0,
-            inCabin: Number(oa.inCabin) || 0,
-            capacity: Number(oa.capacity) || 0,
-          }
-        : null,
-    );
+    const bands = payload.openAttendance?.bands;
+    setOpenLanes(Array.isArray(bands) ? bands : []);
   }, [date, locale]);
 
   useEffect(() => {
@@ -324,23 +313,12 @@ export default function SanatoriumResourcesPage() {
     </EraListFilterBar>
   );
 
-  const foresightBanner =
-    openForesight != null ? (
-      <p className={`mb-2 text-[13px] ${TEXT_MUTED_CLASS}`}>
-        {t("openAttendanceForesight", {
-          waiting: openForesight.waiting,
-          inCabin: openForesight.inCabin,
-          capacity: openForesight.capacity,
-        })}
-      </p>
-    ) : null;
-
   const matrix = (
     <>
-    {foresightBanner}
     <ResourceDayMatrix
       date={date}
       resources={resources}
+      openLanes={openLanes}
       resourceFilter={resourceFilter}
       patientFilter={patientFilter}
       roomFilter={roomFilter}
@@ -357,6 +335,31 @@ export default function SanatoriumResourcesPage() {
         legendBlocked: t("legendBlocked"),
         legendLunch: t("legendLunch"),
         legendOutside: t("legendOutside"),
+        legendOpenQueue: t("legendOpenQueue"),
+        openQueueBefore: (lane) =>
+          t("openQueueHalf", {
+            half: t("openQueueBefore"),
+            arrived: lane.arrivedBeforeLunch,
+            inCabin: lane.inCabin,
+            waiting: lane.waiting,
+            capacity: lane.capacity,
+            name: lane.procedureName,
+          }),
+        openQueueAfter: (lane) =>
+          t("openQueueHalf", {
+            half: t("openQueueAfter"),
+            arrived: lane.arrivedAfterLunch,
+            inCabin: lane.inCabin,
+            waiting: lane.waiting,
+            capacity: lane.capacity,
+            name: lane.procedureName,
+          }),
+        openQueueMark: (lane, which) =>
+          t("openQueueMark", {
+            name: lane.procedureName,
+            waiting: lane.waiting,
+            half: t(which === "morning" ? "openQueueBefore" : "openQueueAfter"),
+          }),
         statusLabel: (status) => procedureStatusLabel(t, status),
       }}
       onDragStart={setDragOrderId}

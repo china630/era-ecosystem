@@ -27,11 +27,11 @@ describe('HK Nafta roster helpers', () => {
     expect(mondayOf(wed).toISOString().slice(0, 10)).toBe('2026-05-04');
   });
 
-  it('laundry express does not invent a surcharge when percent is unset', () => {
-    expect(laundryLineAmount(1, 0, 4, 3, false)).toBe(4);
-    expect(laundryLineAmount(1, 1, 4, 3, false)).toBe(7);
-    expect(laundryLineAmount(1, 0, 4, 3, true)).toBe(4);
-    expect(laundryLineAmount(1, 0, 4, 3, true, 50)).toBe(6);
+  it('laundry line amount uses unit prices without a percent surcharge', () => {
+    expect(laundryLineAmount(1, 0, 4, 3)).toBe(4);
+    expect(laundryLineAmount(1, 1, 4, 3)).toBe(7);
+    expect(laundryLineAmount(1, 0, 6, null)).toBe(6);
+    expect(laundryLineAmount(0, 1, null, 3)).toBe(3);
   });
 
   it('blocks Sunday and holiday intake; weekday noon still accepts wash', () => {

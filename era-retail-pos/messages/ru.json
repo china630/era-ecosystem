@@ -85,7 +85,13 @@
     "receipt": "Чек",
     "online": "Онлайн",
     "queued": "{count} в очереди",
-    "offlineMode": "Офлайн — платежи в локальной очереди"
+    "offlineMode": "Офлайн — платежи в локальной очереди",
+    "roomCharge": "На номер (folio)",
+    "roomNumber": "Номер комнаты",
+    "roomNumberRequired": "Для folio нужен номер комнаты",
+    "channelFolioOff": "Канал folio выключен — room charge недоступен",
+    "channelFolioOffHint": "Канал Folio post выключен (Админ → Связи).",
+    "channelSettlementOff": "Канал settlement выключен — отправка на ресепшн будет отклонена."
   },
   "auth": {
     "loginFailed": "Вход не выполнен",
@@ -297,7 +303,7 @@
   },
   "adminLinks": {
     "title": "Связи интеграции",
-    "subtitle": "Маршрут денег и peer-каналы этой организации.",
+    "subtitle": "Рёбра peer-политики (folio / settlement / revenue) — не переписка. Маршрутизация денег на этом сателлите.",
     "moneyTitle": "Маршрут денег",
     "moneyLine": "Режим {mode} · фискал {fiscal} · выручка {revenue} · родитель {parent}",
     "moneyUnknown": "Режим организации недоступен",
@@ -328,6 +334,12 @@
     "managedPlatform": "Платформа",
     "managedAcceptor": "Принимающий",
     "legacyTitle": "Устаревшие мосты",
-    "legacyHint": "Только отображение CODE_LEGACY — не живые гейты."
+    "legacyHint": "Только отображение CODE_LEGACY — не живые гейты.",
+    "enable": "Включить входящий",
+    "flowFolio": "Проводит начисления в folio пира (счёт комнаты / гостя).",
+    "flowSettlement": "Сверка денег между сателлитами по одному stay/тикету.",
+    "flowRevenue": "Передаёт события выручки в Finance для GL / отчётов.",
+    "flowRead": "Только чтение статуса у пира (без движения денег).",
+    "flowOpsHandoff": "Операционная передача запаса или работы между пирами."
   }
 }

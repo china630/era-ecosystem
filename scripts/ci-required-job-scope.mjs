@@ -5,10 +5,12 @@
  *   node scripts/ci-required-job-scope.mjs --query era-clinic
  *   # prints run=true or run=false for $GITHUB_OUTPUT
  *
- * CI_FULL=true (PR label ci-full) disables stubs.
- * Empty diff or unknown push base runs everything.
+ * CI_FULL=true (PR label ci-full) disables stubs, except CI_CD_PAUSED_DIRS.
+ * Those jobs always stub, including on an empty diff. Empty diff or unknown
+ * push base otherwise runs everything.
  */
 import { spawnSync } from "node:child_process";
+import { isCiCdPausedJob } from "./ci-cd-pause.mjs";
 
 export const JOB_PREFIXES = {
   finance: ["era-finance-core/"],
@@ -39,6 +41,7 @@ export function forcesFullCi(file) {
 }
 
 export function jobShouldRun(jobKey, files, { full = false } = {}) {
+  if (isCiCdPausedJob(jobKey)) return false;
   if (jobKey === "orchestrator") return true;
   if (full) return true;
   const list = (files || []).map((f) => String(f).replace(/\\/g, "/"));
@@ -80,6 +83,10 @@ if (isDirectRun()) {
   if (!jobKey) {
     console.error("--query <job> is required");
     process.exit(1);
+  }
+  if (isCiCdPausedJob(jobKey)) {
+    console.log("run=false");
+    process.exit(0);
   }
   const full = process.env.CI_FULL === "true" || process.env.CI_FULL === "1";
   const files = changedFilesFromGit();

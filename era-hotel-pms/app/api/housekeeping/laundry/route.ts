@@ -7,11 +7,9 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import {
   createLaundryTicket,
   deliverLaundryTicket,
-  ensureNaftaLaundryCatalog,
   getHkHotelPolicy,
 } from '@/lib/services/hk-nafta.service';
 import { prisma } from '@/lib/prisma';
-import { toDecimal } from '@/lib/decimal';
 
 function laundryReadWritePerms() {
   return [PERMISSIONS.HOUSEKEEPING_MANAGE, PERMISSIONS.FOLIO_CHARGE] as const;
@@ -21,9 +19,11 @@ export async function GET(request: Request) {
   try {
     const session = await getSatelliteSession();
     assertAnyPermission(session, [...laundryReadWritePerms()]);
-    await ensureNaftaLaundryCatalog();
     const reservationId = new URL(request.url).searchParams.get('reservationId');
-    const items = await prisma.laundryItem.findMany({ where: { active: true }, orderBy: { code: 'asc' } });
+    const items = await prisma.laundryItem.findMany({
+      where: { active: true },
+      orderBy: [{ category: 'asc' }, { code: 'asc' }],
+    });
     const tickets = await prisma.laundryTicket.findMany({
       where: reservationId ? { reservationId } : undefined,
       take: 80,
@@ -31,7 +31,20 @@ export async function GET(request: Request) {
       include: {
         lines: {
           include: {
-            item: { select: { id: true, name: true, code: true, washPrice: true, ironPrice: true } },
+            item: {
+              select: {
+                id: true,
+                name: true,
+                nameAz: true,
+                nameRu: true,
+                nameEn: true,
+                code: true,
+                washPrice: true,
+                ironPrice: true,
+                expressWashPrice: true,
+                expressIronPrice: true,
+              },
+            },
           },
         },
       },
@@ -66,21 +79,12 @@ export async function GET(request: Request) {
         tickets: ticketsWithRoom,
         stays,
         laundryExpressEnabled: policy.laundryExpressEnabled,
-        laundryExpressPercent: policy.laundryExpressPercent ?? null,
       }),
     );
   } catch (err) {
     return handleRouteError(err);
   }
 }
-
-const createItem = z.object({
-  code: z.string(),
-  name: z.string(),
-  washPrice: z.number(),
-  ironPrice: z.number(),
-  category: z.string().optional(),
-});
 
 const createTicket = z.object({
   roomId: z.string().uuid(),
@@ -148,19 +152,6 @@ export async function POST(request: Request) {
       );
     }
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
-    if (body.code && body.name) {
-      const data = createItem.parse(body);
-      const item = await prisma.laundryItem.create({
-        data: {
-          code: data.code,
-          name: data.name,
-          washPrice: toDecimal(data.washPrice),
-          ironPrice: toDecimal(data.ironPrice),
-          category: data.category ?? 'GENTLEMEN',
-        },
-      });
-      return jsonOk(serialize(item));
-    }
     const data = createTicket.parse(body);
     const ticket = await createLaundryTicket({
       roomId: data.roomId,

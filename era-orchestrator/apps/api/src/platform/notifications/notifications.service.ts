@@ -99,16 +99,31 @@ export class NotificationsService {
 
   async listOutbox(
     organizationId: string,
-    opts: { status?: NotificationOutboxStatus; limit?: number; offset?: number },
+    opts: {
+      status?: NotificationOutboxStatus;
+      limit?: number;
+      offset?: number;
+      /** When set, IN_APP rows are limited to this user (Comms / bell). */
+      forUserId?: string;
+    },
   ) {
     const orgId = resolveOrganizationUuid(organizationId);
     if (!orgId) {
       throw new BadRequestException("Invalid organization id");
     }
 
+    const forUser = opts.forUserId?.trim();
     const where: Prisma.NotificationOutboxWhereInput = {
       organizationId: orgId,
       ...(opts.status ? { status: opts.status } : {}),
+      ...(forUser
+        ? {
+            OR: [
+              { channel: { not: NotificationChannel.IN_APP } },
+              { recipient: `user:${forUser}` },
+            ],
+          }
+        : {}),
     };
 
     const [items, total] = await Promise.all([

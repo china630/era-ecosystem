@@ -27,6 +27,10 @@ import {
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import {
+  compareOpenUnseatedFirst,
+  isOpenUnseatedOrder,
+} from "@/domain/procedure/open-attendance-order";
 
 type NurseInstruction = {
   bodyPart: string | null;
@@ -307,12 +311,24 @@ export default function NursePage() {
         );
       })
       .slice()
-      .sort((a, b) => {
-        const aOpen = a.schedulingMode === "OPEN" && !a.resourceId ? 1 : 0;
-        const bOpen = b.schedulingMode === "OPEN" && !b.resourceId ? 1 : 0;
-        if (aOpen !== bOpen) return aOpen - bOpen;
-        return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
-      });
+      .sort((a, b) =>
+        compareOpenUnseatedFirst(
+          {
+            openUnseated: isOpenUnseatedOrder({
+              schedulingMode: a.schedulingMode,
+              resourceId: a.resourceId ?? a.resource?.id ?? null,
+            }),
+            atMs: new Date(a.scheduledAt).getTime(),
+          },
+          {
+            openUnseated: isOpenUnseatedOrder({
+              schedulingMode: b.schedulingMode,
+              resourceId: b.resourceId ?? b.resource?.id ?? null,
+            }),
+            atMs: new Date(b.scheduledAt).getTime(),
+          },
+        ),
+      );
   }, [orders, boardReady]);
 
   function statusLabel(status: string) {

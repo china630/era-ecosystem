@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, FlaskConical, Pencil, Plus, RotateCcw, TextCursorInput, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { loadHotelRevenueCodes } from "@/lib/hotel-revenue-client";
@@ -244,6 +244,9 @@ export default function DiagnosticCatalogAdminPage() {
   const [dictionaryPick, setDictionaryPick] = useState<DictionaryAnalyte | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  /** Always-current form for save() — avoids stale modalityId after select + other fields. */
+  const formRef = useRef(form);
+  formRef.current = form;
   const [formFields, setFormFields] = useState<CatalogFieldDef[]>([]);
   const loadModalities = useCallback(async () => {
     const res = await fetch("/api/admin/diagnostic-catalog/modalities?includeInactive=true");
@@ -478,15 +481,30 @@ export default function DiagnosticCatalogAdminPage() {
     else showApiError(await res.json().catch(() => ({})), tFav("saveFailed"));
   }
 
+  /** Prefer modality matching service kind (LAB for lab_panel), not sortOrder-first USG. */
+  function defaultModalityIdForKind(kind: string, preferredId?: string): string {
+    if (preferredId && modalities.some((m) => m.id === preferredId)) return preferredId;
+    const pool = modalities.filter((m) => m.active);
+    const list = pool.length ? pool : modalities;
+    const byKind = list.find((m) => m.kind === kind);
+    if (byKind) return byKind.id;
+    if (kind === "lab_panel") {
+      const lab = list.find((m) => m.code === "LAB");
+      if (lab) return lab.id;
+    }
+    return list[0]?.id || "";
+  }
+
   function openCreate() {
     setEditingId(null);
     setFormFields([]);
     setFinanceServiceQ("");
+    const createKind = serviceKindFilter || "lab_panel";
     setForm(
       tab === "services"
         ? {
-            modalityId: serviceModalityFilter || modalities[0]?.id || "",
-            kind: serviceKindFilter || "lab_panel",
+            modalityId: defaultModalityIdForKind(createKind, serviceModalityFilter || undefined),
+            kind: createKind,
             active: "true",
             packageOnly: "false",
           }
@@ -591,6 +609,7 @@ export default function DiagnosticCatalogAdminPage() {
   }
 
   async function save() {
+    const form = formRef.current;
     if (tab === "categories") {
       const name = form.name?.trim() ?? "";
       if (!name) {
@@ -746,6 +765,7 @@ export default function DiagnosticCatalogAdminPage() {
 
   async function saveAnalyte() {
     if (!selectedServiceId) return;
+      const form = formRef.current;
       const missingAnalyte = [
         !form.code?.trim() ? t("code") : "",
         !form.labelEn?.trim() ? t("labelEn") : "",
@@ -1512,7 +1532,7 @@ export default function DiagnosticCatalogAdminPage() {
                   preset="code"
                   required
                   value={form.code ?? ""}
-                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value  }))}
                 />
               ) : null}
               <FieldSelect
@@ -1520,7 +1540,7 @@ export default function DiagnosticCatalogAdminPage() {
                 preset="select"
                 required
                 value={form.kind ?? ""}
-                onChange={(e) => setForm({ ...form, kind: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, kind: e.target.value  }))}
               >
                 {kindChoices.map((kind) => (
                   <option key={kind} value={kind}>
@@ -1533,34 +1553,34 @@ export default function DiagnosticCatalogAdminPage() {
                 preset="shortText"
                 required
                 value={form.titleEn ?? ""}
-                onChange={(e) => setForm({ ...form, titleEn: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, titleEn: e.target.value  }))}
               />
               <Field
                 label={t("titleRu")}
                 preset="shortText"
                 required
                 value={form.titleRu ?? ""}
-                onChange={(e) => setForm({ ...form, titleRu: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, titleRu: e.target.value  }))}
               />
               <Field
                 label={t("titleAz")}
                 preset="shortText"
                 required
                 value={form.titleAz ?? ""}
-                onChange={(e) => setForm({ ...form, titleAz: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, titleAz: e.target.value  }))}
               />
               <Field
                 label={t("sortOrder")}
                 preset="count"
                 value={form.sortOrder ?? "0"}
-                onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value  }))}
               />
               <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
                 <input
                   type="checkbox"
                   className={MODAL_CHECKBOX_CLASS}
                   checked={form.active !== "false"}
-                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, active: e.target.checked ? "true" : "false"  }))}
                 />
                 {t("statusActive")}
               </label>
@@ -1576,7 +1596,7 @@ export default function DiagnosticCatalogAdminPage() {
                     : revenueOptions
                 }
                 onChange={(next) =>
-                  setForm({ ...form, hotelRevenueCode: String(next ?? "") })
+                  setForm((prev) => ({ ...prev, hotelRevenueCode: String(next ?? "")  }))
                 }
               />
             </>
@@ -1590,7 +1610,7 @@ export default function DiagnosticCatalogAdminPage() {
                   preset="code"
                   required
                   value={form.code ?? ""}
-                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value  }))}
                 />
               ) : null}
               <FieldSelect
@@ -1598,7 +1618,10 @@ export default function DiagnosticCatalogAdminPage() {
                 preset="select"
                 required
                 value={form.modalityId ?? ""}
-                onChange={(e) => setForm({ ...form, modalityId: e.target.value })}
+                onChange={(e) => {
+                  const modalityId = e.target.value;
+                  setForm((prev) => ({ ...prev, modalityId }));
+                }}
               >
                 <option value="">{tc("select")}</option>
                 {modalities.map((m) => (
@@ -1615,14 +1638,29 @@ export default function DiagnosticCatalogAdminPage() {
                   options={categories
                     .filter((row) => row.active || row.name === form.category)
                     .map((row) => ({ value: row.name, label: row.name }))}
-                  onChange={(next) => setForm({ ...form, category: String(next ?? "") })}
+                  onChange={(next) =>
+                    setForm((prev) => ({ ...prev, category: String(next ?? "") }))
+                  }
                 />
                 <FieldSelect
                   label={t("kind")}
                   preset="select"
                   required
                   value={form.kind ?? ""}
-                  onChange={(e) => setForm({ ...form, kind: e.target.value })}
+                  onChange={(e) => {
+                    const nextKind = e.target.value;
+                    setForm((prev) => {
+                      const current = modalities.find((m) => m.id === prev.modalityId);
+                      return {
+                        ...prev,
+                        kind: nextKind,
+                        modalityId:
+                          current?.kind === nextKind
+                            ? prev.modalityId
+                            : defaultModalityIdForKind(nextKind),
+                      };
+                    });
+                  }}
                 >
                   {kindChoices.map((kind) => (
                     <option key={kind} value={kind}>
@@ -1636,21 +1674,21 @@ export default function DiagnosticCatalogAdminPage() {
                 preset="shortText"
                 required
                 value={form.titleEn ?? ""}
-                onChange={(e) => setForm({ ...form, titleEn: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, titleEn: e.target.value  }))}
               />
               <Field
                 label={t("titleRu")}
                 preset="shortText"
                 required
                 value={form.titleRu ?? ""}
-                onChange={(e) => setForm({ ...form, titleRu: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, titleRu: e.target.value  }))}
               />
               <Field
                 label={t("titleAz")}
                 preset="shortText"
                 required
                 value={form.titleAz ?? ""}
-                onChange={(e) => setForm({ ...form, titleAz: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, titleAz: e.target.value  }))}
               />
               <CatalogField
                 kind="CLOSED_SMALL"
@@ -1662,10 +1700,8 @@ export default function DiagnosticCatalogAdminPage() {
                   { value: "AFTER_PAYMENT", label: t("guestBlankAfterPayment") },
                 ]}
                 onChange={(value) =>
-                  setForm({
-                    ...form,
-                    guestBlankRelease: value === "AFTER_PAYMENT" ? "AFTER_PAYMENT" : "PAY_WITH_WORK",
-                  })
+                  setForm((prev) => ({ ...prev, guestBlankRelease: value === "AFTER_PAYMENT" ? "AFTER_PAYMENT" : "PAY_WITH_WORK",
+                   }))
                 }
               />
               {form.kind === "lab_panel" ? (
@@ -1674,7 +1710,7 @@ export default function DiagnosticCatalogAdminPage() {
                     type="checkbox"
                     className="mt-0.5"
                     checked={form.autoPaidOnOpen === "1"}
-                    onChange={(e) => setForm({ ...form, autoPaidOnOpen: e.target.checked ? "1" : "" })}
+                    onChange={(e) => setForm((prev) => ({ ...prev, autoPaidOnOpen: e.target.checked ? "1" : ""  }))}
                   />
                   <span>
                     <span className="font-medium">{t("autoPaidOnOpen")}</span>
@@ -1694,11 +1730,8 @@ export default function DiagnosticCatalogAdminPage() {
                   { value: "VISIT", label: t("menuSurfaceVisit") },
                 ]}
                 onChange={(value) =>
-                  setForm({
-                    ...form,
-                    menuSurface:
-                      value === "LAB" || value === "DIAGNOSTIC" || value === "VISIT" ? value : "",
-                  })
+                  setForm((prev) => ({ ...prev, menuSurface: value === "LAB" || value === "DIAGNOSTIC" || value === "VISIT" ? value : "",
+                   }))
                 }
               />
               <CatalogField
@@ -1711,7 +1744,7 @@ export default function DiagnosticCatalogAdminPage() {
                   { value: "OPEN", label: t("schedulingModeOpen") },
                 ]}
                 onChange={(value) =>
-                  setForm({ ...form, schedulingMode: value === "OPEN" ? "OPEN" : "FIXED" })
+                  setForm((prev) => ({ ...prev, schedulingMode: value === "OPEN" ? "OPEN" : "FIXED"  }))
                 }
               />
               <Field
@@ -1723,10 +1756,8 @@ export default function DiagnosticCatalogAdminPage() {
                 max={365}
                 value={form.broughtInMaxDays ?? ""}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    broughtInMaxDays: e.target.value.trim(),
-                  })
+                  setForm((prev) => ({ ...prev, broughtInMaxDays: e.target.value.trim(),
+                   }))
                 }
               />
               <Field
@@ -1767,27 +1798,27 @@ export default function DiagnosticCatalogAdminPage() {
                       ]
                     : financeServiceOptions
                 }
-                onChange={(next) => setForm({ ...form, financeSku: String(next ?? "") })}
+                onChange={(next) => setForm((prev) => ({ ...prev, financeSku: String(next ?? "")  }))}
               />
               <Field
                 label={t("includes")}
                 preset="shortText"
                 hint={t("includesHint")}
                 value={form.includes ?? ""}
-                onChange={(e) => setForm({ ...form, includes: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, includes: e.target.value  }))}
               />
               <Field
                 label={t("sortOrder")}
                 preset="count"
                 value={form.sortOrder ?? "0"}
-                onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value  }))}
               />
               <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
                 <input
                   type="checkbox"
                   className={MODAL_CHECKBOX_CLASS}
                   checked={form.active !== "false"}
-                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, active: e.target.checked ? "true" : "false"  }))}
                 />
                 {t("statusActive")}
               </label>
@@ -1796,7 +1827,7 @@ export default function DiagnosticCatalogAdminPage() {
                   type="checkbox"
                   className={MODAL_CHECKBOX_CLASS}
                   checked={form.packageOnly === "true"}
-                  onChange={(e) => setForm({ ...form, packageOnly: e.target.checked ? "true" : "false" })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, packageOnly: e.target.checked ? "true" : "false"  }))}
                 />
                 {t("packageOnly")}
               </label>
@@ -1809,14 +1840,14 @@ export default function DiagnosticCatalogAdminPage() {
                 preset="shortText"
                 required
                 value={form.name ?? ""}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value  }))}
               />
               <label className={`flex items-center gap-2 text-sm ${MODAL_FIELD_LABEL_CLASS}`}>
                 <input
                   type="checkbox"
                   className={MODAL_CHECKBOX_CLASS}
                   checked={form.active !== "false"}
-                  onChange={(e) => setForm({ ...form, active: e.target.checked ? "true" : "false" })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, active: e.target.checked ? "true" : "false"  }))}
                 />
                 {t("statusActive")}
               </label>
@@ -1983,25 +2014,25 @@ export default function DiagnosticCatalogAdminPage() {
                 preset="code"
                 required
                 value={form.code ?? ""}
-                onChange={(e) => setForm({ ...form, code: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value  }))}
               />
               <Field
                 label={t("unit")}
                 preset="shortText"
                 value={form.unit ?? ""}
-                onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, unit: e.target.value  }))}
               />
               <Field
                 label={t("section")}
                 preset="shortText"
                 value={form.section ?? ""}
-                onChange={(e) => setForm({ ...form, section: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, section: e.target.value  }))}
               />
               <FieldSelect
                 label={t("valueType")}
                 preset="select"
                 value={form.valueType ?? "NUMERIC"}
-                onChange={(e) => setForm({ ...form, valueType: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, valueType: e.target.value  }))}
               >
                 <option value="NUMERIC">{t("valueTypeNumeric")}</option>
                 <option value="QUALITATIVE">{t("valueTypeQualitative")}</option>
@@ -2010,49 +2041,49 @@ export default function DiagnosticCatalogAdminPage() {
                 label={t("valueOptions")}
                 hint={t("valueOptionsHint")}
                 value={form.valueOptionsJson ?? ""}
-                onChange={(e) => setForm({ ...form, valueOptionsJson: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, valueOptionsJson: e.target.value  }))}
               />
               <Field
                 label={t("labelEn")}
                 preset="shortText"
                 required
                 value={form.labelEn ?? ""}
-                onChange={(e) => setForm({ ...form, labelEn: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, labelEn: e.target.value  }))}
               />
               <Field
                 label={t("labelRu")}
                 preset="shortText"
                 required
                 value={form.labelRu ?? ""}
-                onChange={(e) => setForm({ ...form, labelRu: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, labelRu: e.target.value  }))}
               />
               <Field
                 label={t("labelAz")}
                 preset="shortText"
                 required
                 value={form.labelAz ?? ""}
-                onChange={(e) => setForm({ ...form, labelAz: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, labelAz: e.target.value  }))}
               />
               <FieldTextarea
                 label={t("normTextEn")}
                 value={form.normTextEn ?? ""}
-                onChange={(e) => setForm({ ...form, normTextEn: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, normTextEn: e.target.value  }))}
               />
               <FieldTextarea
                 label={t("normTextRu")}
                 value={form.normTextRu ?? ""}
-                onChange={(e) => setForm({ ...form, normTextRu: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, normTextRu: e.target.value  }))}
               />
               <FieldTextarea
                 label={t("normTextAz")}
                 value={form.normTextAz ?? ""}
-                onChange={(e) => setForm({ ...form, normTextAz: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, normTextAz: e.target.value  }))}
               />
               <FieldSelect
                 label={t("boundKind")}
                 preset="select"
                 value={form.boundKind ?? "INTERVAL"}
-                onChange={(e) => setForm({ ...form, boundKind: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, boundKind: e.target.value  }))}
               >
                 <option value="INTERVAL">{t("boundKindInterval")}</option>
                 <option value="UPPER_ONLY">{t("boundKindUpper")}</option>
@@ -2065,13 +2096,13 @@ export default function DiagnosticCatalogAdminPage() {
                   label={t("refMin")}
                   preset="shortText"
                   value={form.refMin ?? ""}
-                  onChange={(e) => setForm({ ...form, refMin: e.target.value })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, refMin: e.target.value  }))}
                 />
                 <Field
                   label={t("refMax")}
                   preset="shortText"
                   value={form.refMax ?? ""}
-                  onChange={(e) => setForm({ ...form, refMax: e.target.value })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, refMax: e.target.value  }))}
                 />
               </FieldRow>
               <FieldRow cols={2}>
@@ -2079,13 +2110,13 @@ export default function DiagnosticCatalogAdminPage() {
                   label={t("refMinFemale")}
                   preset="shortText"
                   value={form.refMinFemale ?? ""}
-                  onChange={(e) => setForm({ ...form, refMinFemale: e.target.value })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, refMinFemale: e.target.value  }))}
                 />
                 <Field
                   label={t("refMaxFemale")}
                   preset="shortText"
                   value={form.refMaxFemale ?? ""}
-                  onChange={(e) => setForm({ ...form, refMaxFemale: e.target.value })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, refMaxFemale: e.target.value  }))}
                 />
               </FieldRow>
               <FieldRow cols={2}>
@@ -2093,26 +2124,26 @@ export default function DiagnosticCatalogAdminPage() {
                   label={t("refMinMale")}
                   preset="shortText"
                   value={form.refMinMale ?? ""}
-                  onChange={(e) => setForm({ ...form, refMinMale: e.target.value })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, refMinMale: e.target.value  }))}
                 />
                 <Field
                   label={t("refMaxMale")}
                   preset="shortText"
                   value={form.refMaxMale ?? ""}
-                  onChange={(e) => setForm({ ...form, refMaxMale: e.target.value })}
+                  onChange={(e) => setForm((prev) => ({ ...prev, refMaxMale: e.target.value  }))}
                 />
               </FieldRow>
               <FieldTextarea
                 label={t("zonesJson")}
                 hint={t("zonesJsonHint")}
                 value={form.zonesJson ?? ""}
-                onChange={(e) => setForm({ ...form, zonesJson: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, zonesJson: e.target.value  }))}
               />
               <Field
                 label={t("sortOrder")}
                 preset="count"
                 value={form.sortOrder ?? "0"}
-                onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value  }))}
               />
         </div>
         <ModalFooter

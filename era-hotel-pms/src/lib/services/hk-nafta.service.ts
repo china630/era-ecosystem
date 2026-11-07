@@ -12,7 +12,9 @@ import {
   laundryDueAt,
   laundryIntakeBlockReason as laundryWindowBlock,
   neededByBakuToUtc,
+  policyFromHkRow,
 } from '@/lib/services/laundry-windows';
+import { NAFTA_LAUNDRY_CATALOG, pickLaundryUnitPrices } from '@/lib/services/laundry-catalog';
 import { compareFloorSheetRows } from '@/lib/hk-sheet-sort';
 
 export const DEFAULT_FLOOR_PAIRS = [
@@ -277,11 +279,25 @@ export async function saveHkHotelPolicy(
   deepEveryNights: number,
   extra?: {
     laundryExpressEnabled?: boolean;
-    laundryExpressPercent?: number | null;
+    laundryIntakeMode?: 'ANY' | 'WINDOW';
+    laundryIntakeStartHour?: number | null;
+    laundryIntakeEndHour?: number | null;
+    laundryClosedDays?:
+      | 'ALL'
+      | 'EXCEPT_SUNDAY'
+      | 'EXCEPT_CALENDAR'
+      | 'EXCEPT_SUNDAY_AND_CALENDAR';
+    laundryDueMode?: 'NONE' | 'BY_HOUR';
+    laundryDueCutoffHour?: number | null;
+    laundryDueAtHour?: number | null;
     egPressureFrom?: string | null;
   },
 ) {
   const row = await getHkHotelPolicy();
+  const clampHour = (h: number | null | undefined, fallback: number | null) => {
+    if (h == null) return fallback;
+    return Math.max(0, Math.min(23, Math.trunc(h)));
+  };
   return prisma.hkHotelPolicy.update({
     where: { id: row.id },
     data: {
@@ -290,8 +306,24 @@ export async function saveHkHotelPolicy(
       ...(extra?.laundryExpressEnabled !== undefined
         ? { laundryExpressEnabled: extra.laundryExpressEnabled }
         : {}),
-      ...(extra && 'laundryExpressPercent' in extra
-        ? { laundryExpressPercent: extra.laundryExpressPercent }
+      ...(extra?.laundryIntakeMode
+        ? { laundryIntakeMode: extra.laundryIntakeMode }
+        : {}),
+      ...(extra && 'laundryIntakeStartHour' in extra
+        ? { laundryIntakeStartHour: clampHour(extra.laundryIntakeStartHour, null) }
+        : {}),
+      ...(extra && 'laundryIntakeEndHour' in extra
+        ? { laundryIntakeEndHour: clampHour(extra.laundryIntakeEndHour, null) }
+        : {}),
+      ...(extra?.laundryClosedDays
+        ? { laundryClosedDays: extra.laundryClosedDays }
+        : {}),
+      ...(extra?.laundryDueMode ? { laundryDueMode: extra.laundryDueMode } : {}),
+      ...(extra && 'laundryDueCutoffHour' in extra && extra.laundryDueCutoffHour != null
+        ? { laundryDueCutoffHour: clampHour(extra.laundryDueCutoffHour, 10) ?? 10 }
+        : {}),
+      ...(extra && 'laundryDueAtHour' in extra && extra.laundryDueAtHour != null
+        ? { laundryDueAtHour: clampHour(extra.laundryDueAtHour, 17) ?? 17 }
         : {}),
       ...(extra && 'egPressureFrom' in extra
         ? { egPressureFrom: extra.egPressureFrom ? new Date(`${extra.egPressureFrom}T00:00:00.000Z`) : null }
@@ -824,16 +856,12 @@ export async function recordDiscrepancy(roomId: string, workDateIso: string, kin
 export function laundryLineAmount(
   washQty: number,
   ironQty: number,
-  washPrice: number,
-  ironPrice: number,
-  express = false,
-  surchargePercent?: number | null,
+  washPrice: number | null | undefined,
+  ironPrice: number | null | undefined,
 ) {
-  const base = washQty * washPrice + ironQty * ironPrice;
-  if (express && surchargePercent && surchargePercent > 0) {
-    return Math.round(base * (1 + surchargePercent / 100) * 100) / 100;
-  }
-  return Math.round(base * 100) / 100;
+  const wash = washQty > 0 ? washQty * (Number(washPrice) || 0) : 0;
+  const iron = ironQty > 0 ? ironQty * (Number(ironPrice) || 0) : 0;
+  return Math.round((wash + iron) * 100) / 100;
 }
 
 export function laundryIntakeBlockReason(input: {
@@ -844,6 +872,7 @@ export function laundryIntakeBlockReason(input: {
   expressEnabled?: boolean;
   dayType?: string | null;
   calendarUnavailable?: boolean;
+  policy?: Parameters<typeof laundryWindowBlock>[0]['policy'];
 }): string | null {
   const hasWash = input.hasWash ?? true;
   const hasIron = input.hasIron ?? false;
@@ -854,6 +883,7 @@ export function laundryIntakeBlockReason(input: {
     express: input.express,
     expressEnabled: input.expressEnabled,
     dayType: input.dayType,
+    policy: input.policy,
   });
 }
 
@@ -887,12 +917,48 @@ export async function createLaundryTicket(input: {
 }) {
   const now = input.now ?? new Date();
   const policy = await getHkHotelPolicy();
+  const intake = policyFromHkRow(policy);
   const stay = input.reservationId
     ? await prisma.reservation.findUnique({ where: { id: input.reservationId }, include: { guest: true } })
     : await resolveStayForRoom(input.roomId);
   if (!stay) throw new Error('In-house or arriving reservation required');
-  const hasWash = input.lines.some((l) => l.washQty > 0);
-  const hasIron = input.lines.some((l) => l.ironQty > 0);
+  const liveLines = input.lines.filter((l) => l.washQty > 0 || l.ironQty > 0);
+  if (liveLines.length === 0) throw new Error('No laundry lines');
+  const itemIds = liveLines.map((l) => l.itemId);
+  const items = await prisma.laundryItem.findMany({
+    where: { id: { in: itemIds }, active: true },
+  });
+  const byId = new Map(items.map((row) => [row.id, row]));
+  const express = Boolean(input.express);
+  for (const line of liveLines) {
+    const item = byId.get(line.itemId);
+    if (!item) throw new Error('Laundry catalog item missing or inactive');
+    const prices = pickLaundryUnitPrices(
+      {
+        washPrice: item.washPrice == null ? null : decimalToNumber(item.washPrice),
+        ironPrice: item.ironPrice == null ? null : decimalToNumber(item.ironPrice),
+        expressWashPrice: item.expressWashPrice == null ? null : decimalToNumber(item.expressWashPrice),
+        expressIronPrice: item.expressIronPrice == null ? null : decimalToNumber(item.expressIronPrice),
+      },
+      express,
+    );
+    if (line.washQty > 0 && prices.washPrice == null) {
+      throw new Error(
+        express
+          ? `Express wash price is not set for ${item.code}`
+          : `Wash is not offered for ${item.code}`,
+      );
+    }
+    if (line.ironQty > 0 && prices.ironPrice == null) {
+      throw new Error(
+        express
+          ? `Express iron price is not set for ${item.code}`
+          : `Iron is not offered for ${item.code}`,
+      );
+    }
+  }
+  const hasWash = liveLines.some((l) => l.washQty > 0);
+  const hasIron = liveLines.some((l) => l.ironQty > 0);
   let dayType: string | null = null;
   try {
     const days = await getCalendarDaysRange(isoDay(now), isoDay(now));
@@ -904,33 +970,29 @@ export async function createLaundryTicket(input: {
     now,
     hasWash,
     hasIron,
-    express: input.express ?? false,
+    express,
     expressEnabled: policy.laundryExpressEnabled,
     dayType,
+    policy: intake,
   });
   if (blocked) throw new Error(blocked);
-  if (input.express && (policy.laundryExpressPercent == null || policy.laundryExpressPercent <= 0)) {
-    throw new Error('Express surcharge is not configured');
-  }
-  const dueAt = laundryDueAt(now);
+  const dueAt = laundryDueAt(now, intake);
   return prisma.laundryTicket.create({
     data: {
       roomId: input.roomId,
       reservationId: stay.id,
       guestName: input.guestName || stay.guest.fullName,
-      express: input.express ?? false,
+      express,
       status: 'IN_PLANT',
       dueAt,
       lines: {
-        create: input.lines
-          .filter((l) => l.washQty > 0 || l.ironQty > 0)
-          .map((l) => ({
-            itemId: l.itemId,
-            washQty: l.washQty,
-            ironQty: l.ironQty,
-            guestQty: l.washQty + l.ironQty,
-            hotelQty: l.washQty + l.ironQty,
-          })),
+        create: liveLines.map((l) => ({
+          itemId: l.itemId,
+          washQty: l.washQty,
+          ironQty: l.ironQty,
+          guestQty: l.washQty + l.ironQty,
+          hotelQty: l.washQty + l.ironQty,
+        })),
       },
     },
     include: { lines: true },
@@ -956,7 +1018,6 @@ export async function deliverLaundryTicket(input: {
   if (!ticket) throw new Error('Ticket not found');
   if (ticket.status === 'POSTED') return ticket;
   if (ticket.status === 'VOIDED') throw new Error('Ticket is voided');
-  const policy = await getHkHotelPolicy();
   const now = input.now ?? new Date();
   let reservationId = ticket.reservationId;
   if (!reservationId) {
@@ -971,14 +1032,24 @@ export async function deliverLaundryTicket(input: {
     const wash = line.washQty;
     const iron = line.ironQty;
     qty += wash + iron;
-    const amt = laundryLineAmount(
-      wash,
-      iron,
-      decimalToNumber(line.item.washPrice),
-      decimalToNumber(line.item.ironPrice),
+    const prices = pickLaundryUnitPrices(
+      {
+        washPrice: line.item.washPrice == null ? null : decimalToNumber(line.item.washPrice),
+        ironPrice: line.item.ironPrice == null ? null : decimalToNumber(line.item.ironPrice),
+        expressWashPrice:
+          line.item.expressWashPrice == null ? null : decimalToNumber(line.item.expressWashPrice),
+        expressIronPrice:
+          line.item.expressIronPrice == null ? null : decimalToNumber(line.item.expressIronPrice),
+      },
       ticket.express,
-      policy.laundryExpressPercent,
     );
+    if (wash > 0 && prices.washPrice == null) {
+      throw new Error(`Wash price missing for ${line.item.code}`);
+    }
+    if (iron > 0 && prices.ironPrice == null) {
+      throw new Error(`Iron price missing for ${line.item.code}`);
+    }
+    const amt = laundryLineAmount(wash, iron, prices.washPrice, prices.ironPrice);
     total += amt;
     if (wash || iron) summary.push(`${line.item.code} W${wash}/I${iron}`);
     await prisma.laundryTicketLine.update({
@@ -1083,50 +1154,52 @@ export async function saveStayLinenOverride(
   });
 }
 
-export const NAFTA_LAUNDRY_CATALOG: Array<{
-  code: string;
-  name: string;
-  category: string;
-  washPrice: number;
-  ironPrice: number;
-}> = [
-  { code: 'M-TROUSERS', name: 'Men trousers', category: 'MEN', washPrice: 4, ironPrice: 3 },
-  { code: 'M-SHIRT', name: 'Men shirt', category: 'MEN', washPrice: 4, ironPrice: 3 },
-  { code: 'M-TEE', name: 'Men T-shirt', category: 'MEN', washPrice: 3, ironPrice: 2 },
-  { code: 'M-SOCKS', name: 'Men socks', category: 'MEN', washPrice: 0.5, ironPrice: 0 },
-  { code: 'W-SKIRT', name: 'Women skirt', category: 'WOMEN', washPrice: 5, ironPrice: 3 },
-  { code: 'W-DRESS', name: 'Women dress', category: 'WOMEN', washPrice: 10, ironPrice: 5 },
-  { code: 'W-TEE', name: 'Women T-shirt', category: 'WOMEN', washPrice: 3, ironPrice: 2 },
-  { code: 'C-TROUSERS', name: 'Child trousers', category: 'CHILD', washPrice: 2, ironPrice: 1 },
-  { code: 'C-SOCKS', name: 'Child socks', category: 'CHILD', washPrice: 0.5, ironPrice: 0 },
-];
+export { NAFTA_LAUNDRY_CATALOG };
 
+/** Insert missing Nafta blank codes only — never overwrite prices or hand-edited names. */
 export async function ensureNaftaLaundryCatalog() {
   for (const row of NAFTA_LAUNDRY_CATALOG) {
     const existing = await prisma.laundryItem.findFirst({ where: { code: row.code } });
     if (existing) {
-      await prisma.laundryItem.update({
-        where: { id: existing.id },
-        data: {
-          washPrice: toDecimal(row.washPrice),
-          ironPrice: toDecimal(row.ironPrice),
-          name: row.name,
-          category: row.category,
-          active: true,
-        },
-      });
-    } else {
-      await prisma.laundryItem.create({
-        data: {
-          code: row.code,
-          name: row.name,
-          category: row.category,
-          washPrice: toDecimal(row.washPrice),
-          ironPrice: toDecimal(row.ironPrice),
-          active: true,
-        },
-      });
+      const az = existing.nameAz?.trim() ?? '';
+      const ru = existing.nameRu?.trim() ?? '';
+      const en = existing.nameEn?.trim() ?? '';
+      const fallback = existing.name?.trim() ?? '';
+      // Migration copied English `name` into all locales; fill real az/ru/en once.
+      const unlocalized =
+        !az ||
+        !ru ||
+        !en ||
+        (az === fallback && ru === fallback && (en === fallback || !en));
+      if (unlocalized) {
+        await prisma.laundryItem.update({
+          where: { id: existing.id },
+          data: {
+            name: row.nameEn,
+            nameAz: row.nameAz,
+            nameRu: row.nameRu,
+            nameEn: row.nameEn,
+            category: row.category,
+          },
+        });
+      }
+      continue;
     }
+    await prisma.laundryItem.create({
+      data: {
+        code: row.code,
+        name: row.nameEn,
+        nameAz: row.nameAz,
+        nameRu: row.nameRu,
+        nameEn: row.nameEn,
+        category: row.category,
+        washPrice: row.washPrice == null ? null : toDecimal(row.washPrice),
+        ironPrice: row.ironPrice == null ? null : toDecimal(row.ironPrice),
+        expressWashPrice: null,
+        expressIronPrice: null,
+        active: true,
+      },
+    });
   }
 }
 

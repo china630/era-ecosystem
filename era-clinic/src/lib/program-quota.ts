@@ -23,9 +23,13 @@ export type QuotaForInput = {
 
 export class QuotaBelowMinError extends Error {
   readonly status = 400;
+  readonly nights: number;
+  readonly minNights: number;
   constructor(nights: number, minNights: number) {
     super(`Stay nights ${nights} below package minimum ${minNights}`);
     this.name = "QuotaBelowMinError";
+    this.nights = nights;
+    this.minNights = minNights;
   }
 }
 
@@ -100,6 +104,11 @@ export function quotaFor(input: QuotaForInput): number {
   return last.qty;
 }
 
+export type QuotaMode = "FIXED" | "DAILY_RATE";
+
+/** Per-block mode when template quotaMode is DAILY_RATE. */
+export type BlockQuotaMode = "DAILY_RATE" | "WEEKLY" | "PER_STAY";
+
 /** Stay nights from hotel check-in / check-out (UTC date parts). */
 export function nightsBetween(checkIn: Date, checkOut: Date): number {
   const a = Date.UTC(
@@ -113,6 +122,89 @@ export function nightsBetween(checkIn: Date, checkOut: Date): number {
     checkOut.getUTCDate(),
   );
   return Math.max(0, Math.round((b - a) / 86_400_000));
+}
+
+/**
+ * Apply package min/max to raw stay nights. Below min throws; above max clamps.
+ */
+export function clampStayNights(
+  nights: number,
+  minNights?: number | null,
+  maxNights?: number | null,
+): number {
+  return clampNights({
+    knots: [],
+    nights,
+    procedureCode: "",
+    minNights,
+    maxNights,
+  });
+}
+
+/**
+ * Parse quotaPerNight from Prisma Decimal | number | string.
+ */
+export function asQuotaRate(raw: unknown): number | null {
+  if (raw == null || raw === "") return null;
+  if (typeof raw === "object" && raw !== null && "toNumber" in raw) {
+    const n = (raw as { toNumber: () => number }).toNumber();
+    return Number.isFinite(n) ? n : null;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Block DAILY_RATE stay total: ceil(countedNights × fractional rate).
+ * rate ≤ 0 or non-finite → 0.
+ */
+export function dailyRateQuotaTotal(input: {
+  countedNights: number;
+  quotaPerNight: number | null | undefined;
+}): number {
+  const rate = asQuotaRate(input.quotaPerNight);
+  if (rate == null || rate <= 0) return 0;
+  const nights = Math.max(0, Math.floor(input.countedNights));
+  if (nights <= 0) return 0;
+  return Math.ceil(nights * rate);
+}
+
+/**
+ * Block WEEKLY stay total: floor(clampedNights / 7) × quotaPerWeek.
+ */
+export function weeklyQuotaTotal(input: {
+  nights: number;
+  quotaPerWeek: number | null | undefined;
+  minNights?: number | null;
+  maxNights?: number | null;
+}): number {
+  const per = Math.max(0, Math.floor(Number(input.quotaPerWeek) || 0));
+  if (per <= 0) return 0;
+  const clamped = clampStayNights(input.nights, input.minNights, input.maxNights);
+  if (clamped <= 0) return 0;
+  return Math.floor(clamped / 7) * per;
+}
+
+export function resolveQuotaMode(raw: string | null | undefined): QuotaMode {
+  return raw === "DAILY_RATE" ? "DAILY_RATE" : "FIXED";
+}
+
+export function resolveBlockQuotaMode(
+  raw: string | null | undefined,
+  fallback: BlockQuotaMode = "DAILY_RATE",
+): BlockQuotaMode {
+  if (raw === "WEEKLY" || raw === "PER_STAY" || raw === "DAILY_RATE") return raw;
+  return fallback;
+}
+
+/** Default block mode when publishing FIXED → DAILY_RATE. */
+export function defaultBlockQuotaMode(input: {
+  kind?: string | null;
+  quotaBasis?: string | null;
+}): BlockQuotaMode {
+  if (input.kind === "LAB" || input.kind === "EXAM") return "PER_STAY";
+  if (input.quotaBasis === "PER_STAY") return "PER_STAY";
+  return "DAILY_RATE";
 }
 
 /**

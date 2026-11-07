@@ -24,6 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { guestComposedFullName, splitStoredFullName } from '@/lib/guest-identity.shared';
 import { guestIdentityGaps, type IdentityField } from '@/lib/guest-stay-requirements';
 import { pickPrimaryContact, pickPrimaryDocument } from '@/lib/guest-card-primary';
+import { applyGuestPhonePolish } from '@/lib/guest-phone-polish';
 import type { GuestStats, GuestTabId } from '@/components/guest-card/types';
 
 const ReservationCardModal = dynamic(() => import('@/components/ReservationCardModal'), { ssr: false });
@@ -340,7 +341,33 @@ export default function GuestCardModal({
     }
     if ('title' in patch) setTitle(String(patch.title));
     if ('sex' in patch) setSex(String(patch.sex));
-    if ('nationality' in patch) setNationality(String(patch.nationality));
+    if ('nationality' in patch) {
+      const nextNat = String(patch.nationality);
+      setNationality(nextNat);
+      const currentPhone =
+        pickPrimaryContact(contacts, ['MOBILE', 'PHONE', 'WHATSAPP']) ||
+        detailFields.phone ||
+        phone;
+      if (currentPhone.trim()) {
+        const polished = applyGuestPhonePolish(currentPhone, nextNat, (key) => t(key));
+        if (polished.status === 'polished' || polished.display !== currentPhone) {
+          setPhone(polished.display);
+          setDetailFields((f) => ({ ...f, phone: polished.display }));
+          if (polished.status === 'polished') {
+            setContacts((rows) => {
+              const kinds = new Set(['MOBILE', 'PHONE', 'WHATSAPP']);
+              const hit =
+                rows.find((r) => kinds.has(r.kind.toUpperCase()) && r.isPrimary) ??
+                rows.find((r) => kinds.has(r.kind.toUpperCase()) && r.value.trim());
+              if (!hit) return rows;
+              return rows.map((r) =>
+                r.id === hit.id ? { ...r, value: polished.display } : r,
+              );
+            });
+          }
+        }
+      }
+    }
     if ('vipType' in patch) setVipType(String(patch.vipType));
     if ('loyaltyTier' in patch) setLoyaltyTier(String(patch.loyaltyTier));
     if ('greyList' in patch) setGreyList(Boolean(patch.greyList));
@@ -384,10 +411,30 @@ export default function GuestCardModal({
     return true;
   }
 
+  function polishPhoneForSave(raw: string | null | undefined): string | null {
+    if (!raw?.trim()) return null;
+    const polished = applyGuestPhonePolish(raw, nationality, (key) => t(key));
+    if (polished.status === 'polished') {
+      setPhone(polished.display);
+      setDetailFields((f) => ({ ...f, phone: polished.display }));
+    }
+    return polished.display || null;
+  }
+
+  function onDraftPhoneBlur() {
+    if (!phone.trim()) return;
+    const polished = applyGuestPhonePolish(phone, nationality, (key) => t(key));
+    if (polished.status === 'polished' || polished.display !== phone) {
+      setPhone(polished.display);
+      setDetailFields((f) => ({ ...f, phone: polished.display }));
+    }
+  }
+
   async function saveCreate() {
     if (rejectIncompleteIdentity()) return;
     setBusy(true);
     try {
+      const phoneOut = polishPhoneForSave(phone);
       const res = await fetch('/api/guests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -402,7 +449,7 @@ export default function GuestCardModal({
           sex: sex || null,
           birthDate: detailFields.birthDate || null,
           nationality,
-          phone: phone || null,
+          phone: phoneOut,
           email: email || null,
           vipType: vipType || null,
           nationalIdFin: transientIdentity.nationalIdFin || null,
@@ -444,6 +491,9 @@ export default function GuestCardModal({
       const emailFromList = pickPrimaryContact(contacts, ['EMAIL']);
       const finFromList = pickPrimaryDocument(documents, ['ID_CARD', 'FIN', 'NATIONAL_ID']);
       const passFromList = pickPrimaryDocument(documents, ['PASSPORT']);
+      const phoneOut = polishPhoneForSave(
+        phoneFromList || detailFields.phone || phone || null,
+      );
       const res = await fetch(`/api/guests/${activeId}/full`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -455,7 +505,7 @@ export default function GuestCardModal({
           title: title || null,
           sex: sex || null,
           nationality,
-          phone: phoneFromList || detailFields.phone || phone || null,
+          phone: phoneOut,
           email: emailFromList || detailFields.email || email || null,
           vipType: vipType || null,
           greyList,
@@ -725,6 +775,8 @@ export default function GuestCardModal({
                     callBack={callBack}
                     draftPhone={phone}
                     draftEmail={email}
+                    nationality={nationality}
+                    onDraftPhoneBlur={onDraftPhoneBlur}
                     onDraftChange={(patch) => {
                       if (patch.phone != null) {
                         setPhone(patch.phone);

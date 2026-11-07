@@ -945,6 +945,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               anyPermission: [PERMISSIONS.SCREEN_HK, PERMISSIONS.SCREEN_SETTINGS],
             },
             {
+              id: 'set-laundry-catalog',
+              href: '/settings/laundry-catalog',
+              labelKey: 'laundryCatalog',
+              icon: Package,
+              permission: PERMISSIONS.SCREEN_HK,
+            },
+            {
               id: 'set-accounts',
               labelKey: 'accounts',
               icon: Users,

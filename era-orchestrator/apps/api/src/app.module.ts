@@ -34,6 +34,7 @@ import { KafeModule } from "./kafe/kafe.module";
 import { VendorsModule } from "./vendors/vendors.module";
 import { StructureModule } from "./structure/structure.module";
 import { ChannelsModule } from "./channels/channels.module";
+import { CommsModule } from "./comms/comms.module";
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { ChannelsModule } from "./channels/channels.module";
     VendorsModule,
     StructureModule,
     ChannelsModule,
+    CommsModule,
   ],
   controllers: [AppController],
   providers: [

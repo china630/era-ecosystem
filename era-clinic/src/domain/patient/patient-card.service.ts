@@ -23,6 +23,7 @@ import { printLabel } from "@/domain/print/print-labels";
 import type { PrintLang } from "@/domain/print/print-types";
 import { labOrderVisibleToLabWhere } from "@/domain/lab/lab-order-pay-gate";
 import { listPendingDiagnostics } from "@/domain/sanatorium/diagnostics-extras.service";
+import { compareOpenUnseatedFirst } from "@/domain/procedure/open-attendance-order";
 
 const RESULT_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
 const PENDING_LAB_STATUSES = new Set(["ORDERED", "COLLECTED", "IN_PROGRESS"]);
@@ -184,8 +185,17 @@ function groupDays(
   return sortedKeys.map((date) => ({
     date,
     labelHint: date === todayKey ? "today" : date > todayKey ? "upcoming" : "past",
-    events: (dayMap.get(date) ?? []).sort(
-      (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
+    events: (dayMap.get(date) ?? []).sort((a, b) =>
+      compareOpenUnseatedFirst(
+        {
+          openUnseated: Boolean(a.openAttendance),
+          atMs: new Date(a.at).getTime(),
+        },
+        {
+          openUnseated: Boolean(b.openAttendance),
+          atMs: new Date(b.at).getTime(),
+        },
+      ),
     ),
   }));
 }
@@ -282,6 +292,7 @@ export async function getPatientCardSummary(
         patientRefId,
         ...episodeFilter,
         status: "PROPOSED",
+        NOT: { inPackage: true, resourceId: null },
       },
       include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
@@ -745,7 +756,7 @@ export async function getPatientPlanPage(
     ],
   };
 
-  const [total, rows, unplacedRows] = await Promise.all([
+  const [total, rows] = await Promise.all([
     prisma.procedureOrder.count({ where }),
     prisma.procedureOrder.findMany({
       where,
@@ -753,12 +764,8 @@ export async function getPatientPlanPage(
       orderBy: { scheduledAt: "asc" },
       ...(paged ? { skip: offset, take: limit } : {}),
     }),
-    prisma.procedureOrder.findMany({
-      where: { patientRefId, ...episodeFilter, ...unseatedPackage },
-      include: PROCEDURE_PHYSIO_INCLUDE,
-      orderBy: { procedureCode: "asc" },
-    }),
   ]);
+  const unplacedRows: typeof rows = [];
 
   const catalogNames = await loadCatalogDisplayNameMap(
     [...rows, ...unplacedRows].map((row) => row.procedureCode),

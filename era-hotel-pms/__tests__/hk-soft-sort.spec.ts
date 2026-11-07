@@ -26,13 +26,27 @@ describe('laundryTicketAmount', () => {
     ).toBe(16);
   });
 
-  it('applies express surcharge when enabled', () => {
+  it('uses express unit prices when express is on', () => {
     expect(
-      laundryTicketAmount([{ washQty: 1, ironQty: 0, item: { washPrice: 10, ironPrice: 0 } }], {
-        express: true,
-        expressPercent: 50,
-      }),
+      laundryTicketAmount(
+        [
+          {
+            washQty: 1,
+            ironQty: 0,
+            item: { washPrice: 10, ironPrice: null, expressWashPrice: 15, expressIronPrice: null },
+          },
+        ],
+        { express: true },
+      ),
     ).toBe(15);
+  });
+
+  it('skips qty when that service price is null (not offered)', () => {
+    expect(
+      laundryTicketAmount([
+        { washQty: 2, ironQty: 1, item: { washPrice: null, ironPrice: 3 } },
+      ]),
+    ).toBe(3);
   });
 
   it('returns 0 for empty lines', () => {

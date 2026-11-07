@@ -400,6 +400,21 @@ export type OrgPaymentMethod = $Result.DefaultSelection<Prisma.$OrgPaymentMethod
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model CommsThread
+ * Org-scoped Control Home messaging (CP-COMMS-01). Not satellite integration channels.
+ */
+export type CommsThread = $Result.DefaultSelection<Prisma.$CommsThreadPayload>
+/**
+ * Model CommsMessage
+ * 
+ */
+export type CommsMessage = $Result.DefaultSelection<Prisma.$CommsMessagePayload>
+/**
+ * Model CommsParticipant
+ * 
+ */
+export type CommsParticipant = $Result.DefaultSelection<Prisma.$CommsParticipantPayload>
+/**
  * Model Holding
  * Multi-entity holding group (control-plane SoT). Distinct from DEPARTMENT parentOrgId routing.
  */
@@ -718,7 +733,8 @@ export type NotificationMessageClass = (typeof NotificationMessageClass)[keyof t
 export const NotificationChannel: {
   EMAIL: 'EMAIL',
   WHATSAPP: 'WHATSAPP',
-  SMS: 'SMS'
+  SMS: 'SMS',
+  IN_APP: 'IN_APP'
 };
 
 export type NotificationChannel = (typeof NotificationChannel)[keyof typeof NotificationChannel]
@@ -2455,6 +2471,36 @@ export class PrismaClient<
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.commsThread`: Exposes CRUD operations for the **CommsThread** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CommsThreads
+    * const commsThreads = await prisma.commsThread.findMany()
+    * ```
+    */
+  get commsThread(): Prisma.CommsThreadDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.commsMessage`: Exposes CRUD operations for the **CommsMessage** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CommsMessages
+    * const commsMessages = await prisma.commsMessage.findMany()
+    * ```
+    */
+  get commsMessage(): Prisma.CommsMessageDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.commsParticipant`: Exposes CRUD operations for the **CommsParticipant** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CommsParticipants
+    * const commsParticipants = await prisma.commsParticipant.findMany()
+    * ```
+    */
+  get commsParticipant(): Prisma.CommsParticipantDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.holding`: Exposes CRUD operations for the **Holding** model.
     * Example usage:
     * ```ts
@@ -3294,6 +3340,9 @@ export namespace Prisma {
     FiscalHardwareDevice: 'FiscalHardwareDevice',
     OrgPaymentMethod: 'OrgPaymentMethod',
     User: 'User',
+    CommsThread: 'CommsThread',
+    CommsMessage: 'CommsMessage',
+    CommsParticipant: 'CommsParticipant',
     Holding: 'Holding',
     HoldingMembership: 'HoldingMembership',
     OrganizationRole: 'OrganizationRole',
@@ -3342,7 +3391,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "organizationSatelliteChannel" | "billingInvoiceItem" | "organizationModuleGrace" | "commercialOutlet" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationProfile" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "orgPaymentMethod" | "user" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "organizationSatelliteChannel" | "billingInvoiceItem" | "organizationModuleGrace" | "commercialOutlet" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationProfile" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "orgPaymentMethod" | "user" | "commsThread" | "commsMessage" | "commsParticipant" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -9044,6 +9093,228 @@ export namespace Prisma {
           }
         }
       }
+      CommsThread: {
+        payload: Prisma.$CommsThreadPayload<ExtArgs>
+        fields: Prisma.CommsThreadFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CommsThreadFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CommsThreadFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>
+          }
+          findFirst: {
+            args: Prisma.CommsThreadFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CommsThreadFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>
+          }
+          findMany: {
+            args: Prisma.CommsThreadFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>[]
+          }
+          create: {
+            args: Prisma.CommsThreadCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>
+          }
+          createMany: {
+            args: Prisma.CommsThreadCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CommsThreadCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>[]
+          }
+          delete: {
+            args: Prisma.CommsThreadDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>
+          }
+          update: {
+            args: Prisma.CommsThreadUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>
+          }
+          deleteMany: {
+            args: Prisma.CommsThreadDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CommsThreadUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CommsThreadUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>[]
+          }
+          upsert: {
+            args: Prisma.CommsThreadUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsThreadPayload>
+          }
+          aggregate: {
+            args: Prisma.CommsThreadAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCommsThread>
+          }
+          groupBy: {
+            args: Prisma.CommsThreadGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CommsThreadGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CommsThreadCountArgs<ExtArgs>
+            result: $Utils.Optional<CommsThreadCountAggregateOutputType> | number
+          }
+        }
+      }
+      CommsMessage: {
+        payload: Prisma.$CommsMessagePayload<ExtArgs>
+        fields: Prisma.CommsMessageFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CommsMessageFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CommsMessageFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>
+          }
+          findFirst: {
+            args: Prisma.CommsMessageFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CommsMessageFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>
+          }
+          findMany: {
+            args: Prisma.CommsMessageFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>[]
+          }
+          create: {
+            args: Prisma.CommsMessageCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>
+          }
+          createMany: {
+            args: Prisma.CommsMessageCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CommsMessageCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>[]
+          }
+          delete: {
+            args: Prisma.CommsMessageDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>
+          }
+          update: {
+            args: Prisma.CommsMessageUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>
+          }
+          deleteMany: {
+            args: Prisma.CommsMessageDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CommsMessageUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CommsMessageUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>[]
+          }
+          upsert: {
+            args: Prisma.CommsMessageUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsMessagePayload>
+          }
+          aggregate: {
+            args: Prisma.CommsMessageAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCommsMessage>
+          }
+          groupBy: {
+            args: Prisma.CommsMessageGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CommsMessageGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CommsMessageCountArgs<ExtArgs>
+            result: $Utils.Optional<CommsMessageCountAggregateOutputType> | number
+          }
+        }
+      }
+      CommsParticipant: {
+        payload: Prisma.$CommsParticipantPayload<ExtArgs>
+        fields: Prisma.CommsParticipantFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CommsParticipantFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CommsParticipantFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>
+          }
+          findFirst: {
+            args: Prisma.CommsParticipantFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CommsParticipantFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>
+          }
+          findMany: {
+            args: Prisma.CommsParticipantFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>[]
+          }
+          create: {
+            args: Prisma.CommsParticipantCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>
+          }
+          createMany: {
+            args: Prisma.CommsParticipantCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CommsParticipantCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>[]
+          }
+          delete: {
+            args: Prisma.CommsParticipantDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>
+          }
+          update: {
+            args: Prisma.CommsParticipantUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>
+          }
+          deleteMany: {
+            args: Prisma.CommsParticipantDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CommsParticipantUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CommsParticipantUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>[]
+          }
+          upsert: {
+            args: Prisma.CommsParticipantUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommsParticipantPayload>
+          }
+          aggregate: {
+            args: Prisma.CommsParticipantAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCommsParticipant>
+          }
+          groupBy: {
+            args: Prisma.CommsParticipantGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CommsParticipantGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CommsParticipantCountArgs<ExtArgs>
+            result: $Utils.Optional<CommsParticipantCountAggregateOutputType> | number
+          }
+        }
+      }
       Holding: {
         payload: Prisma.$HoldingPayload<ExtArgs>
         fields: Prisma.HoldingFieldRefs
@@ -11671,6 +11942,9 @@ export namespace Prisma {
     fiscalHardwareDevice?: FiscalHardwareDeviceOmit
     orgPaymentMethod?: OrgPaymentMethodOmit
     user?: UserOmit
+    commsThread?: CommsThreadOmit
+    commsMessage?: CommsMessageOmit
+    commsParticipant?: CommsParticipantOmit
     holding?: HoldingOmit
     holdingMembership?: HoldingMembershipOmit
     organizationRole?: OrganizationRoleOmit
@@ -12931,6 +13205,7 @@ export namespace Prisma {
     moduleGraces: number
     channelsFrom: number
     channelsTo: number
+    commsThreads: number
     workforceAssignments: number
     workforceEmployments: number
     workforceTimesheets: number
@@ -12990,6 +13265,7 @@ export namespace Prisma {
     moduleGraces?: boolean | OrganizationCountOutputTypeCountModuleGracesArgs
     channelsFrom?: boolean | OrganizationCountOutputTypeCountChannelsFromArgs
     channelsTo?: boolean | OrganizationCountOutputTypeCountChannelsToArgs
+    commsThreads?: boolean | OrganizationCountOutputTypeCountCommsThreadsArgs
     workforceAssignments?: boolean | OrganizationCountOutputTypeCountWorkforceAssignmentsArgs
     workforceEmployments?: boolean | OrganizationCountOutputTypeCountWorkforceEmploymentsArgs
     workforceTimesheets?: boolean | OrganizationCountOutputTypeCountWorkforceTimesheetsArgs
@@ -13231,6 +13507,13 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountChannelsToArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrganizationSatelliteChannelWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountCommsThreadsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsThreadWhereInput
   }
 
   /**
@@ -13506,6 +13789,9 @@ export namespace Prisma {
     ownedOrganizations: number
     holdings: number
     holdingMemberships: number
+    commsThreadsAuthored: number
+    commsMessagesAuthored: number
+    commsParticipations: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13516,6 +13802,9 @@ export namespace Prisma {
     ownedOrganizations?: boolean | UserCountOutputTypeCountOwnedOrganizationsArgs
     holdings?: boolean | UserCountOutputTypeCountHoldingsArgs
     holdingMemberships?: boolean | UserCountOutputTypeCountHoldingMembershipsArgs
+    commsThreadsAuthored?: boolean | UserCountOutputTypeCountCommsThreadsAuthoredArgs
+    commsMessagesAuthored?: boolean | UserCountOutputTypeCountCommsMessagesAuthoredArgs
+    commsParticipations?: boolean | UserCountOutputTypeCountCommsParticipationsArgs
   }
 
   // Custom InputTypes
@@ -13576,6 +13865,67 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountHoldingMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: HoldingMembershipWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCommsThreadsAuthoredArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsThreadWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCommsMessagesAuthoredArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsMessageWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCommsParticipationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsParticipantWhereInput
+  }
+
+
+  /**
+   * Count Type CommsThreadCountOutputType
+   */
+
+  export type CommsThreadCountOutputType = {
+    messages: number
+    participants: number
+  }
+
+  export type CommsThreadCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    messages?: boolean | CommsThreadCountOutputTypeCountMessagesArgs
+    participants?: boolean | CommsThreadCountOutputTypeCountParticipantsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CommsThreadCountOutputType without action
+   */
+  export type CommsThreadCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThreadCountOutputType
+     */
+    select?: CommsThreadCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CommsThreadCountOutputType without action
+   */
+  export type CommsThreadCountOutputTypeCountMessagesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsMessageWhereInput
+  }
+
+  /**
+   * CommsThreadCountOutputType without action
+   */
+  export type CommsThreadCountOutputTypeCountParticipantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsParticipantWhereInput
   }
 
 
@@ -94790,6 +95140,7 @@ export namespace Prisma {
     moduleGraces?: boolean | Organization$moduleGracesArgs<ExtArgs>
     channelsFrom?: boolean | Organization$channelsFromArgs<ExtArgs>
     channelsTo?: boolean | Organization$channelsToArgs<ExtArgs>
+    commsThreads?: boolean | Organization$commsThreadsArgs<ExtArgs>
     workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     workforceEmployments?: boolean | Organization$workforceEmploymentsArgs<ExtArgs>
     workforceTimesheets?: boolean | Organization$workforceTimesheetsArgs<ExtArgs>
@@ -94955,6 +95306,7 @@ export namespace Prisma {
     moduleGraces?: boolean | Organization$moduleGracesArgs<ExtArgs>
     channelsFrom?: boolean | Organization$channelsFromArgs<ExtArgs>
     channelsTo?: boolean | Organization$channelsToArgs<ExtArgs>
+    commsThreads?: boolean | Organization$commsThreadsArgs<ExtArgs>
     workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     workforceEmployments?: boolean | Organization$workforceEmploymentsArgs<ExtArgs>
     workforceTimesheets?: boolean | Organization$workforceTimesheetsArgs<ExtArgs>
@@ -95035,6 +95387,7 @@ export namespace Prisma {
       moduleGraces: Prisma.$OrganizationModuleGracePayload<ExtArgs>[]
       channelsFrom: Prisma.$OrganizationSatelliteChannelPayload<ExtArgs>[]
       channelsTo: Prisma.$OrganizationSatelliteChannelPayload<ExtArgs>[]
+      commsThreads: Prisma.$CommsThreadPayload<ExtArgs>[]
       workforceAssignments: Prisma.$WorkforceAssignmentPayload<ExtArgs>[]
       workforceEmployments: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
       workforceTimesheets: Prisma.$WorkforceTimesheetPayload<ExtArgs>[]
@@ -95531,6 +95884,7 @@ export namespace Prisma {
     moduleGraces<T extends Organization$moduleGracesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$moduleGracesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationModuleGracePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     channelsFrom<T extends Organization$channelsFromArgs<ExtArgs> = {}>(args?: Subset<T, Organization$channelsFromArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     channelsTo<T extends Organization$channelsToArgs<ExtArgs> = {}>(args?: Subset<T, Organization$channelsToArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    commsThreads<T extends Organization$commsThreadsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$commsThreadsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceAssignments<T extends Organization$workforceAssignmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceEmployments<T extends Organization$workforceEmploymentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceEmploymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workforceTimesheets<T extends Organization$workforceTimesheetsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceTimesheetsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceTimesheetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -96734,6 +97088,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: OrganizationSatelliteChannelScalarFieldEnum | OrganizationSatelliteChannelScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.commsThreads
+   */
+  export type Organization$commsThreadsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    where?: CommsThreadWhereInput
+    orderBy?: CommsThreadOrderByWithRelationInput | CommsThreadOrderByWithRelationInput[]
+    cursor?: CommsThreadWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CommsThreadScalarFieldEnum | CommsThreadScalarFieldEnum[]
   }
 
   /**
@@ -106122,6 +106500,9 @@ export namespace Prisma {
     ownedOrganizations?: boolean | User$ownedOrganizationsArgs<ExtArgs>
     holdings?: boolean | User$holdingsArgs<ExtArgs>
     holdingMemberships?: boolean | User$holdingMembershipsArgs<ExtArgs>
+    commsThreadsAuthored?: boolean | User$commsThreadsAuthoredArgs<ExtArgs>
+    commsMessagesAuthored?: boolean | User$commsMessagesAuthoredArgs<ExtArgs>
+    commsParticipations?: boolean | User$commsParticipationsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -106167,6 +106548,9 @@ export namespace Prisma {
     ownedOrganizations?: boolean | User$ownedOrganizationsArgs<ExtArgs>
     holdings?: boolean | User$holdingsArgs<ExtArgs>
     holdingMemberships?: boolean | User$holdingMembershipsArgs<ExtArgs>
+    commsThreadsAuthored?: boolean | User$commsThreadsAuthoredArgs<ExtArgs>
+    commsMessagesAuthored?: boolean | User$commsMessagesAuthoredArgs<ExtArgs>
+    commsParticipations?: boolean | User$commsParticipationsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -106182,6 +106566,9 @@ export namespace Prisma {
       ownedOrganizations: Prisma.$OrganizationPayload<ExtArgs>[]
       holdings: Prisma.$HoldingPayload<ExtArgs>[]
       holdingMemberships: Prisma.$HoldingMembershipPayload<ExtArgs>[]
+      commsThreadsAuthored: Prisma.$CommsThreadPayload<ExtArgs>[]
+      commsMessagesAuthored: Prisma.$CommsMessagePayload<ExtArgs>[]
+      commsParticipations: Prisma.$CommsParticipantPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -106593,6 +106980,9 @@ export namespace Prisma {
     ownedOrganizations<T extends User$ownedOrganizationsArgs<ExtArgs> = {}>(args?: Subset<T, User$ownedOrganizationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     holdings<T extends User$holdingsArgs<ExtArgs> = {}>(args?: Subset<T, User$holdingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     holdingMemberships<T extends User$holdingMembershipsArgs<ExtArgs> = {}>(args?: Subset<T, User$holdingMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    commsThreadsAuthored<T extends User$commsThreadsAuthoredArgs<ExtArgs> = {}>(args?: Subset<T, User$commsThreadsAuthoredArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    commsMessagesAuthored<T extends User$commsMessagesAuthoredArgs<ExtArgs> = {}>(args?: Subset<T, User$commsMessagesAuthoredArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    commsParticipations<T extends User$commsParticipationsArgs<ExtArgs> = {}>(args?: Subset<T, User$commsParticipationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -107191,6 +107581,78 @@ export namespace Prisma {
   }
 
   /**
+   * User.commsThreadsAuthored
+   */
+  export type User$commsThreadsAuthoredArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    where?: CommsThreadWhereInput
+    orderBy?: CommsThreadOrderByWithRelationInput | CommsThreadOrderByWithRelationInput[]
+    cursor?: CommsThreadWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CommsThreadScalarFieldEnum | CommsThreadScalarFieldEnum[]
+  }
+
+  /**
+   * User.commsMessagesAuthored
+   */
+  export type User$commsMessagesAuthoredArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    where?: CommsMessageWhereInput
+    orderBy?: CommsMessageOrderByWithRelationInput | CommsMessageOrderByWithRelationInput[]
+    cursor?: CommsMessageWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CommsMessageScalarFieldEnum | CommsMessageScalarFieldEnum[]
+  }
+
+  /**
+   * User.commsParticipations
+   */
+  export type User$commsParticipationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    where?: CommsParticipantWhereInput
+    orderBy?: CommsParticipantOrderByWithRelationInput | CommsParticipantOrderByWithRelationInput[]
+    cursor?: CommsParticipantWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CommsParticipantScalarFieldEnum | CommsParticipantScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -107206,6 +107668,3290 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CommsThread
+   */
+
+  export type AggregateCommsThread = {
+    _count: CommsThreadCountAggregateOutputType | null
+    _min: CommsThreadMinAggregateOutputType | null
+    _max: CommsThreadMaxAggregateOutputType | null
+  }
+
+  export type CommsThreadMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    subject: string | null
+    authorUserId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CommsThreadMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    subject: string | null
+    authorUserId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CommsThreadCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    subject: number
+    authorUserId: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CommsThreadMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    subject?: true
+    authorUserId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CommsThreadMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    subject?: true
+    authorUserId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CommsThreadCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    subject?: true
+    authorUserId?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CommsThreadAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CommsThread to aggregate.
+     */
+    where?: CommsThreadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsThreads to fetch.
+     */
+    orderBy?: CommsThreadOrderByWithRelationInput | CommsThreadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CommsThreadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsThreads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsThreads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CommsThreads
+    **/
+    _count?: true | CommsThreadCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CommsThreadMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CommsThreadMaxAggregateInputType
+  }
+
+  export type GetCommsThreadAggregateType<T extends CommsThreadAggregateArgs> = {
+        [P in keyof T & keyof AggregateCommsThread]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCommsThread[P]>
+      : GetScalarType<T[P], AggregateCommsThread[P]>
+  }
+
+
+
+
+  export type CommsThreadGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsThreadWhereInput
+    orderBy?: CommsThreadOrderByWithAggregationInput | CommsThreadOrderByWithAggregationInput[]
+    by: CommsThreadScalarFieldEnum[] | CommsThreadScalarFieldEnum
+    having?: CommsThreadScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CommsThreadCountAggregateInputType | true
+    _min?: CommsThreadMinAggregateInputType
+    _max?: CommsThreadMaxAggregateInputType
+  }
+
+  export type CommsThreadGroupByOutputType = {
+    id: string
+    organizationId: string
+    subject: string
+    authorUserId: string
+    createdAt: Date
+    updatedAt: Date
+    _count: CommsThreadCountAggregateOutputType | null
+    _min: CommsThreadMinAggregateOutputType | null
+    _max: CommsThreadMaxAggregateOutputType | null
+  }
+
+  type GetCommsThreadGroupByPayload<T extends CommsThreadGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CommsThreadGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CommsThreadGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CommsThreadGroupByOutputType[P]>
+            : GetScalarType<T[P], CommsThreadGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CommsThreadSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    subject?: boolean
+    authorUserId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+    messages?: boolean | CommsThread$messagesArgs<ExtArgs>
+    participants?: boolean | CommsThread$participantsArgs<ExtArgs>
+    _count?: boolean | CommsThreadCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsThread"]>
+
+  export type CommsThreadSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    subject?: boolean
+    authorUserId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsThread"]>
+
+  export type CommsThreadSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    subject?: boolean
+    authorUserId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsThread"]>
+
+  export type CommsThreadSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    subject?: boolean
+    authorUserId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CommsThreadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "subject" | "authorUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["commsThread"]>
+  export type CommsThreadInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+    messages?: boolean | CommsThread$messagesArgs<ExtArgs>
+    participants?: boolean | CommsThread$participantsArgs<ExtArgs>
+    _count?: boolean | CommsThreadCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CommsThreadIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CommsThreadIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $CommsThreadPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CommsThread"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      author: Prisma.$UserPayload<ExtArgs>
+      messages: Prisma.$CommsMessagePayload<ExtArgs>[]
+      participants: Prisma.$CommsParticipantPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      subject: string
+      authorUserId: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["commsThread"]>
+    composites: {}
+  }
+
+  type CommsThreadGetPayload<S extends boolean | null | undefined | CommsThreadDefaultArgs> = $Result.GetResult<Prisma.$CommsThreadPayload, S>
+
+  type CommsThreadCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CommsThreadFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CommsThreadCountAggregateInputType | true
+    }
+
+  export interface CommsThreadDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CommsThread'], meta: { name: 'CommsThread' } }
+    /**
+     * Find zero or one CommsThread that matches the filter.
+     * @param {CommsThreadFindUniqueArgs} args - Arguments to find a CommsThread
+     * @example
+     * // Get one CommsThread
+     * const commsThread = await prisma.commsThread.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CommsThreadFindUniqueArgs>(args: SelectSubset<T, CommsThreadFindUniqueArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CommsThread that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CommsThreadFindUniqueOrThrowArgs} args - Arguments to find a CommsThread
+     * @example
+     * // Get one CommsThread
+     * const commsThread = await prisma.commsThread.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CommsThreadFindUniqueOrThrowArgs>(args: SelectSubset<T, CommsThreadFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CommsThread that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsThreadFindFirstArgs} args - Arguments to find a CommsThread
+     * @example
+     * // Get one CommsThread
+     * const commsThread = await prisma.commsThread.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CommsThreadFindFirstArgs>(args?: SelectSubset<T, CommsThreadFindFirstArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CommsThread that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsThreadFindFirstOrThrowArgs} args - Arguments to find a CommsThread
+     * @example
+     * // Get one CommsThread
+     * const commsThread = await prisma.commsThread.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CommsThreadFindFirstOrThrowArgs>(args?: SelectSubset<T, CommsThreadFindFirstOrThrowArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CommsThreads that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsThreadFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CommsThreads
+     * const commsThreads = await prisma.commsThread.findMany()
+     * 
+     * // Get first 10 CommsThreads
+     * const commsThreads = await prisma.commsThread.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const commsThreadWithIdOnly = await prisma.commsThread.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CommsThreadFindManyArgs>(args?: SelectSubset<T, CommsThreadFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CommsThread.
+     * @param {CommsThreadCreateArgs} args - Arguments to create a CommsThread.
+     * @example
+     * // Create one CommsThread
+     * const CommsThread = await prisma.commsThread.create({
+     *   data: {
+     *     // ... data to create a CommsThread
+     *   }
+     * })
+     * 
+     */
+    create<T extends CommsThreadCreateArgs>(args: SelectSubset<T, CommsThreadCreateArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CommsThreads.
+     * @param {CommsThreadCreateManyArgs} args - Arguments to create many CommsThreads.
+     * @example
+     * // Create many CommsThreads
+     * const commsThread = await prisma.commsThread.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CommsThreadCreateManyArgs>(args?: SelectSubset<T, CommsThreadCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CommsThreads and returns the data saved in the database.
+     * @param {CommsThreadCreateManyAndReturnArgs} args - Arguments to create many CommsThreads.
+     * @example
+     * // Create many CommsThreads
+     * const commsThread = await prisma.commsThread.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CommsThreads and only return the `id`
+     * const commsThreadWithIdOnly = await prisma.commsThread.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CommsThreadCreateManyAndReturnArgs>(args?: SelectSubset<T, CommsThreadCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CommsThread.
+     * @param {CommsThreadDeleteArgs} args - Arguments to delete one CommsThread.
+     * @example
+     * // Delete one CommsThread
+     * const CommsThread = await prisma.commsThread.delete({
+     *   where: {
+     *     // ... filter to delete one CommsThread
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CommsThreadDeleteArgs>(args: SelectSubset<T, CommsThreadDeleteArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CommsThread.
+     * @param {CommsThreadUpdateArgs} args - Arguments to update one CommsThread.
+     * @example
+     * // Update one CommsThread
+     * const commsThread = await prisma.commsThread.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CommsThreadUpdateArgs>(args: SelectSubset<T, CommsThreadUpdateArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CommsThreads.
+     * @param {CommsThreadDeleteManyArgs} args - Arguments to filter CommsThreads to delete.
+     * @example
+     * // Delete a few CommsThreads
+     * const { count } = await prisma.commsThread.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CommsThreadDeleteManyArgs>(args?: SelectSubset<T, CommsThreadDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CommsThreads.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsThreadUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CommsThreads
+     * const commsThread = await prisma.commsThread.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CommsThreadUpdateManyArgs>(args: SelectSubset<T, CommsThreadUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CommsThreads and returns the data updated in the database.
+     * @param {CommsThreadUpdateManyAndReturnArgs} args - Arguments to update many CommsThreads.
+     * @example
+     * // Update many CommsThreads
+     * const commsThread = await prisma.commsThread.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CommsThreads and only return the `id`
+     * const commsThreadWithIdOnly = await prisma.commsThread.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CommsThreadUpdateManyAndReturnArgs>(args: SelectSubset<T, CommsThreadUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CommsThread.
+     * @param {CommsThreadUpsertArgs} args - Arguments to update or create a CommsThread.
+     * @example
+     * // Update or create a CommsThread
+     * const commsThread = await prisma.commsThread.upsert({
+     *   create: {
+     *     // ... data to create a CommsThread
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CommsThread we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CommsThreadUpsertArgs>(args: SelectSubset<T, CommsThreadUpsertArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CommsThreads.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsThreadCountArgs} args - Arguments to filter CommsThreads to count.
+     * @example
+     * // Count the number of CommsThreads
+     * const count = await prisma.commsThread.count({
+     *   where: {
+     *     // ... the filter for the CommsThreads we want to count
+     *   }
+     * })
+    **/
+    count<T extends CommsThreadCountArgs>(
+      args?: Subset<T, CommsThreadCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CommsThreadCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CommsThread.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsThreadAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CommsThreadAggregateArgs>(args: Subset<T, CommsThreadAggregateArgs>): Prisma.PrismaPromise<GetCommsThreadAggregateType<T>>
+
+    /**
+     * Group by CommsThread.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsThreadGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CommsThreadGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CommsThreadGroupByArgs['orderBy'] }
+        : { orderBy?: CommsThreadGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CommsThreadGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCommsThreadGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CommsThread model
+   */
+  readonly fields: CommsThreadFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CommsThread.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CommsThreadClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    author<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    messages<T extends CommsThread$messagesArgs<ExtArgs> = {}>(args?: Subset<T, CommsThread$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    participants<T extends CommsThread$participantsArgs<ExtArgs> = {}>(args?: Subset<T, CommsThread$participantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CommsThread model
+   */
+  interface CommsThreadFieldRefs {
+    readonly id: FieldRef<"CommsThread", 'String'>
+    readonly organizationId: FieldRef<"CommsThread", 'String'>
+    readonly subject: FieldRef<"CommsThread", 'String'>
+    readonly authorUserId: FieldRef<"CommsThread", 'String'>
+    readonly createdAt: FieldRef<"CommsThread", 'DateTime'>
+    readonly updatedAt: FieldRef<"CommsThread", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CommsThread findUnique
+   */
+  export type CommsThreadFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsThread to fetch.
+     */
+    where: CommsThreadWhereUniqueInput
+  }
+
+  /**
+   * CommsThread findUniqueOrThrow
+   */
+  export type CommsThreadFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsThread to fetch.
+     */
+    where: CommsThreadWhereUniqueInput
+  }
+
+  /**
+   * CommsThread findFirst
+   */
+  export type CommsThreadFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsThread to fetch.
+     */
+    where?: CommsThreadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsThreads to fetch.
+     */
+    orderBy?: CommsThreadOrderByWithRelationInput | CommsThreadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CommsThreads.
+     */
+    cursor?: CommsThreadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsThreads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsThreads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsThreads.
+     */
+    distinct?: CommsThreadScalarFieldEnum | CommsThreadScalarFieldEnum[]
+  }
+
+  /**
+   * CommsThread findFirstOrThrow
+   */
+  export type CommsThreadFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsThread to fetch.
+     */
+    where?: CommsThreadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsThreads to fetch.
+     */
+    orderBy?: CommsThreadOrderByWithRelationInput | CommsThreadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CommsThreads.
+     */
+    cursor?: CommsThreadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsThreads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsThreads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsThreads.
+     */
+    distinct?: CommsThreadScalarFieldEnum | CommsThreadScalarFieldEnum[]
+  }
+
+  /**
+   * CommsThread findMany
+   */
+  export type CommsThreadFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsThreads to fetch.
+     */
+    where?: CommsThreadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsThreads to fetch.
+     */
+    orderBy?: CommsThreadOrderByWithRelationInput | CommsThreadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CommsThreads.
+     */
+    cursor?: CommsThreadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsThreads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsThreads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsThreads.
+     */
+    distinct?: CommsThreadScalarFieldEnum | CommsThreadScalarFieldEnum[]
+  }
+
+  /**
+   * CommsThread create
+   */
+  export type CommsThreadCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CommsThread.
+     */
+    data: XOR<CommsThreadCreateInput, CommsThreadUncheckedCreateInput>
+  }
+
+  /**
+   * CommsThread createMany
+   */
+  export type CommsThreadCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CommsThreads.
+     */
+    data: CommsThreadCreateManyInput | CommsThreadCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CommsThread createManyAndReturn
+   */
+  export type CommsThreadCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * The data used to create many CommsThreads.
+     */
+    data: CommsThreadCreateManyInput | CommsThreadCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CommsThread update
+   */
+  export type CommsThreadUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CommsThread.
+     */
+    data: XOR<CommsThreadUpdateInput, CommsThreadUncheckedUpdateInput>
+    /**
+     * Choose, which CommsThread to update.
+     */
+    where: CommsThreadWhereUniqueInput
+  }
+
+  /**
+   * CommsThread updateMany
+   */
+  export type CommsThreadUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CommsThreads.
+     */
+    data: XOR<CommsThreadUpdateManyMutationInput, CommsThreadUncheckedUpdateManyInput>
+    /**
+     * Filter which CommsThreads to update
+     */
+    where?: CommsThreadWhereInput
+    /**
+     * Limit how many CommsThreads to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CommsThread updateManyAndReturn
+   */
+  export type CommsThreadUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * The data used to update CommsThreads.
+     */
+    data: XOR<CommsThreadUpdateManyMutationInput, CommsThreadUncheckedUpdateManyInput>
+    /**
+     * Filter which CommsThreads to update
+     */
+    where?: CommsThreadWhereInput
+    /**
+     * Limit how many CommsThreads to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CommsThread upsert
+   */
+  export type CommsThreadUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CommsThread to update in case it exists.
+     */
+    where: CommsThreadWhereUniqueInput
+    /**
+     * In case the CommsThread found by the `where` argument doesn't exist, create a new CommsThread with this data.
+     */
+    create: XOR<CommsThreadCreateInput, CommsThreadUncheckedCreateInput>
+    /**
+     * In case the CommsThread was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CommsThreadUpdateInput, CommsThreadUncheckedUpdateInput>
+  }
+
+  /**
+   * CommsThread delete
+   */
+  export type CommsThreadDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+    /**
+     * Filter which CommsThread to delete.
+     */
+    where: CommsThreadWhereUniqueInput
+  }
+
+  /**
+   * CommsThread deleteMany
+   */
+  export type CommsThreadDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CommsThreads to delete
+     */
+    where?: CommsThreadWhereInput
+    /**
+     * Limit how many CommsThreads to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CommsThread.messages
+   */
+  export type CommsThread$messagesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    where?: CommsMessageWhereInput
+    orderBy?: CommsMessageOrderByWithRelationInput | CommsMessageOrderByWithRelationInput[]
+    cursor?: CommsMessageWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CommsMessageScalarFieldEnum | CommsMessageScalarFieldEnum[]
+  }
+
+  /**
+   * CommsThread.participants
+   */
+  export type CommsThread$participantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    where?: CommsParticipantWhereInput
+    orderBy?: CommsParticipantOrderByWithRelationInput | CommsParticipantOrderByWithRelationInput[]
+    cursor?: CommsParticipantWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CommsParticipantScalarFieldEnum | CommsParticipantScalarFieldEnum[]
+  }
+
+  /**
+   * CommsThread without action
+   */
+  export type CommsThreadDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsThread
+     */
+    select?: CommsThreadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsThread
+     */
+    omit?: CommsThreadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsThreadInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CommsMessage
+   */
+
+  export type AggregateCommsMessage = {
+    _count: CommsMessageCountAggregateOutputType | null
+    _min: CommsMessageMinAggregateOutputType | null
+    _max: CommsMessageMaxAggregateOutputType | null
+  }
+
+  export type CommsMessageMinAggregateOutputType = {
+    id: string | null
+    threadId: string | null
+    authorUserId: string | null
+    body: string | null
+    createdAt: Date | null
+  }
+
+  export type CommsMessageMaxAggregateOutputType = {
+    id: string | null
+    threadId: string | null
+    authorUserId: string | null
+    body: string | null
+    createdAt: Date | null
+  }
+
+  export type CommsMessageCountAggregateOutputType = {
+    id: number
+    threadId: number
+    authorUserId: number
+    body: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type CommsMessageMinAggregateInputType = {
+    id?: true
+    threadId?: true
+    authorUserId?: true
+    body?: true
+    createdAt?: true
+  }
+
+  export type CommsMessageMaxAggregateInputType = {
+    id?: true
+    threadId?: true
+    authorUserId?: true
+    body?: true
+    createdAt?: true
+  }
+
+  export type CommsMessageCountAggregateInputType = {
+    id?: true
+    threadId?: true
+    authorUserId?: true
+    body?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type CommsMessageAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CommsMessage to aggregate.
+     */
+    where?: CommsMessageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsMessages to fetch.
+     */
+    orderBy?: CommsMessageOrderByWithRelationInput | CommsMessageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CommsMessageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsMessages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsMessages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CommsMessages
+    **/
+    _count?: true | CommsMessageCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CommsMessageMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CommsMessageMaxAggregateInputType
+  }
+
+  export type GetCommsMessageAggregateType<T extends CommsMessageAggregateArgs> = {
+        [P in keyof T & keyof AggregateCommsMessage]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCommsMessage[P]>
+      : GetScalarType<T[P], AggregateCommsMessage[P]>
+  }
+
+
+
+
+  export type CommsMessageGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsMessageWhereInput
+    orderBy?: CommsMessageOrderByWithAggregationInput | CommsMessageOrderByWithAggregationInput[]
+    by: CommsMessageScalarFieldEnum[] | CommsMessageScalarFieldEnum
+    having?: CommsMessageScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CommsMessageCountAggregateInputType | true
+    _min?: CommsMessageMinAggregateInputType
+    _max?: CommsMessageMaxAggregateInputType
+  }
+
+  export type CommsMessageGroupByOutputType = {
+    id: string
+    threadId: string
+    authorUserId: string
+    body: string
+    createdAt: Date
+    _count: CommsMessageCountAggregateOutputType | null
+    _min: CommsMessageMinAggregateOutputType | null
+    _max: CommsMessageMaxAggregateOutputType | null
+  }
+
+  type GetCommsMessageGroupByPayload<T extends CommsMessageGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CommsMessageGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CommsMessageGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CommsMessageGroupByOutputType[P]>
+            : GetScalarType<T[P], CommsMessageGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CommsMessageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    threadId?: boolean
+    authorUserId?: boolean
+    body?: boolean
+    createdAt?: boolean
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsMessage"]>
+
+  export type CommsMessageSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    threadId?: boolean
+    authorUserId?: boolean
+    body?: boolean
+    createdAt?: boolean
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsMessage"]>
+
+  export type CommsMessageSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    threadId?: boolean
+    authorUserId?: boolean
+    body?: boolean
+    createdAt?: boolean
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsMessage"]>
+
+  export type CommsMessageSelectScalar = {
+    id?: boolean
+    threadId?: boolean
+    authorUserId?: boolean
+    body?: boolean
+    createdAt?: boolean
+  }
+
+  export type CommsMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "threadId" | "authorUserId" | "body" | "createdAt", ExtArgs["result"]["commsMessage"]>
+  export type CommsMessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CommsMessageIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CommsMessageIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $CommsMessagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CommsMessage"
+    objects: {
+      thread: Prisma.$CommsThreadPayload<ExtArgs>
+      author: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      threadId: string
+      authorUserId: string
+      body: string
+      createdAt: Date
+    }, ExtArgs["result"]["commsMessage"]>
+    composites: {}
+  }
+
+  type CommsMessageGetPayload<S extends boolean | null | undefined | CommsMessageDefaultArgs> = $Result.GetResult<Prisma.$CommsMessagePayload, S>
+
+  type CommsMessageCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CommsMessageFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CommsMessageCountAggregateInputType | true
+    }
+
+  export interface CommsMessageDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CommsMessage'], meta: { name: 'CommsMessage' } }
+    /**
+     * Find zero or one CommsMessage that matches the filter.
+     * @param {CommsMessageFindUniqueArgs} args - Arguments to find a CommsMessage
+     * @example
+     * // Get one CommsMessage
+     * const commsMessage = await prisma.commsMessage.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CommsMessageFindUniqueArgs>(args: SelectSubset<T, CommsMessageFindUniqueArgs<ExtArgs>>): Prisma__CommsMessageClient<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CommsMessage that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CommsMessageFindUniqueOrThrowArgs} args - Arguments to find a CommsMessage
+     * @example
+     * // Get one CommsMessage
+     * const commsMessage = await prisma.commsMessage.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CommsMessageFindUniqueOrThrowArgs>(args: SelectSubset<T, CommsMessageFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CommsMessageClient<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CommsMessage that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsMessageFindFirstArgs} args - Arguments to find a CommsMessage
+     * @example
+     * // Get one CommsMessage
+     * const commsMessage = await prisma.commsMessage.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CommsMessageFindFirstArgs>(args?: SelectSubset<T, CommsMessageFindFirstArgs<ExtArgs>>): Prisma__CommsMessageClient<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CommsMessage that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsMessageFindFirstOrThrowArgs} args - Arguments to find a CommsMessage
+     * @example
+     * // Get one CommsMessage
+     * const commsMessage = await prisma.commsMessage.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CommsMessageFindFirstOrThrowArgs>(args?: SelectSubset<T, CommsMessageFindFirstOrThrowArgs<ExtArgs>>): Prisma__CommsMessageClient<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CommsMessages that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsMessageFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CommsMessages
+     * const commsMessages = await prisma.commsMessage.findMany()
+     * 
+     * // Get first 10 CommsMessages
+     * const commsMessages = await prisma.commsMessage.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const commsMessageWithIdOnly = await prisma.commsMessage.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CommsMessageFindManyArgs>(args?: SelectSubset<T, CommsMessageFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CommsMessage.
+     * @param {CommsMessageCreateArgs} args - Arguments to create a CommsMessage.
+     * @example
+     * // Create one CommsMessage
+     * const CommsMessage = await prisma.commsMessage.create({
+     *   data: {
+     *     // ... data to create a CommsMessage
+     *   }
+     * })
+     * 
+     */
+    create<T extends CommsMessageCreateArgs>(args: SelectSubset<T, CommsMessageCreateArgs<ExtArgs>>): Prisma__CommsMessageClient<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CommsMessages.
+     * @param {CommsMessageCreateManyArgs} args - Arguments to create many CommsMessages.
+     * @example
+     * // Create many CommsMessages
+     * const commsMessage = await prisma.commsMessage.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CommsMessageCreateManyArgs>(args?: SelectSubset<T, CommsMessageCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CommsMessages and returns the data saved in the database.
+     * @param {CommsMessageCreateManyAndReturnArgs} args - Arguments to create many CommsMessages.
+     * @example
+     * // Create many CommsMessages
+     * const commsMessage = await prisma.commsMessage.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CommsMessages and only return the `id`
+     * const commsMessageWithIdOnly = await prisma.commsMessage.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CommsMessageCreateManyAndReturnArgs>(args?: SelectSubset<T, CommsMessageCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CommsMessage.
+     * @param {CommsMessageDeleteArgs} args - Arguments to delete one CommsMessage.
+     * @example
+     * // Delete one CommsMessage
+     * const CommsMessage = await prisma.commsMessage.delete({
+     *   where: {
+     *     // ... filter to delete one CommsMessage
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CommsMessageDeleteArgs>(args: SelectSubset<T, CommsMessageDeleteArgs<ExtArgs>>): Prisma__CommsMessageClient<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CommsMessage.
+     * @param {CommsMessageUpdateArgs} args - Arguments to update one CommsMessage.
+     * @example
+     * // Update one CommsMessage
+     * const commsMessage = await prisma.commsMessage.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CommsMessageUpdateArgs>(args: SelectSubset<T, CommsMessageUpdateArgs<ExtArgs>>): Prisma__CommsMessageClient<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CommsMessages.
+     * @param {CommsMessageDeleteManyArgs} args - Arguments to filter CommsMessages to delete.
+     * @example
+     * // Delete a few CommsMessages
+     * const { count } = await prisma.commsMessage.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CommsMessageDeleteManyArgs>(args?: SelectSubset<T, CommsMessageDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CommsMessages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsMessageUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CommsMessages
+     * const commsMessage = await prisma.commsMessage.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CommsMessageUpdateManyArgs>(args: SelectSubset<T, CommsMessageUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CommsMessages and returns the data updated in the database.
+     * @param {CommsMessageUpdateManyAndReturnArgs} args - Arguments to update many CommsMessages.
+     * @example
+     * // Update many CommsMessages
+     * const commsMessage = await prisma.commsMessage.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CommsMessages and only return the `id`
+     * const commsMessageWithIdOnly = await prisma.commsMessage.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CommsMessageUpdateManyAndReturnArgs>(args: SelectSubset<T, CommsMessageUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CommsMessage.
+     * @param {CommsMessageUpsertArgs} args - Arguments to update or create a CommsMessage.
+     * @example
+     * // Update or create a CommsMessage
+     * const commsMessage = await prisma.commsMessage.upsert({
+     *   create: {
+     *     // ... data to create a CommsMessage
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CommsMessage we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CommsMessageUpsertArgs>(args: SelectSubset<T, CommsMessageUpsertArgs<ExtArgs>>): Prisma__CommsMessageClient<$Result.GetResult<Prisma.$CommsMessagePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CommsMessages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsMessageCountArgs} args - Arguments to filter CommsMessages to count.
+     * @example
+     * // Count the number of CommsMessages
+     * const count = await prisma.commsMessage.count({
+     *   where: {
+     *     // ... the filter for the CommsMessages we want to count
+     *   }
+     * })
+    **/
+    count<T extends CommsMessageCountArgs>(
+      args?: Subset<T, CommsMessageCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CommsMessageCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CommsMessage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsMessageAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CommsMessageAggregateArgs>(args: Subset<T, CommsMessageAggregateArgs>): Prisma.PrismaPromise<GetCommsMessageAggregateType<T>>
+
+    /**
+     * Group by CommsMessage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsMessageGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CommsMessageGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CommsMessageGroupByArgs['orderBy'] }
+        : { orderBy?: CommsMessageGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CommsMessageGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCommsMessageGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CommsMessage model
+   */
+  readonly fields: CommsMessageFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CommsMessage.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CommsMessageClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    thread<T extends CommsThreadDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CommsThreadDefaultArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    author<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CommsMessage model
+   */
+  interface CommsMessageFieldRefs {
+    readonly id: FieldRef<"CommsMessage", 'String'>
+    readonly threadId: FieldRef<"CommsMessage", 'String'>
+    readonly authorUserId: FieldRef<"CommsMessage", 'String'>
+    readonly body: FieldRef<"CommsMessage", 'String'>
+    readonly createdAt: FieldRef<"CommsMessage", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CommsMessage findUnique
+   */
+  export type CommsMessageFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsMessage to fetch.
+     */
+    where: CommsMessageWhereUniqueInput
+  }
+
+  /**
+   * CommsMessage findUniqueOrThrow
+   */
+  export type CommsMessageFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsMessage to fetch.
+     */
+    where: CommsMessageWhereUniqueInput
+  }
+
+  /**
+   * CommsMessage findFirst
+   */
+  export type CommsMessageFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsMessage to fetch.
+     */
+    where?: CommsMessageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsMessages to fetch.
+     */
+    orderBy?: CommsMessageOrderByWithRelationInput | CommsMessageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CommsMessages.
+     */
+    cursor?: CommsMessageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsMessages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsMessages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsMessages.
+     */
+    distinct?: CommsMessageScalarFieldEnum | CommsMessageScalarFieldEnum[]
+  }
+
+  /**
+   * CommsMessage findFirstOrThrow
+   */
+  export type CommsMessageFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsMessage to fetch.
+     */
+    where?: CommsMessageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsMessages to fetch.
+     */
+    orderBy?: CommsMessageOrderByWithRelationInput | CommsMessageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CommsMessages.
+     */
+    cursor?: CommsMessageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsMessages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsMessages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsMessages.
+     */
+    distinct?: CommsMessageScalarFieldEnum | CommsMessageScalarFieldEnum[]
+  }
+
+  /**
+   * CommsMessage findMany
+   */
+  export type CommsMessageFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsMessages to fetch.
+     */
+    where?: CommsMessageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsMessages to fetch.
+     */
+    orderBy?: CommsMessageOrderByWithRelationInput | CommsMessageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CommsMessages.
+     */
+    cursor?: CommsMessageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsMessages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsMessages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsMessages.
+     */
+    distinct?: CommsMessageScalarFieldEnum | CommsMessageScalarFieldEnum[]
+  }
+
+  /**
+   * CommsMessage create
+   */
+  export type CommsMessageCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CommsMessage.
+     */
+    data: XOR<CommsMessageCreateInput, CommsMessageUncheckedCreateInput>
+  }
+
+  /**
+   * CommsMessage createMany
+   */
+  export type CommsMessageCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CommsMessages.
+     */
+    data: CommsMessageCreateManyInput | CommsMessageCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CommsMessage createManyAndReturn
+   */
+  export type CommsMessageCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * The data used to create many CommsMessages.
+     */
+    data: CommsMessageCreateManyInput | CommsMessageCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CommsMessage update
+   */
+  export type CommsMessageUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CommsMessage.
+     */
+    data: XOR<CommsMessageUpdateInput, CommsMessageUncheckedUpdateInput>
+    /**
+     * Choose, which CommsMessage to update.
+     */
+    where: CommsMessageWhereUniqueInput
+  }
+
+  /**
+   * CommsMessage updateMany
+   */
+  export type CommsMessageUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CommsMessages.
+     */
+    data: XOR<CommsMessageUpdateManyMutationInput, CommsMessageUncheckedUpdateManyInput>
+    /**
+     * Filter which CommsMessages to update
+     */
+    where?: CommsMessageWhereInput
+    /**
+     * Limit how many CommsMessages to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CommsMessage updateManyAndReturn
+   */
+  export type CommsMessageUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * The data used to update CommsMessages.
+     */
+    data: XOR<CommsMessageUpdateManyMutationInput, CommsMessageUncheckedUpdateManyInput>
+    /**
+     * Filter which CommsMessages to update
+     */
+    where?: CommsMessageWhereInput
+    /**
+     * Limit how many CommsMessages to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CommsMessage upsert
+   */
+  export type CommsMessageUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CommsMessage to update in case it exists.
+     */
+    where: CommsMessageWhereUniqueInput
+    /**
+     * In case the CommsMessage found by the `where` argument doesn't exist, create a new CommsMessage with this data.
+     */
+    create: XOR<CommsMessageCreateInput, CommsMessageUncheckedCreateInput>
+    /**
+     * In case the CommsMessage was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CommsMessageUpdateInput, CommsMessageUncheckedUpdateInput>
+  }
+
+  /**
+   * CommsMessage delete
+   */
+  export type CommsMessageDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+    /**
+     * Filter which CommsMessage to delete.
+     */
+    where: CommsMessageWhereUniqueInput
+  }
+
+  /**
+   * CommsMessage deleteMany
+   */
+  export type CommsMessageDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CommsMessages to delete
+     */
+    where?: CommsMessageWhereInput
+    /**
+     * Limit how many CommsMessages to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CommsMessage without action
+   */
+  export type CommsMessageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsMessage
+     */
+    select?: CommsMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsMessage
+     */
+    omit?: CommsMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsMessageInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CommsParticipant
+   */
+
+  export type AggregateCommsParticipant = {
+    _count: CommsParticipantCountAggregateOutputType | null
+    _min: CommsParticipantMinAggregateOutputType | null
+    _max: CommsParticipantMaxAggregateOutputType | null
+  }
+
+  export type CommsParticipantMinAggregateOutputType = {
+    id: string | null
+    threadId: string | null
+    userId: string | null
+    readAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type CommsParticipantMaxAggregateOutputType = {
+    id: string | null
+    threadId: string | null
+    userId: string | null
+    readAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type CommsParticipantCountAggregateOutputType = {
+    id: number
+    threadId: number
+    userId: number
+    readAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type CommsParticipantMinAggregateInputType = {
+    id?: true
+    threadId?: true
+    userId?: true
+    readAt?: true
+    createdAt?: true
+  }
+
+  export type CommsParticipantMaxAggregateInputType = {
+    id?: true
+    threadId?: true
+    userId?: true
+    readAt?: true
+    createdAt?: true
+  }
+
+  export type CommsParticipantCountAggregateInputType = {
+    id?: true
+    threadId?: true
+    userId?: true
+    readAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type CommsParticipantAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CommsParticipant to aggregate.
+     */
+    where?: CommsParticipantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsParticipants to fetch.
+     */
+    orderBy?: CommsParticipantOrderByWithRelationInput | CommsParticipantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CommsParticipantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsParticipants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsParticipants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CommsParticipants
+    **/
+    _count?: true | CommsParticipantCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CommsParticipantMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CommsParticipantMaxAggregateInputType
+  }
+
+  export type GetCommsParticipantAggregateType<T extends CommsParticipantAggregateArgs> = {
+        [P in keyof T & keyof AggregateCommsParticipant]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCommsParticipant[P]>
+      : GetScalarType<T[P], AggregateCommsParticipant[P]>
+  }
+
+
+
+
+  export type CommsParticipantGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommsParticipantWhereInput
+    orderBy?: CommsParticipantOrderByWithAggregationInput | CommsParticipantOrderByWithAggregationInput[]
+    by: CommsParticipantScalarFieldEnum[] | CommsParticipantScalarFieldEnum
+    having?: CommsParticipantScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CommsParticipantCountAggregateInputType | true
+    _min?: CommsParticipantMinAggregateInputType
+    _max?: CommsParticipantMaxAggregateInputType
+  }
+
+  export type CommsParticipantGroupByOutputType = {
+    id: string
+    threadId: string
+    userId: string
+    readAt: Date | null
+    createdAt: Date
+    _count: CommsParticipantCountAggregateOutputType | null
+    _min: CommsParticipantMinAggregateOutputType | null
+    _max: CommsParticipantMaxAggregateOutputType | null
+  }
+
+  type GetCommsParticipantGroupByPayload<T extends CommsParticipantGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CommsParticipantGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CommsParticipantGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CommsParticipantGroupByOutputType[P]>
+            : GetScalarType<T[P], CommsParticipantGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CommsParticipantSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    threadId?: boolean
+    userId?: boolean
+    readAt?: boolean
+    createdAt?: boolean
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsParticipant"]>
+
+  export type CommsParticipantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    threadId?: boolean
+    userId?: boolean
+    readAt?: boolean
+    createdAt?: boolean
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsParticipant"]>
+
+  export type CommsParticipantSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    threadId?: boolean
+    userId?: boolean
+    readAt?: boolean
+    createdAt?: boolean
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["commsParticipant"]>
+
+  export type CommsParticipantSelectScalar = {
+    id?: boolean
+    threadId?: boolean
+    userId?: boolean
+    readAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type CommsParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "threadId" | "userId" | "readAt" | "createdAt", ExtArgs["result"]["commsParticipant"]>
+  export type CommsParticipantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CommsParticipantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CommsParticipantIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    thread?: boolean | CommsThreadDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $CommsParticipantPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CommsParticipant"
+    objects: {
+      thread: Prisma.$CommsThreadPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      threadId: string
+      userId: string
+      readAt: Date | null
+      createdAt: Date
+    }, ExtArgs["result"]["commsParticipant"]>
+    composites: {}
+  }
+
+  type CommsParticipantGetPayload<S extends boolean | null | undefined | CommsParticipantDefaultArgs> = $Result.GetResult<Prisma.$CommsParticipantPayload, S>
+
+  type CommsParticipantCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CommsParticipantFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CommsParticipantCountAggregateInputType | true
+    }
+
+  export interface CommsParticipantDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CommsParticipant'], meta: { name: 'CommsParticipant' } }
+    /**
+     * Find zero or one CommsParticipant that matches the filter.
+     * @param {CommsParticipantFindUniqueArgs} args - Arguments to find a CommsParticipant
+     * @example
+     * // Get one CommsParticipant
+     * const commsParticipant = await prisma.commsParticipant.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CommsParticipantFindUniqueArgs>(args: SelectSubset<T, CommsParticipantFindUniqueArgs<ExtArgs>>): Prisma__CommsParticipantClient<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CommsParticipant that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CommsParticipantFindUniqueOrThrowArgs} args - Arguments to find a CommsParticipant
+     * @example
+     * // Get one CommsParticipant
+     * const commsParticipant = await prisma.commsParticipant.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CommsParticipantFindUniqueOrThrowArgs>(args: SelectSubset<T, CommsParticipantFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CommsParticipantClient<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CommsParticipant that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsParticipantFindFirstArgs} args - Arguments to find a CommsParticipant
+     * @example
+     * // Get one CommsParticipant
+     * const commsParticipant = await prisma.commsParticipant.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CommsParticipantFindFirstArgs>(args?: SelectSubset<T, CommsParticipantFindFirstArgs<ExtArgs>>): Prisma__CommsParticipantClient<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CommsParticipant that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsParticipantFindFirstOrThrowArgs} args - Arguments to find a CommsParticipant
+     * @example
+     * // Get one CommsParticipant
+     * const commsParticipant = await prisma.commsParticipant.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CommsParticipantFindFirstOrThrowArgs>(args?: SelectSubset<T, CommsParticipantFindFirstOrThrowArgs<ExtArgs>>): Prisma__CommsParticipantClient<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CommsParticipants that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsParticipantFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CommsParticipants
+     * const commsParticipants = await prisma.commsParticipant.findMany()
+     * 
+     * // Get first 10 CommsParticipants
+     * const commsParticipants = await prisma.commsParticipant.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const commsParticipantWithIdOnly = await prisma.commsParticipant.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CommsParticipantFindManyArgs>(args?: SelectSubset<T, CommsParticipantFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CommsParticipant.
+     * @param {CommsParticipantCreateArgs} args - Arguments to create a CommsParticipant.
+     * @example
+     * // Create one CommsParticipant
+     * const CommsParticipant = await prisma.commsParticipant.create({
+     *   data: {
+     *     // ... data to create a CommsParticipant
+     *   }
+     * })
+     * 
+     */
+    create<T extends CommsParticipantCreateArgs>(args: SelectSubset<T, CommsParticipantCreateArgs<ExtArgs>>): Prisma__CommsParticipantClient<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CommsParticipants.
+     * @param {CommsParticipantCreateManyArgs} args - Arguments to create many CommsParticipants.
+     * @example
+     * // Create many CommsParticipants
+     * const commsParticipant = await prisma.commsParticipant.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CommsParticipantCreateManyArgs>(args?: SelectSubset<T, CommsParticipantCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CommsParticipants and returns the data saved in the database.
+     * @param {CommsParticipantCreateManyAndReturnArgs} args - Arguments to create many CommsParticipants.
+     * @example
+     * // Create many CommsParticipants
+     * const commsParticipant = await prisma.commsParticipant.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CommsParticipants and only return the `id`
+     * const commsParticipantWithIdOnly = await prisma.commsParticipant.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CommsParticipantCreateManyAndReturnArgs>(args?: SelectSubset<T, CommsParticipantCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CommsParticipant.
+     * @param {CommsParticipantDeleteArgs} args - Arguments to delete one CommsParticipant.
+     * @example
+     * // Delete one CommsParticipant
+     * const CommsParticipant = await prisma.commsParticipant.delete({
+     *   where: {
+     *     // ... filter to delete one CommsParticipant
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CommsParticipantDeleteArgs>(args: SelectSubset<T, CommsParticipantDeleteArgs<ExtArgs>>): Prisma__CommsParticipantClient<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CommsParticipant.
+     * @param {CommsParticipantUpdateArgs} args - Arguments to update one CommsParticipant.
+     * @example
+     * // Update one CommsParticipant
+     * const commsParticipant = await prisma.commsParticipant.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CommsParticipantUpdateArgs>(args: SelectSubset<T, CommsParticipantUpdateArgs<ExtArgs>>): Prisma__CommsParticipantClient<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CommsParticipants.
+     * @param {CommsParticipantDeleteManyArgs} args - Arguments to filter CommsParticipants to delete.
+     * @example
+     * // Delete a few CommsParticipants
+     * const { count } = await prisma.commsParticipant.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CommsParticipantDeleteManyArgs>(args?: SelectSubset<T, CommsParticipantDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CommsParticipants.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsParticipantUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CommsParticipants
+     * const commsParticipant = await prisma.commsParticipant.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CommsParticipantUpdateManyArgs>(args: SelectSubset<T, CommsParticipantUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CommsParticipants and returns the data updated in the database.
+     * @param {CommsParticipantUpdateManyAndReturnArgs} args - Arguments to update many CommsParticipants.
+     * @example
+     * // Update many CommsParticipants
+     * const commsParticipant = await prisma.commsParticipant.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CommsParticipants and only return the `id`
+     * const commsParticipantWithIdOnly = await prisma.commsParticipant.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CommsParticipantUpdateManyAndReturnArgs>(args: SelectSubset<T, CommsParticipantUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CommsParticipant.
+     * @param {CommsParticipantUpsertArgs} args - Arguments to update or create a CommsParticipant.
+     * @example
+     * // Update or create a CommsParticipant
+     * const commsParticipant = await prisma.commsParticipant.upsert({
+     *   create: {
+     *     // ... data to create a CommsParticipant
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CommsParticipant we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CommsParticipantUpsertArgs>(args: SelectSubset<T, CommsParticipantUpsertArgs<ExtArgs>>): Prisma__CommsParticipantClient<$Result.GetResult<Prisma.$CommsParticipantPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CommsParticipants.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsParticipantCountArgs} args - Arguments to filter CommsParticipants to count.
+     * @example
+     * // Count the number of CommsParticipants
+     * const count = await prisma.commsParticipant.count({
+     *   where: {
+     *     // ... the filter for the CommsParticipants we want to count
+     *   }
+     * })
+    **/
+    count<T extends CommsParticipantCountArgs>(
+      args?: Subset<T, CommsParticipantCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CommsParticipantCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CommsParticipant.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsParticipantAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CommsParticipantAggregateArgs>(args: Subset<T, CommsParticipantAggregateArgs>): Prisma.PrismaPromise<GetCommsParticipantAggregateType<T>>
+
+    /**
+     * Group by CommsParticipant.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommsParticipantGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CommsParticipantGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CommsParticipantGroupByArgs['orderBy'] }
+        : { orderBy?: CommsParticipantGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CommsParticipantGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCommsParticipantGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CommsParticipant model
+   */
+  readonly fields: CommsParticipantFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CommsParticipant.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CommsParticipantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    thread<T extends CommsThreadDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CommsThreadDefaultArgs<ExtArgs>>): Prisma__CommsThreadClient<$Result.GetResult<Prisma.$CommsThreadPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CommsParticipant model
+   */
+  interface CommsParticipantFieldRefs {
+    readonly id: FieldRef<"CommsParticipant", 'String'>
+    readonly threadId: FieldRef<"CommsParticipant", 'String'>
+    readonly userId: FieldRef<"CommsParticipant", 'String'>
+    readonly readAt: FieldRef<"CommsParticipant", 'DateTime'>
+    readonly createdAt: FieldRef<"CommsParticipant", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CommsParticipant findUnique
+   */
+  export type CommsParticipantFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsParticipant to fetch.
+     */
+    where: CommsParticipantWhereUniqueInput
+  }
+
+  /**
+   * CommsParticipant findUniqueOrThrow
+   */
+  export type CommsParticipantFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsParticipant to fetch.
+     */
+    where: CommsParticipantWhereUniqueInput
+  }
+
+  /**
+   * CommsParticipant findFirst
+   */
+  export type CommsParticipantFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsParticipant to fetch.
+     */
+    where?: CommsParticipantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsParticipants to fetch.
+     */
+    orderBy?: CommsParticipantOrderByWithRelationInput | CommsParticipantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CommsParticipants.
+     */
+    cursor?: CommsParticipantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsParticipants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsParticipants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsParticipants.
+     */
+    distinct?: CommsParticipantScalarFieldEnum | CommsParticipantScalarFieldEnum[]
+  }
+
+  /**
+   * CommsParticipant findFirstOrThrow
+   */
+  export type CommsParticipantFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsParticipant to fetch.
+     */
+    where?: CommsParticipantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsParticipants to fetch.
+     */
+    orderBy?: CommsParticipantOrderByWithRelationInput | CommsParticipantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CommsParticipants.
+     */
+    cursor?: CommsParticipantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsParticipants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsParticipants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsParticipants.
+     */
+    distinct?: CommsParticipantScalarFieldEnum | CommsParticipantScalarFieldEnum[]
+  }
+
+  /**
+   * CommsParticipant findMany
+   */
+  export type CommsParticipantFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * Filter, which CommsParticipants to fetch.
+     */
+    where?: CommsParticipantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommsParticipants to fetch.
+     */
+    orderBy?: CommsParticipantOrderByWithRelationInput | CommsParticipantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CommsParticipants.
+     */
+    cursor?: CommsParticipantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommsParticipants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommsParticipants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommsParticipants.
+     */
+    distinct?: CommsParticipantScalarFieldEnum | CommsParticipantScalarFieldEnum[]
+  }
+
+  /**
+   * CommsParticipant create
+   */
+  export type CommsParticipantCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CommsParticipant.
+     */
+    data: XOR<CommsParticipantCreateInput, CommsParticipantUncheckedCreateInput>
+  }
+
+  /**
+   * CommsParticipant createMany
+   */
+  export type CommsParticipantCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CommsParticipants.
+     */
+    data: CommsParticipantCreateManyInput | CommsParticipantCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CommsParticipant createManyAndReturn
+   */
+  export type CommsParticipantCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * The data used to create many CommsParticipants.
+     */
+    data: CommsParticipantCreateManyInput | CommsParticipantCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CommsParticipant update
+   */
+  export type CommsParticipantUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CommsParticipant.
+     */
+    data: XOR<CommsParticipantUpdateInput, CommsParticipantUncheckedUpdateInput>
+    /**
+     * Choose, which CommsParticipant to update.
+     */
+    where: CommsParticipantWhereUniqueInput
+  }
+
+  /**
+   * CommsParticipant updateMany
+   */
+  export type CommsParticipantUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CommsParticipants.
+     */
+    data: XOR<CommsParticipantUpdateManyMutationInput, CommsParticipantUncheckedUpdateManyInput>
+    /**
+     * Filter which CommsParticipants to update
+     */
+    where?: CommsParticipantWhereInput
+    /**
+     * Limit how many CommsParticipants to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CommsParticipant updateManyAndReturn
+   */
+  export type CommsParticipantUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * The data used to update CommsParticipants.
+     */
+    data: XOR<CommsParticipantUpdateManyMutationInput, CommsParticipantUncheckedUpdateManyInput>
+    /**
+     * Filter which CommsParticipants to update
+     */
+    where?: CommsParticipantWhereInput
+    /**
+     * Limit how many CommsParticipants to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CommsParticipant upsert
+   */
+  export type CommsParticipantUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CommsParticipant to update in case it exists.
+     */
+    where: CommsParticipantWhereUniqueInput
+    /**
+     * In case the CommsParticipant found by the `where` argument doesn't exist, create a new CommsParticipant with this data.
+     */
+    create: XOR<CommsParticipantCreateInput, CommsParticipantUncheckedCreateInput>
+    /**
+     * In case the CommsParticipant was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CommsParticipantUpdateInput, CommsParticipantUncheckedUpdateInput>
+  }
+
+  /**
+   * CommsParticipant delete
+   */
+  export type CommsParticipantDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
+    /**
+     * Filter which CommsParticipant to delete.
+     */
+    where: CommsParticipantWhereUniqueInput
+  }
+
+  /**
+   * CommsParticipant deleteMany
+   */
+  export type CommsParticipantDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CommsParticipants to delete
+     */
+    where?: CommsParticipantWhereInput
+    /**
+     * Limit how many CommsParticipants to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CommsParticipant without action
+   */
+  export type CommsParticipantDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommsParticipant
+     */
+    select?: CommsParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CommsParticipant
+     */
+    omit?: CommsParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommsParticipantInclude<ExtArgs> | null
   }
 
 
@@ -145939,6 +149685,40 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+  export const CommsThreadScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    subject: 'subject',
+    authorUserId: 'authorUserId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CommsThreadScalarFieldEnum = (typeof CommsThreadScalarFieldEnum)[keyof typeof CommsThreadScalarFieldEnum]
+
+
+  export const CommsMessageScalarFieldEnum: {
+    id: 'id',
+    threadId: 'threadId',
+    authorUserId: 'authorUserId',
+    body: 'body',
+    createdAt: 'createdAt'
+  };
+
+  export type CommsMessageScalarFieldEnum = (typeof CommsMessageScalarFieldEnum)[keyof typeof CommsMessageScalarFieldEnum]
+
+
+  export const CommsParticipantScalarFieldEnum: {
+    id: 'id',
+    threadId: 'threadId',
+    userId: 'userId',
+    readAt: 'readAt',
+    createdAt: 'createdAt'
+  };
+
+  export type CommsParticipantScalarFieldEnum = (typeof CommsParticipantScalarFieldEnum)[keyof typeof CommsParticipantScalarFieldEnum]
+
+
   export const HoldingScalarFieldEnum: {
     id: 'id',
     name: 'name',
@@ -153597,6 +157377,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceListRelationFilter
     channelsFrom?: OrganizationSatelliteChannelListRelationFilter
     channelsTo?: OrganizationSatelliteChannelListRelationFilter
+    commsThreads?: CommsThreadListRelationFilter
     workforceAssignments?: WorkforceAssignmentListRelationFilter
     workforceEmployments?: WorkforceEmploymentListRelationFilter
     workforceTimesheets?: WorkforceTimesheetListRelationFilter
@@ -153691,6 +157472,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceOrderByRelationAggregateInput
     channelsFrom?: OrganizationSatelliteChannelOrderByRelationAggregateInput
     channelsTo?: OrganizationSatelliteChannelOrderByRelationAggregateInput
+    commsThreads?: CommsThreadOrderByRelationAggregateInput
     workforceAssignments?: WorkforceAssignmentOrderByRelationAggregateInput
     workforceEmployments?: WorkforceEmploymentOrderByRelationAggregateInput
     workforceTimesheets?: WorkforceTimesheetOrderByRelationAggregateInput
@@ -153788,6 +157570,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceListRelationFilter
     channelsFrom?: OrganizationSatelliteChannelListRelationFilter
     channelsTo?: OrganizationSatelliteChannelListRelationFilter
+    commsThreads?: CommsThreadListRelationFilter
     workforceAssignments?: WorkforceAssignmentListRelationFilter
     workforceEmployments?: WorkforceEmploymentListRelationFilter
     workforceTimesheets?: WorkforceTimesheetListRelationFilter
@@ -154575,6 +158358,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationListRelationFilter
     holdings?: HoldingListRelationFilter
     holdingMemberships?: HoldingMembershipListRelationFilter
+    commsThreadsAuthored?: CommsThreadListRelationFilter
+    commsMessagesAuthored?: CommsMessageListRelationFilter
+    commsParticipations?: CommsParticipantListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -154593,6 +158379,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationOrderByRelationAggregateInput
     holdings?: HoldingOrderByRelationAggregateInput
     holdingMemberships?: HoldingMembershipOrderByRelationAggregateInput
+    commsThreadsAuthored?: CommsThreadOrderByRelationAggregateInput
+    commsMessagesAuthored?: CommsMessageOrderByRelationAggregateInput
+    commsParticipations?: CommsParticipantOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -154614,6 +158403,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationListRelationFilter
     holdings?: HoldingListRelationFilter
     holdingMemberships?: HoldingMembershipListRelationFilter
+    commsThreadsAuthored?: CommsThreadListRelationFilter
+    commsMessagesAuthored?: CommsMessageListRelationFilter
+    commsParticipations?: CommsParticipantListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -154642,6 +158434,192 @@ export namespace Prisma {
     lastNameCipher?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type CommsThreadWhereInput = {
+    AND?: CommsThreadWhereInput | CommsThreadWhereInput[]
+    OR?: CommsThreadWhereInput[]
+    NOT?: CommsThreadWhereInput | CommsThreadWhereInput[]
+    id?: UuidFilter<"CommsThread"> | string
+    organizationId?: UuidFilter<"CommsThread"> | string
+    subject?: StringFilter<"CommsThread"> | string
+    authorUserId?: UuidFilter<"CommsThread"> | string
+    createdAt?: DateTimeFilter<"CommsThread"> | Date | string
+    updatedAt?: DateTimeFilter<"CommsThread"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    author?: XOR<UserScalarRelationFilter, UserWhereInput>
+    messages?: CommsMessageListRelationFilter
+    participants?: CommsParticipantListRelationFilter
+  }
+
+  export type CommsThreadOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    subject?: SortOrder
+    authorUserId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    author?: UserOrderByWithRelationInput
+    messages?: CommsMessageOrderByRelationAggregateInput
+    participants?: CommsParticipantOrderByRelationAggregateInput
+  }
+
+  export type CommsThreadWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: CommsThreadWhereInput | CommsThreadWhereInput[]
+    OR?: CommsThreadWhereInput[]
+    NOT?: CommsThreadWhereInput | CommsThreadWhereInput[]
+    organizationId?: UuidFilter<"CommsThread"> | string
+    subject?: StringFilter<"CommsThread"> | string
+    authorUserId?: UuidFilter<"CommsThread"> | string
+    createdAt?: DateTimeFilter<"CommsThread"> | Date | string
+    updatedAt?: DateTimeFilter<"CommsThread"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    author?: XOR<UserScalarRelationFilter, UserWhereInput>
+    messages?: CommsMessageListRelationFilter
+    participants?: CommsParticipantListRelationFilter
+  }, "id">
+
+  export type CommsThreadOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    subject?: SortOrder
+    authorUserId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CommsThreadCountOrderByAggregateInput
+    _max?: CommsThreadMaxOrderByAggregateInput
+    _min?: CommsThreadMinOrderByAggregateInput
+  }
+
+  export type CommsThreadScalarWhereWithAggregatesInput = {
+    AND?: CommsThreadScalarWhereWithAggregatesInput | CommsThreadScalarWhereWithAggregatesInput[]
+    OR?: CommsThreadScalarWhereWithAggregatesInput[]
+    NOT?: CommsThreadScalarWhereWithAggregatesInput | CommsThreadScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"CommsThread"> | string
+    organizationId?: UuidWithAggregatesFilter<"CommsThread"> | string
+    subject?: StringWithAggregatesFilter<"CommsThread"> | string
+    authorUserId?: UuidWithAggregatesFilter<"CommsThread"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"CommsThread"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CommsThread"> | Date | string
+  }
+
+  export type CommsMessageWhereInput = {
+    AND?: CommsMessageWhereInput | CommsMessageWhereInput[]
+    OR?: CommsMessageWhereInput[]
+    NOT?: CommsMessageWhereInput | CommsMessageWhereInput[]
+    id?: UuidFilter<"CommsMessage"> | string
+    threadId?: UuidFilter<"CommsMessage"> | string
+    authorUserId?: UuidFilter<"CommsMessage"> | string
+    body?: StringFilter<"CommsMessage"> | string
+    createdAt?: DateTimeFilter<"CommsMessage"> | Date | string
+    thread?: XOR<CommsThreadScalarRelationFilter, CommsThreadWhereInput>
+    author?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type CommsMessageOrderByWithRelationInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    authorUserId?: SortOrder
+    body?: SortOrder
+    createdAt?: SortOrder
+    thread?: CommsThreadOrderByWithRelationInput
+    author?: UserOrderByWithRelationInput
+  }
+
+  export type CommsMessageWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: CommsMessageWhereInput | CommsMessageWhereInput[]
+    OR?: CommsMessageWhereInput[]
+    NOT?: CommsMessageWhereInput | CommsMessageWhereInput[]
+    threadId?: UuidFilter<"CommsMessage"> | string
+    authorUserId?: UuidFilter<"CommsMessage"> | string
+    body?: StringFilter<"CommsMessage"> | string
+    createdAt?: DateTimeFilter<"CommsMessage"> | Date | string
+    thread?: XOR<CommsThreadScalarRelationFilter, CommsThreadWhereInput>
+    author?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type CommsMessageOrderByWithAggregationInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    authorUserId?: SortOrder
+    body?: SortOrder
+    createdAt?: SortOrder
+    _count?: CommsMessageCountOrderByAggregateInput
+    _max?: CommsMessageMaxOrderByAggregateInput
+    _min?: CommsMessageMinOrderByAggregateInput
+  }
+
+  export type CommsMessageScalarWhereWithAggregatesInput = {
+    AND?: CommsMessageScalarWhereWithAggregatesInput | CommsMessageScalarWhereWithAggregatesInput[]
+    OR?: CommsMessageScalarWhereWithAggregatesInput[]
+    NOT?: CommsMessageScalarWhereWithAggregatesInput | CommsMessageScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"CommsMessage"> | string
+    threadId?: UuidWithAggregatesFilter<"CommsMessage"> | string
+    authorUserId?: UuidWithAggregatesFilter<"CommsMessage"> | string
+    body?: StringWithAggregatesFilter<"CommsMessage"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"CommsMessage"> | Date | string
+  }
+
+  export type CommsParticipantWhereInput = {
+    AND?: CommsParticipantWhereInput | CommsParticipantWhereInput[]
+    OR?: CommsParticipantWhereInput[]
+    NOT?: CommsParticipantWhereInput | CommsParticipantWhereInput[]
+    id?: UuidFilter<"CommsParticipant"> | string
+    threadId?: UuidFilter<"CommsParticipant"> | string
+    userId?: UuidFilter<"CommsParticipant"> | string
+    readAt?: DateTimeNullableFilter<"CommsParticipant"> | Date | string | null
+    createdAt?: DateTimeFilter<"CommsParticipant"> | Date | string
+    thread?: XOR<CommsThreadScalarRelationFilter, CommsThreadWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type CommsParticipantOrderByWithRelationInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    thread?: CommsThreadOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type CommsParticipantWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    threadId_userId?: CommsParticipantThreadIdUserIdCompoundUniqueInput
+    AND?: CommsParticipantWhereInput | CommsParticipantWhereInput[]
+    OR?: CommsParticipantWhereInput[]
+    NOT?: CommsParticipantWhereInput | CommsParticipantWhereInput[]
+    threadId?: UuidFilter<"CommsParticipant"> | string
+    userId?: UuidFilter<"CommsParticipant"> | string
+    readAt?: DateTimeNullableFilter<"CommsParticipant"> | Date | string | null
+    createdAt?: DateTimeFilter<"CommsParticipant"> | Date | string
+    thread?: XOR<CommsThreadScalarRelationFilter, CommsThreadWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "threadId_userId">
+
+  export type CommsParticipantOrderByWithAggregationInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: CommsParticipantCountOrderByAggregateInput
+    _max?: CommsParticipantMaxOrderByAggregateInput
+    _min?: CommsParticipantMinOrderByAggregateInput
+  }
+
+  export type CommsParticipantScalarWhereWithAggregatesInput = {
+    AND?: CommsParticipantScalarWhereWithAggregatesInput | CommsParticipantScalarWhereWithAggregatesInput[]
+    OR?: CommsParticipantScalarWhereWithAggregatesInput[]
+    NOT?: CommsParticipantScalarWhereWithAggregatesInput | CommsParticipantScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"CommsParticipant"> | string
+    threadId?: UuidWithAggregatesFilter<"CommsParticipant"> | string
+    userId?: UuidWithAggregatesFilter<"CommsParticipant"> | string
+    readAt?: DateTimeNullableWithAggregatesFilter<"CommsParticipant"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"CommsParticipant"> | Date | string
   }
 
   export type HoldingWhereInput = {
@@ -163803,6 +167781,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -163897,6 +167876,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -163985,6 +167965,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -164079,6 +168060,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -164967,6 +168949,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
     holdings?: HoldingCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -164985,6 +168970,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
     holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -165003,6 +168991,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -165021,6 +169012,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -165054,6 +169048,183 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsThreadCreateInput = {
+    id?: string
+    subject: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutCommsThreadsInput
+    author: UserCreateNestedOneWithoutCommsThreadsAuthoredInput
+    messages?: CommsMessageCreateNestedManyWithoutThreadInput
+    participants?: CommsParticipantCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    subject: string
+    authorUserId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    messages?: CommsMessageUncheckedCreateNestedManyWithoutThreadInput
+    participants?: CommsParticipantUncheckedCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutCommsThreadsNestedInput
+    author?: UserUpdateOneRequiredWithoutCommsThreadsAuthoredNestedInput
+    messages?: CommsMessageUpdateManyWithoutThreadNestedInput
+    participants?: CommsParticipantUpdateManyWithoutThreadNestedInput
+  }
+
+  export type CommsThreadUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    messages?: CommsMessageUncheckedUpdateManyWithoutThreadNestedInput
+    participants?: CommsParticipantUncheckedUpdateManyWithoutThreadNestedInput
+  }
+
+  export type CommsThreadCreateManyInput = {
+    id?: string
+    organizationId: string
+    subject: string
+    authorUserId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CommsThreadUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsThreadUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsMessageCreateInput = {
+    id?: string
+    body: string
+    createdAt?: Date | string
+    thread: CommsThreadCreateNestedOneWithoutMessagesInput
+    author: UserCreateNestedOneWithoutCommsMessagesAuthoredInput
+  }
+
+  export type CommsMessageUncheckedCreateInput = {
+    id?: string
+    threadId: string
+    authorUserId: string
+    body: string
+    createdAt?: Date | string
+  }
+
+  export type CommsMessageUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    thread?: CommsThreadUpdateOneRequiredWithoutMessagesNestedInput
+    author?: UserUpdateOneRequiredWithoutCommsMessagesAuthoredNestedInput
+  }
+
+  export type CommsMessageUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    threadId?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsMessageCreateManyInput = {
+    id?: string
+    threadId: string
+    authorUserId: string
+    body: string
+    createdAt?: Date | string
+  }
+
+  export type CommsMessageUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsMessageUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    threadId?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsParticipantCreateInput = {
+    id?: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+    thread: CommsThreadCreateNestedOneWithoutParticipantsInput
+    user: UserCreateNestedOneWithoutCommsParticipationsInput
+  }
+
+  export type CommsParticipantUncheckedCreateInput = {
+    id?: string
+    threadId: string
+    userId: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type CommsParticipantUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    thread?: CommsThreadUpdateOneRequiredWithoutParticipantsNestedInput
+    user?: UserUpdateOneRequiredWithoutCommsParticipationsNestedInput
+  }
+
+  export type CommsParticipantUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    threadId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsParticipantCreateManyInput = {
+    id?: string
+    threadId: string
+    userId: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type CommsParticipantUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsParticipantUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    threadId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type HoldingCreateInput = {
@@ -172997,6 +177168,12 @@ export namespace Prisma {
     none?: OrganizationSatelliteChannelWhereInput
   }
 
+  export type CommsThreadListRelationFilter = {
+    every?: CommsThreadWhereInput
+    some?: CommsThreadWhereInput
+    none?: CommsThreadWhereInput
+  }
+
   export type WorkforceAssignmentListRelationFilter = {
     every?: WorkforceAssignmentWhereInput
     some?: WorkforceAssignmentWhereInput
@@ -173215,6 +177392,10 @@ export namespace Prisma {
   }
 
   export type OrganizationSatelliteChannelOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CommsThreadOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -173867,11 +178048,31 @@ export namespace Prisma {
     none?: HoldingMembershipWhereInput
   }
 
+  export type CommsMessageListRelationFilter = {
+    every?: CommsMessageWhereInput
+    some?: CommsMessageWhereInput
+    none?: CommsMessageWhereInput
+  }
+
+  export type CommsParticipantListRelationFilter = {
+    every?: CommsParticipantWhereInput
+    some?: CommsParticipantWhereInput
+    none?: CommsParticipantWhereInput
+  }
+
   export type HoldingOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type HoldingMembershipOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CommsMessageOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CommsParticipantOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -173911,6 +178112,91 @@ export namespace Prisma {
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
+  }
+
+  export type CommsThreadCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    subject?: SortOrder
+    authorUserId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CommsThreadMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    subject?: SortOrder
+    authorUserId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CommsThreadMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    subject?: SortOrder
+    authorUserId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CommsThreadScalarRelationFilter = {
+    is?: CommsThreadWhereInput
+    isNot?: CommsThreadWhereInput
+  }
+
+  export type CommsMessageCountOrderByAggregateInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    authorUserId?: SortOrder
+    body?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CommsMessageMaxOrderByAggregateInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    authorUserId?: SortOrder
+    body?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CommsMessageMinOrderByAggregateInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    authorUserId?: SortOrder
+    body?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CommsParticipantThreadIdUserIdCompoundUniqueInput = {
+    threadId: string
+    userId: string
+  }
+
+  export type CommsParticipantCountOrderByAggregateInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CommsParticipantMaxOrderByAggregateInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CommsParticipantMinOrderByAggregateInput = {
+    id?: SortOrder
+    threadId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type HoldingCountOrderByAggregateInput = {
@@ -180526,6 +184812,13 @@ export namespace Prisma {
     connect?: OrganizationSatelliteChannelWhereUniqueInput | OrganizationSatelliteChannelWhereUniqueInput[]
   }
 
+  export type CommsThreadCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<CommsThreadCreateWithoutOrganizationInput, CommsThreadUncheckedCreateWithoutOrganizationInput> | CommsThreadCreateWithoutOrganizationInput[] | CommsThreadUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutOrganizationInput | CommsThreadCreateOrConnectWithoutOrganizationInput[]
+    createMany?: CommsThreadCreateManyOrganizationInputEnvelope
+    connect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+  }
+
   export type WorkforceAssignmentCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<WorkforceAssignmentCreateWithoutOrganizationInput, WorkforceAssignmentUncheckedCreateWithoutOrganizationInput> | WorkforceAssignmentCreateWithoutOrganizationInput[] | WorkforceAssignmentUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: WorkforceAssignmentCreateOrConnectWithoutOrganizationInput | WorkforceAssignmentCreateOrConnectWithoutOrganizationInput[]
@@ -180964,6 +185257,13 @@ export namespace Prisma {
     connectOrCreate?: OrganizationSatelliteChannelCreateOrConnectWithoutToOrganizationInput | OrganizationSatelliteChannelCreateOrConnectWithoutToOrganizationInput[]
     createMany?: OrganizationSatelliteChannelCreateManyToOrganizationInputEnvelope
     connect?: OrganizationSatelliteChannelWhereUniqueInput | OrganizationSatelliteChannelWhereUniqueInput[]
+  }
+
+  export type CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<CommsThreadCreateWithoutOrganizationInput, CommsThreadUncheckedCreateWithoutOrganizationInput> | CommsThreadCreateWithoutOrganizationInput[] | CommsThreadUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutOrganizationInput | CommsThreadCreateOrConnectWithoutOrganizationInput[]
+    createMany?: CommsThreadCreateManyOrganizationInputEnvelope
+    connect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
   }
 
   export type WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -181614,6 +185914,20 @@ export namespace Prisma {
     update?: OrganizationSatelliteChannelUpdateWithWhereUniqueWithoutToOrganizationInput | OrganizationSatelliteChannelUpdateWithWhereUniqueWithoutToOrganizationInput[]
     updateMany?: OrganizationSatelliteChannelUpdateManyWithWhereWithoutToOrganizationInput | OrganizationSatelliteChannelUpdateManyWithWhereWithoutToOrganizationInput[]
     deleteMany?: OrganizationSatelliteChannelScalarWhereInput | OrganizationSatelliteChannelScalarWhereInput[]
+  }
+
+  export type CommsThreadUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<CommsThreadCreateWithoutOrganizationInput, CommsThreadUncheckedCreateWithoutOrganizationInput> | CommsThreadCreateWithoutOrganizationInput[] | CommsThreadUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutOrganizationInput | CommsThreadCreateOrConnectWithoutOrganizationInput[]
+    upsert?: CommsThreadUpsertWithWhereUniqueWithoutOrganizationInput | CommsThreadUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: CommsThreadCreateManyOrganizationInputEnvelope
+    set?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    disconnect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    delete?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    connect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    update?: CommsThreadUpdateWithWhereUniqueWithoutOrganizationInput | CommsThreadUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: CommsThreadUpdateManyWithWhereWithoutOrganizationInput | CommsThreadUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: CommsThreadScalarWhereInput | CommsThreadScalarWhereInput[]
   }
 
   export type WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput = {
@@ -182480,6 +186794,20 @@ export namespace Prisma {
     deleteMany?: OrganizationSatelliteChannelScalarWhereInput | OrganizationSatelliteChannelScalarWhereInput[]
   }
 
+  export type CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<CommsThreadCreateWithoutOrganizationInput, CommsThreadUncheckedCreateWithoutOrganizationInput> | CommsThreadCreateWithoutOrganizationInput[] | CommsThreadUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutOrganizationInput | CommsThreadCreateOrConnectWithoutOrganizationInput[]
+    upsert?: CommsThreadUpsertWithWhereUniqueWithoutOrganizationInput | CommsThreadUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: CommsThreadCreateManyOrganizationInputEnvelope
+    set?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    disconnect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    delete?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    connect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    update?: CommsThreadUpdateWithWhereUniqueWithoutOrganizationInput | CommsThreadUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: CommsThreadUpdateManyWithWhereWithoutOrganizationInput | CommsThreadUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: CommsThreadScalarWhereInput | CommsThreadScalarWhereInput[]
+  }
+
   export type WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput = {
     create?: XOR<WorkforceAssignmentCreateWithoutOrganizationInput, WorkforceAssignmentUncheckedCreateWithoutOrganizationInput> | WorkforceAssignmentCreateWithoutOrganizationInput[] | WorkforceAssignmentUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: WorkforceAssignmentCreateOrConnectWithoutOrganizationInput | WorkforceAssignmentCreateOrConnectWithoutOrganizationInput[]
@@ -183215,6 +187543,27 @@ export namespace Prisma {
     connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
   }
 
+  export type CommsThreadCreateNestedManyWithoutAuthorInput = {
+    create?: XOR<CommsThreadCreateWithoutAuthorInput, CommsThreadUncheckedCreateWithoutAuthorInput> | CommsThreadCreateWithoutAuthorInput[] | CommsThreadUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutAuthorInput | CommsThreadCreateOrConnectWithoutAuthorInput[]
+    createMany?: CommsThreadCreateManyAuthorInputEnvelope
+    connect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+  }
+
+  export type CommsMessageCreateNestedManyWithoutAuthorInput = {
+    create?: XOR<CommsMessageCreateWithoutAuthorInput, CommsMessageUncheckedCreateWithoutAuthorInput> | CommsMessageCreateWithoutAuthorInput[] | CommsMessageUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommsMessageCreateOrConnectWithoutAuthorInput | CommsMessageCreateOrConnectWithoutAuthorInput[]
+    createMany?: CommsMessageCreateManyAuthorInputEnvelope
+    connect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+  }
+
+  export type CommsParticipantCreateNestedManyWithoutUserInput = {
+    create?: XOR<CommsParticipantCreateWithoutUserInput, CommsParticipantUncheckedCreateWithoutUserInput> | CommsParticipantCreateWithoutUserInput[] | CommsParticipantUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: CommsParticipantCreateOrConnectWithoutUserInput | CommsParticipantCreateOrConnectWithoutUserInput[]
+    createMany?: CommsParticipantCreateManyUserInputEnvelope
+    connect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+  }
+
   export type OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<OrganizationMembershipCreateWithoutUserInput, OrganizationMembershipUncheckedCreateWithoutUserInput> | OrganizationMembershipCreateWithoutUserInput[] | OrganizationMembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutUserInput | OrganizationMembershipCreateOrConnectWithoutUserInput[]
@@ -183262,6 +187611,27 @@ export namespace Prisma {
     connectOrCreate?: HoldingMembershipCreateOrConnectWithoutUserInput | HoldingMembershipCreateOrConnectWithoutUserInput[]
     createMany?: HoldingMembershipCreateManyUserInputEnvelope
     connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+  }
+
+  export type CommsThreadUncheckedCreateNestedManyWithoutAuthorInput = {
+    create?: XOR<CommsThreadCreateWithoutAuthorInput, CommsThreadUncheckedCreateWithoutAuthorInput> | CommsThreadCreateWithoutAuthorInput[] | CommsThreadUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutAuthorInput | CommsThreadCreateOrConnectWithoutAuthorInput[]
+    createMany?: CommsThreadCreateManyAuthorInputEnvelope
+    connect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+  }
+
+  export type CommsMessageUncheckedCreateNestedManyWithoutAuthorInput = {
+    create?: XOR<CommsMessageCreateWithoutAuthorInput, CommsMessageUncheckedCreateWithoutAuthorInput> | CommsMessageCreateWithoutAuthorInput[] | CommsMessageUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommsMessageCreateOrConnectWithoutAuthorInput | CommsMessageCreateOrConnectWithoutAuthorInput[]
+    createMany?: CommsMessageCreateManyAuthorInputEnvelope
+    connect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+  }
+
+  export type CommsParticipantUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<CommsParticipantCreateWithoutUserInput, CommsParticipantUncheckedCreateWithoutUserInput> | CommsParticipantCreateWithoutUserInput[] | CommsParticipantUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: CommsParticipantCreateOrConnectWithoutUserInput | CommsParticipantCreateOrConnectWithoutUserInput[]
+    createMany?: CommsParticipantCreateManyUserInputEnvelope
+    connect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
   }
 
   export type OrganizationMembershipUpdateManyWithoutUserNestedInput = {
@@ -183362,6 +187732,48 @@ export namespace Prisma {
     deleteMany?: HoldingMembershipScalarWhereInput | HoldingMembershipScalarWhereInput[]
   }
 
+  export type CommsThreadUpdateManyWithoutAuthorNestedInput = {
+    create?: XOR<CommsThreadCreateWithoutAuthorInput, CommsThreadUncheckedCreateWithoutAuthorInput> | CommsThreadCreateWithoutAuthorInput[] | CommsThreadUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutAuthorInput | CommsThreadCreateOrConnectWithoutAuthorInput[]
+    upsert?: CommsThreadUpsertWithWhereUniqueWithoutAuthorInput | CommsThreadUpsertWithWhereUniqueWithoutAuthorInput[]
+    createMany?: CommsThreadCreateManyAuthorInputEnvelope
+    set?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    disconnect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    delete?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    connect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    update?: CommsThreadUpdateWithWhereUniqueWithoutAuthorInput | CommsThreadUpdateWithWhereUniqueWithoutAuthorInput[]
+    updateMany?: CommsThreadUpdateManyWithWhereWithoutAuthorInput | CommsThreadUpdateManyWithWhereWithoutAuthorInput[]
+    deleteMany?: CommsThreadScalarWhereInput | CommsThreadScalarWhereInput[]
+  }
+
+  export type CommsMessageUpdateManyWithoutAuthorNestedInput = {
+    create?: XOR<CommsMessageCreateWithoutAuthorInput, CommsMessageUncheckedCreateWithoutAuthorInput> | CommsMessageCreateWithoutAuthorInput[] | CommsMessageUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommsMessageCreateOrConnectWithoutAuthorInput | CommsMessageCreateOrConnectWithoutAuthorInput[]
+    upsert?: CommsMessageUpsertWithWhereUniqueWithoutAuthorInput | CommsMessageUpsertWithWhereUniqueWithoutAuthorInput[]
+    createMany?: CommsMessageCreateManyAuthorInputEnvelope
+    set?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    disconnect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    delete?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    connect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    update?: CommsMessageUpdateWithWhereUniqueWithoutAuthorInput | CommsMessageUpdateWithWhereUniqueWithoutAuthorInput[]
+    updateMany?: CommsMessageUpdateManyWithWhereWithoutAuthorInput | CommsMessageUpdateManyWithWhereWithoutAuthorInput[]
+    deleteMany?: CommsMessageScalarWhereInput | CommsMessageScalarWhereInput[]
+  }
+
+  export type CommsParticipantUpdateManyWithoutUserNestedInput = {
+    create?: XOR<CommsParticipantCreateWithoutUserInput, CommsParticipantUncheckedCreateWithoutUserInput> | CommsParticipantCreateWithoutUserInput[] | CommsParticipantUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: CommsParticipantCreateOrConnectWithoutUserInput | CommsParticipantCreateOrConnectWithoutUserInput[]
+    upsert?: CommsParticipantUpsertWithWhereUniqueWithoutUserInput | CommsParticipantUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: CommsParticipantCreateManyUserInputEnvelope
+    set?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    disconnect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    delete?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    connect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    update?: CommsParticipantUpdateWithWhereUniqueWithoutUserInput | CommsParticipantUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: CommsParticipantUpdateManyWithWhereWithoutUserInput | CommsParticipantUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: CommsParticipantScalarWhereInput | CommsParticipantScalarWhereInput[]
+  }
+
   export type OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<OrganizationMembershipCreateWithoutUserInput, OrganizationMembershipUncheckedCreateWithoutUserInput> | OrganizationMembershipCreateWithoutUserInput[] | OrganizationMembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutUserInput | OrganizationMembershipCreateOrConnectWithoutUserInput[]
@@ -183458,6 +187870,216 @@ export namespace Prisma {
     update?: HoldingMembershipUpdateWithWhereUniqueWithoutUserInput | HoldingMembershipUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: HoldingMembershipUpdateManyWithWhereWithoutUserInput | HoldingMembershipUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: HoldingMembershipScalarWhereInput | HoldingMembershipScalarWhereInput[]
+  }
+
+  export type CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput = {
+    create?: XOR<CommsThreadCreateWithoutAuthorInput, CommsThreadUncheckedCreateWithoutAuthorInput> | CommsThreadCreateWithoutAuthorInput[] | CommsThreadUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutAuthorInput | CommsThreadCreateOrConnectWithoutAuthorInput[]
+    upsert?: CommsThreadUpsertWithWhereUniqueWithoutAuthorInput | CommsThreadUpsertWithWhereUniqueWithoutAuthorInput[]
+    createMany?: CommsThreadCreateManyAuthorInputEnvelope
+    set?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    disconnect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    delete?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    connect?: CommsThreadWhereUniqueInput | CommsThreadWhereUniqueInput[]
+    update?: CommsThreadUpdateWithWhereUniqueWithoutAuthorInput | CommsThreadUpdateWithWhereUniqueWithoutAuthorInput[]
+    updateMany?: CommsThreadUpdateManyWithWhereWithoutAuthorInput | CommsThreadUpdateManyWithWhereWithoutAuthorInput[]
+    deleteMany?: CommsThreadScalarWhereInput | CommsThreadScalarWhereInput[]
+  }
+
+  export type CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput = {
+    create?: XOR<CommsMessageCreateWithoutAuthorInput, CommsMessageUncheckedCreateWithoutAuthorInput> | CommsMessageCreateWithoutAuthorInput[] | CommsMessageUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommsMessageCreateOrConnectWithoutAuthorInput | CommsMessageCreateOrConnectWithoutAuthorInput[]
+    upsert?: CommsMessageUpsertWithWhereUniqueWithoutAuthorInput | CommsMessageUpsertWithWhereUniqueWithoutAuthorInput[]
+    createMany?: CommsMessageCreateManyAuthorInputEnvelope
+    set?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    disconnect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    delete?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    connect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    update?: CommsMessageUpdateWithWhereUniqueWithoutAuthorInput | CommsMessageUpdateWithWhereUniqueWithoutAuthorInput[]
+    updateMany?: CommsMessageUpdateManyWithWhereWithoutAuthorInput | CommsMessageUpdateManyWithWhereWithoutAuthorInput[]
+    deleteMany?: CommsMessageScalarWhereInput | CommsMessageScalarWhereInput[]
+  }
+
+  export type CommsParticipantUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<CommsParticipantCreateWithoutUserInput, CommsParticipantUncheckedCreateWithoutUserInput> | CommsParticipantCreateWithoutUserInput[] | CommsParticipantUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: CommsParticipantCreateOrConnectWithoutUserInput | CommsParticipantCreateOrConnectWithoutUserInput[]
+    upsert?: CommsParticipantUpsertWithWhereUniqueWithoutUserInput | CommsParticipantUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: CommsParticipantCreateManyUserInputEnvelope
+    set?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    disconnect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    delete?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    connect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    update?: CommsParticipantUpdateWithWhereUniqueWithoutUserInput | CommsParticipantUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: CommsParticipantUpdateManyWithWhereWithoutUserInput | CommsParticipantUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: CommsParticipantScalarWhereInput | CommsParticipantScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutCommsThreadsInput = {
+    create?: XOR<OrganizationCreateWithoutCommsThreadsInput, OrganizationUncheckedCreateWithoutCommsThreadsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutCommsThreadsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutCommsThreadsAuthoredInput = {
+    create?: XOR<UserCreateWithoutCommsThreadsAuthoredInput, UserUncheckedCreateWithoutCommsThreadsAuthoredInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCommsThreadsAuthoredInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type CommsMessageCreateNestedManyWithoutThreadInput = {
+    create?: XOR<CommsMessageCreateWithoutThreadInput, CommsMessageUncheckedCreateWithoutThreadInput> | CommsMessageCreateWithoutThreadInput[] | CommsMessageUncheckedCreateWithoutThreadInput[]
+    connectOrCreate?: CommsMessageCreateOrConnectWithoutThreadInput | CommsMessageCreateOrConnectWithoutThreadInput[]
+    createMany?: CommsMessageCreateManyThreadInputEnvelope
+    connect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+  }
+
+  export type CommsParticipantCreateNestedManyWithoutThreadInput = {
+    create?: XOR<CommsParticipantCreateWithoutThreadInput, CommsParticipantUncheckedCreateWithoutThreadInput> | CommsParticipantCreateWithoutThreadInput[] | CommsParticipantUncheckedCreateWithoutThreadInput[]
+    connectOrCreate?: CommsParticipantCreateOrConnectWithoutThreadInput | CommsParticipantCreateOrConnectWithoutThreadInput[]
+    createMany?: CommsParticipantCreateManyThreadInputEnvelope
+    connect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+  }
+
+  export type CommsMessageUncheckedCreateNestedManyWithoutThreadInput = {
+    create?: XOR<CommsMessageCreateWithoutThreadInput, CommsMessageUncheckedCreateWithoutThreadInput> | CommsMessageCreateWithoutThreadInput[] | CommsMessageUncheckedCreateWithoutThreadInput[]
+    connectOrCreate?: CommsMessageCreateOrConnectWithoutThreadInput | CommsMessageCreateOrConnectWithoutThreadInput[]
+    createMany?: CommsMessageCreateManyThreadInputEnvelope
+    connect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+  }
+
+  export type CommsParticipantUncheckedCreateNestedManyWithoutThreadInput = {
+    create?: XOR<CommsParticipantCreateWithoutThreadInput, CommsParticipantUncheckedCreateWithoutThreadInput> | CommsParticipantCreateWithoutThreadInput[] | CommsParticipantUncheckedCreateWithoutThreadInput[]
+    connectOrCreate?: CommsParticipantCreateOrConnectWithoutThreadInput | CommsParticipantCreateOrConnectWithoutThreadInput[]
+    createMany?: CommsParticipantCreateManyThreadInputEnvelope
+    connect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutCommsThreadsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutCommsThreadsInput, OrganizationUncheckedCreateWithoutCommsThreadsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutCommsThreadsInput
+    upsert?: OrganizationUpsertWithoutCommsThreadsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutCommsThreadsInput, OrganizationUpdateWithoutCommsThreadsInput>, OrganizationUncheckedUpdateWithoutCommsThreadsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutCommsThreadsAuthoredNestedInput = {
+    create?: XOR<UserCreateWithoutCommsThreadsAuthoredInput, UserUncheckedCreateWithoutCommsThreadsAuthoredInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCommsThreadsAuthoredInput
+    upsert?: UserUpsertWithoutCommsThreadsAuthoredInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCommsThreadsAuthoredInput, UserUpdateWithoutCommsThreadsAuthoredInput>, UserUncheckedUpdateWithoutCommsThreadsAuthoredInput>
+  }
+
+  export type CommsMessageUpdateManyWithoutThreadNestedInput = {
+    create?: XOR<CommsMessageCreateWithoutThreadInput, CommsMessageUncheckedCreateWithoutThreadInput> | CommsMessageCreateWithoutThreadInput[] | CommsMessageUncheckedCreateWithoutThreadInput[]
+    connectOrCreate?: CommsMessageCreateOrConnectWithoutThreadInput | CommsMessageCreateOrConnectWithoutThreadInput[]
+    upsert?: CommsMessageUpsertWithWhereUniqueWithoutThreadInput | CommsMessageUpsertWithWhereUniqueWithoutThreadInput[]
+    createMany?: CommsMessageCreateManyThreadInputEnvelope
+    set?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    disconnect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    delete?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    connect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    update?: CommsMessageUpdateWithWhereUniqueWithoutThreadInput | CommsMessageUpdateWithWhereUniqueWithoutThreadInput[]
+    updateMany?: CommsMessageUpdateManyWithWhereWithoutThreadInput | CommsMessageUpdateManyWithWhereWithoutThreadInput[]
+    deleteMany?: CommsMessageScalarWhereInput | CommsMessageScalarWhereInput[]
+  }
+
+  export type CommsParticipantUpdateManyWithoutThreadNestedInput = {
+    create?: XOR<CommsParticipantCreateWithoutThreadInput, CommsParticipantUncheckedCreateWithoutThreadInput> | CommsParticipantCreateWithoutThreadInput[] | CommsParticipantUncheckedCreateWithoutThreadInput[]
+    connectOrCreate?: CommsParticipantCreateOrConnectWithoutThreadInput | CommsParticipantCreateOrConnectWithoutThreadInput[]
+    upsert?: CommsParticipantUpsertWithWhereUniqueWithoutThreadInput | CommsParticipantUpsertWithWhereUniqueWithoutThreadInput[]
+    createMany?: CommsParticipantCreateManyThreadInputEnvelope
+    set?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    disconnect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    delete?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    connect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    update?: CommsParticipantUpdateWithWhereUniqueWithoutThreadInput | CommsParticipantUpdateWithWhereUniqueWithoutThreadInput[]
+    updateMany?: CommsParticipantUpdateManyWithWhereWithoutThreadInput | CommsParticipantUpdateManyWithWhereWithoutThreadInput[]
+    deleteMany?: CommsParticipantScalarWhereInput | CommsParticipantScalarWhereInput[]
+  }
+
+  export type CommsMessageUncheckedUpdateManyWithoutThreadNestedInput = {
+    create?: XOR<CommsMessageCreateWithoutThreadInput, CommsMessageUncheckedCreateWithoutThreadInput> | CommsMessageCreateWithoutThreadInput[] | CommsMessageUncheckedCreateWithoutThreadInput[]
+    connectOrCreate?: CommsMessageCreateOrConnectWithoutThreadInput | CommsMessageCreateOrConnectWithoutThreadInput[]
+    upsert?: CommsMessageUpsertWithWhereUniqueWithoutThreadInput | CommsMessageUpsertWithWhereUniqueWithoutThreadInput[]
+    createMany?: CommsMessageCreateManyThreadInputEnvelope
+    set?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    disconnect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    delete?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    connect?: CommsMessageWhereUniqueInput | CommsMessageWhereUniqueInput[]
+    update?: CommsMessageUpdateWithWhereUniqueWithoutThreadInput | CommsMessageUpdateWithWhereUniqueWithoutThreadInput[]
+    updateMany?: CommsMessageUpdateManyWithWhereWithoutThreadInput | CommsMessageUpdateManyWithWhereWithoutThreadInput[]
+    deleteMany?: CommsMessageScalarWhereInput | CommsMessageScalarWhereInput[]
+  }
+
+  export type CommsParticipantUncheckedUpdateManyWithoutThreadNestedInput = {
+    create?: XOR<CommsParticipantCreateWithoutThreadInput, CommsParticipantUncheckedCreateWithoutThreadInput> | CommsParticipantCreateWithoutThreadInput[] | CommsParticipantUncheckedCreateWithoutThreadInput[]
+    connectOrCreate?: CommsParticipantCreateOrConnectWithoutThreadInput | CommsParticipantCreateOrConnectWithoutThreadInput[]
+    upsert?: CommsParticipantUpsertWithWhereUniqueWithoutThreadInput | CommsParticipantUpsertWithWhereUniqueWithoutThreadInput[]
+    createMany?: CommsParticipantCreateManyThreadInputEnvelope
+    set?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    disconnect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    delete?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    connect?: CommsParticipantWhereUniqueInput | CommsParticipantWhereUniqueInput[]
+    update?: CommsParticipantUpdateWithWhereUniqueWithoutThreadInput | CommsParticipantUpdateWithWhereUniqueWithoutThreadInput[]
+    updateMany?: CommsParticipantUpdateManyWithWhereWithoutThreadInput | CommsParticipantUpdateManyWithWhereWithoutThreadInput[]
+    deleteMany?: CommsParticipantScalarWhereInput | CommsParticipantScalarWhereInput[]
+  }
+
+  export type CommsThreadCreateNestedOneWithoutMessagesInput = {
+    create?: XOR<CommsThreadCreateWithoutMessagesInput, CommsThreadUncheckedCreateWithoutMessagesInput>
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutMessagesInput
+    connect?: CommsThreadWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutCommsMessagesAuthoredInput = {
+    create?: XOR<UserCreateWithoutCommsMessagesAuthoredInput, UserUncheckedCreateWithoutCommsMessagesAuthoredInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCommsMessagesAuthoredInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type CommsThreadUpdateOneRequiredWithoutMessagesNestedInput = {
+    create?: XOR<CommsThreadCreateWithoutMessagesInput, CommsThreadUncheckedCreateWithoutMessagesInput>
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutMessagesInput
+    upsert?: CommsThreadUpsertWithoutMessagesInput
+    connect?: CommsThreadWhereUniqueInput
+    update?: XOR<XOR<CommsThreadUpdateToOneWithWhereWithoutMessagesInput, CommsThreadUpdateWithoutMessagesInput>, CommsThreadUncheckedUpdateWithoutMessagesInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutCommsMessagesAuthoredNestedInput = {
+    create?: XOR<UserCreateWithoutCommsMessagesAuthoredInput, UserUncheckedCreateWithoutCommsMessagesAuthoredInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCommsMessagesAuthoredInput
+    upsert?: UserUpsertWithoutCommsMessagesAuthoredInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCommsMessagesAuthoredInput, UserUpdateWithoutCommsMessagesAuthoredInput>, UserUncheckedUpdateWithoutCommsMessagesAuthoredInput>
+  }
+
+  export type CommsThreadCreateNestedOneWithoutParticipantsInput = {
+    create?: XOR<CommsThreadCreateWithoutParticipantsInput, CommsThreadUncheckedCreateWithoutParticipantsInput>
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutParticipantsInput
+    connect?: CommsThreadWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutCommsParticipationsInput = {
+    create?: XOR<UserCreateWithoutCommsParticipationsInput, UserUncheckedCreateWithoutCommsParticipationsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCommsParticipationsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type CommsThreadUpdateOneRequiredWithoutParticipantsNestedInput = {
+    create?: XOR<CommsThreadCreateWithoutParticipantsInput, CommsThreadUncheckedCreateWithoutParticipantsInput>
+    connectOrCreate?: CommsThreadCreateOrConnectWithoutParticipantsInput
+    upsert?: CommsThreadUpsertWithoutParticipantsInput
+    connect?: CommsThreadWhereUniqueInput
+    update?: XOR<XOR<CommsThreadUpdateToOneWithWhereWithoutParticipantsInput, CommsThreadUpdateWithoutParticipantsInput>, CommsThreadUncheckedUpdateWithoutParticipantsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutCommsParticipationsNestedInput = {
+    create?: XOR<UserCreateWithoutCommsParticipationsInput, UserUncheckedCreateWithoutCommsParticipationsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCommsParticipationsInput
+    upsert?: UserUpsertWithoutCommsParticipationsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCommsParticipationsInput, UserUpdateWithoutCommsParticipationsInput>, UserUncheckedUpdateWithoutCommsParticipationsInput>
   }
 
   export type HoldingMembershipCreateNestedManyWithoutHoldingInput = {
@@ -186312,6 +190934,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -186405,6 +191028,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -186508,6 +191132,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -186601,6 +191226,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -186922,6 +191548,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -187015,6 +191642,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -187107,6 +191735,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -187200,6 +191829,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -187303,6 +191933,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -187396,6 +192027,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -187494,6 +192126,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -187587,6 +192220,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -187711,6 +192345,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -187804,6 +192439,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -187950,6 +192586,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -188043,6 +192680,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -188130,6 +192768,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -188223,6 +192862,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -188326,6 +192966,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -188419,6 +193060,7 @@ export namespace Prisma {
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -188506,6 +193148,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -188599,6 +193242,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -188702,6 +193346,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -188795,6 +193440,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -188882,6 +193528,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -188975,6 +193622,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -189078,6 +193726,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -189171,6 +193820,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -189576,6 +194226,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -189669,6 +194320,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -189799,6 +194451,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -189892,6 +194545,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -190012,6 +194666,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -190105,6 +194760,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -190235,6 +194891,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -190328,6 +194985,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -190448,6 +195106,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -190541,6 +195200,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -190644,6 +195304,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -190737,6 +195398,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -190825,6 +195487,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
@@ -190918,6 +195581,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -191021,6 +195685,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
@@ -191114,6 +195779,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -193151,6 +197817,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -193244,6 +197911,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -193431,6 +198099,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -193524,6 +198193,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -195092,6 +199762,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
     workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
@@ -195185,6 +199856,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
     workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -196464,6 +201136,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
     workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
@@ -196557,6 +201230,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
     workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -197711,6 +202385,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
@@ -197804,6 +202479,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -197965,6 +202641,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
@@ -198058,6 +202735,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -198393,6 +203071,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -198486,6 +203165,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -198796,6 +203476,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -198889,6 +203570,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -199110,6 +203792,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -199203,6 +203886,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -199403,6 +204087,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -199496,6 +204181,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -199648,6 +204334,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -199741,6 +204428,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -199929,6 +204617,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -200022,6 +204711,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -200200,6 +204890,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -200293,6 +204984,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -200589,6 +205281,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -200682,6 +205375,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -200979,6 +205673,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -201072,6 +205767,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -201224,6 +205920,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -201317,6 +206014,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -201459,6 +206157,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -201552,6 +206251,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -201740,6 +206440,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -201833,6 +206534,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -202011,6 +206713,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -202104,6 +206807,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -202292,6 +206996,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -202385,6 +207090,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -202563,6 +207269,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -202656,6 +207363,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -202783,6 +207491,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -202876,6 +207585,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -203207,6 +207917,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -203300,6 +208011,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -203488,6 +208200,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -203581,6 +208294,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -203759,6 +208473,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -203852,6 +208567,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -204013,6 +208729,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -204106,6 +208823,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -204236,6 +208954,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -204329,6 +209048,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -204490,6 +209210,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -204583,6 +209304,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -204838,6 +209560,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -204931,6 +209654,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -205128,6 +209852,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -205221,6 +209946,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -205652,6 +210378,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -205745,6 +210472,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -206030,6 +210758,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -206123,6 +210852,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -206416,6 +211146,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -206509,6 +211240,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -206775,6 +211507,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -206868,6 +211601,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -207945,6 +212679,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -208038,6 +212773,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -208141,6 +212877,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -208234,6 +212971,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -208457,6 +213195,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -208550,6 +213289,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -208734,6 +213474,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -208827,6 +213568,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -209192,6 +213934,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -209285,6 +214028,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -209388,6 +214132,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -209481,6 +214226,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -209568,6 +214314,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -209661,6 +214408,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -209798,6 +214546,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -209891,6 +214640,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -210238,6 +214988,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -210331,6 +215082,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -210434,6 +215186,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -210527,6 +215280,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -211700,6 +216454,36 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CommsThreadCreateWithoutOrganizationInput = {
+    id?: string
+    subject: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    author: UserCreateNestedOneWithoutCommsThreadsAuthoredInput
+    messages?: CommsMessageCreateNestedManyWithoutThreadInput
+    participants?: CommsParticipantCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    subject: string
+    authorUserId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    messages?: CommsMessageUncheckedCreateNestedManyWithoutThreadInput
+    participants?: CommsParticipantUncheckedCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadCreateOrConnectWithoutOrganizationInput = {
+    where: CommsThreadWhereUniqueInput
+    create: XOR<CommsThreadCreateWithoutOrganizationInput, CommsThreadUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type CommsThreadCreateManyOrganizationInputEnvelope = {
+    data: CommsThreadCreateManyOrganizationInput | CommsThreadCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type WorkforceAssignmentCreateWithoutOrganizationInput = {
     id?: string
     globalPersonId: string
@@ -212728,6 +217512,9 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     holdings?: HoldingCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutOwnedOrganizationsInput = {
@@ -212745,6 +217532,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutOwnedOrganizationsInput = {
@@ -212807,6 +217597,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -212900,6 +217691,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -212992,6 +217784,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -213084,6 +217877,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -214144,6 +218938,34 @@ export namespace Prisma {
     data: XOR<OrganizationSatelliteChannelUpdateManyMutationInput, OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationInput>
   }
 
+  export type CommsThreadUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: CommsThreadWhereUniqueInput
+    update: XOR<CommsThreadUpdateWithoutOrganizationInput, CommsThreadUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<CommsThreadCreateWithoutOrganizationInput, CommsThreadUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type CommsThreadUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: CommsThreadWhereUniqueInput
+    data: XOR<CommsThreadUpdateWithoutOrganizationInput, CommsThreadUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type CommsThreadUpdateManyWithWhereWithoutOrganizationInput = {
+    where: CommsThreadScalarWhereInput
+    data: XOR<CommsThreadUpdateManyMutationInput, CommsThreadUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type CommsThreadScalarWhereInput = {
+    AND?: CommsThreadScalarWhereInput | CommsThreadScalarWhereInput[]
+    OR?: CommsThreadScalarWhereInput[]
+    NOT?: CommsThreadScalarWhereInput | CommsThreadScalarWhereInput[]
+    id?: UuidFilter<"CommsThread"> | string
+    organizationId?: UuidFilter<"CommsThread"> | string
+    subject?: StringFilter<"CommsThread"> | string
+    authorUserId?: UuidFilter<"CommsThread"> | string
+    createdAt?: DateTimeFilter<"CommsThread"> | Date | string
+    updatedAt?: DateTimeFilter<"CommsThread"> | Date | string
+  }
+
   export type WorkforceAssignmentUpsertWithWhereUniqueWithoutOrganizationInput = {
     where: WorkforceAssignmentWhereUniqueInput
     update: XOR<WorkforceAssignmentUpdateWithoutOrganizationInput, WorkforceAssignmentUncheckedUpdateWithoutOrganizationInput>
@@ -214836,6 +219658,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     holdings?: HoldingUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutOwnedOrganizationsInput = {
@@ -214853,6 +219678,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationUpsertWithoutDepartmentsInput = {
@@ -214921,6 +219749,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -215014,6 +219843,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -215291,6 +220121,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -215384,6 +220215,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -215567,6 +220399,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -215660,6 +220493,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -215985,6 +220819,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -216078,6 +220913,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -216181,6 +221017,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -216274,6 +221111,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -216361,6 +221199,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -216454,6 +221293,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -216546,6 +221386,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -216639,6 +221480,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -216742,6 +221584,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -216835,6 +221678,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -216933,6 +221777,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -217026,6 +221871,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -217113,6 +221959,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -217206,6 +222053,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -217353,6 +222201,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -217446,6 +222295,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -217549,6 +222399,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -217642,6 +222493,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -217790,6 +222642,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -217883,6 +222736,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -218165,6 +223019,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -218257,6 +223112,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -218353,6 +223209,84 @@ export namespace Prisma {
 
   export type HoldingMembershipCreateManyUserInputEnvelope = {
     data: HoldingMembershipCreateManyUserInput | HoldingMembershipCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CommsThreadCreateWithoutAuthorInput = {
+    id?: string
+    subject: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutCommsThreadsInput
+    messages?: CommsMessageCreateNestedManyWithoutThreadInput
+    participants?: CommsParticipantCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadUncheckedCreateWithoutAuthorInput = {
+    id?: string
+    organizationId: string
+    subject: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    messages?: CommsMessageUncheckedCreateNestedManyWithoutThreadInput
+    participants?: CommsParticipantUncheckedCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadCreateOrConnectWithoutAuthorInput = {
+    where: CommsThreadWhereUniqueInput
+    create: XOR<CommsThreadCreateWithoutAuthorInput, CommsThreadUncheckedCreateWithoutAuthorInput>
+  }
+
+  export type CommsThreadCreateManyAuthorInputEnvelope = {
+    data: CommsThreadCreateManyAuthorInput | CommsThreadCreateManyAuthorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CommsMessageCreateWithoutAuthorInput = {
+    id?: string
+    body: string
+    createdAt?: Date | string
+    thread: CommsThreadCreateNestedOneWithoutMessagesInput
+  }
+
+  export type CommsMessageUncheckedCreateWithoutAuthorInput = {
+    id?: string
+    threadId: string
+    body: string
+    createdAt?: Date | string
+  }
+
+  export type CommsMessageCreateOrConnectWithoutAuthorInput = {
+    where: CommsMessageWhereUniqueInput
+    create: XOR<CommsMessageCreateWithoutAuthorInput, CommsMessageUncheckedCreateWithoutAuthorInput>
+  }
+
+  export type CommsMessageCreateManyAuthorInputEnvelope = {
+    data: CommsMessageCreateManyAuthorInput | CommsMessageCreateManyAuthorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CommsParticipantCreateWithoutUserInput = {
+    id?: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+    thread: CommsThreadCreateNestedOneWithoutParticipantsInput
+  }
+
+  export type CommsParticipantUncheckedCreateWithoutUserInput = {
+    id?: string
+    threadId: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type CommsParticipantCreateOrConnectWithoutUserInput = {
+    where: CommsParticipantWhereUniqueInput
+    create: XOR<CommsParticipantCreateWithoutUserInput, CommsParticipantUncheckedCreateWithoutUserInput>
+  }
+
+  export type CommsParticipantCreateManyUserInputEnvelope = {
+    data: CommsParticipantCreateManyUserInput | CommsParticipantCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -218492,6 +223426,936 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"HoldingMembership"> | Date | string
   }
 
+  export type CommsThreadUpsertWithWhereUniqueWithoutAuthorInput = {
+    where: CommsThreadWhereUniqueInput
+    update: XOR<CommsThreadUpdateWithoutAuthorInput, CommsThreadUncheckedUpdateWithoutAuthorInput>
+    create: XOR<CommsThreadCreateWithoutAuthorInput, CommsThreadUncheckedCreateWithoutAuthorInput>
+  }
+
+  export type CommsThreadUpdateWithWhereUniqueWithoutAuthorInput = {
+    where: CommsThreadWhereUniqueInput
+    data: XOR<CommsThreadUpdateWithoutAuthorInput, CommsThreadUncheckedUpdateWithoutAuthorInput>
+  }
+
+  export type CommsThreadUpdateManyWithWhereWithoutAuthorInput = {
+    where: CommsThreadScalarWhereInput
+    data: XOR<CommsThreadUpdateManyMutationInput, CommsThreadUncheckedUpdateManyWithoutAuthorInput>
+  }
+
+  export type CommsMessageUpsertWithWhereUniqueWithoutAuthorInput = {
+    where: CommsMessageWhereUniqueInput
+    update: XOR<CommsMessageUpdateWithoutAuthorInput, CommsMessageUncheckedUpdateWithoutAuthorInput>
+    create: XOR<CommsMessageCreateWithoutAuthorInput, CommsMessageUncheckedCreateWithoutAuthorInput>
+  }
+
+  export type CommsMessageUpdateWithWhereUniqueWithoutAuthorInput = {
+    where: CommsMessageWhereUniqueInput
+    data: XOR<CommsMessageUpdateWithoutAuthorInput, CommsMessageUncheckedUpdateWithoutAuthorInput>
+  }
+
+  export type CommsMessageUpdateManyWithWhereWithoutAuthorInput = {
+    where: CommsMessageScalarWhereInput
+    data: XOR<CommsMessageUpdateManyMutationInput, CommsMessageUncheckedUpdateManyWithoutAuthorInput>
+  }
+
+  export type CommsMessageScalarWhereInput = {
+    AND?: CommsMessageScalarWhereInput | CommsMessageScalarWhereInput[]
+    OR?: CommsMessageScalarWhereInput[]
+    NOT?: CommsMessageScalarWhereInput | CommsMessageScalarWhereInput[]
+    id?: UuidFilter<"CommsMessage"> | string
+    threadId?: UuidFilter<"CommsMessage"> | string
+    authorUserId?: UuidFilter<"CommsMessage"> | string
+    body?: StringFilter<"CommsMessage"> | string
+    createdAt?: DateTimeFilter<"CommsMessage"> | Date | string
+  }
+
+  export type CommsParticipantUpsertWithWhereUniqueWithoutUserInput = {
+    where: CommsParticipantWhereUniqueInput
+    update: XOR<CommsParticipantUpdateWithoutUserInput, CommsParticipantUncheckedUpdateWithoutUserInput>
+    create: XOR<CommsParticipantCreateWithoutUserInput, CommsParticipantUncheckedCreateWithoutUserInput>
+  }
+
+  export type CommsParticipantUpdateWithWhereUniqueWithoutUserInput = {
+    where: CommsParticipantWhereUniqueInput
+    data: XOR<CommsParticipantUpdateWithoutUserInput, CommsParticipantUncheckedUpdateWithoutUserInput>
+  }
+
+  export type CommsParticipantUpdateManyWithWhereWithoutUserInput = {
+    where: CommsParticipantScalarWhereInput
+    data: XOR<CommsParticipantUpdateManyMutationInput, CommsParticipantUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type CommsParticipantScalarWhereInput = {
+    AND?: CommsParticipantScalarWhereInput | CommsParticipantScalarWhereInput[]
+    OR?: CommsParticipantScalarWhereInput[]
+    NOT?: CommsParticipantScalarWhereInput | CommsParticipantScalarWhereInput[]
+    id?: UuidFilter<"CommsParticipant"> | string
+    threadId?: UuidFilter<"CommsParticipant"> | string
+    userId?: UuidFilter<"CommsParticipant"> | string
+    readAt?: DateTimeNullableFilter<"CommsParticipant"> | Date | string | null
+    createdAt?: DateTimeFilter<"CommsParticipant"> | Date | string
+  }
+
+  export type OrganizationCreateWithoutCommsThreadsInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
+    moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
+    channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
+    channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
+    paymentMethods?: OrgPaymentMethodCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutCommsThreadsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
+    moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
+    channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
+    channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    paymentMethods?: OrgPaymentMethodUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutCommsThreadsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutCommsThreadsInput, OrganizationUncheckedCreateWithoutCommsThreadsInput>
+  }
+
+  export type UserCreateWithoutCommsThreadsAuthoredInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutCommsThreadsAuthoredInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutCommsThreadsAuthoredInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCommsThreadsAuthoredInput, UserUncheckedCreateWithoutCommsThreadsAuthoredInput>
+  }
+
+  export type CommsMessageCreateWithoutThreadInput = {
+    id?: string
+    body: string
+    createdAt?: Date | string
+    author: UserCreateNestedOneWithoutCommsMessagesAuthoredInput
+  }
+
+  export type CommsMessageUncheckedCreateWithoutThreadInput = {
+    id?: string
+    authorUserId: string
+    body: string
+    createdAt?: Date | string
+  }
+
+  export type CommsMessageCreateOrConnectWithoutThreadInput = {
+    where: CommsMessageWhereUniqueInput
+    create: XOR<CommsMessageCreateWithoutThreadInput, CommsMessageUncheckedCreateWithoutThreadInput>
+  }
+
+  export type CommsMessageCreateManyThreadInputEnvelope = {
+    data: CommsMessageCreateManyThreadInput | CommsMessageCreateManyThreadInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CommsParticipantCreateWithoutThreadInput = {
+    id?: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutCommsParticipationsInput
+  }
+
+  export type CommsParticipantUncheckedCreateWithoutThreadInput = {
+    id?: string
+    userId: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type CommsParticipantCreateOrConnectWithoutThreadInput = {
+    where: CommsParticipantWhereUniqueInput
+    create: XOR<CommsParticipantCreateWithoutThreadInput, CommsParticipantUncheckedCreateWithoutThreadInput>
+  }
+
+  export type CommsParticipantCreateManyThreadInputEnvelope = {
+    data: CommsParticipantCreateManyThreadInput | CommsParticipantCreateManyThreadInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutCommsThreadsInput = {
+    update: XOR<OrganizationUpdateWithoutCommsThreadsInput, OrganizationUncheckedUpdateWithoutCommsThreadsInput>
+    create: XOR<OrganizationCreateWithoutCommsThreadsInput, OrganizationUncheckedCreateWithoutCommsThreadsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutCommsThreadsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutCommsThreadsInput, OrganizationUncheckedUpdateWithoutCommsThreadsInput>
+  }
+
+  export type OrganizationUpdateWithoutCommsThreadsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
+    moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
+    channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
+    channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
+    paymentMethods?: OrgPaymentMethodUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutCommsThreadsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
+    moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
+    channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
+    channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    paymentMethods?: OrgPaymentMethodUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+  }
+
+  export type UserUpsertWithoutCommsThreadsAuthoredInput = {
+    update: XOR<UserUpdateWithoutCommsThreadsAuthoredInput, UserUncheckedUpdateWithoutCommsThreadsAuthoredInput>
+    create: XOR<UserCreateWithoutCommsThreadsAuthoredInput, UserUncheckedCreateWithoutCommsThreadsAuthoredInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutCommsThreadsAuthoredInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutCommsThreadsAuthoredInput, UserUncheckedUpdateWithoutCommsThreadsAuthoredInput>
+  }
+
+  export type UserUpdateWithoutCommsThreadsAuthoredInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCommsThreadsAuthoredInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type CommsMessageUpsertWithWhereUniqueWithoutThreadInput = {
+    where: CommsMessageWhereUniqueInput
+    update: XOR<CommsMessageUpdateWithoutThreadInput, CommsMessageUncheckedUpdateWithoutThreadInput>
+    create: XOR<CommsMessageCreateWithoutThreadInput, CommsMessageUncheckedCreateWithoutThreadInput>
+  }
+
+  export type CommsMessageUpdateWithWhereUniqueWithoutThreadInput = {
+    where: CommsMessageWhereUniqueInput
+    data: XOR<CommsMessageUpdateWithoutThreadInput, CommsMessageUncheckedUpdateWithoutThreadInput>
+  }
+
+  export type CommsMessageUpdateManyWithWhereWithoutThreadInput = {
+    where: CommsMessageScalarWhereInput
+    data: XOR<CommsMessageUpdateManyMutationInput, CommsMessageUncheckedUpdateManyWithoutThreadInput>
+  }
+
+  export type CommsParticipantUpsertWithWhereUniqueWithoutThreadInput = {
+    where: CommsParticipantWhereUniqueInput
+    update: XOR<CommsParticipantUpdateWithoutThreadInput, CommsParticipantUncheckedUpdateWithoutThreadInput>
+    create: XOR<CommsParticipantCreateWithoutThreadInput, CommsParticipantUncheckedCreateWithoutThreadInput>
+  }
+
+  export type CommsParticipantUpdateWithWhereUniqueWithoutThreadInput = {
+    where: CommsParticipantWhereUniqueInput
+    data: XOR<CommsParticipantUpdateWithoutThreadInput, CommsParticipantUncheckedUpdateWithoutThreadInput>
+  }
+
+  export type CommsParticipantUpdateManyWithWhereWithoutThreadInput = {
+    where: CommsParticipantScalarWhereInput
+    data: XOR<CommsParticipantUpdateManyMutationInput, CommsParticipantUncheckedUpdateManyWithoutThreadInput>
+  }
+
+  export type CommsThreadCreateWithoutMessagesInput = {
+    id?: string
+    subject: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutCommsThreadsInput
+    author: UserCreateNestedOneWithoutCommsThreadsAuthoredInput
+    participants?: CommsParticipantCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadUncheckedCreateWithoutMessagesInput = {
+    id?: string
+    organizationId: string
+    subject: string
+    authorUserId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    participants?: CommsParticipantUncheckedCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadCreateOrConnectWithoutMessagesInput = {
+    where: CommsThreadWhereUniqueInput
+    create: XOR<CommsThreadCreateWithoutMessagesInput, CommsThreadUncheckedCreateWithoutMessagesInput>
+  }
+
+  export type UserCreateWithoutCommsMessagesAuthoredInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutCommsMessagesAuthoredInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutCommsMessagesAuthoredInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCommsMessagesAuthoredInput, UserUncheckedCreateWithoutCommsMessagesAuthoredInput>
+  }
+
+  export type CommsThreadUpsertWithoutMessagesInput = {
+    update: XOR<CommsThreadUpdateWithoutMessagesInput, CommsThreadUncheckedUpdateWithoutMessagesInput>
+    create: XOR<CommsThreadCreateWithoutMessagesInput, CommsThreadUncheckedCreateWithoutMessagesInput>
+    where?: CommsThreadWhereInput
+  }
+
+  export type CommsThreadUpdateToOneWithWhereWithoutMessagesInput = {
+    where?: CommsThreadWhereInput
+    data: XOR<CommsThreadUpdateWithoutMessagesInput, CommsThreadUncheckedUpdateWithoutMessagesInput>
+  }
+
+  export type CommsThreadUpdateWithoutMessagesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutCommsThreadsNestedInput
+    author?: UserUpdateOneRequiredWithoutCommsThreadsAuthoredNestedInput
+    participants?: CommsParticipantUpdateManyWithoutThreadNestedInput
+  }
+
+  export type CommsThreadUncheckedUpdateWithoutMessagesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    participants?: CommsParticipantUncheckedUpdateManyWithoutThreadNestedInput
+  }
+
+  export type UserUpsertWithoutCommsMessagesAuthoredInput = {
+    update: XOR<UserUpdateWithoutCommsMessagesAuthoredInput, UserUncheckedUpdateWithoutCommsMessagesAuthoredInput>
+    create: XOR<UserCreateWithoutCommsMessagesAuthoredInput, UserUncheckedCreateWithoutCommsMessagesAuthoredInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutCommsMessagesAuthoredInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutCommsMessagesAuthoredInput, UserUncheckedUpdateWithoutCommsMessagesAuthoredInput>
+  }
+
+  export type UserUpdateWithoutCommsMessagesAuthoredInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCommsMessagesAuthoredInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type CommsThreadCreateWithoutParticipantsInput = {
+    id?: string
+    subject: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutCommsThreadsInput
+    author: UserCreateNestedOneWithoutCommsThreadsAuthoredInput
+    messages?: CommsMessageCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadUncheckedCreateWithoutParticipantsInput = {
+    id?: string
+    organizationId: string
+    subject: string
+    authorUserId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    messages?: CommsMessageUncheckedCreateNestedManyWithoutThreadInput
+  }
+
+  export type CommsThreadCreateOrConnectWithoutParticipantsInput = {
+    where: CommsThreadWhereUniqueInput
+    create: XOR<CommsThreadCreateWithoutParticipantsInput, CommsThreadUncheckedCreateWithoutParticipantsInput>
+  }
+
+  export type UserCreateWithoutCommsParticipationsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+  }
+
+  export type UserUncheckedCreateWithoutCommsParticipationsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+  }
+
+  export type UserCreateOrConnectWithoutCommsParticipationsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCommsParticipationsInput, UserUncheckedCreateWithoutCommsParticipationsInput>
+  }
+
+  export type CommsThreadUpsertWithoutParticipantsInput = {
+    update: XOR<CommsThreadUpdateWithoutParticipantsInput, CommsThreadUncheckedUpdateWithoutParticipantsInput>
+    create: XOR<CommsThreadCreateWithoutParticipantsInput, CommsThreadUncheckedCreateWithoutParticipantsInput>
+    where?: CommsThreadWhereInput
+  }
+
+  export type CommsThreadUpdateToOneWithWhereWithoutParticipantsInput = {
+    where?: CommsThreadWhereInput
+    data: XOR<CommsThreadUpdateWithoutParticipantsInput, CommsThreadUncheckedUpdateWithoutParticipantsInput>
+  }
+
+  export type CommsThreadUpdateWithoutParticipantsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutCommsThreadsNestedInput
+    author?: UserUpdateOneRequiredWithoutCommsThreadsAuthoredNestedInput
+    messages?: CommsMessageUpdateManyWithoutThreadNestedInput
+  }
+
+  export type CommsThreadUncheckedUpdateWithoutParticipantsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    messages?: CommsMessageUncheckedUpdateManyWithoutThreadNestedInput
+  }
+
+  export type UserUpsertWithoutCommsParticipationsInput = {
+    update: XOR<UserUpdateWithoutCommsParticipationsInput, UserUncheckedUpdateWithoutCommsParticipationsInput>
+    create: XOR<UserCreateWithoutCommsParticipationsInput, UserUncheckedCreateWithoutCommsParticipationsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutCommsParticipationsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutCommsParticipationsInput, UserUncheckedUpdateWithoutCommsParticipationsInput>
+  }
+
+  export type UserUpdateWithoutCommsParticipationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCommsParticipationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+  }
+
   export type HoldingMembershipCreateWithoutHoldingInput = {
     role?: $Enums.HoldingAccessRole
     createdAt?: Date | string
@@ -218529,6 +224393,9 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutHoldingsInput = {
@@ -218546,6 +224413,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutHoldingsInput = {
@@ -218608,6 +224478,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -218700,6 +224571,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -218785,6 +224657,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutHoldingsInput = {
@@ -218802,6 +224677,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationUpsertWithWhereUniqueWithoutHoldingInput = {
@@ -218864,6 +224742,9 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
     holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutHoldingMembershipsInput = {
@@ -218881,6 +224762,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
     holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutHoldingMembershipsInput = {
@@ -218949,6 +224833,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutHoldingMembershipsInput = {
@@ -218966,6 +224853,9 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationCreateWithoutOrganizationRolesInput = {
@@ -219022,6 +224912,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -219115,6 +225006,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -219250,6 +225142,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -219343,6 +225236,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -219407,6 +225301,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
     holdings?: HoldingCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -219424,6 +225321,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
     holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -219485,6 +225385,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -219578,6 +225479,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -219673,6 +225575,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -219690,6 +225595,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationUpsertWithoutMembershipsInput = {
@@ -219757,6 +225665,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -219850,6 +225759,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -220287,6 +226197,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -220380,6 +226291,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -220433,6 +226345,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
     holdings?: HoldingCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutEarlyAccessEventsInput = {
@@ -220450,6 +226365,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
     holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutEarlyAccessEventsInput = {
@@ -220522,6 +226440,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -220615,6 +226534,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -220674,6 +226594,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEarlyAccessEventsInput = {
@@ -220691,6 +226614,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationCreateWithoutEarlyAccessSignupsInput = {
@@ -220747,6 +226673,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -220840,6 +226767,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -220893,6 +226821,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
     holdings?: HoldingCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutEarlyAccessSignupsInput = {
@@ -220910,6 +226841,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
     holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutEarlyAccessSignupsInput = {
@@ -220982,6 +226916,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -221075,6 +227010,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -221134,6 +227070,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEarlyAccessSignupsInput = {
@@ -221151,6 +227090,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationCreateWithoutAuditLogsInput = {
@@ -221207,6 +227149,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -221300,6 +227243,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -221353,6 +227297,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
     holdings?: HoldingCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -221370,6 +227317,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
     holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
     holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+    commsThreadsAuthored?: CommsThreadUncheckedCreateNestedManyWithoutAuthorInput
+    commsMessagesAuthored?: CommsMessageUncheckedCreateNestedManyWithoutAuthorInput
+    commsParticipations?: CommsParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -221442,6 +227392,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -221535,6 +227486,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -221594,6 +227546,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -221611,6 +227566,9 @@ export namespace Prisma {
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
     holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
     holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+    commsThreadsAuthored?: CommsThreadUncheckedUpdateManyWithoutAuthorNestedInput
+    commsMessagesAuthored?: CommsMessageUncheckedUpdateManyWithoutAuthorNestedInput
+    commsParticipations?: CommsParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationCreateWithoutNotificationTemplatesInput = {
@@ -221667,6 +227625,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -221760,6 +227719,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -221909,6 +227869,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -222002,6 +227963,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -222105,6 +228067,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -222198,6 +228161,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -222362,6 +228326,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -222455,6 +228420,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -222636,6 +228602,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -222729,6 +228696,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -222879,6 +228847,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -222972,6 +228941,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -223059,6 +229029,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -223152,6 +229123,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -223294,6 +229266,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -223387,6 +229360,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -223519,6 +229493,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -223612,6 +229587,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -223715,6 +229691,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -223808,6 +229785,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -223895,6 +229873,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -223988,6 +229967,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -224159,6 +230139,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -224252,6 +230233,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -224371,6 +230353,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -224464,6 +230447,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -224628,6 +230612,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -224721,6 +230706,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -224855,6 +230841,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -224948,6 +230935,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -225103,6 +231091,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -225196,6 +231185,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -225347,6 +231337,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -225440,6 +231431,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -225543,6 +231535,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -225636,6 +231629,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -225723,6 +231717,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -225816,6 +231811,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -225919,6 +231915,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -226012,6 +232009,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -226099,6 +232097,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -226192,6 +232191,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -226295,6 +232295,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -226388,6 +232389,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -226475,6 +232477,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -226568,6 +232571,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -226671,6 +232675,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -226764,6 +232769,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -226851,6 +232857,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -226944,6 +232951,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -227047,6 +233055,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -227140,6 +233149,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -227227,6 +233237,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -227320,6 +233331,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -227423,6 +233435,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -227516,6 +233529,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -227677,6 +233691,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -227770,6 +233785,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -227904,6 +233920,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -227997,6 +234014,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -228155,6 +234173,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
@@ -228248,6 +234267,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
     channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
     workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
     workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
@@ -228382,6 +234402,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -228475,6 +234496,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -232939,6 +238961,14 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type CommsThreadCreateManyOrganizationInput = {
+    id?: string
+    subject: string
+    authorUserId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type WorkforceAssignmentCreateManyOrganizationInput = {
     id?: string
     globalPersonId: string
@@ -234358,6 +240388,34 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CommsThreadUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    author?: UserUpdateOneRequiredWithoutCommsThreadsAuthoredNestedInput
+    messages?: CommsMessageUpdateManyWithoutThreadNestedInput
+    participants?: CommsParticipantUpdateManyWithoutThreadNestedInput
+  }
+
+  export type CommsThreadUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    messages?: CommsMessageUncheckedUpdateManyWithoutThreadNestedInput
+    participants?: CommsParticipantUncheckedUpdateManyWithoutThreadNestedInput
+  }
+
+  export type CommsThreadUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type WorkforceAssignmentUpdateWithoutOrganizationInput = {
     id?: StringFieldUpdateOperationsInput | string
     globalPersonId?: StringFieldUpdateOperationsInput | string
@@ -235412,6 +241470,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -235504,6 +241563,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -235914,6 +241974,28 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type CommsThreadCreateManyAuthorInput = {
+    id?: string
+    organizationId: string
+    subject: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CommsMessageCreateManyAuthorInput = {
+    id?: string
+    threadId: string
+    body: string
+    createdAt?: Date | string
+  }
+
+  export type CommsParticipantCreateManyUserInput = {
+    id?: string
+    threadId: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
   export type OrganizationMembershipUpdateWithoutUserInput = {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -236125,6 +242207,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -236217,6 +242300,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -236331,6 +242415,132 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CommsThreadUpdateWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutCommsThreadsNestedInput
+    messages?: CommsMessageUpdateManyWithoutThreadNestedInput
+    participants?: CommsParticipantUpdateManyWithoutThreadNestedInput
+  }
+
+  export type CommsThreadUncheckedUpdateWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    messages?: CommsMessageUncheckedUpdateManyWithoutThreadNestedInput
+    participants?: CommsParticipantUncheckedUpdateManyWithoutThreadNestedInput
+  }
+
+  export type CommsThreadUncheckedUpdateManyWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subject?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsMessageUpdateWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    thread?: CommsThreadUpdateOneRequiredWithoutMessagesNestedInput
+  }
+
+  export type CommsMessageUncheckedUpdateWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    threadId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsMessageUncheckedUpdateManyWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    threadId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsParticipantUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    thread?: CommsThreadUpdateOneRequiredWithoutParticipantsNestedInput
+  }
+
+  export type CommsParticipantUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    threadId?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsParticipantUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    threadId?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsMessageCreateManyThreadInput = {
+    id?: string
+    authorUserId: string
+    body: string
+    createdAt?: Date | string
+  }
+
+  export type CommsParticipantCreateManyThreadInput = {
+    id?: string
+    userId: string
+    readAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type CommsMessageUpdateWithoutThreadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    author?: UserUpdateOneRequiredWithoutCommsMessagesAuthoredNestedInput
+  }
+
+  export type CommsMessageUncheckedUpdateWithoutThreadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsMessageUncheckedUpdateManyWithoutThreadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorUserId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsParticipantUpdateWithoutThreadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutCommsParticipationsNestedInput
+  }
+
+  export type CommsParticipantUncheckedUpdateWithoutThreadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommsParticipantUncheckedUpdateManyWithoutThreadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type HoldingMembershipCreateManyHoldingInput = {
     userId: string
     role?: $Enums.HoldingAccessRole
@@ -236439,6 +242649,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
@@ -236531,6 +242742,7 @@ export namespace Prisma {
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
     channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
     workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput

@@ -7,15 +7,24 @@
 **Amended:** 2026-09-08 — admin save **in-place** when template has zero `ProgramInstance` pins  
 **Amended:** 2026-09-08 — product **validity window** (`effectiveFrom` / `effectiveTo`); delete of a pinned package closes it instead of erasing  
 **Amended:** 2026-09-08 — W1 entitlement usage COUNT SoT (LabOrderItem / VisitServiceLine stamps)  
-**Amended:** 2026-09-09 — block **kind** selects membership catalog + derives `fulfillment`; admin hides İcra
+**Amended:** 2026-09-09 — block **kind** selects membership catalog + derives `fulfillment`; admin hides İcra  
+**Amended:** 2026-11-06 — `quotaMode` FIXED \| DAILY_RATE; daily rate = counted nights × `quotaPerNight` (+ optional Sunday); `dailyUseCap` day block separate from stay total  
+**Amended:** 2026-11-07 — per-block modes on dynamic packages (`blockQuotaMode` DAILY_RATE \| WEEKLY \| PER_STAY); fractional `quotaPerNight` with `ceil`; weekly `floor(nights/7)×quotaPerWeek`; **no** block-level KNOTS mode (knots only while template FIXED)
 
 ## Decision
 
-1. Quota SoT = `ProgramTemplateQuotaKnot` (nights × **block/entitlement code** × qty), not flat `ProgramTemplateProcedure.quotaTotal`.
-2. `quotaFor` clamps to `maxNights`, refuses below `minNights`, interpolates between adjacent PDF columns (`Math.round`).
-3. Stay nights come from hotel check-in/out; `endsOn` follows checkout.
-4. Package/night change → `recalcProgramQuotas`; **never** cancel `CHECKED_IN`/`COMPLETED`; drop orphan `PROPOSED`. **Amended 2026-09-04** ([clinic-episode-procedure-assign-modal.md](./clinic-episode-procedure-assign-modal.md)): when stay **shortens**, also cancel **future non-consumed** `SCHEDULED` past the new end and return unused quota (1 code/category/day sync). Do not silently delete COMPLETED; over-consumed vs new total → pay path.
+1. Quota SoT depends on `ProgramTemplate.quotaMode`:
+   - **FIXED** (legacy Nafta PDF packages until publish) — `ProgramTemplateQuotaKnot` (nights × **block/entitlement code** × qty); flat `ProgramTemplateProcedure.quotaTotal` is legacy fallback when knots are empty. Knots are **not** a block mode on dynamic packages.
+   - **DAILY_RATE** (dynamic package) — each block has `blockQuotaMode`:
+     - **DAILY_RATE** — `ceil(countedNights × quotaPerNight)` with fractional `Decimal(8,4)` rate; `countSunday` from the template; rate ≤ 0 → 0.
+     - **WEEKLY** — `floor(clampStayNights / 7) × quotaPerWeek` (same min/max clamp as FIXED).
+     - **PER_STAY** — flat `quotaTotal` (labs/exams); knots ignored.
+     Defaults on publish: treatment → DAILY_RATE; LAB/EXAM (or stay basis) → PER_STAY; operator may set WEEKLY (e.g. hydrocolon `quotaPerWeek=1`). Guest-favorable cutover rates are **config**, not hard-coded.
+2. `quotaFor` (FIXED only) clamps to `maxNights`, refuses below `minNights`, interpolates between adjacent PDF columns (`Math.round`).
+3. Stay nights come from hotel check-in/out; `endsOn` follows checkout. Checkout morning is not a night.
+4. Package/night change → `recalcProgramQuotas`; **never** cancel `CHECKED_IN`/`COMPLETED`; drop orphan `PROPOSED`. **Amended 2026-09-04** ([clinic-episode-procedure-assign-modal.md](./clinic-episode-procedure-assign-modal.md)): when stay **shortens**, also cancel **future non-consumed** `SCHEDULED` past the new end and return unused quota (1 code/category/day sync). Do not silently delete COMPLETED; over-consumed vs new total → pay path. Admin **preview/apply** open-course adopt-current is `POST …/program-templates/[id]?action=preview-recalc|apply-recalc` (DAILY_RATE); floors `quotaTotal` at `quotaUsed`.
 5. Charging: in-quota `amountNet=0` when a balance line exists; over-quota = the catalog price (`ServiceCatalogCache.listAmount` when set, else `amount`); walk-in without instance always paid. Missing price → `priceMissing` (do not invent silent zeros as truth). See `entitlement-charge.service.ts` (W3). The catalog checkbox `packageIncluded` does not affect the charge.
+5a. Day caps (independent of stay total): `dailyDistinctCap` = distinct in-package SKUs of the block per Asia/Baku day; `dailyUseCap` (block DAILY_RATE) = units of the block per day. Same product `code` when publishing FIXED → DAILY_RATE via `?action=publish-daily` (new version; open courses stay pinned until recalc).
 
 ## Entitlement blocks (2026-09-07)
 

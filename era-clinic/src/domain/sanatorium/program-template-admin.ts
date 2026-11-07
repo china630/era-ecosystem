@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { SatelliteTransactionClient } from "@era/satellite-kit/tenancy";
+import { defaultBlockQuotaMode } from "@/lib/program-quota";
 
 const assignModeSchema = z.enum([
   "AUTO_ON_OPEN",
@@ -11,27 +12,54 @@ const assignModeSchema = z.enum([
 ]);
 const fulfillmentSchema = z.enum(["PROCEDURE_ORDER", "LAB_ORDER", "VISIT"]);
 const quotaBasisSchema = z.enum(["PER_NIGHTS", "PER_STAY"]);
+const quotaModeSchema = z.enum(["FIXED", "DAILY_RATE"]);
+const blockQuotaModeSchema = z.enum(["DAILY_RATE", "WEEKLY", "PER_STAY"]);
 
-const procedureSchema = z.object({
-  procedureCode: z.string().min(1),
-  procedureName: z.string().min(1),
-  quotaTotal: z.number().int().positive(),
-  avoidAfterHour: z.number().int().optional(),
-  kind: z
-    .enum(["PHYSIO", "BATH", "PARAFFIN", "LAB", "EXAM", "CUSTOM"])
-    .nullable()
-    .optional(),
-  dailyDistinctCap: z.number().int().min(1).max(12).nullable().optional(),
-  sortOrder: z.number().int().nonnegative().optional(),
-  showInProcedures: z.boolean().optional(),
-  procedureOrder: z.number().int().nonnegative().optional(),
-  memberCodes: z.array(z.string().min(1)).optional(),
-  assignMode: assignModeSchema.optional(),
-  fulfillment: fulfillmentSchema.optional(),
-  fulfillmentExplicit: z.boolean().optional(),
-  quotaBasis: quotaBasisSchema.optional(),
-  requiresDoctor: z.boolean().optional(),
-});
+const procedureSchema = z
+  .object({
+    procedureCode: z.string().min(1),
+    procedureName: z.string().min(1),
+    quotaTotal: z.number().int().positive(),
+    avoidAfterHour: z.number().int().optional(),
+    kind: z
+      .enum(["PHYSIO", "BATH", "PARAFFIN", "LAB", "EXAM", "CUSTOM"])
+      .nullable()
+      .optional(),
+    blockQuotaMode: blockQuotaModeSchema.nullable().optional(),
+    dailyDistinctCap: z.number().int().min(1).max(12).nullable().optional(),
+    /** Fractional nightly rate (e.g. 0.55 massage). */
+    quotaPerNight: z.number().min(0).max(12).nullable().optional(),
+    quotaPerWeek: z.number().int().min(1).max(21).nullable().optional(),
+    dailyUseCap: z.number().int().min(1).max(12).nullable().optional(),
+    sortOrder: z.number().int().nonnegative().optional(),
+    showInProcedures: z.boolean().optional(),
+    procedureOrder: z.number().int().nonnegative().optional(),
+    memberCodes: z.array(z.string().min(1)).optional(),
+    assignMode: assignModeSchema.optional(),
+    fulfillment: fulfillmentSchema.optional(),
+    fulfillmentExplicit: z.boolean().optional(),
+    quotaBasis: quotaBasisSchema.optional(),
+    requiresDoctor: z.boolean().optional(),
+  })
+  .superRefine((p, ctx) => {
+    if (p.blockQuotaMode === "WEEKLY" && (p.quotaPerWeek == null || p.quotaPerWeek < 1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "quotaPerWeek required when blockQuotaMode is WEEKLY",
+        path: ["quotaPerWeek"],
+      });
+    }
+    if (
+      p.blockQuotaMode === "DAILY_RATE" &&
+      (p.quotaPerNight == null || p.quotaPerNight <= 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "quotaPerNight > 0 required when blockQuotaMode is DAILY_RATE",
+        path: ["quotaPerNight"],
+      });
+    }
+  });
 
 const knotSchema = z.object({
   nights: z.number().int().positive(),
@@ -53,6 +81,8 @@ export const programTemplateWriteSchema = z.object({
   durationDays: z.number().int().positive().optional(),
   minNights: z.number().int().positive().nullable().optional(),
   maxNights: z.number().int().positive().nullable().optional(),
+  quotaMode: quotaModeSchema.optional(),
+  countSunday: z.boolean().optional(),
   effectiveFrom: dateOnlySchema,
   effectiveTo: dateOnlySchema,
   procedures: z.array(procedureSchema).optional(),
@@ -63,11 +93,41 @@ export const programTemplateCreateSchema = programTemplateWriteSchema.extend({
   code: z.string().min(1),
   name: z.string().min(1),
   durationDays: z.number().int().positive(),
+  quotaMode: quotaModeSchema.default("FIXED"),
+  countSunday: z.boolean().default(false),
   procedures: z.array(procedureSchema).default([]),
 });
 
 export type ProgramProcedureInput = z.infer<typeof procedureSchema>;
 export type ProgramKnotInput = z.infer<typeof knotSchema>;
+
+/** Persist coherent per-block fields for the package quotaMode. */
+export function normalizeProceduresForQuotaMode(
+  procedures: ProgramProcedureInput[],
+  quotaMode: "FIXED" | "DAILY_RATE",
+): ProgramProcedureInput[] {
+  if (quotaMode !== "DAILY_RATE") {
+    return procedures.map((p) => ({
+      ...p,
+      blockQuotaMode: null,
+      quotaPerNight: null,
+      quotaPerWeek: null,
+      dailyUseCap: null,
+    }));
+  }
+  return procedures.map((p) => {
+    const mode =
+      p.blockQuotaMode ??
+      defaultBlockQuotaMode({ kind: p.kind, quotaBasis: p.quotaBasis });
+    return {
+      ...p,
+      blockQuotaMode: mode,
+      quotaPerNight: mode === "DAILY_RATE" ? p.quotaPerNight : null,
+      quotaPerWeek: mode === "WEEKLY" ? (p.quotaPerWeek ?? 1) : null,
+      dailyUseCap: mode === "DAILY_RATE" ? p.dailyUseCap : null,
+    };
+  });
+}
 
 export const programTemplateInclude = {
   procedures: { orderBy: [{ sortOrder: "asc" as const }, { procedureCode: "asc" as const }] },
@@ -87,13 +147,19 @@ export type EntitlementSnapshot = {
   version: number;
   templateId: string;
   code: string;
+  quotaMode?: "FIXED" | "DAILY_RATE";
+  countSunday?: boolean;
   procedures: Array<{
     procedureCode: string;
     procedureName: string;
     quotaTotal: number;
     kind?: string | null;
     sortOrder?: number;
+    blockQuotaMode?: "DAILY_RATE" | "WEEKLY" | "PER_STAY" | null;
     dailyDistinctCap?: number | null;
+    quotaPerNight?: number | null;
+    quotaPerWeek?: number | null;
+    dailyUseCap?: number | null;
     showInProcedures?: boolean;
     procedureOrder?: number;
   } & EntitlementBlockAxes>;
@@ -148,10 +214,20 @@ export function shapeProgramTemplate<
   }
   return {
     ...row,
-    procedures: row.procedures.map((p) => ({
-      ...p,
-      memberCodes: membersByBlock.get(p.procedureCode) ?? [],
-    })),
+    procedures: row.procedures.map((p) => {
+      const raw = p as typeof p & {
+        quotaPerNight?: unknown;
+        blockQuotaMode?: string | null;
+        quotaPerWeek?: number | null;
+      };
+      return {
+        ...p,
+        quotaPerNight: snapshotQuotaRate(raw.quotaPerNight),
+        blockQuotaMode: snapshotBlockMode(raw.blockQuotaMode),
+        quotaPerWeek: raw.quotaPerWeek ?? null,
+        memberCodes: membersByBlock.get(p.procedureCode) ?? [],
+      };
+    }),
   };
 }
 
@@ -242,17 +318,40 @@ export async function findCurrentProgramTemplate(
   });
 }
 
+function snapshotQuotaRate(raw: unknown): number | null {
+  if (raw == null || raw === "") return null;
+  if (typeof raw === "object" && raw !== null && "toNumber" in raw) {
+    const n = (raw as { toNumber: () => number }).toNumber();
+    return Number.isFinite(n) ? n : null;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+function snapshotBlockMode(
+  raw: string | null | undefined,
+): "DAILY_RATE" | "WEEKLY" | "PER_STAY" | null {
+  if (raw === "DAILY_RATE" || raw === "WEEKLY" || raw === "PER_STAY") return raw;
+  return null;
+}
+
 export function buildEntitlementSnapshot(input: {
   templateId: string;
   code: string;
   version: number;
+  quotaMode?: string | null;
+  countSunday?: boolean | null;
   procedures: Array<{
     procedureCode: string;
     procedureName: string;
     quotaTotal: number;
     kind?: string | null;
     sortOrder?: number;
+    blockQuotaMode?: string | null;
     dailyDistinctCap?: number | null;
+    quotaPerNight?: unknown;
+    quotaPerWeek?: number | null;
+    dailyUseCap?: number | null;
     showInProcedures?: boolean;
     procedureOrder?: number;
     assignMode?: string | null;
@@ -267,13 +366,19 @@ export function buildEntitlementSnapshot(input: {
     version: input.version,
     templateId: input.templateId,
     code: input.code,
+    quotaMode: input.quotaMode === "DAILY_RATE" ? "DAILY_RATE" : "FIXED",
+    countSunday: Boolean(input.countSunday),
     procedures: input.procedures.map((p) => ({
       procedureCode: p.procedureCode,
       procedureName: p.procedureName,
       quotaTotal: p.quotaTotal,
       kind: p.kind ?? null,
       sortOrder: p.sortOrder ?? 0,
+      blockQuotaMode: snapshotBlockMode(p.blockQuotaMode),
       dailyDistinctCap: p.dailyDistinctCap ?? null,
+      quotaPerNight: snapshotQuotaRate(p.quotaPerNight),
+      quotaPerWeek: p.quotaPerWeek ?? null,
+      dailyUseCap: p.dailyUseCap ?? null,
       showInProcedures: p.showInProcedures === true,
       procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
       ...normalizeBlockAxes(p),
@@ -354,7 +459,12 @@ export async function replaceTemplateProceduresAndKnots(
           fulfillmentExplicit: axes.fulfillmentExplicit,
           quotaBasis: axes.quotaBasis,
           requiresDoctor: axes.requiresDoctor,
+          blockQuotaMode: p.blockQuotaMode ?? null,
           dailyDistinctCap: p.dailyDistinctCap ?? null,
+          quotaPerNight:
+            p.quotaPerNight != null ? new Prisma.Decimal(p.quotaPerNight) : null,
+          quotaPerWeek: p.quotaPerWeek ?? null,
+          dailyUseCap: p.dailyUseCap ?? null,
         };
       }),
     });
@@ -404,6 +514,11 @@ function compositionFingerprint(
         showInProcedures: p.showInProcedures === true,
         procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
         memberCodes: [...(p.memberCodes ?? [])].sort(),
+        blockQuotaMode: p.blockQuotaMode ?? null,
+        dailyDistinctCap: p.dailyDistinctCap ?? null,
+        quotaPerNight: p.quotaPerNight ?? null,
+        quotaPerWeek: p.quotaPerWeek ?? null,
+        dailyUseCap: p.dailyUseCap ?? null,
         ...axes,
       };
     })
@@ -447,6 +562,13 @@ export function compositionChanged(
         quotaBasis?: string | null;
         requiresDoctor?: boolean | null;
       });
+      const row = p as ProgramProcedureInput & {
+        blockQuotaMode?: string | null;
+        dailyDistinctCap?: number | null;
+        quotaPerNight?: unknown;
+        quotaPerWeek?: number | null;
+        dailyUseCap?: number | null;
+      };
       return {
         procedureCode: p.procedureCode,
         procedureName: p.procedureName,
@@ -456,6 +578,11 @@ export function compositionChanged(
         showInProcedures: p.showInProcedures === true,
         procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
         memberCodes: p.memberCodes,
+        blockQuotaMode: snapshotBlockMode(row.blockQuotaMode),
+        dailyDistinctCap: row.dailyDistinctCap ?? null,
+        quotaPerNight: snapshotQuotaRate(row.quotaPerNight),
+        quotaPerWeek: row.quotaPerWeek ?? null,
+        dailyUseCap: row.dailyUseCap ?? null,
         ...axes,
       };
     }),
@@ -465,25 +592,41 @@ export function compositionChanged(
   return before !== after;
 }
 
-/** Name / duration / min-max — contract fields that must not mutate a pinned row. */
+/** Name / duration / min-max / quota mode — contract fields that must not mutate a pinned row. */
 export function contractMetaChanged(
   existing: {
     name: string;
     durationDays: number;
     minNights: number | null;
     maxNights: number | null;
+    quotaMode?: string | null;
+    countSunday?: boolean | null;
   },
   body: {
     name?: string;
     durationDays?: number;
     minNights?: number | null;
     maxNights?: number | null;
+    quotaMode?: "FIXED" | "DAILY_RATE";
+    countSunday?: boolean;
   },
 ): boolean {
   if (body.name !== undefined && body.name !== existing.name) return true;
   if (body.durationDays !== undefined && body.durationDays !== existing.durationDays) return true;
   if (body.minNights !== undefined && body.minNights !== existing.minNights) return true;
   if (body.maxNights !== undefined && body.maxNights !== existing.maxNights) return true;
+  if (
+    body.quotaMode !== undefined &&
+    body.quotaMode !== (existing.quotaMode === "DAILY_RATE" ? "DAILY_RATE" : "FIXED")
+  ) {
+    return true;
+  }
+  if (
+    body.countSunday !== undefined &&
+    Boolean(body.countSunday) !== Boolean(existing.countSunday)
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -512,7 +655,11 @@ function proceduresFromExisting(existing: {
     fulfillment?: string | null;
     quotaBasis?: string | null;
     requiresDoctor?: boolean | null;
+    blockQuotaMode?: string | null;
     dailyDistinctCap?: number | null;
+    quotaPerNight?: unknown;
+    quotaPerWeek?: number | null;
+    dailyUseCap?: number | null;
   }>;
   blockMembers: Array<{ blockCode: string; procedureCode: string }>;
 }): ProgramProcedureInput[] {
@@ -532,7 +679,11 @@ function proceduresFromExisting(existing: {
       kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
       sortOrder: p.sortOrder,
       memberCodes: membersByBlock.get(p.procedureCode) ?? [],
+      blockQuotaMode: snapshotBlockMode(p.blockQuotaMode),
       dailyDistinctCap: p.dailyDistinctCap ?? null,
+      quotaPerNight: snapshotQuotaRate(p.quotaPerNight),
+      quotaPerWeek: p.quotaPerWeek ?? null,
+      dailyUseCap: p.dailyUseCap ?? null,
       ...axes,
     };
   });
@@ -547,6 +698,8 @@ async function bumpTemplateVersion(
     durationDays: number;
     minNights: number | null;
     maxNights: number | null;
+    quotaMode?: string | null;
+    countSunday?: boolean | null;
     version: number;
   },
   next: {
@@ -554,6 +707,8 @@ async function bumpTemplateVersion(
     durationDays: number;
     minNights: number | null;
     maxNights: number | null;
+    quotaMode: "FIXED" | "DAILY_RATE";
+    countSunday: boolean;
     effectiveFrom: Date | null;
     effectiveTo: Date | null;
     procedures: ProgramProcedureInput[];
@@ -571,6 +726,8 @@ async function bumpTemplateVersion(
       durationDays: next.durationDays,
       minNights: next.minNights,
       maxNights: next.maxNights,
+      quotaMode: next.quotaMode,
+      countSunday: next.countSunday,
       effectiveFrom: next.effectiveFrom,
       effectiveTo: next.effectiveTo,
       version: existing.version + 1,
@@ -618,6 +775,8 @@ export async function ensureWritableCurrentTemplate(
     durationDays: existing.durationDays,
     minNights: existing.minNights,
     maxNights: existing.maxNights,
+    quotaMode: existing.quotaMode === "DAILY_RATE" ? "DAILY_RATE" : "FIXED",
+    countSunday: Boolean(existing.countSunday),
     effectiveFrom: existing.effectiveFrom,
     effectiveTo: existing.effectiveTo,
     procedures: procs,
@@ -663,6 +822,11 @@ export async function saveProgramTemplatePatch(
     const nextDuration = body.durationDays ?? existing.durationDays;
     const nextMin = body.minNights !== undefined ? body.minNights : existing.minNights;
     const nextMax = body.maxNights !== undefined ? body.maxNights : existing.maxNights;
+    const nextQuotaMode =
+      body.quotaMode ??
+      (existing.quotaMode === "DAILY_RATE" ? "DAILY_RATE" : "FIXED");
+    const nextCountSunday =
+      body.countSunday !== undefined ? body.countSunday : Boolean(existing.countSunday);
     const nextFrom =
       body.effectiveFrom !== undefined
         ? parseDateOnly(body.effectiveFrom)
@@ -693,8 +857,8 @@ export async function saveProgramTemplatePatch(
     let compChanged = false;
 
     if (body.procedures) {
-      nextProcs = body.procedures;
-      nextKnots = body.knots ?? existingKnots;
+      nextProcs = normalizeProceduresForQuotaMode(body.procedures, nextQuotaMode);
+      nextKnots = nextQuotaMode === "DAILY_RATE" ? [] : (body.knots ?? existingKnots);
       compChanged = compositionChanged(existing, nextProcs, nextKnots);
     }
 
@@ -712,6 +876,8 @@ export async function saveProgramTemplatePatch(
           durationDays: nextDuration,
           minNights: nextMin,
           maxNights: nextMax,
+          quotaMode: nextQuotaMode,
+          countSunday: nextCountSunday,
           effectiveFrom: nextFrom,
           effectiveTo: nextTo,
         },
@@ -730,6 +896,8 @@ export async function saveProgramTemplatePatch(
       durationDays: nextDuration,
       minNights: nextMin,
       maxNights: nextMax,
+      quotaMode: nextQuotaMode,
+      countSunday: nextCountSunday,
       effectiveFrom: nextFrom,
       effectiveTo: nextTo,
       procedures: nextProcs,
@@ -817,6 +985,8 @@ export async function backfillEntitlementSnapshots(): Promise<{ updated: number 
       templateId: template.id,
       code: template.code,
       version: template.version,
+      quotaMode: template.quotaMode,
+      countSunday: template.countSunday,
       procedures: template.procedures,
       knots: template.quotaKnots,
       members: template.blockMembers,

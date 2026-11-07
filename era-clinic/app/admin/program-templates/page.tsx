@@ -42,6 +42,9 @@ import {
 type BlockKind = ProgramBlockKind;
 type AssignMode = "AUTO_ON_OPEN" | "AUTO_DAY1" | "ON_INDICATION" | "MANUAL";
 type QuotaBasis = "PER_NIGHTS" | "PER_STAY";
+type QuotaMode = "FIXED" | "DAILY_RATE";
+type BlockQuotaMode = "DAILY_RATE" | "WEEKLY" | "PER_STAY";
+type CreateWizardStep = 1 | 2 | 3;
 
 type ProgramBlock = {
   procedureCode: string;
@@ -55,10 +58,35 @@ type ProgramBlock = {
   fulfillmentExplicit: boolean;
   quotaBasis: QuotaBasis | "";
   requiresDoctor: boolean | null;
+  blockQuotaMode: BlockQuotaMode | null;
   dailyDistinctCap: number | null;
+  quotaPerNight: number | null;
+  quotaPerWeek: number | null;
+  dailyUseCap: number | null;
   showInProcedures: boolean;
   procedureOrder: number;
 };
+
+function defaultUiBlockMode(
+  kind: BlockKind | null,
+  basis: QuotaBasis | "",
+): BlockQuotaMode {
+  if (kind === "LAB" || kind === "EXAM") return "PER_STAY";
+  if (basis === "PER_STAY") return "PER_STAY";
+  return "DAILY_RATE";
+}
+
+function resolveUiBlockMode(b: ProgramBlock): BlockQuotaMode {
+  if (b.blockQuotaMode === "DAILY_RATE" || b.blockQuotaMode === "WEEKLY" || b.blockQuotaMode === "PER_STAY") {
+    return b.blockQuotaMode;
+  }
+  return defaultUiBlockMode(b.kind, b.quotaBasis);
+}
+
+function ceilDailyPreview(nights: number, rate: number): number {
+  if (!(rate > 0) || nights <= 0) return 0;
+  return Math.ceil(nights * rate);
+}
 
 type ProgramKnot = { nights: number; procedureCode: string; qty: number };
 
@@ -69,6 +97,8 @@ type ProgramTemplate = {
   durationDays: number;
   minNights?: number | null;
   maxNights?: number | null;
+  quotaMode?: QuotaMode | string | null;
+  countSunday?: boolean | null;
   version?: number;
   isCurrent?: boolean;
   /** Sales window (`YYYY-MM-DD`); `effectiveTo` null = open-ended. */
@@ -79,6 +109,19 @@ type ProgramTemplate = {
   pinInstanceCount?: number;
   procedures: ProgramBlock[];
   quotaKnots?: ProgramKnot[];
+};
+
+type RecalcPreviewLine = {
+  instanceId: string;
+  episodeId: string;
+  programCode: string;
+  patientLabel: string;
+  procedureCode: string;
+  procedureName: string;
+  quotaUsed: number;
+  quotaTotalBefore: number;
+  quotaTotalAfter: number;
+  flooredAtUsed: boolean;
 };
 
 type ProcTypeOpt = { code: string; name: string; blockCategory?: string | null };
@@ -155,7 +198,11 @@ function emptyBlockDraft(existing: ProgramBlock[]): ProgramBlock {
     fulfillmentExplicit: false,
     quotaBasis: "",
     requiresDoctor: null,
+    blockQuotaMode: "DAILY_RATE",
     dailyDistinctCap: null,
+    quotaPerNight: 1,
+    quotaPerWeek: null,
+    dailyUseCap: 1,
     showInProcedures: false,
     procedureOrder: 0,
   };
@@ -235,6 +282,8 @@ function emptyForm() {
     durationDays: "7",
     minNights: "",
     maxNights: "",
+    quotaMode: "" as QuotaMode | "",
+    countSunday: false,
     effectiveFrom: todayYmd(),
     effectiveTo: "",
   };
@@ -271,6 +320,13 @@ export default function ProgramTemplatesAdminPage() {
   const [blockOriginalCode, setBlockOriginalCode] = useState<string | null>(null);
   const [blockDraft, setBlockDraft] = useState<ProgramBlock | null>(null);
   const [memberPick, setMemberPick] = useState("");
+  /** Create wizard: 1 identity → 2 type → 3 composition. Null when editing. */
+  const [createStep, setCreateStep] = useState<CreateWizardStep | null>(null);
+  const [recalcPreview, setRecalcPreview] = useState<{
+    openCourseCount: number;
+    lines: RecalcPreviewLine[];
+  } | null>(null);
+  const [recalcBusy, setRecalcBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -471,6 +527,8 @@ export default function ProgramTemplatesAdminPage() {
     setKnots([]);
     setKnotNights("10");
     setMatrixNights([...KNOT_NIGHT_CHIPS]);
+    setCreateStep(1);
+    setRecalcPreview(null);
     closeBlockModal();
     setOpen(true);
   }
@@ -480,12 +538,16 @@ export default function ProgramTemplatesAdminPage() {
     setEditingVersion(row.version ?? 1);
     setOpenStayCount(row.openInstanceCount ?? 0);
     setPinStayCount(row.pinInstanceCount ?? row.openInstanceCount ?? 0);
+    setCreateStep(null);
+    setRecalcPreview(null);
     setForm({
       code: row.code,
       name: row.name,
       durationDays: String(row.durationDays),
       minNights: row.minNights != null ? String(row.minNights) : "",
       maxNights: row.maxNights != null ? String(row.maxNights) : "",
+      quotaMode: row.quotaMode === "DAILY_RATE" ? "DAILY_RATE" : "FIXED",
+      countSunday: Boolean(row.countSunday),
       effectiveFrom: toYmd(row.effectiveFrom),
       effectiveTo: toYmd(row.effectiveTo),
     });
@@ -493,6 +555,18 @@ export default function ProgramTemplatesAdminPage() {
       (row.procedures ?? []).map((p, i) => {
         const code = p.procedureCode;
         const kind = inferBlockKind(code, (p.kind as BlockKind | null) ?? null);
+        const basis = (p.quotaBasis as QuotaBasis) || "PER_NIGHTS";
+        const modeRaw = (p as ProgramBlock).blockQuotaMode;
+        const blockQuotaMode =
+          modeRaw === "DAILY_RATE" || modeRaw === "WEEKLY" || modeRaw === "PER_STAY"
+            ? modeRaw
+            : defaultUiBlockMode(kind, basis);
+        const startRate =
+          p.quotaPerNight != null && Number(p.quotaPerNight) > 0
+            ? Number(p.quotaPerNight)
+            : p.dailyDistinctCap != null && p.dailyDistinctCap >= 1
+              ? p.dailyDistinctCap
+              : 1;
         return {
           procedureCode: code,
           procedureName: p.procedureName,
@@ -508,9 +582,16 @@ export default function ProgramTemplatesAdminPage() {
               ? p.fulfillment
               : fulfillmentFromKind(kind),
           fulfillmentExplicit: p.fulfillmentExplicit === true,
-          quotaBasis: (p.quotaBasis as QuotaBasis) || "PER_NIGHTS",
+          quotaBasis: basis,
           requiresDoctor: Boolean(p.requiresDoctor),
+          blockQuotaMode,
           dailyDistinctCap: p.dailyDistinctCap ?? null,
+          quotaPerNight: p.quotaPerNight != null ? Number(p.quotaPerNight) : startRate,
+          quotaPerWeek:
+            (p as ProgramBlock).quotaPerWeek != null
+              ? Number((p as ProgramBlock).quotaPerWeek)
+              : null,
+          dailyUseCap: p.dailyUseCap ?? Math.max(1, Math.ceil(startRate)),
           showInProcedures: p.showInProcedures === true,
           procedureOrder: p.procedureOrder ?? p.sortOrder ?? i,
         };
@@ -580,6 +661,10 @@ export default function ProgramTemplatesAdminPage() {
             ...prev,
             kind,
             fulfillment: kind ? fulfillmentFromKind(kind) : "",
+            blockQuotaMode:
+              isDailyRate || editingId != null
+                ? defaultUiBlockMode(kind, prev.quotaBasis)
+                : prev.blockQuotaMode,
           }
         : prev,
     );
@@ -622,6 +707,28 @@ export default function ProgramTemplatesAdminPage() {
     ) {
       showApiError({ error: t("validationRequired") });
       return;
+    }
+    if (isDailyRate || (editingId != null && !isDailyRate)) {
+      const mode = resolveUiBlockMode(blockDraft);
+      if (mode === "DAILY_RATE") {
+        const rate = Number(blockDraft.quotaPerNight);
+        if (!Number.isFinite(rate) || rate <= 0) {
+          showApiError({ error: t("quotaPerNightRequired") });
+          return;
+        }
+      } else if (mode === "WEEKLY") {
+        const per = Number(blockDraft.quotaPerWeek);
+        if (!Number.isFinite(per) || per < 1) {
+          showApiError({ error: t("quotaPerWeekRequired") });
+          return;
+        }
+      } else if (
+        !Number.isFinite(Number(blockDraft.quotaTotal)) ||
+        Number(blockDraft.quotaTotal) < 1
+      ) {
+        showApiError({ error: t("stayQtyRequired") });
+        return;
+      }
     }
     const conflict = blocks.some(
       (b) => b.procedureCode === code && b.procedureCode !== blockOriginalCode,
@@ -683,25 +790,57 @@ export default function ProgramTemplatesAdminPage() {
         : form.durationDays;
     const from = formatYmd(form.effectiveFrom) || "—";
     const to = formatYmd(form.effectiveTo) || "—";
-    const head = nightCols
-      .map((n) => `<th class="day">${htmlEscape(t("printNight", { n }))}</th>`)
-      .join("");
+    const modeLabel = isDailyRate ? t("quotaMode_DAILY_RATE") : t("quotaMode_FIXED");
+    const head = isDailyRate
+      ? `<th class="day">${htmlEscape(t("blockQuotaMode"))}</th><th class="day">${htmlEscape(t("blockQuotaValue"))}</th><th class="day">${htmlEscape(t("dailyUseCap"))}</th>`
+      : nightCols
+          .map((n) => `<th class="day">${htmlEscape(t("printNight", { n }))}</th>`)
+          .join("");
     const body = matrixBlocks
       .map((block) => {
         const items = blockCompositionLines(block, diagItems, procTypes, locale)
           .map((line) => `<li>${htmlEscape(line)}</li>`)
           .join("");
-        const days = nightCols
-          .map((n) => {
-            const qty =
-              block.quotaBasis === "PER_STAY"
-                ? stayQty(block.procedureCode)
-                : knotQty(n, block.procedureCode);
-            return `<td class="day">${qty > 0 ? qty : "—"}</td>`;
-          })
-          .join("");
+        const blockMode = resolveUiBlockMode(block);
+        const days = isDailyRate
+          ? (() => {
+              const value =
+                blockMode === "WEEKLY"
+                  ? `${Math.max(1, Math.floor(Number(block.quotaPerWeek) || 1))}/${t("blockQuotaMode_WEEKLY_unit")}`
+                  : blockMode === "PER_STAY"
+                    ? String(Math.max(1, Math.floor(Number(block.quotaTotal) || 1)))
+                    : String(Number(block.quotaPerNight) || 0);
+              const dayCap =
+                blockMode === "DAILY_RATE"
+                  ? String(
+                      Math.max(
+                        1,
+                        Math.floor(
+                          Number(block.dailyUseCap) ||
+                            Math.ceil(Number(block.quotaPerNight) || 1),
+                        ),
+                      ),
+                    )
+                  : "—";
+              return `<td class="day">${htmlEscape(t(`blockQuotaMode_${blockMode}`))}</td>
+             <td class="day">${htmlEscape(value)}</td>
+             <td class="day">${htmlEscape(dayCap)}</td>`;
+            })()
+          : nightCols
+              .map((n) => {
+                const qty =
+                  block.quotaBasis === "PER_STAY"
+                    ? stayQty(block.procedureCode)
+                    : knotQty(n, block.procedureCode);
+                return `<td class="day">${qty > 0 ? qty : "—"}</td>`;
+              })
+              .join("");
         const mode = block.assignMode ? t(`assignMode_${block.assignMode}`) : "—";
-        const basis = block.quotaBasis ? t(`quotaBasis_${block.quotaBasis}`) : "—";
+        const basis = isDailyRate
+          ? t(`blockQuotaMode_${blockMode}`)
+          : block.quotaBasis
+            ? t(`quotaBasis_${block.quotaBasis}`)
+            : "—";
         return `<tr>
           <td class="name"><strong>${htmlEscape(block.procedureName || block.procedureCode)}</strong></td>
           <td><ul>${items}</ul></td>
@@ -711,6 +850,9 @@ export default function ProgramTemplatesAdminPage() {
         </tr>`;
       })
       .join("");
+    const sundayNote = isDailyRate
+      ? ` · ${form.countSunday ? t("countSundayOnShort") : t("countSundayOffShort")}`
+      : "";
     const html = `<!DOCTYPE html><html lang="${htmlEscape(locale)}"><head><meta charset="utf-8"/><title>${htmlEscape(title)}</title>
 <style>
 @page { size: A4 landscape; margin: 10mm 12mm; }
@@ -727,7 +869,7 @@ th.day { font-weight: 600; font-size: 9px; }
 ul { margin: 0; padding-left: 14px; } li { margin: 0; }
 </style></head><body>
 <h1>${htmlEscape(title)}</h1>
-<p class="meta">${htmlEscape(form.code)} · v${editingVersion} · ${htmlEscape(nights)} · ${htmlEscape(from)} — ${htmlEscape(to)}</p>
+<p class="meta">${htmlEscape(form.code)} · v${editingVersion} · ${htmlEscape(modeLabel)}${htmlEscape(sundayNote)} · ${htmlEscape(nights)} · ${htmlEscape(from)} — ${htmlEscape(to)}</p>
 <table><thead><tr>
 <th>${htmlEscape(t("blockName"))}</th>
 <th>${htmlEscape(t("printComposition"))}</th>
@@ -798,12 +940,20 @@ ${head}
     }
   }
 
+  const isDailyRate = form.quotaMode === "DAILY_RATE";
+  const showComposition = editingId != null || createStep === 3;
+
   async function save() {
     const name = form.name.trim();
     const code = form.code.trim();
     const durationDays = Number(form.durationDays);
+    const quotaMode: QuotaMode = form.quotaMode === "DAILY_RATE" ? "DAILY_RATE" : "FIXED";
     if (!name || (!editingId && !code) || !Number.isFinite(durationDays) || durationDays < 1) {
       showApiError({ error: t("validationRequired") });
+      return;
+    }
+    if (!editingId && !form.quotaMode) {
+      showApiError({ error: t("quotaModeRequired") });
       return;
     }
     if (
@@ -829,6 +979,25 @@ ${head}
         return;
       }
       codes.add(b.procedureCode);
+      if (quotaMode === "DAILY_RATE") {
+        const mode = resolveUiBlockMode(b);
+        if (mode === "DAILY_RATE") {
+          const rate = Number(b.quotaPerNight);
+          if (!Number.isFinite(rate) || rate <= 0) {
+            showApiError({ error: t("quotaPerNightRequired") });
+            return;
+          }
+        } else if (mode === "WEEKLY") {
+          const per = Number(b.quotaPerWeek);
+          if (!Number.isFinite(per) || per < 1) {
+            showApiError({ error: t("quotaPerWeekRequired") });
+            return;
+          }
+        } else if (!Number.isFinite(Number(b.quotaTotal)) || Number(b.quotaTotal) < 1) {
+          showApiError({ error: t("stayQtyRequired") });
+          return;
+        }
+      }
     }
 
     setSaving(true);
@@ -843,8 +1012,24 @@ ${head}
       };
       const procedures = blocks.map((b, i) => {
         const knotQtys = knots.filter((k) => k.procedureCode === b.procedureCode).map((k) => k.qty);
+        const blockMode =
+          quotaMode === "DAILY_RATE" ? resolveUiBlockMode(b) : null;
+        const rate = Number(b.quotaPerNight);
+        const useCap = Math.max(
+          1,
+          Math.floor(Number(b.dailyUseCap) || Math.ceil(rate > 0 ? rate : 1)),
+        );
+        const week = Math.max(1, Math.floor(Number(b.quotaPerWeek) || 1));
         const quotaTotal =
-          knotQtys.length > 0 ? Math.max(...knotQtys, 1) : Math.max(1, b.quotaTotal || 1);
+          quotaMode === "DAILY_RATE"
+            ? blockMode === "PER_STAY"
+              ? Math.max(1, Math.floor(Number(b.quotaTotal) || 1))
+              : blockMode === "WEEKLY"
+                ? Math.max(1, week)
+                : Math.max(1, ceilDailyPreview(durationDays, rate > 0 ? rate : 1))
+            : knotQtys.length > 0
+              ? Math.max(...knotQtys, 1)
+              : Math.max(1, b.quotaTotal || 1);
         return {
           procedureCode: b.procedureCode.trim(),
           procedureName: b.procedureName.trim() || b.procedureCode,
@@ -863,25 +1048,40 @@ ${head}
             b.kind === "PHYSIO" || b.kind === "BATH" || b.kind === "PARAFFIN"
               ? b.dailyDistinctCap
               : null,
+          blockQuotaMode: blockMode,
+          quotaPerNight:
+            quotaMode === "DAILY_RATE" && blockMode === "DAILY_RATE"
+              ? rate
+              : null,
+          quotaPerWeek:
+            quotaMode === "DAILY_RATE" && blockMode === "WEEKLY" ? week : null,
+          dailyUseCap:
+            quotaMode === "DAILY_RATE" && blockMode === "DAILY_RATE"
+              ? useCap
+              : null,
         };
       });
       const payload = editingId
         ? {
             name,
             durationDays,
+            quotaMode,
+            countSunday: quotaMode === "DAILY_RATE" ? form.countSunday : false,
             ...nights,
             ...validity,
             procedures,
-            knots,
+            knots: quotaMode === "DAILY_RATE" ? [] : knots,
           }
         : {
             code,
             name,
             durationDays,
+            quotaMode,
+            countSunday: quotaMode === "DAILY_RATE" ? form.countSunday : false,
             ...nights,
             ...validity,
             procedures,
-            knots,
+            knots: quotaMode === "DAILY_RATE" ? [] : knots,
           };
       const url = editingId
         ? `/api/admin/program-templates/${editingId}`
@@ -896,8 +1096,136 @@ ${head}
         return;
       }
       setOpen(false);
+      setCreateStep(null);
       setPage(1);
       await load();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function previewRecalc() {
+    if (!editingId) return;
+    setRecalcBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/program-templates/${editingId}?action=preview-recalc`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+      );
+      if (!res.ok) {
+        showApiError(await res.json().catch(() => ({})), tc("failed"));
+        return;
+      }
+      const json = await res.json();
+      const data = (json.data ?? json) as {
+        openCourseCount: number;
+        lines: RecalcPreviewLine[];
+      };
+      setRecalcPreview({
+        openCourseCount: data.openCourseCount ?? 0,
+        lines: Array.isArray(data.lines) ? data.lines : [],
+      });
+    } finally {
+      setRecalcBusy(false);
+    }
+  }
+
+  async function applyRecalc() {
+    if (!editingId) return;
+    setRecalcBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/program-templates/${editingId}?action=apply-recalc`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+      );
+      if (!res.ok) {
+        showApiError(await res.json().catch(() => ({})), tc("failed"));
+        return;
+      }
+      setRecalcPreview(null);
+      await load();
+    } finally {
+      setRecalcBusy(false);
+    }
+  }
+
+  async function publishAsDaily() {
+    if (!editingId || form.quotaMode === "DAILY_RATE") return;
+    for (const b of blocks) {
+      const mode = resolveUiBlockMode({
+        ...b,
+        blockQuotaMode: b.blockQuotaMode ?? defaultUiBlockMode(b.kind, b.quotaBasis),
+      });
+      if (mode === "DAILY_RATE") {
+        const rate = Number(b.quotaPerNight);
+        if (!Number.isFinite(rate) || rate <= 0) {
+          showApiError({ error: t("quotaPerNightRequired") });
+          return;
+        }
+      } else if (mode === "WEEKLY") {
+        const per = Number(b.quotaPerWeek);
+        if (!Number.isFinite(per) || per < 1) {
+          showApiError({ error: t("quotaPerWeekRequired") });
+          return;
+        }
+      } else if (!Number.isFinite(Number(b.quotaTotal)) || Number(b.quotaTotal) < 1) {
+        showApiError({ error: t("stayQtyRequired") });
+        return;
+      }
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(
+        `/api/admin/program-templates/${editingId}?action=publish-daily`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            countSunday: form.countSunday,
+            blocks: blocks.map((b) => {
+              const mode = resolveUiBlockMode({
+                ...b,
+                blockQuotaMode:
+                  b.blockQuotaMode ??
+                  defaultUiBlockMode(b.kind, b.quotaBasis),
+              });
+              const rate =
+                Number(b.quotaPerNight) > 0
+                  ? Number(b.quotaPerNight)
+                  : Number(b.dailyDistinctCap) > 0
+                    ? Number(b.dailyDistinctCap)
+                    : 1;
+              return {
+                procedureCode: b.procedureCode,
+                blockQuotaMode: mode,
+                quotaPerNight: mode === "DAILY_RATE" ? rate : undefined,
+                quotaPerWeek:
+                  mode === "WEEKLY"
+                    ? Math.max(1, Math.floor(Number(b.quotaPerWeek) || 1))
+                    : undefined,
+                quotaTotal:
+                  mode === "PER_STAY"
+                    ? Math.max(1, Math.floor(Number(b.quotaTotal) || 1))
+                    : undefined,
+                dailyUseCap:
+                  mode === "DAILY_RATE"
+                    ? Math.max(1, Math.floor(Number(b.dailyUseCap) || Math.ceil(rate)))
+                    : null,
+              };
+            }),
+          }),
+        },
+      );
+      if (!res.ok) {
+        showApiError(await res.json().catch(() => ({})), tc("saveFailed"));
+        return;
+      }
+      const json = await res.json();
+      const row = (json.data ?? json) as ProgramTemplate;
+      setOpen(false);
+      setCreateStep(null);
+      await load();
+      if (row?.id) openEdit(row);
     } finally {
       setSaving(false);
     }
@@ -974,6 +1302,7 @@ ${head}
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("code")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("name")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("quotaMode")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("version")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("durationDays")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("nightsRange")}</th>
@@ -986,13 +1315,13 @@ ${head}
             <tbody>
               {loading ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={9} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
+                  <td colSpan={10} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
                     {tc("loading")}
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={9} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
+                  <td colSpan={10} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
                     {t("empty")}
                   </td>
                 </tr>
@@ -1001,6 +1330,11 @@ ${head}
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={`${DATA_TABLE_TD_CLASS} font-medium`}>{row.code}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.name}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.quotaMode === "DAILY_RATE"
+                        ? t("quotaMode_DAILY_RATE")
+                        : t("quotaMode_FIXED")}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       v{row.version ?? 1}
                       {row.isCurrent === false ? (
@@ -1073,23 +1407,29 @@ ${head}
         title={
           editingId
             ? `${tc("edit")} · v${editingVersion}`
-            : tc("add")
+            : createStep
+              ? t("wizardTitle", { step: createStep })
+              : tc("add")
         }
         onClose={() => {
           closeBlockModal();
+          setCreateStep(null);
+          setRecalcPreview(null);
           setOpen(false);
         }}
         closeLabel={tc("close")}
         headerActions={
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={printPackageSheet}
-            aria-label={t("printSheet")}
-          >
-            <Printer className="h-4 w-4" aria-hidden />
-            {t("printSheet")}
-          </button>
+          showComposition ? (
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={printPackageSheet}
+              aria-label={t("printSheet")}
+            >
+              <Printer className="h-4 w-4" aria-hidden />
+              {t("printSheet")}
+            </button>
+          ) : null
         }
         maxWidthClass="max-w-[76rem]"
       >
@@ -1104,6 +1444,54 @@ ${head}
                 : t("versionWarn", { version: editingVersion })}
             </p>
           ) : null}
+
+          {!editingId && createStep === 1 ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                label={t("code")}
+                preset="code"
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+              />
+              <Field
+                label={t("name")}
+                preset="shortText"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+          ) : null}
+
+          {!editingId && createStep === 2 ? (
+            <div className="space-y-3">
+              <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("quotaModeStepHint")}</p>
+              <CatalogField
+                kind="CLOSED_SMALL"
+                label={t("quotaMode")}
+                value={form.quotaMode}
+                onChange={(v) =>
+                  setForm({
+                    ...form,
+                    quotaMode: (String(v ?? "") as QuotaMode | "") || "",
+                  })
+                }
+                options={[
+                  { value: "FIXED", label: t("quotaMode_FIXED") },
+                  { value: "DAILY_RATE", label: t("quotaMode_DAILY_RATE") },
+                ]}
+              />
+              <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                {form.quotaMode === "DAILY_RATE"
+                  ? t("quotaMode_DAILY_RATE_hint")
+                  : form.quotaMode === "FIXED"
+                    ? t("quotaMode_FIXED_hint")
+                    : t("quotaModePick")}
+              </p>
+            </div>
+          ) : null}
+
+          {showComposition ? (
+            <>
           <div className="grid gap-3 sm:grid-cols-2">
             {!editingId ? (
               <Field
@@ -1128,10 +1516,35 @@ ${head}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </div>
+          <div className="flex flex-wrap items-center gap-3 text-[12px] text-slate-700">
+            <span className="rounded border border-slate-200 bg-slate-50 px-2 py-1 font-medium">
+              {t(isDailyRate ? "quotaMode_DAILY_RATE" : "quotaMode_FIXED")}
+            </span>
+            {editingId && !isDailyRate ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={saving}
+                onClick={() => void publishAsDaily()}
+              >
+                {t("publishAsDaily")}
+              </button>
+            ) : null}
+            {editingId && isDailyRate ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={recalcBusy || saving}
+                onClick={() => void previewRecalc()}
+              >
+                {t("recalcQuotas")}
+              </button>
+            ) : null}
+          </div>
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-[6.5rem] shrink-0">
               <Field
-                label={t("durationDays")}
+                label={t("durationNights")}
                 preset="count"
                 value={form.durationDays}
                 onChange={(e) => setForm({ ...form, durationDays: e.target.value })}
@@ -1153,6 +1566,19 @@ ${head}
                 onChange={(e) => setForm({ ...form, maxNights: e.target.value })}
               />
             </div>
+            {isDailyRate || (editingId != null && !isDailyRate) ? (
+              <label className="inline-flex items-center gap-2 pb-2 text-[12px] text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.countSunday}
+                  onChange={(e) => setForm({ ...form, countSunday: e.target.checked })}
+                />
+                <span>
+                  {t("countSunday")}
+                  <span className={`ml-1 ${TEXT_MUTED_CLASS}`}>{t("countSundayHint")}</span>
+                </span>
+              </label>
+            ) : null}
             <div className="min-w-[10.5rem] flex-1">
               <DatePicker
                 label={t("effectiveFrom")}
@@ -1179,15 +1605,22 @@ ${head}
           <section className={`${FIELD_SECTION_CLASS} space-y-3 p-3`}>
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
-                <h3 className="text-[13px] font-semibold text-slate-800">{t("blocksMatrixTitle")}</h3>
-                <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("blocksMatrixHint")}</p>
-                <p className={`mt-1 text-[11px] ${TEXT_MUTED_CLASS}`}>{t("knotsRemoveHint")}</p>
+                <h3 className="text-[13px] font-semibold text-slate-800">
+                  {isDailyRate ? t("blocksDailyTitle") : t("blocksMatrixTitle")}
+                </h3>
+                <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                  {isDailyRate ? t("blocksDailyHint") : t("blocksMatrixHint")}
+                </p>
+                {!isDailyRate ? (
+                  <p className={`mt-1 text-[11px] ${TEXT_MUTED_CLASS}`}>{t("knotsRemoveHint")}</p>
+                ) : null}
               </div>
               <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={openBlockCreate}>
                 <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />
                 {t("addBlock")}
               </button>
             </div>
+            {!isDailyRate ? (
             <div className="flex flex-wrap items-center gap-2">
               <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
                 <span className="shrink-0 font-medium">{t("customNights")}</span>
@@ -1209,11 +1642,14 @@ ${head}
                 </button>
               </label>
             </div>
+            ) : null}
             {blocks.length === 0 ? (
               <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("addBlockFirst")}</p>
-            ) : nightCols.length === 0 ? (
+            ) : null}
+            {!isDailyRate && blocks.length > 0 && nightCols.length === 0 ? (
               <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("addNightFirst")}</p>
-            ) : (
+            ) : null}
+            {!isDailyRate && blocks.length > 0 && nightCols.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[40rem] text-[12px]">
                   <thead>
@@ -1238,64 +1674,21 @@ ${head}
                           </div>
                         </th>
                       ))}
-                      <th className="w-16 p-1 text-right">{tc("actions")}</th>
+                      <th className="w-16 p-1" />
                     </tr>
                   </thead>
                   <tbody>
                     {matrixBlocks.map((b) => {
-                      const kind = inferBlockKind(b.procedureCode, b.kind);
-                      const dailyCap = resolveDailyDistinctCap(kind, b.dailyDistinctCap);
-                      const chips = displayMemberCodes(b);
-                      const chipPreview = chips.slice(0, 3);
-                      const chipMore = chips.length - chipPreview.length;
                       const isStay = b.quotaBasis === "PER_STAY";
-                      const isAuto =
-                        b.assignMode === "AUTO_ON_OPEN" || b.assignMode === "AUTO_DAY1";
                       return (
-                        <tr key={b.procedureCode} className="border-t border-slate-100 align-top">
-                          <td className="sticky left-0 z-[1] bg-white p-1.5">
-                            <p className="m-0 text-[13px] font-semibold text-slate-800">
+                        <tr key={b.procedureCode} className="border-t border-slate-100">
+                          <td className="sticky left-0 z-[1] bg-white p-1">
+                            <div className="font-medium text-slate-800">
                               {b.procedureName || b.procedureCode}
-                              {isAuto ? (
-                                <span
-                                  className="ml-1 inline-flex items-center rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-900"
-                                  title={t(`assignMode_${b.assignMode}`)}
-                                >
-                                  {t("autoBadge")}
-                                </span>
-                              ) : null}
-                            </p>
-                            <p className={`mb-0 mt-0.5 text-[11px] ${TEXT_MUTED_CLASS}`}>
-                              {defaultBlockName(kind, t)}
-                              {" · "}
-                              {t(`fulfillment_${b.fulfillment || fulfillmentFromKind(kind)}`)}
-                              {dailyCap != null ? ` · ${dailyCap}` : ""}
-                            </p>
-                            {chips.length === 0 ? (
-                              <p className={`mb-0 mt-1 text-[11px] ${TEXT_MUTED_CLASS}`}>
-                                {t("membersEmptyHint")}
-                              </p>
-                            ) : (
-                              <div
-                                className="mt-1 flex max-w-[16rem] flex-wrap gap-1"
-                                aria-label={t("blockMembers")}
-                              >
-                                {chipPreview.map((c) => (
-                                  <span
-                                    key={c}
-                                    className="inline-flex max-w-[7rem] truncate rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-800"
-                                    title={procLabel(c)}
-                                  >
-                                    {procShortLabel(c)}
-                                  </span>
-                                ))}
-                                {chipMore > 0 ? (
-                                  <span className={`text-[10px] ${TEXT_MUTED_CLASS}`}>
-                                    {t("membersMore", { count: chipMore })}
-                                  </span>
-                                ) : null}
-                              </div>
-                            )}
+                            </div>
+                            <div className={`text-[11px] ${TEXT_MUTED_CLASS}`}>
+                              {defaultBlockName(inferBlockKind(b.procedureCode, b.kind), t)}
+                            </div>
                           </td>
                           <td className="p-1 text-center">
                             {isStay ? (
@@ -1359,18 +1752,337 @@ ${head}
                   </tbody>
                 </table>
               </div>
-            )}
+            ) : null}
+            {(isDailyRate || (editingId != null && !isDailyRate)) && blocks.length > 0 ? (
+              <div className="space-y-2">
+                {!isDailyRate ? (
+                  <div className="rounded border border-amber-200 bg-amber-50/80 px-2.5 py-2">
+                    <p className="m-0 text-[13px] font-semibold text-slate-800">
+                      {t("publishCutoverTitle")}
+                    </p>
+                    <p className={`mb-0 mt-0.5 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                      {t("publishCutoverHint")}
+                    </p>
+                  </div>
+                ) : null}
+                {matrixBlocks.map((b) => {
+                  const mode = resolveUiBlockMode(b);
+                  const rate = Number(b.quotaPerNight) > 0 ? Number(b.quotaPerNight) : 1;
+                  const week = Math.max(1, Math.floor(Number(b.quotaPerWeek) || 1));
+                  const useCap = Math.max(1, Math.floor(Number(b.dailyUseCap) || Math.ceil(rate)));
+                  const exampleNights = Math.max(
+                    1,
+                    Number(form.minNights) || Number(form.durationDays) || 10,
+                  );
+                  const exampleTotal =
+                    mode === "WEEKLY"
+                      ? Math.floor(exampleNights / 7) * week
+                      : mode === "PER_STAY"
+                        ? Math.max(1, Math.floor(Number(b.quotaTotal) || 1))
+                        : ceilDailyPreview(exampleNights, rate);
+                  return (
+                    <div
+                      key={b.procedureCode}
+                      className="rounded border border-slate-200 bg-white p-2.5"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <p className="m-0 text-[13px] font-semibold text-slate-800">
+                            {b.procedureName || b.procedureCode}
+                          </p>
+                          <p className={`mb-0 mt-0.5 text-[11px] ${TEXT_MUTED_CLASS}`}>
+                            {defaultBlockName(inferBlockKind(b.procedureCode, b.kind), t)}
+                            {" · "}
+                            {t(`blockQuotaMode_${mode}`)}
+                            {" · "}
+                            {t("dailyDistinctCapShort", {
+                              n: resolveDailyDistinctCap(
+                                inferBlockKind(b.procedureCode, b.kind),
+                                b.dailyDistinctCap,
+                              ),
+                            })}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={tc("edit")}
+                          onClick={() => openBlockEdit(b)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </div>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        <CatalogField
+                          kind="CLOSED_SMALL"
+                          label={t("blockQuotaMode")}
+                          value={mode}
+                          onChange={(v) => {
+                            const next = String(v ?? "") as BlockQuotaMode;
+                            setBlocks((prev) =>
+                              prev.map((row) =>
+                                row.procedureCode === b.procedureCode
+                                  ? {
+                                      ...row,
+                                      blockQuotaMode: next,
+                                      quotaPerWeek:
+                                        next === "WEEKLY"
+                                          ? Math.max(1, Number(row.quotaPerWeek) || 1)
+                                          : row.quotaPerWeek,
+                                      quotaPerNight:
+                                        next === "DAILY_RATE"
+                                          ? Number(row.quotaPerNight) > 0
+                                            ? Number(row.quotaPerNight)
+                                            : 1
+                                          : row.quotaPerNight,
+                                    }
+                                  : row,
+                              ),
+                            );
+                          }}
+                          options={(["DAILY_RATE", "WEEKLY", "PER_STAY"] as const).map(
+                            (value) => ({
+                              value,
+                              label: t(`blockQuotaMode_${value}`),
+                            }),
+                          )}
+                        />
+                        {mode === "DAILY_RATE" ? (
+                          <label className="block text-[12px] text-slate-700">
+                            <span className="font-medium">{t("quotaPerNight")}</span>
+                            <input
+                              type="number"
+                              min={0.01}
+                              max={12}
+                              step={0.01}
+                              className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[13px]"
+                              value={b.quotaPerNight ?? 1}
+                              onChange={(e) => {
+                                const n = Math.max(0.01, Number(e.target.value) || 0.01);
+                                setBlocks((prev) =>
+                                  prev.map((row) =>
+                                    row.procedureCode === b.procedureCode
+                                      ? {
+                                          ...row,
+                                          quotaPerNight: n,
+                                          dailyUseCap:
+                                            row.dailyUseCap == null ||
+                                            row.dailyUseCap ===
+                                              Math.ceil(Number(row.quotaPerNight) || 1)
+                                              ? Math.max(1, Math.ceil(n))
+                                              : row.dailyUseCap,
+                                        }
+                                      : row,
+                                  ),
+                                );
+                              }}
+                            />
+                            <span className={`mt-0.5 block text-[11px] ${TEXT_MUTED_CLASS}`}>
+                              {t("quotaPerNightHint")}
+                            </span>
+                          </label>
+                        ) : null}
+                        {mode === "WEEKLY" ? (
+                          <label className="block text-[12px] text-slate-700">
+                            <span className="font-medium">{t("quotaPerWeek")}</span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={21}
+                              className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[13px]"
+                              value={b.quotaPerWeek ?? 1}
+                              onChange={(e) => {
+                                const n = Math.max(1, Math.floor(Number(e.target.value) || 1));
+                                setBlocks((prev) =>
+                                  prev.map((row) =>
+                                    row.procedureCode === b.procedureCode
+                                      ? { ...row, quotaPerWeek: n }
+                                      : row,
+                                  ),
+                                );
+                              }}
+                            />
+                            <span className={`mt-0.5 block text-[11px] ${TEXT_MUTED_CLASS}`}>
+                              {t("quotaPerWeekHint")}
+                            </span>
+                          </label>
+                        ) : null}
+                        {mode === "PER_STAY" ? (
+                          <label className="block text-[12px] text-slate-700">
+                            <span className="font-medium">{t("stayQty")}</span>
+                            <input
+                              type="number"
+                              min={1}
+                              className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[13px]"
+                              value={b.quotaTotal ?? 1}
+                              onChange={(e) => {
+                                const n = Math.max(1, Math.floor(Number(e.target.value) || 1));
+                                setBlocks((prev) =>
+                                  prev.map((row) =>
+                                    row.procedureCode === b.procedureCode
+                                      ? { ...row, quotaTotal: n }
+                                      : row,
+                                  ),
+                                );
+                              }}
+                            />
+                          </label>
+                        ) : null}
+                        {mode === "DAILY_RATE" ? (
+                          <label className="block text-[12px] text-slate-700">
+                            <span className="font-medium">{t("dailyUseCap")}</span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={12}
+                              className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[13px]"
+                              value={b.dailyUseCap ?? Math.ceil(rate)}
+                              onChange={(e) => {
+                                const n = Math.max(1, Math.floor(Number(e.target.value) || 1));
+                                setBlocks((prev) =>
+                                  prev.map((row) =>
+                                    row.procedureCode === b.procedureCode
+                                      ? { ...row, dailyUseCap: n }
+                                      : row,
+                                  ),
+                                );
+                              }}
+                            />
+                            <span className={`mt-0.5 block text-[11px] ${TEXT_MUTED_CLASS}`}>
+                              {t("dailyUseCapHint")}
+                            </span>
+                          </label>
+                        ) : null}
+                      </div>
+                      <p className={`mb-0 mt-1 text-[11px] ${TEXT_MUTED_CLASS}`}>
+                        {mode === "DAILY_RATE"
+                          ? t("dailyRateExample", {
+                              nights: exampleNights,
+                              total: exampleTotal,
+                              dayCap: useCap,
+                              sunday: form.countSunday
+                                ? t("countSundayOnShort")
+                                : t("countSundayOffShort"),
+                            })
+                          : mode === "WEEKLY"
+                            ? t("weeklyRateExample", {
+                                nights: exampleNights,
+                                weeks: Math.floor(exampleNights / 7),
+                                total: exampleTotal,
+                              })
+                            : t("perStayExample", { total: exampleTotal })}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
           </section>
+            </>
+          ) : null}
 
+          {recalcPreview ? (
+            <section className={`${FIELD_SECTION_CLASS} space-y-2 p-3`}>
+              <h3 className="text-[13px] font-semibold text-slate-800">{t("recalcPreviewTitle")}</h3>
+              <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                {recalcPreview.openCourseCount === 0
+                  ? t("recalcNoOpen")
+                  : t("recalcPreviewHint", { count: recalcPreview.openCourseCount })}
+              </p>
+              <p className={`text-[11px] ${TEXT_MUTED_CLASS}`}>{t("recalcClosedStay")}</p>
+              {recalcPreview.lines.length > 0 ? (
+                <div className="max-h-48 overflow-auto">
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr>
+                        <th className="p-1 text-left">{t("recalcPatient")}</th>
+                        <th className="p-1 text-left">{t("blockName")}</th>
+                        <th className="p-1 text-right">{t("recalcBefore")}</th>
+                        <th className="p-1 text-right">{t("recalcAfter")}</th>
+                        <th className="p-1 text-right">{t("recalcUsed")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recalcPreview.lines.map((line) => (
+                        <tr key={`${line.instanceId}-${line.procedureCode}`} className="border-t border-slate-100">
+                          <td className="p-1">{line.patientLabel || line.episodeId}</td>
+                          <td className="p-1">{line.procedureName}</td>
+                          <td className="p-1 text-right tabular-nums">{line.quotaTotalBefore}</td>
+                          <td className="p-1 text-right tabular-nums">{line.quotaTotalAfter}</td>
+                          <td className="p-1 text-right tabular-nums">
+                            {line.quotaUsed}
+                            {line.flooredAtUsed ? (
+                              <span className="ml-1 text-amber-800">{t("recalcFloored")}</span>
+                            ) : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={recalcBusy}
+                  onClick={() => setRecalcPreview(null)}
+                >
+                  {tc("cancel")}
+                </button>
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={
+                    recalcBusy ||
+                    recalcPreview.openCourseCount === 0 ||
+                    recalcPreview.lines.length === 0
+                  }
+                  onClick={() => void applyRecalc()}
+                >
+                  {t("recalcApply")}
+                </button>
+              </div>
+            </section>
+          ) : null}
         </div>
         <ModalFooter
           onCancel={() => {
+            if (!editingId && createStep && createStep > 1) {
+              setCreateStep((createStep - 1) as CreateWizardStep);
+              return;
+            }
             closeBlockModal();
+            setCreateStep(null);
+            setRecalcPreview(null);
             setOpen(false);
           }}
-          onSubmit={() => void save()}
-          submitLabel={tc("save")}
-          submitDisabled={saving || blockModalOpen}
+          cancelLabel={
+            !editingId && createStep && createStep > 1 ? t("wizardBack") : tc("cancel")
+          }
+          onSubmit={() => {
+            if (!editingId && createStep === 1) {
+              if (!form.code.trim() || !form.name.trim()) {
+                showApiError({ error: t("validationRequired") });
+                return;
+              }
+              setCreateStep(2);
+              return;
+            }
+            if (!editingId && createStep === 2) {
+              if (!form.quotaMode) {
+                showApiError({ error: t("quotaModeRequired") });
+                return;
+              }
+              setCreateStep(3);
+              return;
+            }
+            void save();
+          }}
+          submitLabel={
+            !editingId && createStep && createStep < 3 ? t("wizardNext") : tc("save")
+          }
+          submitDisabled={saving || blockModalOpen || recalcBusy}
         />
       </ModalShell>
 
@@ -1477,6 +2189,115 @@ ${head}
                   );
                 }}
               />
+            {isDailyRate || (editingId != null && !isDailyRate) ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("blockQuotaMode")}
+                  value={resolveUiBlockMode(blockDraft)}
+                  onChange={(v) => {
+                    const next = String(v ?? "") as BlockQuotaMode;
+                    setBlockDraft((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            blockQuotaMode: next,
+                            quotaPerWeek:
+                              next === "WEEKLY"
+                                ? Math.max(1, Number(prev.quotaPerWeek) || 1)
+                                : prev.quotaPerWeek,
+                          }
+                        : prev,
+                    );
+                  }}
+                  options={(["DAILY_RATE", "WEEKLY", "PER_STAY"] as const).map((value) => ({
+                    value,
+                    label: t(`blockQuotaMode_${value}`),
+                  }))}
+                />
+                {resolveUiBlockMode(blockDraft) === "DAILY_RATE" ? (
+                  <Field
+                    label={t("quotaPerNight")}
+                    hint={t("quotaPerNightHint")}
+                    preset="count"
+                    type="number"
+                    min={0.01}
+                    max={12}
+                    step={0.01}
+                    value={blockDraft.quotaPerNight ?? 1}
+                    onChange={(e) => {
+                      const n = Math.max(0.01, Number(e.target.value) || 0.01);
+                      setBlockDraft((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              quotaPerNight: n,
+                              dailyUseCap:
+                                prev.dailyUseCap == null ||
+                                prev.dailyUseCap ===
+                                  Math.ceil(Number(prev.quotaPerNight) || 1)
+                                  ? Math.max(1, Math.ceil(n))
+                                  : prev.dailyUseCap,
+                            }
+                          : prev,
+                      );
+                    }}
+                  />
+                ) : null}
+                {resolveUiBlockMode(blockDraft) === "WEEKLY" ? (
+                  <Field
+                    label={t("quotaPerWeek")}
+                    hint={t("quotaPerWeekHint")}
+                    preset="count"
+                    type="number"
+                    min={1}
+                    max={21}
+                    value={blockDraft.quotaPerWeek ?? 1}
+                    onChange={(e) => {
+                      const n = Math.max(1, Math.floor(Number(e.target.value) || 1));
+                      setBlockDraft((prev) =>
+                        prev ? { ...prev, quotaPerWeek: n } : prev,
+                      );
+                    }}
+                  />
+                ) : null}
+                {resolveUiBlockMode(blockDraft) === "PER_STAY" ? (
+                  <Field
+                    label={t("stayQty")}
+                    preset="count"
+                    type="number"
+                    min={1}
+                    value={blockDraft.quotaTotal ?? 1}
+                    onChange={(e) => {
+                      const n = Math.max(1, Math.floor(Number(e.target.value) || 1));
+                      setBlockDraft((prev) =>
+                        prev ? { ...prev, quotaTotal: n } : prev,
+                      );
+                    }}
+                  />
+                ) : null}
+                {resolveUiBlockMode(blockDraft) === "DAILY_RATE" ? (
+                  <Field
+                    label={t("dailyUseCap")}
+                    hint={t("dailyUseCapHint")}
+                    preset="count"
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={
+                      blockDraft.dailyUseCap ??
+                      Math.max(1, Math.ceil(Number(blockDraft.quotaPerNight) || 1))
+                    }
+                    onChange={(e) => {
+                      const n = Math.max(1, Math.floor(Number(e.target.value) || 1));
+                      setBlockDraft((prev) =>
+                        prev ? { ...prev, dailyUseCap: n } : prev,
+                      );
+                    }}
+                  />
+                ) : null}
+              </div>
+            ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
               <CatalogField
                 kind="CLOSED_SMALL"
@@ -1506,6 +2327,7 @@ ${head}
                   label: t(`fulfillment_${value}`),
                 }))}
               />
+              {!isDailyRate ? (
               <CatalogField
                 kind="CLOSED_SMALL"
                 label={t("quotaBasis")}
@@ -1518,6 +2340,7 @@ ${head}
                 }
                 options={quotaBasisOptions}
               />
+              ) : null}
               <CatalogField
                 kind="CLOSED_SMALL"
                 label={t("requiresDoctor")}

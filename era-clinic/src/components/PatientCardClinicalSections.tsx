@@ -25,6 +25,7 @@ import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { bakuDateKey, bakuDateTimeLabel, addBakuDays, bakuDayBounds, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import { localizeSlotDecision } from "@/lib/slot-decision-ui";
+import { compareOpenUnseatedFirst } from "@/domain/procedure/open-attendance-order";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import type { PhysioChipsValue } from "@/components/physio/PhysioSiteChips";
 import {
@@ -338,6 +339,9 @@ export function PatientCardClinicalSections({
     }>
   >([]);
   const [packageBlock, setPackageBlock] = useState<string | null>(null);
+  const [packageBlockNights, setPackageBlockNights] = useState<number | null>(null);
+  const [packageBlockMinNights, setPackageBlockMinNights] = useState<number | null>(null);
+  const [packageBlockMessage, setPackageBlockMessage] = useState<string | null>(null);
   const [packageCode, setPackageCode] = useState<string | null>(null);
   const [quotaTick, setQuotaTick] = useState(0);
   const [visitSlot, setVisitSlot] = useState<{ id: string; title: string } | null>(null);
@@ -371,6 +375,8 @@ export function PatientCardClinicalSections({
     if (!episodeId || !needPackage) {
       setQuotaRows([]);
       setPackageBlock(null);
+      setPackageBlockNights(null);
+      setPackageBlockMinNights(null);
       setPackageCode(null);
       return;
     }
@@ -398,16 +404,30 @@ export function PatientCardClinicalSections({
             })),
           );
           setPackageBlock(typeof snap.blockReason === "string" ? snap.blockReason : null);
+          setPackageBlockNights(
+            typeof snap.blockNights === "number" ? snap.blockNights : null,
+          );
+          setPackageBlockMinNights(
+            typeof snap.blockMinNights === "number" ? snap.blockMinNights : null,
+          );
+          setPackageBlockMessage(
+            typeof snap.blockMessage === "string" ? snap.blockMessage : null,
+          );
           setPackageCode(typeof snap.packageCode === "string" ? snap.packageCode : null);
         } else {
           setQuotaRows([]);
           setPackageBlock(null);
+          setPackageBlockNights(null);
+          setPackageBlockMinNights(null);
+          setPackageBlockMessage(null);
           setPackageCode(null);
         }
       })
       .catch(() => {
         setQuotaRows([]);
         setPackageBlock(null);
+        setPackageBlockNights(null);
+        setPackageBlockMinNights(null);
         setPackageCode(null);
       });
   }, [
@@ -921,7 +941,11 @@ export function PatientCardClinicalSections({
 
       {showPackage && packageBlock ? (
         <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
-          {packageAssignBlockText(t, packageBlock) ?? packageBlock}
+          {packageAssignBlockText(t, packageBlock, packageCode, {
+            message: packageBlockMessage,
+            nights: packageBlockNights,
+            minNights: packageBlockMinNights,
+          }) ?? packageBlock}
         </p>
       ) : null}
 
@@ -1555,8 +1579,17 @@ function mergeDays(
   }
   const days = [...map.values()].map((day) => ({
     ...day,
-    events: [...day.events].sort(
-      (a, b) => new Date(a.at ?? 0).getTime() - new Date(b.at ?? 0).getTime(),
+    events: [...day.events].sort((a, b) =>
+      compareOpenUnseatedFirst(
+        {
+          openUnseated: Boolean(a.openAttendance),
+          atMs: new Date(a.at ?? 0).getTime(),
+        },
+        {
+          openUnseated: Boolean(b.openAttendance),
+          atMs: new Date(b.at ?? 0).getTime(),
+        },
+      ),
     ),
   }));
   return days.sort((a, b) =>

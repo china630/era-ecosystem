@@ -66,7 +66,12 @@ const runtimeBodySchema = z.object({
   /** Soft-delete / revoke: drop this org from the satellite orgNo map. */
   revokePublicOrgNumber: z.boolean().optional(),
   orchestratorEventUrl: z.string().url().optional(),
+  /** This satellite process public URL (pool members). */
   publicBaseUrl: z.string().url().optional(),
+  /** Alias of self URL from orch Sync/desired-state. */
+  satellitePublicBaseUrl: z.string().url().optional(),
+  /** Orchestrator public / launcher — not used for pool self-discovery. */
+  orchestratorPublicBaseUrl: z.string().url().optional(),
   platformSuperAdminEmails: z.array(z.string().email()).max(50).optional(),
   ssoSharedSecret: z.string().min(16).max(512).optional(),
   satelliteEventServiceToken: z.string().min(8).max(512).optional(),
@@ -221,11 +226,13 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
     const orgProfile = body.orgProfile
       ? (body.orgProfile as import("@era/contracts").OrganizationProfileSnapshot)
       : undefined;
+    const selfPublic =
+      body.satellitePublicBaseUrl?.trim() || body.publicBaseUrl?.trim() || undefined;
     const patch: SatelliteRuntimeConfig = {
       // SHARED: do not stamp process-wide blob with last Sync org id.
       organizationId: isShared ? undefined : body.organizationId,
       orchestratorEventUrl: body.orchestratorEventUrl,
-      publicBaseUrl: body.publicBaseUrl,
+      publicBaseUrl: selfPublic,
       platformSuperAdminEmails: body.platformSuperAdminEmails,
       ssoSharedSecret: body.ssoSharedSecret,
       satelliteEventServiceToken: body.satelliteEventServiceToken,

@@ -7,15 +7,19 @@ import {
   CatalogField,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TEXT_MUTED_CLASS,
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
+import { useClinicAuth } from "@/hooks/useClinicAuth";
 
 /**
  * Recalc / reseat tools only. Day kind and hours live on `/admin/working-hours` calendar chip.
+ * API is platform super-admin only — CLINIC_ADMIN with settings can edit days/peaks, not bulk moves.
  */
 export function ClinicDayPanel() {
   const t = useTranslations("adminSettings");
+  const { auth, loading } = useClinicAuth();
   const [episodeId, setEpisodeId] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -66,6 +70,17 @@ export function ClinicDayPanel() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (loading) return null;
+
+  if (!auth?.isPlatformSuperAdmin) {
+    return (
+      <section className={`${CARD_CONTAINER_CLASS} mt-4 space-y-2 p-4`}>
+        <h2 className="text-sm font-medium">{t("recalcSchedule")}</h2>
+        <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("scheduleToolsSaOnly")}</p>
+      </section>
+    );
   }
 
   return (

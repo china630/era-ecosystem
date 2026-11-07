@@ -75,7 +75,9 @@ export function GuestCardIdentityTab({
   onReload,
   draftPhone = '',
   draftEmail = '',
+  nationality = '',
   onDraftChange,
+  onDraftPhoneBlur,
   locked = false,
 }: {
   guestId: string | null;
@@ -101,7 +103,9 @@ export function GuestCardIdentityTab({
   onReload: () => void;
   draftPhone?: string;
   draftEmail?: string;
+  nationality?: string;
   onDraftChange?: (patch: { phone?: string; email?: string }) => void;
+  onDraftPhoneBlur?: () => void;
   locked?: boolean;
 }) {
   const t = useTranslations('guestCard');
@@ -166,6 +170,7 @@ export function GuestCardIdentityTab({
             preset="phone"
             value={draftPhone}
             onChange={(e) => onDraftChange?.({ phone: e.target.value })}
+            onBlur={() => onDraftPhoneBlur?.()}
             hint={t('summary.phoneAtCheckIn')}
           />
           <Field
@@ -255,6 +260,7 @@ export function GuestCardIdentityTab({
           open
           kind={addKind}
           guestId={guestId}
+          nationality={nationality}
           onClose={() => setAddKind(null)}
           onSaved={onReload}
         />

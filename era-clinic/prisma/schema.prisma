@@ -1976,6 +1976,14 @@ model ProgramTemplate {
   minNights      Int?
   maxNights      Int?
   /**
+   * FIXED = PDF knot grid (quotaFor). DAILY_RATE = counted nights × quotaPerNight.
+   */
+  quotaMode      String                       @default("FIXED") @map("quota_mode")
+  /**
+   * DAILY_RATE only: Sunday nights in Asia/Baku count toward the multiplier.
+   */
+  countSunday    Boolean                      @default(false) @map("count_sunday")
+  /**
    * Monotonic version per code; new composition save bumps.
    */
   version        Int                          @default(1)
@@ -2067,12 +2075,31 @@ model ProgramTemplateProcedure {
   /// When true, fulfillment is the route. When false, LAB/EXAM kind still overrides a procedure default.
   fulfillmentExplicit Boolean       @default(false) @map("fulfillment_explicit")
   /**
-   * PER_NIGHTS | PER_STAY
+   * PER_NIGHTS | PER_STAY — used when template quotaMode is FIXED (knot path).
    */
   quotaBasis     String          @default("PER_NIGHTS") @map("quota_basis")
   requiresDoctor Boolean         @default(false) @map("requires_doctor")
+  /**
+   * When template quotaMode is DAILY_RATE: DAILY_RATE | WEEKLY | PER_STAY.
+   * Null on FIXED templates.
+   */
+  blockQuotaMode String?         @map("block_quota_mode")
   /** Distinct in-package SKUs per Asia/Baku day for this block. Null = family default. */
   dailyDistinctCap Int?          @map("daily_distinct_cap")
+  /**
+   * Block DAILY_RATE: fractional units per counted stay night (ceil product).
+   * Null when not used.
+   */
+  quotaPerNight  Decimal?        @map("quota_per_night") @db.Decimal(8, 4)
+  /**
+   * Block WEEKLY: units per floor(stayNights/7) week. Null when not used.
+   */
+  quotaPerWeek   Int?            @map("quota_per_week")
+  /**
+   * DAILY_RATE block: max units of this block that may burn on one Asia/Baku day.
+   * Does not change stay total.
+   */
+  dailyUseCap    Int?            @map("daily_use_cap")
   /** Doctor assign list. Independent of kind: any block may be shown. */
   showInProcedures Boolean       @default(false) @map("show_in_procedures")
   /** Order in the procedure assign list among blocks with the checkbox on. */

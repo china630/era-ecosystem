@@ -55,6 +55,16 @@ export default function PoliciesPage() {
 
   const [linen, setLinen] = useState(3);
   const [deep, setDeep] = useState(5);
+  const [laundryExpressEnabled, setLaundryExpressEnabled] = useState(false);
+  const [laundryIntakeMode, setLaundryIntakeMode] = useState<'ANY' | 'WINDOW'>('WINDOW');
+  const [laundryIntakeStartHour, setLaundryIntakeStartHour] = useState(9);
+  const [laundryIntakeEndHour, setLaundryIntakeEndHour] = useState(17);
+  const [laundryClosedDays, setLaundryClosedDays] = useState<
+    'ALL' | 'EXCEPT_SUNDAY' | 'EXCEPT_CALENDAR' | 'EXCEPT_SUNDAY_AND_CALENDAR'
+  >('EXCEPT_SUNDAY_AND_CALENDAR');
+  const [laundryDueMode, setLaundryDueMode] = useState<'NONE' | 'BY_HOUR'>('BY_HOUR');
+  const [laundryDueCutoffHour, setLaundryDueCutoffHour] = useState(10);
+  const [laundryDueAtHour, setLaundryDueAtHour] = useState(17);
   const [policy, setPolicy] = useState<PricingPolicy | null>(null);
   const [tourOps, setTourOps] = useState<TourOpsPolicy | null>(null);
   const [pack, setPack] = useState<Set<string>>(new Set());
@@ -68,6 +78,28 @@ export default function PoliciesPage() {
         const json = await hkRes.json();
         setLinen(json.linenEveryNights ?? 3);
         setDeep(json.deepEveryNights ?? 5);
+        setLaundryExpressEnabled(Boolean(json.laundryExpressEnabled));
+        setLaundryIntakeMode(json.laundryIntakeMode === 'WINDOW' ? 'WINDOW' : 'ANY');
+        setLaundryIntakeStartHour(
+          typeof json.laundryIntakeStartHour === 'number' ? json.laundryIntakeStartHour : 9,
+        );
+        setLaundryIntakeEndHour(
+          typeof json.laundryIntakeEndHour === 'number' ? json.laundryIntakeEndHour : 17,
+        );
+        const days = json.laundryClosedDays;
+        setLaundryClosedDays(
+          days === 'ALL' ||
+            days === 'EXCEPT_SUNDAY' ||
+            days === 'EXCEPT_CALENDAR' ||
+            days === 'EXCEPT_SUNDAY_AND_CALENDAR'
+            ? days
+            : 'EXCEPT_SUNDAY_AND_CALENDAR',
+        );
+        setLaundryDueMode(json.laundryDueMode === 'NONE' ? 'NONE' : 'BY_HOUR');
+        setLaundryDueCutoffHour(
+          typeof json.laundryDueCutoffHour === 'number' ? json.laundryDueCutoffHour : 10,
+        );
+        setLaundryDueAtHour(typeof json.laundryDueAtHour === 'number' ? json.laundryDueAtHour : 17);
       }
     }
     if (canPrice) {
@@ -120,7 +152,18 @@ export default function PoliciesPage() {
       const res = await fetch('/api/housekeeping/policy', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ linenEveryNights: linen, deepEveryNights: deep }),
+        body: JSON.stringify({
+          linenEveryNights: linen,
+          deepEveryNights: deep,
+          laundryExpressEnabled,
+          laundryIntakeMode,
+          laundryIntakeStartHour: laundryIntakeMode === 'WINDOW' ? laundryIntakeStartHour : null,
+          laundryIntakeEndHour: laundryIntakeMode === 'WINDOW' ? laundryIntakeEndHour : null,
+          laundryClosedDays,
+          laundryDueMode,
+          laundryDueCutoffHour: laundryDueMode === 'BY_HOUR' ? laundryDueCutoffHour : null,
+          laundryDueAtHour: laundryDueMode === 'BY_HOUR' ? laundryDueAtHour : null,
+        }),
       });
       if (!res.ok) showApiError(await res.json(), tc('failed'));
       else showSuccess(tc('saved'));
@@ -128,6 +171,11 @@ export default function PoliciesPage() {
       setBusy(null);
     }
   }
+
+  const hourOptions = Array.from({ length: 24 }, (_, h) => ({
+    value: String(h),
+    label: `${String(h).padStart(2, '0')}:00`,
+  }));
 
   async function savePrice() {
     if (!policy) return;
@@ -339,6 +387,101 @@ export default function PoliciesPage() {
               onChange={(e) => setDeep(Number(e.target.value))}
             />
           </label>
+          <h3 className="m-0 pt-2 text-sm font-semibold text-[#34495E]">{th('laundryPolicyTitle')}</h3>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={th('laundryExpressEnabled')}
+            value={laundryExpressEnabled ? 'yes' : 'no'}
+            onChange={(v) => setLaundryExpressEnabled(String(v) === 'yes')}
+            options={[
+              { value: 'no', label: tc('no') },
+              { value: 'yes', label: tc('yes') },
+            ]}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={th('laundryIntakeMode')}
+            value={laundryIntakeMode}
+            onChange={(v) => setLaundryIntakeMode(String(v) === 'WINDOW' ? 'WINDOW' : 'ANY')}
+            options={[
+              { value: 'ANY', label: th('laundryIntakeAny') },
+              { value: 'WINDOW', label: th('laundryIntakeWindow') },
+            ]}
+          />
+          {laundryIntakeMode === 'WINDOW' ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <CatalogField
+                kind="CLOSED_MEDIUM"
+                label={th('laundryIntakeStart')}
+                value={String(laundryIntakeStartHour)}
+                onChange={(v) => setLaundryIntakeStartHour(Number(v))}
+                options={hourOptions}
+              />
+              <CatalogField
+                kind="CLOSED_MEDIUM"
+                label={th('laundryIntakeEnd')}
+                value={String(laundryIntakeEndHour)}
+                onChange={(v) => setLaundryIntakeEndHour(Number(v))}
+                options={hourOptions}
+              />
+            </div>
+          ) : null}
+          <CatalogField
+            kind="CLOSED_MEDIUM"
+            label={th('laundryClosedDays')}
+            value={laundryClosedDays}
+            onChange={(v) =>
+              setLaundryClosedDays(
+                String(v) as
+                  | 'ALL'
+                  | 'EXCEPT_SUNDAY'
+                  | 'EXCEPT_CALENDAR'
+                  | 'EXCEPT_SUNDAY_AND_CALENDAR',
+              )
+            }
+            options={[
+              { value: 'ALL', label: th('laundryDaysAll') },
+              { value: 'EXCEPT_SUNDAY', label: th('laundryDaysExceptSunday') },
+              { value: 'EXCEPT_CALENDAR', label: th('laundryDaysExceptCalendar') },
+              {
+                value: 'EXCEPT_SUNDAY_AND_CALENDAR',
+                label: th('laundryDaysExceptSundayAndCalendar'),
+              },
+            ]}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={th('laundryDueMode')}
+            value={laundryDueMode}
+            onChange={(v) => setLaundryDueMode(String(v) === 'NONE' ? 'NONE' : 'BY_HOUR')}
+            options={[
+              { value: 'BY_HOUR', label: th('laundryDueByHour') },
+              { value: 'NONE', label: th('laundryDueNone') },
+            ]}
+          />
+          {laundryDueMode === 'BY_HOUR' ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <CatalogField
+                kind="CLOSED_MEDIUM"
+                label={th('laundryDueCutoff')}
+                value={String(laundryDueCutoffHour)}
+                onChange={(v) => setLaundryDueCutoffHour(Number(v))}
+                options={hourOptions}
+              />
+              <CatalogField
+                kind="CLOSED_MEDIUM"
+                label={th('laundryDueAt')}
+                value={String(laundryDueAtHour)}
+                onChange={(v) => setLaundryDueAtHour(Number(v))}
+                options={hourOptions}
+              />
+            </div>
+          ) : null}
+          <p className="m-0 text-[13px]">
+            <Link className="text-[#2980B9] hover:underline" href="/settings/laundry-catalog">
+              {th('laundryCatalogLink')}
+            </Link>
+          </p>
           <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy === 'hk'} onClick={() => void saveHk()}>
             {tc('save')}
           </button>

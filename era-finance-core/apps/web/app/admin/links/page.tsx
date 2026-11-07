@@ -30,7 +30,8 @@ export default function AdminLinksPage() {
     () => ({
       title: t("adminLinks.title", { defaultValue: "Integration links" }),
       subtitle: t("adminLinks.subtitle", {
-        defaultValue: "Money routing and peer channels for this organization.",
+        defaultValue:
+          "Peer policy edges (folio / settlement / revenue) — not messaging. Money routing stays on this satellite.",
       }),
       loadFailed: t("adminLinks.loadFailed", {
         defaultValue: "Could not load links",
@@ -54,6 +55,7 @@ export default function AdminLinksPage() {
       on: t("adminLinks.on", { defaultValue: "on" }),
       off: t("adminLinks.off", { defaultValue: "off" }),
       disable: t("adminLinks.disable", { defaultValue: "Disable inbound" }),
+      enable: t("adminLinks.enable", { defaultValue: "Enable inbound" }),
       satHotel: t("adminLinks.satHotel", { defaultValue: "Hotel" }),
       satClinic: t("adminLinks.satClinic", { defaultValue: "Clinic" }),
       satFnb: t("adminLinks.satFnb", { defaultValue: "F&B" }),
@@ -69,6 +71,24 @@ export default function AdminLinksPage() {
       kindRead: t("adminLinks.kindRead", { defaultValue: "Read status" }),
       kindOpsHandoff: t("adminLinks.kindOpsHandoff", {
         defaultValue: "Ops handoff",
+      }),
+      flowFolio: t("adminLinks.flowFolio", {
+        defaultValue:
+          "Posts charges onto the peer folio (room / guest bill).",
+      }),
+      flowSettlement: t("adminLinks.flowSettlement", {
+        defaultValue:
+          "Settles money between peer satellites for the same stay or ticket.",
+      }),
+      flowRevenue: t("adminLinks.flowRevenue", {
+        defaultValue:
+          "Forwards revenue events to Finance for GL / reporting.",
+      }),
+      flowRead: t("adminLinks.flowRead", {
+        defaultValue: "Read-only status pull from the peer (no money move).",
+      }),
+      flowOpsHandoff: t("adminLinks.flowOpsHandoff", {
+        defaultValue: "Operational handoff of stock or work between peers.",
       }),
       managedPlatform: t("adminLinks.managedPlatform", {
         defaultValue: "Platform",
@@ -112,11 +132,11 @@ export default function AdminLinksPage() {
     void load();
   }, [ready, token, canManage, load]);
 
-  async function onDisableInbound(channelId: string) {
+  async function patchInbound(channelId: string, enabled: boolean) {
     const res = await apiFetch(`/api/integration/channels/${channelId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ enabled: false }),
+      body: JSON.stringify({ enabled }),
     });
     if (!res.ok) {
       setError(labels.saveFailed);
@@ -150,7 +170,8 @@ export default function AdminLinksPage() {
         mode={mode}
         error={error}
         loading={loading}
-        onDisableInbound={onDisableInbound}
+        onDisableInbound={(id) => void patchInbound(id, false)}
+        onEnableInbound={(id) => void patchInbound(id, true)}
         showHeader={false}
       />
     </div>

@@ -46,6 +46,18 @@ export type ResourceRow = MatrixResourceRow;
 
 export type TimeHorizon = "full" | "rest" | "+1h" | "+3h";
 
+/** Day-queue painted across a cabin's morning and afternoon. Not a booked slot. */
+export type OpenAttendanceLane = {
+  procedureCode: string;
+  procedureName: string;
+  resourceCodes: string[];
+  waiting: number;
+  inCabin: number;
+  arrivedBeforeLunch: number;
+  arrivedAfterLunch: number;
+  capacity: number;
+};
+
 export type ResourceDayMatrixLabels = {
   free: string;
   empty: string;
@@ -58,6 +70,11 @@ export type ResourceDayMatrixLabels = {
   legendBlocked: string;
   legendLunch: string;
   legendOutside?: string;
+  legendOpenQueue?: string;
+  openQueueBefore?: (lane: OpenAttendanceLane) => string;
+  openQueueAfter?: (lane: OpenAttendanceLane) => string;
+  /** Short mark for the second and later cabins of the same procedure. */
+  openQueueMark?: (lane: OpenAttendanceLane, which: "morning" | "afternoon") => string;
   /** Localized status chip on the bar (PENDING_PAY → unpaid, etc.). */
   statusLabel: (status: string) => string;
 };
@@ -88,6 +105,7 @@ type Props = {
   roomFilter?: string;
   timeHorizon?: TimeHorizon;
   dayStartHour?: number;
+  openLanes?: OpenAttendanceLane[];
   /** CSS width per time column (appointments use wider cols). Default 1.75rem. */
   slotColumnWidth?: string;
 };
@@ -231,6 +249,22 @@ function alignRowSlots(row: MatrixResourceRow, timeSlots: MatrixSlot[]): MatrixS
   );
 }
 
+function halfRanges(slots: MatrixSlot[]): { morning: [number, number] | null; afternoon: [number, number] | null } {
+  const lunch = slots.flatMap((slot, index) => (slot.lunch ? [index] : []));
+  if (lunch.length > 0) {
+    const first = lunch[0];
+    const last = lunch[lunch.length - 1];
+    return {
+      morning: first > 0 ? [0, first] : null,
+      afternoon: last + 1 < slots.length ? [last + 1, slots.length] : null,
+    };
+  }
+  const split = slots.findIndex((slot) => slotStartMinutesBaku(slot) >= 13 * 60);
+  if (split < 0) return { morning: slots.length ? [0, slots.length] : null, afternoon: null };
+  if (split === 0) return { morning: null, afternoon: slots.length ? [0, slots.length] : null };
+  return { morning: [0, split], afternoon: [split, slots.length] };
+}
+
 function buildSegments(slots: MatrixSlot[]): Segment[] {
   const out: Segment[] = [];
   let i = 0;
@@ -286,6 +320,7 @@ export function ResourceDayMatrix({
   timeHorizon = "full",
   dayStartHour = 9,
   slotColumnWidth = "1.75rem",
+  openLanes = [],
 }: Props) {
   const patientQuery = patientFilter.trim();
 
@@ -301,6 +336,15 @@ export function ResourceDayMatrix({
   const baseSlots = filtered[0]?.slots ?? resources[0]?.slots ?? [];
   const timeSlots = filterSlotsByHorizon(baseSlots, date, timeHorizon, dayStartHour);
   const colCount = timeSlots.length;
+  const fullQueueRowIds = new Set<string>();
+  const seenQueueCode = new Set<string>();
+  for (const row of filtered) {
+    for (const lane of openLanes) {
+      if (!lane.resourceCodes.includes(row.code) || seenQueueCode.has(lane.procedureCode)) continue;
+      seenQueueCode.add(lane.procedureCode);
+      fullQueueRowIds.add(row.resourceId);
+    }
+  }
   const isToday = date === todayBakuYmd();
   const nowLineLeft =
     isToday && timeHorizon === "full"
@@ -352,6 +396,15 @@ export function ResourceDayMatrix({
                 },
               ]
             : []),
+          ...(labels.legendOpenQueue
+            ? [
+                {
+                  id: "open-queue",
+                  label: labels.legendOpenQueue,
+                  swatchClassName: "bg-violet-200 border-violet-400",
+                },
+              ]
+            : []),
         ]}
       />
       <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{labels.dragHint}</p>
@@ -380,6 +433,20 @@ export function ResourceDayMatrix({
               {filtered.map((row) => {
                 const rowSlots = alignRowSlots(row, timeSlots);
                 const segments = buildSegments(rowSlots);
+                const lanes = openLanes.filter((lane) => lane.resourceCodes.includes(row.code));
+                const halves = halfRanges(rowSlots);
+                const laneText = (which: "morning" | "afternoon", full: boolean) =>
+                  lanes
+                    .map((lane) => {
+                      if (!full && labels.openQueueMark) return labels.openQueueMark(lane, which);
+                      return which === "morning"
+                        ? labels.openQueueBefore?.(lane)
+                        : labels.openQueueAfter?.(lane);
+                    })
+                    .filter(Boolean)
+                    .join("\n");
+                const showFullQueue = fullQueueRowIds.has(row.resourceId);
+                const rowMin = lanes.length > 0 ? "min-h-[4.75rem]" : "min-h-[3.25rem]";
                 return (
                   <div key={row.resourceId} className="contents">
                     <div className="sticky left-0 z-10 flex items-center border-b border-r border-[#D5DADF] bg-white px-2 py-1 text-[12px] font-semibold text-[#34495E]">
@@ -387,12 +454,42 @@ export function ResourceDayMatrix({
                         {cabinLabel(row.name, row.code)}
                       </span>
                     </div>
+                    <div
+                      className="relative grid"
+                      style={{
+                        gridColumn: `span ${colCount}`,
+                        gridTemplateColumns: `repeat(${colCount}, ${slotColumnWidth})`,
+                      }}
+                    >
+                    {lanes.length > 0
+                      ? (["morning", "afternoon"] as const).map((which) => {
+                          const range = halves[which];
+                          const text = laneText(which, showFullQueue);
+                          if (!range || !text) return null;
+                          const [from, to] = range;
+                          return (
+                            <div
+                              key={`${row.resourceId}-queue-${which}`}
+                              className="pointer-events-none absolute inset-y-0 z-0 flex items-center overflow-hidden border-y border-violet-300 bg-violet-200 px-1.5 text-sm font-semibold leading-snug text-violet-950"
+                              style={{
+                                left: `${(from / colCount) * 100}%`,
+                                width: `${((to - from) / colCount) * 100}%`,
+                              }}
+                              title={laneText(which, true)}
+                            >
+                              <span className={showFullQueue ? "line-clamp-3" : "truncate"}>
+                                {laneText(which, showFullQueue).split("\n").join(" · ")}
+                              </span>
+                            </div>
+                          );
+                        })
+                      : null}
                     {segments.map((seg) => {
                       if (seg.kind === "lunch" || seg.kind === "outside") {
                         return (
                           <div
                             key={`${row.resourceId}-${seg.kind}-${seg.slot.time}`}
-                            className="min-h-[3.25rem] border-b border-r border-slate-300 bg-slate-200/80"
+                            className={`relative z-[1] ${rowMin} border-b border-r border-slate-300 bg-slate-200/80`}
                             style={{ gridColumn: "span 1" }}
                             title={
                               seg.kind === "lunch"
@@ -406,7 +503,7 @@ export function ResourceDayMatrix({
                         return (
                           <div
                             key={`${row.resourceId}-blocked-${seg.slot.time}`}
-                            className="min-h-[3.25rem] border-b border-r border-amber-300 bg-amber-50"
+                            className={`relative z-[1] ${rowMin} border-b border-r border-amber-300 bg-amber-50`}
                             style={{ gridColumn: "span 1" }}
                             title={labels.legendBlocked}
                           />
@@ -416,7 +513,11 @@ export function ResourceDayMatrix({
                         return (
                           <div
                             key={`${row.resourceId}-${seg.slot.time}`}
-                            className={`min-h-[3.25rem] border-b border-r border-emerald-100 bg-emerald-50/80 ${onFreeClick ? "cursor-pointer hover:bg-emerald-100/90" : ""}`}
+                            className={`relative z-[1] ${rowMin} border-b border-r ${
+                              lanes.length > 0
+                                ? "border-violet-100 bg-transparent"
+                                : "border-emerald-100 bg-emerald-50/80"
+                            } ${onFreeClick ? "cursor-pointer hover:bg-emerald-100/40" : ""}`}
                             style={{ gridColumn: "span 1" }}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={() => onDropFree(row.resourceId, seg.slot.time)}
@@ -435,7 +536,7 @@ export function ResourceDayMatrix({
                           onDragStart={() => {
                             if (slot.procedureOrderId) onDragStart?.(slot.procedureOrderId);
                           }}
-                          className={`min-h-[3.25rem] cursor-pointer overflow-hidden border-b border-r px-1 py-0.5 text-[10px] leading-tight ${barClass(slot.status)} ${scheduled ? "cursor-grab" : ""}`}
+                          className={`relative z-[1] ${rowMin} cursor-pointer overflow-hidden border-b border-r px-1 py-0.5 text-[10px] leading-tight ${barClass(slot.status)} ${scheduled ? "cursor-grab" : ""}`}
                           style={{ gridColumn: `span ${span}` }}
                           title={`${slot.patientName ?? ""} ${slot.procedureCode ?? ""}${
                             slot.status ? ` · ${labels.statusLabel(slot.status)}` : ""
@@ -466,6 +567,7 @@ export function ResourceDayMatrix({
                         </div>
                       );
                     })}
+                    </div>
                   </div>
                 );
               })}

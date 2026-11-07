@@ -10,7 +10,14 @@ import type { SatelliteStaffSessionPayload } from "@era/satellite-kit";
 type GuardOk = { session: SatelliteStaffSessionPayload; error?: undefined };
 type GuardFail = { session?: undefined; error: NextResponse };
 
-/** Permission-mapped admin API gate (Wave 2 — CLINIC_ADMIN matrix applies). */
+/**
+ * Permission-mapped admin API gate (Wave 2 — CLINIC_ADMIN matrix applies).
+ *
+ * Fail-closed: unmapped `/api/admin/*` → 403 for everyone, including OrgOwner /
+ * platform SA. Bypass (`hasClinicPermissionBypass`) runs only after
+ * `adminApiRoutePermissions` finds a row — keep ADMIN_API_PREFIX_PERMISSIONS in sync
+ * (see `scripts/audit-admin-api-map.mjs` and clinic-permissions.spec).
+ */
 export async function assertClinicAdminRoute(
   req: Request,
 ): Promise<GuardOk | GuardFail> {

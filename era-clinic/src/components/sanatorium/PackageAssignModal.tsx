@@ -102,6 +102,8 @@ type PackageBlockReason =
   | "NO_COMPLAINT"
   | "NO_DIAGNOSIS"
   | "NO_CARE_TEAM"
+  | "TEMPLATE_NOT_FOUND"
+  | "PACKAGE_NIGHTS_BELOW_MIN"
   | "INSTANTIATE_FAILED";
 
 type DraftLine = {
@@ -383,6 +385,8 @@ export function PackageAssignModal({
       "NO_COMPLAINT",
       "NO_DIAGNOSIS",
       "NO_CARE_TEAM",
+      "TEMPLATE_NOT_FOUND",
+      "PACKAGE_NIGHTS_BELOW_MIN",
       "INSTANTIATE_FAILED",
     ];
     const block = known.includes(payload.blockReason) ? payload.blockReason : null;
@@ -391,6 +395,13 @@ export function PackageAssignModal({
       tPhysio,
       block,
       typeof payload.packageCode === "string" ? payload.packageCode : "",
+      {
+        nights:
+          typeof payload.blockNights === "number" ? payload.blockNights : null,
+        minNights:
+          typeof payload.blockMinNights === "number" ? payload.blockMinNights : null,
+        message: typeof payload.blockMessage === "string" ? payload.blockMessage : null,
+      },
     );
     if (blockText) {
       setError(blockText);
@@ -1027,7 +1038,7 @@ export function PackageAssignModal({
     if (code === "CABIN_SEX") return tPhysio("packageAssignMissCabinSex");
     if (code === "MASSEUR_NOT_SKILLED") return tPhysio("masseurNotSkilled");
     if (code === "NO_CABIN") return tPhysio("packageAssignNoCabin", { names: serverError });
-    if (code === "PLACE_FAILED") return tPhysio("packageAssignPlaceFailed");
+    if (code === "PLACE_FAILED") return serverError || tPhysio("packageAssignPlaceFailed");
     if (code === "NOT_IN_PROCEDURES") return tPhysio("packageAssignNotInProcedures");
     if (code === "NO_SERVICE") return tPhysio("packageAssignNoService");
     if (code === "NO_CARE_TEAM") return tPhysio("packageAssignNoCareTeam");
@@ -2270,8 +2281,10 @@ export function PackageAssignModal({
         ].join(", ");
         if (!res.ok) {
           showApiError({ error: assignSaveMessage(body) }, tc("saveFailed"));
-        } else if (leftNames) {
-          showApiError({ error: tPhysio("packageAssignCheckoutNoonLeft", { names: leftNames }) });
+        } else if (left.length > 0) {
+          showApiError({
+            error: placeMissText(left) || tPhysio("packageAssignCheckoutNoonLeft", { names: leftNames }),
+          });
         }
         onSaved();
       } finally {

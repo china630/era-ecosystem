@@ -234,7 +234,7 @@
   },
   "adminLinks": {
     "title": "Integration links",
-    "subtitle": "Money routing and peer channels for this organization.",
+    "subtitle": "Peer policy edges (folio / settlement / revenue) — not messaging. Money routing stays on this satellite.",
     "moneyTitle": "Money routing",
     "moneyLine": "Mode {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
     "moneyUnknown": "Operating mode unavailable",
@@ -265,6 +265,12 @@
     "managedPlatform": "Platform",
     "managedAcceptor": "Acceptor",
     "legacyTitle": "Legacy bridges",
-    "legacyHint": "Display-only CODE_LEGACY hints — not live channel gates."
+    "legacyHint": "Display-only CODE_LEGACY hints — not live channel gates.",
+    "enable": "Enable inbound",
+    "flowFolio": "Posts charges onto the peer folio (room / guest bill).",
+    "flowSettlement": "Settles money between peer satellites for the same stay or ticket.",
+    "flowRevenue": "Forwards revenue events to Finance for GL / reporting.",
+    "flowRead": "Read-only status pull from the peer (no money move).",
+    "flowOpsHandoff": "Operational handoff of stock or work between peers."
   }
 }

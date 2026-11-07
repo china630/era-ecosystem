@@ -63,6 +63,7 @@ export const SLOT_REASON_MESSAGE: Record<PlacementFailureReason, string> = {
   checkout_noon: "On checkout day the procedure must finish by 12:00",
   rule: "Procedure rule or rest gap conflict",
   no_slot: "Selected time is outside working hours",
+  anamnesis: "Anamnesis is required before assigning or confirming procedures",
 };
 
 function addMinutes(d: Date, mins: number): Date {
@@ -152,7 +153,11 @@ export async function placeManualProcedureSlot(input: {
   const capFields =
     order.inPackage && dailyCaps
       ? dailyCapForQuota(dailyCaps, order.packageQuotaCode, order.procedureCode)
-      : { quotaKey: order.procedureCode, dailyCap: null as number | null };
+      : {
+          quotaKey: order.procedureCode,
+          dailyCap: null as number | null,
+          dailyUseCap: null as number | null,
+        };
   const pt = order.procedureType ?? (await prisma.procedureType.findFirst({
     where: { code: order.procedureCode },
     include: { requirements: true },

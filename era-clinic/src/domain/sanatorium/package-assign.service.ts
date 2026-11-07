@@ -6,7 +6,11 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
-import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
+import {
+  releaseProcedureOccupancy,
+  replaceProcedureAllocations,
+  type AllocationWrite,
+} from "@/domain/procedure/procedure-allocation.service";
 import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
@@ -573,8 +577,15 @@ export async function getPackageAssignSnapshot(
     | "NO_COMPLAINT"
     | "NO_DIAGNOSIS"
     | "NO_CARE_TEAM"
+    | "TEMPLATE_NOT_FOUND"
+    | "PACKAGE_NIGHTS_BELOW_MIN"
     | "INSTANTIATE_FAILED"
     | null;
+  /** Stay nights vs package min when blockReason is PACKAGE_NIGHTS_BELOW_MIN. */
+  blockNights: number | null;
+  blockMinNights: number | null;
+  /** Instantiate error text when blockReason is INSTANTIATE_FAILED. */
+  blockMessage: string | null;
   /** poolCode → eligible real SKUs for the picker */
   poolEligible: Record<string, PoolEligibleSku[]>;
   /** Pinned package identity for support (code + version). */
@@ -603,6 +614,9 @@ export async function getPackageAssignSnapshot(
         assignedStudies: [],
         softWarnDay1: null,
         blockReason: "NO_PROGRAM_CODE",
+        blockNights: null,
+        blockMinNights: null,
+        blockMessage: null,
         poolEligible: {},
         packageCode: null,
         packageVersion: null,
@@ -623,15 +637,29 @@ export async function getPackageAssignSnapshot(
       });
     }
     if (!episode.programInstance) {
-      const reason = opened.opened
-        ? "INSTANTIATE_FAILED"
-        : opened.reason === "NO_ANAMNESIS" ||
-            opened.reason === "NO_COMPLAINT" ||
-            opened.reason === "NO_DIAGNOSIS" ||
-            opened.reason === "NO_CARE_TEAM" ||
-            opened.reason === "INSTANTIATE_FAILED"
-          ? opened.reason
-          : "NO_PROGRAM";
+      const reason = (():
+        | "NO_PROGRAM"
+        | "NO_ANAMNESIS"
+        | "NO_COMPLAINT"
+        | "NO_DIAGNOSIS"
+        | "NO_CARE_TEAM"
+        | "TEMPLATE_NOT_FOUND"
+        | "PACKAGE_NIGHTS_BELOW_MIN"
+        | "INSTANTIATE_FAILED" => {
+        if (opened.opened) return "INSTANTIATE_FAILED";
+        switch (opened.reason) {
+          case "NO_ANAMNESIS":
+          case "NO_COMPLAINT":
+          case "NO_DIAGNOSIS":
+          case "NO_CARE_TEAM":
+          case "TEMPLATE_NOT_FOUND":
+          case "PACKAGE_NIGHTS_BELOW_MIN":
+          case "INSTANTIATE_FAILED":
+            return opened.reason;
+          default:
+            return "NO_PROGRAM";
+        }
+      })();
       return {
         balances: [],
         studyBalances: [],
@@ -639,6 +667,18 @@ export async function getPackageAssignSnapshot(
         assignedStudies: [],
         softWarnDay1: null,
         blockReason: reason,
+        blockNights:
+          !opened.opened && opened.reason === "PACKAGE_NIGHTS_BELOW_MIN"
+            ? (opened.nights ?? null)
+            : null,
+        blockMinNights:
+          !opened.opened && opened.reason === "PACKAGE_NIGHTS_BELOW_MIN"
+            ? (opened.minNights ?? null)
+            : null,
+        blockMessage:
+          !opened.opened && opened.reason === "INSTANTIATE_FAILED"
+            ? (opened.message ?? null)
+            : null,
         poolEligible: {},
         packageCode: episode.programCode?.trim() || null,
         packageVersion: null,
@@ -1093,6 +1133,9 @@ export async function getPackageAssignSnapshot(
     assignedStudies,
     softWarnDay1,
     blockReason: null,
+    blockNights: null,
+    blockMinNights: null,
+    blockMessage: null,
     poolEligible,
     packageCode: instance.programCode,
     packageVersion:
@@ -1245,9 +1288,17 @@ export function chunkCreatedIdsByLine(
   return out;
 }
 
+export type SuspendedPackageSeat = {
+  id: string;
+  resourceId: string | null;
+  allocations: AllocationWrite[];
+};
+
 export type RedispatchedBlockTail = {
   /** Cap-block key → unfinished order ids (sequence order), OPEN vs FIXED. */
   byKey: Map<string, { openIds: string[]; fixedIds: string[] }>;
+  /** Seats lifted for this refill. Restored when the save throws before it finishes. */
+  suspended: SuspendedPackageSeat[];
 };
 
 /**
@@ -1259,7 +1310,7 @@ export async function unseatUnfinishedBlockTail(
   quotaCodes: string[],
   opts?: { excludeIds?: Set<string>; bathCodes?: Set<string> },
 ): Promise<RedispatchedBlockTail> {
-  const empty: RedispatchedBlockTail = { byKey: new Map() };
+  const empty: RedispatchedBlockTail = { byKey: new Map(), suspended: [] };
   if (quotaCodes.length === 0) return empty;
   const caps = await loadEpisodeDailyCaps(episodeId);
   const touched = new Set<string>();
@@ -1307,14 +1358,72 @@ export async function unseatUnfinishedBlockTail(
     byKey.set(quotaKey, bucket);
     toUnseat.push(row.id);
   }
-  if (toUnseat.length === 0) return { byKey };
+  if (toUnseat.length === 0) return { byKey, suspended: [] };
+
+  const [seatRows, allocationRows] = await Promise.all([
+    prisma.procedureOrder.findMany({
+      where: { id: { in: toUnseat } },
+      select: { id: true, resourceId: true },
+    }),
+    prisma.procedureAllocation.findMany({
+      where: { procedureOrderId: { in: toUnseat } },
+    }),
+  ]);
+  const allocationsByOrder = new Map<string, AllocationWrite[]>();
+  for (const row of allocationRows) {
+    const list = allocationsByOrder.get(row.procedureOrderId) ?? [];
+    list.push({
+      role: row.role,
+      resourceId: row.resourceId,
+      practitionerId: row.practitionerId,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+    });
+    allocationsByOrder.set(row.procedureOrderId, list);
+  }
+  const suspended: SuspendedPackageSeat[] = seatRows.map((row) => ({
+    id: row.id,
+    resourceId: row.resourceId,
+    allocations: allocationsByOrder.get(row.id) ?? [],
+  }));
 
   await releaseProcedureOccupancy(toUnseat);
   await prisma.procedureOrder.updateMany({
     where: { id: { in: toUnseat } },
     data: { status: "PROPOSED", resourceId: null },
   });
-  return { byKey };
+  return { byKey, suspended };
+}
+
+/** Put seats back that this save lifted and then failed to finish. */
+export async function restoreSuspendedPackageSeats(rows: SuspendedPackageSeat[]): Promise<void> {
+  for (const row of rows) {
+    const current = await prisma.procedureOrder.findUnique({
+      where: { id: row.id },
+      select: { status: true, resourceId: true },
+    });
+    if (!current || current.status !== "PROPOSED" || current.resourceId) continue;
+    await prisma.procedureOrder.update({
+      where: { id: row.id },
+      data: { status: "SCHEDULED", resourceId: row.resourceId },
+    });
+    await replaceProcedureAllocations(row.id, row.allocations);
+  }
+}
+
+function assignFailure(err: unknown): PackageAssignError {
+  if (err instanceof PackageAssignError) return err;
+  const code =
+    err && typeof err === "object" && "code" in err && typeof (err as { code?: string }).code === "string"
+      ? (err as { code: string }).code
+      : "";
+  const message = err instanceof Error ? err.message : "Package seating failed";
+  if (code === ANAMNESIS_REQUIRED) {
+    return new PackageAssignError(message, ANAMNESIS_REQUIRED, 409, [
+      { ymd: "", procedureCode: "", procedureName: "", reason: "anamnesis" },
+    ]);
+  }
+  return new PackageAssignError(message, "PLACE_FAILED", 409);
 }
 
 /** Dialog hour from the latest package_assign audit that actually stored one. A later save with startHour null does not erase it. */
@@ -1588,8 +1697,23 @@ export async function assignPackageProcedures(
   const workStart = startAt;
 
   const createdIds: string[] = [];
+  let suspended: SuspendedPackageSeat[] = [];
   const nameByCode = new Map<string, string>();
   let seq = 0;
+  try {
+  await dropUnseatedInPackageOrders(
+    (
+      await prisma.procedureOrder.findMany({
+        where: {
+          clinicalEpisodeId: episodeId,
+          status: "PROPOSED",
+          inPackage: true,
+          resourceId: null,
+        },
+        select: { id: true },
+      })
+    ).map((row) => row.id),
+  );
 
   for (const line of resolved) {
     const pt = typeByCode.get(line.procedureCode);
@@ -1666,6 +1790,7 @@ export async function assignPackageProcedures(
     resolved.map((line) => line.quotaCode),
     { excludeIds: new Set(createdIds), bathCodes },
   );
+  suspended = redispatched.suspended;
   const redispatchedOpenUsed = new Set<string>();
   const redispatchedFixedUsed = new Set<string>();
   const misses: Array<{
@@ -1874,6 +1999,11 @@ export async function assignPackageProcedures(
     ...(misses.length > 0 ? { misses } : {}),
     ...(seatMisses.length > 0 ? { seatMisses } : {}),
   };
+  } catch (err) {
+    await dropUnseatedInPackageOrders(createdIds);
+    await restoreSuspendedPackageSeats(suspended);
+    throw assignFailure(err);
+  }
 }
 
 async function syncQuotaUsed(instanceId: string, episodeId: string, quotaCode: string) {
@@ -2462,17 +2592,21 @@ export async function placeProposedOnCheckoutMorning(
   const cabinIds = orders.filter((row) => row.procedureType?.openAttendance !== true).map((row) => row.id);
   if (cabinIds.length === 0) return { placed: 0, misses: [] };
   const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
-  const placement = await placeConfirmedProcedures(cabinIds, { confirmedByUserId, scheduleBefore: endsOn, checkoutMorning: true },
-  );
-  return {
-    placed: placement.placed,
-    misses: placement.failures.map((row) => ({
-      ymd: row.ymd ?? "",
-      procedureCode: row.procedureCode,
-      procedureName: row.procedureName,
-      reason: row.reason,
-    })),
-  };
+  try {
+    const placement = await placeConfirmedProcedures(cabinIds, { confirmedByUserId, scheduleBefore: endsOn, checkoutMorning: true },
+    );
+    return {
+      placed: placement.placed,
+      misses: placement.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+      })),
+    };
+  } finally {
+    await dropUnseatedInPackageOrders(cabinIds);
+  }
 }
 
 /**
@@ -2548,27 +2682,30 @@ export async function applyPreferredMasseurs(
       data: { preferredPractitionerId: wanted, resourceId: null, status: "PROPOSED" },
     });
     const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
-    const placement = await placeConfirmedProcedures(ids, {
-      confirmedByUserId: opts?.confirmedByUserId,
-      scheduleBefore: endsOn,
-      startAt,
-    });
-    misses.push(
-      ...placement.failures.map((row) => ({
-        ymd: row.ymd ?? "",
-        procedureCode: row.procedureCode,
-        procedureName: row.procedureName,
-        reason: row.reason,
-        staffName: row.staffName,
-      })),
-    );
-    await dropUnseatedInPackageOrders(ids);
-    const extraIds = changed.filter((row) => row.status === "PENDING_PAY" && !row.inPackage).map((row) => row.id);
-    if (extraIds.length > 0) {
-      await prisma.procedureOrder.updateMany({
-        where: { id: { in: extraIds }, status: { in: ["PROPOSED", "SCHEDULED"] } },
-        data: { status: "PENDING_PAY" },
+    try {
+      const placement = await placeConfirmedProcedures(ids, {
+        confirmedByUserId: opts?.confirmedByUserId,
+        scheduleBefore: endsOn,
+        startAt,
       });
+      misses.push(
+        ...placement.failures.map((row) => ({
+          ymd: row.ymd ?? "",
+          procedureCode: row.procedureCode,
+          procedureName: row.procedureName,
+          reason: row.reason,
+          staffName: row.staffName,
+        })),
+      );
+    } finally {
+      await dropUnseatedInPackageOrders(ids);
+      const extraIds = changed.filter((row) => row.status === "PENDING_PAY" && !row.inPackage).map((row) => row.id);
+      if (extraIds.length > 0) {
+        await prisma.procedureOrder.updateMany({
+          where: { id: { in: extraIds }, status: { in: ["PROPOSED", "SCHEDULED"] } },
+          data: { status: "PENDING_PAY" },
+        });
+      }
     }
   }
   return { misses };

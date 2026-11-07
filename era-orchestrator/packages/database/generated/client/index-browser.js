@@ -1174,6 +1174,31 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.CommsThreadScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  subject: 'subject',
+  authorUserId: 'authorUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CommsMessageScalarFieldEnum = {
+  id: 'id',
+  threadId: 'threadId',
+  authorUserId: 'authorUserId',
+  body: 'body',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.CommsParticipantScalarFieldEnum = {
+  id: 'id',
+  threadId: 'threadId',
+  userId: 'userId',
+  readAt: 'readAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.HoldingScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -2035,7 +2060,8 @@ exports.NotificationMessageClass = exports.$Enums.NotificationMessageClass = {
 exports.NotificationChannel = exports.$Enums.NotificationChannel = {
   EMAIL: 'EMAIL',
   WHATSAPP: 'WHATSAPP',
-  SMS: 'SMS'
+  SMS: 'SMS',
+  IN_APP: 'IN_APP'
 };
 
 exports.NotificationOutboxStatus = exports.$Enums.NotificationOutboxStatus = {
@@ -2171,6 +2197,9 @@ exports.Prisma.ModelName = {
   FiscalHardwareDevice: 'FiscalHardwareDevice',
   OrgPaymentMethod: 'OrgPaymentMethod',
   User: 'User',
+  CommsThread: 'CommsThread',
+  CommsMessage: 'CommsMessage',
+  CommsParticipant: 'CommsParticipant',
   Holding: 'Holding',
   HoldingMembership: 'HoldingMembership',
   OrganizationRole: 'OrganizationRole',

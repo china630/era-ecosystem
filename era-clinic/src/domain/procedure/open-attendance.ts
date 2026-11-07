@@ -7,11 +7,15 @@ import {
   addBakuDays,
   bakuDateKey,
   bakuDayBounds,
+  bakuHourMinute,
   parseBakuDateTime,
   todayBakuYmd,
 } from "@/lib/baku-day";
 import { listClinicDays, nextWorkingYmd } from "@/domain/planning/clinic-day";
-import { packageBlockIsFull } from "@/domain/sanatorium/daily-package-cap";
+import {
+  packageBlockIsFull,
+  packageBlockDayUseIsFull,
+} from "@/domain/sanatorium/daily-package-cap";
 import {
   loadEpisodeDailyCaps,
   quotaForGuestDay,
@@ -28,11 +32,17 @@ import {
 export type ProcedureSchedulingMode = "FIXED" | "OPEN";
 export type ProcedureCheckInWindowMode = "STRICT" | "SAME_DAY";
 
-export function isOpenSchedulingMode(
-  mode: string | null | undefined,
-): boolean {
-  return mode === "OPEN";
-}
+import {
+  compareOpenUnseatedFirst,
+  isOpenSchedulingMode,
+  isOpenUnseatedOrder,
+} from "@/domain/procedure/open-attendance-order";
+
+export {
+  compareOpenUnseatedFirst,
+  isOpenSchedulingMode,
+  isOpenUnseatedOrder,
+};
 
 /**
  * OPEN without a cabin is a civil-day pin only (`scheduledAt` = day anchor, not an
@@ -118,6 +128,8 @@ export function pickOpenAttendanceDay(input: {
   inPackage: boolean;
   quotaKey: string;
   dailyCap: number | null;
+  /** DAILY_RATE unit cap; null = unused. */
+  dailyUseCap?: number | null;
   startYmd: string;
   horizonEndYmd: string;
   workingYmds: string[];
@@ -130,17 +142,30 @@ export function pickOpenAttendanceDay(input: {
     if (ymd < input.startYmd || ymd > input.horizonEndYmd) continue;
     if (input.codesOnDay.get(ymd)?.has(input.procedureCode)) continue;
     const blockCodes = input.packageCodesOnDay.get(ymd)?.get(input.quotaKey);
+    const day = parseBakuDateTime(ymd, "12:00");
+    const slots = [...(blockCodes ?? [])].map((code) => ({
+      code,
+      start: day,
+      inPackage: true,
+      quotaKey: input.quotaKey,
+    }));
+    if (
+      input.inPackage &&
+      packageBlockDayUseIsFull({
+        slots,
+        day,
+        quotaKey: input.quotaKey,
+        cap: input.dailyUseCap,
+      })
+    ) {
+      continue;
+    }
     if (
       input.inPackage &&
       input.dailyCap != null &&
       packageBlockIsFull({
-        slots: [...(blockCodes ?? [])].map((code) => ({
-          code,
-          start: parseBakuDateTime(ymd, "12:00"),
-          inPackage: true,
-          quotaKey: input.quotaKey,
-        })),
-        day: parseBakuDateTime(ymd, "12:00"),
+        slots,
+        day,
         candidateCode: input.procedureCode,
         quotaKey: input.quotaKey,
         cap: input.dailyCap,
@@ -336,6 +361,7 @@ export async function pinOpenAttendanceOrders(
         inPackage: order.inPackage,
         quotaKey: quota.quotaKey,
         dailyCap: quota.dailyCap,
+        dailyUseCap: quota.dailyUseCap,
         startYmd: cursorYmd,
         horizonEndYmd,
         workingYmds,
@@ -585,10 +611,84 @@ export async function rebaseFixedOccupancyToNow(
   });
 }
 
+export type OpenAttendanceBand = {
+  procedureCode: string;
+  procedureName: string;
+  resourceCodes: string[];
+  /** Still unseated for the whole civil day. Same number on both halves. */
+  waiting: number;
+  /** CHECKED_IN right now. */
+  inCabin: number;
+  /** CHECKED_IN or COMPLETED with a check-in before lunch. */
+  arrivedBeforeLunch: number;
+  /** CHECKED_IN or COMPLETED with a check-in at or after lunch start. */
+  arrivedAfterLunch: number;
+  /** Seats across the cabins of this procedure. */
+  capacity: number;
+};
+
+type OpenAttendanceRow = {
+  procedureCode: string;
+  procedureName: string;
+  status: string;
+  resourceId: string | null;
+  checkedInAt: Date | null;
+  procedureTypeId: string | null;
+};
+
+/** Group a civil day's OPEN rows into per-procedure queue bands. */
+export function summarizeOpenAttendanceBands(
+  rows: OpenAttendanceRow[],
+  resourceCodesByTypeId: Map<string, string[]>,
+  capacityByResourceCode: Map<string, number>,
+  lunchStartHour: number,
+): OpenAttendanceBand[] {
+  const byCode = new Map<string, OpenAttendanceBand>();
+  for (const row of rows) {
+    let band = byCode.get(row.procedureCode);
+    if (!band) {
+      const codes = row.procedureTypeId
+        ? resourceCodesByTypeId.get(row.procedureTypeId) ?? []
+        : [];
+      const capacity = codes.reduce(
+        (sum, code) => sum + (capacityByResourceCode.get(code) ?? 1),
+        0,
+      );
+      band = {
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        resourceCodes: codes,
+        waiting: 0,
+        inCabin: 0,
+        arrivedBeforeLunch: 0,
+        arrivedAfterLunch: 0,
+        capacity,
+      };
+      byCode.set(row.procedureCode, band);
+    }
+    if (row.status === "SCHEDULED" && !row.resourceId) {
+      band.waiting += 1;
+      continue;
+    }
+    if (row.status === "CHECKED_IN") band.inCabin += 1;
+    if (row.status !== "CHECKED_IN" && row.status !== "COMPLETED") continue;
+    if (!row.checkedInAt) continue;
+    const { hour } = bakuHourMinute(row.checkedInAt);
+    if (hour < lunchStartHour) band.arrivedBeforeLunch += 1;
+    else band.arrivedAfterLunch += 1;
+  }
+  return [...byCode.values()].filter(
+    (band) =>
+      band.resourceCodes.length > 0 &&
+      (band.waiting > 0 || band.inCabin > 0 || band.arrivedBeforeLunch > 0 || band.arrivedAfterLunch > 0),
+  );
+}
+
 export async function loadOpenAttendanceForesight(date: Date): Promise<{
   waiting: number;
   inCabin: number;
   capacity: number;
+  bands: OpenAttendanceBand[];
   rows: Array<{
     id: string;
     procedureCode: string;
@@ -600,11 +700,12 @@ export async function loadOpenAttendanceForesight(date: Date): Promise<{
 }> {
   const ymd = bakuDateKey(date);
   const { start, end } = bakuDayBounds(ymd);
+  const hours = await getTenantWorkHours();
   const rows = await prisma.procedureOrder.findMany({
     where: {
       schedulingMode: "OPEN",
       scheduledAt: { gte: start, lt: end },
-      status: { in: ["SCHEDULED", "CHECKED_IN"] },
+      status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED"] },
     },
     select: {
       id: true,
@@ -614,16 +715,16 @@ export async function loadOpenAttendanceForesight(date: Date): Promise<{
       status: true,
       resourceId: true,
       procedureTypeId: true,
+      checkedInAt: true,
     },
     orderBy: { scheduledAt: "asc" },
     take: 500,
   });
-  const waiting = rows.filter((r) => r.status === "SCHEDULED" && !r.resourceId).length;
-  const inCabin = rows.filter((r) => r.status === "CHECKED_IN").length;
   const typeIds = [
     ...new Set(rows.map((r) => r.procedureTypeId).filter((id): id is string => Boolean(id))),
   ];
-  let capacity = 0;
+  const resourceCodesByTypeId = new Map<string, string[]>();
+  const capacityByResourceCode = new Map<string, number>();
   if (typeIds.length > 0) {
     const types = await prisma.procedureType.findMany({
       where: { id: { in: typeIds } },
@@ -631,28 +732,46 @@ export async function loadOpenAttendanceForesight(date: Date): Promise<{
     });
     const codes = new Set<string>();
     for (const pt of types) {
+      const ptCodes: string[] = [];
       for (const req of pt.requirements) {
         if (
           (req.role === "LOCATION" || req.role === "EQUIPMENT") &&
           req.resourceCode
         ) {
+          ptCodes.push(req.resourceCode);
           codes.add(req.resourceCode);
         }
       }
-      if (pt.resourceCode) codes.add(pt.resourceCode);
+      if (pt.resourceCode) {
+        ptCodes.push(pt.resourceCode);
+        codes.add(pt.resourceCode);
+      }
+      resourceCodesByTypeId.set(pt.id, [...new Set(ptCodes)]);
     }
     if (codes.size > 0) {
       const resources = await prisma.resource.findMany({
         where: { code: { in: [...codes] } },
-        select: { capacity: true },
+        select: { code: true, capacity: true },
       });
-      capacity = resources.reduce((sum, r) => sum + (r.capacity ?? 1), 0);
+      for (const resource of resources) {
+        capacityByResourceCode.set(resource.code, resource.capacity ?? 1);
+      }
     }
   }
+  const bands = summarizeOpenAttendanceBands(
+    rows,
+    resourceCodesByTypeId,
+    capacityByResourceCode,
+    hours.lunchStartHour,
+  );
+  const waiting = bands.reduce((sum, band) => sum + band.waiting, 0);
+  const inCabin = bands.reduce((sum, band) => sum + band.inCabin, 0);
+  const capacity = bands.reduce((sum, band) => sum + band.capacity, 0);
   return {
     waiting,
     inCabin,
     capacity,
+    bands,
     rows: rows.map((r) => ({
       id: r.id,
       procedureCode: r.procedureCode,

@@ -57,6 +57,8 @@ Always read [quality-gates](../quality-gates/SKILL.md) before any `git push`.
 
 `packages/`, a lockfile, `.github/workflows/`, or `docker/` forces the full CI matrix even without `ci-full`. A second CI on `push` to `dev` uses the same stubs. The comment in `ci.yml` says why that push run exists when more than one person commits.
 
+**CI/CD pause** (`scripts/ci-cd-pause.mjs`): `era-logistics`, `era-construction`, `era-crm`, `era-auto-service`, `era-wholesale`, `era-bank`, `era-bank-dbo`. Both **шип** and **шип + пуш** still commit those trees. They do not run in local `ship:prepush`, CI (`ci-full` does not override), GHCR, or droplet deploy. `era-bank-core` stays on the normal path. The CI job name stays as a green stub so branch protection still sees `satellite (era-…)`.
+
 ## Local ship gates (before push)
 
 **When:** immediately before `git push`, `-PublishDev`, or `-PublishMaster`. **Not** on every `git commit` in a multi-commit wave.
@@ -74,7 +76,8 @@ This runs:
 1. `npm run run:quality-gates` (acceptance, satellite raw SQL, integration audit, design tokens, **baku clock**).
 2. Rebuild dirty `packages/*` in CI order if the diff touches them.
 3. **Scoped** checks from `git diff origin/dev...HEAD` (+ working tree):
-   - each touched `era-hotel-pms` / clinic / … / `era-bank` / `era-bank-dbo`: `prisma generate` (if schema), `npm test`, `npm run build`
+   - each touched `era-hotel-pms` / clinic / fnb / retail: `prisma generate` (if schema), `npm test`, `npm run build`
+   - paused dirs in `scripts/ci-cd-pause.mjs` are logged and skipped (commit only)
    - `era-finance-core`: `validate:no-nas-literals` + `test:integration -w @erafinance/api -- --ci`
    - `era-orchestrator`: `db:generate` + `test:api`
    - `era-data-hub`: `test -w @era/data-hub-api`

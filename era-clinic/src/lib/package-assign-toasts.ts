@@ -25,6 +25,7 @@ export function packageAssignMissReasonText(
   if (reason === "day_full") return t("packageAssignMissDayFull");
   if (reason === "rule") return t("packageAssignMissRule");
   if (reason === "no_slot") return t("packageAssignMissNoSlot");
+  if (reason === "anamnesis") return t("packageAssignMissAnamnesis");
   if (reason === "no_mode") return t("packageAssignMissNoBathMode");
   return t("packageAssignMissNoDay");
 }

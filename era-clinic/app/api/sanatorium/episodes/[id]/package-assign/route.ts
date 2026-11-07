@@ -92,8 +92,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let session: Awaited<ReturnType<typeof getSatelliteSession>> = null;
   try {
-    const session = await getSatelliteSession();
+    session = await getSatelliteSession();
     if (!session) return jsonError("Unauthorized", 401);
     const denied = await requireClinicPermission(
       session,
@@ -147,6 +148,25 @@ export async function POST(
     return jsonOk(result);
   } catch (err) {
     const mapped = mapAssignError(err);
+    const message = err instanceof Error ? err.message : "Package seating failed";
+    const code =
+      err && typeof err === "object" && "code" in err && typeof (err as { code?: string }).code === "string"
+        ? (err as { code: string }).code
+        : "PLACE_FAILED";
+    try {
+      const { id } = await params;
+      if (session) {
+        await recordClinicAudit(
+          { userId: session.sub, request: req },
+          "ClinicalEpisode",
+          id,
+          "package_assign_failed",
+          { code, message },
+        );
+      }
+    } catch {
+      /* the seating error is the response; audit must not replace it */
+    }
     if (mapped) return mapped;
     return handleRouteError(err);
   }

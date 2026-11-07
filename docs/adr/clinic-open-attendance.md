@@ -22,8 +22,8 @@ We must not invent a new registration door. Package assign, extras/Pay, nurse ch
 | Assign | Saxla / adjust create day-bucket `SCHEDULED` rows: calendar day pinned, `resourceId = null`, **no** `ResourceBooking` / cabin scan. Different codes share a working day; the same code is once per day and then the next working day, through stay `endsOn`. An in-package row also obeys its block distinct-code cap; a paid extra does not. A row that does not fit is `no_slot` (unpaid extra is deleted, not left on the prescribe clock). `prescribeExtras` under `PLAN_BEFORE_PAY` pins OPEN unpaid the same way (then status back to `PENDING_PAY`). A later Saxla that adds or removes those extras drops unpaid rows from the latest day and reseats the remaining OPEN `PENDING_PAY` of the touched codes from today. Pay **keeps** that day pin (does not re-walk from today). Baths and HARD-staff types should keep the flag off in pilot. |
 | Clock storage | `scheduledAt` is **civil-day anchor only** (often `dayStartHour` stamp). It is **not** an appointment clock. UI hides the time until seated. Planners must use `orderCountsForWallClockRest` (`countsForRest`) — OPEN unseated must **not** enter FIXED `restGap`, mutual-exclusion / sequence-gap overlap, or compatibility checks (a day-start stamp must never block a bath or paid extra that same Baku day). Same-day / package-cap still see the row. |
 | Quota | OPEN burns entitlement only on `CHECKED_IN` / `COMPLETED`. Day-bucket `SCHEDULED` does **not** burn. Auto `NO_SHOW` sweep **skips** OPEN. |
-| Plan / print | Sort OPEN to end of day; time label = open-attendance (not wall clock) until seated. |
-| Matrix | No bar until seated. Do **not** place unseated OPEN on the resource matrix. Foresight rail on `/sanatorium/resources` calendar: waiting / in-cabin counts by day (nurse board does not duplicate the rail). |
+| Plan / print | Sort OPEN unseated **first** within the civil day (before timed rows); time label = open-attendance (not wall clock) until seated. |
+| Matrix | No timed bar until seated. Unseated OPEN is a queue band on that procedure's cabins: morning and afternoon, waiting shared, arrivals split at lunch. The first cabin of the procedure shows the full counts; the other cabins show the procedure name, the half (before or after lunch), and the waiting count. Nurse board does not duplicate the bands. |
 | Nurse | Check-in window = clinic working hours that Baku day. Check-in **seats** a free matching cabin (`endsAt = now + duration`), then normal `CHECKED_IN` → auto-complete. Reception may use the same window from the resource matrix when `receptionProcedureCheckIn` is on. |
 | Canon seat door | Nurse check-in. Matrix may show the bar after seat; DnD of unseated OPEN is refused (or explicit “pin FIXED” later). |
 
@@ -45,7 +45,7 @@ When SAME_DAY is active for today:
 
 ### Open foresight (not CLI-27)
 
-Ops signal only: for a Baku day, count OPEN `SCHEDULED` unseated (`waiting`) and OPEN `CHECKED_IN` (`inCabin`), plus soft capacity hint. Exposed on the resource calendar (`/sanatorium/resources`) only — nurse board does not duplicate the rail. Does **not** block hotel booking (CLI-27 remains slot inventory).
+Ops signal only: for a Baku day, count OPEN `SCHEDULED` unseated (`waiting`), OPEN `CHECKED_IN` (`inCabin`), and arrivals before vs after lunch (`checkedInAt`, including `COMPLETED`). Drawn as two bands on the resource calendar cabins of that procedure. Nurse board does not duplicate them. Does **not** block hotel booking (CLI-27 remains slot inventory).
 
 ## Consequences
 

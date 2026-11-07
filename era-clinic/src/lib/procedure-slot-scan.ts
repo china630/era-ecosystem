@@ -1,6 +1,7 @@
 import {
   inPackageCodesOnBakuDay,
   packageBlockIsFull,
+  packageBlockDayUseIsFull,
   packageDayIsFullForNewCode,
 } from "@/domain/sanatorium/daily-package-cap";
 import { allocationOccupiesCandidate } from "@/domain/procedure/resource-occupancy";
@@ -34,7 +35,8 @@ export type PlacementFailureReason =
   | "past_checkout"
   | "checkout_noon"
   | "rule"
-  | "no_slot";
+  | "no_slot"
+  | "anamnesis";
 
 /** First pin day uses Saxla `now`; later pin days open at the type/clinic hour. */
 export function pinSearchFrom(now: Date, pinYmd: string | undefined, typeDayStartHour: number): Date {
@@ -133,6 +135,8 @@ export type ScanOrder = {
   quotaKey?: string;
   /** Null = this block has no daily cap. Unset = caller still uses packageCap. */
   dailyCap?: number | null;
+  /** DAILY_RATE: max units of this block per Asia/Baku day. */
+  dailyUseCap?: number | null;
   /** Paid extra shares the package block cap without burning quota. */
   shareGuestDayCap?: boolean;
   /** When set, only this practitioner may take the session. */
@@ -463,16 +467,29 @@ export function evaluateCandidateSlot(
   if (!order.beforeLunchAllowed && startHm.hour < order.typeHours.lunchEndHour) return fail("lunch");
 
   const shareCap = order.inPackage || order.shareGuestDayCap === true;
+  const daySlots = input.patientSlots.map((slot) => ({
+    code: slot.code,
+    start: slot.start,
+    inPackage: slot.inPackage || slot.holdsGuestDay === true,
+    quotaKey: slot.quotaKey || slot.code,
+  }));
+  if (shareCap && order.quotaKey && order.dailyUseCap != null) {
+    if (
+      packageBlockDayUseIsFull({
+        slots: daySlots,
+        day: slotStart,
+        quotaKey: order.quotaKey,
+        cap: order.dailyUseCap,
+      })
+    ) {
+      return fail("day_full");
+    }
+  }
   if (shareCap && order.dailyCap !== null) {
     if (order.quotaKey && order.dailyCap != null) {
       if (
         packageBlockIsFull({
-          slots: input.patientSlots.map((slot) => ({
-            code: slot.code,
-            start: slot.start,
-            inPackage: slot.inPackage || slot.holdsGuestDay === true,
-            quotaKey: slot.quotaKey || slot.code,
-          })),
+          slots: daySlots,
           day: slotStart,
           candidateCode: order.procedureCode,
           quotaKey: order.quotaKey,

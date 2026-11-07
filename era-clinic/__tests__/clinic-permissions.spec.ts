@@ -159,6 +159,30 @@ describe("clinic default permissions", () => {
     );
   });
 
+  it("adminApiRoutePermission maps working-hours clinic-days and peak-rules", () => {
+    expect(adminApiRoutePermission("/api/admin/clinic-days")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    );
+    expect(adminApiRoutePermission("/api/admin/clinic-days?from=2026-01-01")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    );
+    expect(adminApiRoutePermission("/api/admin/peak-rules")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    );
+    expect(adminApiRoutePermission("/api/admin/peak-rules/abc")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    );
+    expect(adminApiRoutePermissions("/api/admin/peak-rules")).toEqual([
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    ]);
+    expect(routePermission("/admin/working-hours")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    );
+    // SA-only handlers stay off the permission map (fail-closed if assertClinicAdminRoute used).
+    expect(adminApiRoutePermission("/api/admin/schedule-recalc")).toBeNull();
+    expect(adminApiRoutePermission("/api/admin/schedule-reseat")).toBeNull();
+  });
+
   it("CLINIC_ADMIN role alone does not bypass sessionHasClinicPermission", () => {
     expect(
       sessionHasClinicPermission(

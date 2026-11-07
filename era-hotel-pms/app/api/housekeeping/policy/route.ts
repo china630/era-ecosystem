@@ -20,7 +20,15 @@ const schema = z.object({
   linenEveryNights: z.number().int().min(1).max(30),
   deepEveryNights: z.number().int().min(1).max(30),
   laundryExpressEnabled: z.boolean().optional(),
-  laundryExpressPercent: z.number().int().min(1).max(200).nullable().optional(),
+  laundryIntakeMode: z.enum(['ANY', 'WINDOW']).optional(),
+  laundryIntakeStartHour: z.number().int().min(0).max(23).nullable().optional(),
+  laundryIntakeEndHour: z.number().int().min(0).max(23).nullable().optional(),
+  laundryClosedDays: z
+    .enum(['ALL', 'EXCEPT_SUNDAY', 'EXCEPT_CALENDAR', 'EXCEPT_SUNDAY_AND_CALENDAR'])
+    .optional(),
+  laundryDueMode: z.enum(['NONE', 'BY_HOUR']).optional(),
+  laundryDueCutoffHour: z.number().int().min(0).max(23).nullable().optional(),
+  laundryDueAtHour: z.number().int().min(0).max(23).nullable().optional(),
   egPressureFrom: z.string().nullable().optional(),
 });
 
@@ -29,11 +37,28 @@ export async function PUT(request: Request) {
     const session = await getSatelliteSession();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
     const body = schema.parse(await request.json());
+    if (body.laundryIntakeMode === 'WINDOW') {
+      if (body.laundryIntakeStartHour == null || body.laundryIntakeEndHour == null) {
+        return Response.json(
+          { error: 'Intake window requires start and end hour' },
+          { status: 400 },
+        );
+      }
+      if (body.laundryIntakeStartHour >= body.laundryIntakeEndHour) {
+        return Response.json({ error: 'Intake start must be before end' }, { status: 400 });
+      }
+    }
     return jsonOk(
       serialize(
         await saveHkHotelPolicy(body.linenEveryNights, body.deepEveryNights, {
           laundryExpressEnabled: body.laundryExpressEnabled,
-          laundryExpressPercent: body.laundryExpressPercent,
+          laundryIntakeMode: body.laundryIntakeMode,
+          laundryIntakeStartHour: body.laundryIntakeStartHour,
+          laundryIntakeEndHour: body.laundryIntakeEndHour,
+          laundryClosedDays: body.laundryClosedDays,
+          laundryDueMode: body.laundryDueMode,
+          laundryDueCutoffHour: body.laundryDueCutoffHour,
+          laundryDueAtHour: body.laundryDueAtHour,
           egPressureFrom: body.egPressureFrom,
         }),
       ),
