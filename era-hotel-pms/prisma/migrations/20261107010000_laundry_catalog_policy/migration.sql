@@ -11,10 +11,10 @@ UPDATE "LaundryItem" SET "nameRu" = "name" WHERE "nameRu" IS NULL OR "nameRu" = 
 
 ALTER TABLE "LaundryItem" ALTER COLUMN "washPrice" DROP DEFAULT;
 ALTER TABLE "LaundryItem" ALTER COLUMN "ironPrice" DROP DEFAULT;
-UPDATE "LaundryItem" SET "washPrice" = NULL WHERE "washPrice" = 0;
-UPDATE "LaundryItem" SET "ironPrice" = NULL WHERE "ironPrice" = 0;
 ALTER TABLE "LaundryItem" ALTER COLUMN "washPrice" DROP NOT NULL;
 ALTER TABLE "LaundryItem" ALTER COLUMN "ironPrice" DROP NOT NULL;
+UPDATE "LaundryItem" SET "washPrice" = NULL WHERE "washPrice" = 0;
+UPDATE "LaundryItem" SET "ironPrice" = NULL WHERE "ironPrice" = 0;
 
 -- Intake / due policy on HkHotelPolicy (WINDOW 09–17 = prior hardcoded Nafta hours)
 ALTER TABLE "HkHotelPolicy" ADD COLUMN IF NOT EXISTS "laundryIntakeMode" TEXT NOT NULL DEFAULT 'WINDOW';
