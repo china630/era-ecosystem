@@ -300,7 +300,7 @@ export function resolveBlockQuotaTotal(input: {
         input.procedure.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
     });
   }
-  if (input.procedure.quotaBasis !== "PER_STAY") {
+  if (input.knots.length === 0 && input.procedure.quotaBasis !== "PER_STAY") {
     const perDay = resolveDailyDistinctCap(
       input.procedure.kind,
       input.procedure.dailyDistinctCap,
