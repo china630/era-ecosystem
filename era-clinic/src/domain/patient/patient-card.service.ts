@@ -292,6 +292,7 @@ export async function getPatientCardSummary(
         patientRefId,
         ...episodeFilter,
         status: "PROPOSED",
+        NOT: { inPackage: true, resourceId: null },
       },
       include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
@@ -755,7 +756,7 @@ export async function getPatientPlanPage(
     ],
   };
 
-  const [total, rows, unplacedRows] = await Promise.all([
+  const [total, rows] = await Promise.all([
     prisma.procedureOrder.count({ where }),
     prisma.procedureOrder.findMany({
       where,
@@ -763,12 +764,8 @@ export async function getPatientPlanPage(
       orderBy: { scheduledAt: "asc" },
       ...(paged ? { skip: offset, take: limit } : {}),
     }),
-    prisma.procedureOrder.findMany({
-      where: { patientRefId, ...episodeFilter, ...unseatedPackage },
-      include: PROCEDURE_PHYSIO_INCLUDE,
-      orderBy: { procedureCode: "asc" },
-    }),
   ]);
+  const unplacedRows: typeof rows = [];
 
   const catalogNames = await loadCatalogDisplayNameMap(
     [...rows, ...unplacedRows].map((row) => row.procedureCode),

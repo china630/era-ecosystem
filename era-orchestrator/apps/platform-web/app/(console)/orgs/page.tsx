@@ -5,14 +5,18 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
+  ListPaginationFooter,
   MODAL_INPUT_CLASS,
-  PRIMARY_BUTTON_CLASS,
+  PageHeader,
+  useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { cpAdminFetch } from "@/lib/cp-admin-fetch";
 
@@ -32,15 +36,46 @@ type OrgRow = {
   expiresAt: string | null;
 };
 
+const MODE_OPTIONS = [
+  { value: "", label: "—" },
+  { value: "STANDALONE", label: "STANDALONE" },
+  { value: "DEPARTMENT", label: "DEPARTMENT" },
+];
+
+const TOPO_OPTIONS = [
+  { value: "", label: "—" },
+  { value: "SHARED", label: "SHARED" },
+  { value: "DEDICATED", label: "DEDICATED" },
+  { value: "ONPREM", label: "ONPREM" },
+];
+
+const BILLING_OPTIONS = [
+  { value: "", label: "—" },
+  { value: "ACTIVE", label: "ACTIVE" },
+  { value: "SOFT_BLOCK", label: "SOFT_BLOCK" },
+  { value: "HARD_BLOCK", label: "HARD_BLOCK" },
+];
+
+function billingChipClass(status: string): string {
+  if (status === "ACTIVE") return "bg-emerald-50 text-emerald-800";
+  if (status === "SOFT_BLOCK") return "bg-amber-50 text-amber-800";
+  return "bg-red-50 text-red-800";
+}
+
 export default function SuperAdminOrgsPage() {
   const t = useTranslations("superAdmin.orgs");
+  const tCommon = useTranslations("common");
   const [q, setQ] = useState("");
+  const debouncedQ = useDebouncedValue(q, 300);
+  const [operatingMode, setOperatingMode] = useState("");
+  const [deploymentTopology, setDeploymentTopology] = useState("");
+  const [billingStatus, setBillingStatus] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [total, setTotal] = useState(0);
   const [items, setItems] = useState<OrgRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const pageSize = 25;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,7 +84,10 @@ export default function SuperAdminOrgsPage() {
       page: String(page),
       pageSize: String(pageSize),
     });
-    if (q.trim()) params.set("q", q.trim());
+    if (debouncedQ.trim()) params.set("q", debouncedQ.trim());
+    if (operatingMode) params.set("operatingMode", operatingMode);
+    if (deploymentTopology) params.set("deploymentTopology", deploymentTopology);
+    if (billingStatus) params.set("billingStatus", billingStatus);
     const res = await cpAdminFetch(`organizations?${params.toString()}`);
     if (!res.ok) {
       setError(t("loadFailed"));
@@ -61,43 +99,80 @@ export default function SuperAdminOrgsPage() {
     setTotal(data.total);
     setItems(data.items ?? []);
     setLoading(false);
-  }, [page, q, t]);
+  }, [
+    page,
+    pageSize,
+    debouncedQ,
+    operatingMode,
+    deploymentTopology,
+    billingStatus,
+    t,
+  ]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQ, operatingMode, deploymentTopology, billingStatus]);
+
+  function resetFilters() {
+    setQ("");
+    setOperatingMode("");
+    setDeploymentTopology("");
+    setBillingStatus("");
+    setPage(1);
+  }
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-[#34495E]">{t("title")}</h1>
-      <p className="text-sm text-[#7F8C8D]">{t("hint")}</p>
+      <PageHeader title={t("title")} subtitle={t("hint")} />
 
-      <div className={`${CARD_CONTAINER_CLASS} flex flex-wrap gap-2 p-4`}>
-        <input
-          className={`${MODAL_INPUT_CLASS} min-w-[16rem] flex-1`}
-          placeholder={t("searchPlaceholder")}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              setPage(1);
-              void load();
-            }
-          }}
+      <EraListFilterBar
+        onReset={resetFilters}
+        resetLabel={tCommon("filterReset")}
+      >
+        <label className="block text-xs font-medium text-[#7F8C8D]">
+          {t("searchLabel")}
+          <input
+            className={`${MODAL_INPUT_CLASS} mt-1 min-w-[16rem]`}
+            placeholder={t("searchPlaceholder")}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </label>
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("colMode")}
+          value={operatingMode}
+          onChange={(next) => setOperatingMode(String(next))}
+          options={MODE_OPTIONS.map((o) => ({
+            value: o.value,
+            label: o.value ? o.label : tCommon("all"),
+          }))}
         />
-        <button
-          type="button"
-          className={PRIMARY_BUTTON_CLASS}
-          onClick={() => {
-            setPage(1);
-            void load();
-          }}
-        >
-          {t("search")}
-        </button>
-      </div>
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("colTopology")}
+          value={deploymentTopology}
+          onChange={(next) => setDeploymentTopology(String(next))}
+          options={TOPO_OPTIONS.map((o) => ({
+            value: o.value,
+            label: o.value ? o.label : tCommon("all"),
+          }))}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t("colStatus")}
+          value={billingStatus}
+          onChange={(next) => setBillingStatus(String(next))}
+          options={BILLING_OPTIONS.map((o) => ({
+            value: o.value,
+            label: o.value ? o.label : tCommon("all"),
+          }))}
+        />
+      </EraListFilterBar>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {loading ? <p className="text-sm text-[#7F8C8D]">{t("loading")}</p> : null}
@@ -112,54 +187,53 @@ export default function SuperAdminOrgsPage() {
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTopology")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colTier")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActions")}</th>
               </tr>
             </thead>
             <tbody>
               {items.map((row) => (
-                <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                <tr key={row.id} className={`${DATA_TABLE_TR_CLASS} hover:bg-[#F8FAFC]`}>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    <div className="font-medium text-[#34495E]">{row.name}</div>
-                    <div className="font-mono text-sm font-semibold text-[#2980B9]">
+                    <Link
+                      href={`/orgs/${row.id}`}
+                      className="font-medium text-[#2980B9] hover:underline"
+                    >
+                      {row.name}
+                    </Link>
+                    <div className="font-mono text-sm font-semibold text-[#34495E]">
                       {row.publicOrgNumber}
                     </div>
-                    <div className="font-mono text-[11px] text-[#95A5A6]">{row.id}</div>
                   </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{row.operatingMode}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{row.deploymentTopology}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <span className="rounded-full bg-[#ECF0F1] px-2 py-0.5 text-xs font-medium text-[#34495E]">
+                      {row.operatingMode}
+                    </span>
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <span className="rounded-full bg-[#ECF0F1] px-2 py-0.5 text-xs font-medium text-[#34495E]">
+                      {row.deploymentTopology}
+                    </span>
+                  </td>
                   <td className={DATA_TABLE_TD_CLASS}>
                     {row.currentTier ?? "—"}
-                    {row.isTrial ? ` · ${t("trial")}` : ""}
-                    {row.isBlocked ? ` · ${t("blocked")}` : ""}
+                    {row.isTrial ? (
+                      <span className="ml-1 text-xs text-amber-700">· {t("trial")}</span>
+                    ) : null}
+                    {row.isBlocked ? (
+                      <span className="ml-1 text-xs text-red-700">· {t("blocked")}</span>
+                    ) : null}
                   </td>
-                  <td className={DATA_TABLE_TD_CLASS}>{row.billingStatus}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    <div className="flex flex-wrap gap-2">
-                      <Link
-                        href={`/orgs/${row.id}`}
-                        className="text-sm text-[#2980B9]"
-                      >
-                        {t("openHub")}
-                      </Link>
-                      <Link
-                        href={`/orgs/${row.id}/subscription`}
-                        className="text-sm text-[#2980B9]"
-                      >
-                        {t("openLicense")}
-                      </Link>
-                      <Link
-                        href={`/orgs/${row.id}/placement`}
-                        className="text-sm text-[#2980B9]"
-                      >
-                        Placement
-                      </Link>
-                    </div>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${billingChipClass(row.billingStatus)}`}
+                    >
+                      {row.billingStatus}
+                    </span>
                   </td>
                 </tr>
               ))}
               {!loading && items.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={6}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={5}>
                     {t("empty")}
                   </td>
                 </tr>
@@ -167,27 +241,22 @@ export default function SuperAdminOrgsPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center gap-2 border-t border-[#EBEDF0] p-3 text-sm">
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            {t("prev")}
-          </button>
-          <span>
-            {t("page", { page, total: totalPages })}
-          </span>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            {t("next")}
-          </button>
-        </div>
+        <ListPaginationFooter
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          labels={{
+            rowsPerPage: tCommon("paginationRowsPerPage"),
+            pageOf: tCommon("paginationPageOf"),
+            prev: tCommon("paginationPrev"),
+            next: tCommon("paginationNext"),
+          }}
+        />
       </div>
     </div>
   );

@@ -25,6 +25,15 @@ const CHANNEL_KIND_LABELS: Record<string, string> = {
   OPS_HANDOFF: "Ops handoff",
 };
 
+/** Short English flow blurbs — apps override via i18n when present. */
+const CHANNEL_FLOW_BLURBS: Record<string, string> = {
+  FOLIO_POST: "Posts charges onto the peer folio (room / guest bill).",
+  SETTLEMENT: "Settles money between peer satellites for the same stay or ticket.",
+  REVENUE_EVENT: "Forwards revenue events to Finance for GL / reporting.",
+  READ_STATUS: "Read-only status pull from the peer (no money move).",
+  OPS_HANDOFF: "Operational handoff of stock or work between peers.",
+};
+
 const MANAGED_BY_LABELS: Record<string, string> = {
   PLATFORM: "Platform",
   ACCEPTOR: "Acceptor",
@@ -38,6 +47,11 @@ export function labelSatelliteKey(key: string): string {
 export function labelChannelKind(kind: string): string {
   const k = kind.trim();
   return CHANNEL_KIND_LABELS[k] ?? k;
+}
+
+export function labelChannelFlowBlurb(kind: string): string {
+  const k = kind.trim();
+  return CHANNEL_FLOW_BLURBS[k] ?? "";
 }
 
 export function labelChannelManagedBy(managedBy: string): string {

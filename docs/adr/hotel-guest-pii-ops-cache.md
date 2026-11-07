@@ -48,6 +48,17 @@ On `person-merge`, update `Guest.globalPersonId` only; refresh display names fro
 
 Guest import resolves identity via MDM; sets `globalPersonId`; **does not** persist FIN/passport on `Guest` row (Wave 4). **Name parts** (`firstName`/`middleName`/`lastName`) and **ISO citizenship** go to MDM on link (no `AZ|OTHER` collapse). **Sex and birth date** go to MDM person core on resolve; `Guest.sex` / `Guest.birthDate` remain FO ops cache. `parentFatherName` / `parentMotherName` (physical `fatherName`/`motherName`) are parent names — **not** patronymic (`middleName`). `Reservation.shareGender` is a separate M/F snapshot for share pool — not renamed.
 
+### Phone normalize (guest card)
+
+Ops cache `Guest.phone` and phone-like `GuestContact` values (MOBILE / PHONE / WHATSAPP) are polished to E.164 via kit `normalizePersonPhone`:
+
+- **Region** = ISO `Guest.nationality` on the same card (`AZ` / `KZ` / `RU` / `TR` in MVP). Empty nationality → do **not** invent `+994`; status `needs_region`.
+- **International wins:** if the number already has a calling code (`+…`), never rewrite it to match nationality. Mismatch → `conflict` (toast warning only).
+- **Toast-only UX:** `showWarning` (sonner). No Field hint under the phone control.
+- Successful polish updates the field silently. Server save paths apply the same helper so API cannot bypass UI.
+- `PATCH …/full` with nationality alone re-polishes existing `Guest.phone` when the display value changes; primary phone-like `GuestContact` is mirrored when `Guest.phone` is written. Creating MOBILE/PHONE/WHATSAPP also mirrors onto `Guest.phone` when primary / first / ops cache empty.
+- Elektraweb import polish is a follow-up, not required for this rule.
+
 ### Compliance exports
 
 Tourism registry and migration prefill **resolve** passport/FIN from MDM at export time (`resolveIdentifierForCompliance`). Short-lived payload in `tourismSubmission.payloadJson` is an ops artifact, not SoR.

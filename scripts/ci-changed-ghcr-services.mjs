@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import path from "node:path";
+import { isCiCdPausedService } from "./ci-cd-pause.mjs";
 
 /**
  * Decide which GHCR images to rebuild from a changed-file list.
@@ -38,6 +39,11 @@ export const GHCR_MATRIX = [
 ];
 
 const ALL_SERVICES = GHCR_MATRIX.map((row) => row.service);
+const ACTIVE_SERVICES = ALL_SERVICES.filter((service) => !isCiCdPausedService(service));
+
+function withoutPaused(names) {
+  return names.filter((service) => !isCiCdPausedService(service));
+}
 
 /** Compose / install-contract / droplet scripts — deploy all; may skip image rebuild. */
 export const INSTALL_CONTRACT_FILES = new Set([
@@ -99,8 +105,8 @@ function serviceForFile(file) {
 }
 
 function planFromServices(serviceSet, { rebuildPackages, all, deployScopeOverride } = {}) {
-  const services = all ? [...ALL_SERVICES] : ALL_SERVICES.filter((s) => serviceSet.has(s));
-  const skipImages = !all && services.length === 0;
+  const services = withoutPaused(all ? [...ALL_SERVICES] : ALL_SERVICES.filter((s) => serviceSet.has(s)));
+  const skipImages = services.length === 0;
   const matrix = skipImages ? [] : GHCR_MATRIX.filter((row) => services.includes(row.service));
 
   let deployScope;
@@ -114,11 +120,18 @@ function planFromServices(serviceSet, { rebuildPackages, all, deployScopeOverrid
     deployScope = "custom";
   }
 
+  // "all" would pull paused images that this plan does not build. Name the
+  // active services instead. A recreate that did not build those images keeps
+  // the floating branch tag so unbuilt shas do not 404.
+  const recreateWithoutBuild = deployScope === "all" && (skipImages || !all);
+  let deployNames = [];
+  if (deployScope !== "skip") {
+    deployNames = deployScope === "all" ? [...ACTIVE_SERVICES] : services;
+    deployScope = "custom";
+  }
+
   const deploySkip = deployScope === "skip";
-  const deployAll = deployScope === "all";
-  // Full recreate without a full image rebuild must pull floating branch tags
-  // (dev / master), not branch-<sha> — unbuilt services 404 at the new sha.
-  const imageTagMode = deployAll && !all ? "floating" : "sha";
+  const imageTagMode = recreateWithoutBuild ? "floating" : "sha";
 
   return {
     /** @deprecated alias of skipImages — build-images job gate */
@@ -129,9 +142,9 @@ function planFromServices(serviceSet, { rebuildPackages, all, deployScopeOverrid
     rebuildPackages: Boolean(rebuildPackages || all),
     all: Boolean(all),
     services,
-    servicesCsv: all ? "" : services.join(","),
+    servicesCsv: services.join(","),
     deployScope,
-    deployServices: deploySkip || deployAll ? "" : services.join(" "),
+    deployServices: deploySkip ? "" : deployNames.join(" "),
     matrix,
   };
 }

@@ -345,7 +345,36 @@ export async function createGuestContact(
   guestId: string,
   input: { kind: string; value: string; isPrimary?: boolean },
 ) {
-  return prisma.guestContact.create({ data: { guestId, ...input } });
+  const phoneKinds = new Set(['MOBILE', 'PHONE', 'WHATSAPP']);
+  const kind = String(input.kind ?? '').toUpperCase();
+  let value = input.value;
+  if (phoneKinds.has(kind)) {
+    const guest = await prisma.guest.findUnique({
+      where: { id: guestId },
+      select: { nationality: true, phone: true },
+    });
+    const { persistGuestPhone } = await import('@/lib/guest-phone-server');
+    value = persistGuestPhone(input.value, guest?.nationality) ?? input.value.trim();
+    const row = await prisma.guestContact.create({
+      data: { guestId, kind: input.kind, value, isPrimary: input.isPrimary },
+    });
+    // Mirror onto Guest.phone when primary, first phone contact, or ops cache empty.
+    if (value) {
+      const peers = await prisma.guestContact.count({
+        where: { guestId, kind: { in: [...phoneKinds] } },
+      });
+      if (input.isPrimary === true || peers === 1 || !guest?.phone?.trim()) {
+        await prisma.guest.update({
+          where: { id: guestId },
+          data: { phone: value },
+        });
+      }
+    }
+    return row;
+  }
+  return prisma.guestContact.create({
+    data: { guestId, kind: input.kind, value, isPrimary: input.isPrimary },
+  });
 }
 
 export async function listGuestAddresses(guestId: string) {

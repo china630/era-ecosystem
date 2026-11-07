@@ -1070,7 +1070,7 @@
   },
   "adminLinks": {
     "title": "Интеграционные связи",
-    "subtitle": "Маршрут денег и peer-каналы этой F&B организации.",
+    "subtitle": "Рёбра peer-политики (folio / settlement / revenue) — не переписка. Маршрутизация денег на этом сателлите.",
     "moneyTitle": "Маршрут денег",
     "moneyLine": "Режим {mode} · fiscal {fiscal} · revenue {revenue} · parent {parent}",
     "moneyUnknown": "Operating mode недоступен",
@@ -1096,7 +1096,13 @@
     "managedPlatform": "Platform",
     "managedAcceptor": "Acceptor",
     "legacyTitle": "Устаревшие мосты",
-    "legacyHint": "Только отображение CODE_LEGACY — не живые гейты."
+    "legacyHint": "Только отображение CODE_LEGACY — не живые гейты.",
+    "enable": "Включить входящий",
+    "flowFolio": "Проводит начисления в folio пира (счёт комнаты / гостя).",
+    "flowSettlement": "Сверка денег между сателлитами по одному stay/тикету.",
+    "flowRevenue": "Передаёт события выручки в Finance для GL / отчётов.",
+    "flowRead": "Только чтение статуса у пира (без движения денег).",
+    "flowOpsHandoff": "Операционная передача запаса или работы между пирами."
   },
   "cedvel": {
     "title": "Недельный cədvəl F&B",

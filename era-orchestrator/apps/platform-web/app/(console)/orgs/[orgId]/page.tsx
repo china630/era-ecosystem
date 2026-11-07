@@ -1,344 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  ChannelEdgeCard,
   GHOST_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
-  channelEdgeTitle,
-  labelChannelKind,
-  labelChannelManagedBy,
-  labelSatelliteKey,
+  useDebouncedValue,
 } from "@era/satellite-kit/ui";
 import { useAuth } from "@/lib/auth-context";
 import { orchFetch } from "@/lib/orch-api";
+import { cpAdminFetch } from "@/lib/cp-admin-fetch";
+import type { DepartmentRow, OperatingMode } from "@/lib/org-hub-shared";
+import { useOrgShell } from "./org-shell";
 
-type OperatingMode = {
-  organizationId: string;
-  name: string;
-  publicOrgNumber: number;
-  mode: "STANDALONE" | "DEPARTMENT";
-  parentOrgId: string | null;
-  fiscalRouting: "OWN" | "PARENT";
-  revenueRouting: "OWN" | "PARENT";
-};
-
-type SatelliteEndpoint = {
-  satelliteKey: string;
-  baseUrl: string;
-  enabled: boolean;
-};
-
-type DepartmentRow = {
+type OrgSearchHit = {
   id: string;
   name: string;
-  operatingMode: string;
-  parentOrgId: string | null;
   publicOrgNumber: number;
-  createdAt: string;
 };
 
-type VendorBridgeBundle = {
-  organizationId: string;
-  industries: string[];
-  elektrawebBridge: {
-    inboundEnabled: boolean;
-    writeEnabled: boolean;
-    elektrawebHotelId: number | null;
-    spaDepId: number | null;
-    spaCurrencyId: number | null;
-    walkinResId: string | null;
-    walkinResNameId: string | null;
-  } | null;
-  clinicCutover: {
-    elektrawebDualRun: boolean;
-    hotelOrganizationId: string | null;
-  } | null;
-};
-
-type BridgeDraft = {
-  inboundEnabled: boolean;
-  writeEnabled: boolean;
-  elektrawebHotelId: string;
-  spaDepId: string;
-  spaCurrencyId: string;
-  walkinResId: string;
-  walkinResNameId: string;
-};
-
-type CutoverDraft = {
-  elektrawebDualRun: boolean;
-  hotelOrganizationId: string;
-};
-
-type FiscalDeviceRow = {
-  id: string;
-  kind: string;
-  providerId: string;
-  label: string;
-  outletCode: string | null;
-  registerCode: string | null;
-  endpoint: string | null;
-  status: string;
-  isOrgDefault: boolean;
-  hasSecrets: boolean;
-};
-
-type ChannelRow = {
-  id: string;
-  fromOrgId: string;
-  fromSatelliteKey: string;
-  toOrgId: string;
-  toSatelliteKey: string;
-  kind: string;
-  enabled: boolean;
-  managedBy: string;
-  fromOrgName?: string | null;
-  toOrgName?: string | null;
-};
-
-const ENDPOINT_PRESETS = [
-  "industry_hotel_pms",
-  "industry_fnb_pos",
-  "industry_clinic",
-  "industry_retail",
-  "industry_logistics",
-  "industry_construction",
-  "industry_crm",
-  "industry_auto_service",
-  "industry_wholesale",
-  "finance_core",
-];
-
-const EMPTY_BRIDGE: BridgeDraft = {
-  inboundEnabled: false,
-  writeEnabled: false,
-  elektrawebHotelId: "",
-  spaDepId: "",
-  spaCurrencyId: "",
-  walkinResId: "",
-  walkinResNameId: "",
-};
-
-const EMPTY_CUTOVER: CutoverDraft = {
-  elektrawebDualRun: false,
-  hotelOrganizationId: "",
-};
-
-function parseOptionalInt(raw: string): number | null {
-  const t = raw.trim();
-  if (!t) return null;
-  const n = Number(t);
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
-
-type FieldNotice = { kind: "ok" | "err"; text: string };
-
-async function noticeFromFailedResponse(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { message?: string | string[] };
-    if (typeof body.message === "string" && body.message.trim()) return body.message.trim();
-    if (Array.isArray(body.message) && body.message[0]) return String(body.message[0]);
-  } catch {
-    /* ignore non-JSON */
-  }
-  return "";
-}
-
-/** Comma list of satellites that did not accept the pushed policy; empty when all did. */
-async function undeliveredSatellites(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as {
-      delivery?: Array<{ satelliteKey: string; ok: boolean }>;
-    };
-    return (body.delivery ?? [])
-      .filter((d) => !d.ok)
-      .map((d) => d.satelliteKey)
-      .join(", ");
-  } catch {
-    return "";
-  }
-}
-
-export default function SuperAdminOrgHubPage() {
-  const params = useParams();
-  const orgId = String(params.orgId ?? "");
+export default function SuperAdminOrgOverviewPage() {
+  const { orgId, mode: shellMode, reloadHeader, setFlash } = useOrgShell();
   const { token } = useAuth();
   const t = useTranslations("superAdmin.orgHub");
-  const satLabel = useCallback(
-    (key: string) => {
-      switch (key) {
-        case "industry_hotel_pms":
-          return t("satHotel");
-        case "industry_clinic":
-          return t("satClinic");
-        case "industry_fnb_pos":
-          return t("satFnb");
-        case "industry_retail":
-          return t("satRetail");
-        case "finance_core":
-          return t("satFinance");
-        default:
-          return labelSatelliteKey(key);
-      }
-    },
-    [t],
-  );
-  const kindLabel = useCallback(
-    (kind: string) => {
-      switch (kind) {
-        case "FOLIO_POST":
-          return t("kindFolio");
-        case "SETTLEMENT":
-          return t("kindSettlement");
-        case "REVENUE_EVENT":
-          return t("kindRevenue");
-        case "READ_STATUS":
-          return t("kindRead");
-        case "OPS_HANDOFF":
-          return t("kindOpsHandoff");
-        default:
-          return labelChannelKind(kind);
-      }
-    },
-    [t],
-  );
-  const managedLabel = useCallback(
-    (managedBy: string) => {
-      if (managedBy === "PLATFORM") return t("managedPlatform");
-      if (managedBy === "ACCEPTOR") return t("managedAcceptor");
-      return labelChannelManagedBy(managedBy);
-    },
-    [t],
-  );
-  const [mode, setMode] = useState<OperatingMode | null>(null);
-  const [endpoints, setEndpoints] = useState<SatelliteEndpoint[]>([]);
+  const [mode, setMode] = useState<OperatingMode | null>(shellMode);
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [deptName, setDeptName] = useState("");
-  const [endpointDraft, setEndpointDraft] = useState<Record<string, { baseUrl: string; enabled: boolean }>>({});
+  const [parentQuery, setParentQuery] = useState("");
+  const debouncedParentQ = useDebouncedValue(parentQuery, 300);
+  const [parentHits, setParentHits] = useState<OrgSearchHit[]>([]);
   const [parentOrgId, setParentOrgId] = useState("");
-  const [bridgeDraft, setBridgeDraft] = useState<BridgeDraft>(EMPTY_BRIDGE);
-  const [cutoverDraft, setCutoverDraft] = useState<CutoverDraft>(EMPTY_CUTOVER);
-  const [industries, setIndustries] = useState<string[]>([]);
-  const [message, setMessage] = useState("");
-  const [bridgeNotice, setBridgeNotice] = useState<FieldNotice | null>(null);
-  const [cutoverNotice, setCutoverNotice] = useState<FieldNotice | null>(null);
+  const [parentLabel, setParentLabel] = useState("");
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [savingBridge, setSavingBridge] = useState(false);
-  const [savingCutover, setSavingCutover] = useState(false);
-  const [fiscalDevices, setFiscalDevices] = useState<FiscalDeviceRow[]>([]);
-  const [fiscalDraft, setFiscalDraft] = useState({
-    kind: "FISCAL_KKM",
-    providerId: "mock",
-    label: "",
-    outletCode: "",
-    registerCode: "",
-    endpoint: "",
-    secrets: "",
-    isOrgDefault: false,
-  });
-  const [savingFiscal, setSavingFiscal] = useState(false);
-  const [paymentMethods, setPaymentMethods] = useState<
-    Array<{ id: string; code: string; nameEn: string; active: boolean; satellites: string[]; fiscalHint: string }>
-  >([]);
-  const [channelsOut, setChannelsOut] = useState<ChannelRow[]>([]);
-  const [channelsIn, setChannelsIn] = useState<ChannelRow[]>([]);
-  const [resyncingChannels, setResyncingChannels] = useState(false);
-
-  const showHotelBridge =
-    industries.includes("hotel") ||
-    endpoints.some((e) => e.satelliteKey === "industry_hotel_pms" && e.enabled) ||
-    Boolean(endpointDraft.industry_hotel_pms?.enabled && endpointDraft.industry_hotel_pms?.baseUrl.trim());
-  const showClinicCutover =
-    industries.includes("clinic") ||
-    endpoints.some((e) => e.satelliteKey === "industry_clinic" && e.enabled) ||
-    Boolean(endpointDraft.industry_clinic?.enabled && endpointDraft.industry_clinic?.baseUrl.trim()) ||
-    mode?.mode === "DEPARTMENT";
+  const [message, setMessage] = useState("");
 
   const reload = useCallback(async () => {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const [modeRes, epRes, deptRes, bridgeRes, fiscalRes, payRes, chRes] = await Promise.all([
+      const [modeRes, deptRes] = await Promise.all([
         orchFetch(`/v1/admin/orgs/${orgId}/operating-mode`, { token }),
-        orchFetch(`/v1/admin/orgs/${orgId}/satellite-endpoints`, { token }),
         orchFetch(`/v1/admin/orgs/${orgId}/departments`, { token }),
-        orchFetch(`/v1/admin/orgs/${orgId}/elektraweb-bridge`, { token }),
-        orchFetch(`/v1/admin/orgs/${orgId}/fiscal-devices`, { token }),
-        orchFetch(`/v1/admin/orgs/${orgId}/payment-methods`, { token }),
-        orchFetch(`/v1/admin/organizations/${orgId}/channels`, { token }),
       ]);
-      if (modeRes.ok) setMode((await modeRes.json()) as OperatingMode);
-      if (epRes.ok) {
-        const eps = (await epRes.json()) as SatelliteEndpoint[];
-        setEndpoints(eps);
-        const draft: Record<string, { baseUrl: string; enabled: boolean }> = {};
-        for (const key of ENDPOINT_PRESETS) {
-          const row = eps.find((e) => e.satelliteKey === key);
-          draft[key] = { baseUrl: row?.baseUrl ?? "", enabled: row?.enabled ?? false };
+      if (modeRes.ok) {
+        const next = (await modeRes.json()) as OperatingMode;
+        setMode(next);
+        if (next.parentOrgId) {
+          setParentOrgId(next.parentOrgId);
+          setParentLabel(next.parentOrgId);
+          const parentRes = await cpAdminFetch(
+            `organizations?${new URLSearchParams({
+              q: next.parentOrgId,
+              page: "1",
+              pageSize: "5",
+            })}`,
+          );
+          if (parentRes.ok) {
+            const data = (await parentRes.json()) as { items?: OrgSearchHit[] };
+            const hit = (data.items ?? []).find((h) => h.id === next.parentOrgId);
+            if (hit) {
+              setParentLabel(`${hit.name} · ${hit.publicOrgNumber}`);
+            }
+          }
+        } else {
+          setParentOrgId("");
+          setParentLabel("");
         }
-        setEndpointDraft(draft);
       }
       if (deptRes.ok) setDepartments((await deptRes.json()) as DepartmentRow[]);
-      if (bridgeRes.ok) {
-        const bundle = (await bridgeRes.json()) as VendorBridgeBundle;
-        setIndustries(bundle.industries ?? []);
-        const b = bundle.elektrawebBridge;
-        setBridgeDraft(
-          b
-            ? {
-                inboundEnabled: b.inboundEnabled,
-                writeEnabled: b.writeEnabled,
-                elektrawebHotelId: b.elektrawebHotelId != null ? String(b.elektrawebHotelId) : "",
-                spaDepId: b.spaDepId != null ? String(b.spaDepId) : "",
-                spaCurrencyId: b.spaCurrencyId != null ? String(b.spaCurrencyId) : "",
-                walkinResId: b.walkinResId ?? "",
-                walkinResNameId: b.walkinResNameId ?? "",
-              }
-            : EMPTY_BRIDGE,
-        );
-        const c = bundle.clinicCutover;
-        setCutoverDraft(
-          c
-            ? {
-                elektrawebDualRun: c.elektrawebDualRun,
-                hotelOrganizationId: c.hotelOrganizationId ?? "",
-              }
-            : EMPTY_CUTOVER,
-        );
-      }
-      if (fiscalRes.ok) {
-        setFiscalDevices((await fiscalRes.json()) as FiscalDeviceRow[]);
-      }
-      if (payRes.ok) {
-        setPaymentMethods(
-          (await payRes.json()) as Array<{
-            id: string;
-            code: string;
-            nameEn: string;
-            active: boolean;
-            satellites: string[];
-            fiscalHint: string;
-          }>,
-        );
-      }
-      if (chRes.ok) {
-        const body = (await chRes.json()) as {
-          outbound?: ChannelRow[];
-          inbound?: ChannelRow[];
-        };
-        setChannelsOut(body.outbound ?? []);
-        setChannelsIn(body.inbound ?? []);
-      } else {
-        setChannelsOut([]);
-        setChannelsIn([]);
-      }
     } finally {
       setLoading(false);
     }
@@ -347,6 +79,30 @@ export default function SuperAdminOrgHubPage() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  useEffect(() => {
+    setMode(shellMode);
+  }, [shellMode]);
+
+  useEffect(() => {
+    const q = debouncedParentQ.trim();
+    if (q.length < 2) {
+      setParentHits([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const res = await cpAdminFetch(
+        `organizations?${new URLSearchParams({ q, page: "1", pageSize: "10" })}`,
+      );
+      if (!res.ok || cancelled) return;
+      const data = (await res.json()) as { items?: OrgSearchHit[] };
+      if (!cancelled) setParentHits(data.items ?? []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedParentQ]);
 
   async function saveOperatingMode(nextMode: "STANDALONE" | "DEPARTMENT") {
     if (!token) return;
@@ -372,76 +128,7 @@ export default function SuperAdminOrgHubPage() {
     setMode((await res.json()) as OperatingMode);
     setMessage(t("operatingModeSaved"));
     await reload();
-  }
-
-  async function toggleChannel(channelId: string, enabled: boolean, asAdmin: boolean) {
-    if (!token) return;
-    setMessage("");
-    const res = await orchFetch(
-      `/v1/admin/organizations/${orgId}/channels/${channelId}`,
-      {
-        token,
-        method: "PATCH",
-        body: JSON.stringify(
-          asAdmin && enabled
-            ? { enabled: true, managedBy: "PLATFORM" }
-            : { enabled },
-        ),
-      },
-    );
-    if (!res.ok) {
-      setMessage(t("channelsSaveFailed", { status: res.status }));
-      return;
-    }
-    setMessage(t("channelsSaved"));
-    await reload();
-  }
-
-  async function resyncChannels() {
-    if (!token) return;
-    setMessage("");
-    setResyncingChannels(true);
-    try {
-      const res = await orchFetch(
-        `/v1/admin/organizations/${orgId}/channels/resync`,
-        { token, method: "POST" },
-      );
-      if (!res.ok) {
-        setMessage(t("channelsResyncFailed", { status: res.status }));
-        return;
-      }
-      const body = (await res.json()) as {
-        outbound?: ChannelRow[];
-        inbound?: ChannelRow[];
-      };
-      setChannelsOut(body.outbound ?? []);
-      setChannelsIn(body.inbound ?? []);
-      setMessage(t("channelsResynced"));
-    } finally {
-      setResyncingChannels(false);
-    }
-  }
-
-  async function saveEndpoint(key: string) {
-    if (!token) return;
-    const row = endpointDraft[key];
-    if (!row?.baseUrl.trim()) return;
-    setMessage("");
-    const res = await orchFetch(`/v1/admin/orgs/${orgId}/satellite-endpoints/${key}`, {
-      token,
-      method: "PUT",
-      body: JSON.stringify({
-        satelliteKey: key,
-        baseUrl: row.baseUrl.trim(),
-        enabled: row.enabled,
-      }),
-    });
-    if (!res.ok) {
-      setMessage(t("endpointSaveFailed", { key, status: res.status }));
-      return;
-    }
-    setMessage(t("endpointSaved", { key }));
-    await reload();
+    await reloadHeader();
   }
 
   async function createDepartment() {
@@ -463,9 +150,7 @@ export default function SuperAdminOrgHubPage() {
 
   async function detachDepartment() {
     if (!token) return;
-    if (!window.confirm(t("detachConfirm"))) {
-      return;
-    }
+    if (!window.confirm(t("detachConfirm"))) return;
     setMessage("");
     const res = await orchFetch(`/v1/admin/orgs/${orgId}/operating-mode/detach`, {
       token,
@@ -476,233 +161,20 @@ export default function SuperAdminOrgHubPage() {
       return;
     }
     setMode((await res.json()) as OperatingMode);
+    setParentOrgId("");
+    setParentLabel("");
     setMessage(t("detached"));
     await reload();
+    await reloadHeader();
   }
 
   function copyUuid(id: string) {
     void navigator.clipboard.writeText(id);
-    setMessage(t("copied", { id }));
-  }
-
-  function copyOrgNo(n: number) {
-    void navigator.clipboard.writeText(String(n));
-    setMessage(t("copiedOrgNo", { orgNo: n }));
-  }
-
-  async function saveElektrawebBridge() {
-    if (!token) return;
-    setSavingBridge(true);
-    setBridgeNotice(null);
-    try {
-      const res = await orchFetch(`/v1/admin/orgs/${orgId}/elektraweb-bridge`, {
-        token,
-        method: "PUT",
-        body: JSON.stringify({
-          inboundEnabled: bridgeDraft.inboundEnabled,
-          writeEnabled: bridgeDraft.writeEnabled,
-          elektrawebHotelId: parseOptionalInt(bridgeDraft.elektrawebHotelId),
-          spaDepId: parseOptionalInt(bridgeDraft.spaDepId),
-          spaCurrencyId: parseOptionalInt(bridgeDraft.spaCurrencyId),
-          walkinResId: bridgeDraft.walkinResId.trim() || null,
-          walkinResNameId: bridgeDraft.walkinResNameId.trim() || null,
-        }),
-      });
-      if (!res.ok) {
-        const detail = await noticeFromFailedResponse(res);
-        setBridgeNotice({
-          kind: "err",
-          text: t("bridgeSaveFailed", {
-            status: res.status,
-            detail: detail ? `: ${detail}` : "",
-          }),
-        });
-        return;
-      }
-      const missed = await undeliveredSatellites(res);
-      setBridgeNotice(
-        missed
-          ? { kind: "err", text: t("policySavedNotDelivered", { targets: missed }) }
-          : { kind: "ok", text: t("bridgeSaved") },
-      );
-      await reload();
-    } finally {
-      setSavingBridge(false);
-    }
-  }
-
-  async function saveClinicCutover() {
-    if (!token) return;
-    setSavingCutover(true);
-    setCutoverNotice(null);
-    try {
-      const hotelId = cutoverDraft.hotelOrganizationId.trim();
-      const res = await orchFetch(`/v1/admin/orgs/${orgId}/clinic-cutover`, {
-        token,
-        method: "PUT",
-        body: JSON.stringify({
-          elektrawebDualRun: cutoverDraft.elektrawebDualRun,
-          hotelOrganizationId: hotelId || null,
-        }),
-      });
-      if (!res.ok) {
-        const detail = await noticeFromFailedResponse(res);
-        setCutoverNotice({
-          kind: "err",
-          text: t("cutoverSaveFailed", {
-            status: res.status,
-            detail: detail ? `: ${detail}` : "",
-          }),
-        });
-        return;
-      }
-      const missed = await undeliveredSatellites(res);
-      setCutoverNotice(
-        missed
-          ? { kind: "err", text: t("policySavedNotDelivered", { targets: missed }) }
-          : { kind: "ok", text: t("cutoverSaved") },
-      );
-      await reload();
-    } finally {
-      setSavingCutover(false);
-    }
-  }
-
-  async function syncSatelliteBindings() {
-    if (!token || !orgId) return;
-    setSyncing(true);
-    setMessage("");
-    try {
-      const res = await orchFetch(`/v1/admin/orgs/${orgId}/sync-satellite-bindings`, {
-        token,
-        method: "POST",
-      });
-      if (!res.ok) {
-        setMessage(t("syncFailed", { status: res.status }));
-        return;
-      }
-      const body = (await res.json()) as {
-        results?: Array<{ satelliteKey: string; ok: boolean; organizationId: string; error?: string }>;
-      };
-      const results = body.results ?? [];
-      const ok = results.filter((r) => r.ok).length;
-      const fail = results.filter((r) => !r.ok);
-      if (results.length === 0) {
-        setMessage(t("syncEmpty"));
-        return;
-      }
-      if (fail.length === 0) {
-        setMessage(t("syncOk", { count: ok }));
-        return;
-      }
-      setMessage(
-        t("syncPartial", {
-          ok,
-          total: results.length,
-          failed: fail
-            .map((f) => `${f.satelliteKey}${f.error ? ` (${f.error.slice(0, 80)})` : ""}`)
-            .join("; "),
-        }),
-      );
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  async function addFiscalDevice() {
-    if (!token || !fiscalDraft.label.trim()) return;
-    setSavingFiscal(true);
-    setMessage("");
-    let secrets: Record<string, string> | undefined;
-    if (fiscalDraft.secrets.trim()) {
-      try {
-        secrets = JSON.parse(fiscalDraft.secrets) as Record<string, string>;
-      } catch {
-        setMessage(t("fiscalSaveFailed", { status: "JSON" }));
-        setSavingFiscal(false);
-        return;
-      }
-    }
-    try {
-      const res = await orchFetch(`/v1/admin/orgs/${orgId}/fiscal-devices`, {
-        token,
-        method: "POST",
-        body: JSON.stringify({
-          kind: fiscalDraft.kind,
-          providerId: fiscalDraft.providerId,
-          label: fiscalDraft.label.trim(),
-          outletCode: fiscalDraft.outletCode.trim() || null,
-          registerCode: fiscalDraft.registerCode.trim() || null,
-          endpoint: fiscalDraft.endpoint.trim() || null,
-          secrets: secrets ?? undefined,
-          isOrgDefault: fiscalDraft.isOrgDefault,
-        }),
-      });
-      if (!res.ok) {
-        setMessage(t("fiscalSaveFailed", { status: res.status }));
-        return;
-      }
-      setFiscalDraft((d) => ({ ...d, label: "", secrets: "" }));
-      setMessage(t("fiscalSaved"));
-      await reload();
-    } finally {
-      setSavingFiscal(false);
-    }
-  }
-
-  async function retireFiscalDevice(deviceId: string) {
-    if (!token) return;
-    const res = await orchFetch(`/v1/admin/orgs/${orgId}/fiscal-devices/${deviceId}`, {
-      token,
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      setMessage(t("fiscalSaveFailed", { status: res.status }));
-      return;
-    }
-    setMessage(t("fiscalRetired"));
-    await reload();
+    setFlash(t("copied", { id }));
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <Link href="/orgs" className={GHOST_BUTTON_CLASS}>
-          {t("backOrgs")}
-        </Link>
-        <Link href={`/orgs/${orgId}/subscription`} className={GHOST_BUTTON_CLASS}>
-          {t("licenseLink")}
-        </Link>
-        <Link href={`/orgs/${orgId}/placement`} className={GHOST_BUTTON_CLASS}>
-          {t("placementLink")}
-        </Link>
-        <h1 className="text-lg font-semibold text-[#34495E]">
-          {mode?.name ? `${mode.name} · ` : ""}
-          {t("title")}
-        </h1>
-        {mode?.publicOrgNumber != null ? (
-          <button
-            type="button"
-            className={`${PRIMARY_BUTTON_CLASS} font-mono text-base`}
-            onClick={() => copyOrgNo(mode.publicOrgNumber)}
-            title={t("copyOrgNoHint")}
-          >
-            {t("eraIdLabel")}: {mode.publicOrgNumber}
-          </button>
-        ) : null}
-        <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => copyUuid(orgId)}>
-          {t("copyOrgUuid")}
-        </button>
-        <button
-          type="button"
-          className={PRIMARY_BUTTON_CLASS}
-          disabled={syncing || !token}
-          onClick={() => void syncSatelliteBindings()}
-        >
-          {syncing ? t("syncing") : t("syncBindings")}
-        </button>
-      </div>
-
       {loading ? <p className="text-sm text-[#7F8C8D]">{t("loading")}</p> : null}
       {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
 
@@ -712,469 +184,144 @@ export default function SuperAdminOrgHubPage() {
           <p className="text-sm text-[#7F8C8D]">
             {t("operatingModeCurrent", {
               mode: mode.mode,
-              parent: mode.parentOrgId ? ` · parent ${mode.parentOrgId}` : "",
+              parent: mode.parentOrgId
+                ? ` · parent ${parentLabel || mode.parentOrgId}`
+                : "",
               fiscal: mode.fiscalRouting,
               revenue: mode.revenueRouting,
             })}
           </p>
         ) : null}
         <div className="flex flex-wrap gap-2">
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void saveOperatingMode("STANDALONE")}>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => void saveOperatingMode("STANDALONE")}
+          >
             {t("setStandalone")}
           </button>
-          <input
-            className={`${MODAL_INPUT_CLASS} min-w-[16rem]`}
-            placeholder={t("parentOrgPlaceholder")}
-            value={parentOrgId}
-            onChange={(e) => setParentOrgId(e.target.value)}
-          />
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void saveOperatingMode("DEPARTMENT")}>
-            {t("setDepartment")}
-          </button>
           {mode?.mode === "DEPARTMENT" ? (
-            <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => void detachDepartment()}>
+            <button
+              type="button"
+              className={GHOST_BUTTON_CLASS}
+              onClick={() => void detachDepartment()}
+            >
               {t("detach")}
             </button>
           ) : null}
         </div>
-      </section>
 
-      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h2 className="font-medium text-[#34495E]">{t("channelsTitle")}</h2>
-            <p className="text-xs text-[#7F8C8D]">{t("channelsHint")}</p>
-          </div>
-          <button
-            type="button"
-            className={GHOST_BUTTON_CLASS}
-            disabled={resyncingChannels}
-            onClick={() => void resyncChannels()}
-          >
-            {resyncingChannels ? t("channelsResyncing") : t("channelsResync")}
-          </button>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div>
-            <h3 className="mb-2 text-sm font-medium text-[#5D6D7E]">{t("channelsOutbound")}</h3>
-            <ul className="space-y-2">
-              {channelsOut.map((c) => (
-                <ChannelEdgeCard
-                  key={c.id}
-                  title={channelEdgeTitle({
-                    fromKey: c.fromSatelliteKey,
-                    toKey: c.toSatelliteKey,
-                    fromOrgName: c.fromOrgName,
-                    toOrgName: c.toOrgName,
-                    direction: "outbound",
-                    labelSat: satLabel,
-                  })}
-                  detail={`${c.fromSatelliteKey} → ${c.toSatelliteKey}`}
-                  kindLabel={kindLabel(c.kind)}
-                  managedLabel={managedLabel(c.managedBy)}
-                  enabled={c.enabled}
-                  onLabel={t("channelsOn")}
-                  offLabel={t("channelsOff")}
-                  actionLabel={
-                    c.enabled ? t("channelsDisable") : t("channelsEnable")
-                  }
-                  onAction={() => void toggleChannel(c.id, !c.enabled, true)}
-                />
-              ))}
-              {channelsOut.length === 0 ? (
-                <li className="text-sm text-[#7F8C8D]">{t("channelsEmpty")}</li>
-              ) : null}
-            </ul>
-          </div>
-          <div>
-            <h3 className="mb-2 text-sm font-medium text-[#5D6D7E]">{t("channelsInbound")}</h3>
-            <ul className="space-y-2">
-              {channelsIn.map((c) => (
-                <ChannelEdgeCard
-                  key={c.id}
-                  title={channelEdgeTitle({
-                    fromKey: c.fromSatelliteKey,
-                    toKey: c.toSatelliteKey,
-                    fromOrgName: c.fromOrgName,
-                    toOrgName: c.toOrgName,
-                    direction: "inbound",
-                    labelSat: satLabel,
-                  })}
-                  detail={`${c.fromSatelliteKey} → ${c.toSatelliteKey}`}
-                  kindLabel={kindLabel(c.kind)}
-                  managedLabel={managedLabel(c.managedBy)}
-                  enabled={c.enabled}
-                  onLabel={t("channelsOn")}
-                  offLabel={t("channelsOff")}
-                  actionLabel={
-                    c.enabled ? t("channelsDisable") : t("channelsEnable")
-                  }
-                  onAction={() => void toggleChannel(c.id, !c.enabled, true)}
-                />
-              ))}
-              {channelsIn.length === 0 ? (
-                <li className="text-sm text-[#7F8C8D]">{t("channelsEmpty")}</li>
-              ) : null}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        <h2 className="font-medium text-[#34495E]">{t("fiscalTitle")}</h2>
-        <p className="text-xs text-[#7F8C8D]">{t("fiscalHint")}</p>
-        <ul className="space-y-1 text-sm">
-          {fiscalDevices.map((d) => (
-            <li key={d.id} className="flex flex-wrap items-center gap-2">
-              <span>
-                {d.label} · {d.kind} · {d.providerId}
-                {d.isOrgDefault ? " · default" : ""}
-                {d.hasSecrets ? " · secrets" : ""}
-              </span>
+        <div className="space-y-2 border-t border-[#ECF0F1] pt-3">
+          <label className="block text-xs font-medium text-[#7F8C8D]">
+            {t("parentOrgLabel")}
+          </label>
+          {parentOrgId ? (
+            <p className="text-sm text-[#34495E]">
+              {parentLabel || parentOrgId}
               <button
                 type="button"
-                className="text-xs text-[#E74C3C]"
-                onClick={() => void retireFiscalDevice(d.id)}
+                className="ml-2 text-xs text-[#2980B9]"
+                onClick={() => {
+                  setParentOrgId("");
+                  setParentLabel("");
+                  setParentQuery("");
+                }}
               >
-                {t("fiscalRetire")}
+                {t("clearParent")}
               </button>
-            </li>
-          ))}
-          {fiscalDevices.length === 0 ? (
-            <li className="text-[#7F8C8D]">{t("fiscalEmpty")}</li>
-          ) : null}
-        </ul>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <select
-            className={MODAL_INPUT_CLASS}
-            value={fiscalDraft.kind}
-            onChange={(e) => setFiscalDraft((d) => ({ ...d, kind: e.target.value }))}
+            </p>
+          ) : (
+            <>
+              <input
+                className={`${MODAL_INPUT_CLASS} max-w-md`}
+                value={parentQuery}
+                onChange={(e) => setParentQuery(e.target.value)}
+                placeholder={t("parentOrgSearchPlaceholder")}
+                aria-label={t("parentOrgLabel")}
+              />
+              {parentHits.length > 0 ? (
+                <ul className="max-w-md divide-y divide-[#ECF0F1] rounded border border-[#ECF0F1] text-sm">
+                  {parentHits
+                    .filter((h) => h.id !== orgId)
+                    .map((h) => (
+                      <li key={h.id}>
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-[#F8FAFC]"
+                          onClick={() => {
+                            setParentOrgId(h.id);
+                            setParentLabel(`${h.name} · ${h.publicOrgNumber}`);
+                            setParentQuery("");
+                            setParentHits([]);
+                          }}
+                        >
+                          <span>{h.name}</span>
+                          <span className="font-mono text-xs text-[#2980B9]">
+                            {h.publicOrgNumber}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              ) : null}
+            </>
+          )}
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={!parentOrgId}
+            onClick={() => void saveOperatingMode("DEPARTMENT")}
           >
-            <option value="FISCAL_KKM">{t("fiscalKind")}: KKM</option>
-            <option value="BANK_POS">{t("fiscalKind")}: BANK_POS</option>
-          </select>
-          <select
-            className={MODAL_INPUT_CLASS}
-            value={fiscalDraft.providerId}
-            onChange={(e) => setFiscalDraft((d) => ({ ...d, providerId: e.target.value }))}
-          >
-            <option value="mock">mock</option>
-            <option value="omnitech">omnitech</option>
-            <option value="nbc">nbc</option>
-            <option value="cybernet">cybernet</option>
-          </select>
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("fiscalLabel")}
-            value={fiscalDraft.label}
-            onChange={(e) => setFiscalDraft((d) => ({ ...d, label: e.target.value }))}
-          />
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("fiscalOutlet")}
-            value={fiscalDraft.outletCode}
-            onChange={(e) => setFiscalDraft((d) => ({ ...d, outletCode: e.target.value }))}
-          />
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("fiscalRegister")}
-            value={fiscalDraft.registerCode}
-            onChange={(e) => setFiscalDraft((d) => ({ ...d, registerCode: e.target.value }))}
-          />
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("fiscalEndpoint")}
-            value={fiscalDraft.endpoint}
-            onChange={(e) => setFiscalDraft((d) => ({ ...d, endpoint: e.target.value }))}
-          />
-          <input
-            className={`${MODAL_INPUT_CLASS} sm:col-span-2`}
-            placeholder={t("fiscalSecrets")}
-            value={fiscalDraft.secrets}
-            onChange={(e) => setFiscalDraft((d) => ({ ...d, secrets: e.target.value }))}
-          />
+            {t("setDepartment")}
+          </button>
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={fiscalDraft.isOrgDefault}
-            onChange={(e) => setFiscalDraft((d) => ({ ...d, isOrgDefault: e.target.checked }))}
-          />
-          {t("fiscalOrgDefault")}
-        </label>
-        <button
-          type="button"
-          className={PRIMARY_BUTTON_CLASS}
-          disabled={savingFiscal || !token}
-          onClick={() => void addFiscalDevice()}
-        >
-          {savingFiscal ? t("saving") : t("fiscalAdd")}
-        </button>
-      </section>
-
-      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        <h2 className="font-medium text-[#34495E]">{t("payTitle")}</h2>
-        <p className="text-xs text-[#7F8C8D]">{t("payHint")}</p>
-        {mode?.mode === "DEPARTMENT" && mode.fiscalRouting === "PARENT" ? (
-          <p className="text-xs text-[#2980B9]">{t("payParentCash")}</p>
-        ) : null}
-        <ul className="space-y-1 text-sm">
-          {paymentMethods.map((row) => (
-            <li key={row.id} className="flex flex-wrap gap-2">
-              <code className="font-mono text-[#2980B9]">{row.code}</code>
-              <span>
-                {row.nameEn} · {row.fiscalHint} · {(row.satellites ?? []).join(",")}
-                {!row.active ? ` · ${t("payOff")}` : ""}
-              </span>
-            </li>
-          ))}
-          {paymentMethods.length === 0 ? (
-            <li className="text-[#7F8C8D]">{t("payEmpty")}</li>
-          ) : null}
-        </ul>
       </section>
 
       <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
         <h2 className="font-medium text-[#34495E]">{t("departmentsTitle")}</h2>
-        <div className="flex flex-wrap gap-2">
-          <input
-            className={`${MODAL_INPUT_CLASS} min-w-[12rem]`}
-            placeholder={t("departmentNamePlaceholder")}
-            value={deptName}
-            onChange={(e) => setDeptName(e.target.value)}
-          />
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void createDepartment()}>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="block text-xs font-medium text-[#7F8C8D]">
+            {t("departmentNameLabel")}
+            <input
+              className={`${MODAL_INPUT_CLASS} mt-1 min-w-[12rem]`}
+              value={deptName}
+              onChange={(e) => setDeptName(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => void createDepartment()}
+          >
             {t("createDepartment")}
           </button>
         </div>
         <ul className="space-y-1 text-sm">
           {departments.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center gap-2">
-              <span>{d.name}</span>
+              <Link
+                href={`/orgs/${d.id}`}
+                className="font-medium text-[#2980B9] hover:underline"
+              >
+                {d.name}
+              </Link>
               <code className="font-mono text-sm font-semibold text-[#2980B9]">
                 {d.publicOrgNumber}
               </code>
-              <code className="text-xs text-[#95A5A6]">{d.id}</code>
               <button
                 type="button"
-                className="text-xs text-[#2980B9]"
-                onClick={() => copyOrgNo(d.publicOrgNumber)}
+                className="text-xs text-[#7F8C8D]"
+                onClick={() => copyUuid(d.id)}
               >
-                {t("copyOrgNoHint")}
-              </button>
-              <button type="button" className="text-xs text-[#2980B9]" onClick={() => copyUuid(d.id)}>
                 {t("copy")}
               </button>
             </li>
           ))}
-          {departments.length === 0 ? <li className="text-[#7F8C8D]">{t("noDepartments")}</li> : null}
+          {departments.length === 0 ? (
+            <li className="text-[#7F8C8D]">{t("noDepartments")}</li>
+          ) : null}
         </ul>
       </section>
-
-      <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        <h2 className="font-medium text-[#34495E]">{t("endpointsTitle")}</h2>
-        <p className="text-xs text-[#7F8C8D]">{t("endpointsHint")}</p>
-        {ENDPOINT_PRESETS.map((key) => (
-          <div key={key} className="flex flex-wrap items-center gap-2 border-b border-[#ECF0F1] py-2 text-sm">
-            <span className="w-40 font-mono text-xs">{key}</span>
-            <input
-              className={`${MODAL_INPUT_CLASS} min-w-[16rem] flex-1`}
-              placeholder="http://host:port"
-              value={endpointDraft[key]?.baseUrl ?? ""}
-              onChange={(e) =>
-                setEndpointDraft((prev) => ({
-                  ...prev,
-                  [key]: { ...prev[key], baseUrl: e.target.value, enabled: prev[key]?.enabled ?? true },
-                }))
-              }
-            />
-            <label className="flex items-center gap-1 text-xs">
-              <input
-                type="checkbox"
-                checked={endpointDraft[key]?.enabled ?? false}
-                onChange={(e) =>
-                  setEndpointDraft((prev) => ({
-                    ...prev,
-                    [key]: {
-                      baseUrl: prev[key]?.baseUrl ?? "",
-                      enabled: e.target.checked,
-                    },
-                  }))
-                }
-              />
-              {t("enabled")}
-            </label>
-            <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => void saveEndpoint(key)}>
-              {t("save")}
-            </button>
-          </div>
-        ))}
-        {endpoints.length > 0 && (
-          <p className="text-xs text-[#7F8C8D]">{t("endpointsRegistered", { count: endpoints.length })}</p>
-        )}
-      </section>
-
-      {showHotelBridge ? (
-        <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-          <h2 className="font-medium text-[#34495E]">{t("bridgeTitle")}</h2>
-          <p className="text-xs text-[#7F8C8D]">{t("bridgeHint")}</p>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={bridgeDraft.inboundEnabled}
-                onChange={(e) =>
-                  setBridgeDraft((prev) => ({ ...prev, inboundEnabled: e.target.checked }))
-                }
-              />
-              {t("inboundEnabled")}
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={bridgeDraft.writeEnabled}
-                onChange={(e) =>
-                  setBridgeDraft((prev) => ({ ...prev, writeEnabled: e.target.checked }))
-                }
-              />
-              {t("writeEnabled")}
-            </label>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <label className="text-xs text-[#7F8C8D]">
-              {t("elektrawebHotelId")}
-              <input
-                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
-                inputMode="numeric"
-                value={bridgeDraft.elektrawebHotelId}
-                onChange={(e) =>
-                  setBridgeDraft((prev) => ({ ...prev, elektrawebHotelId: e.target.value }))
-                }
-              />
-            </label>
-            <label className="text-xs text-[#7F8C8D]">
-              {t("spaDepId")}
-              <input
-                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
-                inputMode="numeric"
-                value={bridgeDraft.spaDepId}
-                onChange={(e) => setBridgeDraft((prev) => ({ ...prev, spaDepId: e.target.value }))}
-              />
-            </label>
-            <label className="text-xs text-[#7F8C8D]">
-              {t("spaCurrencyId")}
-              <input
-                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
-                inputMode="numeric"
-                value={bridgeDraft.spaCurrencyId}
-                onChange={(e) =>
-                  setBridgeDraft((prev) => ({ ...prev, spaCurrencyId: e.target.value }))
-                }
-              />
-            </label>
-            <label className="text-xs text-[#7F8C8D]">
-              {t("walkinResId")}
-              <input
-                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
-                value={bridgeDraft.walkinResId}
-                onChange={(e) =>
-                  setBridgeDraft((prev) => ({ ...prev, walkinResId: e.target.value }))
-                }
-              />
-            </label>
-            <label className="text-xs text-[#7F8C8D] sm:col-span-2">
-              {t("walkinResNameId")}
-              <input
-                className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
-                value={bridgeDraft.walkinResNameId}
-                onChange={(e) =>
-                  setBridgeDraft((prev) => ({ ...prev, walkinResNameId: e.target.value }))
-                }
-              />
-            </label>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={savingBridge || !token}
-              onClick={() => void saveElektrawebBridge()}
-            >
-              {savingBridge ? t("saving") : t("saveBridge")}
-            </button>
-            <button
-              type="button"
-              className={GHOST_BUTTON_CLASS}
-              disabled={syncing || !token}
-              onClick={() => void syncSatelliteBindings()}
-            >
-              {t("saveThenSync")}
-            </button>
-          </div>
-          {bridgeNotice ? (
-            <p
-              className={`text-sm ${bridgeNotice.kind === "err" ? "text-red-700" : "text-emerald-700"}`}
-              role={bridgeNotice.kind === "err" ? "alert" : undefined}
-            >
-              {bridgeNotice.text}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
-
-      {showClinicCutover ? (
-        <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-          <h2 className="font-medium text-[#34495E]">{t("cutoverTitle")}</h2>
-          <p className="text-xs text-[#7F8C8D]">{t("cutoverHint")}</p>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={cutoverDraft.elektrawebDualRun}
-              onChange={(e) =>
-                setCutoverDraft((prev) => ({ ...prev, elektrawebDualRun: e.target.checked }))
-              }
-            />
-            {t("elektrawebDualRun")}
-          </label>
-          <label className="block text-xs text-[#7F8C8D]">
-            {t("hotelOrganizationId")}
-            <input
-              className={`${MODAL_INPUT_CLASS} mt-1 w-full min-w-[16rem]`}
-              placeholder={t("hotelOrganizationIdPlaceholder")}
-              value={cutoverDraft.hotelOrganizationId}
-              onChange={(e) =>
-                setCutoverDraft((prev) => ({ ...prev, hotelOrganizationId: e.target.value }))
-              }
-            />
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={savingCutover || !token}
-              onClick={() => void saveClinicCutover()}
-            >
-              {savingCutover ? t("saving") : t("saveCutover")}
-            </button>
-            <button
-              type="button"
-              className={GHOST_BUTTON_CLASS}
-              disabled={syncing || !token}
-              onClick={() => void syncSatelliteBindings()}
-            >
-              {t("saveThenSync")}
-            </button>
-          </div>
-          {cutoverNotice ? (
-            <p
-              className={`text-sm ${cutoverNotice.kind === "err" ? "text-red-700" : "text-emerald-700"}`}
-              role={cutoverNotice.kind === "err" ? "alert" : undefined}
-            >
-              {cutoverNotice.text}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
     </div>
   );
 }

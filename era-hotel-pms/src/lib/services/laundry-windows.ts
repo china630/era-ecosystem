@@ -2,6 +2,35 @@
 
 export const BAKU_OFFSET_HOURS = 4;
 
+export type LaundryClosedDays =
+  | 'ALL'
+  | 'EXCEPT_SUNDAY'
+  | 'EXCEPT_CALENDAR'
+  | 'EXCEPT_SUNDAY_AND_CALENDAR';
+
+export type LaundryIntakePolicy = {
+  intakeMode: 'ANY' | 'WINDOW';
+  intakeStartHour: number | null;
+  intakeEndHour: number | null;
+  closedDays: LaundryClosedDays;
+  dueMode: 'NONE' | 'BY_HOUR';
+  dueCutoffHour: number;
+  dueAtHour: number;
+  expressEnabled?: boolean;
+};
+
+/** Matches prior hardcoded Nafta windows (wash 09–17) until the hotel edits policy. */
+export const DEFAULT_LAUNDRY_INTAKE_POLICY: LaundryIntakePolicy = {
+  intakeMode: 'WINDOW',
+  intakeStartHour: 9,
+  intakeEndHour: 17,
+  closedDays: 'EXCEPT_SUNDAY_AND_CALENDAR',
+  dueMode: 'BY_HOUR',
+  dueCutoffHour: 10,
+  dueAtHour: 17,
+  expressEnabled: false,
+};
+
 export type LaundryLineKind = { washQty: number; ironQty: number };
 
 export function bakuParts(now: Date): { y: number; m: number; d: number; hour: number; weekday: string } {
@@ -38,10 +67,48 @@ export function bakuWeekdayIndex(y: number, m: number, d: number): number {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 }
 
-export function nextBakuWorkingDay(y: number, m: number, d: number): { y: number; m: number; d: number } {
+export function isLaundryCalendarClosed(dayType?: string | null): boolean {
+  return dayType === 'holiday' || dayType === 'transferred_rest';
+}
+
+export function isLaundryDayClosed(input: {
+  weekday: string;
+  closedDays: LaundryClosedDays;
+  dayType?: string | null;
+}): boolean {
+  const sunday = input.weekday === 'Sun';
+  const calendar = isLaundryCalendarClosed(input.dayType);
+  switch (input.closedDays) {
+    case 'ALL':
+      return false;
+    case 'EXCEPT_SUNDAY':
+      return sunday;
+    case 'EXCEPT_CALENDAR':
+      return calendar;
+    case 'EXCEPT_SUNDAY_AND_CALENDAR':
+    default:
+      return sunday || calendar;
+  }
+}
+
+export function nextBakuWorkingDay(
+  y: number,
+  m: number,
+  d: number,
+  closedDays: LaundryClosedDays = 'EXCEPT_SUNDAY_AND_CALENDAR',
+): { y: number; m: number; d: number } {
   let cur = addBakuCalendarDays(y, m, d, 1);
-  while (bakuWeekdayIndex(cur.y, cur.m, cur.d) === 0) {
-    cur = addBakuCalendarDays(cur.y, cur.m, cur.d, 1);
+  for (let i = 0; i < 14; i += 1) {
+    const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][bakuWeekdayIndex(cur.y, cur.m, cur.d)]!;
+    // Calendar holidays are unknown when scanning ahead without a calendar map —
+    // skip Sunday when the mode includes Sunday; calendar-only modes advance one day.
+    const sundayBlocked =
+      closedDays === 'EXCEPT_SUNDAY' || closedDays === 'EXCEPT_SUNDAY_AND_CALENDAR';
+    if (sundayBlocked && weekday === 'Sun') {
+      cur = addBakuCalendarDays(cur.y, cur.m, cur.d, 1);
+      continue;
+    }
+    return cur;
   }
   return cur;
 }
@@ -53,33 +120,54 @@ export function laundryIntakeBlockReason(input: {
   express: boolean;
   expressEnabled?: boolean;
   dayType?: string | null;
+  policy?: Partial<LaundryIntakePolicy> | null;
 }): string | null {
+  const policy: LaundryIntakePolicy = {
+    ...DEFAULT_LAUNDRY_INTAKE_POLICY,
+    ...(input.policy ?? {}),
+    expressEnabled: input.expressEnabled ?? input.policy?.expressEnabled,
+  };
   const { weekday, hour } = bakuParts(input.now);
-  if (weekday === 'Sun') return 'No laundry intake on Sunday';
-  if (input.dayType === 'holiday' || input.dayType === 'transferred_rest') {
-    return 'No laundry intake on labour holiday';
+  if (isLaundryDayClosed({ weekday, closedDays: policy.closedDays, dayType: input.dayType })) {
+    if (weekday === 'Sun' && (policy.closedDays === 'EXCEPT_SUNDAY' || policy.closedDays === 'EXCEPT_SUNDAY_AND_CALENDAR')) {
+      return 'No laundry intake on Sunday';
+    }
+    if (isLaundryCalendarClosed(input.dayType)) {
+      return 'No laundry intake on labour holiday';
+    }
+    return 'No laundry intake on this day';
   }
-  if (input.express && !input.expressEnabled) {
+  if (input.express && !policy.expressEnabled) {
     return 'Express laundry is disabled for this hotel';
   }
-  if (input.hasWash && (hour < 9 || hour >= 17)) {
-    return 'Wash intake is 09:00–17:00 Asia/Baku';
-  }
-  if (input.hasIron && !input.hasWash && (hour < 9 || hour >= 20)) {
-    return 'Iron intake is 09:00–20:00 Asia/Baku';
-  }
-  if (input.hasIron && input.hasWash && (hour < 9 || hour >= 17)) {
-    return 'Mixed wash+iron intake follows wash window 09:00–17:00 Asia/Baku';
+  if (policy.intakeMode === 'WINDOW') {
+    const start = policy.intakeStartHour ?? 0;
+    const end = policy.intakeEndHour ?? 24;
+    if (hour < start || hour >= end) {
+      const a = String(start).padStart(2, '0');
+      const b = String(end).padStart(2, '0');
+      return `Laundry intake is ${a}:00–${b}:00 Asia/Baku`;
+    }
   }
   if (!input.hasWash && !input.hasIron) return 'No laundry lines';
   return null;
 }
 
-/** Same-day 17:00 Baku if accepted before 10:00; else next working day 17:00 Baku. */
-export function laundryDueAt(now: Date): Date {
-  const p = bakuParts(now);
-  const dueDay = p.hour < 10 ? { y: p.y, m: p.m, d: p.d } : nextBakuWorkingDay(p.y, p.m, p.d);
-  return bakuWallToUtc(dueDay.y, dueDay.m, dueDay.d, 17, 0);
+/** Same-day due hour if accepted before cutoff; else next open day. null when dueMode is NONE. */
+export function laundryDueAt(
+  now: Date,
+  policy?: Partial<LaundryIntakePolicy> | null,
+): Date | null {
+  const p: LaundryIntakePolicy = { ...DEFAULT_LAUNDRY_INTAKE_POLICY, ...(policy ?? {}) };
+  if (p.dueMode === 'NONE') return null;
+  const parts = bakuParts(now);
+  const cutoff = p.dueCutoffHour ?? 10;
+  const dueHour = p.dueAtHour ?? 17;
+  const dueDay =
+    parts.hour < cutoff
+      ? { y: parts.y, m: parts.m, d: parts.d }
+      : nextBakuWorkingDay(parts.y, parts.m, parts.d, p.closedDays);
+  return bakuWallToUtc(dueDay.y, dueDay.m, dueDay.d, dueHour, 0);
 }
 
 export function bakuHhmm(d: Date): string {
@@ -91,7 +179,7 @@ export function bakuHhmm(d: Date): string {
   }).format(d);
 }
 
-/** Store needed-by as 17:00-style wall time in Baku on the business date. */
+/** Store needed-by as wall time in Baku on the business date. */
 export function neededByBakuToUtc(workDateIso: string, hhmm: string): Date {
   const [hh, mm] = hhmm.split(':').map(Number);
   const [y, m, d] = workDateIso.split('-').map(Number);
@@ -100,3 +188,37 @@ export function neededByBakuToUtc(workDateIso: string, hhmm: string): Date {
 }
 
 export const bakuClockHhmm = bakuHhmm;
+
+export function policyFromHkRow(row: {
+  laundryIntakeMode?: string | null;
+  laundryIntakeStartHour?: number | null;
+  laundryIntakeEndHour?: number | null;
+  laundryClosedDays?: string | null;
+  laundryDueMode?: string | null;
+  laundryDueCutoffHour?: number | null;
+  laundryDueAtHour?: number | null;
+  laundryExpressEnabled?: boolean | null;
+}): LaundryIntakePolicy {
+  const mode = row.laundryIntakeMode === 'WINDOW' ? 'WINDOW' : 'ANY';
+  const closed =
+    row.laundryClosedDays === 'ALL' ||
+    row.laundryClosedDays === 'EXCEPT_SUNDAY' ||
+    row.laundryClosedDays === 'EXCEPT_CALENDAR' ||
+    row.laundryClosedDays === 'EXCEPT_SUNDAY_AND_CALENDAR'
+      ? row.laundryClosedDays
+      : DEFAULT_LAUNDRY_INTAKE_POLICY.closedDays;
+  return {
+    intakeMode: mode,
+    intakeStartHour:
+      row.laundryIntakeStartHour ??
+      (mode === 'WINDOW' ? DEFAULT_LAUNDRY_INTAKE_POLICY.intakeStartHour : null),
+    intakeEndHour:
+      row.laundryIntakeEndHour ??
+      (mode === 'WINDOW' ? DEFAULT_LAUNDRY_INTAKE_POLICY.intakeEndHour : null),
+    closedDays: closed,
+    dueMode: row.laundryDueMode === 'NONE' ? 'NONE' : 'BY_HOUR',
+    dueCutoffHour: row.laundryDueCutoffHour ?? 10,
+    dueAtHour: row.laundryDueAtHour ?? 17,
+    expressEnabled: Boolean(row.laundryExpressEnabled),
+  };
+}

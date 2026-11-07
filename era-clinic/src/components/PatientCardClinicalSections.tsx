@@ -341,6 +341,7 @@ export function PatientCardClinicalSections({
   const [packageBlock, setPackageBlock] = useState<string | null>(null);
   const [packageBlockNights, setPackageBlockNights] = useState<number | null>(null);
   const [packageBlockMinNights, setPackageBlockMinNights] = useState<number | null>(null);
+  const [packageBlockMessage, setPackageBlockMessage] = useState<string | null>(null);
   const [packageCode, setPackageCode] = useState<string | null>(null);
   const [quotaTick, setQuotaTick] = useState(0);
   const [visitSlot, setVisitSlot] = useState<{ id: string; title: string } | null>(null);
@@ -409,12 +410,16 @@ export function PatientCardClinicalSections({
           setPackageBlockMinNights(
             typeof snap.blockMinNights === "number" ? snap.blockMinNights : null,
           );
+          setPackageBlockMessage(
+            typeof snap.blockMessage === "string" ? snap.blockMessage : null,
+          );
           setPackageCode(typeof snap.packageCode === "string" ? snap.packageCode : null);
         } else {
           setQuotaRows([]);
           setPackageBlock(null);
           setPackageBlockNights(null);
           setPackageBlockMinNights(null);
+          setPackageBlockMessage(null);
           setPackageCode(null);
         }
       })
@@ -937,6 +942,7 @@ export function PatientCardClinicalSections({
       {showPackage && packageBlock ? (
         <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
           {packageAssignBlockText(t, packageBlock, packageCode, {
+            message: packageBlockMessage,
             nights: packageBlockNights,
             minNights: packageBlockMinNights,
           }) ?? packageBlock}

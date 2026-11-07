@@ -89,6 +89,10 @@ export default function PosCheckoutPage() {
   >(null);
   const [lineForm, setLineForm] = useState<LineForm>(EMPTY_LINE);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [folioPostEnabled, setFolioPostEnabled] = useState(false);
+  const [settlementEnabled, setSettlementEnabled] = useState(false);
+  const [hotelLinked, setHotelLinked] = useState(false);
+  const [roomNumber, setRoomNumber] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [loyaltyRef, setLoyaltyRef] = useState("");
@@ -148,6 +152,24 @@ export default function PosCheckoutPage() {
         if (data.config) setPresetConfig(data.config);
       })
       .catch(() => setMessage("Failed to load preset config"));
+  }, []);
+
+  useEffect(() => {
+    void fetch("/api/edition")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        const folio = d.folioPostEnabled === true;
+        const settlement = d.settlementEnabled === true;
+        setFolioPostEnabled(folio);
+        setSettlementEnabled(settlement);
+        setHotelLinked(d.hotelLinked === true);
+        if (!folio && paymentMethod === "ROOM_CHARGE") {
+          setPaymentMethod("CASH");
+        }
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load edition once on mount
   }, []);
 
   useEffect(() => {
@@ -385,6 +407,15 @@ export default function PosCheckoutPage() {
     setLoading(true);
     setMessage("");
     try {
+      if (paymentMethod === "ROOM_CHARGE" && !folioPostEnabled) {
+        throw new Error(t("channelFolioOff"));
+      }
+      if (
+        paymentMethod === "ROOM_CHARGE" &&
+        !roomNumber.trim()
+      ) {
+        throw new Error(t("roomNumberRequired"));
+      }
       const res = await fetch(`/api/receipts/${receipt.id}/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -392,6 +423,10 @@ export default function PosCheckoutPage() {
           paymentMethod,
           customerPhone: customerPhone.trim() || undefined,
           loyaltyRef: loyaltyRef.trim() || undefined,
+          roomNumber:
+            paymentMethod === "ROOM_CHARGE"
+              ? roomNumber.trim() || undefined
+              : undefined,
         }),
       });
       const data = await res.json();
@@ -535,9 +570,29 @@ export default function PosCheckoutPage() {
               { value: "CASH", label: t("cash") },
               { value: "CARD", label: t("card") },
               { value: "TRANSFER", label: t("transfer") },
+              ...(folioPostEnabled
+                ? [{ value: "ROOM_CHARGE", label: t("roomCharge") }]
+                : []),
             ]}
           />
         </div>
+        {paymentMethod === "ROOM_CHARGE" ? (
+          <label className="block text-[13px]">
+            {t("roomNumber")}
+            <input
+              className="mt-1 w-full rounded border px-2 py-1"
+              value={roomNumber}
+              onChange={(e) => setRoomNumber(e.target.value)}
+              maxLength={16}
+            />
+          </label>
+        ) : null}
+        {hotelLinked && !settlementEnabled ? (
+          <p className="text-xs text-amber-800">{t("channelSettlementOff")}</p>
+        ) : null}
+        {hotelLinked && !folioPostEnabled ? (
+          <p className="text-xs text-[#7F8C8D]">{t("channelFolioOffHint")}</p>
+        ) : null}
 
         <div className="flex flex-wrap gap-2">
           {kkms.length > 0 ? (

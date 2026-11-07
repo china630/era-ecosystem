@@ -65,7 +65,7 @@ SatAdmin maintains `ProcedureRotationRule` (`/admin/procedure-rules`, `/api/admi
 
 ### Peak / extended hours
 
-1. Working time lives under **Параметры → Рабочее время** (`/admin/working-hours`): Schedule (including lunch), Day calendar, Peak journal.
+1. Working time lives under **Параметры → Рабочее время** (`/admin/working-hours`): Schedule (including lunch), Day calendar, Peak journal. Day calendar and peak journal APIs require `screen:admin.settings`. Bulk schedule recalc / reseat (`POST /api/admin/schedule-recalc`, `schedule-reseat`) stay **platform super-admin only** — not CLINIC_ADMIN settings.
 2. Saturday is a short day (`shortenedDayStartHour` / `shortenedDayEndHour`). There is no separate Saturday end in the resolver.
 3. Peak journal rows are per day kind (WORKING / SHORT) with scope OWN_ONLY, EMPTY_DEFAULT, or CLINIC_WIDE. Overlapping rows of the same day kind are refused. Peak may only start earlier or end later than the clinic day boundary; it does not close a day or reseat by itself.
 4. `ProcedureType.extendedStartHour` / `extendedEndHour` (and matching resource fields) are card hours for OWN_ONLY / EMPTY_DEFAULT. Empty cards do not extend. Clinic-wide `peakDayEndHour` (legacy 22) is ignored by the window resolver.

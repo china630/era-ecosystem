@@ -40,7 +40,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/holdings` | `app/holdings/page.tsx` | Holding SoT: create, attach/detach orgs, report-access members; API `v1/holdings/*` |
 | `/workspace` | `app/workspace/page.tsx` | Control Home: Platform apps strip + structure summary counts + Systems tiles (Open / Modules / Settings). `POST connect-satellite`, `POST billing/toggle-module` (+ 7d SKU grace). Home org via `POST /auth/home-organization` |
 | `/workspace/structure` | `app/workspace/structure/page.tsx` | Owner hierarchical Org → Dept → System → Outlet; dept `switch-organization`; CatalogField sat select; outlet CRUD; sat/outlet suspend; Open sat SSO. APIs `GET/POST/PATCH/DELETE /v1/structure/*` (CP billing registration — ops materialize is sat→CP upsert) |
-| `/workspace/comms-hub` | `app/workspace/comms-hub/page.tsx` | Comms Hub slot stub (active-org scoped); full inbox later |
+| `/workspace/comms-hub` | `app/workspace/comms-hub/page.tsx` | Comms Hub org inbox (CP-COMMS-01): server threads + multi-recipient compose + reply; not FOLIO/REVENUE channels |
 | `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch via registry `GET /v1/satellites/launch-url` then ticket; env fallback; not entitled → pricing link |
 | `/settings` | `app/settings/page.tsx` | Settings hub |
 | `/settings/team` | `app/settings/team/page.tsx` | Access requests + transfer ownership; invite `organizationRoleCode` from org roles |
@@ -59,7 +59,7 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `/login` | `apps/platform-web/app/login/page.tsx` | Operator-only; `showAccountLinks={false}` |
 | `/` | `apps/platform-web/app/(console)/page.tsx` | → `/billing/pricing` |
 | `/billing/**` | `apps/platform-web/app/(console)/billing/**` | Pricing, addons, quotas, packages, trial-allowlist, settings |
-| `/orgs`, `/orgs/[orgId]`, `…/subscription`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org hub + license + PlacementJob; payment methods CRUD (`GET/POST/PATCH/DELETE /v1/admin/orgs/:orgId/payment-methods`, Sync `paymentMethods`) next to KKM/BANK_POS |
+| `/orgs`, `/orgs/[orgId]`, `…/subscription`, `…/connections`, `…/cutover`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org shell tabs: overview (mode/depts), license, connections (endpoints/channels/KKM + payment methods CRUD `GET/POST/PUT/DELETE /v1/admin/orgs/:orgId/payment-methods`, Sync `paymentMethods`), cutover (hotel/clinic only), PlacementJob lab hop |
 | `/structure` | `apps/platform-web/app/(console)/structure/page.tsx` | Ops entry for commercial topology (owner tree on app `/workspace/structure`) |
 | `/mdm`, `/mdm/companies`, `/mdm/persons` | `apps/platform-web/app/(console)/mdm/**` | MDM overview + directories |
 | `/reference`, `/early-access`, `/referrals`, `/landing`, `/security`, `/vendors/channex` | matching `app/(console)/*` | Same surfaces as former client super-admin |
@@ -104,6 +104,11 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `POST /v1/admin/channels/resync-all` | `AdminChannelsBatchController` — lab/staging backfill all orgs |
 | `GET/PATCH /platform/v1/channels` | `platform-channels.controller.ts` — org JWT list + acceptor disable |
 | `GET/PATCH /v1/internal/channels` (+ `/check`) | `internal-channels.controller.ts` — satellite BFF + live gate (service token) |
+| `GET /v1/comms/recipients` | `comms.controller.ts` — active-org members as Comms recipients |
+| `GET/POST /v1/comms/threads` | `comms.controller.ts` — list / create thread (recipients required) |
+| `GET /v1/comms/threads/:id` | `comms.controller.ts` — thread detail (participant only) |
+| `POST /v1/comms/threads/:id/reply` | `comms.controller.ts` — reply + notify |
+| `POST /v1/comms/threads/:id/read` | `comms.controller.ts` — mark read |
 | `POST /auth/home-organization` | `auth` / membership — set `isHome` for Control Home default org |
 | `POST /v1/subscription/connect-satellite` | `subscription.controller.ts` — owner Connect |
 | `POST /v1/billing/toggle-module` | `billing.controller.ts` — owner module enable/disable + 7d SKU grace / late-month `confirmLateMonth`; best-effort `syncForOrg`; response `synced` |

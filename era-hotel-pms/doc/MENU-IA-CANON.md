@@ -112,7 +112,8 @@ Sidebar order (top level, then groups). URLs stay flat under `/hk/*`.
 | **Guest services** ▸ | | Laundry + lost & found |
 | Guest laundry | `/hk/laundry` | Intake grid with price/sum preview; Accept → IN_PLANT; Delivered + return form → folio `LAUNDRY` |
 | Lost & found | `/hk/lost-and-found` | Lost & found |
-| Policies | `/settings/policies#hk` | Linen / deep every N nights (hotel-wide). Old `/settings/hk-policy` redirects |
+| Laundry catalog | `/settings/laundry-catalog` | Item names az/ru/en + wash/iron/express prices (empty = not offered) |
+| Policies | `/settings/policies#hk` | Linen / deep + laundry intake/due/express. Old `/settings/hk-policy` redirects |
 
 First open on secondary HK screens shows table/board chrome and an empty-state next step (not a bare page).
 

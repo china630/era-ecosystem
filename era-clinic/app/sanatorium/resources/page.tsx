@@ -354,6 +354,12 @@ export default function SanatoriumResourcesPage() {
             capacity: lane.capacity,
             name: lane.procedureName,
           }),
+        openQueueMark: (lane, which) =>
+          t("openQueueMark", {
+            name: lane.procedureName,
+            waiting: lane.waiting,
+            half: t(which === "morning" ? "openQueueBefore" : "openQueueAfter"),
+          }),
         statusLabel: (status) => procedureStatusLabel(t, status),
       }}
       onDragStart={setDragOrderId}

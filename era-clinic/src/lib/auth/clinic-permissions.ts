@@ -471,6 +471,7 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/admin/audit": CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
   "/admin/links": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   "/admin/settings": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+  "/admin/working-hours": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
   "/admin/access": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
   "/admin/users": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
   "/admin/logins": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
@@ -668,6 +669,10 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/ops-wipe", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   { prefix: "/api/admin/links", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   { prefix: "/api/admin/settings", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  // Working-hours calendar / peak journal (page permission = screen:admin.settings).
+  { prefix: "/api/admin/clinic-days", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  { prefix: "/api/admin/peak-rules", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  // schedule-recalc / schedule-reseat stay off this map — platform SA only in their routes.
   { prefix: "/api/admin/workforce-policy", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   {
     prefix: "/api/admin/finance-products",

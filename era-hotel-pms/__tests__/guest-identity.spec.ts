@@ -4,6 +4,14 @@ jest.mock('@era/satellite-kit', () => ({
   satelliteOrganizationId: jest.fn().mockReturnValue('test-org'),
   resolveSatelliteTenantOrgId: jest.fn().mockReturnValue('test-org'),
   enterSatelliteTenant: jest.fn(),
+  normalizePersonPhone: ({ raw }: { raw: string }) => {
+    const value = String(raw ?? '').trim();
+    if (!value) return { status: 'empty', display: '', e164: null, reasonKey: 'empty' };
+    if (value.startsWith('+')) {
+      return { status: 'unchanged', display: value, e164: value, reasonKey: 'unchanged' };
+    }
+    return { status: 'unchanged', display: value, e164: null, reasonKey: 'unchanged' };
+  },
 }));
 
 jest.mock('@/lib/prisma', () => ({

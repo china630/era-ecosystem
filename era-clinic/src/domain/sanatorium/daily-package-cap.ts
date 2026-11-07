@@ -95,3 +95,34 @@ export function packageBlockIsFull(input: {
   if (codes.has(input.candidateCode)) return false;
   return codes.size >= input.cap;
 }
+
+/**
+ * Units (sessions) of one package block already on this Asia/Baku day.
+ * Used by DAILY_RATE `dailyUseCap` — total burns, not distinct SKUs.
+ */
+export function packageBlockDayUseCount(input: {
+  slots: BlockCapSlot[];
+  day: Date;
+  quotaKey: string;
+}): number {
+  const key = bakuDateKey(input.day);
+  let n = 0;
+  for (const slot of input.slots) {
+    if (!slot.inPackage || slot.quotaKey !== input.quotaKey) continue;
+    if (bakuDateKey(slot.start) !== key) continue;
+    n += 1;
+  }
+  return n;
+}
+
+/** True when adding one more in-package unit would exceed dailyUseCap. */
+export function packageBlockDayUseIsFull(input: {
+  slots: BlockCapSlot[];
+  day: Date;
+  quotaKey: string;
+  cap: number | null | undefined;
+}): boolean {
+  if (input.cap == null || !Number.isFinite(Number(input.cap))) return false;
+  const limit = Math.max(1, Math.floor(Number(input.cap)));
+  return packageBlockDayUseCount(input) >= limit;
+}

@@ -14,6 +14,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isCiCdPausedDir } from "./ci-cd-pause.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const argv = process.argv.slice(2);
@@ -297,7 +298,12 @@ if (hasPrefix(files, "era-bank-core")) {
 }
 
 for (const dir of SATELLITE_DIRS) {
-  if (hasPrefix(files, dir)) runSatellite(dir);
+  if (!hasPrefix(files, dir)) continue;
+  if (isCiCdPausedDir(dir)) {
+    console.log(`skip ${dir}: CI/CD paused (commit only)`);
+    continue;
+  }
+  runSatellite(dir);
 }
 
 console.log("\nPASS — local ship gates");

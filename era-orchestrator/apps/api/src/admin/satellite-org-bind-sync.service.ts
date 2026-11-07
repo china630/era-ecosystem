@@ -203,7 +203,7 @@ export class SatelliteOrgBindSyncService {
       where: {
         organizationId_satelliteKey: { organizationId, satelliteKey },
       },
-      select: { enabled: true },
+      select: { enabled: true, baseUrl: true },
     });
     if (!endpoint?.enabled) {
       throw new NotFoundException(
@@ -212,6 +212,7 @@ export class SatelliteOrgBindSyncService {
     }
 
     const config = await this.buildRuntimeConfigPayload(organizationId);
+    this.applySatelliteSelfPublicBaseUrl(config, endpoint.baseUrl);
     config.updatedBy = "orchestrator-desired-state";
     return {
       organizationId,
@@ -270,7 +271,10 @@ export class SatelliteOrgBindSyncService {
       updatedBy: "orchestrator-sync",
     };
     if (eventUrl) body.orchestratorEventUrl = eventUrl.replace(/\/$/, "");
-    if (orchPublic) body.publicBaseUrl = orchPublic.replace(/\/$/, "");
+    // Orch public is NOT the satellite self URL (pool members match SatelliteEndpoint.baseUrl).
+    if (orchPublic) {
+      body.orchestratorPublicBaseUrl = orchPublic.replace(/\/$/, "");
+    }
     if (psa) {
       body.platformSuperAdminEmails = [
         ...new Set(
@@ -471,11 +475,15 @@ export class SatelliteOrgBindSyncService {
     );
     if (!bind.ok) return bind;
 
+    const runtimeBody = await this.buildRuntimeConfigPayload(
+      target.organizationId,
+    );
+    this.applySatelliteSelfPublicBaseUrl(runtimeBody, target.baseUrl);
     const runtime = await this.postJson(
       target,
       token,
       RUNTIME_CONFIG_PATH,
-      await this.buildRuntimeConfigPayload(target.organizationId),
+      runtimeBody,
       "RuntimeConfig",
     );
     return {
@@ -485,6 +493,20 @@ export class SatelliteOrgBindSyncService {
       runtimeConfigOk: runtime.ok,
       runtimeConfigError: runtime.error,
     };
+  }
+
+  /**
+   * Pool registry (`satellite-pool/members`) matches this process URL to
+   * SatelliteEndpoint.baseUrl — never the orchestrator public URL.
+   */
+  private applySatelliteSelfPublicBaseUrl(
+    body: Record<string, unknown>,
+    endpointBaseUrl: string | null | undefined,
+  ): void {
+    const self = endpointBaseUrl?.trim().replace(/\/$/, "") ?? "";
+    if (!self) return;
+    body.publicBaseUrl = self;
+    body.satellitePublicBaseUrl = self;
   }
 
   private async postJson(

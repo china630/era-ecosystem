@@ -118,6 +118,15 @@ describe("Clinic RBAC admin matrix (Wave 2)", () => {
     );
   });
 
+  it("adminApiRoutePermission maps clinic-days and peak-rules to settings", () => {
+    expect(adminApiRoutePermission("/api/admin/clinic-days")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    );
+    expect(adminApiRoutePermission("/api/admin/peak-rules/x")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    );
+  });
+
   it("buildClinicNav hides admin catalog when permission absent", () => {
     const perms = DEFAULT_ROLE_PERMISSIONS[CLINIC_ROLE.CLINIC_ADMIN].filter(
       (p) => p !== CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,

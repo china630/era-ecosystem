@@ -1,13 +1,24 @@
 import { prisma } from "@/lib/prisma";
-import { nightsBetween, quotaFor, applyQuotaRecalc } from "@/lib/program-quota";
+import {
+  nightsBetween,
+  quotaFor,
+  applyQuotaRecalc,
+  clampStayNights,
+  dailyRateQuotaTotal,
+  weeklyQuotaTotal,
+  resolveQuotaMode,
+  resolveBlockQuotaMode,
+  defaultBlockQuotaMode,
+  asQuotaRate,
+} from "@/lib/program-quota";
 import { addBakuDays, bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
-import { resolveDailyDistinctCap } from "@/domain/sanatorium/daily-package-cap";
 import {
   buildEntitlementSnapshot,
   findCurrentProgramTemplate,
   programTemplateInclude,
 } from "@/domain/sanatorium/program-template-admin";
 import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
+import { resolveDailyDistinctCap } from "@/domain/sanatorium/daily-package-cap";
 
 export async function instantiateProgramFromTemplate(input: {
   episodeId: string;
@@ -51,29 +62,31 @@ export async function instantiateProgramFromTemplate(input: {
 
   const endsOn = checkOut;
 
+  const quotaMode = resolveQuotaMode(
+    (template as { quotaMode?: string | null }).quotaMode,
+  );
+  const countSunday = Boolean((template as { countSunday?: boolean }).countSunday);
   const balanceRows = template.procedures.map(
     (p: {
       quotaTotal: number;
       procedureCode: string;
-      quotaBasis?: string | null;
       kind?: string | null;
-      dailyDistinctCap?: number | null;
+      quotaBasis?: string | null;
+      blockQuotaMode?: string | null;
+      quotaPerNight?: unknown;
+      quotaPerWeek?: number | null;
     }) => {
-    let quotaTotal = p.quotaTotal;
-    if (template.quotaKnots.length > 0) {
-      quotaTotal = quotaFor({
-        knots: template.quotaKnots,
-        nights,
-        procedureCode: p.procedureCode,
-        minNights: template.minNights,
-        maxNights: template.maxNights,
-        quotaBasis: p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
-      });
-    }
-    if (p.quotaBasis !== "PER_STAY") {
-      const perDay = resolveDailyDistinctCap(p.kind, p.dailyDistinctCap);
-      quotaTotal = Math.min(quotaTotal, nonSundayStayNights(checkIn, endsOn) * perDay);
-    }
+    const quotaTotal = resolveBlockQuotaTotal({
+      quotaMode,
+      countSunday,
+      nights,
+      checkIn,
+      endsOn,
+      procedure: p,
+      knots: template.quotaKnots,
+      minNights: template.minNights,
+      maxNights: template.maxNights,
+    });
     return {
       procedureCode: p.procedureCode,
       quotaTotal,
@@ -85,6 +98,8 @@ export async function instantiateProgramFromTemplate(input: {
     templateId: template.id,
     code: template.code,
     version: template.version,
+    quotaMode: (template as { quotaMode?: string | null }).quotaMode,
+    countSunday: (template as { countSunday?: boolean | null }).countSunday,
     procedures: template.procedures,
     knots: template.quotaKnots,
     members: template.blockMembers,
@@ -159,6 +174,19 @@ export async function instantiateProgramFromTemplate(input: {
  */
 /** Nights of the stay that are not Sunday in Asia/Baku. Checkout morning is not a night. */
 export function nonSundayStayNights(startsOn: Date, endsOn: Date): number {
+  return countStayNightsBaku(startsOn, endsOn, { includeSunday: false });
+}
+
+/** All stay nights in Asia/Baku (checkout morning excluded). */
+export function stayNightsBaku(startsOn: Date, endsOn: Date): number {
+  return countStayNightsBaku(startsOn, endsOn, { includeSunday: true });
+}
+
+function countStayNightsBaku(
+  startsOn: Date,
+  endsOn: Date,
+  opts: { includeSunday: boolean },
+): number {
   const from = bakuDateKey(startsOn);
   const to = bakuDateKey(endsOn);
   let count = 0;
@@ -169,10 +197,118 @@ export function nonSundayStayNights(startsOn: Date, endsOn: Date): number {
       timeZone: "Asia/Baku",
       weekday: "short",
     }).format(noon);
-    if (weekday !== "Sun") count += 1;
+    if (opts.includeSunday || weekday !== "Sun") count += 1;
     ymd = addBakuDays(ymd, 1);
   }
   return count;
+}
+
+/**
+ * Counted nights for DAILY_RATE after min/max clamp.
+ * When countSunday is false, only the first N clamped nights of the stay are walked
+ * and Sundays among them are dropped.
+ */
+export function countedNightsForDailyRate(input: {
+  startsOn: Date;
+  endsOn: Date;
+  nights: number;
+  countSunday: boolean;
+  minNights?: number | null;
+  maxNights?: number | null;
+}): number {
+  const clamped = clampStayNights(input.nights, input.minNights, input.maxNights);
+  if (clamped <= 0) return 0;
+  if (input.countSunday) return clamped;
+  const from = bakuDateKey(input.startsOn);
+  let counted = 0;
+  let walked = 0;
+  let ymd = from;
+  for (let guard = 0; walked < clamped && guard < 400; guard++) {
+    const noon = parseBakuDateTime(ymd, "12:00");
+    const weekday = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Baku",
+      weekday: "short",
+    }).format(noon);
+    if (weekday !== "Sun") counted += 1;
+    walked += 1;
+    ymd = addBakuDays(ymd, 1);
+  }
+  return counted;
+}
+
+export function resolveBlockQuotaTotal(input: {
+  quotaMode: "FIXED" | "DAILY_RATE";
+  countSunday: boolean;
+  nights: number;
+  checkIn: Date;
+  endsOn: Date;
+  procedure: {
+    quotaTotal: number;
+    procedureCode: string;
+    kind?: string | null;
+    quotaBasis?: string | null;
+    blockQuotaMode?: string | null;
+    quotaPerNight?: unknown;
+    quotaPerWeek?: number | null;
+    dailyDistinctCap?: number | null;
+  };
+  knots: Array<{ nights: number; procedureCode: string; qty: number }>;
+  minNights?: number | null;
+  maxNights?: number | null;
+}): number {
+  if (input.quotaMode === "DAILY_RATE") {
+    const blockMode = resolveBlockQuotaMode(
+      input.procedure.blockQuotaMode,
+      defaultBlockQuotaMode({
+        kind: input.procedure.kind,
+        quotaBasis: input.procedure.quotaBasis,
+      }),
+    );
+    if (blockMode === "PER_STAY") {
+      return Math.max(0, Math.floor(Number(input.procedure.quotaTotal) || 0));
+    }
+    if (blockMode === "WEEKLY") {
+      return weeklyQuotaTotal({
+        nights: input.nights,
+        quotaPerWeek: input.procedure.quotaPerWeek,
+        minNights: input.minNights,
+        maxNights: input.maxNights,
+      });
+    }
+    const counted = countedNightsForDailyRate({
+      startsOn: input.checkIn,
+      endsOn: input.endsOn,
+      nights: input.nights,
+      countSunday: input.countSunday,
+      minNights: input.minNights,
+      maxNights: input.maxNights,
+    });
+    return dailyRateQuotaTotal({
+      countedNights: counted,
+      quotaPerNight: asQuotaRate(input.procedure.quotaPerNight),
+    });
+  }
+  let quotaTotal = input.procedure.quotaTotal;
+  if (input.knots.length > 0) {
+    quotaTotal = quotaFor({
+      knots: input.knots,
+      nights: input.nights,
+      procedureCode: input.procedure.procedureCode,
+      minNights: input.minNights,
+      maxNights: input.maxNights,
+      quotaBasis:
+        input.procedure.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
+    });
+  }
+  if (input.knots.length === 0 && input.procedure.quotaBasis !== "PER_STAY") {
+    const perDay = resolveDailyDistinctCap(
+      input.procedure.kind,
+      input.procedure.dailyDistinctCap,
+    );
+    const procedureDays = nonSundayStayNights(input.checkIn, input.endsOn);
+    quotaTotal = Math.min(quotaTotal, procedureDays * perDay);
+  }
+  return quotaTotal;
 }
 
 export async function recalcProgramQuotas(
@@ -210,6 +346,8 @@ export async function recalcProgramQuotas(
     templateId: template.id,
     code: template.code,
     version: template.version,
+    quotaMode: (template as { quotaMode?: string | null }).quotaMode,
+    countSunday: (template as { countSunday?: boolean | null }).countSunday,
     procedures: template.procedures,
     knots: template.quotaKnots,
     members: template.blockMembers,
@@ -226,25 +364,23 @@ export async function recalcProgramQuotas(
 
   const stayStart = opts.startsOn ?? instance.startsOn;
   const stayEnd = opts.endsOn ?? instance.endsOn;
-  const procedureDays =
-    stayStart && stayEnd ? nonSundayStayNights(stayStart, stayEnd) : null;
+  const quotaMode = resolveQuotaMode(
+    (template as { quotaMode?: string | null }).quotaMode,
+  );
+  const countSunday = Boolean((template as { countSunday?: boolean }).countSunday);
 
   for (const p of template.procedures) {
-    let newTotal = p.quotaTotal;
-    if (template.quotaKnots.length > 0) {
-      newTotal = quotaFor({
-        knots: template.quotaKnots,
-        nights: opts.nights,
-        procedureCode: p.procedureCode,
-        minNights: template.minNights,
-        maxNights: template.maxNights,
-        quotaBasis: p.quotaBasis === "PER_STAY" ? "PER_STAY" : "PER_NIGHTS",
-      });
-    }
-    if (procedureDays != null && p.quotaBasis !== "PER_STAY") {
-      const perDay = resolveDailyDistinctCap(p.kind, p.dailyDistinctCap);
-      newTotal = Math.min(newTotal, procedureDays * perDay);
-    }
+    const newTotal = resolveBlockQuotaTotal({
+      quotaMode,
+      countSunday,
+      nights: opts.nights,
+      checkIn: stayStart,
+      endsOn: stayEnd,
+      procedure: p,
+      knots: template.quotaKnots,
+      minNights: template.minNights,
+      maxNights: template.maxNights,
+    });
     const existing = existingByCode.get(p.procedureCode);
     if (existing) {
       const { quotaTotal } = applyQuotaRecalc(existing.quotaUsed, newTotal);

@@ -4,6 +4,8 @@
 **Not readiness:** for sell/show/UI use [`Hotel-Product-Readiness-Matrix.md`](./Hotel-Product-Readiness-Matrix.md)  
 **Coverage facts:** [`COVERAGE_MATRIX.md`](../COVERAGE_MATRIX.md)
 
+**Guest phone polish (2026-11-07):** kit `normalizePersonPhone` + guest card / contacts / POST+PATCH save + dedup PHONE digits. Negatives in `packages/satellite-kit` `normalize-person-phone.test.ts` (conflict / needs_region / invalid). **AC-HOT-GST-PHONE 🟡** out of Scaffold BE rollup — no UAT, no Scaffold ✅. HOT-GST-01 stays API. Does not reopen AC-HOT-MDM ✅.
+
 **Night-audit enqueue (2026-10-31):** orchestrator queue id no longer rejects `hotel-na:YYYY-MM-DD`. Not a new AC row and not Scaffold ✅. HOT-NA-01 stays SHIPPED. Does not change the BE rollup.
 
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
@@ -127,6 +129,7 @@
 | AC-HOT-REV | Category revenue code + day document v2 (money vs quantity) | 🟡 | [ ] | ADR hotel-revenue-code-resolution; HOT-REV-01; kit `hotel-revenue-route.test.ts` | **Out of Scaffold BE rollup.** Nafta template v2 is the live catalog. One-shot remap scripts were removed after apply (2026-10-31). The 2026-10-27 SQL seeds are archive-only. No night-audit negative suite. Blank category refuses the charge; hub Zod/create refuse non-zero pending without `revenueCode`. Does not darken BE ✅ and does not reopen AC-HOT-CASH. |
 | AC-HOT-AUD | Mutation audit Layer A (HTTP belt) + Layer B enrich catalog | 🟡 | [ ] | ADR era-mutation-audit-standard; HOT-AUD-01; `__tests__/mutation-audit-belt.spec.ts`; `hotel-page-route-inventory` `/admin/audit` reports-not-admin; kit belt; CI fail-closed; Wave B CashShift + DAY_CLOSE; Wave E compound `(organizationId, createdAt)` | **Out of Scaffold BE rollup.** Layer A + stay/folio Layer B + CashShift/DAY_CLOSE + Wave E index landed; UAT + soft-fail negatives open — max 🟡; hash-chain deferred. Does not darken BE ✅. |
 | AC-HOT-MRZ | Passport MRZ scan (super-admin) | 🟡 | [ ] | `__tests__/mrz-parse.spec.ts` (broken check digit; Jean-Paul ≠ Jean-Pierre; name clash; AZE/DEU/GBR → ISO; Jean/Жан translit); UAT-SMOKE §2 3a; HOT-MRZ-01 | **Out of Scaffold BE rollup.** Super-admin only. `mrzNameField` on `GuestDocument`. Match: raw MRZ → passport → exact name → translit/typo/metaphone confirm-only. Catalog `hotel_passport_scan` 19 AZN not entitled. Field UAT open — max 🟡 |
+| AC-HOT-GST-PHONE | Guest card phone polish (E.164) | 🟡 | [ ] | kit `normalize-person-phone.test.ts` (AZ polish; +7903 conflict; empty nat needs_region; invalid); HOT-GST-01 | **Out of Scaffold BE rollup.** Toast-only `showWarning`; international never rewritten; Guest.phone + MOBILE/PHONE/WHATSAPP + server save. UAT open — max 🟡. Does not reopen AC-HOT-MDM ✅ |
 
 **Edition / wave rollup (BE, in-scope)** = worst(FO, CASH, HK, RATE, MDM) → **✅**.  
 AC-HOT-INT remains 🟡 and is **out of Scaffold BE rollup** until vendor modes leave STUB.  
@@ -143,6 +146,7 @@ AC-HOT-RBAC is 🟡 (Variant A shipped; field UAT open) and stays **out of Scaff
 AC-HOT-REV is 🟡 (category code + day document v2; night audit not run) and stays **out of Scaffold BE rollup**. It does not darken BE ✅.
 AC-HOT-AUD is 🟡 (belt + Wave B CashShift/DAY_CLOSE + Wave E compound index; UAT + fuller negatives open; hash-chain deferred) and stays **out of Scaffold BE rollup**. It does not darken BE ✅.
 AC-HOT-DUTY is 🟡 (HOT-DUTY-01 WEEK_POST/WEEK_CREW; UAT open) and stays **out of Scaffold BE rollup**. It does not darken BE ✅.
+AC-HOT-GST-PHONE is 🟡 (kit negatives; UAT open) and stays **out of Scaffold BE rollup**. It does not reopen AC-HOT-MDM ✅ or darken BE ✅.
 
 Do not call this table «product readiness» (UI / Pilot still separate).
 
@@ -153,7 +157,7 @@ Do not call this table «product readiness» (UI / Pilot still separate).
 | AC-HOT-RATE / HOT-02 | Nafta BAR Excel import | BLOCKED external | Scoped out of AC-HOT-RATE |
 | AC-HOT-INT | Live KKM / locks / notify | External ⏸ | Keep STUB; max Scaffold 🟡 |
 | HOT-RPT-01/02 | EW Management Reports catalog + nightly ZIP | W1–W3 code delivered (out of BE rollup) | Screens + PDF + ZIP + cubes + 3-year + email ZIP link; VAT columns Total / Net / VAT; trial balance groups revenue codes under a bold department row (code names from `nameAz`/`nameRu`/`nameEn`); negative path `__tests__/hotel-reports-negative.spec.ts` (unknown slug / lang / empty pack); layout families + letterhead + date bar + zero-capacity ratios in `report-layout-families` / `report-letterhead` / `report-date-bar` / `report-workspace-export` specs — Scaffold 🟡 not ✅; no AC-HOT-RPT ✅ |
-| Nafta HK deepen | Roster/sheet/laundry/forecast/discrepancy/policy + `/hk/rooms` + secondary HK empty chrome / sidebar groups / maids picker / laundry preview / void IN_PLANT on grids+checkout / stay linen override + playbook filter/grid/modal + kit table shell tokens | Out of AC-HOT-HK rollup | SCREEN + `__tests__/hk-nafta.spec.ts` + `__tests__/hk-soft-sort.spec.ts` (soft sort + laundry amount + express %). Soft sort departures→VIP→needed-by→DIRTY→duty→room#. Void IN_PLANT; maids dept/unlink; discrepancy create modal; forecast 1/7/14/30; one PRIMARY; `DATA_TABLE_SHELL` / `CARD_CONTAINER` on secondary HK. Stays 🟡, not Scaffold ✅. UAT §34 open — do not call AC-HOT-HK «весь Nafta» |
+| Nafta HK deepen | Roster/sheet/laundry/forecast/discrepancy/policy + `/hk/rooms` + secondary HK empty chrome / sidebar groups / maids picker / laundry preview / void IN_PLANT on grids+checkout / stay linen override + playbook filter/grid/modal + kit table shell tokens | Out of AC-HOT-HK rollup | SCREEN + `__tests__/hk-nafta.spec.ts` + `__tests__/hk-soft-sort.spec.ts` + `__tests__/laundry-windows.spec.ts` (soft sort + laundry unit prices + intake ANY/WINDOW / closed days / due). Catalog `/settings/laundry-catalog` (az/ru/en; nullable wash/iron/express; empty = not offered). Policy intake/due/express on `/settings/policies#hk`. Soft sort departures→VIP→needed-by→DIRTY→duty→room#. Void IN_PLANT; maids dept/unlink; discrepancy create modal; forecast 1/7/14/30; one PRIMARY; `DATA_TABLE_SHELL` / `CARD_CONTAINER` on secondary HK. Stays 🟡, not Scaffold ✅. UAT §34 open — do not call AC-HOT-HK «весь Nafta» |
 | Pilot lab / field | UAT signoff / customer | Out of BE plan | Owned by UI/lab plan |
 | HOT-CO-04 | Early checkout unused-nights refund (net VAT, default CASH) | Out of BE rollup | ADR Accepted; AC-HOT-CO-EARLY 🟡 until fuller negatives; SHIPPED OpsUI |
 | AC-HOT-REV | Night audit of day document v2 | Out of BE rollup | HOT-REV-01 API; hub blank-`revenueCode` refuse + NA early fail; no NA negative suite; not SHIPPED |
@@ -176,7 +180,7 @@ Do not call this table «product readiness» (UI / Pilot still separate).
 | `era-hotel-pms/__tests__/staff-provision.spec.ts` | AC-HOT-RBAC (unknown role) |
 | `era-hotel-pms/__tests__/hk-status-negative.spec.ts` | AC-HOT-HK |
 | `era-hotel-pms/__tests__/hk-nafta.spec.ts` | Nafta HK deepen (out of AC rollup) |
-| `era-hotel-pms/__tests__/hk-soft-sort.spec.ts` | Nafta HK deepen (soft sort + laundry amount/express; not full AC-HOT-HK Scaffold) |
+| `era-hotel-pms/__tests__/hk-soft-sort.spec.ts` | Nafta HK deepen (soft sort + laundry amount + per-item express; not full AC-HOT-HK Scaffold) |
 | `era-hotel-pms/__tests__/tours-money.spec.ts` | AC-HOT-TOUR |
 | `era-hotel-pms/__tests__/tours-negative.spec.ts` | AC-HOT-TOUR |
 | `era-hotel-pms/__tests__/transfer-fleet.spec.ts` | AC-HOT-XFER |

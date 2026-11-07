@@ -12,6 +12,7 @@ const bodySchema = z.object({
   closedDaysOnly: z.boolean().optional(),
 });
 
+/** Bulk reseat — platform super-admin only (not CLINIC_ADMIN / settings). */
 export async function POST(req: Request) {
   try {
     const session = await getSatelliteSession();

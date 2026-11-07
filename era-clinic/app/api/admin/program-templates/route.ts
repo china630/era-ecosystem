@@ -7,6 +7,7 @@ import {
   parseDateOnly,
   programTemplateCreateSchema,
   programTemplateInclude,
+  normalizeProceduresForQuotaMode,
   replaceTemplateProceduresAndKnots,
   shapeProgramTemplate,
   countOpenInstancesForTemplate,
@@ -93,6 +94,8 @@ export async function POST(req: Request) {
           code: body.code,
           name: body.name,
           durationDays: body.durationDays,
+          quotaMode: body.quotaMode ?? "FIXED",
+          countSunday: body.countSunday ?? false,
           version: 1,
           isCurrent: true,
           effectiveFrom,
@@ -101,11 +104,12 @@ export async function POST(req: Request) {
           ...(body.maxNights !== undefined ? { maxNights: body.maxNights } : {}),
         },
       });
+      const quotaMode = body.quotaMode ?? "FIXED";
       await replaceTemplateProceduresAndKnots(
         tx,
         created.id,
-        body.procedures,
-        body.knots,
+        normalizeProceduresForQuotaMode(body.procedures, quotaMode),
+        quotaMode === "DAILY_RATE" ? [] : body.knots,
       );
       return tx.programTemplate.findUniqueOrThrow({
         where: { id: created.id },

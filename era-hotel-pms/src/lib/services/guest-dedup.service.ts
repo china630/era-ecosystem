@@ -1,3 +1,4 @@
+import { personPhoneDedupDigits } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { ymdParam } from '@/lib/reports/civil-days';
@@ -74,6 +75,7 @@ export async function getGuestDedupSummary(): Promise<GuestDedupSummary> {
       id: true,
       globalPersonId: true,
       phone: true,
+      nationality: true,
     },
   });
 
@@ -84,11 +86,14 @@ export async function getGuestDedupSummary(): Promise<GuestDedupSummary> {
   const personMap = new Map<string, string[]>();
 
   for (const g of guests) {
-    const phone = g.phone?.replace(/\s+/g, '').trim();
-    if (phone && phone.length >= 9) {
-      const list = phoneMap.get(phone) ?? [];
+    const phoneKey = personPhoneDedupDigits({
+      raw: g.phone,
+      nationalityIso: g.nationality,
+    });
+    if (phoneKey.length >= 9) {
+      const list = phoneMap.get(phoneKey) ?? [];
       list.push(g.id);
-      phoneMap.set(phone, list);
+      phoneMap.set(phoneKey, list);
     }
     const pid = g.globalPersonId?.trim();
     if (pid) {
@@ -156,8 +161,11 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
   }
 
   for (const g of guests) {
-    const phone = g.phone?.replace(/\s+/g, '').trim();
-    if (phone && phone.length >= 9) add('PHONE', phone, g.id);
+    const phoneDigits = personPhoneDedupDigits({
+      raw: g.phone,
+      nationalityIso: g.nationality,
+    });
+    if (phoneDigits.length >= 9) add('PHONE', phoneDigits, g.id);
     const pid = g.globalPersonId?.trim();
     if (pid) add('GLOBAL_PERSON_ID', pid, g.id);
     const passport = docKey(g.documents, GUEST_PASSPORT_DOC_TYPES);
@@ -175,7 +183,7 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
         : normalizeNameKey(g.fullName ?? '');
     if (birth && name) add('NAME_BIRTH', `${name}|${birth}`, g.id);
     if (birth && last.length >= 2) add('LAST_BIRTH', `${last}|${birth}`, g.id);
-    const phoneTail = (g.phone ?? '').replace(/\D/g, '').slice(-9);
+    const phoneTail = phoneDigits.length >= 9 ? phoneDigits.slice(-9) : '';
     if (last.length >= 2 && phoneTail.length === 9) add('LAST_PHONE', `${last}|${phoneTail}`, g.id);
     const citizenship = (g.nationality ?? '').trim().toUpperCase();
     for (const doc of g.documents) {

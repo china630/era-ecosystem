@@ -61,7 +61,7 @@ UI may show code-only bridges as `CODE_LEGACY` (display only; never satisfies th
 ## Consequences
 
 - Operating mode remains the money SoR; channels are the peer-call policy edge.
-- CP-COMMS-01 messaging stub stays separate from CP-CHANNELS-01.
+- CP-COMMS-01 messaging inbox stays separate from CP-CHANNELS-01 (product v1 — not channels UI).
 
 ## Deferred debt (do not forget)
 

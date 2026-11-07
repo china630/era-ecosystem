@@ -42,6 +42,15 @@ describe("jobShouldRun", () => {
     assert.equal(jobShouldRun("finance", ["era-clinic/a.ts"], { full: true }), true);
   });
 
+  it("keeps paused apps stubbed even for ci-full, packages, and their own diff", () => {
+    for (const job of ["era-logistics", "era-construction", "era-crm", "era-auto-service", "era-wholesale", "era-bank", "era-bank-dbo"]) {
+      assert.equal(jobShouldRun(job, [], { full: true }), false, job);
+      assert.equal(jobShouldRun(job, ["packages/satellite-kit/src/index.ts"], { full: true }), false, job);
+      assert.equal(jobShouldRun(job, [`${job}/src/a.ts`], { full: true }), false, job);
+    }
+    assert.equal(jobShouldRun("bank-core", ["era-bank-core/src/main.ts"], { full: true }), true);
+  });
+
   it("runs an unknown job key", () => {
     assert.equal(jobShouldRun("not-a-job", ["era-clinic/a.ts"]), true);
   });

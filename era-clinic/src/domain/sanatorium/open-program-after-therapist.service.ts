@@ -27,6 +27,7 @@ export type Day1ProgramResult =
       programCode?: string;
       nights?: number;
       minNights?: number;
+      message?: string;
     };
 
 function isUniqueViolation(err: unknown): boolean {
@@ -127,6 +128,11 @@ export async function tryOpenProgramAfterTherapistStage(
       return { opened: false, reason: "TEMPLATE_NOT_FOUND", programCode };
     }
     console.error("[day1] tryOpenProgramAfterTherapistStage", episodeId, err);
-    return { opened: false, reason: "INSTANTIATE_FAILED", programCode };
+    return {
+      opened: false,
+      reason: "INSTANTIATE_FAILED",
+      programCode,
+      message: err instanceof Error ? err.message : "Program instantiate failed",
+    };
   }
 }

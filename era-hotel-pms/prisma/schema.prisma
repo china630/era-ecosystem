@@ -2113,15 +2113,22 @@ model HkEgLedger {
 }
 
 model LaundryItem {
-  id             String   @id @default(uuid())
-  organizationId String
-  code           String
-  name           String
-  category       String   @default("GENTLEMEN")
-  washPrice      Decimal  @db.Decimal(12, 2) @default(0)
-  ironPrice      Decimal  @db.Decimal(12, 2) @default(0)
-  active         Boolean  @default(true)
-  lines          LaundryTicketLine[]
+  id               String   @id @default(uuid())
+  organizationId   String
+  code             String
+  /// Fallback display (synced to nameEn). Prefer nameAz / nameRu / nameEn.
+  name             String
+  nameAz           String?
+  nameRu           String?
+  nameEn           String?
+  category         String   @default("MEN")
+  /// null = service not offered (not free).
+  washPrice        Decimal? @db.Decimal(12, 2)
+  ironPrice        Decimal? @db.Decimal(12, 2)
+  expressWashPrice Decimal? @db.Decimal(12, 2)
+  expressIronPrice Decimal? @db.Decimal(12, 2)
+  active           Boolean  @default(true)
+  lines            LaundryTicketLine[]
   @@unique([organizationId, code])
   @@index([organizationId])
 }
@@ -2191,7 +2198,18 @@ model HkHotelPolicy {
   linenEveryNights        Int       @default(3)
   deepEveryNights         Int       @default(5)
   laundryExpressEnabled   Boolean   @default(false)
+  /// Legacy percent surcharge; ticket math uses per-item express prices.
   laundryExpressPercent   Int?
+  /// ANY | WINDOW — default WINDOW 09–17 preserves pre-policy Nafta hours
+  laundryIntakeMode       String    @default("WINDOW")
+  laundryIntakeStartHour  Int?      @default(9)
+  laundryIntakeEndHour    Int?      @default(17)
+  /// ALL | EXCEPT_SUNDAY | EXCEPT_CALENDAR | EXCEPT_SUNDAY_AND_CALENDAR
+  laundryClosedDays       String    @default("EXCEPT_SUNDAY_AND_CALENDAR")
+  /// NONE | BY_HOUR
+  laundryDueMode          String    @default("BY_HOUR")
+  laundryDueCutoffHour    Int       @default(10)
+  laundryDueAtHour        Int       @default(17)
   egPressureFrom          DateTime? @db.Date
 }
 

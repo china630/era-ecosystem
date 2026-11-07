@@ -12,7 +12,10 @@ import {
   todayBakuYmd,
 } from "@/lib/baku-day";
 import { listClinicDays, nextWorkingYmd } from "@/domain/planning/clinic-day";
-import { packageBlockIsFull } from "@/domain/sanatorium/daily-package-cap";
+import {
+  packageBlockIsFull,
+  packageBlockDayUseIsFull,
+} from "@/domain/sanatorium/daily-package-cap";
 import {
   loadEpisodeDailyCaps,
   quotaForGuestDay,
@@ -125,6 +128,8 @@ export function pickOpenAttendanceDay(input: {
   inPackage: boolean;
   quotaKey: string;
   dailyCap: number | null;
+  /** DAILY_RATE unit cap; null = unused. */
+  dailyUseCap?: number | null;
   startYmd: string;
   horizonEndYmd: string;
   workingYmds: string[];
@@ -137,17 +142,30 @@ export function pickOpenAttendanceDay(input: {
     if (ymd < input.startYmd || ymd > input.horizonEndYmd) continue;
     if (input.codesOnDay.get(ymd)?.has(input.procedureCode)) continue;
     const blockCodes = input.packageCodesOnDay.get(ymd)?.get(input.quotaKey);
+    const day = parseBakuDateTime(ymd, "12:00");
+    const slots = [...(blockCodes ?? [])].map((code) => ({
+      code,
+      start: day,
+      inPackage: true,
+      quotaKey: input.quotaKey,
+    }));
+    if (
+      input.inPackage &&
+      packageBlockDayUseIsFull({
+        slots,
+        day,
+        quotaKey: input.quotaKey,
+        cap: input.dailyUseCap,
+      })
+    ) {
+      continue;
+    }
     if (
       input.inPackage &&
       input.dailyCap != null &&
       packageBlockIsFull({
-        slots: [...(blockCodes ?? [])].map((code) => ({
-          code,
-          start: parseBakuDateTime(ymd, "12:00"),
-          inPackage: true,
-          quotaKey: input.quotaKey,
-        })),
-        day: parseBakuDateTime(ymd, "12:00"),
+        slots,
+        day,
         candidateCode: input.procedureCode,
         quotaKey: input.quotaKey,
         cap: input.dailyCap,
@@ -343,6 +361,7 @@ export async function pinOpenAttendanceOrders(
         inPackage: order.inPackage,
         quotaKey: quota.quotaKey,
         dailyCap: quota.dailyCap,
+        dailyUseCap: quota.dailyUseCap,
         startYmd: cursorYmd,
         horizonEndYmd,
         workingYmds,

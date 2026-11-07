@@ -290,15 +290,26 @@ export async function prescribeExtras(
   };
 }
 
-/** Place as PROPOSED, then return every row to PENDING_PAY so the cabin stays held. */
+/** Place as PROPOSED, then return seated rows to PENDING_PAY. Unseated drafts are deleted. */
 async function seatUnpaidExtras(ids: string[]): Promise<void> {
   await prisma.procedureOrder.updateMany({
     where: { id: { in: ids }, status: "PENDING_PAY" },
     data: { status: "PROPOSED" },
   });
+  let failedIds: string[] = [];
   try {
-    await placeConfirmedProcedures(ids, {});
+    const placement = await placeConfirmedProcedures(ids, {});
+    failedIds = placement.failures.map((row) => row.orderId);
+  } catch (err) {
+    failedIds = ids;
+    throw err;
   } finally {
+    if (failedIds.length > 0) {
+      await releaseProcedureOccupancy(failedIds);
+      await prisma.procedureOrder.deleteMany({
+        where: { id: { in: failedIds }, status: "PROPOSED", resourceId: null },
+      });
+    }
     await prisma.procedureOrder.updateMany({
       where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
       data: { status: "PENDING_PAY" },
@@ -332,6 +343,7 @@ async function pinUnpaidOpenExtras(
     reason: string;
     ymd?: string;
   }> = [];
+  let pinThrew = false;
   try {
     const { pinOpenAttendanceOrders } = await import(
       "@/domain/procedure/open-attendance"
@@ -341,11 +353,25 @@ async function pinUnpaidOpenExtras(
       startAt: new Date(),
     });
     failures = pinned.failures;
+  } catch (err) {
+    pinThrew = true;
+    failures = ids.map((orderId) => ({
+      orderId,
+      procedureCode: "",
+      procedureName: "",
+      reason: "no_slot",
+    }));
+    throw err;
   } finally {
     await prisma.procedureOrder.updateMany({
       where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
       data: { status: "PENDING_PAY" },
     });
+    if (pinThrew) {
+      await prisma.procedureOrder.deleteMany({
+        where: { id: { in: ids }, status: "PENDING_PAY", resourceId: null },
+      });
+    }
   }
   const missed = failures.map((row) => row.orderId);
   if (missed.length > 0) {

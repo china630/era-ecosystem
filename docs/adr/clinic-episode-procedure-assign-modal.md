@@ -78,7 +78,7 @@ Single modal; **no nested second modal**.
 
 For **in-package** treatment lines:
 
-1. Instantiating a `ProgramInstance` still creates **balances** (`ProgramProcedureBalance`) from knots/nights (CLI-51).
+1. Instantiating a `ProgramInstance` still creates **balances** (`ProgramProcedureBalance`) via `resolveBlockQuotaTotal` — FIXED knots or DAILY_RATE per-block modes (CLI-51).
 2. System **does not** require expanding the full remaining quota into `PROPOSED` rows for the doctor to work (`buildProposedPlan` as the primary doctor UX is deprecated for this card).
 3. Modal Save (package) creates the delta of orders and places them onto resources (same placement engine as today’s confirm path: incremental context, rotation, gaps).
 4. Remaining on the left:  
@@ -331,6 +331,10 @@ Recalc deletes a dropped balance only when `quotaUsed` is 0 and no procedure, la
 ## Amendment 2026-11-01 — unseated package rows
 
 A package `PROPOSED` row with no cabin still occupies that procedure code on its Baku day, so a second seat of the same code is refused. Rows unseated for a package refill, a masseur change, a stay recalculation, or a bath-calendar pin that do not receive a new cabin are deleted and the quota is synced. A manual move uses the same day block. The plan day chips list only seated rows. A package `PROPOSED` without a cabin is a separate "not seated" line with no clock.
+
+## Amendment 2026-11-06 — a failed save leaves no draft on the plan
+
+Saxla still inserts package rows before seating. If seating throws, those rows are deleted and any seat lifted for the refill is restored (`SCHEDULED`, cabin, allocations). The next Save deletes leftover unseated package drafts for the episode first, so a retry does not stack a minute-grid. Checkout-morning seating and a masseur reseat delete rows that stay unseated, including when seating throws. An empty anamnesis is a `misses` reason (`anamnesis`), not an uncaught error. An unexpected failure returns `PLACE_FAILED` with the error text and writes `package_assign_failed`. `INSTANTIATE_FAILED` keeps the original message. The plan no longer renders the unseated package list. Unpaid extras that do not seat are deleted the same way.
 
 ## Amendment 2026-11-02 — Saxla hour and a rejected bath day
 

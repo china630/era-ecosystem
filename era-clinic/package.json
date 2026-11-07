@@ -20,6 +20,7 @@
     "db:seed:icd10": "node prisma/load-icd10.cjs",
     "db:seed:nafta-prices": "node prisma/load-nafta-prices.cjs",
     "test": "jest --ci",
+    "audit:admin-api-map": "node scripts/audit-admin-api-map.mjs",
     "db:seed:sanatorium-week": "node prisma/load-sanatorium-week.cjs",
     "db:seed:lab-usg": "node prisma/load-lab-usg-demo.cjs",
     "db:seed:planning-rules": "npx tsx prisma/seed-planning-rules.ts",
