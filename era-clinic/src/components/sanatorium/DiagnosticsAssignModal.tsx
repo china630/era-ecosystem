@@ -109,6 +109,7 @@ export function DiagnosticsAssignModal({
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
   const [catalogGroups, setCatalogGroups] = useState<CatalogGroup[]>([]);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [catalogQuery, setCatalogQuery] = useState("");
   const [pkgDraft, setPkgDraft] = useState<PkgDraft[]>([]);
   const [extraDraft, setExtraDraft] = useState<ExtraDraft[]>([]);
   const [pendingDrop, setPendingDrop] = useState<Set<string>>(new Set());
@@ -696,8 +697,35 @@ export function DiagnosticsAssignModal({
                   defaultValue: "Additional (catalog)",
                 })}
               </h4>
-              {extraGroupRows.map((group) => {
-                const open = openGroups.has(group.key);
+              <div className="mb-2">
+                <Field
+                  label={t("catalogSearch")}
+                  value={catalogQuery}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setCatalogQuery(next);
+                    if (!next.trim()) setOpenGroups(new Set());
+                  }}
+                />
+              </div>
+              {(() => {
+                const q = catalogQuery.trim().toLocaleLowerCase(locale);
+                const groups = extraGroupRows
+                  .map((group) => ({
+                    ...group,
+                    items:
+                      !q || group.title.toLocaleLowerCase(locale).includes(q)
+                        ? group.items
+                        : group.items.filter((item) =>
+                            item.label.toLocaleLowerCase(locale).includes(q),
+                          ),
+                  }))
+                  .filter((group) => group.items.length > 0);
+                if (q && groups.length === 0) {
+                  return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("catalogSearchEmpty")}</p>;
+                }
+                return groups.map((group) => {
+                const open = q.length > 0 || openGroups.has(group.key);
                 return (
                   <div key={group.key} className="mb-2">
                     <button
@@ -748,7 +776,8 @@ export function DiagnosticsAssignModal({
                     ) : null}
                   </div>
                 );
-              })}
+              });
+              })()}
             </div>
           </div>
 

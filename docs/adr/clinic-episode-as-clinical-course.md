@@ -137,7 +137,7 @@ Cutover import already attaches history to an episode (OPEN or CLOSED archive). 
 | Anamnesis on `PatientRef`; required to save sex/blood | Anamnesis on episode; required to assign/confirm **procedures** |
 | Contraindications patient-wide; planner uses all years | Per episode; new course starts with no blocked zones |
 | Procedures / most visits / many labs not on episode | Children of the episode |
-| Card ICD = OPEN only; no course switcher | Switcher; default latest; archive read-only |
+| Card ICD = OPEN only; no course switcher | One opened course on the card; other courses expand on the patients list; a closed course is read-only |
 | Print = latest episode by `openedAt` | Print = selected episode |
 
 ## Out of scope

@@ -14,6 +14,7 @@ import {
   getPackageAssignSnapshot,
   applyPreferredMasseurs,
   placeProposedOnCheckoutMorning,
+  releaseUnseatedPackageOrders,
 } from "@/domain/sanatorium/package-assign.service";
 import { readUiLocale } from "@/lib/request-locale";
 import { parseBakuDateTime } from "@/lib/baku-day";
@@ -45,12 +46,14 @@ const assignSchema = z
     lines: z.array(lineSchema).default([]),
     staffPrefs: z.array(staffPrefSchema).optional(),
     checkoutMorning: z.boolean().optional(),
+    releaseUnseated: z.boolean().optional(),
     startOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     startHour: z.number().int().min(0).max(23).optional(),
   })
   .refine(
     (body) =>
       body.checkoutMorning === true ||
+      body.releaseUnseated === true ||
       body.lines.length > 0 ||
       (body.staffPrefs?.length ?? 0) > 0,
     { message: "lines required" },
@@ -105,8 +108,13 @@ export async function POST(
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
     const body = assignSchema.parse(await req.json());
+    if (body.releaseUnseated && body.lines.length === 0) {
+      const released = await releaseUnseatedPackageOrders(id);
+      return jsonOk({ released });
+    }
     if (body.checkoutMorning && body.lines.length === 0) {
       const seated = await placeProposedOnCheckoutMorning(id, session.sub);
+      await releaseUnseatedPackageOrders(id);
       return jsonOk(seated);
     }
     const startAt =

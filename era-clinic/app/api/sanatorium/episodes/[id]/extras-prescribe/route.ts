@@ -9,6 +9,7 @@ import {
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { assertEpisodeDataScope } from "@/lib/auth/clinic-data-scope";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
+import { regimeFromOrderSites } from "@/domain/sanatorium/regime-key";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 import { readUiLocale } from "@/lib/request-locale";
 import {
@@ -18,7 +19,6 @@ import {
   listPaidExtras,
   listPendingExtras,
   prescribeExtras,
-  repackPendingOpenExtras,
 } from "@/domain/sanatorium/extras-assign.service";
 import {
   deletePendingDiagnostic,
@@ -47,6 +47,7 @@ const prescribeSchema = z.object({
         procedureCode: z.string().min(1),
         qty: z.number().int().positive().max(40),
         kind: z.enum(["procedure", "lab", "visit"]).optional(),
+        orderIds: z.array(z.string().min(1)).max(40).optional(),
       }),
     )
     .max(40)
@@ -89,6 +90,14 @@ export async function GET(
           amountNet: Number(r.amountNet),
           note: r.note,
           status: r.status,
+          scheduledAt: r.scheduledAt.toISOString(),
+          regimeKey: regimeFromOrderSites(r),
+          physioFields: r.physioFields,
+          siteIds: r.sites.map((site) => site.siteId),
+          siteApplyMode: r.siteApplyMode,
+          siteLaterality: Object.fromEntries(
+            r.sites.map((site) => [site.siteId, site.laterality]),
+          ),
         })),
         ...diagnostics.map((r) => ({
           id: r.id,
@@ -107,6 +116,7 @@ export async function GET(
         procedureCode: r.procedureCode,
         procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
         amountNet: Number(r.amountNet),
+        regimeKey: regimeFromOrderSites(r),
       })),
       diagnostics,
     });
@@ -153,14 +163,28 @@ export async function POST(
         for (const row of drop) await deletePendingDiagnostic(removal.kind, row.id);
         continue;
       }
-      await dropPendingExtrasFromTail(id, removal.procedureCode, removal.qty);
+      if (removal.orderIds && removal.orderIds.length > 0) {
+        for (const orderId of removal.orderIds) {
+          try {
+            await deletePendingExtra(orderId);
+          } catch (err) {
+            if (err instanceof PackageAssignError && err.code === "NOT_FOUND") continue;
+            throw err;
+          }
+        }
+      } else {
+        await dropPendingExtrasFromTail(id, removal.procedureCode, removal.qty);
+      }
     }
     const result =
       body.lines.length > 0
         ? await prescribeExtras(id, body.lines, session.sub)
         : { orderIds: [], labOrderIds: [], visitIds: [], misses: [] };
     for (const line of body.lines) touched.add(line.procedureCode);
-    const repackMisses = await repackPendingOpenExtras(id, [...touched]);
+    const { compactOpenRegimeQueues } = await import("@/domain/procedure/open-attendance");
+    const repackMisses = await compactOpenRegimeQueues(id, [...touched], {
+      appendIds: result.orderIds,
+    });
     return jsonOk({ ...result, misses: [...result.misses, ...repackMisses] });
   } catch (err) {
     if (err instanceof PackageAssignError) {

@@ -7,6 +7,18 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
+**Closeout (2026-11-09 stay-day grid):** No new Scaffold ✅. AC-CLI-ASSIGN stays 🟡. The procedure modal is full size, split in half. The right half is a date grid of saved sessions. Saxla stays open. An unseated package row returns to the remaining quota, including when the modal is opened again. Second pass: the day-grid hint omits an empty time or cabin. No new negative spec. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 checkout horizon + catalog search):** No new Scaffold ✅. AC-CLI-ASSIGN and AC-CLI-OPEN-ATTEND stay 🟡. Open attendance uses the day before checkout; the dialog seats that leftover, including open attendance. Catalog search filters the extra accordions by row name or group title. Second pass: the assign-modal ADR now says open attendance takes the checkout day and is not moved onto a cabin. No new negative spec. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 episode card split):** No new Scaffold ✅. AC-CLI-EPISODE stays 🟡. The card shows one course in the reservation split; the patients list holds the other courses. An empty expand and a failed load stay on that row. No new negative spec. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-08 regime cards):** No new Scaffold ✅. AC-CLI-ASSIGN stays 🟡. Cards split by regime; minus cancels that regime's unfinished ids; OPEN reseat is one queue per code. Unit path only (`assignedAggGroupKey` / `regimeFingerprint`). Second pass: minus and a paid draft stay on that regime; lab and visit rows in the procedure modal keep their own lane. No field negative path. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-07 Sollyuks cabin repair):** No new Scaffold ✅. AC-CLI-ASSIGN stays 🟡. Droplet only: 87 SCHEDULED `SVC-SOLLYUKS` moved off `WO-ROOM-2/3/21/22` onto `WO-ROOM-29/30`. 27 used a recoverable original minute; 60 were packed into same-day free gaps. One Saturday 7 Nov pair still shares a minute. `restore-sollyuks-type.sql` and `remap-solyuks-to-sollyuks.sql` removed. No negative suite. Gate/Pilot unchanged. `clinic.yaml` untouched.
+
+**Closeout (2026-11-07 urine color and clarity lists):** AC-CLI-LAB stays ✅ (existing negative path). No new Scaffold ✅. `U-COLOR` and `U-CLARITY` stay QUALITATIVE; option rows added on the droplet and in `lab-blank-norms.json`. Gate/Pilot unchanged. `clinic.yaml` untouched.
+
 **Closeout (2026-11-06 working-hours admin API map, second pass):** No new Scaffold ✅. AC-CLI-RBAC stays 🟡. Exact `ROUTE_PERMISSION_EXACT["/admin/working-hours"]`; schedule load-error UI; specs assert `schedule-recalc`/`schedule-reseat` unmapped; ADR + module-map SA-only note. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.
 
 **Closeout (2026-11-06 working-hours admin API map):** No new Scaffold ✅. AC-CLI-RBAC stays 🟡 (out of BE). `clinic-days` / `peak-rules` added to `ADMIN_API_PREFIX_PERMISSIONS` → `screen:admin.settings`; inventory `scripts/audit-admin-api-map.mjs` + `__tests__/admin-api-prefix-inventory.spec.ts` + permission specs. Schedule recalc/reseat remain platform SA only (not settings). CLI-59 stays SCREEN. Gate/Pilot unchanged. `clinic.yaml` untouched. Needs image deploy.

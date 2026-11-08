@@ -591,12 +591,14 @@
       "valueType": "QUALITATIVE",
       "normText": { "az": "Açıq sarı", "ru": "Светло-жёлтый", "en": "Light yellow" },
       "valueOptions": [
-        {
-          "code": "LIGHT_YELLOW",
-          "labelEn": "Light yellow",
-          "labelRu": "Светло-жёлтый",
-          "labelAz": "Açıq sarı"
-        }
+        { "code": "COLORLESS", "labelEn": "Colorless", "labelRu": "Бесцветная", "labelAz": "Rəngsiz" },
+        { "code": "LIGHT_YELLOW", "labelEn": "Light yellow", "labelRu": "Светло-жёлтая", "labelAz": "Açıq sarı" },
+        { "code": "YELLOW", "labelEn": "Yellow", "labelRu": "Жёлтая", "labelAz": "Sarı" },
+        { "code": "DARK_YELLOW", "labelEn": "Dark yellow", "labelRu": "Тёмно-жёлтая", "labelAz": "Tünd sarı" },
+        { "code": "AMBER", "labelEn": "Amber", "labelRu": "Янтарная", "labelAz": "Kəhrəba" },
+        { "code": "PINK", "labelEn": "Pink", "labelRu": "Розовая", "labelAz": "Çəhrayı" },
+        { "code": "RED", "labelEn": "Red", "labelRu": "Красная", "labelAz": "Qırmızı" },
+        { "code": "BROWN", "labelEn": "Brown", "labelRu": "Коричневая", "labelAz": "Qəhvəyi" }
       ]
     },
     {
@@ -607,12 +609,10 @@
       "valueType": "QUALITATIVE",
       "normText": { "az": "Şəffaf", "ru": "Прозрачная", "en": "Clear" },
       "valueOptions": [
-        {
-          "code": "CLEAR",
-          "labelEn": "Clear",
-          "labelRu": "Прозрачная",
-          "labelAz": "Şəffaf"
-        }
+        { "code": "CLEAR", "labelEn": "Clear", "labelRu": "Прозрачная", "labelAz": "Şəffaf" },
+        { "code": "SLIGHTLY_CLOUDY", "labelEn": "Slightly cloudy", "labelRu": "Слабо мутная", "labelAz": "Zəif bulanıq" },
+        { "code": "CLOUDY", "labelEn": "Cloudy", "labelRu": "Мутная", "labelAz": "Bulanıq" },
+        { "code": "VERY_CLOUDY", "labelEn": "Very cloudy", "labelRu": "Сильно мутная", "labelAz": "Çox bulanıq" }
       ]
     },
     {

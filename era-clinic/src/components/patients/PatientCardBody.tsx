@@ -17,6 +17,9 @@ import { bakuDateDisplay } from "@/lib/baku-day";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  TAB_ITEM_ACTIVE_CLASS,
+  TAB_ITEM_CLASS,
+  TAB_STRIP_CLASS,
   DatePicker,
   Field,
   FieldRow,
@@ -131,16 +134,15 @@ const emptyForm = {
   issuingCountry: "",
 };
 
-export type PatientCardTab = "guest" | "doctor" | "diagnostics" | "plan" | "package";
+export type PatientCardTab = "doctor" | "diagnostics" | "plan" | "package";
 
-const CARD_TABS: PatientCardTab[] = ["guest", "doctor", "diagnostics", "plan", "package"];
+const CARD_TABS: PatientCardTab[] = ["doctor", "diagnostics", "plan", "package"];
 
 export function tabFromCardPanel(panel?: string | null): PatientCardTab {
   if (panel === "plan") return "plan";
   if (panel === "diagnostics" || panel === "intake") return "diagnostics";
   if (panel === "package" || panel === "chart") return "package";
-  if (panel === "doctor" || panel === "clinical") return "doctor";
-  return "guest";
+  return "doctor";
 }
 
 type Props = {
@@ -177,7 +179,6 @@ export function PatientCardBody({
   const [diagnosisCount, setDiagnosisCount] = useState(0);
   const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
   const [cardTab, setCardTab] = useState<PatientCardTab>(() => tabFromCardPanel(panel));
-  const [careDoctorLabel, setCareDoctorLabel] = useState("—");
   const [printOpen, setPrintOpen] = useState(false);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -215,11 +216,6 @@ export function PatientCardBody({
   const anamnesisOk = Boolean(anamnesis.trim());
   const careTeamOk = careTeamCount > 0;
   const studiesUnlocked = anamnesisOk && complaintCount > 0 && diagnosisCount > 0;
-  const episodeFieldKind = episodes.length <= 12 ? "CLOSED_SMALL" : "SEARCHABLE";
-  const episodeOptions = useMemo(
-    () => episodes.map((e) => ({ value: e.id, label: e.label })),
-    [episodes],
-  );
 
   const sexLabel = useCallback(
     (sex: PatientSex | undefined) => {
@@ -243,7 +239,10 @@ export function PatientCardBody({
     const items = (parsed.data?.items ?? parsed.items ?? []) as EpisodeOption[];
     setEpisodes(items);
     if (items.length > 0) {
-      const preferred = items.find((item) => item.id === initialEpisodeId) ?? items[0];
+      const preferred =
+        items.find((item) => item.id === initialEpisodeId) ??
+        items.find((item) => item.status === "OPEN") ??
+        items[0];
       setSelectedEpisodeId(preferred.id);
       setAnamnesis(preferred.anamnesisText ?? "");
     } else {
@@ -287,20 +286,7 @@ export function PatientCardBody({
     setCardTab(tabFromCardPanel(panel));
   }, [panel]);
 
-  function onEpisodeChange(nextId: string) {
-    setSelectedEpisodeId(nextId);
-    const ep = episodes.find((e) => e.id === nextId);
-    setAnamnesis(ep?.anamnesisText ?? "");
-    setCareTeamCount(0);
-    setCareDoctorLabel("—");
-    setComplaintCount(0);
-    setDiagnosisCount(0);
-  }
-
   const onCareTeamChange = useCallback((items: { id: string; practitioner?: { fullName?: string } }[]) => {
-    setCareDoctorLabel(
-      items.map((row) => row.practitioner?.fullName?.trim()).filter(Boolean).join(", ") || "—",
-    );
     setCareTeamCount((prev) => {
       if (prev === 0 && items.length > 0) {
         setClinicalRefreshKey((n) => n + 1);
@@ -465,24 +451,15 @@ export function PatientCardBody({
         ) : null}
       </div>
 
-      <div className="mx-auto flex max-w-3xl flex-col gap-3 px-4 pb-6 sm:px-0">
-        <div className={`sticky top-0 z-10 space-y-3 bg-white pb-1`}>
+      <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="min-h-0 space-y-3 overflow-y-auto">
           <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-3 text-[13px]`}>
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                {episodes.length > 0 ? (
-                  <CatalogField
-                    kind={episodeFieldKind}
-                    label={t("episodeSelect")}
-                    value={selectedEpisodeId ?? ""}
-                    onChange={(next) => onEpisodeChange(String(next))}
-                    options={episodeOptions}
-                  />
-                ) : (
-                  <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("anamnesisCourseMissing")}</p>
-                )}
+                <p className="text-base font-semibold text-[#2C3E50]">{patient.fullName}</p>
+                <p className="mt-0.5 text-sm font-medium text-[#34495E]">{patient.refCode}</p>
               </div>
-              <div className="flex shrink-0 items-center gap-1 pt-5">
+              <div className="flex shrink-0 items-center gap-1">
                 {selectedEpisodeId ? (
                   <button
                     type="button"
@@ -541,45 +518,11 @@ export function PatientCardBody({
                   <span className="font-medium">{t("stayNights")}:</span>{" "}
                   {selectedEpisode.stayNights ?? "—"}
                 </p>
-                <p className="col-span-2 sm:col-span-3">
-                  <span className="font-medium">{t("careTeamTitle")}:</span> {careDoctorLabel}
-                </p>
               </div>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {CARD_TABS.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                className={cardTab === tab ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-                onClick={() => setCardTab(tab)}
-              >
-                {t(
-                  tab === "guest"
-                    ? "cardTabGuest"
-                    : tab === "doctor"
-                      ? "cardTabDoctor"
-                      : tab === "diagnostics"
-                        ? "cardTabDiagnostics"
-                        : tab === "plan"
-                          ? "cardTabPlan"
-                          : "cardTabPackage",
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {cardTab === "guest" ? (
-          <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-            <div>
-              <p className="text-base font-semibold text-[#2C3E50]">{patient.fullName}</p>
-              <p className="mt-0.5 text-sm font-medium text-[#34495E]">
-                {patient.refCode}
-                {patient.ageYears != null ? ` · ${t("ageYears", { age: patient.ageYears })}` : ""}
-              </p>
-            </div>
+            ) : (
+              <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("anamnesisCourseMissing")}</p>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
             {isSuperAdmin ? (
               <p>
                 <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
@@ -659,11 +602,35 @@ export function PatientCardBody({
                 {patient.identifiersSummary.map((i) => i.type).join(", ")}
               </p>
             ) : null}
+            </div>
           </div>
-        ) : null}
+        <div className="flex min-h-0 min-w-0 flex-col">
+          <div className={TAB_STRIP_CLASS} role="tablist">
+            {CARD_TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={cardTab === tab}
+                className={cardTab === tab ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
+                onClick={() => setCardTab(tab)}
+              >
+                {t(
+                  tab === "doctor"
+                    ? "cardTabDoctor"
+                    : tab === "diagnostics"
+                      ? "cardTabDiagnostics"
+                      : tab === "plan"
+                        ? "cardTabPlan"
+                        : "cardTabPackage",
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
 
         {selectedEpisode ? (
-          <div className={cardTab === "guest" ? "space-y-2" : "hidden"}>
+          <div className={cardTab === "doctor" ? "space-y-2" : "hidden"}>
             {selectedEpisode.autoPaidLabMisses ? (
               <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
                 {t("autoPaidLabMiss", { codes: selectedEpisode.autoPaidLabMisses })}
@@ -760,6 +727,8 @@ export function PatientCardBody({
             section={cardTab}
           />
         ) : null}
+          </div>
+        </div>
       </div>
 
       <ModalShell open={editOpen} title={t("editPatient")} onClose={() => setEditOpen(false)}>

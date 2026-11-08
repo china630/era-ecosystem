@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ModalShell } from "@era/satellite-kit/ui";
+import { MODAL_FULL_CLASS, ModalShell } from "@era/satellite-kit/ui";
 import { PatientCardBody, type PatientCardPatient } from "@/components/patients/PatientCardBody";
-import { EPISODE_MODAL_CLASS } from "@/components/sanatorium/episode-modal-class";
 
 type Props = {
   patientId: string | null;
@@ -36,8 +35,9 @@ export function PatientCardModal({
       open={open}
       title={patient?.fullName ?? t("openCard")}
       onClose={onClose}
-      maxWidthClass={EPISODE_MODAL_CLASS}
+      maxWidthClass={MODAL_FULL_CLASS}
       overlayZClass={overlayZClass}
+      bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
     >
       <PatientCardBody
         patientId={patientId}
