@@ -942,7 +942,7 @@ export function PackageAssignModal({
     if (qty < 1) return;
     const unit = unitOf(code);
     const paramsLabel = extra?.paramsLabel ?? "";
-    const regimeKey = regimeOf({ ...extra, paramsLabel });
+    const regimeKey = regimeOf(extra ?? {});
     setExtraDraft((prev) => {
       const hit = prev.find((row) => row.procedureCode === code && regimeOf(row) === regimeKey);
       if (hit) {
