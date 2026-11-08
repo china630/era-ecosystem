@@ -18,6 +18,7 @@ const adjustSchema = z.object({
   assignBatchId: z.string().optional().nullable(),
   targetActiveQty: z.number().int().min(0).optional(),
   cancelAllActive: z.boolean().optional(),
+  cancelOrderIds: z.array(z.string().min(1)).max(80).optional(),
 });
 
 export async function POST(

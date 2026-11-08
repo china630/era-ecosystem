@@ -199,7 +199,8 @@ export function noteOpenAttendanceDay(
 }
 
 /**
- * Pin OPEN rows onto working days through the stay. Different codes share a day.
+ * Pin OPEN rows onto working days through the day before checkout. Different codes share a day.
+ * The checkout day is included only when `checkoutMorning` is set.
  * The same code goes to the next working day. No cabin.
  * `scheduledAt` is the Baku civil-day anchor only (dayStartHour stamp) — UI hides
  * the clock; planners must use `orderCountsForWallClockRest` so the stamp never
@@ -213,6 +214,8 @@ export async function pinOpenAttendanceOrders(
     startAt?: Date;
     /** When set (reseat/recalc), pin each order to that Baku YMD instead of consecutive days. */
     pinYmdByOrderId?: Record<string, string>;
+    /** Stay endsOn is the checkout day. It is inside the horizon only after the guest agrees. */
+    checkoutMorning?: boolean;
   },
 ): Promise<{
   placed: number;
@@ -248,18 +251,19 @@ export async function pinOpenAttendanceOrders(
   let cursorYmd = bakuDateKey(now);
   let horizonEndYmd = addBakuDays(cursorYmd, 21);
   if (opts?.scheduleBefore && !Number.isNaN(opts.scheduleBefore.getTime())) {
-    horizonEndYmd = bakuDateKey(opts.scheduleBefore);
+    const checkoutYmd = bakuDateKey(opts.scheduleBefore);
+    horizonEndYmd = opts.checkoutMorning ? checkoutYmd : addBakuDays(checkoutYmd, -1);
   } else {
     for (const order of orders) {
       const endsOn = order.clinicalEpisode?.programInstance?.endsOn;
       if (endsOn && !Number.isNaN(endsOn.getTime())) {
-        const ymd = bakuDateKey(endsOn);
+        const ymd = addBakuDays(bakuDateKey(endsOn), opts?.checkoutMorning ? 0 : -1);
         if (ymd < horizonEndYmd) horizonEndYmd = ymd;
       }
     }
   }
   for (const pin of Object.values(opts?.pinYmdByOrderId ?? {})) {
-    if (pin && pin >= horizonEndYmd) horizonEndYmd = addBakuDays(pin, 1);
+    if (pin && pin > horizonEndYmd) horizonEndYmd = pin;
   }
   const clinicDays = await listClinicDays(cursorYmd, addBakuDays(horizonEndYmd, 7));
   if (!clinicDays.some((d) => d.working && d.ymd === cursorYmd)) {
@@ -781,4 +785,123 @@ export async function loadOpenAttendanceForesight(date: Date): Promise<{
       resourceId: r.resourceId,
     })),
   };
+}
+
+/**
+ * Reseat movable OPEN sessions of each code in calendar order.
+ * A new id in `appendIds` goes after sessions already on the plan.
+ * Started, completed, paid, and hand-moved rows keep their day and occupy it.
+ * Closed days are skipped. Sessions that do not fit stay put and come back as misses.
+ */
+export async function compactOpenRegimeQueues(
+  episodeId: string,
+  procedureCodes: string[],
+  opts?: { appendIds?: string[]; checkoutMorning?: boolean },
+): Promise<
+  Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>
+> {
+  const codes = [...new Set(procedureCodes.map((code) => code.trim()).filter(Boolean))];
+  if (codes.length === 0) return [];
+  const append = new Set(opts?.appendIds ?? []);
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { programInstance: { select: { endsOn: true } } },
+  });
+  const rows = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      procedureCode: { in: codes },
+      schedulingMode: "OPEN",
+      status: { notIn: ["CANCELLED", "UNPAID_MISSED"] },
+    },
+    select: {
+      id: true,
+      procedureCode: true,
+      procedureName: true,
+      status: true,
+      scheduledAt: true,
+      createdAt: true,
+      manuallyAdjusted: true,
+      checkedInAt: true,
+      inPackage: true,
+    },
+  });
+  const today = todayBakuYmd();
+  const checkoutYmd = episode?.programInstance?.endsOn
+    ? bakuDateKey(episode.programInstance.endsOn)
+    : null;
+  const horizonEnd = checkoutYmd
+    ? opts?.checkoutMorning
+      ? checkoutYmd
+      : addBakuDays(checkoutYmd, -1)
+    : addBakuDays(today, 60);
+  const failures: Array<{
+    orderId: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    ymd?: string;
+  }> = [];
+  const pin: Record<string, string> = {};
+  const movableIds: string[] = [];
+  for (const code of codes) {
+    const ofCode = rows.filter((row) => row.procedureCode === code);
+    const movable = ofCode.filter((row) => {
+      if (row.manuallyAdjusted || row.checkedInAt) return false;
+      if (row.inPackage) return row.status === "PROPOSED" || row.status === "SCHEDULED";
+      return row.status === "PENDING_PAY";
+    });
+    const movableIdsOfCode = new Set(movable.map((row) => row.id));
+    const occupied = new Set(
+      ofCode
+        .filter((row) => !movableIdsOfCode.has(row.id))
+        .map((row) => bakuDateKey(row.scheduledAt)),
+    );
+    const sorted = [...movable].sort((a, b) => {
+      const aNew = append.has(a.id) ? 1 : 0;
+      const bNew = append.has(b.id) ? 1 : 0;
+      if (aNew !== bNew) return aNew - bNew;
+      if (aNew === 1) return a.createdAt.getTime() - b.createdAt.getTime();
+      const byDay = a.scheduledAt.getTime() - b.scheduledAt.getTime();
+      return byDay !== 0 ? byDay : a.createdAt.getTime() - b.createdAt.getTime();
+    });
+    const startYmd = sorted.reduce((min, row) => {
+      if (append.has(row.id)) return min;
+      const ymd = bakuDateKey(row.scheduledAt);
+      return ymd < min ? ymd : min;
+    }, today);
+    const from = startYmd < today ? today : startYmd;
+    const clinicDays = await listClinicDays(from, horizonEnd);
+    const working = clinicDays
+      .filter((day) => day.working && day.ymd >= from && day.ymd <= horizonEnd)
+      .map((day) => day.ymd);
+    let cursor = 0;
+    for (const row of sorted) {
+      while (cursor < working.length && occupied.has(working[cursor]!)) cursor += 1;
+      const ymd = working[cursor];
+      if (!ymd) {
+        failures.push({
+          orderId: row.id,
+          procedureCode: row.procedureCode,
+          procedureName: row.procedureName,
+          reason: "no_slot",
+          ymd: horizonEnd,
+        });
+        continue;
+      }
+      occupied.add(ymd);
+      cursor += 1;
+      pin[row.id] = ymd;
+      movableIds.push(row.id);
+    }
+  }
+  if (movableIds.length > 0) {
+    const seat = await pinOpenAttendanceOrders(movableIds, {
+      pinYmdByOrderId: pin,
+      scheduleBefore: episode?.programInstance?.endsOn ?? undefined,
+      checkoutMorning: opts?.checkoutMorning,
+    });
+    failures.push(...seat.failures);
+  }
+  return failures;
 }

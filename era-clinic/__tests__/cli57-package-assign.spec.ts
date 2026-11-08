@@ -1,3 +1,4 @@
+import { regimeFingerprint } from "@/domain/sanatorium/regime-key";
 import {
   bakuDayKey,
   PackageAssignError,
@@ -210,20 +211,45 @@ describe("CLI-57 package assign helpers", () => {
     })).toEqual(["2 gün", "tam"]);
   });
 
-  it("assignedAggGroupKey merges batches and param fingerprints for the same SKU", () => {
-    const a = assignedAggGroupKey({
+  it("assignedAggGroupKey keeps one card per regime and splits a different regime", () => {
+    const neck = assignedAggGroupKey({
       procedureCode: "SVC-AMP",
       packageQuotaCode: "PHYSIO_POOL",
-      locked: false,
-      consumed: false,
+      regimeKey: "site-neck|TURN|{}",
     });
-    const b = assignedAggGroupKey({
+    const neckAgain = assignedAggGroupKey({
       procedureCode: "SVC-AMP",
       packageQuotaCode: "PHYSIO_POOL",
-      locked: false,
-      consumed: false,
+      regimeKey: "site-neck|TURN|{}",
     });
-    expect(a).toBe(b);
+    const legs = assignedAggGroupKey({
+      procedureCode: "SVC-AMP",
+      packageQuotaCode: "PHYSIO_POOL",
+      regimeKey: "site-legs|TURN|{}",
+    });
+    expect(neck).toBe(neckAgain);
+    expect(neck).not.toBe(legs);
+    const neckRegime = regimeFingerprint({
+      siteIds: ["b", "a"],
+      siteLaterality: { a: "LEFT", b: null },
+      siteApplyMode: "TURN",
+      physioFields: { intensity: "LOW" },
+    });
+    expect(neckRegime).toBe(
+      regimeFingerprint({
+        siteIds: ["a", "b"],
+        siteLaterality: { b: null, a: "LEFT" },
+        siteApplyMode: "TURN",
+        physioFields: { intensity: "LOW" },
+      }),
+    );
+    expect(neckRegime).not.toBe(
+      regimeFingerprint({
+        siteIds: ["a"],
+        siteApplyMode: "TURN",
+        physioFields: { intensity: "HIGH" },
+      }),
+    );
     expect(mergeParamLines(["naftalanFill: TAM · dayBlock: 2", "naftalanFill: TAM · bathSequence: SITZ_THEN_FULL"])).toEqual([
       "naftalanFill: TAM",
       "dayBlock: 2",

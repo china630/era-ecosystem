@@ -383,10 +383,15 @@ async function pinUnpaidOpenExtras(
   return failures;
 }
 
+const extraRegimeInclude = {
+  sites: { select: { siteId: true, laterality: true } },
+} as const;
+
 export async function listPendingExtras(episodeId: string) {
   return prisma.procedureOrder.findMany({
     where: { clinicalEpisodeId: episodeId, status: "PENDING_PAY" },
     orderBy: { createdAt: "asc" },
+    include: extraRegimeInclude,
   });
 }
 
@@ -417,6 +422,7 @@ export async function listPaidExtras(episodeId: string) {
       status: { in: [...PAID_EXTRA_STATUSES] },
     },
     orderBy: { createdAt: "asc" },
+    include: extraRegimeInclude,
   });
 }
 
@@ -426,6 +432,7 @@ export async function deletePendingExtra(orderId: string): Promise<void> {
   if (order.status !== "PENDING_PAY") {
     throw new PackageAssignError("Only PENDING_PAY can be deleted here", "INVALID_STATUS", 400);
   }
+  await releaseProcedureOccupancy([orderId]);
   await prisma.procedureOrder.delete({ where: { id: orderId } });
 }
 

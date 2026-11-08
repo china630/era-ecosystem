@@ -13,6 +13,9 @@ import {
   LINK_ACCENT_CLASS,
   ModalFooter,
   ModalShell,
+  CHIP_ACTIVE_CLASS,
+  CHIP_CLASS,
+  CHIP_GROUP_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
@@ -1152,9 +1155,10 @@ export function PatientCardClinicalSections({
         <section className="flex min-h-0 flex-1 flex-col space-y-3">
           {studiesUnlocked && episodeId ? (
             <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className={CHIP_GROUP_CLASS}>
               <button
                 type="button"
-                className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                className={planDate === "all" ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
                 onClick={() => setPlanDate("all")}
               >
                 {t("planAll")}
@@ -1163,12 +1167,13 @@ export function PatientCardClinicalSections({
                 <button
                   key={date}
                   type="button"
-                  className={planDate === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                  className={planDate === date ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
                   onClick={() => setPlanDate(date)}
                 >
                   {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
                 </button>
               ))}
+              </div>
               <div className="ml-auto flex items-center gap-2">
                 <button
                   type="button"
@@ -1193,10 +1198,10 @@ export function PatientCardClinicalSections({
               </div>
             </div>
           ) : (
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <div className={CHIP_GROUP_CLASS}>
               <button
                 type="button"
-                className={planDate === "all" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                className={planDate === "all" ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
                 onClick={() => setPlanDate("all")}
               >
                 {t("planAll")}
@@ -1205,7 +1210,7 @@ export function PatientCardClinicalSections({
                 <button
                   key={date}
                   type="button"
-                  className={planDate === date ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                  className={planDate === date ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
                   onClick={() => setPlanDate(date)}
                 >
                   {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
