@@ -2010,7 +2010,7 @@ export function PackageAssignModal({
               if (usedPending.has(row.id) || usedPaid.has(row.id)) continue;
               const regimeKey = "regimeKey" in row ? row.regimeKey ?? "" : "";
               if (lanes.some((lane) => lane.code === row.procedureCode && lane.regimeKey === regimeKey)) continue;
-              pushLane(row.procedureCode, row.procedureName, regimeKey, "", [], undefined, undefined, 0, false, row);
+              pushLane(row.procedureCode, row.procedureName, regimeKey, "", [], undefined, undefined, 0, false);
             }
             if (lanes.length === 0) {
               return <p className={TEXT_MUTED_CLASS}>{labels.emptyRight}</p>;
@@ -2139,6 +2139,7 @@ export function PackageAssignModal({
                             () => extraMinus(lane.code, lane.regimeKey),
                             () =>
                               extraPlus(lane.code, lane.name, lane.paramsLabel, lane.regimeKey, {
+                                note: "",
                                 physioFields: lane.physioFields,
                                 siteIds: lane.siteIds,
                                 siteApplyMode: lane.siteApplyMode,
