@@ -699,6 +699,7 @@ export function DiagnosticsAssignModal({
               </h4>
               <div className="mb-2">
                 <Field
+                  preset="shortText"
                   label={t("catalogSearch")}
                   value={catalogQuery}
                   onChange={(e) => {
