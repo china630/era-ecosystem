@@ -604,6 +604,7 @@ export function PatientCardBody({
             ) : null}
             </div>
           </div>
+        </div>
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className={TAB_STRIP_CLASS} role="tablist">
             {CARD_TABS.map((tab) => (
