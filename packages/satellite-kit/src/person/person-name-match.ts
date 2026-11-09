@@ -42,7 +42,7 @@ export function isSimilarPersonName(
   return damerauLevenshtein(al, bl) <= 1 && damerauLevenshtein(af, bf) <= 1;
 }
 
-function latinMetaphone(raw: string): string {
+export function latinMetaphone(raw: string): string {
   let s = normalizeNameKey(raw);
   if (!s) return "";
   s = s

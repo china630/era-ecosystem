@@ -715,6 +715,7 @@ export {
 
 export {
   isSimilarPersonName,
+  latinMetaphone,
   namesClearlyDiffer,
   normalizeNameKey,
   sameMetaphoneName,
