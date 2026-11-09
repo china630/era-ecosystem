@@ -148,17 +148,16 @@ export function PatientCardComplaints({
   }
 
   return (
-    <FieldGroupBox
-      title={t("complaintsTitle")}
-      actions={
-        !readOnly && resolvedEpisodeId ? (
+    <div>
+      {!readOnly && resolvedEpisodeId ? (
+        <div className="mb-1 flex justify-end">
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
             <Plus className="h-4 w-4" aria-hidden />
             {t("addComplaint")}
           </button>
-        ) : null
-      }
-    >
+        </div>
+      ) : null}
+    <FieldGroupBox title={t("complaintsTitle")}>
         {loading ? (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
         ) : !resolvedEpisodeId ? (
@@ -231,5 +230,6 @@ export function PatientCardComplaints({
         />
       </ModalShell>
     </FieldGroupBox>
+    </div>
   );
 }

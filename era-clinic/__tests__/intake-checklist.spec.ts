@@ -122,6 +122,82 @@ describe("getIntakeChecklist", () => {
     expect(mockedPrisma.programTemplate.findFirst).not.toHaveBeenCalled();
   });
 
+  it("puts the own-blank date on auto-paid infection biochemistry, not package blood biochem", async () => {
+    const services = prisma as unknown as {
+      diagnosticService: { findMany: jest.Mock };
+    };
+    services.diagnosticService.findMany.mockResolvedValue([
+      {
+        code: "LAB-BIOCHEM-STANDART",
+        serviceCode: "LAB-BIOCHEM-STANDART",
+        broughtInMaxDays: 30,
+        autoPaidOnOpen: false,
+        titleEn: "Blood biochemistry",
+        titleRu: "Биохимия крови",
+        titleAz: "Qanın biokimya analizi",
+      },
+      {
+        code: "LAB-INFECT",
+        serviceCode: "LAB-INFECT",
+        broughtInMaxDays: 30,
+        autoPaidOnOpen: false,
+        titleEn: "Infections",
+        titleRu: "Инфекции",
+        titleAz: "İnfeksiya",
+      },
+      {
+        code: "LAB-BIOCHEM-INFECT",
+        serviceCode: "LAB-BIOCHEM-INFECT",
+        broughtInMaxDays: 30,
+        autoPaidOnOpen: true,
+        titleEn: "Biochemistry (infections)",
+        titleRu: "Биохимия (инфекции)",
+        titleAz: "Biokimya (infeksiyalar)",
+      },
+    ]);
+    mockedPrisma.programTemplate.findFirst.mockResolvedValue({
+      ...template,
+      procedures: [
+        ...template.procedures,
+        {
+          procedureCode: "LAB-BIOCHEM-STANDART",
+          procedureName: "Qanın biokimya analizi",
+          assignMode: "AUTO_ON_OPEN",
+          kind: "LAB",
+          fulfillment: "LAB_ORDER",
+          sortOrder: 5,
+        },
+        {
+          procedureCode: "LAB-INFECT",
+          procedureName: "İnfeksiya",
+          assignMode: "AUTO_ON_OPEN",
+          kind: "LAB",
+          fulfillment: "LAB_ORDER",
+          sortOrder: 6,
+        },
+      ],
+      blockMembers: [
+        ...template.blockMembers,
+        { blockCode: "LAB-BIOCHEM-STANDART", procedureCode: "LAB-BIOCHEM-STANDART" },
+        { blockCode: "LAB-INFECT", procedureCode: "LAB-INFECT" },
+      ],
+    });
+    const checklist = await getIntakeChecklist("p1", { episodeId: "ep1" });
+    expect(checklist.items.find((item) => item.resolvedCode === "LAB-BIOCHEM-STANDART")).toMatchObject({
+      broughtInMaxDays: null,
+      broughtInOn: null,
+    });
+    expect(checklist.items.find((item) => item.resolvedCode === "LAB-INFECT")).toMatchObject({
+      broughtInMaxDays: 30,
+    });
+    expect(checklist.items.find((item) => item.slot === "LAB-BIOCHEM-INFECT")).toMatchObject({
+      kind: "lab",
+      broughtInMaxDays: 30,
+      title: { ru: "Биохимия (инфекции)" },
+    });
+    services.diagnosticService.findMany.mockResolvedValue([]);
+  });
+
   it("stays empty without an episode", async () => {
     const checklist = await getIntakeChecklist("p1");
     expect(checklist.items).toEqual([]);

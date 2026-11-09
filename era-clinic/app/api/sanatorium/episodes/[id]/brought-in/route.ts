@@ -10,7 +10,7 @@ import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { assertEpisodeDataScope } from "@/lib/auth/clinic-data-scope";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { broughtInIsFresh } from "@/domain/lab/brought-in-result";
+import { broughtInIsFresh, ownBlankMaxDays } from "@/domain/lab/brought-in-result";
 import { cancelLabOrder } from "@/domain/lab/lab-order-cancel.service";
 
 const bodySchema = z.object({
@@ -73,7 +73,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         });
       }
     }
-    if (!service || service.broughtInMaxDays == null) {
+    const maxDays = service ? ownBlankMaxDays(service.code, service.broughtInMaxDays) : null;
+    if (!service || maxDays == null) {
       return jsonError("This lab does not accept a brought-in blank", 400);
     }
     if (!body.resultOn) {
@@ -82,7 +83,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       });
       return jsonOk({ serviceCode: service.code, resultOn: null });
     }
-    if (!broughtInIsFresh(body.resultOn, service.broughtInMaxDays)) {
+    if (!broughtInIsFresh(body.resultOn, maxDays)) {
       return jsonError("Brought-in blank is outside the accepted window", 400);
     }
     const orgId = episode.organizationId || requestOrganizationId();

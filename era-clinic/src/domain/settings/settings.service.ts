@@ -122,6 +122,7 @@ export async function getClinicSettings() {
     doctorBonusPercentWalkIn: tenant.doctorBonusPercentWalkIn ?? 0,
     hotelFolioRevenueCode: tenant.hotelFolioRevenueCode?.trim() || null,
     noShowKeepsCharge: tenant.noShowKeepsCharge !== false,
+    noShowBurnsQuota: tenant.noShowBurnsQuota !== false,
     extraProcedureRoute: parseExtraProcedureRoute(tenant.extraProcedureRoute),
     procedurePrintExtraLang:
       tenant.procedurePrintExtraLang === "az" ||
@@ -203,6 +204,7 @@ export async function updateClinicSettings(input: {
   doctorBonusPercentWalkIn?: number;
   hotelFolioRevenueCode?: string | null;
   noShowKeepsCharge?: boolean;
+  noShowBurnsQuota?: boolean;
   extraProcedureRoute?: string | null;
   procedurePrintExtraLang?: string | null;
 }) {
@@ -423,6 +425,9 @@ export async function updateClinicSettings(input: {
         : {}),
       ...(input.noShowKeepsCharge !== undefined
         ? { noShowKeepsCharge: input.noShowKeepsCharge }
+        : {}),
+      ...(input.noShowBurnsQuota !== undefined
+        ? { noShowBurnsQuota: input.noShowBurnsQuota }
         : {}),
       ...(input.extraProcedureRoute
         ? { extraProcedureRoute: parseExtraProcedureRoute(input.extraProcedureRoute) }

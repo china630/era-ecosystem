@@ -94,6 +94,8 @@ type AssignBlocksProps = {
   hidePackage?: boolean;
   /** Diagnostics chip: the tab already names the block. */
   hidePackageTitle?: boolean;
+  /** Print / history / plus live on the tab row instead of this block. */
+  suppressToolbar?: boolean;
   /** PENDING_PAY / awaiting-payment rows visible on the card (ADR D8). */
   extrasPending?: AssignPendingRow[];
   pendingPayLabel?: string;
@@ -120,6 +122,7 @@ export function EpisodeAssignBlocks({
   readOnly,
   hidePackage,
   hidePackageTitle,
+  suppressToolbar,
   extrasPending = [],
   pendingPayLabel = "Awaiting payment",
   payLabel = "Pay",
@@ -131,9 +134,10 @@ export function EpisodeAssignBlocks({
 }: AssignBlocksProps) {
   const showExtrasBlock = hidePackage || extrasPending.length > 0;
   const showRowActions = Boolean(onPayPending || onRemovePending);
+  if (suppressToolbar && !showExtrasBlock) return null;
   return (
     <div className="space-y-3">
-      {!hidePackage && (onPackagePrint || onPackageHistory || onPackagePlus) ? (
+      {!suppressToolbar && !hidePackage && (onPackagePrint || onPackageHistory || onPackagePlus) ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
           {hidePackageTitle ? <span /> : <h3 className="font-semibold">{packageTitle}</h3>}
           <div className="flex flex-wrap items-center gap-2">
@@ -173,7 +177,7 @@ export function EpisodeAssignBlocks({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-semibold">{extrasTitle}</h3>
-            {hidePackage ? (
+            {hidePackage && !suppressToolbar ? (
               <button
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}

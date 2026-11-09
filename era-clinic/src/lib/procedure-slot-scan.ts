@@ -333,6 +333,75 @@ function resourceUsed(
   return count;
 }
 
+/** Occupancy split by cabin and person. A seat added during the scan joins the same maps. */
+export function indexScanAllocations(allocs: ScanAllocation[]): {
+  byResource: Map<string, ScanAllocation[]>;
+  byStaff: Map<string, ScanAllocation[]>;
+  add: (row: ScanAllocation) => void;
+} {
+  const byResource = new Map<string, ScanAllocation[]>();
+  const byStaff = new Map<string, ScanAllocation[]>();
+  const add = (row: ScanAllocation) => {
+    if (row.resourceId && (row.role === "LOCATION" || row.role === "EQUIPMENT")) {
+      const list = byResource.get(row.resourceId) ?? [];
+      list.push(row);
+      byResource.set(row.resourceId, list);
+    }
+    if (row.practitionerId && row.role === "STAFF") {
+      const list = byStaff.get(row.practitionerId) ?? [];
+      list.push(row);
+      byStaff.set(row.practitionerId, list);
+    }
+  };
+  for (const row of allocs) add(row);
+  return { byResource, byStaff, add };
+}
+
+/**
+ * Next grid time at which at least one cabin of this procedure is free.
+ * The cabin stays busy until the occupying session ends plus that session's own gap.
+ */
+export function nextCabinGridTime(
+  order: Pick<ScanOrder, "id" | "resources" | "durationMin" | "physicalRole">,
+  slotStart: Date,
+  allocations: ScanAllocation[],
+  slotMinutes: number,
+): Date | null {
+  if (order.resources.length === 0) return null;
+  const slotEnd = addMinutes(slotStart, order.durationMin);
+  let earliest: Date | null = null;
+  for (const resource of order.resources) {
+    let busyUntil = slotStart;
+    let blocked = false;
+    for (const row of allocations) {
+      if (row.role !== "LOCATION" && row.role !== "EQUIPMENT") continue;
+      if (row.resourceId !== resource.id) continue;
+      if (row.procedureOrderId === order.id) continue;
+      if (
+        !allocationOccupiesCandidate(
+          row.startsAt,
+          row.endsAt,
+          row.resourceGapMinutes,
+          slotStart,
+          slotEnd,
+        )
+      ) {
+        continue;
+      }
+      blocked = true;
+      const occupiedEnd = new Date(
+        row.endsAt.getTime() + Math.max(0, row.resourceGapMinutes) * 60_000,
+      );
+      if (occupiedEnd > busyUntil) busyUntil = occupiedEnd;
+    }
+    const opened = blocked ? snapUpToSlot(busyUntil, slotMinutes) : slotStart;
+    const candidate =
+      opened.getTime() <= slotStart.getTime() ? addMinutes(slotStart, slotMinutes) : opened;
+    if (!earliest || candidate.getTime() < earliest.getTime()) earliest = candidate;
+  }
+  return earliest;
+}
+
 function pickStaff(
   people: ScanStaff[],
   allocs: ScanAllocation[],
@@ -340,13 +409,15 @@ function pickStaff(
   endsAt: Date,
   orderId: string,
   mode: "HARD" | "SOFT",
+  byStaff?: Map<string, ScanAllocation[]>,
 ): ScanStaff | null {
+  const rowsFor = (personId: string) => byStaff?.get(personId) ?? allocs;
   if (people.length === 0) return null;
   if (mode === "SOFT") {
     let best = people[0]!;
     let bestBusy = Number.POSITIVE_INFINITY;
     for (const person of people) {
-      const busy = staffBusy(allocs, person.id, startsAt, endsAt, orderId);
+      const busy = staffBusy(rowsFor(person.id), person.id, startsAt, endsAt, orderId);
       if (busy < bestBusy) {
         best = person;
         bestBusy = busy;
@@ -356,7 +427,7 @@ function pickStaff(
     return best;
   }
   for (const person of people) {
-    if (staffBusy(allocs, person.id, startsAt, endsAt, orderId) === 0) return person;
+    if (staffBusy(rowsFor(person.id), person.id, startsAt, endsAt, orderId) === 0) return person;
   }
   return null;
 }
@@ -410,6 +481,10 @@ export type CandidateSlotInput = {
   patientSlots: ScanPatientSlot[];
   rotationContext: RotationContextSlot[];
   allocations: ScanAllocation[];
+  /** Cabin rows only. When set, cabin checks skip the full occupancy list. */
+  allocationsByResource?: Map<string, ScanAllocation[]>;
+  /** Staff rows only. When set, nurse checks skip the full occupancy list. */
+  allocationsByStaff?: Map<string, ScanAllocation[]>;
   /** Manual move: this cabin only. Auto search leaves it unset. */
   requiredResourceId?: string | null;
 };
@@ -539,6 +614,7 @@ export function evaluateCandidateSlot(
     slotEnd,
     order.id,
     order.staffMode,
+    input.allocationsByStaff,
   );
   if (!staff) return fail("staff_busy", true);
 
@@ -585,7 +661,14 @@ export function evaluateCandidateSlot(
   if (order.resources.length === 0) return fail("no_cabin", true);
   if (input.requiredResourceId && candidates.length === 0) return fail("no_cabin", true);
   const resource = candidates.find(
-    (row) => resourceUsed(input.allocations, row.id, slotStart, slotEnd, order.id) < row.capacity,
+    (row) =>
+      resourceUsed(
+        input.allocationsByResource?.get(row.id) ?? input.allocations,
+        row.id,
+        slotStart,
+        slotEnd,
+        order.id,
+      ) < row.capacity,
   );
   if (!resource) return fail("cabin_busy", true);
 
@@ -632,6 +715,7 @@ export function scanProcedureSlots(input: {
 }): { planned: PlannedPlacement[]; failures: PlacementFailure[] } {
   const planned: PlannedPlacement[] = [];
   const failures: PlacementFailure[] = [];
+  const occupancy = indexScanAllocations(input.allocations);
 
   for (const order of input.orders) {
     if (order.resources.length === 0) {
@@ -728,6 +812,8 @@ export function scanProcedureSlots(input: {
         patientSlots: input.patientSlots,
         rotationContext: input.rotationContext,
         allocations: input.allocations,
+        allocationsByResource: occupancy.byResource,
+        allocationsByStaff: occupancy.byStaff,
       });
       if (!verdict.ok) {
         if (verdict.sawStaffPool) sawStaffPool = true;
@@ -746,6 +832,25 @@ export function scanProcedureSlots(input: {
             verdict.reason === "same_day" ||
             verdict.reason === "no_staff" ||
             verdict.reason === "closed");
+        if (!order.pinYmd && verdict.reason === "cabin_busy") {
+          const cabinAt = nextCabinGridTime(
+            order,
+            slotStart,
+            input.allocations,
+            input.slotMinutes,
+          );
+          slotStart = cabinAt
+            ? nextOpenSlot(
+                cabinAt,
+                order,
+                input.closedYmds,
+                input.horizonEndYmd,
+                input.slotMinutes,
+                input.noonCheckoutYmd,
+              )
+            : null;
+          continue;
+        }
         slotStart = jumpMorning
           ? nextMorning(slotStart, order, input.closedYmds, input.horizonEndYmd, input.slotMinutes, input.noonCheckoutYmd)
           : nextOpenSlot(
@@ -792,26 +897,27 @@ export function scanProcedureSlots(input: {
         startAt: slotStart,
         endAt: slotEnd,
       });
-      input.allocations.push(
-        {
-          role: order.physicalRole,
-          resourceId: verdict.resource.id,
-          practitionerId: null,
-          startsAt: slotStart,
-          endsAt: slotEnd,
-          procedureOrderId: order.id,
-          resourceGapMinutes: order.resourceGapMinutes,
-        },
-        {
-          role: "STAFF",
-          resourceId: null,
-          practitionerId: verdict.staff.id,
-          startsAt: slotStart,
-          endsAt: slotEnd,
-          procedureOrderId: order.id,
-          resourceGapMinutes: 0,
-        },
-      );
+      const cabinRow: ScanAllocation = {
+        role: order.physicalRole,
+        resourceId: verdict.resource.id,
+        practitionerId: null,
+        startsAt: slotStart,
+        endsAt: slotEnd,
+        procedureOrderId: order.id,
+        resourceGapMinutes: order.resourceGapMinutes,
+      };
+      const staffRow: ScanAllocation = {
+        role: "STAFF",
+        resourceId: null,
+        practitionerId: verdict.staff.id,
+        startsAt: slotStart,
+        endsAt: slotEnd,
+        procedureOrderId: order.id,
+        resourceGapMinutes: 0,
+      };
+      input.allocations.push(cabinRow, staffRow);
+      occupancy.add(cabinRow);
+      occupancy.add(staffRow);
     }
 
     if (placed) planned.push(placed);

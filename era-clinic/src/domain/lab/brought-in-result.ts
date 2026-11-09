@@ -3,6 +3,19 @@ import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Package blood panels stay in-house. The own-blank date is the infection panel. */
+export const PACKAGE_BLOOD_BIOCHEM_CODES = new Set([
+  "LAB-BIOCHEM-STANDART",
+  "LAB-BIOCHEM-PREMIUM",
+  "LAB-BIOCHEM-DERMA",
+  "LAB-BIOCHEM-DETOKS",
+]);
+
+export function ownBlankMaxDays(code: string, days: number | null | undefined): number | null {
+  if (days == null || PACKAGE_BLOOD_BIOCHEM_CODES.has(code)) return null;
+  return days;
+}
+
 export function broughtInAgeDays(resultOnYmd: string, todayYmd = todayBakuYmd()): number | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(resultOnYmd) || !/^\d{4}-\d{2}-\d{2}$/.test(todayYmd)) {
     return null;
@@ -35,9 +48,11 @@ export async function freshBroughtInCodes(episodeId: string): Promise<Set<string
   });
   const maxByCode = new Map<string, number>();
   for (const service of services) {
-    if (service.broughtInMaxDays == null) continue;
-    maxByCode.set(service.code, service.broughtInMaxDays);
-    maxByCode.set(service.serviceCode, service.broughtInMaxDays);
+    const days = ownBlankMaxDays(service.code, service.broughtInMaxDays);
+    if (days == null) continue;
+    maxByCode.set(service.code, days);
+    const viaSku = ownBlankMaxDays(service.serviceCode, service.broughtInMaxDays);
+    if (viaSku != null) maxByCode.set(service.serviceCode, viaSku);
   }
   const fresh = new Set<string>();
   for (const row of rows) {

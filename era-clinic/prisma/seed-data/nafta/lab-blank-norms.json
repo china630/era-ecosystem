@@ -798,7 +798,19 @@
       "valueType": "QUALITATIVE",
       "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
       "valueOptions": [
-        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" }
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" },
+        { "code": "OXALATE_FEW", "labelEn": "Calcium oxalate crystals, small amount", "labelRu": "Кристаллы оксалата, небольшое количество", "labelAz": "Oksalat kristalları az miqdarda" },
+        { "code": "OXALATE_MOD", "labelEn": "Calcium oxalate crystals, moderate amount", "labelRu": "Кристаллы оксалата, умеренное количество", "labelAz": "Oksalat kristalları orta miqdarda" },
+        { "code": "OXALATE_MANY", "labelEn": "Calcium oxalate crystals, large amount", "labelRu": "Кристаллы оксалата, большое количество", "labelAz": "Oksalat kristalları çox miqdarda" },
+        { "code": "URIC_ACID_FEW", "labelEn": "Uric acid crystals, small amount", "labelRu": "Кристаллы мочевой кислоты, небольшое количество", "labelAz": "Sidik turşusu kristalları az miqdarda" },
+        { "code": "URIC_ACID_MOD", "labelEn": "Uric acid crystals, moderate amount", "labelRu": "Кристаллы мочевой кислоты, умеренное количество", "labelAz": "Sidik turşusu kristalları orta miqdarda" },
+        { "code": "URIC_ACID_MANY", "labelEn": "Uric acid crystals, large amount", "labelRu": "Кристаллы мочевой кислоты, большое количество", "labelAz": "Sidik turşusu kristalları çox miqdarda" },
+        { "code": "URATE_FEW", "labelEn": "Urate crystals, small amount", "labelRu": "Кристаллы уратов, небольшое количество", "labelAz": "Urat kristalları az miqdarda" },
+        { "code": "URATE_MOD", "labelEn": "Urate crystals, moderate amount", "labelRu": "Кристаллы уратов, умеренное количество", "labelAz": "Urat kristalları orta miqdarda" },
+        { "code": "URATE_MANY", "labelEn": "Urate crystals, large amount", "labelRu": "Кристаллы уратов, большое количество", "labelAz": "Urat kristalları çox miqdarda" },
+        { "code": "TRIPLE_PHOS_FEW", "labelEn": "Triple phosphate crystals, small amount", "labelRu": "Кристаллы трипельфосфата, небольшое количество", "labelAz": "Tripel fosfat kristalları az miqdarda" },
+        { "code": "TRIPLE_PHOS_MOD", "labelEn": "Triple phosphate crystals, moderate amount", "labelRu": "Кристаллы трипельфосфата, умеренное количество", "labelAz": "Tripel fosfat kristalları orta miqdarda" },
+        { "code": "TRIPLE_PHOS_MANY", "labelEn": "Triple phosphate crystals, large amount", "labelRu": "Кристаллы трипельфосфата, большое количество", "labelAz": "Tripel fosfat kristalları çox miqdarda" }
       ]
     }
   ]

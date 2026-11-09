@@ -6,7 +6,7 @@ import { regimeFromOrderSites } from "@/domain/sanatorium/regime-key";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
+import { placeConfirmedProcedures, type CabinScanBag } from "@/lib/treatment-planner.service";
 import {
   releaseProcedureOccupancy,
   replaceProcedureAllocations,
@@ -1008,15 +1008,16 @@ export async function getPackageAssignSnapshot(
     const consumed = (CONSUMED as readonly string[]).includes(o.status);
     const started = consumed || o.status === "CHECKED_IN" || o.checkedInAt != null;
     const regimeKey = regimeFromOrderSites(o);
+    const stampedQuota = quotaCodeOf(o);
     const key = assignedAggGroupKey({
       procedureCode: o.procedureCode,
-      packageQuotaCode: quotaCodeOf(o),
+      packageQuotaCode: isPackageQuotaAlias(stampedQuota) ? o.procedureCode : stampedQuota,
       regimeKey,
     });
     const lines = paramsLinesFromOrder(o, { locale, listTitles });
     const movable =
       !started &&
-      !o.manuallyAdjusted &&
+      bakuDateKey(o.scheduledAt) >= todayBakuYmd() &&
       (o.status === "PROPOSED" || o.status === "SCHEDULED");
     const prev = batchMap.get(key);
     if (prev) {
@@ -1639,7 +1640,13 @@ async function resolvePackageStart(episodeId: string, explicit: Date | null | un
 export async function assignPackageProcedures(
   episodeId: string,
   lines: AssignLineInput[],
-  opts?: { confirmedByUserId?: string; softWarnOnly?: boolean; startAt?: Date | null },
+  opts?: {
+    confirmedByUserId?: string;
+    softWarnOnly?: boolean;
+    startAt?: Date | null;
+    /** Lift the unfinished quota tail and seat it again with the new rows. */
+    reseatQuotaTail?: boolean;
+  },
 ): Promise<{
   placed: number;
   softWarn: string | null;
@@ -1958,11 +1965,15 @@ export async function assignPackageProcedures(
   );
   const bathCodes = await bathSeriesProcedureCodes();
   const episodeCaps = await loadEpisodeDailyCaps(episodeId);
-  const redispatched = await unseatUnfinishedBlockTail(
-    episodeId,
-    resolved.map((line) => line.quotaCode),
-    { excludeIds: new Set(createdIds), bathCodes },
-  );
+  // Adding sessions does not lift the seated quota tail. A new start hour,
+  // masseur, or procedure replacement reseats through its own path.
+  const redispatched = opts?.reseatQuotaTail
+    ? await unseatUnfinishedBlockTail(
+        episodeId,
+        resolved.map((line) => line.quotaCode),
+        { excludeIds: new Set(createdIds), bathCodes },
+      )
+    : { byKey: new Map<string, { openIds: string[]; fixedIds: string[] }>(), suspended: [] as SuspendedPackageSeat[] };
   suspended = redispatched.suspended;
   const redispatchedOpenUsed = new Set<string>();
   const redispatchedFixedUsed = new Set<string>();
@@ -1996,6 +2007,7 @@ export async function assignPackageProcedures(
   const { pinOpenAttendanceOrders } = await import(
     "@/domain/procedure/open-attendance"
   );
+  const cabinBag: CabinScanBag = {};
   const chunks = chunkCreatedIdsByLine(createdIds, resolved);
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i]!;
@@ -2066,6 +2078,7 @@ export async function assignPackageProcedures(
       confirmedByUserId: opts?.confirmedByUserId,
       scheduleBefore: instance.endsOn,
       startAt,
+      cabinBag,
     });
     missingCabinNames.push(...placement.missingCabinNames);
     if (placement.failures.some((row) => row.reason !== "no_cabin")) genericCabinOnly = false;
@@ -2108,6 +2121,7 @@ export async function assignPackageProcedures(
         confirmedByUserId: opts?.confirmedByUserId,
         scheduleBefore: instance.endsOn,
         startAt,
+        cabinBag,
       });
       missingCabinNames.push(...placement.missingCabinNames);
       if (placement.failures.some((row) => row.reason !== "no_cabin")) {
@@ -2412,7 +2426,7 @@ export async function replacePackageProcedures(
           burnPoolCode,
         },
       ],
-      opts,
+      { ...opts, reseatQuotaTail: true },
     );
     return {
       cancelled: active.length,
@@ -2649,7 +2663,7 @@ export async function adjustPackageAssign(
         inPackage: true,
         status: { in: [...ADJUSTABLE] },
         checkedInAt: null,
-        manuallyAdjusted: false,
+        scheduledAt: { gte: bakuDayBounds(todayBakuYmd()).start },
       },
       select: { id: true, packageQuotaCode: true, procedureCode: true },
     });
@@ -2667,8 +2681,6 @@ export async function adjustPackageAssign(
     for (const code of syncCodes) {
       await syncQuotaUsed(instance.id, episodeId, code);
     }
-    const { compactOpenRegimeQueues } = await import("@/domain/procedure/open-attendance");
-    await compactOpenRegimeQueues(episodeId, [input.procedureCode]);
     return { cancelled: picked.length };
   }
 
@@ -2677,6 +2689,7 @@ export async function adjustPackageAssign(
     procedureCode: input.procedureCode,
     status: { in: ["PROPOSED", ...IN_CIRCULATION] },
     inPackage: true,
+    scheduledAt: { gte: bakuDayBounds(todayBakuYmd()).start },
     ...(input.assignBatchId ? { assignBatchId: input.assignBatchId } : {}),
   };
 
@@ -3052,7 +3065,10 @@ export async function assignPackageMenuLines(
   let searchHour: number | null | undefined;
   const seatMisses: NonNullable<Awaited<ReturnType<typeof assignPackageProcedures>>["seatMisses"]> = [];
   if (procedures.length > 0) {
-    const result = await assignPackageProcedures(episodeId, procedures, opts);
+    const result = await assignPackageProcedures(episodeId, procedures, {
+      ...opts,
+      reseatQuotaTail: Boolean(opts?.startAt),
+    });
     placed += result.placed;
     softWarn = result.softWarn;
     orderIds.push(...result.orderIds);

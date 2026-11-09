@@ -79,6 +79,7 @@ type SchedulingDefaults = {
   doctorBonusPercentWalkIn: number;
   hotelFolioRevenueCode: string;
   noShowKeepsCharge: boolean;
+  noShowBurnsQuota: boolean;
   extraProcedureRoute: "PLAN_BEFORE_PAY" | "HOLD_UNTIL_PAY";
 };
 
@@ -136,6 +137,7 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   doctorBonusPercentWalkIn: 0,
   hotelFolioRevenueCode: "",
   noShowKeepsCharge: true,
+  noShowBurnsQuota: true,
   extraProcedureRoute: "PLAN_BEFORE_PAY",
 };
 
@@ -230,6 +232,7 @@ export default function ClinicAdminSettingsPage() {
           hotelFolioRevenueCode:
             row.hotelFolioRevenueCode ?? SCHED_DEFAULTS.hotelFolioRevenueCode,
           noShowKeepsCharge: row.noShowKeepsCharge !== false,
+          noShowBurnsQuota: row.noShowBurnsQuota !== false,
           extraProcedureRoute:
             row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
         };
@@ -326,6 +329,7 @@ export default function ClinicAdminSettingsPage() {
         hotelFolioRevenueCode:
           row.hotelFolioRevenueCode ?? draftSched.hotelFolioRevenueCode,
         noShowKeepsCharge: row.noShowKeepsCharge !== false,
+        noShowBurnsQuota: row.noShowBurnsQuota !== false,
         extraProcedureRoute:
           row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
       });
@@ -789,6 +793,16 @@ export default function ClinicAdminSettingsPage() {
               }
             />
             {t("noShowKeepsCharge")}
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draftSched.noShowBurnsQuota}
+              onChange={(e) =>
+                setDraftSched((prev) => ({ ...prev, noShowBurnsQuota: e.target.checked }))
+              }
+            />
+            {t("noShowBurnsQuota")}
           </label>
           <CatalogField
             kind="CLOSED_SMALL"

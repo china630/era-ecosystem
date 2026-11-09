@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { CalendarClock, History, LayoutGrid, Printer, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -39,6 +40,11 @@ import { PackageAssignModal } from "@/components/sanatorium/PackageAssignModal";
 import { DiagnosticsAssignModal } from "@/components/sanatorium/DiagnosticsAssignModal";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 import {
+  formatLateralityLabel,
+  formatPhysioFieldsPrint,
+  type PhysioOrderFields,
+} from "@/domain/physio/physio-order-fields";
+import {
   formatPackageAssignMissLines,
   toastPackageAssignOutcome,
 } from "@/lib/package-assign-toasts";
@@ -53,6 +59,7 @@ type TimelineEvent = {
   showClock?: boolean;
   openAttendance?: boolean;
   href?: string;
+  codes?: string[];
   hasCritical?: boolean;
   resultSummary?: Array<{ code: string; value: string; flag?: string }>;
   physio?: PhysioChipsValue & { bodyPart?: string | null };
@@ -167,6 +174,38 @@ type CardSummary = {
 function eventTitle(ev: TimelineEvent, locale: string): string {
   if (ev.titleL10n) return pickL10n(ev.titleL10n, locale);
   return ev.title;
+}
+
+function planProcedureName(title: string): string {
+  return title.replace(/^Procedure\s*[·\-–]\s*/i, "").trim();
+}
+
+function planRegimeLine(ev: TimelineEvent, lang: "en" | "az" | "ru"): string {
+  const bits: string[] = [];
+  if (ev.physio) {
+    bits.push(
+      ...formatPhysioFieldsPrint(lang, ev.physio.physioFields as PhysioOrderFields),
+    );
+    if (ev.physio.bodyPart?.trim()) bits.push(ev.physio.bodyPart.trim());
+    const sides = Object.values(ev.physio.siteLaterality ?? {})
+      .map((side) => formatLateralityLabel(lang, side))
+      .filter(Boolean);
+    if (sides.length) bits.push(sides.join(", "));
+  }
+  if (bits.length) return bits.join(" · ");
+  let rest = ev.subtitle?.trim() ?? "";
+  rest = rest.replace(/^\d{2}\.\d{2}(?:\s+\d{2}:\d{2})?\s*·\s*/, "");
+  rest = rest.replace(/^type\s+\S+\s*·?\s*/i, "");
+  return rest;
+}
+
+function CardTabActions({ children }: { children: ReactNode }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setHost(document.getElementById("episode-card-tab-actions"));
+  }, []);
+  if (!host) return null;
+  return createPortal(children, host);
 }
 
 function formatDay(date: string, locale: string, todayWord: string, isToday: boolean): string {
@@ -300,7 +339,6 @@ export function PatientCardClinicalSections({
   section,
 }: Props) {
   const t = useTranslations("patientCard");
-  const tr = useTranslations("patientRegistry");
   const ts = useTranslations("sanatorium");
   const tc = useTranslations("common");
   const locale = useLocale();
@@ -611,26 +649,6 @@ export function PatientCardClinicalSections({
     }
   }
 
-  function planStatusLabel(status: string): string {
-    const key =
-      status === "SCHEDULED"
-        ? "statusScheduled"
-        : status === "CHECKED_IN" || status === "IN_PROGRESS"
-          ? "statusCheckedIn"
-          : status === "NO_SHOW"
-            ? "statusNoShow"
-            : status === "COMPLETED"
-              ? "statusCompleted"
-              : status === "CANCELLED"
-                ? "statusCancelled"
-                : status === "PROPOSED"
-                  ? "statusProposed"
-                  : status === "PENDING_PAY"
-                    ? "statusUnpaid"
-                    : "";
-    return key ? ts(key) : status;
-  }
-
   function planChipLabel(ymd: string): string {
     const [year, month, day] = ymd.split("-");
     if (!year || !month || !day) return ymd;
@@ -690,12 +708,47 @@ export function PatientCardClinicalSections({
   return (
     <div className="space-y-6">
       {showDiagnostics && episodeId ? (
+        <CardTabActions>
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200"
+            aria-label={t("openHistory")}
+            onClick={() => {
+              setHistTypes("all");
+              setHistoryOpen(true);
+            }}
+          >
+            <History className="h-4 w-4 text-[#2980B9]" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={TABLE_ROW_ICON_BTN_CLASS}
+            aria-label={t("printStudies", { defaultValue: "Print analyses and diagnostics" })}
+            onClick={() =>
+              openPrint(`/print/studies/${patientRefId}?episode=${encodeURIComponent(episodeId)}`)
+            }
+          >
+            <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={readOnly || !anamnesisOk}
+            onClick={() => setDiagnosticsModalOpen(true)}
+          >
+            +
+          </button>
+        </CardTabActions>
+      ) : null}
+
+      {showDiagnostics && episodeId ? (
         <section className="space-y-3">
           <EpisodeAssignBlocks
             packageTitle={t("diagnosticsAssignTitle", {
               defaultValue: "Analyses and diagnostics",
             })}
             hidePackageTitle
+            suppressToolbar
             onPackageHistory={() => {
               setHistTypes("all");
               setHistoryOpen(true);
@@ -896,11 +949,26 @@ export function PatientCardClinicalSections({
         </FieldGroupBox>
       ) : null}
 
+      {showPackage && studiesUnlocked && episodeId ? (
+        <CardTabActions>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={readOnly || !anamnesisOk}
+            onClick={() => setPackageModalOpen(true)}
+          >
+            +
+          </button>
+        </CardTabActions>
+      ) : null}
+
       {showPackage && studiesUnlocked ? (
       <section className="space-y-2">
         {episodeId ? (
           <EpisodeAssignBlocks
             packageTitle={t("assignPackageTitle", { defaultValue: "Procedures in package" })}
+            hidePackageTitle
+            suppressToolbar
             extrasTitle={t("extrasAwaiting", { defaultValue: "Additional procedures (awaiting payment)" })}
             readOnly={readOnly || !anamnesisOk}
             hidePackage={patientOrigin === "WALK_IN"}
@@ -1127,37 +1195,33 @@ export function PatientCardClinicalSections({
         </section>
       ) : null}
 
+      {showInlinePlan && studiesUnlocked && episodeId ? (
+        <CardTabActions>
+          <button
+            type="button"
+            className={TABLE_ROW_ICON_BTN_CLASS}
+            aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
+            onClick={() =>
+              openPrint(
+                `/print/procedures/${patientRefId}?episode=${encodeURIComponent(episodeId)}`,
+              )
+            }
+          >
+            <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={readOnly || !anamnesisOk}
+            onClick={() => setPackageModalOpen(true)}
+          >
+            +
+          </button>
+        </CardTabActions>
+      ) : null}
+
       {showInlinePlan ? (
-        <FieldGroupBox
-          title={tr("cardTabPlan")}
-          className="flex min-h-0 flex-1 flex-col"
-          actions={
-            studiesUnlocked && episodeId ? (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className={TABLE_ROW_ICON_BTN_CLASS}
-                  aria-label={t("printProcedures", { defaultValue: "Print schedule" })}
-                  onClick={() =>
-                    openPrint(
-                      `/print/procedures/${patientRefId}?episode=${encodeURIComponent(episodeId)}`,
-                    )
-                  }
-                >
-                  <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className={PRIMARY_BUTTON_CLASS}
-                  disabled={readOnly || !anamnesisOk}
-                  onClick={() => setPackageModalOpen(true)}
-                >
-                  +
-                </button>
-              </div>
-            ) : null
-          }
-        >
+        <div className="flex min-h-0 flex-1 flex-col">
           {studiesUnlocked && episodeId ? (
             <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2">
               <div className={CHIP_GROUP_CLASS}>
@@ -1209,16 +1273,20 @@ export function PatientCardClinicalSections({
               <ul className="space-y-2">
                 {planUnplaced.map((ev) => {
                   const orderId = ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : "";
+                  const regime = planRegimeLine(ev, locale === "az" || locale === "ru" ? locale : "en");
                   return (
                     <li
                       key={ev.id}
                       className={`${CARD_CONTAINER_CLASS} flex items-start justify-between gap-2 px-3 py-2 text-[13px]`}
                     >
                       <div className="min-w-0">
-                        <div className="font-medium">{eventTitle(ev, locale)}</div>
-                        <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                          {planStatusLabel(ev.status)}
-                        </p>
+                        <div className="font-medium">{planProcedureName(eventTitle(ev, locale))}</div>
+                        {ev.codes?.[0] ? (
+                          <div className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{ev.codes[0]}</div>
+                        ) : null}
+                        {regime ? (
+                          <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{regime}</p>
+                        ) : null}
                       </div>
                       {orderId ? (
                         <button
@@ -1252,24 +1320,26 @@ export function PatientCardClinicalSections({
                 return (
                   <li
                     key={ev.id}
-                    className={`${CARD_CONTAINER_CLASS} grid grid-cols-[30%_40%_20%] items-start gap-2 px-3 py-2 text-[13px]`}
+                    className={`${CARD_CONTAINER_CLASS} grid grid-cols-[minmax(0,30%)_minmax(0,1fr)_auto] items-start gap-2 px-3 py-2 text-[13px]`}
                   >
-                    <div className="min-w-0 font-medium">{eventTitle(ev, locale)}</div>
+                    <div className="min-w-0">
+                      <div className="font-medium">{planProcedureName(eventTitle(ev, locale))}</div>
+                      {ev.openAttendance ? null : ev.showClock !== false && ev.at ? (
+                        <div className="text-[12px] font-semibold text-[#7F8C8D]">
+                          {bakuTimeLabel(ev.at)}
+                        </div>
+                      ) : null}
+                      {ev.codes?.[0] ? (
+                        <div className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{ev.codes[0]}</div>
+                      ) : null}
+                    </div>
                     <p className={`line-clamp-3 min-w-0 text-[12px] ${TEXT_MUTED_CLASS}`}>
-                      {ev.subtitle?.trim()
-                        ? ev.subtitle
-                        : ev.openAttendance
+                      {planRegimeLine(ev, locale === "az" || locale === "ru" ? locale : "en") ||
+                        (ev.openAttendance
                           ? t("openAttendance", { defaultValue: "Open attendance" })
-                          : planStatusLabel(ev.status)}
+                          : "")}
                     </p>
-                    <div className="flex min-w-0 items-start justify-end gap-1">
-                      <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {ev.openAttendance
-                          ? ""
-                          : ev.showClock !== false && ev.at
-                            ? bakuTimeLabel(ev.at)
-                            : ""}
-                      </span>
+                    <div className="flex items-start justify-end">
                     {actionable ? (
                       <div className="flex shrink-0 gap-1">
                         {scheduled && !ev.openAttendance ? (
@@ -1313,7 +1383,7 @@ export function PatientCardClinicalSections({
               })}
             </ul>
           )}
-        </FieldGroupBox>
+        </div>
       ) : null}
 
       {studiesUnlocked && episodeId ? (

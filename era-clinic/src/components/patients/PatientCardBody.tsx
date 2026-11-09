@@ -590,7 +590,7 @@ export function PatientCardBody({
           </FieldGroupBox>
         </div>
         <div className="flex min-h-0 min-w-0 flex-col">
-          <div className={TAB_STRIP_CLASS} role="tablist">
+          <div className={`${TAB_STRIP_CLASS} items-center`} role="tablist">
             {CARD_TABS.map((tab) => (
               <button
                 key={tab}
@@ -611,6 +611,7 @@ export function PatientCardBody({
                 )}
               </button>
             ))}
+            <div id="episode-card-tab-actions" className="ml-auto flex items-center gap-2 pb-1" />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
 
