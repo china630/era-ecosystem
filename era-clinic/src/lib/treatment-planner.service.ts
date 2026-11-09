@@ -353,6 +353,19 @@ export type PlaceConfirmedResult = {
   failures: PlacementFailure[];
 };
 
+export type CabinScanBag = {
+  rules?: Awaited<ReturnType<typeof prisma.procedureRule.findMany>>;
+  types?: Awaited<
+    ReturnType<typeof prisma.procedureType.findMany<{ include: { requirements: true } }>>
+  >;
+  rotationRules?: Awaited<ReturnType<typeof prisma.procedureRotationRule.findMany>>;
+  compatibilityRules?: Awaited<ReturnType<typeof prisma.procedureCompatibilityRule.findMany>>;
+  staffByTypeAndYmd?: Awaited<ReturnType<typeof loadStaffByDayForScan>>;
+  staffStamp?: string;
+  allocations?: Awaited<ReturnType<typeof loadOccupancyForScan>>;
+  allocStamp?: string;
+};
+
 export async function placeConfirmedProcedures(
   orderIds: string[],
   opts?: {
@@ -365,6 +378,8 @@ export async function placeConfirmedProcedures(
     checkoutMorning?: boolean;
     /** When true, a pin on a closed day is a miss — do not remap to the next working day. */
     pinStrict?: boolean;
+    /** Reused across cabin chunks of one save so rules, staff and occupancy load once. */
+    cabinBag?: CabinScanBag;
   },
 ): Promise<PlaceConfirmedResult> {
   if (orderIds.length === 0) return { placed: 0, placedIds: [], missingCabinNames: [], failures: [] };
@@ -413,10 +428,13 @@ export async function placeConfirmedProcedures(
       };
     }
   }
-  const rules = await prisma.procedureRule.findMany();
-  const types = await prisma.procedureType.findMany({
+  const bag = opts?.cabinBag;
+  const rules = bag?.rules ?? (await prisma.procedureRule.findMany());
+  if (bag && !bag.rules) bag.rules = rules;
+  const types = bag?.types ?? (await prisma.procedureType.findMany({
     include: { requirements: true },
-  });
+  }));
+  if (bag && !bag.types) bag.types = types;
   const typeByCode = new Map(types.map((t) => [t.code, t]));
 
   const existing = await prisma.procedureOrder.findMany({
@@ -517,10 +535,16 @@ export async function placeConfirmedProcedures(
     if (pin && pin >= horizonEndYmd) horizonEndYmd = addBakuDays(pin, 1);
   }
 
-  const [rotationRules, compatibilityRules] = await Promise.all([
-    prisma.procedureRotationRule.findMany({ where: { active: true } }),
-    prisma.procedureCompatibilityRule.findMany({ where: { active: true } }),
-  ]);
+  const [rotationRules, compatibilityRules] = bag?.rotationRules && bag.compatibilityRules
+    ? [bag.rotationRules, bag.compatibilityRules]
+    : await Promise.all([
+        prisma.procedureRotationRule.findMany({ where: { active: true } }),
+        prisma.procedureCompatibilityRule.findMany({ where: { active: true } }),
+      ]);
+  if (bag) {
+    bag.rotationRules = rotationRules;
+    bag.compatibilityRules = compatibilityRules;
+  }
 
   const untyped: PlacementFailure[] = [];
   const scanOrders: Array<
@@ -668,7 +692,27 @@ export async function placeConfirmedProcedures(
   }
 
   const typeIds = [...new Set(scanOrders.map((order) => order.procedureTypeId))];
-  const staffByTypeAndYmd = await loadStaffByDayForScan(typeIds, today, horizonEndYmd);
+  const staffRange = `${today}|${horizonEndYmd}`;
+  let staffByTypeAndYmd = bag?.staffByTypeAndYmd && bag.staffStamp === staffRange
+    ? bag.staffByTypeAndYmd
+    : new Map();
+  const covered = new Set(
+    [...staffByTypeAndYmd.keys()].map((key) => key.slice(0, key.lastIndexOf("|"))),
+  );
+  const missingTypes = typeIds.filter((id) => !covered.has(id));
+  if (missingTypes.length > 0 || bag?.staffStamp !== staffRange) {
+    const loaded = await loadStaffByDayForScan(
+      bag?.staffStamp === staffRange ? missingTypes : typeIds,
+      today,
+      horizonEndYmd,
+    );
+    if (bag?.staffStamp !== staffRange) staffByTypeAndYmd = loaded;
+    else for (const [key, people] of loaded) staffByTypeAndYmd.set(key, people);
+  }
+  if (bag) {
+    bag.staffByTypeAndYmd = staffByTypeAndYmd;
+    bag.staffStamp = staffRange;
+  }
   await ensurePreferredStaffInPool(
     staffByTypeAndYmd,
     scanOrders.map((order) => ({
@@ -693,7 +737,15 @@ export async function placeConfirmedProcedures(
   }
   const staffIds = [...new Set([...staffByTypeAndYmd.values()].flat().map((person) => person.id))];
   const resourceIds = [...new Set(scanOrders.flatMap((order) => order.resources.map((row) => row.id)))];
-  const allocations = await loadOccupancyForScan(resourceIds, staffIds, today, horizonEndYmd);
+  const allocStamp = `${today}|${horizonEndYmd}|${resourceIds.slice().sort().join(",")}|${staffIds.slice().sort().join(",")}`;
+  const allocations =
+    bag?.allocations && bag.allocStamp === allocStamp
+      ? bag.allocations
+      : await loadOccupancyForScan(resourceIds, staffIds, today, horizonEndYmd);
+  if (bag) {
+    bag.allocations = allocations;
+    bag.allocStamp = allocStamp;
+  }
 
   const scanned = scanProcedureSlots({
     orders: scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),

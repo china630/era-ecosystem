@@ -18,7 +18,9 @@ import {
   listExtraUnitPrices,
   listPaidExtras,
   listPendingExtras,
+  placeHeldExtrasOnCheckoutMorning,
   prescribeExtras,
+  releaseHeldExtras,
 } from "@/domain/sanatorium/extras-assign.service";
 import {
   deletePendingDiagnostic,
@@ -41,6 +43,8 @@ const lineSchema = z.object({
 
 const prescribeSchema = z.object({
   lines: z.array(lineSchema).max(40).default([]),
+  checkoutMorning: z.boolean().optional(),
+  releaseHeld: z.boolean().optional(),
   removals: z
     .array(
       z.object({
@@ -145,6 +149,14 @@ export async function POST(
     if (scopeDenied) return scopeDenied;
     const body = prescribeSchema.parse(await req.json());
     const removals = body.removals ?? [];
+    if (body.releaseHeld && body.lines.length === 0) {
+      const released = await releaseHeldExtras(id);
+      return jsonOk({ released });
+    }
+    if (body.checkoutMorning && body.lines.length === 0) {
+      const seated = await placeHeldExtrasOnCheckoutMorning(id, session.sub);
+      return jsonOk(seated);
+    }
     if (body.lines.length === 0 && removals.length === 0) {
       return jsonError("Nothing to save", 400);
     }

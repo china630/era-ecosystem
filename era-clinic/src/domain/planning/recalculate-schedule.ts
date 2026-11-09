@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { bakuDateKey } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays } from "@/domain/planning/clinic-day";
 import { parseBathDayModes, planBathSeries, type KeptCell } from "@/domain/planning/bath-calendar";
 import {
@@ -167,11 +167,11 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
     }
     if (seriesInputs.length > 0) {
       const planned = planBathSeries({
-        days: days.filter((day) => day.ymd > today),
+        days,
         series: seriesInputs,
         kept,
         modes: bathModes,
-        notBeforeYmd: today,
+        notBeforeYmd: addBakuDays(today, 1),
         policy: bathPolicyFromSettings(settings),
       });
       for (const [procedureCode, automatic] of automaticByCode) {

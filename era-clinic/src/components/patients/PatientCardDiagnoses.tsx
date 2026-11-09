@@ -70,10 +70,9 @@ export function PatientCardDiagnoses({
     : `/api/patients/${patientRefId}/diagnoses`;
 
   return (
-    <FieldGroupBox
-      title={t("diagnosesTitle")}
-      actions={
-        !readOnly && resolvedEpisodeId ? (
+    <div>
+      {!readOnly && resolvedEpisodeId ? (
+        <div className="mb-1 flex justify-end">
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
@@ -82,9 +81,9 @@ export function PatientCardDiagnoses({
             <Plus className="h-4 w-4" aria-hidden />
             {t("addDiagnosis")}
           </button>
-        ) : null
-      }
-    >
+        </div>
+      ) : null}
+    <FieldGroupBox title={t("diagnosesTitle")}>
         {resolvedEpisodeId ? (
           <DiagnosisPanel
             ref={panelRef}
@@ -108,5 +107,6 @@ export function PatientCardDiagnoses({
           </p>
         )}
     </FieldGroupBox>
+    </div>
   );
 }

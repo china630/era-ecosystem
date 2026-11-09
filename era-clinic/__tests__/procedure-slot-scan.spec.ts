@@ -4,6 +4,7 @@ import {
   pinSearchFrom,
   placementBlockReason,
   restGap,
+  nextCabinGridTime,
   scanProcedureSlots,
   type ScanOrder,
 } from "@/lib/procedure-slot-scan";
@@ -513,5 +514,41 @@ describe("restGap / OPEN day-bucket", () => {
     expect(result.planned[0]!.slotStart.getTime()).toBeGreaterThanOrEqual(
       parseBakuDateTime("2026-11-02", "09:50").getTime(),
     );
+  });
+
+  it("jumps to the earlier cabin on the 5-minute grid, using that session's gap", () => {
+    const probe = order();
+    probe.durationMin = 10;
+    probe.resources = [
+      { id: "cab-a", capacity: 1, role: "LOCATION" },
+      { id: "cab-b", capacity: 1, role: "LOCATION" },
+    ];
+    const at = nextCabinGridTime(
+      probe,
+      parseBakuDateTime("2026-11-02", "10:00"),
+      [
+        {
+          role: "LOCATION",
+          resourceId: "cab-a",
+          practitionerId: null,
+          startsAt: parseBakuDateTime("2026-11-02", "09:30"),
+          endsAt: parseBakuDateTime("2026-11-02", "10:33"),
+          procedureOrderId: "other-a",
+          resourceGapMinutes: 0,
+        },
+        {
+          role: "LOCATION",
+          resourceId: "cab-b",
+          practitionerId: null,
+          startsAt: parseBakuDateTime("2026-11-02", "09:30"),
+          endsAt: parseBakuDateTime("2026-11-02", "10:33"),
+          procedureOrderId: "other-b",
+          resourceGapMinutes: 5,
+        },
+      ],
+      5,
+    );
+    expect(bakuHourMinute(at!).hour).toBe(10);
+    expect(bakuHourMinute(at!).minute).toBe(35);
   });
 });

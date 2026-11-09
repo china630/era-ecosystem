@@ -10,6 +10,19 @@ export type RegimeKeyInput = {
   physioFields?: unknown;
 };
 
+/** Seating bookkeeping. One chosen regime stays one card when these differ. */
+const REGIME_KEY_IGNORED = new Set(["dayBlock", "seatMiss", "restYmds", "bathSequence"]);
+
+function fieldsForRegimeKey(fields: unknown): unknown {
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) return fields;
+  const copy: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(fields as Record<string, unknown>)) {
+    if (REGIME_KEY_IGNORED.has(key)) continue;
+    copy[key] = value;
+  }
+  return copy;
+}
+
 function stableJson(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value ?? null);
   if (Array.isArray(value)) return `[${value.map((item) => stableJson(item)).join(",")}]`;
@@ -28,7 +41,7 @@ export function regimeFingerprint(input: RegimeKeyInput): string {
   const mode = input.siteApplyMode ?? "";
   const fields =
     input.physioFields && typeof input.physioFields === "object" && !Array.isArray(input.physioFields)
-      ? stableJson(input.physioFields)
+      ? stableJson(fieldsForRegimeKey(input.physioFields))
       : "";
   return `${sites.join(",")}|${mode}|${fields}`;
 }

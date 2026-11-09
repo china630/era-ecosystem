@@ -637,10 +637,15 @@ export async function seatBathSeriesOrders(
   const today = todayBakuYmd();
   const startFloor = notBeforeYmdFromStart(opts?.startAt, today);
   const notBeforeYmd = nextWorkingYmd(snapshot.days, startFloor) ?? startFloor;
-  const upcoming = snapshot.days.filter((day) => day.ymd >= notBeforeYmd);
   const seatingIds = new Set(handled.map((order) => order.id));
   const seatingCodes = new Set(byCode.keys());
   const kept: KeptCell[] = saxlaSeatKept(snapshot.orders, seatingIds, seatingCodes);
+  for (const order of snapshot.orders) {
+    if (seatingIds.has(order.id) || !seatingCodes.has(order.procedureCode)) continue;
+    for (const ymd of restYmdsFromFields(order.physioFields)) {
+      kept.push({ ymd, procedureCode: order.procedureCode, locked: false, manualRest: true });
+    }
+  }
   const blockedDays = saxlaBlockedDays(snapshot.orders, seatingIds, seatingCodes);
   const seriesInputs = [...byCode.entries()].map(([procedureCode, group]) => {
     const meta = memberByCode.get(procedureCode)!;
@@ -654,10 +659,10 @@ export async function seatBathSeriesOrders(
     };
   });
   const planned =
-    upcoming.length === 0
+    snapshot.days.length === 0
       ? []
       : planBathSeries({
-          days: upcoming,
+          days: snapshot.days,
           series: seriesInputs,
           kept,
           layout: "fresh",

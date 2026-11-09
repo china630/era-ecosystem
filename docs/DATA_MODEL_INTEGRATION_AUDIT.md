@@ -149,7 +149,7 @@ No schema drift found for legal-entity ownership (Finance + MDM split is respect
 | era-construction | — | `platformVoenLookup` | calendar client | **COMPLIANT** (W2) |
 | era-crm | — | `platformVoenLookup` | calendar client | **COMPLIANT** (W2) |
 | era-auto-service | — | `platformVoenLookup` | calendar client | **COMPLIANT** (W2) |
-| era-clinic | — | N/A | `getCalendarDay` in scheduling | **COMPLIANT** (W2) |
+| era-clinic | — | N/A | clinic week + day overrides only; country calendar is not a clinic closed day | **COMPLIANT** (W2) |
 | era-retail-pos | — | — | none detected | **COMPLIANT** |
 | era-fnb-pos | — | — | none detected | **COMPLIANT** |
 

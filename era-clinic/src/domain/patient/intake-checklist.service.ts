@@ -4,6 +4,7 @@ import {
   resolveAutoBlockServiceCodes,
 } from "@/domain/sanatorium/package-auto-apply.service";
 import { labOrderLaneHref } from "@/domain/lab/lab-order-lane";
+import { ownBlankMaxDays } from "@/domain/lab/brought-in-result";
 
 export type IntakeChecklistStatus = "DONE" | "ORDERED" | "MISSING";
 
@@ -195,8 +196,20 @@ export async function getIntakeChecklist(
   const title = { en: template.name, ru: template.name, az: template.name };
   const [broughtServices, broughtRows] = await Promise.all([
     prisma.diagnosticService.findMany({
-      where: { organizationId: episode.organizationId, broughtInMaxDays: { not: null } },
-      select: { code: true, serviceCode: true, broughtInMaxDays: true },
+      where: {
+        organizationId: episode.organizationId,
+        active: true,
+        broughtInMaxDays: { not: null },
+      },
+      select: {
+        code: true,
+        serviceCode: true,
+        broughtInMaxDays: true,
+        autoPaidOnOpen: true,
+        titleEn: true,
+        titleRu: true,
+        titleAz: true,
+      },
     }),
     prisma.episodeBroughtInResult.findMany({
       where: { episodeId },
@@ -205,13 +218,11 @@ export async function getIntakeChecklist(
   ]);
   const broughtMax = new Map<string, number>();
   for (const service of broughtServices) {
-    if (service.broughtInMaxDays == null) continue;
-    broughtMax.set(service.code, service.broughtInMaxDays);
-    broughtMax.set(service.serviceCode, service.broughtInMaxDays);
-  }
-  for (const member of template.blockMembers ?? []) {
-    const days = broughtMax.get(member.procedureCode);
-    if (days != null) broughtMax.set(member.blockCode, days);
+    const days = ownBlankMaxDays(service.code, service.broughtInMaxDays);
+    if (days == null) continue;
+    broughtMax.set(service.code, days);
+    const viaSku = ownBlankMaxDays(service.serviceCode, service.broughtInMaxDays);
+    if (viaSku != null) broughtMax.set(service.serviceCode, viaSku);
   }
   const broughtOn = new Map<string, string>();
   for (const row of broughtRows) {
@@ -275,9 +286,44 @@ export async function getIntakeChecklist(
       recordId: order?.id ?? null,
       scheduledAt: null,
       broughtInMaxDays: broughtMax.get(serviceCode) ?? null,
-      broughtInOn: broughtOn.get(serviceCode) ?? null,
+      broughtInOn:
+        broughtMax.get(serviceCode) != null ? (broughtOn.get(serviceCode) ?? null) : null,
     });
     }
+  }
+
+  for (const service of broughtServices) {
+    const days = ownBlankMaxDays(service.code, service.broughtInMaxDays);
+    if (!service.autoPaidOnOpen || days == null) continue;
+    if (seen.has(service.code)) {
+      const existing = items.find((item) => item.resolvedCode === service.code);
+      if (existing && existing.broughtInMaxDays == null) {
+        existing.broughtInMaxDays = days;
+        existing.broughtInOn =
+          broughtOn.get(service.code) ?? broughtOn.get(service.serviceCode) ?? null;
+      }
+      continue;
+    }
+    seen.add(service.code);
+    const order = await findLabOrder(patientRefId, service.code, {
+      clinicalEpisodeId: episodeId,
+    });
+    items.push({
+      slot: service.code,
+      resolvedCode: service.code,
+      kind: "lab",
+      title: {
+        en: service.titleEn?.trim() || service.code,
+        ru: service.titleRu?.trim() || service.titleEn?.trim() || service.code,
+        az: service.titleAz?.trim() || service.titleEn?.trim() || service.code,
+      },
+      status: order ? labStatus(order.status) : "MISSING",
+      href: order ? labOrderLaneHref(order.id, "lab_panel") : null,
+      recordId: order?.id ?? null,
+      scheduledAt: null,
+      broughtInMaxDays: days,
+      broughtInOn: broughtOn.get(service.code) ?? broughtOn.get(service.serviceCode) ?? null,
+    });
   }
 
   return { packageCode: programCode, packageTitle: title, items };

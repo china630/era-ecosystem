@@ -98,38 +98,36 @@ export function PatientCardAnamnesis({
   const authorLine = authorLabelFrom(author);
 
   return (
-    <FieldGroupBox
-      title={tr("anamnesis")}
-      actions={
-        <div className="flex items-center gap-1">
+    <div>
+      {!readOnly && !hasAnamnesis ? (
+        <div className="mb-1 flex justify-end">
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+            <Plus className="h-4 w-4" aria-hidden />
+            {t("addAnamnesis")}
+          </button>
+        </div>
+      ) : null}
+    <FieldGroupBox title={tr("anamnesis")}>
+      <div className="flex items-start justify-between gap-3">
+        <p className={`min-w-0 flex-1 whitespace-pre-wrap text-sm ${hasAnamnesis ? "text-[#2C3E50]" : TEXT_MUTED_CLASS}`}>
+          {hasAnamnesis ? text : "—"}
+        </p>
+        <div className="flex shrink-0 items-center gap-1">
           {authorLine ? (
-            <span className={`mr-1 text-[12px] ${TEXT_MUTED_CLASS}`}>{authorLine}</span>
+            <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{authorLine}</span>
           ) : null}
-          {!readOnly ? (
-            hasAnamnesis ? (
-              <button
-                type="button"
-                className={TABLE_ROW_ICON_BTN_CLASS}
-                aria-label={tc("edit")}
-                onClick={openEdit}
-              >
-                <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-              </button>
-            ) : (
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-                <Plus className="h-4 w-4" aria-hidden />
-                {t("addAnamnesis")}
-              </button>
-            )
+          {!readOnly && hasAnamnesis ? (
+            <button
+              type="button"
+              className={TABLE_ROW_ICON_BTN_CLASS}
+              aria-label={tc("edit")}
+              onClick={openEdit}
+            >
+              <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+            </button>
           ) : null}
         </div>
-      }
-    >
-      {hasAnamnesis ? (
-        <p className="whitespace-pre-wrap text-sm text-[#2C3E50]">{text}</p>
-      ) : (
-        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>—</p>
-      )}
+      </div>
       <ModalShell
         open={open}
         title={hasAnamnesis ? tc("edit") : t("addAnamnesis")}
@@ -155,5 +153,6 @@ export function PatientCardAnamnesis({
         />
       </ModalShell>
     </FieldGroupBox>
+    </div>
   );
 }

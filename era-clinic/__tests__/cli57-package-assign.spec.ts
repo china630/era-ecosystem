@@ -250,6 +250,20 @@ describe("CLI-57 package assign helpers", () => {
         physioFields: { intensity: "HIGH" },
       }),
     );
+    expect(neckRegime).toBe(
+      regimeFingerprint({
+        siteIds: ["b", "a"],
+        siteLaterality: { a: "LEFT", b: null },
+        siteApplyMode: "TURN",
+        physioFields: {
+          intensity: "LOW",
+          dayBlock: "3",
+          seatMiss: { reason: "no_day" },
+          restYmds: ["2026-10-22"],
+          bathSequence: null,
+        },
+      }),
+    );
     expect(mergeParamLines(["naftalanFill: TAM · dayBlock: 2", "naftalanFill: TAM · bathSequence: SITZ_THEN_FULL"])).toEqual([
       "naftalanFill: TAM",
       "dayBlock: 2",

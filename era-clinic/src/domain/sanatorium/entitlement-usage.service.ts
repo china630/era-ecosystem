@@ -83,6 +83,14 @@ export async function countEntitlementUsage(input: {
   quotaCode: string;
 }): Promise<number> {
   const { episodeId, quotaCode } = input;
+  const { getClinicSettings } = await import("@/domain/settings/settings.service");
+  const burnsNoShow = (await getClinicSettings()).noShowBurnsQuota !== false;
+  const fixedStatuses = burnsNoShow
+    ? [...PROCEDURE_ENTITLEMENT_STATUSES]
+    : PROCEDURE_ENTITLEMENT_STATUSES.filter((status) => status !== "NO_SHOW");
+  const openStatuses = burnsNoShow
+    ? (["CHECKED_IN", "COMPLETED", "NO_SHOW"] as const)
+    : (["CHECKED_IN", "COMPLETED"] as const);
   const [procCount, labCount, visitCount] = await Promise.all([
     prisma.procedureOrder.count({
       where: {
@@ -92,17 +100,17 @@ export async function countEntitlementUsage(input: {
           { packageQuotaCode: quotaCode },
           { packageQuotaCode: null, procedureCode: quotaCode },
         ],
-        // FIXED: SCHEDULED|CHECKED_IN|COMPLETED|NO_SHOW. OPEN: only after attendance (CLI-62).
+        // Cabin and open attendance share the clinic no-show quota switch.
         AND: [
           {
             OR: [
               {
                 schedulingMode: "FIXED",
-                status: { in: [...PROCEDURE_ENTITLEMENT_STATUSES] },
+                status: { in: [...fixedStatuses] },
               },
               {
                 schedulingMode: "OPEN",
-                status: { in: ["CHECKED_IN", "COMPLETED"] },
+                status: { in: [...openStatuses] },
               },
             ],
           },

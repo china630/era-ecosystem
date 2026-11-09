@@ -133,10 +133,9 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
   }
 
   return (
-    <FieldGroupBox
-      title={t("careTeamTitle")}
-      actions={
-        !readOnly ? (
+    <div>
+      {!readOnly ? (
+        <div className="mb-1 flex justify-end">
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
@@ -146,9 +145,9 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
             <Plus className="mr-1 inline h-4 w-4" aria-hidden />
             {t("careTeamAdd")}
           </button>
-        ) : null
-      }
-    >
+        </div>
+      ) : null}
+    <FieldGroupBox title={t("careTeamTitle")}>
       {items.length > 0 ? (
         <ul className="list-none text-sm">
           {items.map((row) => (
@@ -222,5 +221,6 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
         />
       </ModalShell>
     </FieldGroupBox>
+    </div>
   );
 }

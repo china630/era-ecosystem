@@ -63,6 +63,7 @@ const patchSchema = z.object({
   doctorBonusPercentWalkIn: z.number().min(0).max(100).optional(),
   hotelFolioRevenueCode: z.string().max(32).nullable().optional(),
   noShowKeepsCharge: z.boolean().optional(),
+  noShowBurnsQuota: z.boolean().optional(),
   printLogoDataUrl: z.string().nullable().optional(),
   printClinicNameEn: z.string().nullable().optional(),
   printClinicNameRu: z.string().nullable().optional(),

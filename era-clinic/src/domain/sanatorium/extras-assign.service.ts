@@ -277,9 +277,14 @@ export async function prescribeExtras(
     const openIds = created
       .filter((row) => row.schedulingMode === "OPEN")
       .map((row) => row.id);
-    if (fixedIds.length > 0) await seatUnpaidExtras(fixedIds);
+    if (fixedIds.length > 0) {
+      const held = await seatUnpaidExtras(fixedIds);
+      misses.push(...held);
+    }
     // OPEN = day-bucket across stay (no cabin). Pay keeps the pin; nurse seats on arrival.
-    if (openIds.length > 0) misses = await pinUnpaidOpenExtras(openIds, episodeId);
+    if (openIds.length > 0) {
+      misses.push(...(await pinUnpaidOpenExtras(openIds, episodeId)));
+    }
   }
   const missedIds = new Set(misses.map((row) => row.orderId));
   return {
@@ -290,16 +295,44 @@ export async function prescribeExtras(
   };
 }
 
-/** Place as PROPOSED, then return seated rows to PENDING_PAY. Unseated drafts are deleted. */
-async function seatUnpaidExtras(ids: string[]): Promise<void> {
+const CHECKOUT_HOLD = "await_checkout_morning";
+
+function isCheckoutHoldReason(reason: string): boolean {
+  return reason === "no_slot" || reason === "no_day";
+}
+
+/** Place as PROPOSED, then return seated rows to PENDING_PAY. A stay-horizon miss is held for the checkout question. */
+async function seatUnpaidExtras(
+  ids: string[],
+): Promise<Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>> {
   await prisma.procedureOrder.updateMany({
     where: { id: { in: ids }, status: "PENDING_PAY" },
     data: { status: "PROPOSED" },
   });
   let failedIds: string[] = [];
+  let heldIds: string[] = [];
+  let held: Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }> = [];
   try {
     const placement = await placeConfirmedProcedures(ids, {});
-    failedIds = placement.failures.map((row) => row.orderId);
+    held = placement.failures
+      .filter((row) => isCheckoutHoldReason(row.reason))
+      .map((row) => ({
+        orderId: row.orderId,
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+        ymd: row.ymd,
+      }));
+    heldIds = held.map((row) => row.orderId);
+    failedIds = placement.failures
+      .map((row) => row.orderId)
+      .filter((id) => !heldIds.includes(id));
+    if (heldIds.length > 0) {
+      await prisma.procedureOrder.updateMany({
+        where: { id: { in: heldIds } },
+        data: { cancelReason: CHECKOUT_HOLD, resourceId: null },
+      });
+    }
   } catch (err) {
     failedIds = ids;
     throw err;
@@ -311,16 +344,20 @@ async function seatUnpaidExtras(ids: string[]): Promise<void> {
       });
     }
     await prisma.procedureOrder.updateMany({
-      where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
+      where: {
+        id: { in: ids.filter((id) => !heldIds.includes(id)) },
+        status: { in: ["PROPOSED", "SCHEDULED"] },
+      },
       data: { status: "PENDING_PAY" },
     });
   }
+  return held;
 }
 
 /**
  * Pin OPEN unpaid extras onto working days until stay endsOn.
  * Different codes share a day; the same code takes the next working day.
- * Rows that do not fit are deleted so they do not stay on the prescribe clock.
+ * A stay-horizon miss (`no_slot` / `no_day`) is held for the checkout-morning question. Any other miss is deleted.
  */
 async function pinUnpaidOpenExtras(
   ids: string[],
@@ -363,8 +400,18 @@ async function pinUnpaidOpenExtras(
     }));
     throw err;
   } finally {
+    const heldIds = failures.filter((row) => isCheckoutHoldReason(row.reason)).map((row) => row.orderId);
+    if (heldIds.length > 0) {
+      await prisma.procedureOrder.updateMany({
+        where: { id: { in: heldIds } },
+        data: { cancelReason: CHECKOUT_HOLD, resourceId: null, status: "PROPOSED" },
+      });
+    }
     await prisma.procedureOrder.updateMany({
-      where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
+      where: {
+        id: { in: ids.filter((id) => !heldIds.includes(id)) },
+        status: { in: ["PROPOSED", "SCHEDULED"] },
+      },
       data: { status: "PENDING_PAY" },
     });
     if (pinThrew) {
@@ -373,14 +420,114 @@ async function pinUnpaidOpenExtras(
       });
     }
   }
-  const missed = failures.map((row) => row.orderId);
-  if (missed.length > 0) {
-    await releaseProcedureOccupancy(missed);
+  const dropIds = failures
+    .filter((row) => !isCheckoutHoldReason(row.reason))
+    .map((row) => row.orderId);
+  if (dropIds.length > 0) {
+    await releaseProcedureOccupancy(dropIds);
     await prisma.procedureOrder.deleteMany({
-      where: { id: { in: missed }, status: "PENDING_PAY", inPackage: false },
+      where: { id: { in: dropIds }, status: "PENDING_PAY", inPackage: false },
     });
   }
   return failures;
+}
+
+const heldExtraWhere = {
+  inPackage: false,
+  status: "PROPOSED" as const,
+  cancelReason: CHECKOUT_HOLD,
+};
+
+/** Seat paid rows held for the checkout-morning question. */
+export async function placeHeldExtrasOnCheckoutMorning(
+  episodeId: string,
+  confirmedByUserId?: string,
+): Promise<{
+  placed: number;
+  misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
+}> {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { programInstance: { select: { endsOn: true } } },
+  });
+  const endsOn = episode?.programInstance?.endsOn ?? null;
+  const orders = await prisma.procedureOrder.findMany({
+    where: { clinicalEpisodeId: episodeId, ...heldExtraWhere },
+    select: {
+      id: true,
+      procedureCode: true,
+      procedureType: { select: { openAttendance: true } },
+    },
+  });
+  if (!endsOn || orders.length === 0) return { placed: 0, misses: [] };
+  const openIds = orders.filter((row) => row.procedureType?.openAttendance === true).map((row) => row.id);
+  const cabinIds = orders.filter((row) => row.procedureType?.openAttendance !== true).map((row) => row.id);
+  const misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }> = [];
+  let placed = 0;
+  if (openIds.length > 0) {
+    const { pinOpenAttendanceOrders } = await import("@/domain/procedure/open-attendance");
+    const pinned = await pinOpenAttendanceOrders(openIds, {
+      confirmedByUserId,
+      scheduleBefore: endsOn,
+      startAt: new Date(),
+      checkoutMorning: true,
+    });
+    placed += pinned.placed;
+    misses.push(
+      ...pinned.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+      })),
+    );
+  }
+  if (cabinIds.length > 0) {
+    const placement = await placeConfirmedProcedures(cabinIds, {
+      confirmedByUserId,
+      scheduleBefore: endsOn,
+      checkoutMorning: true,
+    });
+    placed += placement.placed;
+    misses.push(
+      ...placement.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+      })),
+    );
+  }
+  const stillHeld = await prisma.procedureOrder.findMany({
+    where: { id: { in: orders.map((row) => row.id) }, ...heldExtraWhere },
+    select: { id: true },
+  });
+  const stillHeldIds = stillHeld.map((row) => row.id);
+  const seatedIds = orders.map((row) => row.id).filter((id) => !stillHeldIds.includes(id));
+  if (seatedIds.length > 0) {
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: seatedIds } },
+      data: { status: "PENDING_PAY", cancelReason: null },
+    });
+  }
+  if (stillHeldIds.length > 0) {
+    await releaseProcedureOccupancy(stillHeldIds);
+    await prisma.procedureOrder.deleteMany({ where: { id: { in: stillHeldIds } } });
+  }
+  return { placed, misses };
+}
+
+/** Drop paid rows the guest refused to put on checkout morning. */
+export async function releaseHeldExtras(episodeId: string): Promise<number> {
+  const rows = await prisma.procedureOrder.findMany({
+    where: { clinicalEpisodeId: episodeId, ...heldExtraWhere },
+    select: { id: true },
+  });
+  if (rows.length === 0) return 0;
+  const ids = rows.map((row) => row.id);
+  await releaseProcedureOccupancy(ids);
+  const result = await prisma.procedureOrder.deleteMany({ where: { id: { in: ids } } });
+  return result.count;
 }
 
 const extraRegimeInclude = {

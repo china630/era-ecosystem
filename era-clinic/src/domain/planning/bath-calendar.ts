@@ -358,6 +358,28 @@ export function planBathSeries(input: {
         restLeft = block.rest;
       }
     };
+    const replaySeatedDay = (day: StayDay) => {
+      if (!day.working) {
+        if (restLeft > 0 && policy.closedDaySpendsOwedRest) {
+          restLeft -= 1;
+          streak = 0;
+        } else if (restLeft === 0 && streak > 0 && policy.closedDayResetsOpenStreak) {
+          streak = 0;
+        }
+        return;
+      }
+      if (restDays.has(day.ymd)) {
+        streak = 0;
+        if (restLeft > 0) restLeft -= 1;
+        return;
+      }
+      if (restLeft > 0) {
+        restLeft -= 1;
+        streak = 0;
+        return;
+      }
+      if (blockedOwn.has(day.ymd) || keptByDay.has(day.ymd)) finishBlock();
+    };
     for (const day of input.days) {
       if (fresh) {
         const pin = keptByDay.get(day.ymd);
@@ -379,12 +401,19 @@ export function planBathSeries(input: {
             } else if (used < series.qty) {
               used += 1;
             }
+            if (pastPin) finishBlock();
           }
           continue;
         }
       }
-      if (input.notBeforeYmd && day.ymd < input.notBeforeYmd) continue;
-      if (lastKept && day.ymd <= lastKept) continue;
+      if (input.notBeforeYmd && day.ymd < input.notBeforeYmd) {
+        replaySeatedDay(day);
+        continue;
+      }
+      if (lastKept && day.ymd <= lastKept) {
+        replaySeatedDay(day);
+        continue;
+      }
       if (used >= series.qty) break;
       if (!day.working) {
         if (restLeft > 0 && policy.closedDaySpendsOwedRest) {

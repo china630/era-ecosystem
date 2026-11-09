@@ -336,7 +336,11 @@ export function PackageAssignModal({
   const [replaceReason, setReplaceReason] = useState("");
   const [packagePin, setPackagePin] = useState<string | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
-  const [checkoutAsk, setCheckoutAsk] = useState<string[] | null>(null);
+  const [checkoutAsk, setCheckoutAsk] = useState<{
+    names: string[];
+    package: boolean;
+    extras: boolean;
+  } | null>(null);
   const [stayPlan, setStayPlan] = useState<StayPlan>({ days: [], checkoutYmd: null, closedDays: [], marks: [] });
   const [planFocus, setPlanFocus] = useState<string | null>(null);
   const [pendingCancel, setPendingCancel] = useState<Set<string>>(new Set());
@@ -1065,7 +1069,8 @@ export function PackageAssignModal({
 
   function defaultStartPoint(): { date: string; hour: string } {
     const { hour } = bakuHourMinute(new Date());
-    let next = hour + 1;
+    // End of the current hour, then one more hour. 11:22 → 13:00.
+    let next = hour + 2;
     let date = todayBakuYmd();
     if (next >= 17) {
       next = 9;
@@ -1073,6 +1078,14 @@ export function PackageAssignModal({
     }
     if (next < 9) next = 9;
     return { date, hour: String(next) };
+  }
+
+  function noonMissNames(rows: Array<{ reason?: string; procedureName?: string; procedureCode?: string }>): string[] {
+    return rows
+      .filter((row) => row.reason === "no_slot" || row.reason === "no_day")
+      .map((row) => row.procedureName || row.procedureCode)
+      .filter((name): name is string => Boolean(name))
+      .filter((name, index, all) => all.indexOf(name) === index);
   }
 
   function placeMissText(
@@ -1209,7 +1222,7 @@ export function PackageAssignModal({
     }
     setBusy(true);
     setError(null);
-    let pendingCheckout: string[] | null = null;
+    let pendingCheckout: { names: string[]; package: boolean; extras: boolean } | null = null;
     try {
       for (const row of assigned) {
         if (row.locked) continue;
@@ -1265,13 +1278,9 @@ export function PackageAssignModal({
         }
         const payload = d.data ?? d;
         const missRows = Array.isArray(payload.misses) ? payload.misses : [];
-        const noonNames = missRows
-          .filter((row: { reason?: string }) => row.reason === "no_slot" || row.reason === "no_day")
-          .map((row: { procedureName?: string; procedureCode?: string }) => row.procedureName || row.procedureCode)
-          .filter((name: string | undefined): name is string => Boolean(name))
-          .filter((name: string, index: number, all: string[]) => all.indexOf(name) === index);
+        const noonNames = noonMissNames(missRows);
         if (noonNames.length > 0) {
-          pendingCheckout = noonNames;
+          pendingCheckout = { names: noonNames, package: true, extras: false };
         } else {
           toastPackageAssignOutcome(
             lines.map((row) => ({
@@ -1309,15 +1318,29 @@ export function PackageAssignModal({
         const extraBody = await res.json().catch(() => ({}));
         const extraPayload = extraBody.data ?? extraBody;
         if (res.ok && Array.isArray(extraPayload.misses) && extraPayload.misses.length > 0) {
-          toastPackageAssignOutcome(
-            extras.map((row) => ({
-              procedureCode: row.procedureCode,
-              procedureName: row.procedureName,
-              qty: row.qty,
-            })),
-            extraPayload.misses,
-            (key, values) => tPhysio(key, values),
+          const extraNoon = noonMissNames(extraPayload.misses);
+          const otherMisses = extraPayload.misses.filter(
+            (row: { reason?: string }) => row.reason !== "no_slot" && row.reason !== "no_day",
           );
+          if (extraNoon.length > 0) {
+            const names = [...new Set([...(pendingCheckout?.names ?? []), ...extraNoon])];
+            pendingCheckout = {
+              names,
+              package: pendingCheckout?.package === true,
+              extras: true,
+            };
+          }
+          if (otherMisses.length > 0) {
+            toastPackageAssignOutcome(
+              extras.map((row) => ({
+                procedureCode: row.procedureCode,
+                procedureName: row.procedureName,
+                qty: row.qty,
+              })),
+              otherMisses,
+              (key, values) => tPhysio(key, values),
+            );
+          }
         }
         if (!res.ok) {
           const code = typeof extraBody?.code === "string" ? extraBody.code : null;
@@ -1574,7 +1597,7 @@ export function PackageAssignModal({
       open={open}
       title={labels.title}
       onClose={requestClose}
-      maxWidthClass={MODAL_FULL_CLASS}
+      maxWidthClass={`${MODAL_FULL_CLASS} !h-[90vh]`}
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
@@ -1590,9 +1613,7 @@ export function PackageAssignModal({
             type="button"
             className={PRIMARY_BUTTON_CLASS}
             disabled={!canSave}
-            onClick={() =>
-              void save(startOpen ? { date: startDate, hour: startHour } : undefined)
-            }
+            onClick={() => void save()}
           >
             {labels.save}
           </button>
@@ -1609,40 +1630,6 @@ export function PackageAssignModal({
         <p className="mb-2 text-[12px] text-amber-700">
           {labels.softWarnPrefix}: {softWarn}
         </p>
-      ) : null}
-      {startOpen ? (
-        <div className="mb-3 shrink-0 rounded-lg border border-[#D5DADF] bg-[#F4F5F7] p-3">
-          <p className="mb-2 text-[13px] font-medium">{tPhysio("packageAssignStartTitle")}</p>
-          <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignStartHint")}</p>
-          <div className="flex flex-wrap items-end gap-3">
-            <DatePicker
-              label={tPhysio("packageAssignStartDate")}
-              value={startDate}
-              onChange={(iso) => {
-                const yesterday = addBakuDays(todayBakuYmd(), -1);
-                if (iso && iso < yesterday) {
-                  setStartDate(yesterday);
-                  return;
-                }
-                setStartDate(iso);
-              }}
-              placeholder={tc("datePlaceholder")}
-              openCalendarLabel={tc("openCalendar")}
-            />
-            <div className="w-28">
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={tPhysio("packageAssignStartHour")}
-                value={startHour}
-                onChange={(value) => setStartHour(String(value ?? "9"))}
-                options={Array.from({ length: 8 }, (_, index) => {
-                  const hour = String(9 + index);
-                  return { value: hour, label: `${hour.padStart(2, "0")}:00` };
-                })}
-              />
-            </div>
-          </div>
-        </div>
       ) : null}
       <div className="grid h-full min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
         <div className="grid min-h-0 grid-cols-1 gap-3 overflow-hidden md:grid-cols-2">
@@ -2403,45 +2390,71 @@ export function PackageAssignModal({
           emptyLabel={tPhysio("stayPlanEmpty")}
           openLabel={tPhysio("stayPlanOpen")}
           noonLabel={tPhysio("stayPlanNoon")}
+          legendPackage={tPhysio("stayPlanPackage")}
+          legendPaid={tPhysio("stayPlanPaid")}
+          legendDone={tPhysio("stayPlanDone")}
         />
       </div>
     </ModalShell>
   );
   function answerCheckout(place: boolean) {
-    const names = checkoutAsk ?? [];
+    const ask = checkoutAsk;
     setCheckoutAsk(null);
     setBusy(true);
     void (async () => {
       try {
-        if (place && names.length > 0) {
-          const res = await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ checkoutMorning: true, lines: [] }),
-          });
-          const body = await res.json().catch(() => ({}));
-          const payload = body.data ?? body;
-          const left = Array.isArray(payload.misses) ? payload.misses : [];
+        if (!ask) return;
+        if (place && ask.names.length > 0) {
+          const left: Array<{ procedureName?: string; procedureCode?: string }> = [];
+          if (ask.package) {
+            const res = await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ checkoutMorning: true, lines: [] }),
+            });
+            const body = await res.json().catch(() => ({}));
+            const payload = body.data ?? body;
+            if (!res.ok) showApiError({ error: assignSaveMessage(body) }, tc("saveFailed"));
+            else if (Array.isArray(payload.misses)) left.push(...payload.misses);
+          }
+          if (ask.extras) {
+            const res = await fetch(`/api/sanatorium/episodes/${episodeId}/extras-prescribe`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ checkoutMorning: true, lines: [] }),
+            });
+            const body = await res.json().catch(() => ({}));
+            const payload = body.data ?? body;
+            if (!res.ok) showApiError({ error: assignSaveMessage(body) }, tc("saveFailed"));
+            else if (Array.isArray(payload.misses)) left.push(...payload.misses);
+          }
           const leftNames = [
             ...new Set(
               left
-                .map((row: { procedureName?: string; procedureCode?: string }) => row.procedureName || row.procedureCode)
-                .filter((name: string | undefined): name is string => Boolean(name)),
+                .map((row) => row.procedureName || row.procedureCode)
+                .filter((name): name is string => Boolean(name)),
             ),
           ].join(", ");
-          if (!res.ok) {
-            showApiError({ error: assignSaveMessage(body) }, tc("saveFailed"));
-          } else if (left.length > 0) {
+          if (left.length > 0) {
             showApiError({
               error: placeMissText(left) || tPhysio("packageAssignCheckoutNoonLeft", { names: leftNames }),
             });
           }
         } else {
-          await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ releaseUnseated: true, lines: [] }),
-          });
+          if (ask.package) {
+            await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ releaseUnseated: true, lines: [] }),
+            });
+          }
+          if (ask.extras) {
+            await fetch(`/api/sanatorium/episodes/${episodeId}/extras-prescribe`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ releaseHeld: true, lines: [] }),
+            });
+          }
         }
         await load();
         onSaved();
@@ -2486,6 +2499,60 @@ export function PackageAssignModal({
       <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignDiscardBody")}</p>
     </ModalShell>
   );
+  const startAsk = (
+    <ModalShell
+      open={startOpen}
+      title={tPhysio("packageAssignStartTitle")}
+      onClose={() => setStartOpen(false)}
+      overlayZClass="z-[400]"
+      maxWidthClass="max-w-md"
+      footer={
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setStartOpen(false)}>
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy || !startDate || !startHour}
+            onClick={() => void save({ date: startDate, hour: startHour })}
+          >
+            {labels.save}
+          </button>
+        </div>
+      }
+    >
+      <p className={`mb-3 text-sm ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignStartHint")}</p>
+      <div className="flex flex-wrap items-end gap-3">
+        <DatePicker
+          label={tPhysio("packageAssignStartDate")}
+          value={startDate}
+          onChange={(iso) => {
+            const yesterday = addBakuDays(todayBakuYmd(), -1);
+            if (iso && iso < yesterday) {
+              setStartDate(yesterday);
+              return;
+            }
+            setStartDate(iso);
+          }}
+          placeholder={tc("datePlaceholder")}
+          openCalendarLabel={tc("openCalendar")}
+        />
+        <div className="w-28">
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={tPhysio("packageAssignStartHour")}
+            value={startHour}
+            onChange={(value) => setStartHour(String(value ?? "9"))}
+            options={Array.from({ length: 8 }, (_, index) => {
+              const hour = String(9 + index);
+              return { value: hour, label: `${hour.padStart(2, "0")}:00` };
+            })}
+          />
+        </div>
+      </div>
+    </ModalShell>
+  );
   const checkout = (
     <ModalShell
       open={checkoutAsk != null}
@@ -2520,6 +2587,7 @@ export function PackageAssignModal({
     <>
       {shell}
       {discard}
+      {startAsk}
       {checkout}
     </>
   );

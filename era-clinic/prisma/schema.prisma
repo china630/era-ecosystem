@@ -103,6 +103,8 @@ model Tenant {
   hotelFolioRevenueCode          String?                  @map("hotel_folio_revenue_code")
   /// Paid no-show keeps the folio charge (default). False lets the hotel void it.
   noShowKeepsCharge              Boolean                  @default(true) @map("no_show_keeps_charge")
+  /// Package no-show burns the quota (default), cabin and open attendance alike.
+  noShowBurnsQuota               Boolean                  @default(true) @map("no_show_burns_quota")
   /// Unpaid extra: seat before pay (default) or hide until pay/folio.
   extraProcedureRoute            ExtraProcedureRoute      @default(PLAN_BEFORE_PAY) @map("extra_procedure_route")
   /// Extra catalog language on the guest procedure sheet. Empty = sheet language only.
@@ -779,7 +781,7 @@ model DiagnosticService {
   schedulingMode String              @default("FIXED") @map("scheduling_mode")
   /// On episode open, create one paid lab order the lab can see before the cashier.
   autoPaidOnOpen Boolean             @default(false) @map("auto_paid_on_open")
-  /// When set, the episode analyses row can accept the guest's own blank not older than this many days.
+  /// When set on an auto-paid lab, the intake list accepts the guest's own blank not older than this many days.
   broughtInMaxDays Int?              @map("brought_in_max_days")
   sortOrder      Int                 @default(0) @map("sort_order")
   active         Boolean             @default(true)

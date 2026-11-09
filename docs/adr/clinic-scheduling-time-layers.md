@@ -110,6 +110,16 @@ Tenant `defaultProcedureGapMinutes = 5` remains the create default for new types
 
 CLI-26 / CLI-30 stay **SHIPPED**. Per-type gaps are API + SatAdmin. Do not mark product-readiness GA from canvas simulation alone.
 
+## Amendment (2026-11-09) — one save, no reshuffle of a seated tail
+
+A procedure save reads rules, staff and occupancy once for the cabin chunks of that save and writes each placed session into that occupancy before the next code. The cabin search steps five minutes. When only the cabin blocks, the next probe is the earliest five-minute mark where any cabin of that procedure is free, after the occupying session plus that session's own gap. Nurse, guest, lunch and the daily cap still move one grid step. Clinic lunch jumps to its end in one step.
+
+Adding package sessions does not lift sessions already on the plan. The unfinished quota tail is seated again only when the start hour, the masseur, or the procedure itself changes. A quantity cut removes the latest not-started sessions of that procedure whose day is still today or later, including a hand-moved one when it is the latest. Check-in, completed, and past days stay. Open attendance uses the same cut and is not laid out again.
+
+The first save asks the start day and hour in its own dialog. The default is the end of the current hour plus one hour, whole hours 09:00–16:00, otherwise the next day at 09:00.
+
+Checkout morning stays one question for package and paid misses. A paid miss is held until the guest answers. No-show burns the package quota for both cabin and open attendance when the clinic switch is on (default). Turning it off leaves the balance.
+
 ## Out of scope
 
 - Implementing the Prisma fields in the same change as this ADR.
