@@ -35,7 +35,7 @@ export function PatientCardModal({
       open={open}
       title={patient?.fullName ?? t("openCard")}
       onClose={onClose}
-      maxWidthClass={MODAL_FULL_CLASS}
+      maxWidthClass={`${MODAL_FULL_CLASS} !h-[90vh]`}
       overlayZClass={overlayZClass}
       bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
     >
