@@ -21,7 +21,7 @@ import {
   MdmPersonCache,
   type WorkforcePersonCacheRow,
 } from "./mdm-person-cache";
-import { normalizePersonPhone, personPhoneDedupDigits } from "@era/satellite-kit";
+import { normalizePersonPhone, personPhoneDedupDigits } from "@era/satellite-kit/phone";
 import {
   blindIndexFin,
   blindIndexIdentifier,

@@ -78,6 +78,10 @@
       "types": "./dist/integration/person-name.d.ts",
       "default": "./dist/integration/person-name.js"
     },
+    "./person/name": {
+      "types": "./dist/person/person-name-match.d.ts",
+      "default": "./dist/person/person-name-match.js"
+    },
     "./phone": {
       "types": "./dist/phone/normalize-person-phone.d.ts",
       "default": "./dist/phone/normalize-person-phone.js"

@@ -2,9 +2,9 @@ import {
   isSimilarPersonName,
   namesClearlyDiffer,
   normalizeNameKey,
-  personPhoneDedupDigits,
   sameMetaphoneName,
-} from "@era/satellite-kit";
+} from "@era/satellite-kit/person/name";
+import { personPhoneDedupDigits } from "@era/satellite-kit/phone";
 
 export type MdmDedupMatchType =
   | "PHONE"
