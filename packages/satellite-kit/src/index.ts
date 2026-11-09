@@ -714,6 +714,12 @@ export {
 } from "./organization/org-profile-cache";
 
 export {
+  isSimilarPersonName,
+  namesClearlyDiffer,
+  normalizeNameKey,
+  sameMetaphoneName,
+} from "./person/person-name-match";
+export {
   normalizePersonPhone,
   personPhoneDedupDigits,
   PERSON_PHONE_POLISH_REGIONS,
