@@ -188,6 +188,13 @@ exports.Prisma.PersonIdentityDocumentScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PersonDedupDismissalScalarFieldEnum = {
+  id: 'id',
+  personIdLow: 'personIdLow',
+  personIdHigh: 'personIdHigh',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.PersonIdentifierScalarFieldEnum = {
   id: 'id',
   personId: 'personId',
@@ -334,6 +341,7 @@ exports.Prisma.ModelName = {
   PersonAddress: 'PersonAddress',
   PersonKinContact: 'PersonKinContact',
   PersonIdentityDocument: 'PersonIdentityDocument',
+  PersonDedupDismissal: 'PersonDedupDismissal',
   PersonIdentifier: 'PersonIdentifier',
   GlobalLegalEntity: 'GlobalLegalEntity',
   PersonAccessRequest: 'PersonAccessRequest',

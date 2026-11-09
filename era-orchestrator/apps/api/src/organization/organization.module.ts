@@ -8,6 +8,7 @@ import { OrganizationController } from "./organization.controller";
 import { OrganizationProfileController } from "./organization-profile.controller";
 import { OrganizationProfileService } from "./organization-profile.service";
 import { OrganizationService } from "./organization.service";
+import { OrgAccessCredentialService } from "../admin/org-access-credential.service";
 
 @Module({
   imports: [PrismaModule, AuthModule],
@@ -19,6 +20,7 @@ import { OrganizationService } from "./organization.service";
   providers: [
     OrganizationService,
     OrganizationProfileService,
+    OrgAccessCredentialService,
     JwtAuthGuard,
     PermissionsGuard,
   ],

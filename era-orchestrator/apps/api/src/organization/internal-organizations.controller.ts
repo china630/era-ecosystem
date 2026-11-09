@@ -13,6 +13,7 @@ import { assertMatchingServiceToken } from "../common/utils/internal-service-tok
 import { PrismaService } from "../prisma/prisma.service";
 import { parsePublicOrgNumberParam } from "./public-org-number";
 import { OrganizationProfileService } from "./organization-profile.service";
+import { OrgAccessCredentialService } from "../admin/org-access-credential.service";
 
 @Public()
 @Controller("internal/v1/organizations")
@@ -20,6 +21,7 @@ export class InternalOrganizationsController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly profiles: OrganizationProfileService,
+    private readonly access: OrgAccessCredentialService,
   ) {}
 
   /**
@@ -79,5 +81,17 @@ export class InternalOrganizationsController {
         ? null
         : String(body.bankLine);
     return this.profiles.patchBankLineFromService(organizationId, bankLine);
+  }
+
+  /** Finance reads this org's connector key. Bearer service token. Inactive codes are not found. */
+  @Get(":id/access/:code")
+  async accessMaterial(
+    @Param("id", ParseUUIDPipe) organizationId: string,
+    @Param("code") code: string,
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    assertMatchingServiceToken(auth, xToken);
+    return this.access.resolveForService(organizationId, code);
   }
 }

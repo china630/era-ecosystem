@@ -14,7 +14,6 @@ import {
 import { useTranslations } from "next-intl";
 import {
   GHOST_BUTTON_CLASS,
-  PRIMARY_BUTTON_CLASS,
   TAB_ITEM_ACTIVE_CLASS,
   TAB_ITEM_CLASS,
   TAB_STRIP_CLASS,
@@ -61,6 +60,7 @@ export function OrgShell({ children }: { children: ReactNode }) {
     billingStatus: null,
     industries: [],
   });
+  const [parentName, setParentName] = useState("");
   const [flash, setFlash] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -78,6 +78,18 @@ export function OrgShell({ children }: { children: ReactNode }) {
       if (modeRes.ok) {
         nextMode = (await modeRes.json()) as OperatingMode;
         setMode(nextMode);
+        if (nextMode.parentOrgId) {
+          const parentRes = await orchFetch(
+            `/v1/admin/organizations/${nextMode.parentOrgId}/subscription-tree`,
+            { token },
+          );
+          if (parentRes.ok) {
+            const parentTree = (await parentRes.json()) as { organizationName?: string };
+            setParentName(parentTree.organizationName ?? "");
+          }
+        } else {
+          setParentName("");
+        }
       }
       let topology: string | null = null;
       let tier: string | null = null;
@@ -147,21 +159,26 @@ export function OrgShell({ children }: { children: ReactNode }) {
 
   const tabs = useMemo(() => {
     const base = [
-      { href: `/orgs/${orgId}`, label: t("tabOverview"), match: "exact" as const },
+      { href: `/orgs/${orgId}`, label: t("tabCard"), match: "exact" as const },
+      { href: `/orgs/${orgId}/structure`, label: t("tabStructure"), match: "prefix" as const },
       { href: `/orgs/${orgId}/subscription`, label: t("tabLicense"), match: "prefix" as const },
-      { href: `/orgs/${orgId}/connections`, label: t("tabConnections"), match: "prefix" as const },
+      { href: `/orgs/${orgId}/modules`, label: t("tabModules"), match: "prefix" as const },
+      { href: `/orgs/${orgId}/connections`, label: t("tabEndpoints"), match: "prefix" as const },
+      { href: `/orgs/${orgId}/payments`, label: t("tabPayments"), match: "prefix" as const },
+      { href: `/orgs/${orgId}/access`, label: t("tabAccess"), match: "prefix" as const },
+      { href: `/orgs/${orgId}/channels`, label: t("tabChannels"), match: "prefix" as const },
     ];
     if (cutoverVisible) {
       base.push({
         href: `/orgs/${orgId}/cutover`,
         label: t("tabCutover"),
-        match: "prefix",
+        match: "prefix" as const,
       });
     }
     base.push({
       href: `/orgs/${orgId}/placement`,
       label: t("tabPlacement"),
-      match: "prefix",
+      match: "prefix" as const,
     });
     return base;
   }, [orgId, t, cutoverVisible]);
@@ -184,32 +201,44 @@ export function OrgShell({ children }: { children: ReactNode }) {
           {meta.publicOrgNumber != null ? (
             <button
               type="button"
-              className={`${PRIMARY_BUTTON_CLASS} font-mono text-sm`}
+              className="font-mono text-sm text-[#34495E] underline-offset-2 hover:underline"
               onClick={copyOrgNo}
               title={t("copyOrgNoHint")}
             >
-              {t("eraIdLabel")}: {meta.publicOrgNumber}
+              {t("eraIdLabel")} {meta.publicOrgNumber}
             </button>
           ) : null}
-          <button type="button" className={GHOST_BUTTON_CLASS} onClick={copyUuid}>
+          <button
+            type="button"
+            className="text-xs text-[#7F8C8D] underline-offset-2 hover:underline"
+            onClick={copyUuid}
+          >
             {t("copyUuid")}
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2 text-xs text-[#7F8C8D]">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[#7F8C8D]">
           {meta.mode ? (
             <span className="rounded-full bg-[#ECF0F1] px-2 py-0.5 font-medium text-[#34495E]">
-              {meta.mode}
+              {meta.mode === "DEPARTMENT" ? t("modeDepartment") : t("modeStandalone")}
             </span>
+          ) : null}
+          {mode?.parentOrgId ? (
+            <Link
+              href={`/orgs/${mode.parentOrgId}`}
+              className="rounded-full bg-[#ECF0F1] px-2 py-0.5 font-medium text-[#2980B9] hover:underline"
+            >
+              {t("parentChip", { name: parentName || mode.parentOrgId })}
+            </Link>
           ) : null}
           {meta.topology ? (
             <span className="rounded-full bg-[#ECF0F1] px-2 py-0.5 font-medium text-[#34495E]">
-              {meta.topology}
+              {t(`topology_${meta.topology}` as "topology_SHARED")}
             </span>
           ) : null}
           {meta.tier ? (
             <span className="rounded-full bg-[#ECF0F1] px-2 py-0.5 font-medium text-[#34495E]">
-              {meta.tier}
+              {t(`tier_${meta.tier}` as "tier_TIER_0")}
             </span>
           ) : null}
           {meta.billingStatus ? (
@@ -222,7 +251,7 @@ export function OrgShell({ children }: { children: ReactNode }) {
                     : "bg-red-50 text-red-800"
               }`}
             >
-              {meta.billingStatus}
+              {t(`billing_${meta.billingStatus}` as "billing_ACTIVE")}
             </span>
           ) : null}
         </div>

@@ -294,6 +294,7 @@ import { WorkforceJobsService } from "./workforce-jobs.service";
     WorkforceSeatService,
 
     WorkforceAttendanceService,
+    WorkforceApprovalService,
 
   ],
 

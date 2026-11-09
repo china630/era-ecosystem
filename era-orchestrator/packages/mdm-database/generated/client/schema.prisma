@@ -122,6 +122,8 @@ model GlobalNaturalPerson {
   identityDocuments  PersonIdentityDocument[]
   mergedInto         GlobalNaturalPerson?     @relation("PersonMerge", fields: [mergedIntoPersonId], references: [id], onDelete: SetNull)
   mergedFrom         GlobalNaturalPerson[]    @relation("PersonMerge")
+  dedupDismissLow    PersonDedupDismissal[]   @relation("DedupLow")
+  dedupDismissHigh   PersonDedupDismissal[]   @relation("DedupHigh")
 
   @@index([mergedIntoPersonId])
   @@map("global_natural_persons")
@@ -193,6 +195,19 @@ model PersonIdentityDocument {
   @@unique([personId, kind])
   @@index([personId])
   @@map("person_identity_documents")
+}
+
+/// Pair marked "not the same people" on the MDM dedup queue. Order is low id then high id.
+model PersonDedupDismissal {
+  id           String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personIdLow  String              @map("person_id_low") @db.Uuid
+  personIdHigh String              @map("person_id_high") @db.Uuid
+  createdAt    DateTime            @default(now()) @map("created_at")
+  personLow    GlobalNaturalPerson @relation("DedupLow", fields: [personIdLow], references: [id], onDelete: Cascade)
+  personHigh   GlobalNaturalPerson @relation("DedupHigh", fields: [personIdHigh], references: [id], onDelete: Cascade)
+
+  @@unique([personIdLow, personIdHigh])
+  @@map("person_dedup_dismissals")
 }
 
 model PersonIdentifier {

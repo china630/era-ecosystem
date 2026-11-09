@@ -21,6 +21,7 @@ import {
   MdmPersonCache,
   type WorkforcePersonCacheRow,
 } from "./mdm-person-cache";
+import { normalizePersonPhone, personPhoneDedupDigits } from "@era/satellite-kit";
 import {
   blindIndexFin,
   blindIndexIdentifier,
@@ -28,6 +29,7 @@ import {
   normalizeCountryCode,
   type PersonIdentifierTypeKey,
 } from "../common/utils/mdm-crypto.util";
+import { decryptText } from "../security/pii-crypto.util";
 import {
   collectIdentifierInputs,
   inferPersonSegment,
@@ -47,8 +49,8 @@ import {
   splitFullNameToParts,
   type PersonNameParts,
 } from "./mdm-person-name";
-import { decryptText } from "../security/pii-crypto.util";
 import { blindIndexForVoen } from "../common/utils/voen-blind-index";
+import { buildMdmDedupGroups, dedupPairKey, type MdmDedupPerson } from "./mdm-person-dedup";
 import {
   defaultGuestIdentityExpiresAt,
   signGuestIdentityToken,
@@ -512,14 +514,14 @@ export class MdmService {
       birthDate: input.birthDate,
     });
 
-    const phoneTrim = input.phone?.trim();
+    const phoneCipher = this.phoneCipherForWrite(input.phone, nationalityIso, "create");
     const emailNorm = normalizeContactEmail(input.email);
     const created = await this.mdm.globalNaturalPerson.create({
       data: {
         finBlindIndex,
         finCipher: finIdent ? encryptText(finIdent.value.trim()) : null,
         ...this.nameCipherWriteData(nameParts),
-        phoneCipher: phoneTrim ? encryptText(phoneTrim) : null,
+        phoneCipher,
         emailCipher: emailNorm ? encryptText(emailNorm) : null,
         nationality: nationalityIso,
         personSegment: segment as PersonSegment,
@@ -585,13 +587,17 @@ export class MdmService {
       identifiers,
     );
     const finIdent = identifiers.find((i) => i.type === "AZ_FIN");
-    const phoneTrim = input.phone?.trim();
+    const phoneCipher = this.phoneCipherForWrite(
+      input.phone,
+      nationalityIso ?? existing.nationality,
+      "update",
+    );
     const emailNorm = normalizeContactEmail(input.email);
     await this.mdm.globalNaturalPerson.update({
       where: { id: personId },
       data: {
         ...this.nameCipherWriteData(nameParts),
-        phoneCipher: phoneTrim ? encryptText(phoneTrim) : undefined,
+        ...(phoneCipher !== undefined ? { phoneCipher } : {}),
         emailCipher: emailNorm ? encryptText(emailNorm) : undefined,
         ...(nationalityIso ? { nationality: nationalityIso } : {}),
         personSegment: segment as PersonSegment,
@@ -1121,6 +1127,7 @@ export class MdmService {
       phoneCipher: true,
       finCipher: true,
       sex: true,
+      nationality: true,
       birthDate: true,
       personSegment: true,
       mergedIntoPersonId: true,
@@ -1157,10 +1164,19 @@ export class MdmService {
           if (!name.includes(nameQ)) return false;
         }
         if (phoneDigits) {
-          const phone = r.phoneCipher
-            ? (decryptText(r.phoneCipher) ?? "").replace(/\D/g, "")
-            : "";
-          if (!phone.includes(phoneDigits)) return false;
+          const phone = r.phoneCipher ? (decryptText(r.phoneCipher) ?? "") : "";
+          const stored = personPhoneDedupDigits({
+            raw: phone,
+            nationalityIso: r.nationality,
+          });
+          const query = personPhoneDedupDigits({
+            raw: phoneDigits,
+            nationalityIso: r.nationality,
+          });
+          const tail = query.slice(-9);
+          if (!stored || !tail || (!stored.endsWith(tail) && !query.endsWith(stored.slice(-9)))) {
+            return false;
+          }
         }
         return true;
       });
@@ -1171,6 +1187,109 @@ export class MdmService {
     }
 
     return { total, page, pageSize, items };
+  }
+
+  private phoneCipherForWrite(
+    raw: string | null | undefined,
+    nationality: string | null | undefined,
+    mode: "create" | "update",
+  ): string | null | undefined {
+    const trimmed = String(raw ?? "").trim();
+    if (!trimmed) return mode === "create" ? null : undefined;
+    const result = normalizePersonPhone({ raw: trimmed, nationalityIso: nationality });
+    if (result.status === "conflict" || result.status === "invalid") {
+      throw new BadRequestException({
+        message: result.reasonKey,
+        phoneStatus: result.status,
+        detectedRegion: result.detectedRegion ?? null,
+      });
+    }
+    return encryptText(result.display);
+  }
+
+  async listPersonDedupGroups(limit = 50) {
+    const rows = await this.mdm.globalNaturalPerson.findMany({
+      where: { mergedIntoPersonId: null },
+      take: 5000,
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        firstNameCipher: true,
+        lastNameCipher: true,
+        fullNameCipher: true,
+        phoneCipher: true,
+        emailCipher: true,
+        finCipher: true,
+        nationality: true,
+        sex: true,
+        birthDate: true,
+        identifiers: { select: { type: true, valueCipher: true, issuingCountry: true } },
+        identityDocuments: { select: { kind: true, numberCipher: true, issuingCountry: true } },
+      },
+    });
+    const people: MdmDedupPerson[] = rows.map((row) => {
+      const names = this.decryptPersonNameParts(row);
+      const finFromIdent = row.identifiers.find((item) => item.type === "AZ_FIN");
+      const passportIdent = row.identifiers.find((item) => item.type === "PASSPORT");
+      const passportDoc = row.identityDocuments.find((item) => item.kind === "PASSPORT");
+      return {
+        id: row.id,
+        firstName: names.firstName ?? "",
+        lastName: names.lastName ?? "",
+        fullName: names.fullName ?? "",
+        birthDate: formatPersonBirthDate(row.birthDate) ?? "",
+        sex: row.sex,
+        nationality: row.nationality ?? "",
+        phone: row.phoneCipher ? decryptText(row.phoneCipher) ?? "" : "",
+        email: row.emailCipher ? decryptText(row.emailCipher) ?? "" : "",
+        fin: decryptText(finFromIdent?.valueCipher ?? row.finCipher ?? "") ?? "",
+        passport:
+          decryptText(passportIdent?.valueCipher ?? passportDoc?.numberCipher ?? "") ?? "",
+        docNumbers: row.identityDocuments
+          .map((doc) => ({
+            number: decryptText(doc.numberCipher ?? "") ?? "",
+            country: doc.issuingCountry ?? row.nationality ?? "",
+          }))
+          .filter((doc) => doc.number),
+      };
+    });
+    const dismissedRows = await this.mdm.personDedupDismissal.findMany({
+      select: { personIdLow: true, personIdHigh: true },
+    });
+    const dismissed = new Set(
+      dismissedRows.map((row) => `${row.personIdLow}:${row.personIdHigh}`),
+    );
+    const groups = buildMdmDedupGroups(people, dismissed, limit);
+    const byId = new Map(people.map((person) => [person.id, person]));
+    return {
+      groups: groups.map((group) => ({
+        matchType: group.matchType,
+        nameClash: group.nameClash,
+        persons: group.personIds.map((id) => {
+          const person = byId.get(id)!;
+          return {
+            id: person.id,
+            fullName: person.fullName,
+            birthDate: person.birthDate || null,
+            nationality: person.nationality || null,
+            phoneMasked: person.phone ? maskPhone(person.phone) : null,
+          };
+        }),
+      })),
+    };
+  }
+
+  async dismissPersonDedupPair(a: string, b: string) {
+    if (!a || !b || a === b) throw new BadRequestException("Two different people are required");
+    const pair = dedupPairKey(a, b);
+    await this.mdm.personDedupDismissal.upsert({
+      where: {
+        personIdLow_personIdHigh: pair,
+      },
+      create: pair,
+      update: {},
+    });
+    return { ok: true };
   }
 
   async getPersonOpsProfile(personId: string, requesterOrgId?: string) {

@@ -28,6 +28,7 @@ describe("InternalOrganizationsController byPublicNumber", () => {
         organization: { findFirst },
       } as never,
       { getSnapshot: jest.fn() } as never,
+      { resolveForService: jest.fn() } as never,
     );
   }
 

@@ -41,6 +41,7 @@ Left-nav tree (`components/layout/orch-sidebar.tsx`): Workspace → Organization
 | `/workspace` | `app/workspace/page.tsx` | Control Home: Platform apps strip + structure summary counts + Systems tiles (Open / Modules / Settings). `POST connect-satellite`, `POST billing/toggle-module` (+ 7d SKU grace). Home org via `POST /auth/home-organization` |
 | `/workspace/structure` | `app/workspace/structure/page.tsx` | Owner hierarchical Org → Dept → System → Outlet; dept `switch-organization`; CatalogField sat select; outlet CRUD; sat/outlet suspend; Open sat SSO. APIs `GET/POST/PATCH/DELETE /v1/structure/*` (CP billing registration — ops materialize is sat→CP upsert) |
 | `/workspace/comms-hub` | `app/workspace/comms-hub/page.tsx` | Comms Hub org inbox (CP-COMMS-01): server threads + multi-recipient compose + reply; not FOLIO/REVENUE channels |
+| `/workspace/documents` | `app/workspace/documents/page.tsx` | Document register (CP-DOC-01): drafts, filters, card `/workspace/documents/[id]`, tasks, route templates, archive tree |
 | `/industry/[vertical]` | `app/industry/[vertical]/page.tsx` | SSO launch via registry `GET /v1/satellites/launch-url` then ticket; env fallback; not entitled → pricing link |
 | `/settings` | `app/settings/page.tsx` | Settings hub |
 | `/settings/team` | `app/settings/team/page.tsx` | Access requests + transfer ownership; invite `organizationRoleCode` from org roles |
@@ -59,9 +60,8 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `/login` | `apps/platform-web/app/login/page.tsx` | Operator-only; `showAccountLinks={false}` |
 | `/` | `apps/platform-web/app/(console)/page.tsx` | → `/billing/pricing` |
 | `/billing/**` | `apps/platform-web/app/(console)/billing/**` | Pricing, addons, quotas, packages, trial-allowlist, settings |
-| `/orgs`, `/orgs/[orgId]`, `…/subscription`, `…/connections`, `…/cutover`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org shell tabs: overview (mode/depts), license, connections (endpoints/channels/KKM + payment methods CRUD `GET/POST/PUT/DELETE /v1/admin/orgs/:orgId/payment-methods`, Sync `paymentMethods`), cutover (hotel/clinic only), PlacementJob lab hop |
-| `/structure` | `apps/platform-web/app/(console)/structure/page.tsx` | Ops entry for commercial topology (owner tree on app `/workspace/structure`) |
-| `/mdm`, `/mdm/companies`, `/mdm/persons` | `apps/platform-web/app/(console)/mdm/**` | MDM overview + directories |
+| `/orgs`, `/orgs/[orgId]`, `…/structure`, `…/subscription`, `…/modules`, `…/connections`, `…/payments`, `…/access`, `…/channels`, `…/cutover`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org shell: card (read-only), structure (mode/depts), license, modules, app URLs + Sync, payments/KKM, access keys (org id + secret; API URL stays in the catalog), channels, Elektraweb cutover (hotel/clinic), placement lab hop. Payment methods `GET/POST/PUT/DELETE /v1/admin/orgs/:orgId/payment-methods`. Access `GET/PUT/POST /v1/admin/orgs/:orgId/access` |
+| `/mdm`, `/mdm/companies`, `/mdm/persons`, `/mdm/persons/dedup` | `apps/platform-web/app/(console)/mdm/**` | MDM overview, directories, suspected-person queue |
 | `/reference`, `/early-access`, `/referrals`, `/landing`, `/security`, `/vendors/channex` | matching `app/(console)/*` | Same surfaces as former client super-admin |
 
 ## Shared web components
@@ -92,6 +92,7 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `GET/PATCH /platform/v1/organizations/:id/profile` | same; membership or super-admin |
 | `GET /internal/v1/organizations/:id/profile-snapshot` | `internal-organizations.controller.ts` — S2S branding snapshot (service token) |
 | `PATCH /internal/v1/organizations/:id/profile-bank-line` | `internal-organizations.controller.ts` — Finance primary bank → denormalized `bankLine` (service token; CP-ORG-PROFILE-01) |
+| `GET /internal/v1/organizations/:id/access/:code` | `internal-organizations.controller.ts` — Finance reads org connector id + secret (service token). Inactive codes are not found |
 | `GET /v1/subscription/me` | `subscription.controller.ts` — satelliteEntitlements, connectableSatellites |
 | `GET /v1/satellites/launch-url` | `satellite-launch-url.controller.ts` — owner launcher baseUrl from SatelliteEndpoint; env fallback only when endpoint not disabled; `403 SATELLITE_SUSPENDED` when entitlement.suspendedAt set |
 | `GET /v1/structure/tree` | `structure.controller.ts` — Org→Dept→Sat→Outlet tree (effective suspend/block) |
@@ -109,6 +110,7 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `GET /v1/comms/threads/:id` | `comms.controller.ts` — thread detail (participant only) |
 | `POST /v1/comms/threads/:id/reply` | `comms.controller.ts` — reply + notify |
 | `POST /v1/comms/threads/:id/read` | `comms.controller.ts` — mark read |
+| `/v1/documents/*` | `documents.controller.ts` — cases, files, register, start, archive, tasks/mine, tasks/overdue, tasks/assign, decide (`returnToStep`), locations, templates, `PATCH templates/:id` (blocked while an OPEN route uses it), `PATCH templates/:id/layout`, `PATCH cases/:id/files/:fileId` (CP-DOC-01). Reads require org membership. Edges are a 1→n chain |
 | `POST /auth/home-organization` | `auth` / membership — set `isHome` for Control Home default org |
 | `POST /v1/subscription/connect-satellite` | `subscription.controller.ts` — owner Connect |
 | `POST /v1/billing/toggle-module` | `billing.controller.ts` — owner module enable/disable + 7d SKU grace / late-month `confirmLateMonth`; best-effort `syncForOrg`; response `synced` |
@@ -241,7 +243,8 @@ Auth: `Authorization: Bearer` (`SATELLITE_EVENT_SERVICE_TOKEN` or `CONTROL_PLANE
 | `GET /internal/v1/workforce/organizations/:organizationId/assignments` | `workforce-registry.controller.ts` — S2S org assignments |
 | `GET /internal/v1/workforce/organizations/:organizationId/picker` | `workforce-employment-picker.controller.ts` — S2S active employments for a satellite staff picker (name only; hotel `/api/housekeeping/personnel`) |
 | `GET /v1/admin/mdm/persons` | `admin-mdm.controller.ts` — paginated directory (FIN/DOB/name/phone filters) |
-| `POST /v1/admin/mdm/persons/lookup-by-fin\|resolve\|merge` | super-admin write; UI `/super-admin/mdm/persons` |
+| `GET /v1/admin/mdm/persons/dedup`, `POST …/dedup/dismiss` | suspected duplicates (ten hotel rules); UI `platform…/mdm/persons/dedup` |
+| `POST /v1/admin/mdm/persons/lookup-by-fin\|resolve\|merge` | super-admin write; resolve polishes phone via `normalizePersonPhone` |
 | `POST /internal/v1/mdm/persons/ops-profile/batch` | `mdm.controller.ts` — workforce batch display (+ `hrProfile` when grant allows) |
 | `GET/PATCH /internal/v1/mdm/persons/:id/hr-profile` | `mdm.controller.ts` — grant-gated PersonHrProfile + PersonAddress |
 | `POST /internal/v1/mdm/persons/workforce-resolve` | `mdm.controller.ts` — hire intake |
