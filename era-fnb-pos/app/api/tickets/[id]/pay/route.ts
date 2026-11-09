@@ -185,14 +185,23 @@ export async function POST(
   }
 
   if (body.method === "LIMIT" && body.limitHolderId) {
-    const taken = await prisma.$executeRaw`
-      UPDATE "fnb_limit_holders"
-      SET "used_azn" = "used_azn" + ${due}, "updated_at" = NOW()
-      WHERE "id" = ${body.limitHolderId}
-        AND "organization_id" = ${organizationId}
-        AND "active" = true
-        AND "used_azn" + ${due} <= "ceiling_azn"
-    `;
+    const holder = await prisma.fnbLimitHolder.findFirst({
+      where: { id: body.limitHolderId, organizationId, active: true },
+    });
+    const nextUsed = holder ? holder.usedAzn.plus(due) : null;
+    const taken =
+      holder && nextUsed
+        ? await prisma.fnbLimitHolder.updateMany({
+            where: {
+              id: holder.id,
+              organizationId,
+              active: true,
+              usedAzn: holder.usedAzn,
+              ceilingAzn: { gte: nextUsed },
+            },
+            data: { usedAzn: nextUsed },
+          })
+        : 0;
     if (taken !== 1) {
       return NextResponse.json({ error: "Limit ceiling exceeded" }, { status: 409 });
     }
