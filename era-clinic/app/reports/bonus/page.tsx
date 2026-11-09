@@ -71,8 +71,8 @@ export default function BonusReportPage() {
     <div className={LIST_PAGE_SHELL_CLASS}>
       <PageHeader title={tc("bonusReport")} />
       <div className="mb-4 flex flex-wrap gap-3">
-        <DatePicker label={t("from")} value={from} onChange={setFrom} />
-        <DatePicker label={t("to")} value={to} onChange={setTo} />
+        <DatePicker label={t("from")} value={from} onChange={setFrom} placeholder="dd.mm.yyyy" />
+        <DatePicker label={t("to")} value={to} onChange={setTo} placeholder="dd.mm.yyyy" />
       </div>
       <div className="mb-4 grid gap-3 md:grid-cols-3">
         <label className="text-sm">
