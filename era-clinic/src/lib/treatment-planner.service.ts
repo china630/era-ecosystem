@@ -355,7 +355,9 @@ export type PlaceConfirmedResult = {
 
 export type CabinScanBag = {
   rules?: Awaited<ReturnType<typeof prisma.procedureRule.findMany>>;
-  types?: Awaited<ReturnType<typeof prisma.procedureType.findMany>>;
+  types?: Awaited<
+    ReturnType<typeof prisma.procedureType.findMany<{ include: { requirements: true } }>>
+  >;
   rotationRules?: Awaited<ReturnType<typeof prisma.procedureRotationRule.findMany>>;
   compatibilityRules?: Awaited<ReturnType<typeof prisma.procedureCompatibilityRule.findMany>>;
   staffByTypeAndYmd?: Awaited<ReturnType<typeof loadStaffByDayForScan>>;
