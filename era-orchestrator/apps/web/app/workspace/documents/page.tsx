@@ -137,7 +137,7 @@ export default function DocumentsPage() {
         />
         <Field preset="shortText" label={t("fieldTitle")} value={title} onChange={(e) => setTitle(e.target.value)} />
         <Field preset="shortText" label={t("fieldCorrespondent")} value={correspondent} onChange={(e) => setCorrespondent(e.target.value)} />
-        <DatePicker label={t("fieldDue")} value={dueOn} onChange={setDueOn} />
+        <DatePicker label={t("fieldDue")} value={dueOn} onChange={setDueOn} placeholder="dd.mm.yyyy" />
         <Field preset="shortText" label={t("fieldAmount")} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <CatalogField
           kind="SEARCHABLE"
