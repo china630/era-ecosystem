@@ -10,7 +10,7 @@ import { apiFetch } from "../../../lib/api-client";
 import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
@@ -169,11 +169,10 @@ export default function ProcurementProtocolsPage() {
               </thead>
               <tbody>
                 {rows.length === 0 ? (
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td colSpan={6} className={`${DATA_TABLE_TD_CLASS} py-10 text-center`}>
-                      <EmptyState compact title={t("procurementProtocols.empty")} />
-                    </td>
-                  </tr>
+                  <FinanceEmptyTableRow
+                    colSpan={6}
+                    message={t("procurementProtocols.empty")}
+                  />
                 ) : (
                   rows.map((row) => (
                     <tr key={row.id} className={DATA_TABLE_TR_CLASS}>

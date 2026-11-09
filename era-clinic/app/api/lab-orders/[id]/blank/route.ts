@@ -27,7 +27,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     });
     if (!order) return jsonError("Order not found", 404);
     const { labAwaitingPaymentDenied } = await import("@/domain/lab/lab-order-pay-gate");
-    const unpaid = labAwaitingPaymentDenied(order, { guestBlank: true });
+    // Staff Word import is lab work. Guest print stays on labOrderVisibleToGuestWhere until settledAt.
+    const unpaid = labAwaitingPaymentDenied(order);
     if (unpaid) return jsonError(unpaid.message, unpaid.status, { code: unpaid.code });
     const body = bodySchema.parse(await req.json());
     const docx = Buffer.from(body.docxBase64, "base64");

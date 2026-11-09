@@ -40,8 +40,8 @@
 
 ADR: [hotel-department-duty-schedules.md](../../docs/adr/hotel-department-duty-schedules.md). PIN `StaffRoster` / `/api/labor/roster` stay separate.
 
-1. Manager → `/admin/cedvel` — week grid person × day; shift codes E/A/L/P/N/OFF/EG/IB (legend in Board settings).
-2. Board settings: bind Workforce org units. Click empty day → set shift (+ outlet); click chip to change; × removes.
+1. Manager → `/admin/cedvel` (last nav item before Settings) — week grid person × day; shift codes E/A/L/P/N/OFF/EG/IB (legend in Board settings, collapsed by default).
+2. Open Board settings → bind Workforce org units. Click empty day → set shift (+ outlet); click chip to change; × removes.
 3. Prev / This week / Next; **Copy previous week**; Approve (confirm) → read-only; Reopen draft.
 4. Workforce unavailable → banner; existing cells stay; new save refused.
 5. Confirm PIN roster `/api/labor/roster` still creates PIN staff (not this grid).
@@ -124,6 +124,20 @@ Prerequisite: org has module `fnb_buffet_planner` in orch `activeModules` (and `
 9. Publish → `/admin/daily-menu` merge check for that date/outlet
 
 Evidence: **not signed** until live AZ staging walkthrough + punchlist. API/SCREEN only — not SHIPPED / Demo / SHOW.
+
+## FB-HALL-01 — Nafta hall till — open
+
+1. `/admin/settings` outlet editor → Hall grid mode on for Xudmani or Disco (not Naftani until a-la-carte is confirmed). Same flag is `PATCH /api/outlets/:id` `hallMode`.
+2. `/floor` with hall mode — All / My / Open. Occupied cell shows check id, waiter, covers, total, Baku time. Pay and precheck print two copies: day number, last 8 characters of the key, waiter, Baku time, discount line. LIMIT with no holder stays on the check. In-house search charges the room from the floor. Move needs `api:tickets.move`. Fired-line qty cut needs `api:tickets.void`.
+2b. `/reports/journal` (`screen:sales`) — white till, yellow room, purple limit. Row shows day number and last 8 characters; the find box matches either. Row links back to `/floor`. Voided-check column is present and empty until a void-closed rule exists.
+3. On `/orders`, with hall mode on, pick a holder and **Charge limit**, or **Compliment**. Pay and room charge show the same two slip copies. Ceiling exceeded → 409 (one SQL update). Settle `POST /api/admin/limit-holders/:id/settle` restores only the paid amount. Waiter with pay permission can list holders.
+4. Pay `IKRAM` closes at amount 0 and still requires lines. Non-hall outlet → 409 for LIMIT and IKRAM.
+5. Room charge writes `tenderRoute=ROOM` and `roomNumberLabel` and returns a ROOM slip (room, guest, signature line).
+6. `POST /api/tickets/:id/move` moves an open check onto a free table of the same outlet.
+7. `/reports/x` has three sheets: X, room handover (gave/took), cash act (four signature lines). Hidden X blocks come from outlet `xReportHidden`.
+8. Same page prints room handover (closed room checks, our ticket id) and one cash act per outlet. Signatures stay on paper.
+
+Evidence: not signed — FNB-HALL-01 stays API/SCREEN, not SHIPPED. Open: ikram vs hotel house-use, refund tender/date, Naftani a-la-carte.
 
 ## FB-OUTLET-01 — Second café + outlet caps / Elektra — open
 

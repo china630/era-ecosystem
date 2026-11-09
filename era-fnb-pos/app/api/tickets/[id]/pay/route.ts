@@ -4,7 +4,7 @@ import { z } from "zod";
 import { runPlatformCommerceHooks } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { releaseTableForTicket } from "@/lib/ticket-helpers";
+import { daySeqMap, releaseTableForTicket } from "@/lib/ticket-helpers";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import {
   assertFbRevenueChannel,
@@ -19,6 +19,7 @@ import {
 } from "@/lib/billing-router";
 import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
+import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { requireOpenShift } from "@/lib/open-shift";
@@ -36,6 +37,7 @@ const paySchema = z.object({
   customHostname: z.string().max(253).optional(),
   fiscalDeviceId: z.string().min(1).max(64).optional(),
   bankTerminalId: z.string().min(1).max(64).optional(),
+  limitHolderId: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(
@@ -59,7 +61,8 @@ export async function POST(
   const { id } = await params;
   const body = paySchema.parse(await request.json());
   const { assertFnbPaymentMethodAllowed } = await import('@/lib/org-payment-methods');
-  assertFnbPaymentMethodAllowed(body.method);
+  const hallTender = body.method === "LIMIT" || body.method === "IKRAM";
+  if (!hallTender) assertFnbPaymentMethodAllowed(body.method);
 
   const ticket = await prisma.ticket.findUnique({
     where: { id },
@@ -75,9 +78,19 @@ export async function POST(
     );
   }
 
+  const organizationId = requestOrganizationId();
+  if (body.method === "LIMIT" && (!session || !sessionHasFnbPermission(session, PERMISSIONS.TICKETS_LIMIT))) {
+    return NextResponse.json({ error: "Limit tender is not granted", code: "FNB_NO_LIMIT" }, { status: 403 });
+  }
+  if (body.method === "IKRAM" && (!session || !sessionHasFnbPermission(session, PERMISSIONS.TICKETS_IKRAM))) {
+    return NextResponse.json({ error: "Compliment tender is not granted", code: "FNB_NO_IKRAM" }, { status: 403 });
+  }
+  if (hallTender && !ticket.outlet.hallMode) {
+    return NextResponse.json({ error: "Hall tenders require hall mode on the outlet" }, { status: 409 });
+  }
   const liveLines = ticket.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID");
-  const amount = body.amount ?? Number(ticket.totalAzn);
   const due = Number(ticket.totalAzn);
+  const amount = body.method === "IKRAM" ? 0 : (body.amount ?? due);
   let cashTendered: number | null = null;
   let changeAzn: number | null = null;
   if (body.method === "CASH") {
@@ -87,10 +100,30 @@ export async function POST(
     }
     changeAzn = Math.round((cashTendered - due) * 100) / 100;
   }
-  if (liveLines.length === 0 || amount <= 0) {
+  if (liveLines.length === 0 || (body.method !== "IKRAM" && amount <= 0)) {
     return NextResponse.json({ error: "Nothing to pay" }, { status: 400 });
   }
-  const organizationId = requestOrganizationId();
+  let limitBalanceAfter: number | null = null;
+  let limitHolderName: string | null = null;
+  if (body.method === "LIMIT") {
+    if (!body.limitHolderId) {
+      return NextResponse.json({ error: "Limit holder is required" }, { status: 400 });
+    }
+    const holder = await prisma.fnbLimitHolder.findFirst({
+      where: { id: body.limitHolderId, organizationId, active: true },
+    });
+    if (!holder) return NextResponse.json({ error: "Limit holder not found" }, { status: 404 });
+    limitHolderName = holder.displayName;
+    const ceiling = Number(holder.ceilingAzn);
+    const used = Number(holder.usedAzn);
+    if (used + due > ceiling + 0.001) {
+      return NextResponse.json(
+        { error: "Limit ceiling exceeded", availableAzn: Math.round((ceiling - used) * 100) / 100 },
+        { status: 409 },
+      );
+    }
+    limitBalanceAfter = Math.round((ceiling - used - due) * 100) / 100;
+  }
   const openShift = await requireOpenShift(ticket.outletId);
 
   const settlement = await resolveTicketSettlement(ticket);
@@ -151,12 +184,37 @@ export async function POST(
         };
   }
 
+  if (body.method === "LIMIT" && body.limitHolderId) {
+    const holder = await prisma.fnbLimitHolder.findFirst({
+      where: { id: body.limitHolderId, organizationId, active: true },
+    });
+    const nextUsed = holder ? holder.usedAzn.plus(due) : null;
+    const taken = holder && nextUsed
+      ? await prisma.fnbLimitHolder.updateMany({
+          where: {
+            id: holder.id,
+            organizationId,
+            active: true,
+            usedAzn: holder.usedAzn,
+            ceilingAzn: { gte: nextUsed },
+          },
+          data: { usedAzn: nextUsed },
+        })
+      : { count: 0 };
+    if (taken.count !== 1) {
+      return NextResponse.json({ error: "Limit ceiling exceeded" }, { status: 409 });
+    }
+  }
   await prisma.ticket.update({
     where: { id },
     data: {
       status: "CLOSED",
       closedAt: new Date(),
       paymentMethod: body.method,
+      tenderRoute: body.method,
+      cardTerminalLabel: body.method === "CARD" ? body.bankTerminalId ?? null : null,
+      limitHolderId: body.method === "LIMIT" ? body.limitHolderId ?? null : null,
+      limitBalanceAfter,
       cashTenderedAzn: cashTendered,
       changeAzn,
       shiftId: openShift.id,
@@ -215,11 +273,13 @@ export async function POST(
     payUrl = hooks.payUrl;
   }
 
-  void dispatchStockConsumptionIfEnabled(id, body.method, amount).catch(() => {
-    // E8 optional; enabled via STOCK_CONSUMPTION_ENABLED
-  });
+  if (body.method !== "IKRAM") {
+    void dispatchStockConsumptionIfEnabled(id, body.method, amount).catch(() => {
+      // E8 optional; enabled via STOCK_CONSUMPTION_ENABLED
+    });
+  }
 
-  if (settlement === "LOCAL_CASHIER") {
+  if (settlement === "LOCAL_CASHIER" && body.method !== "IKRAM") {
     const receiptId = fiscal.receiptId?.trim() || `fb-ticket-${id}`;
     const lineCount = ticket.lines.filter((l: TicketLine) => l.kitchenStatus !== "VOID").length;
     void dispatchFbSaleCompleted({
@@ -282,6 +342,37 @@ export async function POST(
       },
       /** Org profile + outlet overlay for guest check / KKM stub header. */
       printChrome,
+      slip: {
+        copies: 2,
+        kind: body.method,
+        ticketId: id,
+        dayNo: (await daySeqMap(ticket.organizationId)).get(id) ?? null,
+        outletName: ticket.outlet.name,
+        table: ticket.table?.name ?? ticket.table?.code ?? null,
+        guestName: ticket.guestName,
+        room: ticket.roomNumberLabel,
+        waiter: ticket.waiterLabel,
+        at: new Date().toISOString(),
+        total: body.method === "IKRAM" ? 0 : Number(ticket.totalAzn),
+        discountAzn:
+          body.method === "IKRAM"
+            ? 0
+            : Math.max(
+                0,
+                Math.round(
+                  (liveLines.reduce((sum, line) => sum + line.qty * Number(line.unitPriceAzn), 0) -
+                    Number(ticket.totalAzn)) *
+                    100,
+                ) / 100,
+              ),
+        limitBalanceAfter,
+        holderName: limitHolderName,
+        lines: liveLines.map((line) => ({
+          name: line.description,
+          qty: line.qty,
+          amount: Math.round(line.qty * Number(line.unitPriceAzn) * 100) / 100,
+        })),
+      },
     },
     201,
   );

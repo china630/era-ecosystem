@@ -14,6 +14,7 @@ import { EtaxesSubmissionAdapterFactory } from "../reporting/etaxes-submission.a
 import { SignatureService } from "../signature/signature.service";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 import { invoiceHoldsDayForMissingEqaime, manualEqaimeLinkPatch } from "./qaime-day-close";
+import { OrgAccessClient } from "../control-plane/org-access.client";
 
 @Injectable()
 export class EqaimeSubmissionService {
@@ -23,6 +24,7 @@ export class EqaimeSubmissionService {
     private readonly submissionFactory: EtaxesSubmissionAdapterFactory,
     private readonly signatures: SignatureService,
     private readonly config: ConfigService,
+    private readonly orgAccess: OrgAccessClient,
   ) {}
 
   isS2sEnabled(): boolean {
@@ -43,14 +45,6 @@ export class EqaimeSubmissionService {
     }
   }
 
-  private resolveAsanUserId(settingsJson: unknown): string | null {
-    if (!settingsJson || typeof settingsJson !== "object") return null;
-    const tax = (settingsJson as Record<string, unknown>).tax;
-    if (!tax || typeof tax !== "object") return null;
-    const id = (tax as Record<string, unknown>).asanUserId;
-    return typeof id === "string" && id.trim() ? id.trim() : null;
-  }
-
   async buildPackage(invoiceId: string, organizationId: string) {
     const prefill = await this.invoices.getExtensionPrefill(organizationId, invoiceId);
     const org = await this.prisma.organization.findUnique({
@@ -66,7 +60,7 @@ export class EqaimeSubmissionService {
       issuer: {
         name: org.name,
         taxId: issuerTaxId,
-        asanUserId: this.resolveAsanUserId(org.settings),
+        asanUserId: await this.orgAccess.resolveAsanUserId(organizationId, org.settings),
       },
       document: prefill,
     };
@@ -130,13 +124,13 @@ export class EqaimeSubmissionService {
       where: { id: organizationId },
       select: { settings: true },
     });
-    const asanUserId = this.resolveAsanUserId(org?.settings);
+    const asanUserId = await this.orgAccess.resolveAsanUserId(organizationId, org?.settings);
     if (!asanUserId) {
       throw new HttpException(
         {
           code: "ASAN_USER_ID_REQUIRED",
           message:
-            "Organization.settings.tax.asanUserId is required for e-Qaimə S2S. Configure in organization settings.",
+            "ASAN ID for this organization is set on the platform access tab (tax).",
         },
         HttpStatus.SERVICE_UNAVAILABLE,
       );

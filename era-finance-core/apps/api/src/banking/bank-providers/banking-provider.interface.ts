@@ -30,9 +30,17 @@ export type PaymentDraftResult = {
   providerPayload?: unknown;
 };
 
+/** Per-organization key from the platform access catalog. API URL stays on the adapter. */
+export type OrgBankCall = {
+  clientId?: string;
+  login?: string;
+  cif?: string;
+  secret: string;
+};
+
 export interface BankingProviderInterface {
-  getBalances(): Promise<BankBalanceItem[]>;
-  getStatements(from: string, to: string): Promise<BankStatementItem[]>;
-  sendPaymentDraft(payload: PaymentDraftRequest): Promise<PaymentDraftResult>;
+  getBalances(creds?: OrgBankCall): Promise<BankBalanceItem[]>;
+  getStatements(from: string, to: string, creds?: OrgBankCall): Promise<BankStatementItem[]>;
+  sendPaymentDraft(payload: PaymentDraftRequest, creds?: OrgBankCall): Promise<PaymentDraftResult>;
 }
 

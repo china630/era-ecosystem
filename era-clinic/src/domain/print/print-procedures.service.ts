@@ -17,7 +17,7 @@ import {
   formatPhysioFieldsPrint,
   readPhysioFields,
 } from "@/domain/physio/physio-order-fields";
-import { bakuDateDisplay, bakuTimeLabel, todayBakuYmd } from "@/lib/baku-day";
+import { bakuDateDisplay, bakuDateKey, bakuTimeLabel, todayBakuYmd } from "@/lib/baku-day";
 import {
   loadCatalogDisplayNameMap,
   resolveOrderDisplayName,
@@ -280,6 +280,8 @@ export async function buildProceduresPrint(
   for (const o of orders) {
     const openUnseated = o.schedulingMode === "OPEN" && !o.resourceId;
     const seated = !openUnseated && printsProcedureClock(o.status, o.resourceId);
+    const ymd = bakuDateKey(o.scheduledAt);
+    if (stay.departure && ymd > stay.departure) continue;
     const date = bakuDate(o.scheduledAt);
     const room = seated
       ? (o.resource?.room?.name ?? o.resource?.name ?? o.resource?.code ?? "—")

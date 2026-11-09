@@ -8,7 +8,7 @@ import { Building2, Wallet } from "lucide-react";
 import { apiFetch } from "../../lib/api-client";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { CARD_CONTAINER_CLASS, LINK_ACCENT_CLASS, PRIMARY_BUTTON_CLASS } from "../../lib/design-system";
-import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import { PageHeader } from "../../components/layout/page-header";
 import { holdingLedgerQueryParam, useLedger } from "../../lib/ledger-context";
 
@@ -246,13 +246,26 @@ export default function HoldingDashboardPage() {
         </div>
       ) : holdings.length === 0 ? (
         <div className="space-y-3">
-          <EmptyState
-            icon={<Building2 className="h-12 w-12 mx-auto stroke-[1.5]" aria-hidden />}
-            title={t("holdingReport.noHoldings", { defaultValue: "Holdinq yoxdur" })}
-            description={t("holdingReport.noOrgsHint", {
-              defaultValue: "Əvvəlcə holdinq yaradın və şirkətləri bağlayın.",
-            })}
-          />
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-[#E0E6ED]">
+                  <th className="px-3 py-2 text-left font-semibold text-[#34495E]">
+                    {t("holdingReport.colOrg", { defaultValue: "Şirkət" })}
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold text-[#34495E]">VÖEN</th>
+                  <th className="px-3 py-2 text-right font-semibold text-[#34495E]">Cash/Bank</th>
+                  <th className="px-3 py-2 text-right font-semibold text-[#34495E]">AZN</th>
+                </tr>
+              </thead>
+              <tbody>
+                <FinanceEmptyTableRow
+                  colSpan={4}
+                  message={t("holdingReport.noHoldings", { defaultValue: "Holdinq yoxdur" })}
+                />
+              </tbody>
+            </table>
+          </div>
           <p className="text-center text-sm text-[#7F8C8D]">
             <a
               href={`${ORCH_WEB.replace(/\/$/, "")}/holdings`}

@@ -174,7 +174,7 @@ export async function getResourceDayMatrix(date: Date) {
             procedureCode: true,
             manuallyAdjusted: true,
             schedulingMode: true,
-            clinicalEpisode: { select: { roomNumber: true } },
+            clinicalEpisode: { select: { roomNumber: true, status: true } },
           },
         })
       : [];
@@ -192,15 +192,17 @@ export async function getResourceDayMatrix(date: Date) {
       ...r,
       slots: r.slots.map((s) => {
         const ord = s.procedureOrderId ? byId.get(s.procedureOrderId) : undefined;
+        const gone = ord?.clinicalEpisode?.status === "CLOSED";
         return {
           ...s,
-          status: ord?.status,
-          patientRefId: ord?.patientRefId,
-          roomNumber: ord?.clinicalEpisode?.roomNumber ?? undefined,
-          procedureCode: ord?.procedureCode,
+          status: gone ? undefined : ord?.status,
+          patientRefId: gone ? undefined : ord?.patientRefId,
+          roomNumber: gone ? undefined : ord?.clinicalEpisode?.roomNumber ?? undefined,
+          procedureCode: gone ? undefined : ord?.procedureCode,
           manuallyAdjusted: ord?.manuallyAdjusted,
           schedulingMode: ord?.schedulingMode,
-          blocked: s.occupied,
+          occupied: gone ? false : s.occupied,
+          blocked: gone ? false : s.occupied,
           lunch: s.lunch,
           outside: "outside" in s ? Boolean((s as { outside?: boolean }).outside) : false,
         };

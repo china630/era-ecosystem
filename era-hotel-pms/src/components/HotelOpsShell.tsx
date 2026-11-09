@@ -107,6 +107,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
   const pathname = usePathname() ?? '';
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [locationHash, setLocationHash] = useState('');
   const openReservation = searchParams.get('openReservation') === '1';
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [groupModalOpen, setGroupModalOpen] = useState(false);
@@ -153,18 +154,35 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [searchParams, pathname, router]);
 
+  useEffect(() => {
+    const read = () => setLocationHash(window.location.hash.replace(/^#/, ''));
+    read();
+    window.addEventListener('hashchange', read);
+    return () => window.removeEventListener('hashchange', read);
+  }, [pathname]);
+
   function navHrefActive(href: string): boolean {
     const hash = href.indexOf('#');
     const bare = hash >= 0 ? href.slice(0, hash) : href;
+    const wantedHash = hash >= 0 ? href.slice(hash + 1) : '';
     const qIndex = bare.indexOf('?');
     const path = qIndex >= 0 ? bare.slice(0, qIndex) : bare;
     const query = qIndex >= 0 ? bare.slice(qIndex + 1) : '';
     if (path === '/') return pathname === '/';
     // Parent items that have their own siblings under the same prefix.
     // `/night-audit` must not stay lit on `/night-audit/logs`.
-    const exactOnly = path === '/reports' || path === '/night-audit' || path === '/hk';
+    const exactOnly =
+      path === '/reports' ||
+      path === '/night-audit' ||
+      path === '/hk' ||
+      path === '/schedules';
     const pathOk = exactOnly ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
     if (!pathOk) return false;
+    if (wantedHash) {
+      if (locationHash !== wantedHash) return false;
+    } else if (path === '/settings/policies' && locationHash) {
+      return false;
+    }
     if (!query) {
       if (path === '/settings/integration') {
         const view = searchParams.get('view');
@@ -470,13 +488,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
                   permission: PERMISSIONS.SCREEN_HK,
                 },
                 {
-                  id: 'hk-roster',
-                  href: '/hk/roster',
-                  labelKey: 'hkRoster',
-                  icon: Users,
-                  permission: PERMISSIONS.SCREEN_HK,
-                },
-                {
                   id: 'hk-rotation',
                   href: '/hk/rotation',
                   labelKey: 'hkRotation',
@@ -539,48 +550,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           ]),
         },
         {
-          id: 'hotel_schedules',
-          title: t('sectionSchedules'),
-          icon: CalendarClock,
-          items: sectionItems([
-            {
-              id: 'sched-hub',
-              href: '/schedules',
-              labelKey: 'schedulesHub',
-              icon: CalendarClock,
-              permission: PERMISSIONS.SCREEN_SCHEDULES,
-            },
-            {
-              id: 'sched-hk',
-              href: '/hk/roster',
-              labelKey: 'hkRoster',
-              icon: Users,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'sched-reception',
-              href: '/schedules/reception',
-              labelKey: 'scheduleReception',
-              icon: ClipboardList,
-              permission: PERMISSIONS.SCREEN_SCHEDULES,
-            },
-            {
-              id: 'sched-security',
-              href: '/schedules/security',
-              labelKey: 'scheduleSecurity',
-              icon: Shield,
-              permission: PERMISSIONS.SCREEN_SCHEDULES,
-            },
-            {
-              id: 'sched-engineering',
-              href: '/schedules/engineering',
-              labelKey: 'scheduleEngineering',
-              icon: Wrench,
-              permission: PERMISSIONS.SCREEN_SCHEDULES,
-            },
-          ]),
-        },
-        {
           id: 'hotel_guest_experience',
           title: t('sectionGuests'),
           icon: Users,
@@ -591,6 +560,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'guests',
               icon: Users,
               permission: PERMISSIONS.SCREEN_FO,
+            },
+            {
+              id: 'gx-dedup',
+              href: '/reports/guest-dedup',
+              labelKey: 'guestDedup',
+              icon: Users,
+              permission: PERMISSIONS.SCREEN_REPORTS,
             },
           ]),
         },
@@ -646,69 +622,6 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/distribution/companies',
               labelKey: 'companies',
               icon: Building2,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-          ]),
-        },
-        {
-          id: 'hotel_rates_pricing',
-          title: t('sectionRatesPricing'),
-          icon: Banknote,
-          items: sectionItems([
-            {
-              id: 'price-seasons',
-              href: '/settings/seasons',
-              labelKey: 'priceSeasons',
-              icon: CalendarDays,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'price-packages',
-              href: '/settings/package-prices',
-              labelKey: 'packagePrices',
-              icon: Banknote,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'price-daily',
-              href: '/settings/daily-prices',
-              labelKey: 'dailyPrices',
-              icon: Banknote,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'price-child-matrix',
-              href: '/settings/child-matrix',
-              labelKey: 'childMatrix',
-              icon: Users,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'price-bar',
-              href: '/settings/bar-calendar',
-              labelKey: 'barCalendar',
-              icon: CalendarDays,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'price-components',
-              href: '/settings/pricing-components',
-              labelKey: 'pricingComponents',
-              icon: Banknote,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'price-yield-rules',
-              href: '/settings/yield-rules',
-              labelKey: 'yieldRules',
-              icon: TrendingUp,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'price-policy',
-              href: '/settings/policies#pricing',
-              labelKey: 'pricingPolicy',
-              icon: Banknote,
               permission: PERMISSIONS.SCREEN_SETTINGS,
             },
           ]),
@@ -872,49 +785,61 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               icon: BarChart3,
               permission: PERMISSIONS.SCREEN_REPORTS,
             },
-          ]),
-        },
-        {
-          id: 'hotel_reports_other',
-          title: t('reportsOther'),
-          icon: FileText,
-          items: sectionItems([
             {
-              id: 'rep-other-invoices',
+              id: 'rep-invoices',
               href: '/reports/invoices',
               labelKey: 'reportsInvoices',
               icon: FileText,
               permission: PERMISSIONS.SCREEN_REPORTS,
             },
             {
-              id: 'rep-other-recon',
+              id: 'rep-recon',
               href: '/reports/reconciliation',
               labelKey: 'reportsReconciliation',
               icon: ClipboardList,
               permission: PERMISSIONS.SCREEN_REPORTS,
             },
+          ]),
+        },
+        {
+          id: 'hotel_schedules',
+          title: t('sectionSchedules'),
+          icon: CalendarClock,
+          items: sectionItems([
             {
-              id: 'rep-other-dedup',
-              href: '/reports/guest-dedup',
-              labelKey: 'guestDedup',
+              id: 'sched-hub',
+              href: '/schedules',
+              labelKey: 'schedulesHub',
+              icon: CalendarClock,
+              permission: PERMISSIONS.SCREEN_SCHEDULES,
+            },
+            {
+              id: 'sched-hk',
+              href: '/hk/roster',
+              labelKey: 'hkRoster',
               icon: Users,
-              permission: PERMISSIONS.SCREEN_REPORTS,
+              permission: PERMISSIONS.SCREEN_HK,
             },
             {
-              id: 'rep-pos',
-              href: posCalendarHref(),
-              labelKey: 'posCalendar',
-              icon: CalendarDays,
-              external: true,
-              permission: PERMISSIONS.SCREEN_FO,
+              id: 'sched-reception',
+              href: '/schedules/reception',
+              labelKey: 'scheduleReception',
+              icon: ClipboardList,
+              permission: PERMISSIONS.SCREEN_SCHEDULES,
             },
             {
-              id: 'rep-retail',
-              href: souvenirRetailHref(),
-              labelKey: 'souvenirShop',
-              icon: ShoppingBag,
-              external: true,
-              permission: PERMISSIONS.SCREEN_FO,
+              id: 'sched-security',
+              href: '/schedules/security',
+              labelKey: 'scheduleSecurity',
+              icon: Shield,
+              permission: PERMISSIONS.SCREEN_SCHEDULES,
+            },
+            {
+              id: 'sched-engineering',
+              href: '/schedules/engineering',
+              labelKey: 'scheduleEngineering',
+              icon: Wrench,
+              permission: PERMISSIONS.SCREEN_SCHEDULES,
             },
           ]),
         },
@@ -924,37 +849,268 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           icon: Settings,
           items: sectionItems([
             {
-              id: 'set-master',
-              href: '/settings/master-data',
-              labelKey: 'masterData',
+              id: 'set-property',
+              labelKey: 'setGroupProperty',
               icon: Building2,
               permission: PERMISSIONS.SCREEN_SETTINGS,
+              children: [
+                {
+                  id: 'set-letterhead',
+                  href: '/settings/policies#letterhead',
+                  labelKey: 'setLetterhead',
+                  icon: FileText,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-departments',
+                  href: '/settings/departments',
+                  labelKey: 'departments',
+                  icon: Building2,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
             },
             {
-              id: 'set-departments',
-              href: '/settings/departments',
-              labelKey: 'departments',
-              icon: Building2,
+              id: 'set-rooms',
+              labelKey: 'setGroupRooms',
+              icon: BedDouble,
               permission: PERMISSIONS.SCREEN_SETTINGS,
+              children: [
+                {
+                  id: 'set-room-types',
+                  href: '/settings/master-data?tab=roomTypes',
+                  labelKey: 'setRoomTypes',
+                  icon: BedDouble,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-rooms-list',
+                  href: '/settings/master-data?tab=rooms',
+                  labelKey: 'setRooms',
+                  icon: LayoutGrid,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-beds',
+                  href: '/settings/master-data?tab=beds',
+                  labelKey: 'setBeds',
+                  icon: BedDouble,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-views',
+                  href: '/settings/master-data?tab=views',
+                  labelKey: 'setViews',
+                  icon: LayoutGrid,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-quota',
+                  href: '/settings/master-data?tab=quota',
+                  labelKey: 'setQuotaJournal',
+                  icon: ClipboardList,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
             },
             {
-              id: 'set-policies',
-              href: '/settings/policies',
-              labelKey: 'policies',
-              icon: Wrench,
-              anyPermission: [PERMISSIONS.SCREEN_HK, PERMISSIONS.SCREEN_SETTINGS],
-            },
-            {
-              id: 'set-laundry-catalog',
-              href: '/settings/laundry-catalog',
-              labelKey: 'laundryCatalog',
-              icon: Package,
-              permission: PERMISSIONS.SCREEN_HK,
-            },
-            {
-              id: 'set-accounts',
-              labelKey: 'accounts',
+              id: 'set-guest-lists',
+              labelKey: 'setGroupGuestLists',
               icon: Users,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+              children: [
+                {
+                  id: 'set-lookup-commercial',
+                  href: '/settings/master-data?tab=lookupCommercial',
+                  labelKey: 'setLookupCommercial',
+                  icon: Users,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-lookup-identity',
+                  href: '/settings/master-data?tab=lookupIdentity',
+                  labelKey: 'setLookupIdentity',
+                  icon: Users,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-lookup-stay',
+                  href: '/settings/master-data?tab=lookupStay',
+                  labelKey: 'setLookupStay',
+                  icon: Users,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-lookup-notes',
+                  href: '/settings/master-data?tab=lookupNotes',
+                  labelKey: 'setLookupNotes',
+                  icon: ClipboardList,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
+            },
+            {
+              id: 'set-rates',
+              labelKey: 'setGroupRates',
+              icon: Banknote,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+              children: [
+                {
+                  id: 'set-rate-plans',
+                  href: '/settings/master-data?tab=ratePlans',
+                  labelKey: 'setRatePlans',
+                  icon: Banknote,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'price-seasons',
+                  href: '/settings/seasons',
+                  labelKey: 'priceSeasons',
+                  icon: CalendarDays,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'price-packages',
+                  href: '/settings/package-prices',
+                  labelKey: 'packagePrices',
+                  icon: Banknote,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'price-daily',
+                  href: '/settings/daily-prices',
+                  labelKey: 'dailyPrices',
+                  icon: Banknote,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'price-bar',
+                  href: '/settings/bar-calendar',
+                  labelKey: 'barCalendar',
+                  icon: CalendarDays,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'price-child-matrix',
+                  href: '/settings/child-matrix',
+                  labelKey: 'childMatrix',
+                  icon: Users,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'price-components',
+                  href: '/settings/pricing-components',
+                  labelKey: 'pricingComponents',
+                  icon: Banknote,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'price-yield-rules',
+                  href: '/settings/yield-rules',
+                  labelKey: 'yieldRules',
+                  icon: TrendingUp,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'price-policy',
+                  href: '/settings/policies#pricing',
+                  labelKey: 'pricingPolicy',
+                  icon: Banknote,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
+            },
+            {
+              id: 'set-revenue',
+              labelKey: 'setGroupRevenue',
+              icon: TrendingUp,
+              permission: PERMISSIONS.SCREEN_SETTINGS,
+              children: [
+                {
+                  id: 'set-revenue-codes',
+                  href: '/settings/master-data?tab=revenue',
+                  labelKey: 'setRevenueCodes',
+                  icon: Banknote,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-int-gl',
+                  href: '/settings/integration?view=gl',
+                  labelKey: 'integrationGl',
+                  icon: Link2,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
+            },
+            {
+              id: 'set-house',
+              labelKey: 'setGroupHouse',
+              icon: SprayCan,
+              anyPermission: [PERMISSIONS.SCREEN_HK, PERMISSIONS.SCREEN_SETTINGS],
+              children: [
+                {
+                  id: 'set-hk-policy',
+                  href: '/settings/policies#hk',
+                  labelKey: 'setHkPolicy',
+                  icon: SprayCan,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+                {
+                  id: 'set-laundry-policy',
+                  href: '/settings/policies#laundry',
+                  labelKey: 'setLaundryPolicy',
+                  icon: Package,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+                {
+                  id: 'set-laundry-catalog',
+                  href: '/settings/laundry-catalog',
+                  labelKey: 'laundryCatalog',
+                  icon: Package,
+                  permission: PERMISSIONS.SCREEN_HK,
+                },
+                {
+                  id: 'set-stock',
+                  href: '/settings/stock',
+                  labelKey: 'minibarCatalog',
+                  icon: Package,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
+            },
+            {
+              id: 'set-shift',
+              labelKey: 'setGroupShift',
+              icon: Moon,
+              anyPermission: [PERMISSIONS.SCREEN_HK, PERMISSIONS.SCREEN_SETTINGS],
+              children: [
+                {
+                  id: 'set-na-policy',
+                  href: '/settings/policies#night-audit',
+                  labelKey: 'setNaPolicy',
+                  icon: Moon,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-tour-policy',
+                  href: '/settings/policies#tours',
+                  labelKey: 'setTourPolicy',
+                  icon: Bus,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-report-pack',
+                  href: '/settings/policies#reports',
+                  labelKey: 'setReportPack',
+                  icon: FileText,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
+            },
+            {
+              id: 'set-access-group',
+              labelKey: 'setGroupAccess',
+              icon: Shield,
               anyPermission: [
                 PERMISSIONS.SCREEN_SETTINGS_USERS,
                 PERMISSIONS.SCREEN_SETTINGS_ACCESS,
@@ -971,7 +1127,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
                   id: 'set-access',
                   href: '/settings/access',
                   labelKey: 'access',
-                  icon: Users,
+                  icon: Shield,
                   permission: PERMISSIONS.SCREEN_SETTINGS_ACCESS,
                 },
                 {
@@ -984,61 +1140,93 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               ],
             },
             {
-              id: 'set-int',
-              href: '/settings/integration',
-              labelKey: 'integrationEvents',
-              icon: Link2,
+              id: 'set-exchange',
+              labelKey: 'setGroupExchange',
+              icon: Radio,
               permission: PERMISSIONS.SCREEN_SETTINGS,
+              children: [
+                {
+                  id: 'set-int',
+                  href: '/settings/integration',
+                  labelKey: 'integrationEvents',
+                  icon: Radio,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-int-journal',
+                  href: '/settings/integration?view=journal',
+                  labelKey: 'integrationJournal',
+                  icon: ClipboardList,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
+                  id: 'set-channel-links',
+                  href: '/admin/links',
+                  labelKey: 'adminLinks',
+                  icon: Link2,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+              ],
             },
             {
-              id: 'set-int-gl',
-              href: '/settings/integration?view=gl',
-              labelKey: 'integrationGl',
-              icon: Link2,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
+              id: 'set-service',
+              labelKey: 'setGroupService',
+              icon: Wrench,
+              anyPermission: [PERMISSIONS.SCREEN_SETTINGS, PERMISSIONS.SCREEN_REPORTS],
+              children: [
+                {
+                  id: 'set-audit',
+                  href: '/admin/audit',
+                  labelKey: 'auditViewer',
+                  icon: ClipboardList,
+                  permission: PERMISSIONS.SCREEN_REPORTS,
+                },
+                {
+                  id: 'set-import',
+                  href: '/settings/import',
+                  labelKey: 'elektrawebImport',
+                  icon: FileText,
+                  permission: PERMISSIONS.API_IMPORT_ELEKTRAWEB,
+                  when: canRunElektrawebImport,
+                },
+                {
+                  id: 'set-ops-wipe',
+                  href: '/settings/ops-wipe',
+                  labelKey: 'opsWipe',
+                  icon: Trash2,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                  when: isPlatformSuperAdmin,
+                },
+              ],
+            },
+          ]),
+        },
+        {
+          id: 'hotel_external',
+          title: t('sectionExternal'),
+          icon: Link2,
+          items: sectionItems([
+            {
+              id: 'ext-pos',
+              href: posCalendarHref(),
+              labelKey: 'posCalendar',
+              icon: CalendarDays,
+              external: true,
+              permission: PERMISSIONS.SCREEN_FO,
             },
             {
-              id: 'set-int-journal',
-              href: '/settings/integration?view=journal',
-              labelKey: 'integrationJournal',
-              icon: Link2,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'set-channel-links',
-              href: '/admin/links',
-              labelKey: 'adminLinks',
-              icon: Link2,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-            },
-            {
-              id: 'set-audit',
-              href: '/admin/audit',
-              labelKey: 'auditViewer',
-              icon: ClipboardList,
-              permission: PERMISSIONS.SCREEN_REPORTS,
-            },
-            {
-              id: 'set-import',
-              href: '/settings/import',
-              labelKey: 'elektrawebImport',
-              icon: FileText,
-              permission: PERMISSIONS.API_IMPORT_ELEKTRAWEB,
-              when: canRunElektrawebImport,
-            },
-            {
-              id: 'set-ops-wipe',
-              href: '/settings/ops-wipe',
-              labelKey: 'opsWipe',
-              icon: Trash2,
-              permission: PERMISSIONS.SCREEN_SETTINGS,
-              when: isPlatformSuperAdmin,
+              id: 'ext-retail',
+              href: souvenirRetailHref(),
+              labelKey: 'souvenirShop',
+              icon: ShoppingBag,
+              external: true,
+              permission: PERMISSIONS.SCREEN_FO,
             },
           ]),
         },
       ],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- t identity stable enough per render
-    [t, pathname, searchParams, canRunElektrawebImport, isPlatformSuperAdmin],
+    [t, pathname, searchParams, locationHash, canRunElektrawebImport, isPlatformSuperAdmin],
   );
   const visibleSections = useMemo(
     () => visibleOpsNavSections(navSections, navStatus, profile, allowHotel),

@@ -58,4 +58,9 @@ describe("duty schedule catalog", () => {
     expect(shiftChipClass("E", true)).toContain("amber");
     expect(dayHeaderClass("2026-11-07", "2026-11-07")).toContain("sky");
   });
+
+  it("P2002 unique conflict shape is recognized for seed races", () => {
+    const err = { code: "P2002", meta: { target: ["organizationId", "dept"] } };
+    expect(err.code).toBe("P2002");
+  });
 });

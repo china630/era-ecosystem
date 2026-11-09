@@ -9,7 +9,7 @@ import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { SubcontoFilterFields } from "../../../components/reporting/subconto-filter-fields";
 import { useSubcontoFilters } from "../../../lib/use-subconto-filters";
 import {
@@ -243,66 +243,92 @@ export default function TurnoversPage() {
       {reportNote ? <p className="text-xs text-[#7F8C8D]">{reportNote}</p> : null}
 
       {tab === "turnovers" && rows ? (
-        rows.length === 0 ? (
-          <EmptyState title={t("reporting.turnovers.empty")} />
-        ) : (
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.thCode")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.thAccName")}</th>
-                  {useSubcontoTb ? (
-                    <>
-                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.subconto.thType")}</th>
-                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.subconto.thValue")}</th>
-                    </>
-                  ) : null}
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thOpenDr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thOpenCr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thCloseDr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thCloseCr")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => {
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.thCode")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.thAccName")}</th>
+                {useSubcontoTb ? (
+                  <>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.subconto.thType")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.subconto.thValue")}</th>
+                  </>
+                ) : null}
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thOpenDr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thOpenCr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thCloseDr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thCloseCr")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <FinanceEmptyTableRow
+                  colSpan={useSubcontoTb ? 10 : 8}
+                  message={t("reporting.turnovers.empty")}
+                />
+              ) : (
+                rows.map((r) => {
                   const sub = r as SubcontoTbRow;
                   const rowKey = useSubcontoTb
                     ? `${r.accountCode}-${sub.valueName ?? ""}`
                     : r.accountCode;
                   return (
-                  <tr key={rowKey} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>{r.accountCode}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{r.accountName}</td>
-                    {useSubcontoTb ? (
-                      <>
-                        <td className={DATA_TABLE_TD_CLASS}>{sub.subcontoTypeName ?? "—"}</td>
-                        <td className={DATA_TABLE_TD_CLASS}>{sub.valueName ?? "—"}</td>
-                      </>
-                    ) : null}
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.openingDebit)}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.openingCredit)}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodDebit)}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodCredit)}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.closingDebit)}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.closingCredit)}</td>
-                  </tr>
+                    <tr key={rowKey} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{r.accountCode}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{r.accountName}</td>
+                      {useSubcontoTb ? (
+                        <>
+                          <td className={DATA_TABLE_TD_CLASS}>{sub.subcontoTypeName ?? "—"}</td>
+                          <td className={DATA_TABLE_TD_CLASS}>{sub.valueName ?? "—"}</td>
+                        </>
+                      ) : null}
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.openingDebit)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.openingCredit)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodDebit)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodCredit)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.closingDebit)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.closingCredit)}</td>
+                    </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       ) : null}
 
       {tab === "chessboard" && cells ? (
         <div className="space-y-3">
           {methodNote ? <p className="text-xs text-[#7F8C8D]">{methodNote}</p> : null}
-          {cells.length === 0 ? (
-            <EmptyState title={t("reporting.chessboard.empty")} />
-          ) : codes.length <= 20 ? (
+          {cells.length === 0 || codes.length > 20 ? (
+            <div className={DATA_TABLE_VIEWPORT_CLASS}>
+              <table className={DATA_TABLE_CLASS}>
+                <thead>
+                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.chessboard.thDebit")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.chessboard.thCredit")}</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.chessboard.thAmount")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cells.length === 0 ? (
+                    <FinanceEmptyTableRow colSpan={3} message={t("reporting.chessboard.empty")} />
+                  ) : (
+                    cells.map((c) => (
+                      <tr key={`${c.debitAccountCode}-${c.creditAccountCode}`} className={DATA_TABLE_TR_CLASS}>
+                        <td className={DATA_TABLE_TD_CLASS}>{c.debitAccountCode}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{c.creditAccountCode}</td>
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(c.amount)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
             <div className={DATA_TABLE_VIEWPORT_CLASS}>
               <table className={DATA_TABLE_CLASS}>
                 <thead>
@@ -325,27 +351,6 @@ export default function TurnoversPage() {
                           </td>
                         );
                       })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <thead>
-                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.chessboard.thDebit")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.chessboard.thCredit")}</th>
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.chessboard.thAmount")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cells.map((c) => (
-                    <tr key={`${c.debitAccountCode}-${c.creditAccountCode}`} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>{c.debitAccountCode}</td>
-                      <td className={DATA_TABLE_TD_CLASS}>{c.creditAccountCode}</td>
-                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(c.amount)}</td>
                     </tr>
                   ))}
                 </tbody>

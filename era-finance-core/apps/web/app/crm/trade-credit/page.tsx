@@ -24,7 +24,7 @@ import {
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useSubscription } from "../../../lib/subscription-context";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 
 type PolicyGroupCode = "A" | "B" | "C" | "D";
 
@@ -645,17 +645,14 @@ export default function TradeCreditGrantsPage() {
             <h2 className="text-sm font-semibold text-[#34495E]">
               {t("tradeCredit.facilitiesTitle")}
             </h2>
-            {facilities.length === 0 ? (
-              <EmptyState title={t("tradeCredit.facilitiesEmpty")} />
-            ) : (
-              <div className={CARD_CONTAINER_CLASS}>
-                <div className={DATA_TABLE_VIEWPORT_CLASS}>
-                  <table className={DATA_TABLE_CLASS}>
-                    <thead>
-                      <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                        <th className={DATA_TABLE_TH_LEFT_CLASS}>
-                          {t("tradeCredit.colCounterparty")}
-                        </th>
+            <div className={CARD_CONTAINER_CLASS}>
+              <div className={DATA_TABLE_VIEWPORT_CLASS}>
+                <table className={DATA_TABLE_CLASS}>
+                  <thead>
+                    <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                        {t("tradeCredit.colCounterparty")}
+                      </th>
                         <th className={DATA_TABLE_TH_LEFT_CLASS}>
                           {t("tradeCredit.policyGroup")}
                         </th>
@@ -680,7 +677,10 @@ export default function TradeCreditGrantsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {facilities.map((row) => (
+                      {facilities.length === 0 ? (
+                        <FinanceEmptyTableRow colSpan={8} message={t("tradeCredit.facilitiesEmpty")} />
+                      ) : (
+                        facilities.map((row) => (
                         <tr
                           key={row.id}
                           className={`${DATA_TABLE_TR_CLASS}${
@@ -796,27 +796,24 @@ export default function TradeCreditGrantsPage() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
-            )}
           </div>
 
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-[#34495E]">
               {t("tradeCredit.grantsTitle")}
             </h2>
-            {rows.length === 0 ? (
-              <EmptyState title={t("tradeCredit.empty")} />
-            ) : (
-              <div className={CARD_CONTAINER_CLASS}>
-                <div className={DATA_TABLE_VIEWPORT_CLASS}>
-                  <table className={DATA_TABLE_CLASS}>
-                    <thead>
-                      <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                        <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("tradeCredit.colCreated")}</th>
+            <div className={CARD_CONTAINER_CLASS}>
+              <div className={DATA_TABLE_VIEWPORT_CLASS}>
+                <table className={DATA_TABLE_CLASS}>
+                  <thead>
+                    <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("tradeCredit.colCreated")}</th>
                         <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("tradeCredit.colCounterparty")}</th>
                         <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("tradeCredit.colAmount")}</th>
                         <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("tradeCredit.colExpires")}</th>
@@ -825,7 +822,10 @@ export default function TradeCreditGrantsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {rows.map((row) => (
+                      {rows.length === 0 ? (
+                        <FinanceEmptyTableRow colSpan={6} message={t("tradeCredit.empty")} />
+                      ) : (
+                        rows.map((row) => (
                         <tr
                           key={row.id}
                           className={`${DATA_TABLE_TR_CLASS}${
@@ -862,12 +862,12 @@ export default function TradeCreditGrantsPage() {
                             )}
                           </td>
                         </tr>
-                      ))}
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
-            )}
           </div>
         </>
       )}

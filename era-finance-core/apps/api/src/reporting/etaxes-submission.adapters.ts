@@ -127,7 +127,7 @@ export class HsmEtaxesSubmissionAdapter implements EtaxesSubmissionAdapter {
         {
           code: "ASAN_USER_ID_REQUIRED",
           message:
-            "Organization.settings.tax.asanUserId is required for HSM/ASAN submission.",
+            "ASAN ID for this organization is set on the platform access tab (tax).",
         },
         HttpStatus.BAD_REQUEST,
       );

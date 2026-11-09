@@ -7,10 +7,15 @@ import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../lib/api-client";
 import {
   CARD_CONTAINER_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../lib/design-system";
 import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import {
   DEFAULT_LIST_PAGE_SIZE,
   ListPaginationFooter,
@@ -274,12 +279,19 @@ export default function ComplianceDashboardPage() {
             {loading && !list ? (
               <p className="text-[13px] text-[#7F8C8D]">{t("compliance.loading")}</p>
             ) : null}
-            {(list?.items ?? []).length === 0 && !loading ? (
-              <EmptyState
-                compact
-                title={t("compliance.emptyAlerts")}
-                className="bg-white"
-              />
+            {!loading && (list?.items ?? []).length === 0 ? (
+              <div className={DATA_TABLE_VIEWPORT_CLASS}>
+                <table className={DATA_TABLE_CLASS}>
+                  <thead>
+                    <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("compliance.pageTitle")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <FinanceEmptyTableRow colSpan={1} message={t("compliance.emptyAlerts")} />
+                  </tbody>
+                </table>
+              </div>
             ) : null}
             {(list?.items ?? []).map((row) => (
               <div

@@ -25,6 +25,7 @@ export function presetsRequiredForPath(pathname: string): ClinicPresetCode[] | n
     is("/nurse") ||
     is("/check-in") ||
     is("/reports/procedures") ||
+    is("/reports/bonus") ||
     is("/reports/revenue") ||
     is("/reports/patient-assignments") ||
     is("/sanatorium") ||

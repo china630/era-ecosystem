@@ -123,7 +123,10 @@ export async function GET(req: Request) {
       return jsonOk({ data: [], total: 0, page: query.page, pageSize: query.pageSize });
     }
 
-    const conditions: Prisma.LabOrderWhereInput[] = [labOrderVisibleToLabWhere()];
+    const conditions: Prisma.LabOrderWhereInput[] = [
+      labOrderVisibleToLabWhere(),
+      { OR: [{ clinicalEpisodeId: null }, { episode: { status: "OPEN" } }] },
+    ];
     if (dataScope.mode === "ASSIGNED" && dataScope.practitionerId) {
       conditions.push(labOrderAssignedToPractitionerWhere(dataScope.practitionerId));
     }

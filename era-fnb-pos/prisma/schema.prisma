@@ -83,6 +83,10 @@ model Outlet {
   capBuffetPlanner   Boolean  @default(false) @map("cap_buffet_planner")
   /// cafe | restaurant | buffet_kitchen | disco
   shapeHint          String?  @map("shape_hint")
+  /// Elektra-style hall: grid, limit, ikram, per-tender slip, X with open till.
+  hallMode           Boolean  @default(false) @map("hall_mode")
+  /// X-report section ids to hide. Null = print every block.
+  xReportHidden      Json?    @map("x_report_hidden")
   active             Boolean  @default(true)
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
@@ -100,6 +104,7 @@ model Outlet {
   buffetGuestNightEntries BuffetGuestNightEntry[]
   soldOut            MenuItemSoldOut[]
   staff              StaffRoster[]
+  limitHolders       FnbLimitHolder[]
   publicSlug         String?  @unique @map("public_slug")
   /** PINs on this point stop working until a manager pairs the tablet again. Set on Z. */
   terminalRevokedAt  DateTime? @map("terminal_revoked_at")
@@ -507,6 +512,12 @@ model Ticket {
   discountPercent         Decimal      @default(0) @map("discount_percent") @db.Decimal(5, 2)
   totalAzn                Decimal      @default(0) @map("total_azn") @db.Decimal(12, 2)
   paymentMethod           String?      @map("payment_method")
+  /// CASH | CARD | TRANSFER | ROOM | LIMIT | IKRAM
+  tenderRoute             String?      @map("tender_route")
+  cardTerminalLabel       String?      @map("card_terminal_label")
+  limitHolderId           String?      @map("limit_holder_id")
+  limitBalanceAfter       Decimal?     @map("limit_balance_after") @db.Decimal(12, 2)
+  roomNumberLabel         String?      @map("room_number_label")
   cashTenderedAzn         Decimal?     @map("cash_tendered_azn") @db.Decimal(12, 2)
   changeAzn               Decimal?     @map("change_azn") @db.Decimal(12, 2)
   shiftId                 String?      @map("shift_id")
@@ -571,6 +582,25 @@ model PosShift {
   @@index([outletId, status])
   @@map("pos_shifts")
   @@index([organizationId])
+}
+
+/// Debt ceiling for a named person (staff or not). Hotel director sets the ceiling.
+/// Spending raises `usedAzn`. The ceiling is available again only after the debt is settled.
+model FnbLimitHolder {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  outletId       String?  @map("outlet_id")
+  displayName    String   @map("display_name")
+  ceilingAzn     Decimal  @map("ceiling_azn") @db.Decimal(12, 2)
+  usedAzn        Decimal  @default(0) @map("used_azn") @db.Decimal(12, 2)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  outlet         Outlet?  @relation(fields: [outletId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, active])
+  @@index([outletId])
+  @@map("fnb_limit_holders")
 }
 
 model PosCashDrop {

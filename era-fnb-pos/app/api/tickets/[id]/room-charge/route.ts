@@ -8,7 +8,7 @@ import {
   resolveTicketSettlement,
 } from "@/lib/billing-router";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { isUuid, releaseTableForTicket } from "@/lib/ticket-helpers";
+import { daySeqMap, isUuid, releaseTableForTicket } from "@/lib/ticket-helpers";
 import { shiftIdCovering } from "@/lib/open-shift";
 import { getSatelliteSession, sessionActorName } from "@/lib/session";
 import { assertHotelFnbFeature } from "@/lib/fnb-module-gate";
@@ -176,6 +176,9 @@ export async function POST(
       data: {
         status: "CLOSED",
         closedAt,
+        paymentMethod: "ROOM",
+        tenderRoute: "ROOM",
+        roomNumberLabel: roomNumber ?? ticket.roomNumberLabel,
         shiftId: await shiftIdCovering(ticket.outletId, closedAt),
         closedByName: sessionActorName(session),
       },
@@ -221,7 +224,34 @@ export async function POST(
       }).catch(() => undefined);
     }
 
-    return jsonOk(result.body);
+    const posted = result.body;
+    const gross = ticket.lines.reduce((sum, line) => sum + line.qty * Number(line.unitPriceAzn), 0);
+    const slip = {
+      copies: 2,
+      kind: "ROOM",
+      ticketId: id,
+      dayNo: (await daySeqMap(ticket.organizationId)).get(id) ?? null,
+      outletName: ticket.outlet.name,
+      table: ticket.table?.name ?? ticket.table?.code ?? null,
+      guestName: ticket.guestName,
+      room: roomNumber ?? ticket.roomNumberLabel,
+      waiter: ticket.waiterLabel,
+      at: closedAt.toISOString(),
+      total: amount,
+      discountAzn: Math.max(0, Math.round((gross - amount) * 100) / 100),
+      limitBalanceAfter: null,
+      holderName: null,
+      lines: ticket.lines.map((line) => ({
+        name: line.description,
+        qty: line.qty,
+        amount: Math.round(line.qty * Number(line.unitPriceAzn) * 100) / 100,
+      })),
+    };
+    return jsonOk(
+      posted && typeof posted === "object"
+        ? { ...posted, slip }
+        : { slip },
+    );
   } catch (err) {
     return handleRouteError(err);
   }

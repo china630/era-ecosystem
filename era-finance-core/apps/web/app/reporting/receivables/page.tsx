@@ -6,9 +6,8 @@ import { apiFetch } from "../../../lib/api-client";
 import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { ArrowUpRight } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -96,14 +95,7 @@ export default function ReceivablesPage() {
       )}
       {error && <p className="text-red-600 text-sm">{error}</p>}
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
-      {!loading && data && data.rows.length === 0 && !error && (
-        <EmptyState
-          icon={<ArrowUpRight className="h-12 w-12 mx-auto stroke-[1.5]" aria-hidden />}
-          title={t("receivables.none")}
-          description={t("receivables.emptyHint")}
-        />
-      )}
-      {!loading && data && data.rows.length > 0 && (
+      {!loading && data && !error && (
         <>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} w-full min-w-[480px]`}>
@@ -115,19 +107,25 @@ export default function ReceivablesPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.rows.map((r) => (
-                  <tr key={r.counterpartyId} className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{r.taxId}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.balance)}</td>
-                  </tr>
-                ))}
+                {data.rows.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={3} message={t("receivables.none")} />
+                ) : (
+                  data.rows.map((r) => (
+                    <tr key={r.counterpartyId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{r.taxId}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.balance)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-          <p className="text-base font-semibold text-[#34495E]">
-            {t("receivables.total")}: {formatMoneyAzn(data.totalBalance)}
-          </p>
+          {data.rows.length > 0 ? (
+            <p className="text-base font-semibold text-[#34495E]">
+              {t("receivables.total")}: {formatMoneyAzn(data.totalBalance)}
+            </p>
+          ) : null}
         </>
       )}
     </div>

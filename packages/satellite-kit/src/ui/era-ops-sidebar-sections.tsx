@@ -12,7 +12,7 @@ import {
   collectSectionHrefs,
   isBestNavHref,
   navHrefMatches,
-  sectionContainsPath,
+  sectionOwnsBestHref,
   type NavSearch,
 } from "./nav-href-match";
 
@@ -20,9 +20,10 @@ function branchContains(
   item: EraOpsNavItem,
   pathname: string,
   search: NavSearch,
+  currentHash: string,
 ): boolean {
-  if (item.href && navHrefMatches(pathname, search, item.href)) return true;
-  return item.children?.some((child) => branchContains(child, pathname, search)) ?? false;
+  if (item.href && navHrefMatches(pathname, search, item.href, currentHash)) return true;
+  return item.children?.some((child) => branchContains(child, pathname, search, currentHash)) ?? false;
 }
 
 type RailMode = {
@@ -147,6 +148,7 @@ function CollapsibleSection({
   section,
   pathname,
   search,
+  currentHash,
   bestHref,
   open,
   onToggle,
@@ -154,6 +156,7 @@ function CollapsibleSection({
   section: EraOpsNavSection;
   pathname: string;
   search: NavSearch;
+  currentHash: string;
   bestHref: string | null;
   open: boolean;
   onToggle: () => void;
@@ -162,13 +165,13 @@ function CollapsibleSection({
   const routeBranch = visibleItems.find(
     (item) =>
       (item.children ?? []).some((child) => !child.hidden) &&
-      branchContains(item, pathname, search),
+      branchContains(item, pathname, search, currentHash),
   );
   const routeBranchKey = routeBranch ? (routeBranch.id ?? routeBranch.label) : null;
   const [openBranch, setOpenBranch] = useState<string | null>(routeBranchKey);
   useEffect(() => {
     setOpenBranch(routeBranchKey);
-  }, [pathname, routeBranchKey]);
+  }, [pathname, currentHash, routeBranchKey]);
   const rail = useContext(RailModeContext);
   const rootRef = useRef<HTMLDivElement>(null);
   const setFlyoutId = rail.setFlyoutId;
@@ -261,14 +264,6 @@ function CollapsibleSection({
   );
 }
 
-function sectionOwnsPath(
-  section: EraOpsNavSection,
-  pathname: string,
-  search: NavSearch,
-): boolean {
-  return sectionContainsPath(section, pathname, search);
-}
-
 export function EraOpsSidebarSections({
   sections,
   topItems = [],
@@ -284,14 +279,22 @@ export function EraOpsSidebarSections({
 }) {
   const pathname = usePathname() ?? "";
   const search = useSearchParams();
+  const [locationHash, setLocationHash] = useState("");
+  useEffect(() => {
+    const read = () => setLocationHash(window.location.hash.replace(/^#/, ""));
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, [pathname]);
   const visibleSections = sections.filter((section) => !section.hidden);
   const hrefs = useMemo(
     () => collectSectionHrefs(visibleSections, topItems),
     [visibleSections, topItems],
   );
-  const bestHref = bestMatchingNavHref(pathname, search, hrefs);
+  const bestHref = bestMatchingNavHref(pathname, search, hrefs, locationHash);
+  // Prefer the section that owns the best href — `/hk` must not steal `/hk/roster` from Schedules.
   const routeSectionId =
-    visibleSections.find((section) => sectionOwnsPath(section, pathname, search))?.id ??
+    visibleSections.find((section) => sectionOwnsBestHref(section, bestHref))?.id ??
     null;
   const [openId, setOpenId] = useState<string | null>(routeSectionId);
   const [flyoutId, setFlyoutId] = useState<string | null>(null);
@@ -333,6 +336,7 @@ export function EraOpsSidebarSections({
           section={section}
           pathname={pathname}
           search={search}
+          currentHash={locationHash}
           bestHref={bestHref}
           open={openId === section.id}
           onToggle={() =>

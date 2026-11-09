@@ -9,7 +9,7 @@ import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { ManufacturingOrderCreateModal } from "../../../components/manufacturing/manufacturing-order-create-modal";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
@@ -177,11 +177,7 @@ function ManufacturingOrdersContent() {
           </thead>
           <tbody>
             {!loading && rows.length === 0 ? (
-              <tr>
-                <td colSpan={7}>
-                  <EmptyState title={t("manufacturing.noOrders")} compact />
-                </td>
-              </tr>
+              <FinanceEmptyTableRow colSpan={7} message={t("manufacturing.noOrders")} />
             ) : (
               rows.map((row) => {
                 const badge = statusBadge(row.status, t);

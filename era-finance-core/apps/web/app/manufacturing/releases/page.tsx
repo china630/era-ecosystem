@@ -10,7 +10,7 @@ import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { ReleaseModal } from "../../../components/manufacturing/release-modal";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
@@ -140,11 +140,7 @@ function ManufacturingReleasesContent() {
           </thead>
           <tbody>
             {!loading && rows.length === 0 ? (
-              <tr>
-                <td colSpan={5}>
-                  <EmptyState title={t("manufacturing.noReleases")} compact />
-                </td>
-              </tr>
+              <FinanceEmptyTableRow colSpan={5} message={t("manufacturing.noReleases")} />
             ) : (
               rows.map((row) => (
                 <tr key={row.id} className={DATA_TABLE_TR_CLASS}>

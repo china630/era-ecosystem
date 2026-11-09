@@ -446,6 +446,7 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/lab-orders": CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
   "/reports/diagnoses": CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   "/reports/procedures": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+  "/reports/bonus": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/revenue": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/patient-assignments": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/patients-by-country": CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
@@ -743,6 +744,7 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/reports/diagnoses", permission: CLINIC_PERMISSION.API_REPORTS_DIAGNOSES },
   { prefix: "/api/reports/patients-by-country", permission: CLINIC_PERMISSION.API_REPORTS_DIAGNOSES },
   { prefix: "/api/reports/procedures", permission: CLINIC_PERMISSION.API_REPORTS_PROCEDURES },
+  { prefix: "/api/reports/bonus", permission: CLINIC_PERMISSION.API_REPORTS_PROCEDURES },
   { prefix: "/api/reports/revenue", permission: CLINIC_PERMISSION.API_REPORTS_PROCEDURES },
   {
     prefix: "/api/reports/patient-assignments",

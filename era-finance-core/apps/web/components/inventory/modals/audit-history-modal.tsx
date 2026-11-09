@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
-import { ClipboardList } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
 import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { EmptyState } from "../../empty-state";
+import { FinanceEmptyTableRow } from "../../finance-empty-table-row";
 import { InventoryModalFooter, InventoryModalShell } from "./modal-shell";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 
@@ -87,17 +86,7 @@ export function AuditHistoryModal({
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
       {loading && <p className="text-[13px] text-[#7F8C8D]">{t("common.loading")}</p>}
 
-      {!loading && rows.length === 0 && !error && (
-        <EmptyState
-          icon={
-            <ClipboardList className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]" aria-hidden />
-          }
-          title={t("inventory.auditHistoryEmpty")}
-          description={t("inventory.auditHistoryEmptyHint")}
-        />
-      )}
-
-      {!loading && rows.length > 0 && (
+      {!loading && !error && (
         <div className={`overflow-x-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm`}>
           <table className="min-w-full text-[13px]">
             <thead>
@@ -110,6 +99,9 @@ export function AuditHistoryModal({
               </tr>
             </thead>
             <tbody>
+              {rows.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={5} message={t("inventory.auditHistoryEmpty")} />
+              ) : null}
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-[#EBEDF0]">
                   <td className="whitespace-nowrap p-2">

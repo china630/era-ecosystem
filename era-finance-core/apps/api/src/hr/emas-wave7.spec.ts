@@ -61,6 +61,7 @@ describe("EmasContractService wave 7", () => {
     prisma,
     employees as never,
     adapterFactory as never,
+    { get: jest.fn().mockResolvedValue(null) } as never,
   );
 
   beforeEach(() => {

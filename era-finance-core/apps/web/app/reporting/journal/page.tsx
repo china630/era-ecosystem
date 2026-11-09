@@ -9,7 +9,7 @@ import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -185,29 +185,29 @@ export default function JournalPage() {
       {err ? <p className="text-sm text-red-600">{err}</p> : null}
 
       {lines ? (
-        lines.length === 0 ? (
-          <EmptyState title={t("reporting.journal.empty")} />
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-[#34495E]">
-              {t("reporting.journal.showing", { shown: lines.length, total })}
-            </p>
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <thead>
-                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDate")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thRef")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.thCode")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.thAccName")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDesc")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thCp")}</th>
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((l) => (
+        <div className="space-y-3">
+          <p className="text-sm text-[#34495E]">
+            {t("reporting.journal.showing", { shown: lines.length, total })}
+          </p>
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDate")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thRef")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.thCode")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.thAccName")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDesc")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thCp")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lines.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={8} message={t("reporting.journal.empty")} />
+                ) : (
+                  lines.map((l) => (
                     <tr key={l.journalEntryId} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>{l.date}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{l.reference ?? "—"}</td>
@@ -218,30 +218,30 @@ export default function JournalPage() {
                       <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(l.debit)}</td>
                       <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(l.credit)}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={loading || skip <= 0}
-                onClick={() => void load(Math.max(0, skip - take))}
-              >
-                {t("reporting.journal.prev")}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={loading || skip + lines.length >= total}
-                onClick={() => void load(skip + take)}
-              >
-                {t("reporting.journal.next")}
-              </button>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={loading || skip <= 0}
+              onClick={() => void load(Math.max(0, skip - take))}
+            >
+              {t("reporting.journal.prev")}
+            </button>
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={loading || skip + lines.length >= total}
+              onClick={() => void load(skip + take)}
+            >
+              {t("reporting.journal.next")}
+            </button>
+          </div>
+        </div>
       ) : null}
     </div>
   );

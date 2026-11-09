@@ -10,7 +10,7 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -254,7 +254,7 @@ function VatDepositPageInner() {
             )}
           </dl>
         ) : (
-          <EmptyState title={t("reporting.vatDeposit.noData")} />
+          <p className="mt-3 text-sm text-[#7F8C8D]">{t("reporting.vatDeposit.noData")}</p>
         )}
       </section>
 
@@ -386,11 +386,7 @@ function VatDepositPageInner() {
             </thead>
             <tbody>
               {movements.length === 0 ? (
-                <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={4} className={DATA_TABLE_TD_CLASS}>
-                    {t("reporting.vatDeposit.noMovements")}
-                  </td>
-                </tr>
+                <FinanceEmptyTableRow colSpan={4} message={t("reporting.vatDeposit.noMovements")} />
               ) : (
                 movements.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>

@@ -18,6 +18,7 @@ import type {
   BankStatementItem,
   PaymentDraftRequest,
   PaymentDraftResult,
+  OrgBankCall,
 } from "./banking-provider.interface";
 
 type AbbTokenResponse = {
@@ -107,14 +108,20 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
    * - §4.1 Generate Token, §4.9 Get Balance, §4.10 Get Account Statement
    * - §5.3 Salary Payment XML Structure
    */
-  async getBalances(): Promise<BankBalanceItem[]> {
-    if (this.devMockEnabled) {
+  async getBalances(creds?: OrgBankCall): Promise<BankBalanceItem[]> {
+    if (this.devMockEnabled && !creds) {
       return this.mockBalances();
     }
-    const accountsResponse = await this.authorizedRequest<unknown>({
-      method: "GET",
-      url: this.accountsByCifPath,
-    });
+    const accountsResponse = await this.authorizedRequest<unknown>(
+      {
+        method: "GET",
+        url: this.accountsByCifPath,
+        params: creds?.cif ? { cif: creds.cif } : undefined,
+      },
+      true,
+      undefined,
+      creds,
+    );
     const accounts = this.extractRows(accountsResponse.data, ["items", "data"]);
     const mapped = accounts.map((row, idx) => {
       const rec = this.asRecord(row);
@@ -140,11 +147,16 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
       .filter(Boolean);
     const balances: BankBalanceItem[] = [];
     for (const accountNumber of accountNumbers) {
-      const response = await this.authorizedRequest<unknown>({
-        method: "GET",
-        url: this.accountBalancePath,
-        params: { accountNumber },
-      });
+      const response = await this.authorizedRequest<unknown>(
+        {
+          method: "GET",
+          url: this.accountBalancePath,
+          params: { accountNumber },
+        },
+        true,
+        undefined,
+        creds,
+      );
       const rec = this.asRecord(response.data);
       balances.push({
         accountId: this.pickString(rec, ["accountNumber"], accountNumber)!,
@@ -156,25 +168,30 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
     return balances;
   }
 
-  async getStatements(from: string, to: string): Promise<BankStatementItem[]> {
-    if (this.devMockEnabled) {
+  async getStatements(from: string, to: string, creds?: OrgBankCall): Promise<BankStatementItem[]> {
+    if (this.devMockEnabled && !creds) {
       return this.mockStatements(from, to);
     }
-    const balances = await this.getBalances();
+    const balances = await this.getBalances(creds);
     const statements: BankStatementItem[] = [];
     for (const acc of balances) {
-      const response = await this.authorizedRequest<unknown>({
-        method: "GET",
-        url: this.accountStatementPath,
-        params: {
-          account: acc.iban ?? acc.accountId,
-          "from-date": from,
-          "to-date": to,
-          "page-size": 100,
-          page: 1,
-          "operation-type": "A",
+      const response = await this.authorizedRequest<unknown>(
+        {
+          method: "GET",
+          url: this.accountStatementPath,
+          params: {
+            account: acc.iban ?? acc.accountId,
+            "from-date": from,
+            "to-date": to,
+            "page-size": 100,
+            page: 1,
+            "operation-type": "A",
+          },
         },
-      });
+        true,
+        undefined,
+        creds,
+      );
       const root = this.asRecord(response.data);
       const accountInfo = this.asRecord(root.accountInfo);
       const tx = this.asRecord(root.transaction);
@@ -200,8 +217,8 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
     return statements;
   }
 
-  async sendPaymentDraft(payload: PaymentDraftRequest): Promise<PaymentDraftResult> {
-    if (this.devMockEnabled) {
+  async sendPaymentDraft(payload: PaymentDraftRequest, creds?: OrgBankCall): Promise<PaymentDraftResult> {
+    if (this.devMockEnabled && !creds) {
       return {
         draftId: `ABB-MOCK-${Date.now()}`,
         status: "CREATED",
@@ -229,6 +246,7 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
       },
       true,
       createHash("sha256").update(JSON.stringify(payload)).digest("hex").slice(0, 32),
+      creds,
     );
     return {
       draftId: response.data?.data?.batchNumber ?? "",
@@ -295,8 +313,9 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
     config: AxiosRequestConfig,
     retryOnTokenError = true,
     writeIdempotencyKey?: string,
+    creds?: OrgBankCall,
   ): Promise<AxiosResponse<T>> {
-    const token = await this.getAccessToken();
+    const token = await this.getAccessToken(creds);
     try {
       return await this.reliability.executeWithPolicies({
         provider: "abb",
@@ -314,8 +333,8 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
     } catch (error) {
       const shouldRetry = retryOnTokenError && this.isInvalidTokenError(error);
       if (shouldRetry) {
-        await this.redis.del(this.redisKey);
-        const fresh = await this.getAccessToken();
+        await this.redis.del(this.tokenCacheKey(creds));
+        const fresh = await this.getAccessToken(creds);
         return this.http.request<T>({
           ...config,
           headers: {
@@ -329,12 +348,24 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
     }
   }
 
-  private async getAccessToken(): Promise<string> {
-    const cached = await this.redis.get(this.redisKey);
+  private tokenCacheKey(creds?: OrgBankCall): string {
+    const id = creds?.login || creds?.clientId;
+    if (!id) return this.redisKey;
+    const suffix = createHash("sha256").update(id).digest("hex").slice(0, 12);
+    return `${this.redisKey}:${suffix}`;
+  }
+
+  private async getAccessToken(creds?: OrgBankCall): Promise<string> {
+    const cacheKey = this.tokenCacheKey(creds);
+    const cached = await this.redis.get(cacheKey);
     if (cached) return cached;
-    if (!this.username || !this.password) {
+    const username = creds ? creds.login ?? "" : this.username;
+    const password = creds ? creds.secret : this.password;
+    if (!username || !password) {
       throw new UnauthorizedException(
-        "ABB credentials are missing (ABB_USERNAME / ABB_PASSWORD)",
+        creds
+          ? "ABB credentials for this organization are missing on the platform"
+          : "ABB credentials are missing (ABB_USERNAME / ABB_PASSWORD)",
       );
     }
     try {
@@ -345,8 +376,8 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
           this.http.post<AbbTokenResponse>(
             this.tokenPath,
             {
-              username: this.username,
-              password: this.password,
+              username,
+              password,
             },
             {
               headers: {
@@ -361,7 +392,7 @@ export class AbbAdapter implements BankingProviderInterface, OnModuleDestroy {
         throw new UnauthorizedException("ABB token missing in response");
       }
       const ttl = Math.max(30, (response.data?.expires_in ?? 600) - 30);
-      await this.redis.set(this.redisKey, token, "EX", ttl);
+      await this.redis.set(cacheKey, token, "EX", ttl);
       return token;
     } catch (error) {
       this.handleApiError(error);

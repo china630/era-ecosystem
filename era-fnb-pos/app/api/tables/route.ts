@@ -33,7 +33,7 @@ export async function GET(request: Request) {
         status: { in: ["OPEN", "HELD"] },
         tableId: { not: null },
       },
-      select: { id: true, tableId: true, totalAzn: true, openedAt: true },
+      select: { id: true, tableId: true, totalAzn: true, openedAt: true, waiterLabel: true, openedByName: true, covers: true },
     });
     const ticketIdByTable = new Map(
       openTickets
@@ -52,6 +52,16 @@ export async function GET(request: Request) {
         .filter((row) => row.tableId)
         .map((row) => [row.tableId as string, row.openedAt.toISOString()]),
     );
+    const waiterByTable = new Map(
+      openTickets
+        .filter((row) => row.tableId)
+        .map((row) => [row.tableId as string, row.waiterLabel || row.openedByName]),
+    );
+    const coversByTable = new Map(
+      openTickets
+        .filter((row) => row.tableId)
+        .map((row) => [row.tableId as string, row.covers]),
+    );
     return jsonOk(
       tables.map((table) => ({
         ...table,
@@ -68,6 +78,8 @@ export async function GET(request: Request) {
           (table.currentTicketId ? openedByTicket.get(table.currentTicketId) : undefined) ??
           openedByTable.get(table.id) ??
           null,
+        waiterLabel: waiterByTable.get(table.id) ?? null,
+        covers: coversByTable.get(table.id) ?? null,
       })),
     );
   } catch (err) {

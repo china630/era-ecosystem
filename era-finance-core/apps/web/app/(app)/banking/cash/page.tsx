@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "../../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../../components/list-pagination-footer";
 import { KO1PrintForm, type KO1PrintOrder } from "../../../../components/print/KO1PrintForm";
 import { apiFetch } from "../../../../lib/api-client";
@@ -798,6 +799,9 @@ export default function BankingCashPage() {
                     </tr>
                   </thead>
                   <tbody>
+                    {!loading && orders.length === 0 ? (
+                      <FinanceEmptyTableRow colSpan={7} message={t("common.noRows")} />
+                    ) : null}
                     {orders.map((row) => (
                       <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                         <td className={`${DATA_TABLE_TD_CLASS} font-mono text-xs`}>
@@ -872,9 +876,6 @@ export default function BankingCashPage() {
                   }}
                 />
               ) : null}
-              {!loading && ordersTotal === 0 && (
-                <p className="px-4 py-6 text-slate-500 text-sm">—</p>
-              )}
             </div>
 
             {viewOrder ? (

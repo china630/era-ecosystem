@@ -5,6 +5,7 @@ import { ControlPlaneEntitlementGuard } from "./control-plane-entitlement.guard"
 import { ControlPlanePrismaService } from "./control-plane-prisma.service";
 import { OrganizationBindController } from "./organization-bind.controller";
 import { RuntimeConfigController } from "./runtime-config.controller";
+import { OrgAccessClient } from "./org-access.client";
 
 @Global()
 @Module({
@@ -14,11 +15,13 @@ import { RuntimeConfigController } from "./runtime-config.controller";
     ControlPlaneClient,
     ControlPlaneEntitlementGuard,
     ControlPlanePrismaService,
+    OrgAccessClient,
   ],
   exports: [
     ControlPlaneClient,
     ControlPlaneEntitlementGuard,
     ControlPlanePrismaService,
+    OrgAccessClient,
   ],
 })
 export class ControlPlaneModule {}

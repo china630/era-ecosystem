@@ -35,6 +35,7 @@ import { VendorsModule } from "./vendors/vendors.module";
 import { StructureModule } from "./structure/structure.module";
 import { ChannelsModule } from "./channels/channels.module";
 import { CommsModule } from "./comms/comms.module";
+import { DocumentsModule } from "./documents/documents.module";
 
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { CommsModule } from "./comms/comms.module";
     StructureModule,
     ChannelsModule,
     CommsModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [

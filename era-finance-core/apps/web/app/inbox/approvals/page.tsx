@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { apiFetch } from "../../../lib/api-client";
@@ -122,8 +122,7 @@ export default function ApprovalsInboxPage() {
       <PageHeader title={t("approvals.inboxTitle")} subtitle={t("nav.approvalsInbox")} />
       {err ? <p className="text-sm text-red-600">{t("approvals.loadErr")}: {err}</p> : null}
       {loading ? <p className="text-sm text-[#7F8C8D]">{t("common.loading")}</p> : null}
-      {!loading && rows.length === 0 ? <EmptyState title={t("approvals.empty")} /> : null}
-      {!loading && rows.length > 0 ? (
+      {!loading ? (
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
@@ -134,6 +133,9 @@ export default function ApprovalsInboxPage() {
               </tr>
             </thead>
             <tbody>
+              {rows.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={3} message={t("approvals.empty")} />
+              ) : null}
               {rows.map((r) => (
                 <tr
                   key={r.id}

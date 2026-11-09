@@ -132,7 +132,14 @@ export function EraOpsSidebarNav({
 }) {
   const pathname = usePathname() ?? "";
   const search = useSearchParams();
-  const bestHref = bestMatchingNavHref(pathname, search, collectNavHrefs(items));
+  const [locationHash, setLocationHash] = useState("");
+  useEffect(() => {
+    const read = () => setLocationHash(window.location.hash.replace(/^#/, ""));
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, [pathname]);
+  const bestHref = bestMatchingNavHref(pathname, search, collectNavHrefs(items), locationHash);
   const linkActive = (item: EraOpsNavItem) =>
     item.href ? isBestNavHref(item.href, bestHref) : Boolean(item.active);
   return (

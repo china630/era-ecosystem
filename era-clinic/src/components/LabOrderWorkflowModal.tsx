@@ -740,9 +740,11 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                             ? t("loadWordNoBlank")
                             : code === "NO_USM_FIELDS"
                               ? t("loadWordNoFields")
-                              : typeof json.error === "string"
-                                ? json.error
-                                : t("loadWord"),
+                              : code === "LAB_AWAITING_PAYMENT"
+                                ? t("loadWordAwaitingPayment")
+                                : typeof json.error === "string"
+                                  ? json.error
+                                  : t("loadWord"),
                       },
                       t("loadWord"),
                     );

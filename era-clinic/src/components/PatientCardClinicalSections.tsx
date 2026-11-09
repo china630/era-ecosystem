@@ -325,6 +325,8 @@ type Props = {
   refreshKey?: number;
   /** Card tab: only that slice. Omit for the legacy stacked card. */
   section?: "diagnostics" | "plan" | "package";
+  /** Closed course: plan and execution show what was delivered, not the forward plan. */
+  episodeClosed?: boolean;
 };
 
 export function PatientCardClinicalSections({
@@ -337,6 +339,7 @@ export function PatientCardClinicalSections({
   readOnly = false,
   refreshKey = 0,
   section,
+  episodeClosed = false,
 }: Props) {
   const t = useTranslations("patientCard");
   const ts = useTranslations("sanatorium");
@@ -540,9 +543,9 @@ export function PatientCardClinicalSections({
   }, [historyOpen, histTypes, period, episodeId]);
 
   useEffect(() => {
-    if (section === "plan") void loadPlan(true);
+    if (section === "plan" || (episodeClosed && section === "package")) void loadPlan(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section, episodeId]);
+  }, [section, episodeId, episodeClosed]);
 
   const planChipDates = useMemo(() => {
     const dates = new Set(planDays.map((day) => day.date));
@@ -703,7 +706,7 @@ export function PatientCardClinicalSections({
 
   const showDiagnostics = !section || section === "diagnostics";
   const showPackage = !section || section === "package";
-  const showInlinePlan = section === "plan";
+  const showInlinePlan = section === "plan" || (episodeClosed && section === "package");
 
   return (
     <div className="space-y-6">
@@ -730,6 +733,7 @@ export function PatientCardClinicalSections({
           >
             <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
           </button>
+          {episodeClosed ? null : (
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
@@ -738,6 +742,7 @@ export function PatientCardClinicalSections({
           >
             +
           </button>
+          )}
         </CardTabActions>
       ) : null}
 
@@ -949,7 +954,7 @@ export function PatientCardClinicalSections({
         </FieldGroupBox>
       ) : null}
 
-      {showPackage && studiesUnlocked && episodeId ? (
+      {showPackage && !episodeClosed && studiesUnlocked && episodeId ? (
         <CardTabActions>
           <button
             type="button"
@@ -962,7 +967,7 @@ export function PatientCardClinicalSections({
         </CardTabActions>
       ) : null}
 
-      {showPackage && studiesUnlocked ? (
+      {showPackage && !episodeClosed && studiesUnlocked ? (
       <section className="space-y-2">
         {episodeId ? (
           <EpisodeAssignBlocks
@@ -1195,7 +1200,7 @@ export function PatientCardClinicalSections({
         </section>
       ) : null}
 
-      {showInlinePlan && studiesUnlocked && episodeId ? (
+      {showInlinePlan && !episodeClosed && studiesUnlocked && episodeId ? (
         <CardTabActions>
           <button
             type="button"
@@ -1340,7 +1345,7 @@ export function PatientCardClinicalSections({
                           : "")}
                     </p>
                     <div className="flex items-start justify-end">
-                    {actionable ? (
+                    {actionable && !readOnly ? (
                       <div className="flex shrink-0 gap-1">
                         {scheduled && !ev.openAttendance ? (
                           <>

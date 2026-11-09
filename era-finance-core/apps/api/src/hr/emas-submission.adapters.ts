@@ -43,6 +43,7 @@ export class HttpEmasSubmissionAdapter implements EmasSubmissionAdapter {
   private async postOp(
     op: EmasLifecycleOp,
     payload: unknown,
+    signer: EmasSignerContext,
   ): Promise<EmasSubmissionResult> {
     const base = this.baseUrl();
     if (!base) {
@@ -56,12 +57,26 @@ export class HttpEmasSubmissionAdapter implements EmasSubmissionAdapter {
       );
     }
     const url = `${base.replace(/\/$/, "")}/${op}`;
+    const employerId = signer.employerId?.trim();
+    const accessSecret = signer.accessSecret?.trim();
+    if (!employerId || !accessSecret) {
+      throw new HttpException(
+        {
+          code: "EMAS_ORG_ACCESS_MISSING",
+          message:
+            "ƏMAS employer id and key are set on the platform access tab. Excel and RPA remain available.",
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
     try {
       const res = await axios.post(url, payload, {
         timeout: 30_000,
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          Authorization: `Bearer ${accessSecret}`,
+          "X-Employer-Id": employerId,
         },
         validateStatus: () => true,
       });
@@ -101,16 +116,16 @@ export class HttpEmasSubmissionAdapter implements EmasSubmissionAdapter {
     }
   }
 
-  submitHire(payload: unknown, _signer: EmasSignerContext) {
-    return this.postOp("hire", payload);
+  submitHire(payload: unknown, signer: EmasSignerContext) {
+    return this.postOp("hire", payload, signer);
   }
 
-  submitTransfer(payload: unknown, _signer: EmasSignerContext) {
-    return this.postOp("transfer", payload);
+  submitTransfer(payload: unknown, signer: EmasSignerContext) {
+    return this.postOp("transfer", payload, signer);
   }
 
-  submitTerminate(payload: unknown, _signer: EmasSignerContext) {
-    return this.postOp("terminate", payload);
+  submitTerminate(payload: unknown, signer: EmasSignerContext) {
+    return this.postOp("terminate", payload, signer);
   }
 }
 
@@ -133,7 +148,7 @@ export class HsmEmasSubmissionAdapter implements EmasSubmissionAdapter {
         {
           code: "ASAN_USER_ID_REQUIRED",
           message:
-            "Organization.settings.tax.asanUserId is required for HSM/ASAN ƏMAS submission.",
+            "ASAN ID for this organization is set on the platform access tab (tax).",
         },
         HttpStatus.BAD_REQUEST,
       );

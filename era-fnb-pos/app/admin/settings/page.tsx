@@ -47,6 +47,7 @@ type OutletRow = {
   capTables?: boolean;
   capBuffetPlanner?: boolean;
   shapeHint?: string | null;
+  hallMode?: boolean;
 };
 
 const PRESET_LABEL_KEY: Record<string, string> = {
@@ -87,6 +88,7 @@ export default function AdminSettingsPage() {
   const [capTablesDraft, setCapTablesDraft] = useState(true);
   const [capBuffetDraft, setCapBuffetDraft] = useState(false);
   const [shapeDraft, setShapeDraft] = useState("restaurant");
+  const [hallModeDraft, setHallModeDraft] = useState(false);
 
   function refreshOutlets() {
     return fetch("/api/outlets")
@@ -159,6 +161,7 @@ export default function AdminSettingsPage() {
               capTill: capTillDraft,
               capTables: capTablesDraft,
               capBuffetPlanner: capBuffetDraft,
+              hallMode: hallModeDraft,
               phone: phoneDraft.trim() || null,
               email: emailDraft.trim() || null,
               address: addressDraft.trim() || null,
@@ -195,6 +198,7 @@ export default function AdminSettingsPage() {
               capTill: capTillDraft,
               capTables: capTablesDraft,
               capBuffetPlanner: capBuffetDraft,
+              hallMode: hallModeDraft,
               shapeHint: shapeDraft,
             }
           : row,
@@ -229,6 +233,7 @@ export default function AdminSettingsPage() {
     setCapTablesDraft(row.capTables !== false);
     setCapBuffetDraft(row.capBuffetPlanner === true);
     setShapeDraft(row.shapeHint || "restaurant");
+    setHallModeDraft(row.hallMode === true);
     setRevenueOpen(true);
   }
 
@@ -557,6 +562,16 @@ export default function AdminSettingsPage() {
               ]}
               value={capTablesDraft ? "1" : "0"}
               onChange={(next) => setCapTablesDraft(String(next) === "1")}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("hallMode")}
+              options={[
+                { value: "1", label: t("capYes") },
+                { value: "0", label: t("capNo") },
+              ]}
+              value={hallModeDraft ? "1" : "0"}
+              onChange={(next) => setHallModeDraft(String(next) === "1")}
             />
             <CatalogField
               kind="CLOSED_SMALL"

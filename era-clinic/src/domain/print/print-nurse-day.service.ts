@@ -87,7 +87,10 @@ export async function buildNurseDayPrint(input: {
       { status: { in: SHEET_STATUSES } },
       { status: "PENDING_PAY", resourceId: { not: null } },
     ],
-    AND: seatedOrPackage,
+    AND: [
+      ...seatedOrPackage,
+      { OR: [{ clinicalEpisodeId: null }, { clinicalEpisode: { status: "OPEN" } }] },
+    ],
   };
   if (staffId) {
     where.allocations = { some: { role: "STAFF", practitionerId: staffId } };

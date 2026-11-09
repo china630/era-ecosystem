@@ -155,7 +155,6 @@ export default function OrganizationSettingsPage() {
         name: name.trim(),
         // legalAddress / phone / directorName / logoUrl — SoR on orch (CP-ORG-PROFILE-01)
         valuationMethod,
-        asanUserId: asanUserId.trim() || null,
         taxRegime,
         pricesIncludeTax,
         requireEqaimeForDayClose,
@@ -386,9 +385,8 @@ export default function OrganizationSettingsPage() {
                   {t("orgSettings.asanUserId")}
                   <input
                     value={asanUserId}
-                    onChange={(e) => setAsanUserId(e.target.value)}
-                    className={`block mt-1 w-full max-w-md ${INPUT_BORDERED_CLASS}`}
-                    disabled={!canEditGeneral}
+                    readOnly
+                    className={`block mt-1 w-full max-w-md ${INPUT_BORDERED_CLASS} bg-slate-50`}
                     placeholder={t("orgSettings.asanUserIdPlaceholder")}
                   />
                   <span className="mt-1 block text-xs text-[#7F8C8D]">

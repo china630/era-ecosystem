@@ -1631,7 +1631,7 @@ export function PackageAssignModal({
           {labels.softWarnPrefix}: {softWarn}
         </p>
       ) : null}
-      <div className="grid h-full min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="grid h-full min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="grid min-h-0 grid-cols-1 gap-3 overflow-hidden md:grid-cols-2">
         <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
           <h4 className="text-sm font-medium">{tPhysio("packageBalanceTitle")}</h4>

@@ -1,4 +1,10 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+import {
+  operationalGapsForPax,
+  StayCheckInBlockedError,
+} from '@/lib/guest-stay-requirements';
 import { openFoliosForReservation } from '@/lib/services/folio.service';
 import { normalizeMedicalPackageCode } from '@/lib/services/medical-package-resolve.service';
 import {
@@ -10,13 +16,21 @@ import { paxLifecycleGlobalPersonId } from '@/lib/integration/pax-lifecycle-pers
 
 const ADMIT_STATUSES = ['OPTION', 'CONFIRMED'] as const;
 
+const guestIdentityInclude = {
+  documents: { select: { docType: true, docNumber: true } },
+  contacts: { select: { kind: true, value: true } },
+} as const;
+
 async function loadPax(reservationId: string, paxId: string) {
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
     include: {
       guest: true,
       room: true,
-      paxGuests: { where: { id: paxId }, include: { guest: true } },
+      paxGuests: {
+        where: { id: paxId },
+        include: { guest: { include: guestIdentityInclude } },
+      },
     },
   });
   const pax = reservation?.paxGuests[0] ?? null;
@@ -48,6 +62,14 @@ export async function admitGuestToClinic(reservationId: string, paxId: string) {
       code: 'CLINIC_ADMIT_NO_PACKAGE',
     });
   }
+  if (hotelDateKey(reservation.checkInDate) > todayBakuYmd()) {
+    throw Object.assign(new Error('Clinic admit opens on the arrival date'), {
+      status: 409,
+      code: 'CLINIC_ADMIT_EARLY',
+    });
+  }
+  const missing = operationalGapsForPax(pax, todayBakuYmd());
+  if (missing) throw new StayCheckInBlockedError([missing]);
   if (!pax.clinicAdmittedAt) {
     await prisma.reservationGuest.update({
       where: { id: pax.id },

@@ -7,7 +7,6 @@ import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
   CheckCircle2,
   Eye,
-  FileStack,
   Link2,
   MoreHorizontal,
   Send,
@@ -64,7 +63,7 @@ import { PageHeader } from "../../../components/layout/page-header";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { ExtensionInstallBanner } from "../../../components/extension-install-banner";
 import { RpaUpsellModal } from "../../../components/rpa-upsell-modal";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { CreateInvoiceModal, ViewInvoiceModal } from "../../../components/sales/modals";
 import { CreateShipmentModal } from "../../../components/inventory/create-shipment-modal";
 import { useSubscription } from "../../../lib/subscription-context";
@@ -800,22 +799,9 @@ export default function InvoicesPage() {
         table={
           <>
             {loading ? <p className="p-4 text-gray-600">{t("common.loading")}</p> : null}
-            {!loading && total === 0 && !error ? (
-              <EmptyState
-                title={t("invoices.none")}
-                description={t("invoices.emptyHint")}
-                icon={
-                  <FileStack className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]" aria-hidden />
-                }
-                action={
-                  <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
-                    + {t("invoices.new")}
-                  </button>
-                }
-              />
-            ) : null}
-            {!loading && total > 0 ? (
+            {!loading && !error ? (
               <>
+                {total > 0 ? (
                 <div className="space-y-3 p-2 md:hidden">
                   {rows.map((r) => (
                     <div
@@ -841,7 +827,8 @@ export default function InvoicesPage() {
                     </div>
                   ))}
                 </div>
-                <div className="hidden md:block">
+                ) : null}
+                <div className={total > 0 ? "hidden md:block" : undefined}>
                   <table className={`${DATA_TABLE_CLASS} min-w-[720px]`}>
                     <thead>
                       <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -912,6 +899,9 @@ export default function InvoicesPage() {
                       </tr>
                     </thead>
                     <tbody>
+                      {total === 0 ? (
+                        <FinanceEmptyTableRow colSpan={10} message={t("invoices.none")} />
+                      ) : null}
                       {rows.map((r) => (
                         <Fragment key={r.id}>
                           <tr className={DATA_TABLE_TR_CLASS}>

@@ -8,9 +8,8 @@ import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
-import { TrendingDown } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -119,14 +118,7 @@ export default function AgingPage() {
       )}
       {err && <p className="text-red-600 text-sm">{err}</p>}
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
-      {!loading && data && data.rows.length === 0 && !err && (
-        <EmptyState
-          icon={<TrendingDown className="h-12 w-12 mx-auto stroke-[1.5]" aria-hidden />}
-          title={t("aging.none")}
-          description={t("aging.emptyHint")}
-        />
-      )}
-      {!loading && data && data.rows.length > 0 && (
+      {!loading && data && !err && (
         <>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} min-w-full`}>
@@ -141,36 +133,42 @@ export default function AgingPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.rows.map((r) => (
-                  <tr key={r.counterpartyId} className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{r.taxId}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.bucket0to30)}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.bucket31to60)}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.bucket61plus)}</td>
-                    <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-semibold`}>
-                      {formatMoneyAzn(r.total)}
-                    </td>
-                  </tr>
-                ))}
+                {data.rows.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={6} message={t("aging.none")} />
+                ) : (
+                  data.rows.map((r) => (
+                    <tr key={r.counterpartyId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{r.taxId}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.bucket0to30)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.bucket31to60)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.bucket61plus)}</td>
+                      <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-semibold`}>
+                        {formatMoneyAzn(r.total)}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
-              <tfoot>
-                <tr className={`${DATA_TABLE_TR_CLASS} border-t-2 border-[#D5DADF] bg-[#F8FAFC] font-semibold`}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={2}>
-                    {t("aging.totals")}
-                  </td>
-                  <td className={DATA_TABLE_TD_RIGHT_CLASS}>
-                    {formatMoneyAzn(data.totals.bucket0to30)}
-                  </td>
-                  <td className={DATA_TABLE_TD_RIGHT_CLASS}>
-                    {formatMoneyAzn(data.totals.bucket31to60)}
-                  </td>
-                  <td className={DATA_TABLE_TD_RIGHT_CLASS}>
-                    {formatMoneyAzn(data.totals.bucket61plus)}
-                  </td>
-                  <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(data.totals.total)}</td>
-                </tr>
-              </tfoot>
+              {data.rows.length > 0 ? (
+                <tfoot>
+                  <tr className={`${DATA_TABLE_TR_CLASS} border-t-2 border-[#D5DADF] bg-[#F8FAFC] font-semibold`}>
+                    <td className={DATA_TABLE_TD_CLASS} colSpan={2}>
+                      {t("aging.totals")}
+                    </td>
+                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>
+                      {formatMoneyAzn(data.totals.bucket0to30)}
+                    </td>
+                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>
+                      {formatMoneyAzn(data.totals.bucket31to60)}
+                    </td>
+                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>
+                      {formatMoneyAzn(data.totals.bucket61plus)}
+                    </td>
+                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(data.totals.total)}</td>
+                  </tr>
+                </tfoot>
+              ) : null}
             </table>
           </div>
           {data.methodologyNote && (

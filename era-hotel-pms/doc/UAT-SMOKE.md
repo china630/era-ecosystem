@@ -51,7 +51,7 @@ Agency directory (staff): `/settings` → agencies list and agency settlement (`
 1. `/bookings/new` — create guest via **+ New guest**; enter FIN/passport in lookup fields → MDM link → verify guest row has `globalPersonId` and **no** local FIN/passport columns (DB).
 2. `/guests` — open guest card; left panel shows **Ad / Ata adı / Soyad** (`firstName` / `middleName` / `lastName`); save composes `fullName` with patronymic; **Sex** catalog (M/F) writes `Guest.sex`; nationality Select stores ISO code (e.g. `KZ`, not collapsed to `OTHER` on MDM wire).
 3. Guest card Details tab shows **masked** FIN/passport from MDM ops-profile; parent names (`parentFatherName` / `parentMotherName`) separate from patronymic; edit uses transient lookup only.
-3a. **Passport MRZ (platform super-admin only):** guest-card scanner icon (and stay Guests ⋮ Scan) opens crop → OCR → confirm. Staff without super-admin do not see the button. Shared passport number with a different name attaches that card and does **not** overwrite its name. Not SHIPPED until this step is signed (`HOT-MRZ-01` / `AC-HOT-MRZ`).
+3a. **Passport MRZ (platform super-admin only):** guest-card scanner icon (and stay Guests ⋮ Scan) opens crop → OCR → confirm. Accepts photo or PDF (first page). Drag a box over the MRZ lines (a click-sized point does not enable Read); use the skew angle slider for crooked scans; vertical boxes also rotate for OCR. Staff without super-admin do not see the button. Shared passport number with a different name attaches that card and does **not** overwrite its name. Not SHIPPED until this step is signed (`HOT-MRZ-01` / `AC-HOT-MRZ`).
 4. Re-save guest with empty middle name — MDM **does not** clear existing patronymic (fill-not-clear).
 5. Create 3-night booking (room type + rate + dates).
 6. Confirm reservation. Arrival day on the rack: guest name as arrival. Other days: rack tile is Reserved without the name; the room-plan bar still shows the stay.
@@ -518,7 +518,7 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Secondary HK list table
 1. `/hk/roster` — week filter bar; **Propose week** PRIMARY; Accrue ƏG SECONDARY; change cell via closed select (not free text); ƏG balance visible.
 2. `/hk/rotation` — date filter; **Rotate pairs** PRIMARY; Swap pairs in modal (SECONDARY); floors 2–11 pairs on one grid.
 3. `/hk` floor sheet — one floor; date defaults to the business date (any other date is read-only); chips All / To clean / Dirty / For inspection; maid in the title (not a column); reason and shift task are different words; arrival and departure time under the date; outcome V/VC/OK/İstəmədi/DND/SO can be cleared back to empty; no NSR button; a dirty door without a task is marked on the row; fullscreen. PDF is the selected date and floor, working columns in the UI language, maid names in the title.
-4. `/hk/laundry` — `+` intake modal; wash/iron qty + unit price + line sum + order total preview (hidden cells when catalog price empty; express uses per-item express prices); **accept does not post**; Delivered + return-form / void = secondary on the grid → folio `LAUNDRY` / VOIDED. FO `/fo/laundry` **grid** with amount + void IN_PLANT + fallback Delivered on the **same** ticket only. Catalog `/settings/laundry-catalog`; intake windows on `/settings/policies#hk`.
+4. `/hk/laundry` — `+` intake modal; wash/iron qty + unit price + line sum + order total preview (hidden cells when catalog price empty; express uses per-item express prices); **accept does not post**; Delivered + return-form / void = secondary on the grid → folio `LAUNDRY` / VOIDED. FO `/fo/laundry` **grid** with amount + void IN_PLANT + fallback Delivered on the **same** ticket only. Catalog `/settings/laundry-catalog`; intake windows on `/settings/policies#laundry`.
 5. Check-out with IN_PLANT laundry — **blocked** (`LAUNDRY_OPEN` toast); check-out dialog stays open; laundry dialog: room + guest list, Delivered + return form, **void**, or wait; after last clear, check-out retries — no skip.
 6. `/hk/closed-rooms` — one grid + kind filter (All/OOO/OOS) + room search; Close in modal; Return secondary. Return to service → IN_SERVICE (DIRTY).
 7. `/hk/discrepancy` — date filter; create Skip/Sleep in modal (Sleep not labelled SO); FO banner for DND×2 / SO×3.
@@ -533,8 +533,8 @@ UI paths — spec: [HK-NAFTA-OPS.md](./HK-NAFTA-OPS.md). Secondary HK list table
 
 ADR: [hotel-department-duty-schedules.md](../../docs/adr/hotel-department-duty-schedules.md). Do **not** mark SHIPPED until signed.
 
-1. Sidebar **Schedules** → `/schedules` hub (ops labels, not type codes); links open HK roster + reception / security / engineering.
-2. `/schedules/reception` — Board settings: bind Workforce org units (+ add a post if needed). On a day cell click **Assign** → person + shift in the editor strip; save; same person on a second post same day → `PERSON_DOUBLE_BOOKED`.
+1. Sidebar **Schedules** is last before **Settings**; hub `/schedules` (ops labels); HK roster only here (not under Housekeeping staff).
+2. `/schedules/reception` — Board settings start collapsed; open them → bind Workforce org units (+ add a post if needed). On a day cell click **Assign** → person + shift; save; same person on a second post same day → `PERSON_DOUBLE_BOOKED`.
 3. Prev / This week / Next; **Copy previous week** into an empty draft (confirm replace if cells exist).
 4. Approve week (confirm) → chips read-only; Reopen draft (confirm) → editable again.
 5. Orchestrator down / no token → amber banner; existing cells visible; new save refused (`ORCH_UNAVAILABLE`).

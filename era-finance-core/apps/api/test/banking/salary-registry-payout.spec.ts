@@ -50,6 +50,7 @@ describe("SalaryRegistry payout strategy", () => {
       abb,
       { buildSalaryRegistryXlsx: jest.fn() } as any,
       { putObject: jest.fn() } as any,
+      { get: jest.fn().mockResolvedValue({ publicFields: { login: "u", clientId: "c" }, secret: "s" }) } as any,
     );
 
     await service.prepareSalaryRegistry("reg-1", UserRole.ACCOUNTANT);
@@ -108,6 +109,7 @@ describe("SalaryRegistry payout strategy", () => {
       { buildSalaryPaymentXml: jest.fn(), sendSalaryRegistryXml: jest.fn() } as any,
       universal,
       storage,
+      { get: jest.fn() } as any,
     );
 
     await service.prepareSalaryRegistry("reg-2", UserRole.ACCOUNTANT);

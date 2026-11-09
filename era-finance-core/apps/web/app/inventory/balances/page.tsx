@@ -1,15 +1,14 @@
 "use client";
 
-import { BarChart3 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
-import { CatalogField } from "@era/satellite-kit/ui";
+import { CatalogField, EraListFilterBar } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import {
   DATA_TABLE_CLASS,
@@ -131,21 +130,23 @@ export default function InventoryBalancesReportPage() {
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
       <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-[12rem]">
-          <CatalogField
-            kind="ENTITY_REF"
-            label={t("inventory.filterWh")}
-            value={filterWh}
-            onChange={(next) => {
-              const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
-              setFilterWh(v);
-            }}
-            options={[
-              { value: "", label: t("inventory.allWh") },
-              ...warehouses.map((w) => ({ value: w.id, label: w.name })),
-            ]}
-          />
-        </div>
+        <EraListFilterBar>
+          <div className="min-w-[12rem]">
+            <CatalogField
+              kind="ENTITY_REF"
+              label={t("inventory.filterWh")}
+              value={filterWh}
+              onChange={(next) => {
+                const v = Array.isArray(next) ? next[0] ?? "" : String(next ?? "");
+                setFilterWh(v);
+              }}
+              options={[
+                { value: "", label: t("inventory.allWh") },
+                ...warehouses.map((w) => ({ value: w.id, label: w.name })),
+              ]}
+            />
+          </div>
+        </EraListFilterBar>
         <label className="block text-sm font-medium text-[#475569] min-w-[12rem] flex-1 max-w-md">
           {t("inventory.balancesFilterSearch")}
           <input
@@ -156,9 +157,6 @@ export default function InventoryBalancesReportPage() {
             className={`mt-1 block w-full ${INPUT_BORDERED_CLASS}`}
           />
         </label>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
-          {t("inventory.refresh")}
-        </button>
         <button
           type="button"
           className={PRIMARY_BUTTON_CLASS}
@@ -176,15 +174,7 @@ export default function InventoryBalancesReportPage() {
 
       {loading && <p className="text-[#7F8C8D] text-sm">{t("common.loading")}</p>}
 
-      {!loading && total === 0 && !error && (
-        <EmptyState
-          icon={<BarChart3 className="h-12 w-12 mx-auto stroke-[1.5] text-[#7F8C8D]" aria-hidden />}
-          title={t("inventory.balancesEmptyTitle")}
-          description={t("inventory.balancesEmptyHint")}
-        />
-      )}
-
-      {!loading && total > 0 && (
+      {!loading && !error ? (
         <>
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={`${DATA_TABLE_CLASS} min-w-[720px]`}>
@@ -197,7 +187,10 @@ export default function InventoryBalancesReportPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {total === 0 ? (
+                <FinanceEmptyTableRow colSpan={4} message={t("inventory.balancesEmptyTitle")} />
+              ) : (
+                rows.map((r) => (
                 <tr key={`${r.warehouseId}:${r.binId ?? "null"}:${r.productId}`} className={DATA_TABLE_TR_CLASS}>
                   <td className={`${DATA_TABLE_TD_CLASS} font-medium text-[#34495E]`}>
                     <div className="flex flex-col gap-0.5">
@@ -213,7 +206,8 @@ export default function InventoryBalancesReportPage() {
                     {fmtQty(r.quantity)}
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -228,7 +222,7 @@ export default function InventoryBalancesReportPage() {
           }}
         />
         </>
-      )}
+      ) : null}
     </div>
   );
 }

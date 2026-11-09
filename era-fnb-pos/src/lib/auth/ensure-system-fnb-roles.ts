@@ -14,7 +14,7 @@ import {
 } from "@/lib/auth/permissions";
 import { normalizeFnbEdition } from "@/lib/fnb-edition";
 
-export const FNB_PERMISSION_CATALOG_VERSION = 5;
+export const FNB_PERMISSION_CATALOG_VERSION = 6;
 
 type RoleRow = {
   id: string;
@@ -163,6 +163,9 @@ async function upsertSystemRole(
       const current = parsePermissions(existing.permissionsJson);
       const extra = [
         PERMISSIONS.SCREEN_SALES,
+        PERMISSIONS.TICKETS_LIMIT,
+        PERMISSIONS.TICKETS_IKRAM,
+        PERMISSIONS.TICKETS_MOVE,
         PERMISSIONS.HOTEL_REVENUE_CODES,
         PERMISSIONS.SCREEN_ADMIN_BUFFET,
         PERMISSIONS.ADMIN_BUFFET,

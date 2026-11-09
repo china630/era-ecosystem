@@ -11,7 +11,7 @@ import { apiFetch } from "../../../lib/api-client";
 import { formatAzEmployeeListName } from "../../../lib/employee-display-name";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { PageHeader } from "../../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
 import { Badge } from "../../../components/ui/badge";
@@ -297,11 +297,6 @@ function AdvanceReportsPageContent() {
 
         {loading ? (
           <p className="text-sm text-gray-600">{t("common.loading")}</p>
-        ) : rows.length === 0 ? (
-          <EmptyState
-            title={t("expenses.advanceReport.emptyTitle")}
-            description={t("expenses.advanceReport.emptyHint")}
-          />
         ) : (
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
@@ -316,7 +311,13 @@ function AdvanceReportsPageContent() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {rows.length === 0 ? (
+                  <FinanceEmptyTableRow
+                    colSpan={6}
+                    message={t("expenses.advanceReport.emptyTitle")}
+                  />
+                ) : (
+                  rows.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(String(r.reportDate).slice(0, 10))}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{employeeLabel(r.employee)}</td>
@@ -362,7 +363,8 @@ function AdvanceReportsPageContent() {
                       ) : null}
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

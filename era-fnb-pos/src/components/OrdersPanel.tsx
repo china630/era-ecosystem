@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { showApiError, showSuccess } from "@era/satellite-kit/ui";
+import { CatalogField, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
 import { CheckLines } from "@/components/CheckLines";
+import { SlipTape, type SlipCopy } from "@/components/SlipTape";
+import { fnbCan } from "@/lib/auth/permission-check";
+import { PERMISSIONS } from "@/lib/auth/permissions";
 
 type TicketLine = {
   id: string;
@@ -65,6 +68,7 @@ export default function OrdersPanel() {
   const t = useTranslations("orders");
   const tf = useTranslations("floor");
   const tc = useTranslations("common");
+  const slips = useTranslations("hallPages");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,6 +91,13 @@ export default function OrdersPanel() {
     { code: "CARD", label: "CARD" },
     { code: "TRANSFER", label: "TRANSFER" },
   ]);
+  const [hallMode, setHallMode] = useState(false);
+  const [mayLimit, setMayLimit] = useState(false);
+  const [mayIkram, setMayIkram] = useState(false);
+  const [bankTerminalId, setBankTerminalId] = useState<string | null>(null);
+  const [holders, setHolders] = useState<Array<{ id: string; displayName: string; availableAzn: number }>>([]);
+  const [holderId, setHolderId] = useState("");
+  const [slip, setSlip] = useState<SlipCopy | null>(null);
   const [lastPaid, setLastPaid] = useState<{
     dayNo: number | null;
     amount: number;
@@ -110,6 +121,35 @@ export default function OrdersPanel() {
         if (Array.isArray(rows) && rows.length > 0) {
           setPayMethods(rows.map((row) => ({ code: row.code, label: row.label || row.code })));
         }
+      })
+      .catch(() => undefined);
+    void fetch("/api/outlets")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const rows = (body?.outlets ?? []) as Array<{ id: string; hallMode?: boolean }>;
+        const selected = rows.find((row) => row.id === body?.selectedOutletId) ?? rows[0];
+        setHallMode(selected?.hallMode === true);
+      })
+      .catch(() => undefined);
+    void fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        setMayLimit(fnbCan(me, PERMISSIONS.TICKETS_LIMIT));
+        setMayIkram(fnbCan(me, PERMISSIONS.TICKETS_IKRAM));
+      })
+      .catch(() => undefined);
+    void fetch("/api/shifts/open")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((shift) => {
+        setBankTerminalId(typeof shift?.bankTerminalId === "string" ? shift.bankTerminalId : null);
+      })
+      .catch(() => undefined);
+    void fetch("/api/admin/limit-holders")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((rows) => {
+        if (!Array.isArray(rows)) return;
+        setHolders(rows.filter((row) => row.active !== false));
+        setHolderId((prev) => prev || rows[0]?.id || "");
       })
       .catch(() => undefined);
   }, []);
@@ -206,7 +246,7 @@ export default function OrdersPanel() {
     await load();
   }
 
-  async function pay(method: string) {
+  async function pay(method: string, extra?: { limitHolderId?: string }) {
     if (!selected || !canPay) return;
     const persisted = await persistDiscount();
     if (persisted == null) return;
@@ -216,6 +256,10 @@ export default function OrdersPanel() {
       showApiError({ error: tf("cashShort") });
       return;
     }
+    if (method === "LIMIT" && !extra?.limitHolderId) {
+      showApiError({ error: tf("pickHolder") });
+      return;
+    }
     const paidDay = selected.dayNo ?? null;
     const res = await fetch(`/api/tickets/${selected.id}/pay`, {
       method: "POST",
@@ -223,6 +267,8 @@ export default function OrdersPanel() {
       body: JSON.stringify({
         method,
         ...(method === "CASH" ? { cashTendered: got } : {}),
+        ...(method === "CARD" && bankTerminalId ? { bankTerminalId } : {}),
+        ...(extra?.limitHolderId ? { limitHolderId: extra.limitHolderId } : {}),
       }),
     }).catch(() => null);
     if (!res || (!res.ok && typeof navigator !== "undefined" && !navigator.onLine)) {
@@ -279,6 +325,7 @@ export default function OrdersPanel() {
         : null,
     });
     window.dispatchEvent(new Event("era-fnb-shift-refresh"));
+    if (data.slip) setSlip(data.slip);
     setCashReceived("");
     setSelectedId(null);
     await load();
@@ -325,6 +372,7 @@ export default function OrdersPanel() {
       body: JSON.stringify({
         roomChargeReservationId: guest.reservationId,
         guestName: guest.guestName,
+        roomNumber: guest.roomNumber,
       }),
     });
     const data = await res.json();
@@ -366,6 +414,7 @@ export default function OrdersPanel() {
       showApiError(data, "Room charge failed");
       return;
     }
+    if (data.slip) setSlip(data.slip);
     showSuccess(t("roomChargeOk"));
     setSelectedId(null);
     await load();
@@ -493,6 +542,7 @@ export default function OrdersPanel() {
 
       <div className={`${CARD_CLASS} flex flex-col p-4 lg:min-h-0 lg:overflow-hidden`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("ticketActions")}</h2>
+        {slip ? <SlipTape slip={slip} /> : null}
         {!selected ? (
           lastPaid ? (
             <div className="space-y-1 text-sm text-[#7F8C8D]">
@@ -707,6 +757,33 @@ export default function OrdersPanel() {
               ) : canPay ? (
                 <div className="flex w-full shrink-0 flex-col items-end gap-2">
                   <div className="flex flex-wrap justify-end gap-2">
+                  {selected ? (
+                    <button
+                      type="button"
+                      className="rounded border px-3 py-1.5 text-sm"
+                      onClick={() => {
+                        const gross = selected.lines.reduce((sum, line) => sum + line.qty * Number(line.unitPriceAzn), 0);
+                        const total = Number(selected.totalAzn) || 0;
+                        setSlip({
+                          kind: "PRECHECK",
+                          ticketId: selected.id,
+                          dayNo: selected.dayNo,
+                          outletName: selected.outlet.code,
+                          table: selected.table?.name ?? selected.table?.code ?? null,
+                          at: new Date().toISOString(),
+                          total,
+                          discountAzn: Math.max(0, Math.round((gross - total) * 100) / 100),
+                          lines: selected.lines.map((line) => ({
+                            name: line.description,
+                            qty: line.qty,
+                            amount: Math.round(line.qty * Number(line.unitPriceAzn) * 100) / 100,
+                          })),
+                        });
+                      }}
+                    >
+                      {slips("precheck")}
+                    </button>
+                  ) : null}
                   {payMethods.map((row) => {
                     const tone =
                       row.code === "CASH"
@@ -733,6 +810,40 @@ export default function OrdersPanel() {
                       </button>
                     );
                   })}
+                  {hallMode && (mayLimit || mayIkram) ? (
+                    <>
+                      {mayLimit ? (
+                      <CatalogField
+                        kind="SEARCHABLE"
+                        label={t("pickHolder")}
+                        options={holders.map((row) => ({
+                          value: row.id,
+                          label: `${row.displayName} · ${row.availableAzn.toFixed(2)}`,
+                        }))}
+                        value={holderId}
+                        onChange={(next) => setHolderId(String(next ?? ""))}
+                      />
+                      ) : null}
+                      {mayLimit ? (
+                      <button
+                        type="button"
+                        className="rounded bg-[#6C3483] px-3 py-1.5 text-sm text-white"
+                        onClick={() => void pay("LIMIT", { limitHolderId: holderId })}
+                      >
+                        {t("payLimit")}
+                      </button>
+                      ) : null}
+                      {mayIkram ? (
+                      <button
+                        type="button"
+                        className="rounded bg-[#7F8C8D] px-3 py-1.5 text-sm text-white"
+                        onClick={() => void pay("IKRAM")}
+                      >
+                        {t("payIkram")}
+                      </button>
+                      ) : null}
+                    </>
+                  ) : null}
                   </div>
                 </div>
               ) : null}
