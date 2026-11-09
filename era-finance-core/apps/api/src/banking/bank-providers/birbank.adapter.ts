@@ -18,6 +18,7 @@ import type {
   BankStatementItem,
   PaymentDraftRequest,
   PaymentDraftResult,
+  OrgBankCall,
 } from "./banking-provider.interface";
 
 type BirbankOAuthTokenResponse = {
@@ -93,24 +94,25 @@ export class BirbankAdapter implements BankingProviderInterface, OnModuleDestroy
    * - BIRBANK_ACCOUNTS_PATH (default: /accounts)
    * - BIRBANK_STATEMENTS_PATH (default: /accounts/statements)
    */
-  async getBalances(): Promise<BankBalanceItem[]> {
-    const response = await this.authorizedRequest<unknown>({
-      method: "GET",
-      url: this.accountsPath,
-    });
+  async getBalances(creds?: OrgBankCall): Promise<BankBalanceItem[]> {
+    const response = await this.authorizedRequest<unknown>(
+      { method: "GET", url: this.accountsPath },
+      true,
+      creds,
+    );
     return this.mapBalances(response.data);
   }
 
-  async getStatements(from: string, to: string): Promise<BankStatementItem[]> {
-    const response = await this.authorizedRequest<unknown>({
-      method: "GET",
-      url: this.statementsPath,
-      params: { from, to },
-    });
+  async getStatements(from: string, to: string, creds?: OrgBankCall): Promise<BankStatementItem[]> {
+    const response = await this.authorizedRequest<unknown>(
+      { method: "GET", url: this.statementsPath, params: { from, to } },
+      true,
+      creds,
+    );
     return this.mapStatements(response.data);
   }
 
-  async sendPaymentDraft(payload: PaymentDraftRequest): Promise<PaymentDraftResult> {
+  async sendPaymentDraft(payload: PaymentDraftRequest, creds?: OrgBankCall): Promise<PaymentDraftResult> {
     const idemKey =
       payload.reference?.trim() ||
       createHash("sha256").update(JSON.stringify(payload)).digest("hex").slice(0, 32);
@@ -123,11 +125,15 @@ export class BirbankAdapter implements BankingProviderInterface, OnModuleDestroy
           id?: string | number;
           draftId?: string | number;
           status?: string;
-        }>({
-          method: "POST",
-          url: this.paymentDraftsPath,
-          data: payload,
-        }),
+        }>(
+          {
+            method: "POST",
+            url: this.paymentDraftsPath,
+            data: payload,
+          },
+          true,
+          creds,
+        ),
     });
     const draftId = String(response.data?.draftId ?? response.data?.id ?? "");
     const status = response.data?.status ?? "CREATED";
@@ -145,8 +151,9 @@ export class BirbankAdapter implements BankingProviderInterface, OnModuleDestroy
   private async authorizedRequest<T>(
     config: AxiosRequestConfig,
     retryOnTokenError = true,
+    creds?: OrgBankCall,
   ): Promise<AxiosResponse<T>> {
-    const token = await this.getAccessToken();
+    const token = await this.getAccessToken(creds);
     try {
       return await this.reliability.executeWithPolicies({
         provider: "birbank",
@@ -163,8 +170,8 @@ export class BirbankAdapter implements BankingProviderInterface, OnModuleDestroy
     } catch (error) {
       const shouldRetry = retryOnTokenError && this.isInvalidTokenError(error);
       if (shouldRetry) {
-        await this.redis.del(this.redisKey);
-        const freshToken = await this.getAccessToken();
+        await this.redis.del(this.tokenCacheKey(creds));
+        const freshToken = await this.getAccessToken(creds);
         return this.http.request<T>({
           ...config,
           headers: {
@@ -178,20 +185,31 @@ export class BirbankAdapter implements BankingProviderInterface, OnModuleDestroy
     }
   }
 
-  private async getAccessToken(): Promise<string> {
-    const cached = await this.redis.get(this.redisKey);
+  private tokenCacheKey(creds?: OrgBankCall): string {
+    if (!creds?.clientId) return this.redisKey;
+    const suffix = createHash("sha256").update(creds.clientId).digest("hex").slice(0, 12);
+    return `${this.redisKey}:${suffix}`;
+  }
+
+  private async getAccessToken(creds?: OrgBankCall): Promise<string> {
+    const cacheKey = this.tokenCacheKey(creds);
+    const cached = await this.redis.get(cacheKey);
     if (cached) return cached;
 
-    if (!this.clientId || !this.clientSecret) {
+    const clientId = creds?.clientId ?? (creds ? "" : this.clientId);
+    const clientSecret = creds?.secret ?? (creds ? "" : this.clientSecret);
+    if (!clientId || !clientSecret) {
       throw new UnauthorizedException(
-        "Birbank OAuth credentials are missing (BIRBANK_CLIENT_ID / BIRBANK_CLIENT_SECRET)",
+        creds
+          ? "Birbank credentials for this organization are missing on the platform"
+          : "Birbank OAuth credentials are missing (BIRBANK_CLIENT_ID / BIRBANK_CLIENT_SECRET)",
       );
     }
 
     const body = new URLSearchParams();
     body.set("grant_type", "client_credentials");
-    body.set("client_id", this.clientId);
-    body.set("client_secret", this.clientSecret);
+    body.set("client_id", clientId);
+    body.set("client_secret", clientSecret);
     if (this.scope) body.set("scope", this.scope);
     if (this.audience) body.set("audience", this.audience);
 
@@ -214,7 +232,7 @@ export class BirbankAdapter implements BankingProviderInterface, OnModuleDestroy
       }
       const rawTtl = response.data?.expires_in ?? response.data?.expiresIn ?? 300;
       const safeTtl = Math.max(30, Number(rawTtl) - 30);
-      await this.redis.set(this.redisKey, token, "EX", safeTtl);
+      await this.redis.set(cacheKey, token, "EX", safeTtl);
       return token;
     } catch (error) {
       this.handleBirbankError(error);

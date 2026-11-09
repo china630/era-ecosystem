@@ -69,6 +69,14 @@ export default function PoliciesPage() {
   const [tourOps, setTourOps] = useState<TourOpsPolicy | null>(null);
   const [pack, setPack] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<'hk' | 'price' | 'pack' | 'tours' | null>(null);
+  const [hash, setHash] = useState('');
+  useEffect(() => {
+    const read = () => setHash(window.location.hash.replace(/^#/, ''));
+    read();
+    window.addEventListener('hashchange', read);
+    return () => window.removeEventListener('hashchange', read);
+  }, []);
+  const show = (id: string) => hash === '' || hash === id;
   const eligible = getPackEligibleReports();
 
   const load = useCallback(async () => {
@@ -281,7 +289,7 @@ export default function PoliciesPage() {
         {!canHk && !canPrice && !canPack && !canTours ? (
           <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
         ) : null}
-        {canTours && tourOps ? (
+        {show('tours') && canTours && tourOps ? (
         <section id="tours" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{tt('title')}</h2>
           <p className="m-0 text-[13px] text-[#7F8C8D]">{tt('subtitle')}</p>
@@ -361,8 +369,10 @@ export default function PoliciesPage() {
           </button>
         </section>
         ) : null}
-        {canHk ? (
-        <section id="hk" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+        {(show('hk') || show('laundry')) && canHk ? (
+        <section id={hash === 'laundry' ? 'laundry' : 'hk'} className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+          {hash !== 'laundry' ? (
+          <>
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{th('policyTitle')}</h2>
           <p className="m-0 text-[13px] text-[#7F8C8D]">{th('policyHint')}</p>
           <label className="block text-sm text-[#34495E]">
@@ -387,6 +397,10 @@ export default function PoliciesPage() {
               onChange={(e) => setDeep(Number(e.target.value))}
             />
           </label>
+          </>
+          ) : null}
+          {hash !== 'hk' ? (
+          <>
           <h3 className="m-0 pt-2 text-sm font-semibold text-[#34495E]">{th('laundryPolicyTitle')}</h3>
           <CatalogField
             kind="CLOSED_SMALL"
@@ -482,13 +496,15 @@ export default function PoliciesPage() {
               {th('laundryCatalogLink')}
             </Link>
           </p>
+          </>
+          ) : null}
           <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy === 'hk'} onClick={() => void saveHk()}>
             {tc('save')}
           </button>
         </section>
         ) : null}
 
-        {canPrice ? (
+        {show('pricing') && canPrice ? (
         <section id="pricing" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{tp('title')}</h2>
           <p className="m-0 text-[13px] text-[#7F8C8D]">{tp('subtitle')}</p>
@@ -520,9 +536,9 @@ export default function PoliciesPage() {
         </section>
         ) : null}
 
-        {canPrice ? <LetterheadSection /> : null}
+        {show('letterhead') && canPrice ? <LetterheadSection /> : null}
 
-        {canPrice && policy ? (
+        {show('night-audit') && canPrice && policy ? (
         <section id="night-audit" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{tn('nightAudit')}</h2>
           {(
@@ -551,7 +567,7 @@ export default function PoliciesPage() {
         </section>
         ) : null}
 
-        {canPack ? (
+        {show('reports') && canPack ? (
         <section id="reports" className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{tr('reports.nightlyPack')}</h2>
           {eligible.map((r) => (

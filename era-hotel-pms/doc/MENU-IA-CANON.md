@@ -101,9 +101,8 @@ Sidebar order (top level, then groups). URLs stay flat under `/hk/*`.
 | Closed rooms (OOO/OOS) | `/hk/closed-rooms` | One grid + kind filter; close in modal; `RoomClosure` dates |
 | HK mobile | `/hk/mobile` | Maid mobile client (one click; not under a group) |
 | HK forecast | `/hk/forecast` | Load 1/7/14/30 by floor |
-| **HK staff** ▸ | | Maid assignment → roster → daily floor pairs |
+| **HK staff** ▸ | | Maid assignment → daily floor pairs (weekly roster under **Schedules**) |
 | Maid management | `/hk/maids` | Link CP employment; hotel keeps HK department and ƏG |
-| HK roster | `/hk/roster` | Week E/L/N/OFF/ƏG + DnD order/department |
 | Floor rotation | `/hk/rotation` | Daily pairs 2–11 + swap |
 | **Minibar** ▸ | | Folio sale + catalog (not HK consumption) |
 | Minibar | `/hk/minibar` | Minibar control. Guest folio sale |
@@ -113,7 +112,7 @@ Sidebar order (top level, then groups). URLs stay flat under `/hk/*`.
 | Guest laundry | `/hk/laundry` | Intake grid with price/sum preview; Accept → IN_PLANT; Delivered + return form → folio `LAUNDRY` |
 | Lost & found | `/hk/lost-and-found` | Lost & found |
 | Laundry catalog | `/settings/laundry-catalog` | Item names az/ru/en + wash/iron/express prices (empty = not offered) |
-| Policies | `/settings/policies#hk` | Linen / deep + laundry intake/due/express. Old `/settings/hk-policy` redirects |
+| Policies | `/settings/policies#hk` and `#laundry` | Linen / deep on `#hk`. Laundry intake/due/express on `#laundry`. Old `/settings/hk-policy` redirects to `#hk` |
 
 First open on secondary HK screens shows table/board chrome and an empty-state next step (not a bare page).
 
@@ -121,19 +120,19 @@ Legacy: `/housekeeping` → `/hk`, `/housekeeping/*` → `/hk/*`.
 
 ---
 
-### 2.4b Schedules — `/schedules/*` (+ HK roster link)
+### 2.4b Schedules — last ops section before Settings
 
-Department duty boards (Workforce people). Type catalog: [ADR hotel-department-duty-schedules](../../docs/adr/hotel-department-duty-schedules.md).
+All hotel weekly duty boards live only here (not under Housekeeping). Type catalog: [ADR hotel-department-duty-schedules](../../docs/adr/hotel-department-duty-schedules.md).
 
 | Menu item | URL | Description |
 |-----------|-----|-------------|
-| All schedules | `/schedules` | Hub: HK + reception + security + engineering (ops labels) |
-| HK roster | `/hk/roster` | Existing `WEEK_ZONE` (also under Housekeeping) |
-| Reception roster | `/schedules/reception` | `WEEK_POST` desk posts × day; chip assign; week chrome; copy previous week; Board settings (binding + posts) |
-| Security roster | `/schedules/security` | `WEEK_POST` gate / patrol; same UX as reception |
-| Technical roster | `/schedules/engineering` | `WEEK_CREW` building zones; not work orders; same UX |
+| All schedules | `/schedules` | Hub: HK + reception + security + engineering |
+| HK roster | `/hk/roster` | Existing `WEEK_ZONE` (Schedules only — removed from HK staff) |
+| Reception roster | `/schedules/reception` | `WEEK_POST`; chip assign; week chrome; copy week; settings collapsed |
+| Security roster | `/schedules/security` | `WEEK_POST`; same UX |
+| Technical roster | `/schedules/engineering` | `WEEK_CREW`; same UX |
 
-Screen permission: `screen:schedules` (API `api:duty_schedules.manage`). Clinic `MONTH_DUTY` is not hosted here. UAT-SMOKE §34b open — not SHIPPED.
+Sidebar order: … Reports → **Schedules** → Settings. Permission: `screen:schedules` (HK roster also `screen:hk`). UAT-SMOKE §34b open — not SHIPPED.
 
 ---
 
@@ -173,6 +172,7 @@ Legacy: `/distribution/child-matrix` → `/settings/child-matrix`, `/distributio
 | Menu item | URL | Description |
 |-----------|-----|-------------|
 | Guest profiles | `/guests` | Registry; CRM depth inside guest card |
+| Guest dedup | `/reports/guest-dedup` | Duplicate cards. Menu home is Guests, not Reports |
 
 No separate top-level CRM module required if tabs cover notes/tasks/allergens/merge.
 
@@ -236,17 +236,28 @@ Deep clinical / lab → **Clinic** (external).
 
 ### 2.13 Settings — `/settings/*`
 
-| Menu item | URL | Description |
-|-----------|-----|-------------|
-| Master data | `/settings/master-data` | Rooms, types, rates, revenue codes, routing |
-| Policies | `/settings/policies` | HK linen/deep, pricing flags, morning report pack. Old URLs redirect to `#hk` / `#pricing` / `#reports` |
-| Accounts | `/settings/users`, `/settings/access`, `/settings/logins` | Nested menu: users, roles, sign-ins |
-| Outbound events | `/settings/integration` | Event toggles and URLs |
-| Revenue codes | `/settings/integration?view=gl` | Revenue code → GL |
-| Outbound journal | `/settings/integration?view=journal` | Sent events |
-| Channel links | `/admin/links` | CP-CHANNELS vitrine (PLATFORM/ACCEPTOR); Settings grant, not SCREEN_ADMIN |
-| Audit viewer | `/admin/audit` | Canonical filters (entityType default HTTP_MUTATION, entityId, action, userId, dates). Page grant = reports, not admin. Stay journal on the card is Layer B only. HOT-AUD-01 UAT open |
-| Import | `/settings/import` | Column profile includes Elektraweb; the screen name is Import |
+One sidebar section. Groups are nested menus of equal depth. The old flat «НСИ», «Политики», and the separate «Тарифы и цены» section are this tree. Each catalog is one screen (`?tab=`), each policy block is one hash. Row actions on catalogs are icon buttons.
+
+| Group | Item | URL |
+|-------|------|-----|
+| Property | Profile and letterhead | `/settings/policies#letterhead` |
+| Property | Departments | `/settings/departments` |
+| Rooms | Room types | `/settings/master-data?tab=roomTypes` |
+| Rooms | Rooms | `/settings/master-data?tab=rooms` |
+| Rooms | Bed types | `/settings/master-data?tab=beds` |
+| Rooms | Room views | `/settings/master-data?tab=views` |
+| Rooms | Quota journal | `/settings/master-data?tab=quota` |
+| Guest lists | Commercial / Documents / Stay / Notes | `/settings/master-data?tab=lookupCommercial` (and `lookupIdentity`, `lookupStay`, `lookupNotes`) |
+| Rates | Rate plans, seasons, package prices, daily prices, BAR, child matrix, components, yield, pricing flags | `/settings/master-data?tab=ratePlans`, `/settings/seasons`, `/settings/package-prices`, `/settings/daily-prices`, `/settings/bar-calendar`, `/settings/child-matrix`, `/settings/pricing-components`, `/settings/yield-rules`, `/settings/policies#pricing` |
+| Revenue | Revenue codes | `/settings/master-data?tab=revenue` |
+| Revenue | Post to ledger | `/settings/integration?view=gl` |
+| House | Cleaning policy / laundry rules / laundry price / minibar catalog | `/settings/policies#hk`, `#laundry`, `/settings/laundry-catalog`, `/settings/stock` |
+| Shift rules | Night audit / tours / morning pack | `/settings/policies#night-audit`, `#tours`, `#reports` |
+| Access | Users, roles, sign-ins | `/settings/users`, `/settings/access`, `/settings/logins` |
+| Exchange | Outbound events, outbound journal, channel links | `/settings/integration`, `?view=journal`, `/admin/links` |
+| Service | Audit viewer, import, ops wipe | `/admin/audit`, `/settings/import`, `/settings/ops-wipe` |
+
+`/settings/policies` with no hash still shows every policy card. Channel links and the audit viewer stay on `/admin/*` until those URLs move. Import step titles are translated; file names stay Elektraweb.
 
 Legacy: `/admin/*` → `/settings/*` for these screens.
 
@@ -273,7 +284,7 @@ Legacy: `/admin/*` → `/settings/*` for these screens.
 
 SSOT catalog: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md) (ElektraWeb WA0058/59 + Nafta samples). **W1 live** — 8 P0 screens + PDF + nightly ZIP; not SHIPPED (no UAT evidence).
 
-**Sidebar:** Reports, then Other, immediately above Settings. Categories live in the report list, not as extra menu screens. «All reports» highlights only on `/reports` itself.
+**Sidebar:** one Reports section. No «Other» bucket. «All reports» highlights only on `/reports` itself.
 
 | Menu item | URL | Classifier |
 |-----------|-----|------------|
@@ -281,6 +292,10 @@ SSOT catalog: [`MANAGEMENT-REPORTS-CATALOG.md`](./MANAGEMENT-REPORTS-CATALOG.md)
 | Nightly pack | `/reports/nightly-pack` | Eight morning-pack forms for the last closed audit, plus ZIP for that date |
 | Occupancy grid | `/reports/occupancy/grid` | Room-type grid, not a catalog slug |
 | Booking analytics | `/reports/analytics` | Sources, cancellations, demographics. Not a catalog slug |
+| Invoices | `/reports/invoices` | Invoice list. Same Reports section |
+| Reconciliation | `/reports/reconciliation` | Night-audit reconciliation. Same Reports section |
+
+Guest dedup lives under Guests (`/reports/guest-dedup`). POS calendar and the souvenir shop are the External systems section after Settings. Finance and Clinic links are still not in the sidebar.
 
 SatAdmin pack membership: `/settings/policies#reports`. Old `/settings/report-pack` redirects.
 
@@ -317,14 +332,16 @@ SatAdmin pack membership: `/settings/policies#reports`. Old `/settings/report-pa
 6. Distribution  
 7. Service  
 8. Migration  
+
+Rates and prices are not a top-level section. They are the Settings → Rates group.  
 9. SPA  
 10. Transfers  
 11. Banquets  
 12. Medical  
-13. Reports  
-14. Other  
+13. Reports (all reports, nightly pack, occupancy grid, analytics, invoices, reconciliation)  
+14. **Schedules** (all weekly duty boards incl. HK roster)  
 15. Settings  
-16. External links (footer / header)  
+16. External systems (POS, souvenir shop)  
 17. Əsas — when decided  
 
 ---

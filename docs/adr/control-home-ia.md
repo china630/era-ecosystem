@@ -13,7 +13,7 @@
 
 1. **Control Home** is `/workspace` (and the shared authenticated shell around it) with four zones:
    - **Context bar** — active organization name, `ORG` / `DEPT` badge, org switcher, star to set **home**.
-   - **Platform apps** — in-orchestrator surfaces: Workforce, Billing/subscription, Org profile; **Comms Hub** list+compose shell in the same slot (see [cp-comms-hub-messaging.md](./cp-comms-hub-messaging.md); not channel FOLIO/REVENUE).
+   - **Platform apps** — in-orchestrator surfaces: Workforce, Billing/subscription, Org profile; **Comms Hub** list+compose shell in the same slot (see [cp-comms-hub-messaging.md](./cp-comms-hub-messaging.md); not channel FOLIO/REVENUE); **document register** at `/workspace/documents` (see [cp-document-register.md](./cp-document-register.md)).
    - **Systems** — satellite tiles (Finance + industry): Open / Modules / Settings (SSO). Unchanged launch semantics from [orchestrator-workspace-launcher.md](./orchestrator-workspace-launcher.md).
    - **Structure** — separate page for Org → Department → Satellite → Outlet + kill switches (owner hierarchical UX on `/workspace/structure`; Home shows compact structure counts + Manage structure). Not a substitute for Systems tiles. CP outlet create registers billing/allowlist only; ops outlet materialize remains sat→CP upsert.
 
@@ -29,4 +29,4 @@
 - Department context = switch active org to the child `Organization` row (`operatingMode=DEPARTMENT`); Structure tree switch uses the same `/auth/switch-organization` as the header switcher.
 - After org switch, Structure fetches must use the refreshed access token from storage (not a stale React closure).
 - Comms Hub must not invent a second org tree.
-- platform-web `/structure` remains an ops entry stub; full owner tree lives on app `/workspace/structure`.
+- The owner tree lives on app `/workspace/structure`. Platform console does not host a second structure screen.

@@ -230,6 +230,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
+    href: "/reports/bonus",
+    labelKey: "bonusReport",
+    icon: FileSpreadsheet,
+    group: "reports",
+    permission: CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
+  {
     href: "/reports/revenue",
     labelKey: "revenueReport",
     icon: FileSpreadsheet,

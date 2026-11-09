@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { PageHeader } from "../../../components/layout/page-header";
 import { Button } from "../../../components/ui/button";
 import {
@@ -198,11 +198,6 @@ export default function PriceListsPage() {
       {err && <p className="text-sm text-red-600">{err}</p>}
       {loading ? (
         <p className="text-sm text-gray-600">{t("common.loading")}</p>
-      ) : rows.length === 0 ? (
-        <EmptyState
-          title={t("catalog.priceList.emptyTitle")}
-          description={t("catalog.priceList.emptyHint")}
-        />
       ) : (
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
@@ -217,7 +212,10 @@ export default function PriceListsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {rows.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={6} message={t("catalog.priceList.emptyTitle")} />
+              ) : (
+                rows.map((r) => (
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{r.name}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{r.currencyCode}</td>
@@ -236,7 +234,8 @@ export default function PriceListsPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

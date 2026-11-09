@@ -64,6 +64,8 @@ export async function PATCH(
               : ticket.roomChargeReservationId,
         guestName:
           body.guestName !== undefined ? body.guestName || null : ticket.guestName,
+        roomNumberLabel:
+          body.roomNumber !== undefined ? body.roomNumber || null : ticket.roomNumberLabel,
       },
       include: { lines: true, table: true, outlet: true },
     });

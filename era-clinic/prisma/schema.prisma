@@ -99,6 +99,8 @@ model Tenant {
   doctorBonusPercentInHouse      Float                    @default(0) @map("doctor_bonus_percent_in_house")
   /// Doctor bonus % of COMPLETED extras (WALK_IN) — Wave D; default 0 until FO sets
   doctorBonusPercentWalkIn       Float                    @default(0) @map("doctor_bonus_percent_walk_in")
+  /// Nafta-style bonus schedule JSON. Empty = built-in Nafta defaults.
+  bonusScheduleJson              String?                  @map("bonus_schedule_json") @db.Text
   /// Hotel RevenueCode.code posted on clinic folio charges (Nafta: 23 AMBULATOR). Empty refuses the charge.
   hotelFolioRevenueCode          String?                  @map("hotel_folio_revenue_code")
   /// Paid no-show keeps the folio charge (default). False lets the hotel void it.
@@ -692,7 +694,7 @@ model LabOrder {
   paymentReceiptRef     String?          @map("payment_receipt_ref")
   /// Lab works before pay; guest blank stays closed until settledAt. Ignored when inPackage.
   releaseAfterPay       Boolean          @default(false) @map("release_after_pay")
-  /// Created by the paid-on-open flag. Day-end and checkout do not cancel it unpaid.
+  /// Created by the paid-on-open flag. Day-end cheque skip stays. Checkout cancels an ORDERED row.
   autoPaidStay          Boolean          @default(false) @map("auto_paid_stay")
   reservationId         String?          @map("reservation_id")
   roomNumber            String?          @map("room_number")

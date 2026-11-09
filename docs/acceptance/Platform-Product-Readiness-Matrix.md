@@ -9,6 +9,12 @@
 
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.  
+**Closeout (2026-11-10 d):** org access keys tab. AC-CP-ACCESS 🟡 out of BE rollup. ORCH-ACCESS-01 API/SCREEN. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `platform.yaml` untouched. `READINESS_MATRIX` N/A.
+
+**Closeout (2026-11-10 c):** CP-DOC-01 cycle 4 reply-to, file text, template step edit, ALL waiting list, return-to-step. AC-CP-DOC stays 🟡 out of BE rollup. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `platform.yaml` untouched. `READINESS_MATRIX` N/A.
+
+**Closeout (2026-11-09):** CP-DOC-01 document register API+SCREEN. AC-CP-DOC 🟡 out of BE rollup. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `platform.yaml` untouched. `READINESS_MATRIX` N/A.
+
 **Closeout (2026-10-31):** night-audit correlation ids enqueue. FIN-02 stays HEADLESS. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition stays `mvp`.
 
 ---
@@ -31,11 +37,13 @@
 |---------|------|-------|
 | Workspace / org hub | `/workspace, /organizations`, `/workspace/organization` | 🟡 — OrgOwner org profile (multi-contact/logo, `CatalogField` kinds): [ADR](../adr/cp-organization-profile-and-branding.md); CP-ORG-PROFILE-01 API/SCREEN; Finance Sync + hotel/clinic prefer CP; dual-edit closed; F&B/Retail pay `printChrome` + Outlet contact overlay; Finance→orch backfill ops script; UAT open; not sellable. Modules modal + workforce/connect (CP-BILL-OWNER-01): TIER_3; auto-Sync ([ADR](../adr/billing-module-change-satellite-sync.md)); `synced:false` toast; UAT E-C.7 open; not sellable |
 | Workforce | `/workspace/workforce/*` | 🟡 SCREEN — request dates, hire date, and migration stamp render `дд.мм.гггг`. Floor and self-service dates are `DatePicker`. Does not move Gate, BE 🟡, UI 🟡, Demo 🟡, Pilot, or edition. Month timesheet harden + vacation multi-line; **not sell-ready** (no UAT-SMOKE). **BE:** hub AC-CP-WF ✅; job architecture **AC-CP-WF-JOB 🟡** out of BE rollup (`CP-WF-JOB-01` Status=API). **UI:** `/job-architecture`, `/org-chart` (package `org`), org-structure manager/`unitKind`, positions job/parent, employments reporting + hire managers, hr-settings new step kinds — SCREEN only ([ADR](../adr/cp-workforce-job-architecture.md)). **Demo/TE / Pilot / Edition / Sell:** unchanged 🟡 / [ ] / `mvp` / do not claim GA. 2026-10-26 grants: one active row per employment+satellite+role (409), Active filter is `revokedAt` null. 2026-10-27: satellite uncheck/disconnect revokes linked and orphan grants for that key; orphan grant bindings heal on reprovision; MANUAL_GRANT emits last. Evrostar: group HR (`CP-WF-GROUP-01` API), roster wave 2, orders/templates (`CP-WF-ORD-02` API); MGMT book wave 5; FaceID attendance (`CP-WF-ATT-01` API, not SHIPPED); live floor (`CP-WF-FLOOR-01` API); minute buckets (`CP-WF-MIN-01` API); Finance minute pricing (`FIN-HR-MIN-01` API); employee cabinet (`CP-WF-SELF-01` API); fitness files (`CP-WF-FIT-01` API) — [ADR](../adr/evrostar-workforce-pilot.md) / [floor ADR](../adr/cp-workforce-floor-attendance.md) |
-| Super-admin | `platform.era-365.online` (`apps/platform-web`); `app` `/super-admin/*` redirects | 🟡 SCREEN — cutover redirects landed (CP-SA-CONSOLE-01); org shell tabs Overview / License / Connections / Cutover / Placement; Connections ModalShell payment CRUD (CP-PAY-METHODS-01); UAT/SHOW open; not SHOW |
-| Control Home / Structure | `/workspace` zones; `/workspace/structure`; `/workspace/comms-hub` inbox | 🟡 SCREEN — home org ★; Platform apps vs Systems; structure summary counts + Manage structure; hierarchical Structure (dept switch, CatalogField sat, outlet CRUD, Open sat SSO); Comms server inbox + recipients (not SHOW/SHIPPED); lab [`reports/platform-structure-owner-ux-signoff.md`](../../reports/platform-structure-owner-ux-signoff.md); CP→sat materialize open; UAT/SHOW open; not sellable |
-| Integration channels | `platform…/orgs/[id]` Channels+Resync; shared kit `/admin/links` (hotel OpsShell SETTINGS); F&B+retail+clinic pre-mutate money assert | 🟡 SCREEN — harden + second-pass lab; human UAT open; not sellable |
+| Super-admin | `platform.era-365.online` (`apps/platform-web`); `app` `/super-admin/*` redirects | 🟡 SCREEN — cutover redirects landed (CP-SA-CONSOLE-01); org shell one job per tab (card, structure, license, modules, addresses, payments, channels, Elektraweb, service placement); payment CRUD on `/payments` (CP-PAY-METHODS-01); UAT/SHOW open; not SHOW |
+| Control Home / Structure | `/workspace` zones; `/workspace/structure`; `/workspace/comms-hub` inbox; `/workspace/documents` | 🟡 SCREEN — home org ★; Platform apps vs Systems; structure summary counts + Manage structure; hierarchical Structure (dept switch, CatalogField sat, outlet CRUD, Open sat SSO); Comms server inbox + recipients (not SHOW/SHIPPED); lab [`reports/platform-structure-owner-ux-signoff.md`](../../reports/platform-structure-owner-ux-signoff.md); CP→sat materialize open; UAT/SHOW open; not sellable |
+| Integration channels | `platform…/orgs/[id]/channels` Channels+Resync; shared kit `/admin/links` (hotel OpsShell SETTINGS); F&B+retail+clinic pre-mutate money assert | 🟡 SCREEN — harden + second-pass lab; human UAT open; not sellable |
 | Owner invoices | `/settings/invoices` | 🟡 SCREEN — Org→Sat→Outlet line tree (CP-BILL-LINES-01); UAT open; not sellable |
 | Reference settings | `platform…/reference` (after MDM; app path redirects) | 🟡 SCREEN — hub fetch switches and per-org hub/Excel; UAT open; not SHOW |
+| MDM persons | `platform…/mdm/persons`, `…/persons/dedup` | 🟡 SCREEN — directory plus suspected-person queue (ORCH-MDM-04). Phone polish on resolve. UAT open; not SHOW. AC-CP-MDM-DEDUP 🟡 out of BE rollup |
+| Org access keys | `platform…/orgs/:id/access` | 🟡 SCREEN — org enters id + secret (ORCH-ACCESS-01). Check does not call the bank or portal. Unibank / Access / Bank of Baku closed. Not SHOW. AC-CP-ACCESS 🟡 out of BE rollup |
 | Placement hop / freeze | `platform…/orgs/[orgId]/placement` (app path redirects) | 🟡 SCREEN — lab table + next-step / fail + create modal (i18n); AC-CP-TOPO still 🟡 ([return playbook](./BE-OPEN-AND-TOPO-RETURN.md)) |
 
 Routes added 2026-08-17 (still 🟡 / not sell-ready): org catalog, referrals, landing, owner invoices/orders, workforce vacation/orders/ştat/timesheets.  
@@ -50,6 +58,12 @@ Routes added 2026-08-17 (still 🟡 / not sell-ready): org catalog, referrals, l
 **Closeout (2026-11-03 d):** Channels UI polish (`ChannelEdgeCard`) + F&B `/admin/links`; deferred debts in ADR/Sprint (`S-CHANNELS-*`, `S-COMMS-HUB`). Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
 
 **Closeout (2026-11-03 e):** Channels second-pass — kit rebuild for new exports; ChannelEdgeCard kind/sat/managed i18n (en/az/ru); invoice sat labels; Nest `GET …/channels/check` static before `:channelId`. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
+
+**Closeout (2026-11-10 c):** MDM phone polish on resolve and suspected-person queue (`/mdm/persons/dedup`). ORCH-MDM-04 stays **API**. AC-CP-MDM-DEDUP **🟡** out of BE rollup; AC-CP-MDM ✅ not reopened. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**. `platform.yaml` untouched. READINESS_MATRIX N/A (no DELIVERY % change).
+
+**Closeout (2026-11-10 b):** Platform operator stub `/structure` removed. Owner tree stays `/workspace/structure`. CP-STRUCTURE-01 SuperAdmin column cleared; status stays **API** / **SCREEN**. AC-CP-HOME stays out of BE rollup and not Scaffold ✅ (owner UAT open). Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**. `platform.yaml` untouched. READINESS_MATRIX N/A.
+
+**Closeout (2026-11-10):** Org console IA split — card / structure / license / modules / addresses / payments / channels / Elektraweb / service placement. CP-SA-CONSOLE-01 / CP-LIC-01 / CP-PAY-METHODS-01 / CP-CHANNELS-01 / CP-PLACE-01 stay **API** and **SCREEN**. AC-CP-PAY-METHODS and AC-CP-TOPO stay Scaffold 🟡. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**. `platform.yaml` untouched. READINESS_MATRIX N/A (no API level or DELIVERY % change).
 
 **Closeout (2026-11-06):** Platform org console UX — org shell tabs; `/connections` payment ModalShell CRUD; list filters; placement next-step UI. CP-SA-CONSOLE-01 / CP-PAY-METHODS-01 / CP-PLACE-01 stay **API**; AC-CP-PAY-METHODS + AC-CP-TOPO stay Scaffold 🟡. Gate / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot / Edition `mvp` / Sell **unchanged**.
 

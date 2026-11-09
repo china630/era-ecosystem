@@ -710,6 +710,7 @@ export async function loadOpenAttendanceForesight(date: Date): Promise<{
       schedulingMode: "OPEN",
       scheduledAt: { gte: start, lt: end },
       status: { in: ["SCHEDULED", "CHECKED_IN", "COMPLETED"] },
+      NOT: { clinicalEpisode: { status: "CLOSED" } },
     },
     select: {
       id: true,

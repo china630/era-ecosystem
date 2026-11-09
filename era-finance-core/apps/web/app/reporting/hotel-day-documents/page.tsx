@@ -8,7 +8,7 @@ import { ModalShell } from "@era/satellite-kit/ui";
 import { apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -144,21 +144,21 @@ export default function HotelDayDocumentsPage() {
     <>
       <PageHeader title={t("inventory.dayDocumentTitle")} subtitle={t("inventory.dayDocumentHint")} />
       <section className={`${CARD_CONTAINER_CLASS} p-6`}>
-        {rows.length === 0 ? (
-          <EmptyState title={t("inventory.dayDocumentEmpty")} />
-        ) : (
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.dayDocumentDate")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.dayDocumentError")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("inventory.dayDocumentLineCount")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS} />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.dayDocumentDate")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("inventory.dayDocumentError")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("inventory.dayDocumentLineCount")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS} />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={4} message={t("inventory.dayDocumentEmpty")} />
+              ) : (
+                rows.map((row) => (
                   <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(row.businessDate)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{row.errorMessage}</td>
@@ -183,11 +183,11 @@ export default function HotelDayDocumentsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {open && lines ? (

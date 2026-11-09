@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
+import { CatalogField, ColorLegend, showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { Ban } from "lucide-react";
 import { bakuTimeLabel } from "@era/satellite-kit/time";
 import { CARD_CLASS, INPUT_CLASS } from "@/lib/design-system";
@@ -13,6 +14,7 @@ import {
   homePathForCapabilities,
 } from "@/lib/outlet-capabilities";
 import { CheckLines } from "@/components/CheckLines";
+import { SlipTape, type SlipCopy } from "@/components/SlipTape";
 import PosShiftPanel from "@/components/PosShiftPanel";
 
 type Table = {
@@ -24,6 +26,8 @@ type Table = {
   currentTicketId?: string | null;
   openTotalAzn?: number | null;
   openedAt?: string | null;
+  waiterLabel?: string | null;
+  covers?: number | null;
 };
 
 type MenuItem = {
@@ -89,6 +93,11 @@ function liveLines(lines: TicketLineView[]): TicketLineView[] {
 
 export default function FloorPanel() {
   const t = useTranslations("floor");
+  const orders = useTranslations("orders");
+  const slips = useTranslations("hallPages");
+  const search = useSearchParams();
+  const ticketFromJournal = search.get("ticket");
+  const journalView = search.get("view") === "1";
   const tc = useTranslations("common");
 
   const [tables, setTables] = useState<Table[]>([]);
@@ -128,6 +137,23 @@ export default function FloorPanel() {
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(null);
   const [canPay, setCanPay] = useState<boolean | null>(null);
+  const [hallMode, setHallMode] = useState(false);
+  const [actorName, setActorName] = useState("");
+  const [mayLimit, setMayLimit] = useState(false);
+  const [mayIkram, setMayIkram] = useState(false);
+  const [mayMove, setMayMove] = useState(false);
+  const [bankTerminalId, setBankTerminalId] = useState<string | null>(null);
+  const [tableScope, setTableScope] = useState<"all" | "mine" | "open">("all");
+  const [holders, setHolders] = useState<Array<{ id: string; displayName: string; availableAzn: number }>>([]);
+  const [holderId, setHolderId] = useState("");
+  const [readOnly, setReadOnly] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [slip, setSlip] = useState<SlipCopy | null>(null);
+  const [guestName, setGuestName] = useState<string | null>(null);
+  const [reservationId, setReservationId] = useState<string | null>(null);
+  const [roomLabel, setRoomLabel] = useState<string | null>(null);
+  const [guestQuery, setGuestQuery] = useState("");
+  const [guestResults, setGuestResults] = useState<Array<{ reservationId: string; roomNumber: string; guestName: string; allowRoomCharge: boolean }>>([]);
   const [canDiscount, setCanDiscount] = useState<boolean | null>(null);
   const [canSoldOut, setCanSoldOut] = useState(false);
   const busy = useRef(false);
@@ -147,7 +173,12 @@ export default function FloorPanel() {
       discountPercent?: string | number | null;
       status?: string;
       released?: boolean;
+      guestName?: string | null;
+      roomChargeReservationId?: string | null;
+      roomNumberLabel?: string | null;
     }, caption?: string) => {
+      if (data.status === "CLOSED") setReadOnly(true);
+      else if (data.status === "OPEN" || data.status === "HELD") setReadOnly(false);
       if (data.released || data.status === "VOID") {
         setActiveTicketId(null);
         setDraft(null);
@@ -156,6 +187,9 @@ export default function FloorPanel() {
         setTicketCaption("");
         setDayNo(null);
         setStoredDiscount(0);
+        setGuestName(null);
+        setReservationId(null);
+        setRoomLabel(null);
         return;
       }
       if (typeof data.id === "string") setActiveTicketId(data.id);
@@ -164,6 +198,9 @@ export default function FloorPanel() {
       setTicketTotal(Number(data.totalAzn) || 0);
       if (data.discountPercent != null) setStoredDiscount(Number(data.discountPercent) || 0);
       if (typeof data.dayNo === "number") setDayNo(data.dayNo);
+      setGuestName(data.guestName ?? null);
+      setReservationId(data.roomChargeReservationId ?? null);
+      setRoomLabel(data.roomNumberLabel ?? null);
       const tableCode = data.table?.name?.trim() || data.table?.code;
       const takeaway =
         data.serviceChannel === "TAKEAWAY" || data.serviceChannel === "WALK_IN";
@@ -241,6 +278,22 @@ export default function FloorPanel() {
         setCanDiscount(grants?.mayDiscount === false ? false : true);
       }
       setCanSoldOut(fnbCan(me, PERMISSIONS.MENU_SOLD_OUT));
+      setMayLimit(fnbCan(me, PERMISSIONS.TICKETS_LIMIT));
+      setMayIkram(fnbCan(me, PERMISSIONS.TICKETS_IKRAM));
+      setMayMove(fnbCan(me, PERMISSIONS.TICKETS_MOVE));
+      setActorName(typeof me?.fullName === "string" ? me.fullName : "");
+      setBankTerminalId(typeof grants?.bankTerminalId === "string" ? grants.bankTerminalId : null);
+      const outletRows = (outletsData?.outlets ?? []) as Array<{ id: string; hallMode?: boolean }>;
+      const currentOutlet = outletRows.find((row) => row.id === outletsData?.selectedOutletId);
+      setHallMode(currentOutlet?.hallMode === true);
+      if (currentOutlet?.hallMode) {
+        const holderRes = await fetch("/api/admin/limit-holders");
+        const holderRows = holderRes.ok ? await holderRes.json().catch(() => []) : [];
+        if (Array.isArray(holderRows)) {
+          setHolders(holderRows);
+          setHolderId((prev) => prev || holderRows[0]?.id || "");
+        }
+      }
       const hotel = editionData ? editionData.hotelMode === true : hotelModeRef.current;
       if (editionData) {
         hotelModeRef.current = hotel;
@@ -384,6 +437,14 @@ export default function FloorPanel() {
     }
     applyTicket(data, caption);
   }
+
+  const journalOpened = useRef(false);
+  useEffect(() => {
+    if (!ticketFromJournal || journalOpened.current || loading) return;
+    journalOpened.current = true;
+    if (journalView) setReadOnly(true);
+    void focusTicket(ticketFromJournal);
+  }, [ticketFromJournal, loading]);
 
   async function createWithLine(
     item: MenuItem,
@@ -547,11 +608,87 @@ export default function FloorPanel() {
     return total;
   }
 
-  async function pay(method: string) {
+  function showPrecheck() {
+    if (!activeTicketId || ticketLines.length === 0) return;
+    const gross = ticketLines.reduce((sum, line) => sum + line.qty * Number(line.unitPriceAzn), 0);
+    setSlip({
+      kind: "PRECHECK",
+      ticketId: activeTicketId,
+      dayNo,
+      outletName: selectedOutlet?.name,
+      table: ticketCaption,
+      waiter: actorName || null,
+      at: new Date().toISOString(),
+      total: ticketTotal ?? 0,
+      discountAzn: Math.max(0, Math.round((gross - (ticketTotal ?? 0)) * 100) / 100),
+      lines: ticketLines.map((line) => ({
+        name: line.description,
+        qty: line.qty,
+        amount: Math.round(line.qty * Number(line.unitPriceAzn) * 100) / 100,
+      })),
+    });
+  }
+
+  async function searchGuests() {
+    const q = guestQuery.trim();
+    if (!q) return;
+    const res = await fetch(`/api/in-house?query=${encodeURIComponent(q)}`);
+    const data = await res.json().catch(() => []);
+    const rows = Array.isArray(data) ? data : [];
+    setGuestResults(rows);
+    if (rows.length === 0) showApiError({ error: orders("guestNotFound") });
+  }
+
+  async function linkGuest(guest: { reservationId: string; roomNumber: string; guestName: string; allowRoomCharge: boolean }) {
+    if (!activeTicketId) return;
+    if (!guest.allowRoomCharge) {
+      showApiError({ error: orders("guestRoomChargeBlocked") });
+      return;
+    }
+    const res = await fetch(`/api/tickets/${activeTicketId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        roomChargeReservationId: guest.reservationId,
+        guestName: guest.guestName,
+        roomNumber: guest.roomNumber,
+      }),
+    });
+    if (!res.ok) {
+      showApiError(await res.json().catch(() => ({})), tc("failed"));
+      return;
+    }
+    setGuestName(guest.guestName);
+    setReservationId(guest.reservationId);
+    setRoomLabel(guest.roomNumber);
+    setGuestResults([]);
+    setGuestQuery("");
+  }
+
+  async function chargeRoom() {
+    if (!activeTicketId || !reservationId) return;
+    const res = await fetch(`/api/tickets/${activeTicketId}/room-charge`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reservationId, roomNumber: roomLabel ?? undefined }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showApiError(data, tc("failed"));
+      return;
+    }
+    if (data.slip) setSlip(data.slip);
+    setActiveTicketId(null);
+    setTicketLines([]);
+    setTicketTotal(null);
+    await load({ silent: true });
+  }
+
+  async function pay(method: string, extra?: { limitHolderId?: string }) {
     if (busy.current || !activeTicketId || !canPay) return;
     const persisted = await persistDiscount();
     if (persisted == null) return;
-    if (ticketLines.length === 0 || persisted <= 0) {
+    if (ticketLines.length === 0 || (method !== "IKRAM" && persisted <= 0)) {
       showApiError({ error: t("nothingToPay") });
       return;
     }
@@ -559,6 +696,10 @@ export default function FloorPanel() {
     const got = Number(cashReceived);
     if (method === "CASH" && (!Number.isFinite(got) || got + 0.001 < due)) {
       showApiError({ error: t("cashShort") });
+      return;
+    }
+    if (method === "LIMIT" && !extra?.limitHolderId) {
+      showApiError({ error: t("pickHolder") });
       return;
     }
     busy.current = true;
@@ -571,6 +712,8 @@ export default function FloorPanel() {
       body: JSON.stringify({
         method,
         ...(method === "CASH" ? { cashTendered: got } : {}),
+        ...(method === "CARD" && bankTerminalId ? { bankTerminalId } : {}),
+        ...(extra?.limitHolderId ? { limitHolderId: extra.limitHolderId } : {}),
       }),
     }).catch(() => null);
     if (!res || (!res.ok && typeof navigator !== "undefined" && !navigator.onLine)) {
@@ -603,6 +746,7 @@ export default function FloorPanel() {
       return;
     }
     const amount = Number(data.amount);
+    if (data.slip) setSlip(data.slip);
     setLastPaid({
       dayNo: paidDay,
       amount,
@@ -797,10 +941,17 @@ export default function FloorPanel() {
     (hallFilter === "" ? halls.hasBlank : halls.named.some((hall) => hall.key === hallFilter))
       ? hallFilter
       : null;
-  const visibleTables =
+  const visibleTables = (
     activeHall == null
       ? tables
-      : tables.filter((table) => (activeHall === "" ? !table.hall?.id : table.hall?.id === activeHall));
+      : tables.filter((table) => (activeHall === "" ? !table.hall?.id : table.hall?.id === activeHall))
+  ).filter((table) => {
+    if (tableScope === "open") return table.status === "OCCUPIED";
+    if (tableScope === "mine") {
+      return table.status === "OCCUPIED" && actorName && table.waiterLabel === actorName;
+    }
+    return true;
+  });
   const occupiedIn = (hallId: string | null) =>
     tables.filter(
       (table) =>
@@ -810,6 +961,7 @@ export default function FloorPanel() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:overflow-hidden">
+      {slip ? <SlipTape slip={slip} /> : null}
       {outlets.length > 1 && (
         <div className={`${CARD_CLASS} mb-4 p-4`}>
           <div className="flex flex-wrap items-end gap-3">
@@ -965,6 +1117,18 @@ export default function FloorPanel() {
                     ))}
                   </div>
             )}
+            <div className="mb-2 flex flex-wrap gap-2">
+              {(["all", "mine", "open"] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`rounded border px-2 py-1 text-xs ${tableScope === key ? "bg-[#2980B9] text-white" : ""}`}
+                  onClick={() => setTableScope(key)}
+                >
+                  {key === "all" ? t("scopeAll") : key === "mine" ? t("scopeMine") : t("scopeOpen")}
+                </button>
+              ))}
+            </div>
             <ColorLegend
               items={[
                 { id: "free", label: t("statusFree"), swatchClassName: "bg-white" },
@@ -1001,7 +1165,10 @@ export default function FloorPanel() {
                   </div>
                   <span className="mt-auto flex items-end justify-between gap-2">
                     <span className="text-xs text-[#7F8C8D]">
-                      {table.openedAt ? bakuTimeLabel(table.openedAt) : ""}
+                      {table.currentTicketId ? table.currentTicketId.slice(0, 8) : ""}
+                      {table.waiterLabel ? ` · ${table.waiterLabel}` : ""}
+                      {table.covers ? ` · ${table.covers}` : ""}
+                      {table.openedAt ? ` · ${bakuTimeLabel(table.openedAt)}` : ""}
                     </span>
                     {table.status === "OCCUPIED" && table.openTotalAzn != null ? (
                       <span className="text-sm font-semibold tabular-nums text-[#2C3E50]">
@@ -1107,7 +1274,7 @@ export default function FloorPanel() {
                     <CheckLines
                       lines={ticketLines}
                       onQty={(line, qty) => void changeQty(line, qty)}
-                      onRemove={(line) => void changeQty(line, 0)}
+                      onRemove={readOnly ? undefined : (line) => void changeQty(line, 0)}
                       azn={tc("azn")}
                       labels={{
                         name: t("colName"),
@@ -1151,7 +1318,7 @@ export default function FloorPanel() {
                     />
                   )}
                 </div>
-                {canPay && activeTicketId && ticketLines.length > 0 && (ticketTotal ?? 0) > 0 && (
+                {canPay && !readOnly && activeTicketId && ticketLines.length > 0 && (ticketTotal ?? 0) > 0 && (
                   <div className="mt-3 shrink-0 space-y-2">
                     <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:justify-end">
                       {payMethods.map((row) => {
@@ -1180,6 +1347,73 @@ export default function FloorPanel() {
                           </button>
                         );
                       })}
+                      {hallMode && mayLimit ? (
+                        <CatalogField
+                          kind="SEARCHABLE"
+                          label={t("payLimit")}
+                          options={holders.map((row) => ({
+                            value: row.id,
+                            label: `${row.displayName} · ${Number(row.availableAzn).toFixed(2)}`,
+                          }))}
+                          value={holderId}
+                          onChange={(next) => setHolderId(String(next ?? ""))}
+                        />
+                      ) : null}
+                      {hallMode && mayLimit ? (
+                        <button
+                          type="button"
+                          className="w-full rounded bg-[#6C3483] px-3 py-2 text-sm text-white lg:w-auto"
+                          onClick={() => void pay("LIMIT", { limitHolderId: holderId })}
+                        >
+                          {t("payLimit")}
+                        </button>
+                      ) : null}
+                      {hallMode && mayIkram ? (
+                        <button
+                          type="button"
+                          className="w-full rounded bg-[#7F8C8D] px-3 py-2 text-sm text-white lg:w-auto"
+                          onClick={() => void pay("IKRAM")}
+                        >
+                          {t("payIkram")}
+                        </button>
+                      ) : null}
+                      {!readOnly && activeTicketId && ticketLines.length > 0 ? (
+                        <button type="button" className="w-full rounded border px-3 py-2 text-sm lg:w-auto" onClick={showPrecheck}>
+                          {slips("precheck")}
+                        </button>
+                      ) : null}
+                      {hotelMode && !readOnly && activeTicketId ? (
+                        <div className="w-full space-y-2 lg:w-auto">
+                          <p className="text-xs text-[#7F8C8D]">{orders("inHouseGuest")}</p>
+                          {reservationId ? (
+                            <p className="text-sm">{roomLabel} {guestName}</p>
+                          ) : (
+                            <div className="flex gap-2">
+                              <input value={guestQuery} onChange={(event) => setGuestQuery(event.target.value)} className={INPUT_CLASS} />
+                              <button type="button" className="rounded border px-2 text-sm" onClick={() => void searchGuests()}>{orders("guestSearch")}</button>
+                            </div>
+                          )}
+                          {guestResults.map((guest) => (
+                            <button key={guest.reservationId} type="button" className="block text-left text-sm underline" onClick={() => void linkGuest(guest)}>
+                              {guest.roomNumber} {guest.guestName}
+                            </button>
+                          ))}
+                          {reservationId ? (
+                            <button type="button" className="rounded bg-[#8E44AD] px-3 py-2 text-sm text-white" onClick={() => void chargeRoom()}>
+                              {orders("roomCharge")}
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      {hallMode && mayMove && !readOnly ? (
+                        <button
+                          type="button"
+                          className="w-full rounded border px-3 py-2 text-sm lg:w-auto"
+                          onClick={() => setMoving((open) => !open)}
+                        >
+                          {t("moveTable")}
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         className="w-full rounded border border-[#C0392B] px-3 py-2 text-sm text-[#C0392B] lg:w-auto"
@@ -1188,6 +1422,35 @@ export default function FloorPanel() {
                         {t("cancelTicket")}
                       </button>
                     </div>
+                    {moving ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {tables
+                          .filter((table) => table.status !== "OCCUPIED" && table.currentTicketId == null)
+                          .map((table) => (
+                            <button
+                              key={table.id}
+                              type="button"
+                              className="rounded border px-2 py-2 text-sm"
+                              onClick={() => {
+                                if (!activeTicketId) return;
+                                void fetch(`/api/tickets/${activeTicketId}/move`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ tableId: table.id }),
+                                }).then(async (res) => {
+                                  if (!res.ok) showApiError(await res.json().catch(() => ({})), tc("failed"));
+                                  else {
+                                    setMoving(false);
+                                    await load({ silent: true });
+                                  }
+                                });
+                              }}
+                            >
+                              {table.code}
+                            </button>
+                          ))}
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </>

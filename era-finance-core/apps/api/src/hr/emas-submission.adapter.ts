@@ -6,6 +6,9 @@ export type EmasSignerContext = {
   organizationId: string;
   /** Organization.settings.tax.asanUserId — ASAN subscriber id for HSM signing */
   asanUserId: string | null;
+  /** Platform GOV_EMAS. Absent on the manual queue path. */
+  employerId?: string | null;
+  accessSecret?: string | null;
 };
 
 export type EmasSubmissionResult = {

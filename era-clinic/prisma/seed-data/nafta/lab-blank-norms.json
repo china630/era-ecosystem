@@ -659,14 +659,12 @@
       "labelAz": "Keton",
       "boundKind": "QUALITATIVE",
       "valueType": "QUALITATIVE",
-      "normText": { "az": "Neqativ", "ru": "Отрицательный", "en": "Negative" },
+      "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
       "valueOptions": [
-        {
-          "code": "NEGATIVE",
-          "labelEn": "Negative",
-          "labelRu": "Отрицательный",
-          "labelAz": "Neqativ"
-        }
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" },
+        { "code": "PLUS", "labelEn": "+", "labelRu": "+", "labelAz": "+" },
+        { "code": "PLUS2", "labelEn": "++", "labelRu": "++", "labelAz": "++" },
+        { "code": "PLUS3", "labelEn": "+++", "labelRu": "+++", "labelAz": "+++" }
       ]
     },
     {
@@ -675,14 +673,12 @@
       "labelAz": "Nitrit",
       "boundKind": "QUALITATIVE",
       "valueType": "QUALITATIVE",
-      "normText": { "az": "Neqativ", "ru": "Отрицательный", "en": "Negative" },
+      "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
       "valueOptions": [
-        {
-          "code": "NEGATIVE",
-          "labelEn": "Negative",
-          "labelRu": "Отрицательный",
-          "labelAz": "Neqativ"
-        }
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" },
+        { "code": "PLUS", "labelEn": "+", "labelRu": "+", "labelAz": "+" },
+        { "code": "PLUS2", "labelEn": "++", "labelRu": "++", "labelAz": "++" },
+        { "code": "PLUS3", "labelEn": "+++", "labelRu": "+++", "labelAz": "+++" }
       ]
     },
     {
@@ -691,14 +687,12 @@
       "labelAz": "Bilirubin",
       "boundKind": "QUALITATIVE",
       "valueType": "QUALITATIVE",
-      "normText": { "az": "Neqativ", "ru": "Отрицательный", "en": "Negative" },
+      "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
       "valueOptions": [
-        {
-          "code": "NEGATIVE",
-          "labelEn": "Negative",
-          "labelRu": "Отрицательный",
-          "labelAz": "Neqativ"
-        }
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" },
+        { "code": "PLUS", "labelEn": "+", "labelRu": "+", "labelAz": "+" },
+        { "code": "PLUS2", "labelEn": "++", "labelRu": "++", "labelAz": "++" },
+        { "code": "PLUS3", "labelEn": "+++", "labelRu": "+++", "labelAz": "+++" }
       ]
     },
     {
@@ -707,14 +701,12 @@
       "labelAz": "Urobilinoqen",
       "boundKind": "QUALITATIVE",
       "valueType": "QUALITATIVE",
-      "normText": { "az": "Neqativ", "ru": "Отрицательный", "en": "Negative" },
+      "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
       "valueOptions": [
-        {
-          "code": "NEGATIVE",
-          "labelEn": "Negative",
-          "labelRu": "Отрицательный",
-          "labelAz": "Neqativ"
-        }
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" },
+        { "code": "PLUS", "labelEn": "+", "labelRu": "+", "labelAz": "+" },
+        { "code": "PLUS2", "labelEn": "++", "labelRu": "++", "labelAz": "++" },
+        { "code": "PLUS3", "labelEn": "+++", "labelRu": "+++", "labelAz": "+++" }
       ]
     },
     {
@@ -765,7 +757,10 @@
       "valueType": "QUALITATIVE",
       "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
       "valueOptions": [
-        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" }
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" },
+        { "code": "PLUS", "labelEn": "+", "labelRu": "+", "labelAz": "+" },
+        { "code": "PLUS2", "labelEn": "++", "labelRu": "++", "labelAz": "++" },
+        { "code": "PLUS3", "labelEn": "+++", "labelRu": "+++", "labelAz": "+++" }
       ]
     },
     {
@@ -776,7 +771,10 @@
       "valueType": "QUALITATIVE",
       "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
       "valueOptions": [
-        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" }
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" },
+        { "code": "PLUS", "labelEn": "+", "labelRu": "+", "labelAz": "+" },
+        { "code": "PLUS2", "labelEn": "++", "labelRu": "++", "labelAz": "++" },
+        { "code": "PLUS3", "labelEn": "+++", "labelRu": "+++", "labelAz": "+++" }
       ]
     },
     {
@@ -787,7 +785,10 @@
       "valueType": "QUALITATIVE",
       "normText": { "az": "Yoxdur", "ru": "Нет", "en": "None" },
       "valueOptions": [
-        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" }
+        { "code": "NONE", "labelEn": "None", "labelRu": "Нет", "labelAz": "Yoxdur" },
+        { "code": "PLUS", "labelEn": "+", "labelRu": "+", "labelAz": "+" },
+        { "code": "PLUS2", "labelEn": "++", "labelRu": "++", "labelAz": "++" },
+        { "code": "PLUS3", "labelEn": "+++", "labelRu": "+++", "labelAz": "+++" }
       ]
     },
     {

@@ -107,8 +107,12 @@ export class OrganizationSettingsService {
           inventoryValuation: valuation,
         };
       }
+      if (dto.asanUserId !== undefined) {
+        throw new BadRequestException(
+          "ASAN ID is stored on the platform access tab (GOV_ETAXES)",
+        );
+      }
       if (
-        dto.asanUserId !== undefined ||
         dto.taxRegime !== undefined ||
         dto.pricesIncludeTax !== undefined ||
         dto.requireEqaimeForDayClose !== undefined ||

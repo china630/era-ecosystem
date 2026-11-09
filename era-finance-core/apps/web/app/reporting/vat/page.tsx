@@ -10,7 +10,7 @@ import { apiFetch } from "../../../lib/api-client";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import {
@@ -262,25 +262,25 @@ export default function VatDeclarationPage() {
       </div>
 
       {data ? (
-        rows.length === 0 ? (
-          <EmptyState title={t("reporting.vat.empty")} />
-        ) : (
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.vat.thDate")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.vat.thDoc")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.vat.thCp")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.vat.thVoen")}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDesc")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.vat.thNet")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.vat.thVat")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.vat.thGross")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.vat.thDate")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.vat.thDoc")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.vat.thCp")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.vat.thVoen")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDesc")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.vat.thNet")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.vat.thVat")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.vat.thGross")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={8} message={t("reporting.vat.empty")} />
+              ) : (
+                rows.map((r) => (
                   <tr key={`${tab}-${r.lineNo}`} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{r.btp.tarixi}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{r.btp.sened_nomresi}</td>
@@ -295,11 +295,11 @@ export default function VatDeclarationPage() {
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.btp.edv_meblegi)}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.btp.cemi)}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       ) : null}
 
       {showPreview && data ? (

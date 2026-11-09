@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Package, Pencil } from "lucide-react";
+import { ChevronDown, Pencil } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -25,7 +25,7 @@ const CATALOG_TOOLBAR_SEARCH_CLASS =
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { CreateServiceModal } from "./create-service-modal";
 import { ProductModal } from "./product-modal";
 
@@ -217,57 +217,7 @@ export default function ProductsPage() {
           />
         </div>
         {loading && <p className="text-gray-600">{t("common.loading")}</p>}
-        {!loading && rows.length === 0 && !error && (
-          <EmptyState
-            title={t("products.none")}
-            description={t("products.emptyHint")}
-            icon={<Package className="h-12 w-12 mx-auto stroke-[1.5] text-[#7F8C8D]" aria-hidden />}
-            action={
-              <details className="relative inline-block text-left">
-                <summary
-                  className={`${PRIMARY_BUTTON_CLASS} inline-flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden`}
-                >
-                  {t("products.addDropdownLabel")}
-                  <ChevronDown className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
-                </summary>
-                <div className="absolute left-0 z-20 mt-1 min-w-[14rem] rounded-2xl border border-[#D5DADF] bg-white py-1 shadow-md">
-                  <button
-                    type="button"
-                    className="flex w-full px-3 py-2 text-left text-sm text-[#34495E] hover:bg-[#F4F5F7]"
-                    onClick={(e) => {
-                      const d = e.currentTarget.closest("details");
-                      if (d) (d as HTMLDetailsElement).open = false;
-                      setCreateServiceOpen(false);
-                      setCreateProductOpen(true);
-                    }}
-                  >
-                    {t("products.newProductMenu")}
-                  </button>
-                  <button
-                    type="button"
-                    className="flex w-full px-3 py-2 text-left text-sm text-[#34495E] hover:bg-[#F4F5F7]"
-                    onClick={(e) => {
-                      const d = e.currentTarget.closest("details");
-                      if (d) (d as HTMLDetailsElement).open = false;
-                      setCreateProductOpen(false);
-                      setCreateServiceOpen(true);
-                    }}
-                  >
-                    {t("products.newServiceMenu")}
-                  </button>
-                </div>
-              </details>
-            }
-          />
-        )}
-        {!loading && rows.length > 0 && filteredRows.length === 0 && !error && (
-          <EmptyState
-            title={t("products.filteredEmptyTitle")}
-            description={t("products.searchNone")}
-            icon={<Package className="h-12 w-12 mx-auto stroke-[1.5] text-[#7F8C8D]" aria-hidden />}
-          />
-        )}
-        {!loading && filteredRows.length > 0 && (
+        {!loading && !error ? (
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>
@@ -280,7 +230,17 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((r) => (
+                {filteredRows.length === 0 ? (
+                  <FinanceEmptyTableRow
+                    colSpan={5}
+                    message={
+                      rows.length === 0
+                        ? t("products.none")
+                        : t("products.filteredEmptyTitle")
+                    }
+                  />
+                ) : (
+                  filteredRows.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{r.sku}</td>
@@ -299,11 +259,12 @@ export default function ProductsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </section>
 
       <ProductModal

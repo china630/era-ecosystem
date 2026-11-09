@@ -17,7 +17,7 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/rooms` | `GET /api/rooms`, `POST /api/housekeeping/condition` | Hotel-wide cleanliness board. Occupied door accepts Dirty/Pickup/Clean from HK; Inspected stays vacant-only |
 | `/hk/maids` | `GET/POST /api/housekeeping/maids`, `GET /api/housekeeping/personnel` (CP picker: name, org unit, position) | Link CP employment; org-unit filter; `Name (position)`; change department; unlink (soft); hotel stores HK department and ƏG |
 | `/hk/mobile` | sheet + `POST /api/housekeeping/outcome` + `POST /api/housekeeping/discrepancy` | Auto-select self when session name matches rotation; outcomes including İstəmədi; Skip/Sleep; empty CTA to rotation |
-| `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week filter; Propose PRIMARY / Accrue ƏG SECONDARY; E/L/N/OFF/ƏG cells. Type `WEEK_ZONE` in [ADR hotel-department-duty-schedules](../../../docs/adr/hotel-department-duty-schedules.md); Schedules nav also links here |
+| `/hk/roster` | `GET/POST /api/housekeeping/roster` | Week filter; Propose PRIMARY / Accrue ƏG SECONDARY; E/L/N/OFF/ƏG cells. Type `WEEK_ZONE` in [ADR hotel-department-duty-schedules](../../../docs/adr/hotel-department-duty-schedules.md). **Primary home = Schedules** (not under HK staff) |
 | `/schedules` | `GET /api/duty-schedules/catalog` | Hub: HK + reception + security + engineering |
 | `/schedules/reception` `/schedules/security` | `GET/POST /api/duty-schedules/:dept/week` (+ copyPreviousWeek), binding, personnel, axes | `WEEK_POST`; in-cell assign; Workforce picker; one person ≠ two posts same day; draft/approve; UAT §34b open |
 | `/schedules/engineering` | same APIs (`ENGINEERING`) | `WEEK_CREW`; crew zones; does not replace work orders |
@@ -30,10 +30,11 @@ SSOT: [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md) — FO=`/fo/*`, HK=`/
 | `/hk/forecast` | `GET /api/housekeeping/forecast` | Load 1/7/14/30 days by floor; empty chrome |
 | `/hk/discrepancy` | `GET/POST /api/housekeeping/discrepancy` | Date filter + one grid; create Skip/Sleep in modal; escalations when present |
 | `/hk/closed-rooms` | `GET /api/housekeeping/closed-rooms`, `POST …/closed-rooms/:id/return` | One grid + kind filter (All/OOO/OOS); close in modal; return secondary |
-| `/settings/policies#hk` | `GET/PUT /api/housekeeping/policy`; `POST /api/housekeeping/stay-linen` | Linen/deep every N; laundry intake ANY/WINDOW, closed days, due promise, express switch. Stay linen override on reservation card Additional. `/settings/hk-policy` redirects here |
+| `/settings/policies#hk` | `GET/PUT /api/housekeeping/policy`; `POST /api/housekeeping/stay-linen` | Linen/deep every N. Stay linen override on reservation card Additional. `/settings/hk-policy` redirects here |
+| `/settings/policies#laundry` | same `GET/PUT /api/housekeeping/policy` | Laundry intake ANY/WINDOW, closed days, due promise, express switch |
 | Room axes | `Room.hkCondition`, `Room.inventoryStatus` | ADR hotel-housekeeping-nafta-ops. FO cannot PATCH cleanliness on `IN_HOUSE` (`OCCUPIED_HK_LOCKED`) |
 
-Sidebar IA (URLs flat): floor work top-level; **HK staff** = maids → roster → rotation; **Minibar** = minibar + `/settings/stock` (not consumption); **Guest services** = laundry + lost & found. Secondary HK list tables use kit `DATA_TABLE_SHELL_CLASS` + `DATA_TABLE_*` (not bare `rounded` borders). Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md) · [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md).
+Sidebar IA (URLs flat): floor work top-level; **HK staff** = maids → rotation (weekly roster lives under **Schedules**, last before Settings); **Minibar** = minibar + `/settings/stock` (not consumption); **Guest services** = laundry + lost & found. Secondary HK list tables use kit `DATA_TABLE_SHELL_CLASS` + `DATA_TABLE_*` (not bare `rounded` borders). Canon: [`doc/HK-NAFTA-OPS.md`](../../doc/HK-NAFTA-OPS.md) · [`doc/MENU-IA-CANON.md`](../../doc/MENU-IA-CANON.md).
 
 ## Front office chain
 
@@ -111,7 +112,7 @@ Cross-app: fb-pos tickets with `beoId` — extras only on event day; base packag
 | Guest card Details tab | `GET /api/mdm/person-ops-profile?globalPersonId=` | Masked FIN/passport from MDM |
 | Guest card merge | `POST /api/mdm/person-merge` | Foreigner → citizen FIN merge |
 | Guest create/edit | `POST /api/guests`, `PATCH /api/guests/:id/full`, `POST /api/guests/:id/contacts` | Transient identity → `linkPersonIdentity`; no local FIN/passport columns. Phone polish via kit `normalizePersonPhone` (nationality region; Guest.phone + MOBILE/PHONE/WHATSAPP; nationality-only PATCH re-polishes) |
-| Passport MRZ | `POST /api/guests/mrz-match` | Super-admin only. Crop on guest card and stay guest row. `GuestDocument.mrzNameField` stores raw ICAO name. Match: raw MRZ → passport → exact name → translit/typo/metaphone confirm-only. Catalog `hotel_passport_scan` does not unlock the button |
+| Passport MRZ | `POST /api/guests/mrz-match` | Super-admin only. Photo or PDF (first page via pdfjs → `/pdf.worker.min.mjs`; Docker builder/dev run `scripts/copy-pdf-worker.mjs` because deps use `--ignore-scripts`). Crop on guest card and stay guest row (pointer draw, skew angle −45…+45, min 8px, img not draggable). `GuestDocument.mrzNameField` stores raw ICAO name. Match: raw MRZ → passport → exact name → translit/typo/metaphone confirm-only. Catalog `hotel_passport_scan` does not unlock the button |
 | Guest list | `GET /api/guests?q=&page=&pageSize=` | Paged `{ items, total, page, pageSize }`; UI `EraListWorkspace` |
 
 Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYSTEM_URLS.md`).

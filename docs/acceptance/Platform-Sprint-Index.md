@@ -44,6 +44,7 @@ Current rollup: Gate ✅ (scaffold only) · BE 🟡 (TOPO **in** rollup — Plac
 | S-CHANNELS-REVENUE | `REVENUE_EVENT` fail-closed on finance dispatch | [x] | 2026-11-06 — assert before F&B CLOSE/Z-close + hub settlement-confirmed; retail PAID/return/hub-settle/Z-close + events/dispatch; clinic visit/procedure/lab/hub-settle + events/dispatch; room-charge skips revenue |
 | S-CHANNELS-OPS-HANDOFF | `OPS_HANDOFF` wholesale→retail PLATFORM pair | [~] | Deferred honest: enum + desired edges landed; `assertChannelEnabled` waits first S2S call-site — do not invent consumers |
 | S-CHANNELS-READ-LEGACY | `READ_STATUS` + UI `CODE_LEGACY` | [~] | Deferred honest: `CHANNEL_LEGACY_HINTS` UI only; `READ_STATUS` PLATFORM rows still none |
+| S-DOC-REGISTER | Document register (CP-DOC-01) | [~] | 2026-11-10 cycle 4 — reply-to, file text before route start, template step edit blocked on an open route, ALL waiting list, reject can reopen an earlier step. API/SCREEN. Not Scaffold ✅, not SHIPPED, not Pilot |
 | S-COMMS-HUB | Messaging Comms Hub (CP-COMMS-01) | [~] | 2026-11-06 — `comms_*` + `IN_APP` migrated on stand; Nest `/v1/comms/*` + Control Home inbox (create/reply/recipients); IN_APP outbox scoped to JWT user; orch image next ship; orch-only; COVERAGE SCREEN not SHIPPED (UAT open, not wave goal) |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

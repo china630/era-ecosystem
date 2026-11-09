@@ -30,8 +30,8 @@ export async function sweepNoShowScheduled(now = new Date()): Promise<{
     where: {
       status: "SCHEDULED",
       scheduledAt: { gte: start, lt: end },
-      // OPEN day-buckets never auto-NO_SHOW (ADR clinic-open-attendance).
       schedulingMode: "FIXED",
+      NOT: { clinicalEpisode: { status: "CLOSED" } },
     },
     select: { id: true, scheduledAt: true, endsAt: true },
     take: 500,

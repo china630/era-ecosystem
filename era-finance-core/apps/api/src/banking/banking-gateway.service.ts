@@ -18,6 +18,8 @@ import {
   type StorageService,
 } from "../storage/storage.interface";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import { OrgAccessClient } from "../control-plane/org-access.client";
+import type { OrgBankCall } from "./bank-providers/banking-provider.interface";
 
 function asRecord(v: unknown): Record<string, unknown> {
   if (typeof v === "object" && v !== null && !Array.isArray(v)) {
@@ -54,6 +56,7 @@ export class BankingGatewayService {
     private readonly abb: AbbAdapter,
     private readonly universalExport: UniversalBankExportService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+    private readonly orgAccess: OrgAccessClient,
   ) {}
 
   private assertCircuitClosed(provider: BankingProviderKey): void {
@@ -70,6 +73,21 @@ export class BankingGatewayService {
       this.openUntil.delete(provider);
       this.failures.set(provider, 0);
     }
+  }
+
+  private async orgBankCall(organizationId: string, key: BankingProviderKey): Promise<OrgBankCall> {
+    const code = key === "pasha" ? "BANK_PASHA" : key === "abb" ? "BANK_ABB" : "BANK_BIRBANK";
+    const row = await this.orgAccess.get(organizationId, code);
+    const secret = row?.secret?.trim() ?? "";
+    const clientId = row?.publicFields.clientId?.trim() ?? "";
+    const login = row?.publicFields.login?.trim() ?? "";
+    if (!secret || (key === "abb" ? !login : !clientId)) {
+      throw new ServiceUnavailableException({
+        code: "BANK_ORG_ACCESS_MISSING",
+        message: "Bank keys for this organization are set on the platform access tab",
+      });
+    }
+    return { secret, clientId, login, cif: row?.publicFields.cif?.trim() };
   }
 
   private onProviderSuccess(provider: BankingProviderKey): void {
@@ -138,7 +156,8 @@ export class BankingGatewayService {
         const adapter = this.providers.getProvider(key);
         try {
           this.assertCircuitClosed(key);
-          const balances = await adapter.getBalances();
+          const creds = await this.orgBankCall(organizationId, key);
+          const balances = await adapter.getBalances(creds);
           this.onProviderSuccess(key);
           return { provider: key, balances, error: null as string | null };
         } catch (e) {
@@ -361,6 +380,7 @@ export class BankingGatewayService {
       "pasha";
     const adapter = this.providers.getProvider(preferred);
     this.assertCircuitClosed(preferred);
+    const creds = await this.orgBankCall(organizationId, preferred);
     const amountStr = new Decimal(draft.amount).toFixed(4);
     try {
       const sent = await adapter.sendPaymentDraft({
@@ -372,7 +392,7 @@ export class BankingGatewayService {
           .toUpperCase(),
         purpose: draft.purpose,
         reference: `bp-${draft.id.slice(0, 8)}`,
-      });
+      }, creds);
       this.onProviderSuccess(preferred);
       await (this.prisma as any).bankPaymentDraft.update({
         where: { id: draft.id },
@@ -466,6 +486,7 @@ export class BankingGatewayService {
       "pasha";
     const adapter = this.providers.getProvider(preferred);
     this.assertCircuitClosed(preferred);
+    const creds = await this.orgBankCall(organizationId, preferred);
 
     const draft = await (this.prisma as any).bankPaymentDraft.create({
       data: {
@@ -487,7 +508,7 @@ export class BankingGatewayService {
         currency: payload.currency.toUpperCase(),
         purpose: payload.purpose,
         reference: `bp-${draft.id.slice(0, 8)}`,
-      });
+      }, creds);
       this.onProviderSuccess(preferred);
       return (this.prisma as any).bankPaymentDraft.update({
         where: { id: draft.id },

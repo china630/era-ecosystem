@@ -112,6 +112,7 @@ export async function POST(request: Request) {
       walkInLabel: body.walkInLabel,
       beoId: body.beoId,
       openedByName: sessionActorName(session),
+      waiterLabel: sessionActorName(session),
       subtotalAzn: subtotal,
       totalAzn: subtotal,
       lines: {

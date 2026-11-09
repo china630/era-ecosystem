@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import {
@@ -161,9 +161,26 @@ export default function EqfRegistryPage() {
 
       {loading ? (
         <p className="text-[#7F8C8D]">{t("common.loading")}</p>
-      ) : !data?.groups.length ? (
-        <EmptyState title={t("reporting.eqfRegistryEmpty")} />
-      ) : (
+      ) : data && !data.groups.length ? (
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("invoices.number")}</th>
+                <th className={DATA_TABLE_TH_CENTER_CLASS}>{t("invoices.eqaimeStatus")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("invoices.eqaimeNumber")}</th>
+                <th className={DATA_TABLE_TH_CENTER_CLASS}>
+                  {t("reporting.eqfRegistryDvxHeader")}
+                </th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("invoices.amount")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <FinanceEmptyTableRow colSpan={5} message={t("reporting.eqfRegistryEmpty")} />
+            </tbody>
+          </table>
+        </div>
+      ) : data && data.groups.length > 0 ? (
         <div className="space-y-6">
           {data.groups.map((g) => (
             <section key={g.counterpartyId} className="space-y-2">
@@ -224,7 +241,7 @@ export default function EqfRegistryPage() {
             </section>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

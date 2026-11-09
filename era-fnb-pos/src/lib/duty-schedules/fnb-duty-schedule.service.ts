@@ -30,32 +30,50 @@ function weekDate(weekStart: string) {
   return new Date(`${weekStart.slice(0, 10)}T00:00:00.000Z`);
 }
 
+function isUniqueConflict(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: string }).code === "P2002"
+  );
+}
+
+/** Concurrent page loads race on create — treat P2002 as already seeded. */
 export async function ensureFnbDutyDefaults() {
   const organizationId = orgId();
-  await prisma.fnbDutyScheduleBinding.upsert({
-    where: { organizationId },
-    create: {
-      organizationId,
-      orgUnitIds: [],
-      positionIds: [],
-      outletIds: [],
-    },
-    update: {},
-  });
-  for (const row of FNB_SHIFT_CODE_SEED) {
-    await prisma.fnbDutyShiftCode.upsert({
-      where: { organizationId_code: { organizationId, code: row.code } },
+  try {
+    await prisma.fnbDutyScheduleBinding.upsert({
+      where: { organizationId },
       create: {
         organizationId,
-        code: row.code,
-        label: row.label,
-        startTime: row.startTime,
-        endTime: row.endTime,
-        sortOrder: row.sortOrder,
-        active: true,
+        orgUnitIds: [],
+        positionIds: [],
+        outletIds: [],
       },
       update: {},
     });
+  } catch (err) {
+    if (!isUniqueConflict(err)) throw err;
+  }
+  for (const row of FNB_SHIFT_CODE_SEED) {
+    try {
+      await prisma.fnbDutyShiftCode.upsert({
+        where: { organizationId_code: { organizationId, code: row.code } },
+        create: {
+          organizationId,
+          code: row.code,
+          label: row.label,
+          startTime: row.startTime,
+          endTime: row.endTime,
+          sortOrder: row.sortOrder,
+          active: true,
+        },
+        update: {},
+      });
+    } catch (err) {
+      if (!isUniqueConflict(err)) throw err;
+    }
   }
 }
 
@@ -137,10 +155,20 @@ export async function getOrCreateWeek(weekStart: string) {
     include: { cells: { orderBy: [{ personName: "asc" }, { workDate: "asc" }] } },
   });
   if (!week) {
-    week = await prisma.fnbDutyScheduleWeek.create({
-      data: { organizationId, weekStart: start, status: "DRAFT" },
-      include: { cells: true },
-    });
+    try {
+      week = await prisma.fnbDutyScheduleWeek.create({
+        data: { organizationId, weekStart: start, status: "DRAFT" },
+        include: { cells: true },
+      });
+    } catch (err) {
+      if (!isUniqueConflict(err)) throw err;
+      week = await prisma.fnbDutyScheduleWeek.findUnique({
+        where: { organizationId_weekStart: { organizationId, weekStart: start } },
+        include: {
+          cells: { orderBy: [{ personName: "asc" }, { workDate: "asc" }] },
+        },
+      });
+    }
   }
   if (!week) {
     throw new FnbDutyError("Could not open week", "WEEK_OPEN_FAILED", 500);

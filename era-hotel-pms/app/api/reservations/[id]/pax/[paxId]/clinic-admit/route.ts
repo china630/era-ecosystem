@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
 import { admitGuestToClinic, revokeGuestClinicAdmit } from '@/lib/services/clinic-admit.service';
@@ -19,9 +20,12 @@ export async function POST(
       : await admitGuestToClinic(id, paxId);
     return jsonOk(serialize(result));
   } catch (err) {
-    const status = (err as Error & { status?: number }).status;
+    const status = (err as Error & { status?: number; code?: string }).status;
+    const code = (err as { code?: string }).code;
     if (status === 404 || status === 409) {
-      return jsonError(err instanceof Error ? err.message : 'Conflict', status);
+      const message = err instanceof Error ? err.message : 'Conflict';
+      if (code) return NextResponse.json({ error: message, code }, { status });
+      return jsonError(message, status);
     }
     return handleRouteError(err);
   }

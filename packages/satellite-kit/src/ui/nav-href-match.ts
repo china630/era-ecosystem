@@ -2,20 +2,31 @@ import type { EraOpsNavItem, EraOpsNavSection } from "./era-ops-types";
 
 export type NavSearch = { get(name: string): string | null };
 
-export function splitNavHref(href: string): { path: string; query: string } {
-  const hash = href.indexOf("#");
-  const bare = hash >= 0 ? href.slice(0, hash) : href;
+export function splitNavHref(href: string): { path: string; query: string; hash: string } {
+  const hashAt = href.indexOf("#");
+  const hash = hashAt >= 0 ? href.slice(hashAt + 1) : "";
+  const bare = hashAt >= 0 ? href.slice(0, hashAt) : href;
   const q = bare.indexOf("?");
-  if (q < 0) return { path: bare || "/", query: "" };
-  return { path: bare.slice(0, q) || "/", query: bare.slice(q + 1) };
+  if (q < 0) return { path: bare || "/", query: "", hash };
+  return { path: bare.slice(0, q) || "/", query: bare.slice(q + 1), hash };
 }
 
-/** True when this href is the current page or a prefix of it, including query pins. */
-export function navHrefMatches(pathname: string, search: NavSearch, href: string): boolean {
-  const { path, query } = splitNavHref(href);
+/** True when this href is the current page or a prefix of it, including query pins and hash. */
+export function navHrefMatches(
+  pathname: string,
+  search: NavSearch,
+  href: string,
+  currentHash = "",
+): boolean {
+  const { path, query, hash } = splitNavHref(href);
   const pathOk =
     path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
   if (!pathOk) return false;
+  if (hash) {
+    if (hash !== currentHash) return false;
+  } else if (currentHash && pathname === path) {
+    return false;
+  }
   if (!query) return true;
   const want = new URLSearchParams(query);
   for (const [key, value] of want) {
@@ -25,8 +36,8 @@ export function navHrefMatches(pathname: string, search: NavSearch, href: string
 }
 
 function navHrefScore(href: string): number {
-  const { path, query } = splitNavHref(href);
-  return path.length + (query ? 10_000 + query.length : 0);
+  const { path, query, hash } = splitNavHref(href);
+  return path.length + (query ? 10_000 + query.length : 0) + (hash ? 100 + hash.length : 0);
 }
 
 /** Longest matching href. A parent such as `/hk` loses to `/hk/maids`. */
@@ -34,11 +45,12 @@ export function bestMatchingNavHref(
   pathname: string,
   search: NavSearch,
   hrefs: readonly string[],
+  currentHash = "",
 ): string | null {
   let best: string | null = null;
   let bestScore = -1;
   for (const href of hrefs) {
-    if (!href || !navHrefMatches(pathname, search, href)) continue;
+    if (!href || !navHrefMatches(pathname, search, href, currentHash)) continue;
     const score = navHrefScore(href);
     if (score > bestScore) {
       bestScore = score;
@@ -52,7 +64,7 @@ export function isBestNavHref(href: string | undefined, best: string | null): bo
   if (!href || !best) return false;
   const a = splitNavHref(href);
   const b = splitNavHref(best);
-  return a.path === b.path && a.query === b.query;
+  return a.path === b.path && a.query === b.query && a.hash === b.hash;
 }
 
 export function collectNavHrefs(items: readonly EraOpsNavItem[]): string[] {
@@ -81,6 +93,18 @@ export function sectionContainsPath(
   section: EraOpsNavSection,
   pathname: string,
   search: NavSearch = EMPTY_SEARCH,
+  currentHash = "",
 ): boolean {
-  return collectNavHrefs(section.items).some((href) => navHrefMatches(pathname, search, href));
+  return collectNavHrefs(section.items).some((href) =>
+    navHrefMatches(pathname, search, href, currentHash),
+  );
+}
+
+/** True when this section owns the single best matching href (not a shorter prefix). */
+export function sectionOwnsBestHref(
+  section: EraOpsNavSection,
+  bestHref: string | null,
+): boolean {
+  if (!bestHref) return false;
+  return collectNavHrefs(section.items).some((href) => isBestNavHref(href, bestHref));
 }

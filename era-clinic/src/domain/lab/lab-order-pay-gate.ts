@@ -23,7 +23,7 @@ export function isLabOrderAwaitingPayment(order: {
 
 export const LAB_AWAITING_PAYMENT = "LAB_AWAITING_PAYMENT";
 
-/** Collect / results stay open for release-after-pay. The guest blank does not. */
+/** Collect, results, and the staff Word import stay open for release-after-pay. Pass guestBlank only for a guest-facing blank. */
 export function assertLabOrderReadyForWork(order: {
   amountNet: unknown;
   settledAt: Date | null;

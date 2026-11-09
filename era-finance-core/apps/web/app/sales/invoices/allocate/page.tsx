@@ -10,7 +10,7 @@ import { formatMoneyAzn } from "../../../../lib/format-money";
 import { useRequireAuth } from "../../../../lib/use-require-auth";
 import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PageHeader } from "../../../../components/layout/page-header";
-import { EmptyState } from "../../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../../components/finance-empty-table-row";
 import { Badge } from "../../../../components/ui/badge";
 import {
   DATA_TABLE_CLASS,
@@ -192,12 +192,7 @@ export default function InvoiceAllocatePage() {
       </div>
 
       {loading ? <p className="text-gray-600">{t("common.loading")}</p> : null}
-      {!loading && counterpartyId && openRows.length === 0 ? (
-        <EmptyState
-          title={t("invoices.allocateEmpty", { defaultValue: "No open receivable invoices" })}
-        />
-      ) : null}
-      {!loading && openRows.length > 0 ? (
+      {!loading && counterpartyId ? (
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
@@ -217,7 +212,13 @@ export default function InvoiceAllocatePage() {
               </tr>
             </thead>
             <tbody>
-              {openRows.map((r) => (
+              {openRows.length === 0 ? (
+                <FinanceEmptyTableRow
+                  colSpan={4}
+                  message={t("invoices.allocateEmpty", { defaultValue: "No open receivable invoices" })}
+                />
+              ) : (
+                openRows.map((r) => (
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{r.number}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
@@ -242,7 +243,8 @@ export default function InvoiceAllocatePage() {
                     {formatMoneyAzn(Number(r.remaining ?? 0))}
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

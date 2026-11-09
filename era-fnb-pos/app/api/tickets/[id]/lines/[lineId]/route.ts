@@ -9,6 +9,7 @@ import {
 } from "@/lib/ticket-helpers";
 import { getSatelliteSession } from "@/lib/session";
 import { denyUnlessPermission } from "@/lib/auth/require";
+import { sessionHasFnbPermission } from "@/lib/auth/permission-check";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { recordFbAudit } from "@/lib/satellite-audit";
 import { assertMenuItemNotSoldOut } from "@/lib/fnb-sold-out";
@@ -51,6 +52,14 @@ export async function PATCH(
         outletId: ticket.outletId,
         menuItemId: line.menuItemId,
       });
+    }
+
+    const fired = line.kitchenStatus !== "NEW";
+    if (fired && body.qty < line.qty && (!session || !sessionHasFnbPermission(session, PERMISSIONS.TICKETS_VOID))) {
+      return NextResponse.json(
+        { error: "Fired line requires void permission", code: "FNB_FIRED_LINE" },
+        { status: 403 },
+      );
     }
 
     if (body.qty === 0) {

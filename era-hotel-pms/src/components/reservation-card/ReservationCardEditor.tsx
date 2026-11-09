@@ -3460,7 +3460,9 @@ export function ReservationCardEditor({
                   onVipType={setVipType}
                   onTripReason={setTripReason}
                   partyOpsEnabled={!isCreate && status === 'IN_HOUSE'}
-                  clinicAdmitEnabled={!isCreate && (status === 'OPTION' || status === 'CONFIRMED')}
+                  clinicAdmitEnabled={
+                    !isCreate && isPreArrivalStatus(status) && arrivalReached
+                  }
                   onClinicAdmit={(idx) => setClinicAdmitIdx(idx)}
                   onDepartGuest={(idx) => setDepartPaxIdx(idx)}
                   onMoveGuest={
@@ -3629,7 +3631,20 @@ export function ReservationCardEditor({
                 .then(async (res) => {
                   const json = await res.json();
                   if (!res.ok) {
-                    reportApiError(json, tc('failed'));
+                    reportApiError(
+                      json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
+                        ? {
+                            error: t('clinicAdmitBlocked', {
+                              details: operationalGapDetails(json.people, (gap) =>
+                                t(operationalGapLabelKey(gap)),
+                              ),
+                            }),
+                          }
+                        : json?.code === 'CLINIC_ADMIT_EARLY'
+                          ? { error: t('clinicAdmitEarly') }
+                          : json,
+                      tc('failed'),
+                    );
                     return;
                   }
                   showSuccess(admit ? t('clinicAdmitDone') : t('clinicRevokeDone'));

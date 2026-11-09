@@ -10,6 +10,8 @@ FROM base AS dev
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
+# deps used --ignore-scripts; copy pdf.js worker for MRZ PDF scans
+RUN node scripts/copy-pdf-worker.mjs
 EXPOSE 3201
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
@@ -19,6 +21,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
+# deps used --ignore-scripts; public/pdf.worker.min.mjs must exist before next build
+RUN node scripts/copy-pdf-worker.mjs
 RUN npm run build
 
 FROM base AS runner

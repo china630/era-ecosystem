@@ -26,7 +26,7 @@ export async function listClinicSyncSnapshot(input: {
   organizationId: string;
   openReservationIds: string[];
 }): Promise<{ inHouse: ClinicSyncGuest[]; checkedOutIds: string[] }> {
-  const openIds = [...new Set(input.openReservationIds.map((id) => id.trim()).filter(Boolean))].slice(0, 200);
+  const openIds = [...new Set(input.openReservationIds.map((id) => id.trim()).filter(Boolean))].slice(0, 500);
   const checkedOut = openIds.length
     ? await prisma.reservation.findMany({
         where: { organizationId: input.organizationId, id: { in: openIds }, status: "CHECKED_OUT" },

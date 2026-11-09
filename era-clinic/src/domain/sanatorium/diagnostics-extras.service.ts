@@ -313,7 +313,7 @@ export async function prescribeDiagnosticsExtras(
 
 /**
  * Zero mispriced package burns (inPackage + amountNet > 0, not settled).
- * Drops unpaid forcePaid duplicates when a package sibling already covers the code.
+ * Drops an unpaid paid duplicate only while an open package order of the same code still covers it.
  */
 export async function healMispricedPackageDiagnostics(episodeId: string): Promise<{
   healedVisits: number;
@@ -372,6 +372,7 @@ export async function healMispricedPackageDiagnostics(episodeId: string): Promis
     healedLabs += 1;
   }
 
+  const openPackageLabStatuses = ["ORDERED", "COLLECTED", "IN_PROGRESS", "RESULT_READY"] as const;
   const packageLabCodes = new Set(
     (
       await prisma.labOrderItem.findMany({
@@ -379,7 +380,7 @@ export async function healMispricedPackageDiagnostics(episodeId: string): Promis
           inPackage: true,
           labOrder: {
             clinicalEpisodeId: episodeId,
-            status: { not: "CANCELLED" },
+            status: { in: [...openPackageLabStatuses] },
           },
         },
         select: { serviceCode: true },
@@ -393,7 +394,7 @@ export async function healMispricedPackageDiagnostics(episodeId: string): Promis
           inPackage: true,
           visit: {
             clinicalEpisodeId: episodeId,
-            status: { not: "CANCELLED" },
+            status: "IN_PROGRESS",
           },
         },
         select: { serviceCode: true },
@@ -593,6 +594,19 @@ export async function deletePendingDiagnostic(
   await prisma.visit.delete({ where: { id } });
 }
 
+async function inHouseReservationId(row: {
+  reservationId: string | null;
+  clinicalEpisodeId: string | null;
+}): Promise<string | null> {
+  if (row.reservationId) return row.reservationId;
+  if (!row.clinicalEpisodeId) return null;
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: row.clinicalEpisodeId },
+    select: { reservationId: true },
+  });
+  return episode?.reservationId ?? null;
+}
+
 export type DiagnosticPayLine = { id: string; kind: "lab" | "visit" };
 
 export type DiagnosticBatchLine = { id: string; kind: "lab" | "visit"; name: string; reason?: string };
@@ -667,7 +681,8 @@ export async function payDiagnosticsExtras(
       const ticketId = clinicLabTicketRef(order.id);
       try {
         if (order.patientOrigin === "IN_HOUSE") {
-          if (!order.reservationId) {
+          const reservationId = await inHouseReservationId(order);
+          if (!reservationId) {
             rejected.push({
               id: order.id,
               kind: "lab",
@@ -678,7 +693,7 @@ export async function payDiagnosticsExtras(
           }
           await postProcedureFolioCharge({
             hotelOrganizationId: hotelOrganizationId ?? undefined,
-            reservationId: order.reservationId,
+            reservationId,
             amount,
             description: `${name} · çek ${receipt}`,
             externalTicketId: ticketId,
@@ -690,6 +705,7 @@ export async function payDiagnosticsExtras(
             data: {
               settledAt: new Date(),
               paymentReceiptRef: receipt,
+              reservationId,
             },
           });
           accepted.push({ id: order.id, kind: "lab", name });
@@ -757,7 +773,8 @@ export async function payDiagnosticsExtras(
     const ticketId = clinicVisitTicketRef(visit.id);
     try {
       if (visit.patientOrigin === "IN_HOUSE") {
-        if (!visit.reservationId) {
+        const reservationId = await inHouseReservationId(visit);
+        if (!reservationId) {
           rejected.push({
             id: visit.id,
             kind: "visit",
@@ -768,7 +785,7 @@ export async function payDiagnosticsExtras(
         }
         await postProcedureFolioCharge({
           hotelOrganizationId: hotelOrganizationId ?? undefined,
-          reservationId: visit.reservationId,
+          reservationId,
           amount,
           description: `${name} · çek ${receipt}`,
           externalTicketId: ticketId,
@@ -781,6 +798,7 @@ export async function payDiagnosticsExtras(
             settledAt: new Date(),
             paymentReceiptRef: receipt,
             billingTarget: "HOTEL_FOLIO",
+            reservationId,
           },
         });
         accepted.push({ id: visit.id, kind: "visit", name });

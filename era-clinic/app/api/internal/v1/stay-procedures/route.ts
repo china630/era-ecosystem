@@ -43,7 +43,13 @@ export async function POST(req: NextRequest) {
     if (!assertServiceToken(req)) return jsonError("Unauthorized", 401);
     const body = clearSchema.parse(await req.json());
     enterRequestTenant(body.organizationId);
-    return jsonOk(await clearStayProceduresAtCheckout(body.reservationId));
+    const { closeOpenEpisodesForReservation } = await import("@/lib/lifecycle-consumer");
+    const closed = await closeOpenEpisodesForReservation(body.reservationId);
+    const cleared = await clearStayProceduresAtCheckout(body.reservationId);
+    const cancelledOrderIds = [
+      ...new Set([...closed.cancelledOrderIds, ...cleared.cancelledOrderIds]),
+    ];
+    return jsonOk({ ...cleared, cancelledOrderIds });
   } catch (err) {
     return handleRouteError(err);
   }

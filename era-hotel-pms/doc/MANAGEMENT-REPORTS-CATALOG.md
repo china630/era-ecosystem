@@ -140,7 +140,7 @@ SatAdmin pack membership: `/settings/policies#reports` (not a Reports sidebar ro
 | `/reports/occupancy` | Occupancy hub (A); keep current grid as default child |
 | `/reports/analytics` | Analysis / booking (A0 Sales + E demographics) — fold into Analysis or Booking, do not leave a stray top-level item |
 | `/reports/agency-profitability` | Agency & market |
-| `/reports/guest-dedup` | Ops/data-quality — **not** Management Reports; keep under Reports as utility or Settings |
+| `/reports/guest-dedup` | Ops/data-quality — **not** Management Reports. Menu home is Guests |
 | `/reports/invoices` | Invoice reports (other EW menu) — keep, outside this catalog |
 | `/reports/reconciliation` | Ops utility — keep, outside this catalog |
 | `/reports/agency-ledger` | Already redirects to Front Cash |

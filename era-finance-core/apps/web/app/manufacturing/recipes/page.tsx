@@ -10,7 +10,7 @@ import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh, notifyListRefresh } from "../../../lib/list-refresh-bus";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { RecipeModal } from "../../../components/manufacturing/recipe-modal";
 import { SubscriptionPaywall } from "../../../components/subscription-paywall";
@@ -163,11 +163,7 @@ function ManufacturingRecipesContent() {
           </thead>
           <tbody>
             {!loading && rows.length === 0 ? (
-              <tr>
-                <td colSpan={5}>
-                  <EmptyState title={t("manufacturing.noRecipes")} compact />
-                </td>
-              </tr>
+              <FinanceEmptyTableRow colSpan={5} message={t("manufacturing.noRecipes")} />
             ) : (
               rows.map((row) => (
                 <tr key={row.id} className={DATA_TABLE_TR_CLASS}>

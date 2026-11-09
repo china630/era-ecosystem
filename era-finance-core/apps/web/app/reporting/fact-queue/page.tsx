@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { Button } from "../../../components/ui/button";
 import { apiFetch } from "../../../lib/api-client";
 import { parseApiErrorPayload } from "../../../lib/api-error-text";
@@ -155,10 +155,7 @@ export default function FactQueuePage() {
         }
       />
       {err ? <p className="text-sm text-red-700">{err}</p> : null}
-      {payload && payload.rows.length === 0 ? (
-        <EmptyState title={t("reporting.factQueueEmpty")} />
-      ) : null}
-      {(payload?.rows ?? []).length > 0 ? (
+      {payload ? (
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
             <thead>
@@ -171,7 +168,10 @@ export default function FactQueuePage() {
               </tr>
             </thead>
             <tbody>
-              {(payload?.rows ?? []).map((row) => {
+              {payload.rows.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={5} message={t("reporting.factQueueEmpty")} />
+              ) : (
+                payload.rows.map((row) => {
                 const allowed = meaningsFor(row, confirm[row.id] === true);
                 const chosen = meaning[row.id] ?? "";
                 return (
@@ -263,7 +263,8 @@ export default function FactQueuePage() {
                     </td>
                   </tr>
                 );
-              })}
+                })
+              )}
             </tbody>
           </table>
         </div>

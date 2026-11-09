@@ -97,6 +97,7 @@ export function StayDayGrid({
   const checkIn = plan.days[0]!;
   const checkout = plan.checkoutYmd ?? plan.days[plan.days.length - 1]!;
   const today = todayBakuYmd();
+  const todayMark = "shadow-[inset_1px_0_0_0_#1F4E79,inset_-1px_0_0_0_#1F4E79]";
   const monthSpans: Array<{ ymd: string; span: number }> = [];
   for (const ymd of days) {
     const prev = monthSpans[monthSpans.length - 1];
@@ -107,34 +108,34 @@ export function StayDayGrid({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 overflow-auto">
-        <table
-          className="table-fixed border-separate border-spacing-0 text-[12px]"
-          style={{ width: `calc(9rem + (100% - 9rem) * ${days.length} / ${DAY_SLOTS})` }}
-        >
-          <thead className="sticky top-0 z-10 bg-white">
-            <tr>
-              <th className="sticky left-0 z-20 w-36 bg-white" />
-              {monthSpans.map((group) => (
-                <th
-                  key={group.ymd.slice(0, 7)}
-                  colSpan={group.span}
-                  className="px-1 py-1 text-left text-[12px] font-semibold capitalize text-[#2C3E50]"
-                >
-                  {monthTitle(group.ymd, locale)}
-                </th>
-              ))}
-            </tr>
+        <div style={{ width: `calc(9rem + (100% - 9rem) * ${days.length} / ${DAY_SLOTS})` }}>
+        <div className="sticky top-0 z-30 flex bg-white">
+          <div className="w-36 shrink-0" />
+          <div className="flex min-w-0 flex-1">
+            {monthSpans.map((group) => (
+              <div
+                key={group.ymd.slice(0, 7)}
+                style={{ flex: group.span }}
+                className="truncate px-1 py-1 text-center text-[12px] font-semibold text-[#2C3E50]"
+              >
+                {monthTitle(group.ymd, locale)}
+              </div>
+            ))}
+          </div>
+        </div>
+        <table className="w-full table-fixed border-separate border-spacing-0 text-[12px]">
+          <thead className="sticky top-7 z-10 bg-white">
             <tr>
               <th className="sticky left-0 z-20 w-36 bg-white" />
               {days.map((ymd) => {
                 const day = ymd.slice(8);
-                const gray = isGrayDay(ymd, checkIn, checkout, today);
+                const tone = dayTone(ymd, checkIn, checkout, today);
                 return (
                   <th
                     key={ymd}
                     className={`px-0 py-1 text-center text-[13px] font-semibold tabular-nums ${
-                      gray ? TEXT_MUTED_CLASS : "text-[#2C3E50]"
-                    } ${ymd === today ? "shadow-[inset_2px_0_0_0_#1F4E79]" : ""}`}
+                      tone === "closed" ? TEXT_MUTED_CLASS : "text-[#2C3E50]"
+                    } ${ymd === today ? todayMark : ""}`}
                   >
                     {day}
                   </th>
@@ -163,7 +164,7 @@ export function StayDayGrid({
                 </th>
                 {days.map((ymd) => {
                   const mark = row.marks.find((item) => item.ymd === ymd);
-                  const gray = isGrayDay(ymd, checkIn, checkout, today);
+                  const tone = dayTone(ymd, checkIn, checkout, today);
                   const place = mark
                     ? mark.open
                       ? openLabel
@@ -178,13 +179,15 @@ export function StayDayGrid({
                     <td
                       key={ymd}
                       title={hint || undefined}
-                      className={`px-0 py-0.5 text-center ${gray ? "bg-slate-100" : ""} ${
-                        ymd === today ? "shadow-[inset_2px_0_0_0_#1F4E79]" : ""
+                      className={`px-0 py-0.5 text-center align-middle ${
+                        tone === "closed" ? "bg-slate-100" : tone === "past" ? "bg-rose-50" : ""
+                      } ${
+                        ymd === today ? todayMark : ""
                       }`}
                     >
                       {mark ? (
                         <span
-                          className={`inline-block h-2.5 w-2.5 rounded-full ${
+                          className={`mx-auto block h-2.5 w-2.5 rounded-full ${
                             mark.done ? "bg-slate-700" : mark.paid ? "bg-amber-400" : "bg-[#1F4E79]"
                           }`}
                         />
@@ -196,6 +199,7 @@ export function StayDayGrid({
             ))}
           </tbody>
         </table>
+        </div>
         {list.length === 0 ? (
           <p className={`mt-2 text-[13px] ${TEXT_MUTED_CLASS}`}>{emptyLabel}</p>
         ) : null}
@@ -218,10 +222,13 @@ export function StayDayGrid({
   );
 }
 
-function isGrayDay(ymd: string, checkIn: string, checkout: string, today: string): boolean {
-  if (ymd < checkIn || ymd > checkout) return true;
-  if (ymd === checkout) return true;
-  if (isBakuSunday(ymd)) return true;
-  if (ymd < today) return true;
-  return false;
+function dayTone(
+  ymd: string,
+  checkIn: string,
+  checkout: string,
+  today: string,
+): "closed" | "past" | "open" {
+  if (ymd < checkIn || ymd > checkout || ymd === checkout || isBakuSunday(ymd)) return "closed";
+  if (ymd < today) return "past";
+  return "open";
 }

@@ -13,6 +13,7 @@ import {
   VatQuarterDataService,
 } from "./vat-quarter-data.service";
 import { EtaxesSubmissionAdapterFactory } from "./etaxes-submission.adapters";
+import { OrgAccessClient } from "../control-plane/org-access.client";
 
 /** Нормализованный VÖEN: ровно 10 цифр */
 function normalizeVoenDigits(raw: string | null | undefined): string | null {
@@ -131,15 +132,8 @@ export class ETaxesIntegrationService {
     private readonly vatQuarter: VatQuarterDataService,
     private readonly posting: PostingAccountResolver,
     private readonly submissionFactory: EtaxesSubmissionAdapterFactory,
+    private readonly orgAccess: OrgAccessClient,
   ) {}
-
-  private resolveAsanUserId(settingsJson: unknown): string | null {
-    if (!settingsJson || typeof settingsJson !== "object") return null;
-    const tax = (settingsJson as Record<string, unknown>).tax;
-    if (!tax || typeof tax !== "object") return null;
-    const id = (tax as Record<string, unknown>).asanUserId;
-    return typeof id === "string" && id.trim() ? id.trim() : null;
-  }
 
   private validateRows(
     orgVoen: string,
@@ -372,7 +366,7 @@ export class ETaxesIntegrationService {
     const adapter = this.submissionFactory.get();
     return adapter.submit(pkg, {
       organizationId,
-      asanUserId: this.resolveAsanUserId(org?.settings),
+      asanUserId: await this.orgAccess.resolveAsanUserId(organizationId, org?.settings),
       destination: "VAT",
     });
   }

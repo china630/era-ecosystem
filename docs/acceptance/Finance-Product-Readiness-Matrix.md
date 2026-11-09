@@ -10,6 +10,8 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-10):** Bank, ƏMAS, and e-taxes reads can take the organization key from the platform access tab. Missing bank key does not call the bank. ASAN ID is no longer edited in finance settings. Gate / BE / UI / Demo / Pilot / edition `mvp` / Sell unchanged. Not SHIPPED.
+
 **Closeout (2026-10-31):** Finance home FX may show the previous CBAR day until today's FINAL exists. Postings stay on the document date. Direct bank sync stays off until `bankingDirect.syncMode` is `mock` or `rest`. Taxpayer and signature stubs stay off unless `settings.tax.taxLookupMock` or `signatureGatewayMock` is set. FIN-ASAN-01 stays API/STUB. VAT-threshold audit rows now take a chain hash; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, not the warehouse; the row opens the package lines, with quantity purpose labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. **Migration machine (FIN-MIG-01 / AC-FIN-MIG) 97–98% wave:** `/settings/migration` **SHOW**; COVERAGE **SHIPPED**; AC Scaffold ✅ (out of W6 BE rollup until Pilot); UAT-SMOKE + signoff — does **not** move Gate / BE ✅ / Demo ❌ / Pilot `[ ]` / Sell. Edition stays `mvp` (`pilot_ready: false`).
 
 **Closeout (2026-11-01) — sidebar UI debt polish (Home→Reports):** PageHeader / Badge / CatalogField / `MODAL_DIALOG_*` / `DATA_TABLE_*` / ListPaginationFooter tokens on former PARTIAL/GAP screens. **Does not** move Gate, BE ✅, UI 🟡 rollup, Demo ❌, Pilot `[ ]`, Sell, or edition `mvp`. No SHOW upgrade without UAT.
@@ -33,6 +35,7 @@
 | Surface | Path | Level |
 |---------|------|-------|
 | GL / invoices / adjustments | `/chart-of-accounts`, `/sales/invoices`, `/accounting/adjustments` | 🟡 — due dates render `дд.мм.гггг`; date fields use the finance calendar. Does not move Gate, UI 🟡, Demo ❌, Pilot, or edition |
+| List chrome | finance registries, report result tables, audit-history modal, `/hr/analytics` month grid | 🟡 — empty result keeps the header and one muted row (`FinanceEmptyTableRow`, or the day-grid caption). Warehouse filters that already reload sit in `EraListFilterBar`. Does not move Gate, Demo, Pilot, or Sell |
 | P&L and trial-balance profit proxy | `/reporting` sums `601` with `601.*` (AC-FIN-DAY) | 🟡 — same reports; not a new SHOW |
 | Payroll / employees | `/payroll, /employees`, `/hr/emas-queue` | 🟡 — ƏMAS manual queue + extension prefill STUB (`FIN-EMAS-01`); wave 11 minute premiums API (`FIN-HR-MIN-01`); not sell-ready without portal UAT |
 | FA / reporting | `/fixed-assets, /reporting/*` | 🟡 |

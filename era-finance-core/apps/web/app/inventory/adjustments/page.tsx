@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { ClipboardList } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -11,7 +9,7 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
 import { PageHeader } from "../../../components/layout/page-header";
 import { bakuDateDisplay, bakuDateTimeDisplay } from "@era/satellite-kit/time";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { AdjustmentsModal } from "../../../components/inventory/modals";
 import {
@@ -23,7 +21,6 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-  LINK_ACCENT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 
@@ -143,27 +140,12 @@ export default function InventoryAdjustmentsPage() {
             </thead>
             <tbody>
               {rows.length === 0 ? (
-                <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={7} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
-                    {!error ? (
-                      <EmptyState
-                        icon={
-                          <ClipboardList
-                            className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]"
-                            aria-hidden
-                          />
-                        }
-                        title={t("inventory.emptyAdjustmentsTitle")}
-                        description={t("inventory.emptyAdjustmentsHint")}
-                        action={
-                          <Link className={LINK_ACCENT_CLASS} href="/inventory/movements">
-                            {t("inventory.goToMovements")}
-                          </Link>
-                        }
-                      />
-                    ) : null}
-                  </td>
-                </tr>
+                !error ? (
+                  <FinanceEmptyTableRow
+                    colSpan={7}
+                    message={t("inventory.emptyAdjustmentsTitle")}
+                  />
+                ) : null
               ) : (
               rows.map((m) => (
                 <tr key={m.id} className={DATA_TABLE_TR_CLASS}>

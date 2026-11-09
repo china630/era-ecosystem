@@ -1,4 +1,4 @@
-import { planClinicStayReconcile } from "@/lib/stay-reconcile-plan";
+import { closedEpisodesToSweep, planClinicStayReconcile } from "@/lib/stay-reconcile-plan";
 
 const episode = {
   id: "ep-1",
@@ -28,6 +28,18 @@ describe("clinic stay reconcile plan", () => {
     });
     expect(plan.open.map((guest) => guest.guestName)).toEqual(["New Guest"]);
     expect(plan.closeEpisodeIds).toEqual(["ep-1"]);
+  });
+
+  it("sweeps a closed course only when the hotel stay is checked out", () => {
+    expect(
+      closedEpisodesToSweep(
+        [
+          { id: "old", reservationId: "stay-1" },
+          { id: "live", reservationId: "stay-2" },
+        ],
+        ["stay-1"],
+      ),
+    ).toEqual(["old"]);
   });
 
   it("closes only the departed guest and still syncs the one who stays", () => {

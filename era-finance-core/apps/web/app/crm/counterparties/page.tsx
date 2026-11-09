@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CreditCard, Pencil, Scale, Users2 } from "lucide-react";
+import { CreditCard, Pencil, Scale } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
 import { useTranslation } from "react-i18next";
@@ -24,7 +24,7 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
 } from "../../../lib/design-system";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
   CounterpartyBankAccountsModal,
@@ -227,26 +227,7 @@ export default function CounterpartiesPage() {
           </div>
         </div>
         {loading && <p className="text-gray-600">{t("common.loading")}</p>}
-        {!loading && rows.length === 0 && !error && (
-          <EmptyState
-            title={t("counterparties.none")}
-            description={t("counterparties.emptyHint")}
-            icon={<Users2 className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]" aria-hidden />}
-            action={
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
-                + {t("counterparties.newBtn")}
-              </button>
-            }
-          />
-        )}
-        {!loading && rows.length > 0 && filtered.length === 0 && !error && (
-          <EmptyState
-            title={t("counterparties.none", { defaultValue: "Нет контрагентов" })}
-            description={t("counterparties.searchNone")}
-            icon={<Users2 className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]" aria-hidden />}
-          />
-        )}
-        {!loading && filtered.length > 0 && (
+        {!loading && !error ? (
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={DATA_TABLE_CLASS}>
               <thead>
@@ -263,6 +244,9 @@ export default function CounterpartiesPage() {
                 </tr>
               </thead>
               <tbody>
+                {filtered.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={7} message={t("counterparties.none")} />
+                ) : null}
                 {filtered.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
@@ -309,7 +293,7 @@ export default function CounterpartiesPage() {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </section>
 
       <CreateCounterpartyModal open={createOpen} onClose={() => setCreateOpen(false)} />

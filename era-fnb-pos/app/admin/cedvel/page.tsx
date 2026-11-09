@@ -101,16 +101,17 @@ export default function FnbCedvelPage() {
     const qs = selectedUnit
       ? `?orgUnitId=${encodeURIComponent(selectedUnit)}`
       : "";
-    const [weekRes, peopleRes] = await Promise.all([
-      fetch(`/api/admin/cedvel/week?weekStart=${weekStart}`),
-      fetch(`/api/admin/cedvel/personnel${qs}`),
-    ]);
+    // Week first so ensureFnbDutyDefaults seeds before personnel (avoids parallel upsert races).
+    const weekRes = await fetch(
+      `/api/admin/cedvel/week?weekStart=${weekStart}`,
+    );
     const weekJson = await weekRes.json();
-    const peopleJson = await peopleRes.json();
     if (!weekRes.ok) {
       showApiError(weekJson, t("title"));
       return;
     }
+    const peopleRes = await fetch(`/api/admin/cedvel/personnel${qs}`);
+    const peopleJson = await peopleRes.json();
     if (!peopleRes.ok) {
       showApiError(peopleJson, t("title"));
       return;
@@ -136,10 +137,6 @@ export default function FnbCedvelPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (orgUnitIds.length === 0 && !unavailable) setSettingsOpen(true);
-  }, [orgUnitIds.length, unavailable]);
 
   const peopleRows = useMemo(() => {
     const map = new Map<
@@ -388,9 +385,16 @@ export default function FnbCedvelPage() {
         </p>
       ) : null}
 
-      {emptyBinding ? (
-        <p className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-          {t("emptyBindingHint")}
+      {!settingsOpen && emptyBinding ? (
+        <p className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex flex-wrap gap-2 items-center justify-between">
+          <span>{t("emptyBindingHint")}</span>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => setSettingsOpen(true)}
+          >
+            {t("showSettings")}
+          </button>
         </p>
       ) : null}
 

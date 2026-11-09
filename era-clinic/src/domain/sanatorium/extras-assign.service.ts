@@ -301,7 +301,22 @@ function isCheckoutHoldReason(reason: string): boolean {
   return reason === "no_slot" || reason === "no_day";
 }
 
-/** Place as PROPOSED, then return seated rows to PENDING_PAY. A stay-horizon miss is held for the checkout question. */
+/** Earliest course end among these orders. Cabin extras must not walk past it. */
+async function stayEndForOrders(ids: string[]): Promise<Date | undefined> {
+  const rows = await prisma.procedureOrder.findMany({
+    where: { id: { in: ids } },
+    select: {
+      clinicalEpisode: { select: { programInstance: { select: { endsOn: true } } } },
+    },
+  });
+  const ends = rows
+    .map((row) => row.clinicalEpisode?.programInstance?.endsOn)
+    .filter((value): value is Date => value instanceof Date && !Number.isNaN(value.getTime()));
+  if (ends.length === 0) return undefined;
+  return ends.reduce((earliest, value) => (value < earliest ? value : earliest));
+}
+
+/** Place as PROPOSED, then return seated rows to PENDING_PAY. Every miss is returned. A stay-horizon miss is also held for the checkout question. */
 async function seatUnpaidExtras(
   ids: string[],
 ): Promise<Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>> {
@@ -311,22 +326,20 @@ async function seatUnpaidExtras(
   });
   let failedIds: string[] = [];
   let heldIds: string[] = [];
-  let held: Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }> = [];
+  let reported: Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }> = [];
   try {
-    const placement = await placeConfirmedProcedures(ids, {});
-    held = placement.failures
-      .filter((row) => isCheckoutHoldReason(row.reason))
-      .map((row) => ({
-        orderId: row.orderId,
-        procedureCode: row.procedureCode,
-        procedureName: row.procedureName,
-        reason: row.reason,
-        ymd: row.ymd,
-      }));
-    heldIds = held.map((row) => row.orderId);
-    failedIds = placement.failures
-      .map((row) => row.orderId)
-      .filter((id) => !heldIds.includes(id));
+    const placement = await placeConfirmedProcedures(ids, {
+      scheduleBefore: await stayEndForOrders(ids),
+    });
+    reported = placement.failures.map((row) => ({
+      orderId: row.orderId,
+      procedureCode: row.procedureCode,
+      procedureName: row.procedureName,
+      reason: row.reason,
+      ymd: row.ymd,
+    }));
+    heldIds = reported.filter((row) => isCheckoutHoldReason(row.reason)).map((row) => row.orderId);
+    failedIds = reported.map((row) => row.orderId).filter((id) => !heldIds.includes(id));
     if (heldIds.length > 0) {
       await prisma.procedureOrder.updateMany({
         where: { id: { in: heldIds } },
@@ -351,7 +364,7 @@ async function seatUnpaidExtras(
       data: { status: "PENDING_PAY" },
     });
   }
-  return held;
+  return reported;
 }
 
 /**
@@ -834,7 +847,10 @@ export async function payAndScheduleExtras(
       }
       if (fixedLoose.length > 0) {
         placed += (
-          await placeConfirmedProcedures(fixedLoose, { confirmedByUserId: actorUserId })
+          await placeConfirmedProcedures(fixedLoose, {
+            confirmedByUserId: actorUserId,
+            scheduleBefore: await stayEndForOrders(fixedLoose),
+          })
         ).placed;
       }
     } catch (err) {
@@ -908,7 +924,9 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
         );
         await pinOpenAttendanceOrders([order.id], {});
       } else {
-        await placeConfirmedProcedures([order.id], {});
+        await placeConfirmedProcedures([order.id], {
+          scheduleBefore: await stayEndForOrders([order.id]),
+        });
       }
     } catch (err) {
       const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +19,8 @@ const patchSchema = z.object({
   capTables: z.boolean().optional(),
   capBuffetPlanner: z.boolean().optional(),
   shapeHint: z.enum(["cafe", "restaurant", "buffet_kitchen", "disco"]).nullable().optional(),
+  hallMode: z.boolean().optional(),
+  xReportHidden: z.array(z.string().min(1).max(32)).nullable().optional(),
   phone: optionalContact,
   email: optionalContact,
   address: optionalContact,
@@ -46,7 +49,9 @@ export async function PATCH(
         body.capTill !== undefined ||
         body.capTables !== undefined ||
         body.capBuffetPlanner !== undefined ||
-        body.shapeHint !== undefined) &&
+        body.shapeHint !== undefined ||
+        body.hallMode !== undefined ||
+        body.xReportHidden !== undefined) &&
       !canManage
     ) {
       return jsonError("Outlet profile requires outlets.manage", 403);
@@ -82,6 +87,8 @@ export async function PATCH(
       body.capTables === undefined &&
       body.capBuffetPlanner === undefined &&
       body.shapeHint === undefined &&
+      body.hallMode === undefined &&
+      body.xReportHidden === undefined &&
       body.phone === undefined &&
       body.email === undefined &&
       body.address === undefined &&
@@ -109,6 +116,10 @@ export async function PATCH(
           ? { capBuffetPlanner: body.capBuffetPlanner }
           : {}),
         ...(body.shapeHint !== undefined ? { shapeHint: body.shapeHint } : {}),
+        ...(body.hallMode !== undefined ? { hallMode: body.hallMode } : {}),
+        ...(body.xReportHidden !== undefined
+          ? { xReportHidden: body.xReportHidden === null ? Prisma.JsonNull : body.xReportHidden }
+          : {}),
         ...(body.revenueCenterCode !== undefined
           ? {
               revenueCenterCode:

@@ -20,8 +20,7 @@ import {
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
-import { EmptyState } from "../../../components/empty-state";
-import { Building2 } from "lucide-react";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 
 function monthBounds(): { from: string; to: string } {
   const now = new Date();
@@ -193,17 +192,7 @@ export default function HoldingConsolidatedReportingPage() {
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
-      {!loadingReport && report && report.organizations.length === 0 && (
-        <EmptyState
-          icon={<Building2 className="h-12 w-12 mx-auto stroke-[1.5]" aria-hidden />}
-          title={t("holdingReport.noOrgs", { defaultValue: "Нет организаций в холдинге" })}
-          description={t("holdingReport.noOrgsHint", {
-            defaultValue: "Привяжите организации в разделе компаний или через API.",
-          })}
-        />
-      )}
-
-      {report && report.organizations.length > 0 && (
+      {!loadingReport && report ? (
         <div className="space-y-0">
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} min-w-full`}>
@@ -221,43 +210,52 @@ export default function HoldingConsolidatedReportingPage() {
                 </tr>
               </thead>
               <tbody>
-                {report.organizations.map((row) => (
-                  <tr key={row.organizationId} className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>
-                      {row.organizationName}
-                    </td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{row.taxId}</td>
-                    <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-semibold`}>
-                      {row.netProfit} {row.currency}
-                    </td>
-                  </tr>
-                ))}
+                {report.organizations.length === 0 ? (
+                  <FinanceEmptyTableRow
+                    colSpan={3}
+                    message={t("holdingReport.noOrgs", { defaultValue: "Нет организаций в холдинге" })}
+                  />
+                ) : (
+                  report.organizations.map((row) => (
+                    <tr key={row.organizationId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>
+                        {row.organizationName}
+                      </td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{row.taxId}</td>
+                      <td className={`${DATA_TABLE_TD_RIGHT_CLASS} font-semibold`}>
+                        {row.netProfit} {row.currency}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-          <div className={`${CARD_CONTAINER_CLASS} rounded-t-none border-t-0 -mt-px space-y-1 px-3 py-3`}>
-            <p className="m-0 text-[12px] font-semibold text-[#34495E]">
-              {t("holdingReport.consolidated", { defaultValue: "Итого по валютам" })}
-            </p>
-            {Object.entries(report.consolidatedNetProfitByCurrency).map(([cur, amt]) => (
-              <p key={cur} className="text-[13px] tabular-nums text-[#34495E]">
-                {amt} {cur}
+          {report.organizations.length > 0 ? (
+            <div className={`${CARD_CONTAINER_CLASS} rounded-t-none border-t-0 -mt-px space-y-1 px-3 py-3`}>
+              <p className="m-0 text-[12px] font-semibold text-[#34495E]">
+                {t("holdingReport.consolidated", { defaultValue: "Итого по валютам" })}
               </p>
-            ))}
-            {report.consolidatedNetProfitInHoldingBase != null &&
-            report.holdingBaseCurrency ? (
-              <p className="text-[13px] font-medium tabular-nums text-[#34495E] pt-1">
-                Σ → {report.holdingBaseCurrency}: {report.consolidatedNetProfitInHoldingBase}
-              </p>
-            ) : null}
-            {report.consolidationNote ? (
-              <p className="text-[11px] text-[#7F8C8D] pt-1 leading-snug">
-                {report.consolidationNote}
-              </p>
-            ) : null}
-          </div>
+              {Object.entries(report.consolidatedNetProfitByCurrency).map(([cur, amt]) => (
+                <p key={cur} className="text-[13px] tabular-nums text-[#34495E]">
+                  {amt} {cur}
+                </p>
+              ))}
+              {report.consolidatedNetProfitInHoldingBase != null &&
+              report.holdingBaseCurrency ? (
+                <p className="text-[13px] font-medium tabular-nums text-[#34495E] pt-1">
+                  Σ → {report.holdingBaseCurrency}: {report.consolidatedNetProfitInHoldingBase}
+                </p>
+              ) : null}
+              {report.consolidationNote ? (
+                <p className="text-[11px] text-[#7F8C8D] pt-1 leading-snug">
+                  {report.consolidationNote}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

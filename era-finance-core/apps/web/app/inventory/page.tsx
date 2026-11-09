@@ -1,16 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { Package } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../lib/api-client";
 import { formatMoneyAzn } from "../../lib/format-money";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../lib/list-refresh-bus";
-import { CatalogField } from "@era/satellite-kit/ui";
+import { CatalogField, EraListFilterBar } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../components/layout/page-header";
-import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -21,8 +19,6 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-  PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
 } from "../../lib/design-system";
 
 type Warehouse = { id: string; name: string; location: string };
@@ -102,7 +98,7 @@ export default function InventoryPage() {
 
       <section className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
         <h2 className="text-lg font-semibold text-[#34495E] m-0">{t("inventory.stockBalancesTitle")}</h2>
-        <div className="flex flex-wrap items-end gap-3">
+        <EraListFilterBar>
           <div className="min-w-[14rem] max-w-md">
             <CatalogField
               kind="ENTITY_REF"
@@ -118,27 +114,13 @@ export default function InventoryPage() {
               ]}
             />
           </div>
-          <button type="button" onClick={() => void load()} className={`${SECONDARY_BUTTON_CLASS} px-4`}>
-            {t("inventory.refresh")}
-          </button>
-        </div>
+        </EraListFilterBar>
       </section>
 
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
-      {!loading && stock.length === 0 && !error && (
-        <EmptyState
-          icon={<Package className="h-12 w-12 mx-auto stroke-[1.5] text-[#7F8C8D]" aria-hidden />}
-          title={t("inventory.emptyStock")}
-          description={t("inventory.emptyStockHint")}
-          action={
-            <Link href="/purchases" className={PRIMARY_BUTTON_CLASS}>
-              + {t("inventory.newPurchaseBtn")}
-            </Link>
-          }
-        />
-      )}
-      {!loading && stock.length > 0 && (
+      {!loading && !error ? (
         <>
+          {stock.length > 0 ? (
           <div className="md:hidden space-y-3">
             {stock.map((r) => (
               <div
@@ -161,7 +143,8 @@ export default function InventoryPage() {
               </div>
             ))}
           </div>
-          <div className={`hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}`}>
+          ) : null}
+          <div className={stock.length > 0 ? `hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}` : DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} min-w-full`}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -174,7 +157,10 @@ export default function InventoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {stock.map((r) => (
+                {stock.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={6} message={t("inventory.emptyStock")} />
+                ) : (
+                  stock.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{r.warehouse.name}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>
@@ -185,12 +171,13 @@ export default function InventoryPage() {
                     <td className={DATA_TABLE_TD_CLASS}>{r.bin?.code ?? "—"}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.averageCost)}</td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

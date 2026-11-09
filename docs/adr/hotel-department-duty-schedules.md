@@ -31,7 +31,7 @@ Satellites call the Workforce picker. Each board has a **binding**: `orgUnitIds`
 
 ### 3. Hotel IA
 
-Sidebar section **Schedules**: hub `/schedules`, link to `/hk/roster`, boards `/schedules/reception`, `/schedules/security`, `/schedules/engineering`. Models: `DutyScheduleBinding`, `DutyScheduleAxis`, `DutyScheduleWeek`, `DutyScheduleCell`, `DutyShiftCode`.
+Sidebar section **Schedules** is the **last ops block before Settings**: hub `/schedules`, HK `/hk/roster` (not under Housekeeping staff), boards `/schedules/reception`, `/schedules/security`, `/schedules/engineering`. Models: `DutyScheduleBinding`, `DutyScheduleAxis`, `DutyScheduleWeek`, `DutyScheduleCell`, `DutyShiftCode`. Concurrent seed of binding/axes/week treats Prisma `P2002` as success. Sidebar open-section uses best href so `/hk` does not steal `/hk/roster` from Schedules.
 
 ### 4. F&B cədvəl
 

@@ -152,6 +152,7 @@ export async function listExtrasAwaitingTicket(
     prisma.procedureOrder.findMany({
       where: {
         importedHistorical: false,
+        NOT: { clinicalEpisode: { status: "CLOSED" } },
         ...roomFilter,
         ...(history
           ? {
@@ -205,6 +206,7 @@ export async function listExtrasAwaitingTicket(
         amountNet: { gt: 0 },
         inPackage: false,
         status: { not: "CANCELLED" },
+        NOT: { episode: { status: "CLOSED" } },
         ...labRoomFilter,
         ...(history
           ? {
@@ -287,6 +289,7 @@ export async function listExtrasAwaitingTicket(
       where: {
         amountNet: { gt: 0 },
         status: { not: "CANCELLED" },
+        NOT: { clinicalEpisode: { status: "CLOSED" } },
         ...visitRoomFilter,
         ...(history
           ? {

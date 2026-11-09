@@ -30,6 +30,7 @@ describe("BankingGatewayService benchmark: circuit breaker under 100+ load", () 
       {} as any,
       {} as any,
       {} as any,
+      { get: jest.fn().mockResolvedValue({ publicFields: { login: "u", clientId: "c" }, secret: "s" }) } as any,
     );
 
     await svc.getBalances("org-1");

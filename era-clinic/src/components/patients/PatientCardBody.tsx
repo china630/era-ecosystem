@@ -701,6 +701,7 @@ export function PatientCardBody({
             studiesUnlocked={studiesUnlocked}
             refreshKey={clinicalRefreshKey}
             section={cardTab}
+            episodeClosed={selectedEpisode.status === "CLOSED"}
           />
         ) : null}
           </div>
