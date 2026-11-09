@@ -125,10 +125,8 @@ export class OrganizationSettingsService {
           !Array.isArray(baseSettings.tax)
             ? (baseSettings.tax as Record<string, unknown>)
             : {};
-        const trimmed = dto.asanUserId?.trim() || null;
         mergedSettings.tax = {
           ...prevTax,
-          ...(dto.asanUserId !== undefined ? { asanUserId: trimmed } : {}),
           ...(dto.taxRegime !== undefined ? { regime: dto.taxRegime } : {}),
           ...(dto.pricesIncludeTax !== undefined
             ? { pricesIncludeTax: dto.pricesIncludeTax }
