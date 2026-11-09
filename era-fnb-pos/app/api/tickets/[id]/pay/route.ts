@@ -189,20 +189,19 @@ export async function POST(
       where: { id: body.limitHolderId, organizationId, active: true },
     });
     const nextUsed = holder ? holder.usedAzn.plus(due) : null;
-    const taken =
-      holder && nextUsed
-        ? await prisma.fnbLimitHolder.updateMany({
-            where: {
-              id: holder.id,
-              organizationId,
-              active: true,
-              usedAzn: holder.usedAzn,
-              ceilingAzn: { gte: nextUsed },
-            },
-            data: { usedAzn: nextUsed },
-          })
-        : 0;
-    if (taken !== 1) {
+    const taken = holder && nextUsed
+      ? await prisma.fnbLimitHolder.updateMany({
+          where: {
+            id: holder.id,
+            organizationId,
+            active: true,
+            usedAzn: holder.usedAzn,
+            ceilingAzn: { gte: nextUsed },
+          },
+          data: { usedAzn: nextUsed },
+        })
+      : { count: 0 };
+    if (taken.count !== 1) {
       return NextResponse.json({ error: "Limit ceiling exceeded" }, { status: 409 });
     }
   }
