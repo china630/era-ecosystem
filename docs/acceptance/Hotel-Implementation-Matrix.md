@@ -4,6 +4,8 @@
 **Not readiness:** for sell/show/UI use [`Hotel-Product-Readiness-Matrix.md`](./Hotel-Product-Readiness-Matrix.md)  
 **Coverage facts:** [`COVERAGE_MATRIX.md`](../COVERAGE_MATRIX.md)
 
+**Closeout (2026-11-09 sanatorium admit before check-in):** No new Scaffold ✅. HOT-FO-07 stays API. AC-HOT-FO stays ✅ and is not reopened. No new negative suite. Confirm dialogs for admit/undo and for removing a guest. Gate/Pilot unchanged. `hotel.yaml` untouched. Needs migration `20261109160000_clinic_admitted_at`.
+
 **Guest phone polish (2026-11-07):** kit `normalizePersonPhone` + guest card / contacts / POST+PATCH save + dedup PHONE digits. Negatives in `packages/satellite-kit` `normalize-person-phone.test.ts` (conflict / needs_region / invalid). **AC-HOT-GST-PHONE 🟡** out of Scaffold BE rollup — no UAT, no Scaffold ✅. HOT-GST-01 stays API. Does not reopen AC-HOT-MDM ✅.
 
 **Night-audit enqueue (2026-10-31):** orchestrator queue id no longer rejects `hotel-na:YYYY-MM-DD`. Not a new AC row and not Scaffold ✅. HOT-NA-01 stays SHIPPED. Does not change the BE rollup.

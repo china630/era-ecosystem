@@ -1772,6 +1772,8 @@ model ReservationGuest {
   medicalPackageCode String?
   /** Person-level early departure while RoomStay stays IN_HOUSE (ADR hotel-reservation-card-and-party-ops D4). */
   departedAt    DateTime?
+  /** Sanatorium chart opened before the stay is IN_HOUSE. Cleared on hotel check-in. */
+  clinicAdmittedAt DateTime? @map("clinic_admitted_at")
   folio         Folio?
   deposits      FolioDeposit[]
 

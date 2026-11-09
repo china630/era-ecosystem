@@ -1140,6 +1140,10 @@ export async function checkInReservation(
       data: { status: 'IN_HOUSE' },
       include: { room: true, guest: true, ratePlan: true, roomType: true },
     });
+    await tx.reservationGuest.updateMany({
+      where: { reservationId: id, clinicAdmittedAt: { not: null } },
+      data: { clinicAdmittedAt: null },
+    });
     if (priorStay) {
       await tx.stay.update({
         where: { id: priorStay.id },
@@ -1364,6 +1368,18 @@ export async function cancelReservation(
     return updated;
   });
   const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  const admitted = await prisma.reservationGuest.findMany({
+    where: { reservationId: id, clinicAdmittedAt: { not: null } },
+    select: { id: true, firstName: true, lastName: true, medicalPackageCode: true },
+  });
+  if (admitted.length > 0) {
+    const { revokeGuestClinicAdmit } = await import('@/lib/services/clinic-admit.service');
+    for (const guest of admitted) {
+      await revokeGuestClinicAdmit(id, guest.id).catch((e) =>
+        console.error('Clinic admit revoke on cancel failed', guest.id, e),
+      );
+    }
+  }
   await recordReservationAudit(id, noShow ? 'NO_SHOW' : 'CANCEL', audit, {
     section: 'status',
     source: 'user',

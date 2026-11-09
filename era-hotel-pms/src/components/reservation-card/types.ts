@@ -28,6 +28,8 @@ export type PaxRow = {
   medicalPackageCode?: string;
   /** Person-level early departure (stay may remain IN_HOUSE). */
   departedAt?: string | null;
+  /** Sanatorium chart opened before hotel check-in. */
+  clinicAdmittedAt?: string | null;
 };
 
 export type DailyRateRow = {

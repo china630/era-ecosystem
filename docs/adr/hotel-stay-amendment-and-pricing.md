@@ -44,7 +44,7 @@ The same zero applies to a medical package night, not only a room night. Unposte
 
 ## Check-in and clinic
 
-Clinic receives a guest at check-in when that guest has an explicit medical package, and again when that package changes on an in-house stay. Saving a reservation that is not yet in house does not open a clinic episode. The tariff does not fill a package the receptionist left empty. `WALKIN` hides the package column and does not send clinic.
+Clinic receives a guest at check-in when that guest has an explicit medical package, and again when that package changes on an in-house stay. Saving a reservation that is not yet in house does not open a clinic episode. The guest-row menu can admit that person to the sanatorium before check-in: the same check-in event, an open folio that accepts clinic charges, and no room occupancy. Hotel check-in finds that episode and clears the mark. Cancelling the admit or the stay closes that person's episode. The tariff does not fill a package the receptionist left empty. `WALKIN` hides the package column and does not send clinic.
 
 A past arrival date moves to the business day on check-in. Nights before that day are dropped and not charged. The confirmation text names the new date only in that case.
 

@@ -20,6 +20,8 @@ export type CatalogOption = {
   value: string;
   label: string;
   disabled?: boolean;
+  /** Extra search text. Not shown in the list. */
+  keywords?: string;
 };
 
 export type CatalogFieldProps = {
@@ -317,7 +319,9 @@ function CatalogCombobox({
     return options
       .filter(
         (o) =>
-          o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q),
+          o.label.toLowerCase().includes(q) ||
+          o.value.toLowerCase().includes(q) ||
+          (o.keywords ?? "").toLowerCase().includes(q),
       )
       .slice(0, 50);
   }, [options, query, serverSearch]);

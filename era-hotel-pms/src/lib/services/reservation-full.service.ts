@@ -740,12 +740,14 @@ export async function patchReservationFull(
       const name = `${(p.firstName ?? '').trim().toLowerCase()}|${(p.lastName ?? '').trim().toLowerCase()}`;
       if (name !== '|') staying.add(`name:${name}`);
     }
+    const droppedClinic: typeof previousGuests = [];
     for (const prev of previousGuests) {
       const name = `${(prev.firstName ?? '').trim().toLowerCase()}|${(prev.lastName ?? '').trim().toLowerCase()}`;
       const stillHere =
         (prev.guestId && staying.has(`id:${prev.guestId}`)) ||
         (name !== '|' && staying.has(`name:${name}`));
       if (stillHere) continue;
+      if (prev.clinicAdmittedAt) droppedClinic.push(prev);
       const heldOnGuest = await prisma.folioDeposit.count({
         where: { reservationId: id, reservationGuestId: prev.id, status: 'HELD' },
       });
@@ -760,6 +762,17 @@ export async function patchReservationFull(
         );
       }
     }
+    if (droppedClinic.length > 0) {
+      const { dispatchGuestDeparted } = await import('@/lib/integration/guest-lifecycle-events');
+      for (const prev of droppedClinic) {
+        await dispatchGuestDeparted({
+          reservationId: id,
+          paxKey: prev.id,
+          guestName: [prev.firstName, prev.lastName].filter(Boolean).join(' ') || 'Guest',
+          programCode: prev.medicalPackageCode ?? undefined,
+        }).catch((e) => console.error('Clinic admit close on party drop failed', prev.id, e));
+      }
+    }
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
     const primaryIdx = primaryIndexForParty(paxGuests);
     await prisma.reservation.update({
@@ -772,9 +785,14 @@ export async function patchReservationFull(
         const departed = isDepartedPartyRow(p);
         const isPrimary = i === primaryIdx && !departed;
         const ownsFolio = !departed;
+        const prev = previousGuests.find(
+          (row) => (p.id && row.id === p.id) || (p.guestId && row.guestId === p.guestId),
+        );
         return {
+          ...(p.id ? { id: p.id } : {}),
           organizationId: existing.organizationId,
           reservationId: id,
+          clinicAdmittedAt: prev?.clinicAdmittedAt ?? null,
           guestId: p.guestId ?? null,
           title: p.title ?? null,
           sex: p.sex ?? p.gender ?? null,
