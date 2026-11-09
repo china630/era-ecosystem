@@ -18,6 +18,7 @@ import {
 import { stepApplies } from "../platform/workforce/workforce-reporting.resolve";
 import { chainEdges, stepSkipped } from "./documents-route.util";
 import { WorkforceApprovalService } from "../platform/workforce/workforce-approval.service";
+import { todayBakuYmd } from "@era/satellite-kit/time";
 import { PrismaService } from "../prisma/prisma.service";
 import { CommsService } from "../comms/comms.service";
 import type {
@@ -37,7 +38,7 @@ const PREFIX: Record<DocKind, string> = {
 };
 
 function bakuYear(date = new Date()): number {
-  return new Date(date.getTime() + 4 * 60 * 60 * 1000).getUTCFullYear();
+  return Number(todayBakuYmd(date).slice(0, 4));
 }
 
 @Injectable()
@@ -110,7 +111,7 @@ export class DocumentsService {
         },
       },
     });
-    const today = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const today = todayBakuYmd();
     const now = new Date();
     return rows.map((row) => ({
       ...row,
