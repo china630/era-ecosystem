@@ -14,17 +14,20 @@ import {
 export function FieldGroupBox({
   title,
   badge,
+  actions,
   children,
   className,
 }: {
   title: string;
   badge?: string | number;
+  /** Buttons on the top edge, opposite the title. */
+  actions?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <fieldset className={`${FIELD_GROUP_BOX_CLASS} ${className ?? ""}`.trim()}>
-      <legend className={FIELD_GROUP_BOX_LEGEND_CLASS}>
+    <fieldset className={`relative ${FIELD_GROUP_BOX_CLASS} ${className ?? ""}`.trim()}>
+      <legend className={`${FIELD_GROUP_BOX_LEGEND_CLASS} max-w-[70%]`}>
         <span className="inline-flex items-center gap-2">
           <span>{title}</span>
           {badge != null && badge !== "" ? (
@@ -34,6 +37,11 @@ export function FieldGroupBox({
           ) : null}
         </span>
       </legend>
+      {actions ? (
+        <div className="absolute right-3 top-0 z-10 flex -translate-y-1/2 items-center gap-1 bg-white px-1">
+          {actions}
+        </div>
+      ) : null}
       <div className={FIELD_GROUP_BOX_BODY_CLASS}>{children}</div>
     </fieldset>
   );

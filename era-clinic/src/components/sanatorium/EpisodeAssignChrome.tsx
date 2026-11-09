@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Printer, Trash2 } from "lucide-react";
+import { History, Printer, Trash2 } from "lucide-react";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -85,11 +85,15 @@ type AssignBlocksProps = {
   extrasTitle: string;
   onPackagePlus: () => void;
   onPackagePrint?: () => void;
+  onPackageHistory?: () => void;
+  packageHistoryLabel?: string;
   packagePrintLabel?: string;
   onExtrasPlus: () => void;
   readOnly?: boolean;
   /** CLI-57 walk-in: hide package block (extras only). */
   hidePackage?: boolean;
+  /** Diagnostics chip: the tab already names the block. */
+  hidePackageTitle?: boolean;
   /** PENDING_PAY / awaiting-payment rows visible on the card (ADR D8). */
   extrasPending?: AssignPendingRow[];
   pendingPayLabel?: string;
@@ -109,10 +113,13 @@ export function EpisodeAssignBlocks({
   extrasTitle,
   onPackagePlus,
   onPackagePrint,
+  onPackageHistory,
+  packageHistoryLabel,
   packagePrintLabel,
   onExtrasPlus,
   readOnly,
   hidePackage,
+  hidePackageTitle,
   extrasPending = [],
   pendingPayLabel = "Awaiting payment",
   payLabel = "Pay",
@@ -126,10 +133,20 @@ export function EpisodeAssignBlocks({
   const showRowActions = Boolean(onPayPending || onRemovePending);
   return (
     <div className="space-y-3">
-      {!hidePackage ? (
+      {!hidePackage && (onPackagePrint || onPackageHistory || onPackagePlus) ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-semibold">{packageTitle}</h3>
+          {hidePackageTitle ? <span /> : <h3 className="font-semibold">{packageTitle}</h3>}
           <div className="flex flex-wrap items-center gap-2">
+            {onPackageHistory ? (
+              <button
+                type="button"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200"
+                aria-label={packageHistoryLabel ?? packageTitle}
+                onClick={onPackageHistory}
+              >
+                <History className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            ) : null}
             {onPackagePrint ? (
               <button
                 type="button"

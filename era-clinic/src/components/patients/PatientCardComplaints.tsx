@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
+  FieldGroupBox,
   FieldTextarea,
   LINK_ACCENT_CLASS,
   ModalFooter,
@@ -148,19 +148,17 @@ export function PatientCardComplaints({
   }
 
   return (
-    <section className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-          {t("complaintsTitle")}
-        </h2>
-        {!readOnly && resolvedEpisodeId ? (
+    <FieldGroupBox
+      title={t("complaintsTitle")}
+      actions={
+        !readOnly && resolvedEpisodeId ? (
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
             <Plus className="h-4 w-4" aria-hidden />
             {t("addComplaint")}
           </button>
-        ) : null}
-      </div>
-      <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4`}>
+        ) : null
+      }
+    >
         {loading ? (
           <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>
         ) : !resolvedEpisodeId ? (
@@ -212,7 +210,6 @@ export function PatientCardComplaints({
             ) : null}
           </ul>
         )}
-      </div>
       <ModalShell
         open={open}
         title={editingId ? tc("edit") : t("addComplaint")}
@@ -233,6 +230,6 @@ export function PatientCardComplaints({
           cancelLabel={tc("cancel")}
         />
       </ModalShell>
-    </section>
+    </FieldGroupBox>
   );
 }

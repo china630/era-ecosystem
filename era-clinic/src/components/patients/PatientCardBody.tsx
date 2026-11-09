@@ -17,6 +17,7 @@ import { bakuDateDisplay } from "@/lib/baku-day";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  FieldGroupBox,
   TAB_ITEM_ACTIVE_CLASS,
   TAB_ITEM_CLASS,
   TAB_STRIP_CLASS,
@@ -434,7 +435,7 @@ export function PatientCardBody({
     patient.ageYears != null ? t("ageYears", { age: patient.ageYears }) : t("ageUnknown");
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="mb-4 flex flex-wrap gap-2">
         {patient.globalPersonId &&
         patient.identifiersSummary?.some((i) => i.type === "PASSPORT") &&
@@ -453,13 +454,84 @@ export function PatientCardBody({
 
       <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="min-h-0 space-y-3 overflow-y-auto">
-          <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-3 text-[13px]`}>
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="text-base font-semibold text-[#2C3E50]">{patient.fullName}</p>
-                <p className="mt-0.5 text-sm font-medium text-[#34495E]">{patient.refCode}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
+          <FieldGroupBox
+            title={t("personalBox")}
+            actions={
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={tc("edit")}
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            }
+          >
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("fullName")}</span>
+                <span className="font-semibold text-[#2C3E50]">{patient.fullName}</span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("refCode")}</span>
+                <span className="font-semibold text-[#2C3E50]">{patient.refCode}</span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("phone")}</span>
+                <span className="font-semibold text-[#2C3E50]">{identityValue(patient.phone)}</span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("nationality")}</span>
+                <span className="font-semibold text-[#2C3E50]">
+                  {patient.nationality ? countryLabel(patient.nationality, locale) : "—"}
+                </span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("sex")}</span>
+                <span className="font-semibold text-[#2C3E50]">{identityValue(sexLabel(patient.sex))}</span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("birthDate")}</span>
+                <span className="font-semibold text-[#2C3E50]">
+                  {birthDateToInputValue(patient.birthDate)
+                    ? `${birthDateToInputValue(patient.birthDate)} (${ageLine})`
+                    : "—"}
+                </span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("bloodGroup")}</span>
+                <span className="font-semibold text-[#2C3E50]">
+                  {patient.bloodGroup && patient.bloodGroup !== "UNKNOWN"
+                    ? BLOOD_LABELS[patient.bloodGroup]
+                    : "—"}
+                </span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("emergencyContact")}</span>
+                <span className="font-semibold text-[#2C3E50]">
+                  {identityValue(
+                    [patient.emergencyContactName, patient.emergencyContactPhone]
+                      .filter(Boolean)
+                      .join(" · "),
+                  )}
+                </span>
+              </p>
+            </div>
+            {isSuperAdmin ? (
+              <p className="mt-2 text-[13px]">
+                <span className="block text-[11px] font-medium text-slate-500">{t("mdmBadge")}</span>
+                {patient.globalPersonId ? (
+                  <span className={`font-semibold ${TEXT_SUCCESS_CLASS}`}>{maskPersonId(patient.globalPersonId)}</span>
+                ) : (
+                  <span className={`font-semibold ${TEXT_DANGER_CLASS}`}>{t("mdmMissing")}</span>
+                )}
+              </p>
+            ) : null}
+          </FieldGroupBox>
+          <FieldGroupBox
+            title={t("episodeBox")}
+            actions={
+              <div className="flex items-center gap-1">
                 {selectedEpisodeId ? (
                   <button
                     type="button"
@@ -482,128 +554,40 @@ export function PatientCardBody({
                     <RefreshCw className="h-4 w-4 text-[#E74C3C]" aria-hidden />
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  className={TABLE_ROW_ICON_BTN_CLASS}
-                  aria-label={tc("edit")}
-                  onClick={() => setEditOpen(true)}
-                >
-                  <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                </button>
               </div>
-            </div>
+            }
+          >
             {selectedEpisode ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
                 <p>
-                  <span className="font-medium">{t("packageProgram")}:</span>{" "}
-                  {selectedEpisode.programCode ?? "—"}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("packageProgram")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.programCode ?? "—"}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("packageRoom")}:</span>{" "}
-                  {selectedEpisode.roomNumber ?? "—"}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("packageRoom")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.roomNumber ?? "—"}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("packageOrigin")}:</span>{" "}
-                  {selectedEpisode.patientOrigin}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("stayCheckIn")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{formatStayDate(selectedEpisode.stayStartsOn)}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("stayCheckIn")}:</span>{" "}
-                  {formatStayDate(selectedEpisode.stayStartsOn)}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("stayCheckOut")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{formatStayDate(selectedEpisode.stayEndsOn)}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("stayCheckOut")}:</span>{" "}
-                  {formatStayDate(selectedEpisode.stayEndsOn)}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("stayNights")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.stayNights ?? "—"}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("stayNights")}:</span>{" "}
-                  {selectedEpisode.stayNights ?? "—"}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("packageOrigin")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.patientOrigin}</span>
                 </p>
               </div>
             ) : (
-              <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("anamnesisCourseMissing")}</p>
+              <p className={`text-sm ${TEXT_MUTED_CLASS}`}>—</p>
             )}
-            <div className="grid gap-3 sm:grid-cols-2">
-            {isSuperAdmin ? (
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("mdmBadge")}
-                </span>
-                {patient.globalPersonId ? (
-                  <span className={`text-base font-semibold ${TEXT_SUCCESS_CLASS}`}>
-                    {maskPersonId(patient.globalPersonId)}
-                  </span>
-                ) : (
-                  <span className={`text-base font-semibold ${TEXT_DANGER_CLASS}`}>
-                    {t("mdmMissing")}
-                  </span>
-                )}
-              </p>
-            ) : null}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("phone")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {identityValue(patient.phone)}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("nationality")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {patient.nationality ? countryLabel(patient.nationality, locale) : "—"}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("sex")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {identityValue(sexLabel(patient.sex))}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("birthDate")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {birthDateToInputValue(patient.birthDate)
-                    ? `${birthDateToInputValue(patient.birthDate)} (${ageLine})`
-                    : "—"}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("bloodGroup")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {patient.bloodGroup && patient.bloodGroup !== "UNKNOWN"
-                    ? BLOOD_LABELS[patient.bloodGroup]
-                    : "—"}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("emergencyContact")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {identityValue(
-                    [patient.emergencyContactName, patient.emergencyContactPhone]
-                      .filter(Boolean)
-                      .join(" · "),
-                  )}
-                </span>
-              </p>
-            </div>
-            {isSuperAdmin && patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
-              <p className={TEXT_MUTED_CLASS}>
-                {patient.identifiersSummary.map((i) => i.type).join(", ")}
-              </p>
-            ) : null}
-            </div>
-          </div>
+          </FieldGroupBox>
         </div>
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className={TAB_STRIP_CLASS} role="tablist">
@@ -655,39 +639,29 @@ export function PatientCardBody({
               onSaved={onAnamnesisSaved}
             />
 
-            <section className="space-y-2">
-              <div
-                className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
-                  ciOpen ? "p-4" : "px-4 py-2"
-                }`}
-              >
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
-                    {t("contraindicationsTitle")}
-                    {ciCount > 0 ? (
-                      <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
-                        {ciCount}
-                      </span>
-                    ) : null}
-                  </h2>
-                  <button
-                    type="button"
-                    className={SECONDARY_BUTTON_CLASS}
-                    aria-expanded={ciOpen}
-                    onClick={() => setCiOpen((open) => !open)}
-                  >
-                    {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
-                  </button>
-                </div>
-                <PatientContraindicationsPanel
-                  patientRefId={patient.id}
-                  episodeId={selectedEpisodeId}
-                  readOnly={episodeReadOnly}
-                  expanded={ciOpen}
-                  onCountChange={setCiCount}
-                />
-              </div>
-            </section>
+            <FieldGroupBox
+              title={t("contraindicationsTitle")}
+              badge={ciCount > 0 ? ciCount : undefined}
+              className="bg-amber-50"
+              actions={
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  aria-expanded={ciOpen}
+                  onClick={() => setCiOpen((open) => !open)}
+                >
+                  {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
+                </button>
+              }
+            >
+              <PatientContraindicationsPanel
+                patientRefId={patient.id}
+                episodeId={selectedEpisodeId}
+                readOnly={episodeReadOnly}
+                expanded={ciOpen}
+                onCountChange={setCiCount}
+              />
+            </FieldGroupBox>
 
             <PatientCardComplaints
               patientRefId={patient.id}
@@ -889,7 +863,7 @@ export function PatientCardBody({
             : null
         }
       />
-    </>
+    </div>
   );
 }
 

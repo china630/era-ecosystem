@@ -2065,6 +2065,8 @@
     "careTeamLastDoctor": "Cannot remove the last doctor from an open care course.",
     "packageSummaryTitle": "Package / stay",
     "packageProgram": "Program",
+    "personalBox": "Personal",
+    "episodeBox": "Course",
     "packageRoom": "Room",
     "packageOrigin": "Origin",
     "stayCheckIn": "Check-in",

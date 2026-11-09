@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarClock, LayoutGrid, Printer, Trash2 } from "lucide-react";
+import { CalendarClock, History, LayoutGrid, Printer, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -16,6 +16,7 @@ import {
   CHIP_ACTIVE_CLASS,
   CHIP_CLASS,
   CHIP_GROUP_CLASS,
+  FieldGroupBox,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
@@ -299,6 +300,7 @@ export function PatientCardClinicalSections({
   section,
 }: Props) {
   const t = useTranslations("patientCard");
+  const tr = useTranslations("patientRegistry");
   const ts = useTranslations("sanatorium");
   const tc = useTranslations("common");
   const locale = useLocale();
@@ -693,6 +695,12 @@ export function PatientCardClinicalSections({
             packageTitle={t("diagnosticsAssignTitle", {
               defaultValue: "Analyses and diagnostics",
             })}
+            hidePackageTitle
+            onPackageHistory={() => {
+              setHistTypes("all");
+              setHistoryOpen(true);
+            }}
+            packageHistoryLabel={t("openHistory")}
             extrasTitle={t("diagnosticsExtraTitle", {
               defaultValue: "Additional (awaiting payment)",
             })}
@@ -712,23 +720,7 @@ export function PatientCardClinicalSections({
       ) : null}
 
       {showDiagnostics && resultsPreview.length > 0 ? (
-      <section className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-            {t("resultsTitle")}
-          </h2>
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => {
-              setHistTypes("all");
-              setHistoryOpen(true);
-            }}
-          >
-            {t("openHistory")}
-          </button>
-        </div>
-        <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+      <FieldGroupBox title={t("resultsTitle")}>
           {resultsPreview.length === 0 ? (
             <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("resultsEmpty")}</p>
           ) : (
@@ -776,18 +768,11 @@ export function PatientCardClinicalSections({
               ))}
             </ul>
           )}
-        </div>
-      </section>
+      </FieldGroupBox>
       ) : null}
 
       {showDiagnostics && (summary?.examNotesPreview?.length ?? 0) > 0 ? (
-      <section className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-            {t("examNotesTitle", { defaultValue: "Exam notes" })}
-          </h2>
-        </div>
-        <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+      <FieldGroupBox title={t("examNotesTitle", { defaultValue: "Exam notes" })}>
           {(summary?.examNotesPreview?.length ?? 0) === 0 ? (
             <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
               {t("examNotesEmpty", { defaultValue: "No exam notes yet." })}
@@ -819,8 +804,7 @@ export function PatientCardClinicalSections({
               ))}
             </ul>
           )}
-        </div>
-      </section>
+      </FieldGroupBox>
       ) : null}
 
       {showDiagnostics && !intakeChecklist?.items?.length && resultsPreview.length === 0 ? (
@@ -830,17 +814,13 @@ export function PatientCardClinicalSections({
       ) : null}
 
       {showDiagnostics && intakeChecklist?.items?.length ? (
-        <section className="space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-              {t("intakeChecklistTitle", {
-                defaultValue: intakeChecklist.packageTitle
-                  ? pickL10n(intakeChecklist.packageTitle, locale)
-                  : "Initial diagnostics",
-              })}
-            </h2>
-          </div>
-          <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+        <FieldGroupBox
+          title={t("intakeChecklistTitle", {
+            defaultValue: intakeChecklist.packageTitle
+              ? pickL10n(intakeChecklist.packageTitle, locale)
+              : "Initial diagnostics",
+          })}
+        >
             <ul className="divide-y divide-slate-100">
               {intakeChecklist.items.map((item) => {
                 const statusLabel =
@@ -913,15 +893,11 @@ export function PatientCardClinicalSections({
                 );
               })}
             </ul>
-          </div>
-        </section>
+        </FieldGroupBox>
       ) : null}
 
       {showPackage && studiesUnlocked ? (
       <section className="space-y-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-          {t("assignSectionTitle", { defaultValue: "Procedure assign" })}
-        </h2>
         {episodeId ? (
           <EpisodeAssignBlocks
             packageTitle={t("assignPackageTitle", { defaultValue: "Procedures in package" })}
@@ -1152,29 +1128,12 @@ export function PatientCardClinicalSections({
       ) : null}
 
       {showInlinePlan ? (
-        <section className="flex min-h-0 flex-1 flex-col space-y-3">
-          {studiesUnlocked && episodeId ? (
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <div className={CHIP_GROUP_CLASS}>
-              <button
-                type="button"
-                className={planDate === "all" ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-                onClick={() => setPlanDate("all")}
-              >
-                {t("planAll")}
-              </button>
-              {planChipDates.map((date) => (
-                <button
-                  key={date}
-                  type="button"
-                  className={planDate === date ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
-                  onClick={() => setPlanDate(date)}
-                >
-                  {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
-                </button>
-              ))}
-              </div>
-              <div className="ml-auto flex items-center gap-2">
+        <FieldGroupBox
+          title={tr("cardTabPlan")}
+          className="flex min-h-0 flex-1 flex-col"
+          actions={
+            studiesUnlocked && episodeId ? (
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   className={TABLE_ROW_ICON_BTN_CLASS}
@@ -1195,6 +1154,30 @@ export function PatientCardClinicalSections({
                 >
                   +
                 </button>
+              </div>
+            ) : null
+          }
+        >
+          {studiesUnlocked && episodeId ? (
+            <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2">
+              <div className={CHIP_GROUP_CLASS}>
+              <button
+                type="button"
+                className={planDate === "all" ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+                onClick={() => setPlanDate("all")}
+              >
+                {t("planAll")}
+              </button>
+              {planChipDates.map((date) => (
+                <button
+                  key={date}
+                  type="button"
+                  className={planDate === date ? CHIP_ACTIVE_CLASS : CHIP_CLASS}
+                  onClick={() => setPlanDate(date)}
+                >
+                  {date === todayBakuYmd() ? t("today") : planChipLabel(date)}
+                </button>
+              ))}
               </div>
             </div>
           ) : (
@@ -1269,23 +1252,24 @@ export function PatientCardClinicalSections({
                 return (
                   <li
                     key={ev.id}
-                    className={`${CARD_CONTAINER_CLASS} flex items-start justify-between gap-2 px-3 py-2 text-[13px]`}
+                    className={`${CARD_CONTAINER_CLASS} grid grid-cols-[30%_40%_20%] items-start gap-2 px-3 py-2 text-[13px]`}
                   >
-                    <div className="min-w-0">
-                      <div className="font-medium">{eventTitle(ev, locale)}</div>
-                      <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
-                        {ev.openAttendance
+                    <div className="min-w-0 font-medium">{eventTitle(ev, locale)}</div>
+                    <p className={`line-clamp-3 min-w-0 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                      {ev.subtitle?.trim()
+                        ? ev.subtitle
+                        : ev.openAttendance
                           ? t("openAttendance", { defaultValue: "Open attendance" })
+                          : planStatusLabel(ev.status)}
+                    </p>
+                    <div className="flex min-w-0 items-start justify-end gap-1">
+                      <span className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                        {ev.openAttendance
+                          ? ""
                           : ev.showClock !== false && ev.at
-                            ? bakuDateTimeLabel(ev.at)
+                            ? bakuTimeLabel(ev.at)
                             : ""}
-                        {ev.status
-                          ? `${
-                              ev.openAttendance || (ev.showClock !== false && ev.at) ? " · " : ""
-                            }${planStatusLabel(ev.status)}`
-                          : ""}
-                      </p>
-                    </div>
+                      </span>
                     {actionable ? (
                       <div className="flex shrink-0 gap-1">
                         {scheduled && !ev.openAttendance ? (
@@ -1323,12 +1307,13 @@ export function PatientCardClinicalSections({
                         </button>
                       </div>
                     ) : null}
+                    </div>
                   </li>
                 );
               })}
             </ul>
           )}
-        </section>
+        </FieldGroupBox>
       ) : null}
 
       {studiesUnlocked && episodeId ? (
