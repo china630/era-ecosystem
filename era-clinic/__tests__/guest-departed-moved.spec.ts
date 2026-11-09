@@ -98,8 +98,11 @@ describe("hotel person-level lifecycle (Depart / Move)", () => {
     );
     expect(mockedEpisodes.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: { in: ["ep-spouse"] } },
-        data: expect.objectContaining({ status: "CLOSED" }),
+        where: expect.objectContaining({
+          status: "OPEN",
+          OR: [{ id: { in: ["ep-spouse"] } }],
+        }),
+        data: expect.objectContaining({ status: "CLOSED", roomNumber: null }),
       }),
     );
     expect(mockedAllocations.deleteMany).toHaveBeenCalledWith({
