@@ -46,6 +46,8 @@ On `GlobalNaturalPerson`:
 - **Hotel reservation party:** Guests tab / FOCP sync hydrate empty `ReservationGuest` snapshot demographics from linked `Guest` master (import often writes names only).
 - **Exception — hotel ops cache:** `Guest` may retain non-identifier operational fields (name, phone, visa, CRM, gender/DOB cache) per [hotel-guest-pii-ops-cache.md](./hotel-guest-pii-ops-cache.md); plaintext FIN/passport on `Guest` is **deprecated** (removed Wave 4).
 - **lookup** = prefill/read; **resolve** = create/update person (name parts + sex/DOB fill-not-clear); **merge** = foreigner → citizen.
+- **Phone:** `resolve` stores `normalizePersonPhone` display (`polished` / `unchanged` / `needs_region` as typed). `conflict` and `invalid` reject the write. A later pass may rewrite stored `polished` numbers only.
+- **Dedup queue:** super-admin `GET /v1/admin/mdm/persons/dedup` groups by the hotel keys (phone, passport, FIN, email, document+citizenship, name+birth, surname+birth, surname+phone, one-letter slip, metaphone). Confirm-only. Dismissed pairs stay hidden. No auto-merge. Companies are out of scope.
 - Unified client: `linkPersonIdentity` in `@era/satellite-kit`. Accepts `firstName`/`middleName`/`lastName` and/or legacy `fullName`; pass `sex`/`gender` + `birthDate`. When the satellite already has `globalPersonId`, pass it so a card edit fills MDM without a second person.
 - Read paths (lookup / ops-profile / admin list) return **parts + composed `fullName`** so old clients keep working.
 
