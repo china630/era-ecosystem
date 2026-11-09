@@ -205,6 +205,10 @@ A move is stored in `RoomChangePlan` only when the door actually changes. The ch
 - Occupancy 2→1 mid-stay is a pricing amend, not unused-nights refund of the whole stay ([hotel-early-checkout-unused-nights.md](./hotel-early-checkout-unused-nights.md) applies when the **stay** checks out early).
 - Group booking wizard already creates N stays; pax still often share one `guestId` on create — Move guest assumes pax rows are real people (MDM / guest cards), not empty slots.
 
+### D7 — Sanatorium admit before room check-in
+
+On a stay that is not yet in house, the guest-row menu (⋮) offers **Admit to sanatorium** as the item above Remove. A confirm dialog accepts or cancels. The stay does not become `IN_HOUSE`, the door is not occupied, and night audit does not post the room. The clinic episode is the ordinary per-person chart. Clinic charges may post to that stay's folio. Hotel check-in keeps the episode and clears the mark. Undo and stay cancel close that person's episode. Remove from the party also asks for confirmation.
+
 ## Out of scope
 
 - Opera folio windows 1–8 as the data model (ERA folio types GUEST/AGENCY/COMPANY + routing overrides).

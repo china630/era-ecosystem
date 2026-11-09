@@ -12,6 +12,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
+import { nationalitySearchKeywords } from '@/lib/iso-alpha3';
 import { buildMdmPersonLookupBody } from '@/lib/mdm-person-lookup-body';
 
 const GUEST_LOOKUP_KINDS = [
@@ -257,11 +258,13 @@ export function GuestCardLeftPanel({
               onChange={setCatalog('nationality')}
               options={withOrphanOption(byKind.NATIONALITY ?? [], nationality).map((opt) => {
                 const code = opt.value.trim().toUpperCase();
-                if (!/^[A-Z]{2}$/.test(code)) return opt;
+                const keywords = nationalitySearchKeywords(code);
+                const withKeywords = keywords ? { ...opt, keywords } : opt;
+                if (!/^[A-Z]{2}$/.test(code)) return withKeywords;
                 if (opt.label.toUpperCase().startsWith(`${code} `) || opt.label.toUpperCase().startsWith(`${code}—`)) {
-                  return opt;
+                  return withKeywords;
                 }
-                return { ...opt, label: `${code} — ${opt.label}` };
+                return { ...withKeywords, label: `${code} — ${opt.label}` };
               })}
             />
           </FieldRow>

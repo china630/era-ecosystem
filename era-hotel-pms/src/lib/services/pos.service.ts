@@ -103,7 +103,18 @@ export async function postRoomCharge(
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
   });
-  if (!reservation || reservation.status !== 'IN_HOUSE') {
+  const clinicEarly =
+    reservation != null &&
+    (reservation.status === 'OPTION' || reservation.status === 'CONFIRMED') &&
+    (await prisma.reservationGuest.findFirst({
+      where: {
+        reservationId,
+        departedAt: null,
+        clinicAdmittedAt: { not: null },
+      },
+      select: { id: true },
+    }));
+  if (!reservation || (reservation.status !== 'IN_HOUSE' && !clinicEarly)) {
     throw new Error('Room charge only for IN_HOUSE reservations');
   }
 

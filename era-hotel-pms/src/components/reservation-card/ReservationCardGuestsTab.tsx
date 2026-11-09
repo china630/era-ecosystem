@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ArrowRightLeft, Camera, LogOut, Search, Star, Trash2, UserPlus } from 'lucide-react';
+import { ArrowRightLeft, Camera, LogOut, Search, Star, Stethoscope, Trash2, UserPlus } from 'lucide-react';
 import {
   CatalogField,
   DROPDOWN_ITEM_CLASS,
@@ -17,6 +17,7 @@ import {
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { guestListItems } from '@/lib/guest-list-identity';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import {
@@ -81,6 +82,8 @@ export function ReservationCardGuestsTab({
   partyOpsEnabled = false,
   onDepartGuest,
   onMoveGuest,
+  clinicAdmitEnabled = false,
+  onClinicAdmit,
 }: {
   isCreate?: boolean;
   guestId: string;
@@ -111,10 +114,14 @@ export function ReservationCardGuestsTab({
   partyOpsEnabled?: boolean;
   onDepartGuest?: (paxIndex: number) => void;
   onMoveGuest?: (paxIndex: number) => void;
+  /** Saved stay, not yet in house. */
+  clinicAdmitEnabled?: boolean;
+  onClinicAdmit?: (paxIndex: number) => void;
 }) {
   const t = useTranslations('reservationCard');
   const { byKind } = useHotelLookupOptions(['VIP_TYPE', 'TRIP_REASON']);
   const [menuOpenIdx, setMenuOpenIdx] = useState<number | null>(null);
+  const [removeIdx, setRemoveIdx] = useState<number | null>(null);
   const [rowEdit, setRowEdit] = useState<number | null>(null);
   const [rowQuery, setRowQuery] = useState('');
   const [rowHits, setRowHits] = useState<SelectOption[]>([]);
@@ -451,12 +458,26 @@ export function ReservationCardGuestsTab({
                   <ArrowRightLeft className="h-3.5 w-3.5" />
                   {t('moveGuest')}
                 </button>
+                {clinicAdmitEnabled && row.medicalPackageCode?.trim() && !row.departedAt ? (
+                  <button
+                    type="button"
+                    className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
+                    disabled={!row.id || !onClinicAdmit}
+                    onClick={() => {
+                      setMenuOpenIdx(null);
+                      onClinicAdmit?.(row._idx);
+                    }}
+                  >
+                    <Stethoscope className="h-3.5 w-3.5" />
+                    {row.clinicAdmittedAt ? t('clinicRevokeGuest') : t('clinicAdmitGuest')}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
                   onClick={() => {
                     setMenuOpenIdx(null);
-                    removeAt(row._idx);
+                    setRemoveIdx(row._idx);
                   }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -480,6 +501,8 @@ export function ReservationCardGuestsTab({
       partyOpsEnabled,
       onDepartGuest,
       onMoveGuest,
+      clinicAdmitEnabled,
+      onClinicAdmit,
       onOpenGuestCard,
       onScanId,
       onNewGuest,
@@ -584,6 +607,34 @@ export function ReservationCardGuestsTab({
           </span>
         </div>
       </div>
+      <EraModal
+        open={removeIdx != null}
+        title={t('removeGuestTitle')}
+        onClose={() => setRemoveIdx(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setRemoveIdx(null)}
+            submitLabel={t('removeFromParty')}
+            onSubmit={() => {
+              if (removeIdx != null) removeAt(removeIdx);
+              setRemoveIdx(null);
+            }}
+          />
+        }
+      >
+        <p className="m-0 text-[13px] text-[#34495E]">
+          {t('removeGuestHint', {
+            name:
+              removeIdx != null
+                ? [pax[removeIdx]?.firstName, pax[removeIdx]?.lastName].filter(Boolean).join(' ') ||
+                  t('removeFromParty')
+                : '',
+          })}
+        </p>
+        {removeIdx != null && pax[removeIdx]?.clinicAdmittedAt ? (
+          <p className="m-0 mt-2 text-[13px] text-[#34495E]">{t('clinicRevokeHint')}</p>
+        ) : null}
+      </EraModal>
     </div>
   );
 }
