@@ -289,7 +289,10 @@ export async function listExtrasAwaitingTicket(
       where: {
         amountNet: { gt: 0 },
         status: { not: "CANCELLED" },
-        NOT: { clinicalEpisode: { status: "CLOSED" } },
+        NOT: [
+          { clinicalEpisode: { status: "CLOSED" } },
+          { serviceLines: { some: { inPackage: true } } },
+        ],
         ...visitRoomFilter,
         ...(history
           ? {
@@ -321,7 +324,6 @@ export async function listExtrasAwaitingTicket(
                 },
               ],
             }),
-        NOT: [{ serviceLines: { some: { inPackage: true } } }],
         ...(q
           ? {
               AND: [
