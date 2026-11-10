@@ -11,7 +11,7 @@ export {
   type LaneId,
   type LaneSnapshot,
 } from "@/domain/sanatorium/lane-gate-policy";
-import type { LaneDenial, LaneId } from "@/domain/sanatorium/lane-gate-policy";
+import type { LaneDenial, LaneGatePolicy, LaneId } from "@/domain/sanatorium/lane-gate-policy";
 import { laneDenied, normalizeLaneGate } from "@/domain/sanatorium/lane-gate-policy";
 
 export async function loadLaneGate(): Promise<LaneGatePolicy> {
