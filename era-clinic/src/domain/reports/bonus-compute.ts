@@ -213,7 +213,7 @@ export async function computeBonusMonth(from: string, to: string): Promise<Bonus
       return {
         practitionerId: id,
         name: person.fullName,
-        staffKind: person.staffKind,
+        staffKind: String(person.staffKind),
         turnover: round2(row.turnover),
         bonus,
         shareOfTotal: share(bonus),
