@@ -7,6 +7,7 @@ import {
 } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { listPatientEpisodes } from "@/domain/sanatorium/episode-resolve";
+import { loadLaneGate } from "@/domain/sanatorium/lane-gates";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -24,7 +25,7 @@ export async function GET(
       select: { id: true },
     });
     if (!exists) return jsonError("Not found", 404);
-    return jsonOk({ items: await listPatientEpisodes(id) });
+    return jsonOk({ items: await listPatientEpisodes(id), laneGate: await loadLaneGate() });
   } catch (err) {
     return handleRouteError(err);
   }

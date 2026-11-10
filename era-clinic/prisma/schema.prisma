@@ -101,6 +101,8 @@ model Tenant {
   doctorBonusPercentWalkIn       Float                    @default(0) @map("doctor_bonus_percent_walk_in")
   /// Nafta-style bonus schedule JSON. Empty = built-in Nafta defaults.
   bonusScheduleJson              String?                  @map("bonus_schedule_json") @db.Text
+  /// Which intake facts a lane needs before it opens. Null = Nafta default.
+  laneGateJson                   String?                  @map("lane_gate_json") @db.Text
   /// Hotel RevenueCode.code posted on clinic folio charges (Nafta: 23 AMBULATOR). Empty refuses the charge.
   hotelFolioRevenueCode          String?                  @map("hotel_folio_revenue_code")
   /// Paid no-show keeps the folio charge (default). False lets the hotel void it.

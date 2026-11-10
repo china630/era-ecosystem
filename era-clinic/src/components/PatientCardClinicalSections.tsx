@@ -316,10 +316,10 @@ type Props = {
   episodeId?: string | null;
   /** CLI-57: walk-in hides package assign. */
   patientOrigin?: string | null;
-  /** When false, confirm procedures buttons are disabled (ANAMNESIS_REQUIRED). */
-  anamnesisOk?: boolean;
-  /** Package procedures and schedule. Anamnesis + complaint + ICD-10. Intake shows with the doctor. */
+  /** Package procedures and schedule follow the procedure lane. */
   studiesUnlocked?: boolean;
+  /** Labs and diagnostics. Independent of the procedure lane. */
+  labsUnlocked?: boolean;
   readOnly?: boolean;
   /** Bump to reload card-summary (intake checklist after anamnesis/complaint). */
   refreshKey?: number;
@@ -334,8 +334,8 @@ export function PatientCardClinicalSections({
   panel,
   episodeId,
   patientOrigin,
-  anamnesisOk = true,
   studiesUnlocked = false,
+  labsUnlocked = true,
   readOnly = false,
   refreshKey = 0,
   section,
@@ -737,7 +737,7 @@ export function PatientCardClinicalSections({
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
-            disabled={readOnly || !anamnesisOk}
+            disabled={readOnly || !labsUnlocked}
             onClick={() => setDiagnosticsModalOpen(true)}
           >
             +
@@ -762,7 +762,7 @@ export function PatientCardClinicalSections({
             extrasTitle={t("diagnosticsExtraTitle", {
               defaultValue: "Additional (awaiting payment)",
             })}
-            readOnly={readOnly || !anamnesisOk}
+            readOnly={readOnly || !labsUnlocked}
             hidePackage={false}
             extrasPending={[]}
             onPackagePlus={() => setDiagnosticsModalOpen(true)}
@@ -959,7 +959,7 @@ export function PatientCardClinicalSections({
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
-            disabled={readOnly || !anamnesisOk}
+            disabled={readOnly || !studiesUnlocked}
             onClick={() => setPackageModalOpen(true)}
           >
             +
@@ -975,7 +975,7 @@ export function PatientCardClinicalSections({
             hidePackageTitle
             suppressToolbar
             extrasTitle={t("extrasAwaiting", { defaultValue: "Additional procedures (awaiting payment)" })}
-            readOnly={readOnly || !anamnesisOk}
+            readOnly={readOnly || !studiesUnlocked}
             hidePackage={patientOrigin === "WALK_IN"}
             extrasPending={[]}
             onPackagePlus={() => setPackageModalOpen(true)}
@@ -1217,7 +1217,7 @@ export function PatientCardClinicalSections({
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
-            disabled={readOnly || !anamnesisOk}
+            disabled={readOnly || !studiesUnlocked}
             onClick={() => setPackageModalOpen(true)}
           >
             +
@@ -1443,7 +1443,7 @@ export function PatientCardClinicalSections({
           open={diagnosticsModalOpen}
           episodeId={episodeId}
           onClose={() => setDiagnosticsModalOpen(false)}
-          readOnly={readOnly || !anamnesisOk}
+          readOnly={readOnly || !labsUnlocked}
           onSaved={async () => {
             await loadSummary();
             setQuotaTick((n) => n + 1);

@@ -99,15 +99,9 @@ export async function POST(req: Request) {
       if (!pt) return jsonError(`Unknown replaceWithCode ${body.replaceWithCode}`, 400);
 
       if (body.episodeId) {
-        const episode = await prisma.clinicalEpisode.findUnique({
-          where: { id: body.episodeId },
-          select: { anamnesisText: true },
-        });
-        const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
-          "@/domain/sanatorium/episode-gates"
-        );
-        const denied = episodeAnamnesisDenied(episode?.anamnesisText);
-        if (denied) return jsonError(denied, 409, { code: ANAMNESIS_REQUIRED });
+        const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+        const denied = await procedureLaneDenial(body.episodeId);
+        if (denied) return jsonError(denied.message, 409, { code: denied.code });
       }
 
       const newIds: string[] = [];

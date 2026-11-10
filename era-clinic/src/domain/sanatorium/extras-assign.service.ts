@@ -7,7 +7,7 @@ import type { Prisma } from "@prisma/client";
 import { DEFAULT_OVER_QUOTA_AZN } from "@/domain/sanatorium/entitlement-charge.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
-import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
+import { ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
   episodeCareTeamDenied,
@@ -58,9 +58,10 @@ async function loadEpisode(episodeId: string) {
   if (episode.status !== "OPEN") {
     throw new PackageAssignError("Episode is not OPEN", "NOT_OPEN");
   }
-  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
-  if (anamnesisDenied) {
-    throw new PackageAssignError(anamnesisDenied, ANAMNESIS_REQUIRED);
+  const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+  const lane = await procedureLaneDenial(episodeId);
+  if (lane) {
+    throw new PackageAssignError(lane.message, lane.code);
   }
   const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
   if (careDenied) {
@@ -930,7 +931,7 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
       }
     } catch (err) {
       const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
-      if (code === ANAMNESIS_REQUIRED || code === CARE_TEAM_REQUIRED) {
+      if (code === ANAMNESIS_REQUIRED || code === "COMPLAINT_REQUIRED" || code === "DIAGNOSIS_REQUIRED" || code === CARE_TEAM_REQUIRED) {
         console.warn("Walk-in settlement: left PROPOSED until clinical gates pass", {
           orderId: order.id,
           code,

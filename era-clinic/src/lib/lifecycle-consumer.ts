@@ -60,12 +60,9 @@ async function ensureEpisodeAndProgram(
   });
   const autoInstantiate = await shouldAutoInstantiateProgramOnCheckin();
   if (p.programCode && !existingProgram && autoInstantiate) {
-    const fresh = await prisma.clinicalEpisode.findUnique({
-      where: { id: episode.id },
-      select: { anamnesisText: true },
-    });
-    // CLI-55: open episode + intake always; skip physio FIFO until anamnesis filled.
-    if (fresh?.anamnesisText?.trim()) {
+    const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+    const denied = await procedureLaneDenial(episode.id);
+    if (!denied) {
       await instantiateProgramFromTemplate({
         episodeId: episode.id,
         programCode: p.programCode,
@@ -436,12 +433,8 @@ export async function handleStayProductChanged(
     const nights = nightsBetween(checkIn, checkOut) || 1;
 
     try {
-      const fresh = await prisma.clinicalEpisode.findUnique({
-        where: { id: episode.id },
-        select: { anamnesisText: true },
-      });
-      // CLI-55: skip physio FIFO until anamnesis filled for this course.
-      if (!fresh?.anamnesisText?.trim()) continue;
+      const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+      if (await procedureLaneDenial(episode.id)) continue;
 
       if (existing) {
         await recalcProgramQuotas(existing.id, {

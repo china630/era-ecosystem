@@ -5,7 +5,15 @@
 **Not the same as** [`Clinic-Implementation-Matrix.md`](./Clinic-Implementation-Matrix.md) (= Scaffold BE / AC only).  
 **Not** [`READINESS_MATRIX.md`](../READINESS_MATRIX.md) (engineering API/DELIVERY %).
 
+**Closeout (2026-11-10 procedure card stepper):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 stays SCREEN. Plus and minus stay on a procedure card after sessions are done. Minus stops at the done count. Lab extras stay off this modal. Bath and paraffin replacement asks for 7 characters and names the source line. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-10 lab journal groups):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-12 stays SHIPPED. Grouping does not lift Demo or Pilot. A patient can still split across pages. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-10 lane gates):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-55 stays SCREEN. Labs and visits follow their own checkboxes. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy and migration `20261110120000_lane_gate_json`.
+
 **Sources:** Sprint-Index · Implementation-Matrix · UAT-SMOKE · COVERAGE · Pilot · [`docs/editions/clinic.yaml`](../editions/clinic.yaml)
+
+**Closeout (2026-11-10 bonus roster):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. The bonus page is the period table; rates and the chosen staff open from Settings. Does not lift Demo or Pilot. `clinic.yaml` untouched.
 
 **Closeout (2026-11-09 bonus schedule):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-53 stays SCREEN. Bonus calculation is `/reports/bonus`. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy and migration `20261109180000_bonus_schedule_json`.
 
@@ -173,7 +181,7 @@
 | Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (procedures + unpaid labs/visits Pay desk; only `OPEN` episodes — checked-out hidden in every scope; kind badge + title search; scope due by default keeps today's already-paid rows (amber, same as hotel in-house) with Appointment and Payment columns; overdue/noshow/issued/all with a kit `DatePicker` range; HOT-06 extension write still HEADLESS; not SHIPPED) |
 | Local staff password (CLI-WF-PWD-01) | `/account/password` | 🟡 SCREEN (UAT listed; not SHOW / not GA) |
 | Doctor first-day confirm (CLI-52 / Wave C) | `/sanatorium` + card proposed; `/admin/settings` scheduling mode | 🟡 SCREEN (no Confirm all; FIFO kept; UAT open; not SHIPPED) |
-| Doctor bonus extras (CLI-53 / Wave D) | `/reports/procedures` fulfillment + doctor-bonus; `/reports/bonus` | 🟡 SCREEN (package/extra assigned vs completed; Nafta bonus month; UAT open; not SHIPPED) |
+| Doctor bonus extras (CLI-53 / Wave D) | `/reports/procedures` fulfillment + doctor-bonus; `/reports/bonus` | 🟡 SCREEN (period table of HR-picked staff, share of the total before the name; settings modal; UAT open; not SHIPPED) |
 | Paid revenue by code (CLI-63) | `/reports/revenue` | 🟡 SCREEN (paid extras, labs, exams; code resolved at read; UAT open; not SHIPPED) |
 | Patient assignment ledger (CLI-64) | `/reports/patient-assignments` + `/print/patient-assignments/[episodeId]` | 🟡 SCREEN (one episode; procedures/labs/visits; room+kind; amount after acceptance; print; UAT open — not SHOW / not Pilot) |
 | One stay two episodes (CLI-54 / Wave E) | `/sanatorium` multi-row same room | 🟡 SCREEN (same surname stays two rows; 1-click select / 2-click open Guest; nationality code, first doctor, hotel checkout; UAT open; not SHIPPED) |

@@ -82,6 +82,25 @@ const patchSchema = z.object({
   printModalitySignersJson: z.string().max(8000).nullable().optional(),
   checkupSectionsJson: z.string().nullable().optional(),
   extraProcedureRoute: z.enum(["PLAN_BEFORE_PAY", "HOLD_UNTIL_PAY", "SHOW_ON_PLAN"]).optional(),
+  laneGate: z
+    .object({
+      procedures: z.object({
+        anamnesis: z.boolean(),
+        complaints: z.boolean(),
+        diagnoses: z.boolean(),
+      }),
+      labs: z.object({
+        anamnesis: z.boolean(),
+        complaints: z.boolean(),
+        diagnoses: z.boolean(),
+      }),
+      visits: z.object({
+        anamnesis: z.boolean(),
+        complaints: z.boolean(),
+        diagnoses: z.boolean(),
+      }),
+    })
+    .optional(),
   procedurePrintExtraLang: z.enum(["az", "ru", "en"]).nullable().optional(),
 });
 

@@ -405,14 +405,8 @@ export async function placeConfirmedProcedures(
   const episodeId = orders[0].clinicalEpisodeId;
   const dailyCaps = episodeId ? await loadEpisodeDailyCaps(episodeId) : null;
   if (episodeId) {
-    const episode = await prisma.clinicalEpisode.findUnique({
-      where: { id: episodeId },
-      select: { anamnesisText: true },
-    });
-    const { episodeAnamnesisDenied } = await import(
-      "@/domain/sanatorium/episode-gates"
-    );
-    const denied = episodeAnamnesisDenied(episode?.anamnesisText);
+    const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+    const denied = await procedureLaneDenial(episodeId);
     if (denied) {
       return {
         placed: 0,

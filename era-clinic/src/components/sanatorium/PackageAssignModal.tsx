@@ -489,7 +489,9 @@ export function PackageAssignModal({
           const data = await extraRes.json();
           const payload = data.data ?? data;
           setExtraPrices(payload.prices ?? {});
-          const pending = Array.isArray(payload.items) ? payload.items : [];
+          const pending = (Array.isArray(payload.items) ? payload.items : []).filter(
+            (row: { kind?: string }) => row.kind !== "lab",
+          );
           setExtraPendingCut({});
           setExtraPending(
             pending.map(
@@ -1094,6 +1096,13 @@ export function PackageAssignModal({
     return formatPackageAssignMissLines(misses, tPhysio);
   }
 
+  function replaceReasonToast(): string {
+    const name =
+      balances.find((row) => row.procedureCode === replaceFrom)?.procedureName ??
+      replaceFrom;
+    return tPhysio("replaceBathsNeedReason", { name: name || "—" });
+  }
+
   function assignSaveMessage(payload: {
     code?: unknown;
     error?: unknown;
@@ -1112,6 +1121,7 @@ export function PackageAssignModal({
     if (code === "NO_CARE_TEAM") return tPhysio("packageAssignNoCareTeam");
     if (code === "LAB_ALREADY_OPEN") return tPhysio("packageAssignLabOpen");
     if (code === "LAB_ONE") return tPhysio("packageAssignLabOne");
+    if (code === "REASON_REQUIRED") return replaceReasonToast();
     if (serverError) return code && code !== "PLACE_FAILED" && !serverError.includes(code)
       ? `${serverError} (${code})`
       : serverError;
@@ -1382,7 +1392,6 @@ export function PackageAssignModal({
   }
 
   function bumpPlusOne(row: PackageAssignedAgg) {
-    if (row.locked) return;
     const key = assignedKey(row);
     if (pendingCancel.has(key)) {
       setPendingCancel((prev) => {
@@ -1404,17 +1413,23 @@ export function PackageAssignModal({
     }
     const quota = menuQuotaForAssigned(row);
     const rem = draftRemaining.get(quota) ?? 0;
-    if (rem < 1) return;
-    pushDraft({
-      procedureCode: row.procedureCode,
-      procedureName: row.procedureName,
-      qty: 1,
+    const detail = {
       note: row.note ?? "",
       physioFields: row.physioFields ?? null,
       siteIds: row.siteIds ?? [],
       siteApplyMode: row.siteApplyMode ?? null,
       siteLaterality: row.siteLaterality,
       paramsLabel: row.paramsLabel ?? "",
+    };
+    if (rem < 1) {
+      pushPaid(row.procedureCode, row.procedureName, 1, detail);
+      return;
+    }
+    pushDraft({
+      procedureCode: row.procedureCode,
+      procedureName: row.procedureName,
+      qty: 1,
+      ...detail,
       fingerprint: regimeOf(row),
       burnPoolCode: quota !== row.procedureCode ? quota : null,
     });
@@ -1434,7 +1449,6 @@ export function PackageAssignModal({
   }
 
   function bumpMinusOne(row: PackageAssignedAgg) {
-    if (row.locked) return;
     if (row.qty < 1) return;
     const key = assignedKey(row);
     const matching = draft.find((d) => draftMatchesAssigned(d, row, menuQuotaForAssigned(row)));
@@ -1448,14 +1462,10 @@ export function PackageAssignModal({
       );
       return;
     }
-    const floor = row.doneQty ?? 0;
+    const kept = Math.max(row.doneQty ?? 0, row.qty - (row.movableOrderIds?.length ?? 0));
     const cut = pendingCut[key] ?? 0;
     const live = row.qty - cut;
-    if (live - 1 < floor) return;
-    if (live - 1 <= floor) {
-      setPendingCancel((prev) => new Set(prev).add(key));
-      return;
-    }
+    if (live - 1 < kept) return;
     setPendingCut((prev) => ({ ...prev, [key]: cut + 1 }));
   }
 
@@ -1511,8 +1521,8 @@ export function PackageAssignModal({
   async function submitReplace() {
     if (!replaceFrom || !replaceTo || replaceQty < 1) return;
     const reason = replaceReason.trim();
-    if (reason.length < 2) {
-      showApiError({ error: tPhysio("replaceBathsNeedReason") });
+    if (reason.length < 7) {
+      showApiError({ error: replaceReasonToast() });
       return;
     }
     setBusy(true);
@@ -2007,12 +2017,13 @@ export function PackageAssignModal({
               onMinus: () => void,
               onPlus: () => void,
               plusDisabled: boolean,
+              minusDisabled = false,
             ) => (
               <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
                   className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
-                  disabled={busy || qty < 1}
+                  disabled={busy || qty < 1 || minusDisabled}
                   onClick={onMinus}
                   aria-label={labels.qtyDown ?? "−1"}
                 >
@@ -2034,20 +2045,24 @@ export function PackageAssignModal({
               <>
               <ul className="space-y-2">
                 {lanes.map((lane) => {
-                  const quota = lane.assigned
-                    ? lane.assigned.packageQuotaCode || lane.assigned.procedureCode
-                    : lane.pkgDraft?.burnPoolCode || lane.code;
-                  const rem = draftRemaining.get(quota) ?? 0;
                   const saxlaNo = lane.pkgDraft
                     ? saxlaOrderByDraftKey.get(lane.pkgDraft.key)
                     : undefined;
+                  const movable = lane.assigned
+                    ? lane.assigned.movableOrderIds?.length ??
+                      (lane.pkgLocked ? 0 : lane.assigned.qty)
+                    : 0;
+                  const kept = lane.assigned
+                    ? Math.max(lane.assigned.doneQty ?? 0, lane.assigned.qty - movable)
+                    : 0;
+                  const packageMinusDisabled = Boolean(lane.assigned) && lane.pkgQty <= kept;
                   return (
                     <li
                       key={lane.key}
                       id={`assign-lane-${lane.code}:${lane.regimeKey}`}
                       className={`${CARD_CONTAINER_CLASS} px-3 py-2 text-[13px] ${
-                        lane.pkgLocked ? "opacity-80" : ""
-                      } ${planFocus === `${lane.code}:${lane.regimeKey}` ? "ring-2 ring-[#1F4E79]" : ""}`}
+                        planFocus === `${lane.code}:${lane.regimeKey}` ? "ring-2 ring-[#1F4E79]" : ""
+                      }`}
                     >
                       <div className="mb-1 flex items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -2090,25 +2105,18 @@ export function PackageAssignModal({
                       {lane.pkgQty > 0 || lane.assigned || lane.pkgDraft ? (
                         <div className="flex items-center justify-between gap-2 py-1">
                           <span className={TEXT_MUTED_CLASS}>{tPhysio("fromPackage")}</span>
-                          {lane.pkgLocked ? (
-                            <span className="tabular-nums">{lane.pkgQty}</span>
-                          ) : (
-                            stepper(
-                              lane.pkgQty,
-                              () => {
-                                if (lane.assigned) bumpMinusOne(lane.assigned);
-                                else if (lane.pkgDraft) bumpLeftoverMinus(lane.pkgDraft);
-                              },
-                              () => {
-                                if (lane.assigned) bumpPlusOne(lane.assigned);
-                                else if (lane.pkgDraft) bumpLeftoverPlus(lane.pkgDraft);
-                              },
-                              rem < 1 &&
-                                !(
-                                  lane.assigned &&
-                                  (pendingCut[assignedKey(lane.assigned)] ?? 0) > 0
-                                ),
-                            )
+                          {stepper(
+                            lane.pkgQty,
+                            () => {
+                              if (lane.assigned) bumpMinusOne(lane.assigned);
+                              else if (lane.pkgDraft) bumpLeftoverMinus(lane.pkgDraft);
+                            },
+                            () => {
+                              if (lane.assigned) bumpPlusOne(lane.assigned);
+                              else if (lane.pkgDraft) bumpLeftoverPlus(lane.pkgDraft);
+                            },
+                            false,
+                            packageMinusDisabled,
                           )}
                         </div>
                       ) : null}
@@ -2369,7 +2377,7 @@ export function PackageAssignModal({
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
-                  disabled={busy || !replaceFrom || !replaceTo || replaceReason.trim().length < 2}
+                  disabled={busy || !replaceFrom || !replaceTo || replaceReason.trim().length < 7}
                   onClick={() => void submitReplace()}
                 >
                   {tPhysio("replaceBaths")}

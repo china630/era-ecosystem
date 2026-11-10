@@ -11,6 +11,12 @@ import {
   type ClinicPresetCode,
 } from "@/domain/presets/clinic-presets";
 import {
+  NAFTA_LANE_GATE,
+  normalizeLaneGate,
+  type LaneGatePolicy,
+  type LaneId,
+} from "@/domain/sanatorium/lane-gates";
+import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
@@ -164,6 +170,7 @@ export default function ClinicAdminSettingsPage() {
   const [draftCard, setDraftCard] = useState<CardLimits>(CARD_DEFAULTS);
   const [draftWork, setDraftWork] = useState<WorkHours>(WORK_DEFAULTS);
   const [draftSched, setDraftSched] = useState<SchedulingDefaults>(SCHED_DEFAULTS);
+  const [laneGate, setLaneGate] = useState<LaneGatePolicy>(NAFTA_LANE_GATE);
   const [chip, setChip] = useState("clinic");
 
   useEffect(() => {
@@ -237,6 +244,7 @@ export default function ClinicAdminSettingsPage() {
             row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
         };
         setSchedDefaults(sched);
+        setLaneGate(normalizeLaneGate(row.laneGate));
         setDraftSched(sched);
       });
   }, []);
@@ -268,6 +276,7 @@ export default function ClinicAdminSettingsPage() {
         ...draftCard,
         ...draftWork,
         ...draftSched,
+        laneGate,
         procedureCheckInSameDayUntil: draftSched.procedureCheckInSameDayUntil
           ? `${draftSched.procedureCheckInSameDayUntil}T12:00:00.000Z`
           : null,
@@ -333,6 +342,7 @@ export default function ClinicAdminSettingsPage() {
         extraProcedureRoute:
           row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
       });
+      setLaneGate(normalizeLaneGate(row.laneGate));
       setOpen(false);
       showSuccess(tc("saved"));
       window.location.reload();
@@ -822,6 +832,40 @@ export default function ClinicAdminSettingsPage() {
               }));
             }}
           />
+          <div className="text-sm">
+            <p className="mb-2 font-medium">{t("laneGate")}</p>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th />
+                  {(["anamnesis", "complaints", "diagnoses"] as const).map((fact) => (
+                    <th key={fact} className="px-2 text-left font-medium">{t(`laneFact_${fact}`)}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(["procedures", "labs", "visits"] as LaneId[]).map((lane) => (
+                  <tr key={lane}>
+                    <td className="py-1 pr-2">{t(`lane_${lane}`)}</td>
+                    {(["anamnesis", "complaints", "diagnoses"] as const).map((fact) => (
+                      <td key={fact} className="px-2">
+                        <input
+                          type="checkbox"
+                          checked={laneGate[lane][fact]}
+                          onChange={(e) =>
+                            setLaneGate((prev) => ({
+                              ...prev,
+                              [lane]: { ...prev[lane], [fact]: e.target.checked },
+                            }))
+                          }
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <CatalogField
             kind="CLOSED_SMALL"
             label={t("programSchedulingMode")}

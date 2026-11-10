@@ -300,13 +300,6 @@ export async function POST(req: Request) {
       reservationId: body.reservationId,
     });
     if (clinicalEpisodeId) {
-      const episode = await prisma.clinicalEpisode.findUnique({
-        where: { id: clinicalEpisodeId },
-        select: { anamnesisText: true },
-      });
-      const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
-        "@/domain/sanatorium/episode-gates"
-      );
       const {
         CARE_TEAM_REQUIRED,
         episodeCareTeamDenied,
@@ -320,9 +313,10 @@ export async function POST(req: Request) {
       if (careDenied) {
         return jsonError(careDenied, 409, { code: CARE_TEAM_REQUIRED });
       }
-      const deniedAn = episodeAnamnesisDenied(episode?.anamnesisText);
+      const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+      const deniedAn = await procedureLaneDenial(clinicalEpisodeId);
       if (deniedAn) {
-        return jsonError(deniedAn, 409, { code: ANAMNESIS_REQUIRED });
+        return jsonError(deniedAn.message, 409, { code: deniedAn.code });
       }
     }
     const { clinicDayIsClosed, SlotDecisionError, SLOT_REASON_MESSAGE } = await import(

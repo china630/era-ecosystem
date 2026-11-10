@@ -22,6 +22,8 @@ export type BonusSchedule = {
   usPractitionerId: string | null;
   /** practitionerId -> 0..100. Missing means 100. */
   coefficients: Record<string, number>;
+  /** Staff HR put on this sheet. Empty means nobody, not every doctor. */
+  memberIds: string[];
   walkIn: BonusRateTable;
   inHouse: BonusRateTable;
 };
@@ -46,6 +48,7 @@ export const NAFTA_BONUS_SCHEDULE: BonusSchedule = {
   labPractitionerId: null,
   usPractitionerId: null,
   coefficients: {},
+  memberIds: [],
   walkIn: table([
     [15, 35],
     [25, 10],
@@ -82,6 +85,9 @@ export function normalizeSchedule(raw: unknown): BonusSchedule {
   base.usPractitionerId = row.usPractitionerId ?? null;
   if (row.coefficients && typeof row.coefficients === "object") {
     base.coefficients = row.coefficients;
+  }
+  if (Array.isArray(row.memberIds)) {
+    base.memberIds = [...new Set(row.memberIds.map((id) => String(id).trim()).filter(Boolean))];
   }
   for (const group of ["walkIn", "inHouse"] as const) {
     const incoming = row[group];
