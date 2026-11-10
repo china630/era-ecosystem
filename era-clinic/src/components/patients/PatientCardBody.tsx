@@ -15,7 +15,7 @@ import {
   laneDenied,
   normalizeLaneGate,
   type LaneGatePolicy,
-} from "@/domain/sanatorium/lane-gates";
+} from "@/domain/sanatorium/lane-gate-policy";
 import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";

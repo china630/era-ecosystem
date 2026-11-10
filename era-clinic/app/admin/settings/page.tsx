@@ -15,7 +15,7 @@ import {
   normalizeLaneGate,
   type LaneGatePolicy,
   type LaneId,
-} from "@/domain/sanatorium/lane-gates";
+} from "@/domain/sanatorium/lane-gate-policy";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
