@@ -526,18 +526,16 @@ export async function completeCheckupAndSchedule(input: {
   });
   if (!episode) throw new Error('Episode not found');
   if (episode.programInstance) throw new Error('Program already assigned');
-  // Strict AND: anamnesis + ≥1 complaint (ICD/labs optional — day-1 before diagnostics).
-  const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
-    "@/domain/sanatorium/episode-gates"
-  );
-  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
-  if (anamnesisDenied) {
-    const err = new Error(anamnesisDenied);
-    (err as Error & { code?: string }).code = ANAMNESIS_REQUIRED;
+  const { laneDenied, loadLaneGate } = await import("@/domain/sanatorium/lane-gates");
+  const denied = laneDenied(await loadLaneGate(), "procedures", {
+    anamnesisText: episode.anamnesisText,
+    complaintCount: episode.complaints.length,
+    diagnosisCount: episode.diagnoses.length,
+  });
+  if (denied) {
+    const err = new Error(denied.message);
+    (err as Error & { code?: string }).code = denied.code;
     throw err;
-  }
-  if (episode.complaints.length === 0) {
-    throw new Error('Add anamnesis and at least one complaint before scheduling');
   }
 
   const programCode = input.programCode ?? episode.programCode;
@@ -1082,6 +1080,14 @@ export async function createEpisodeLabOrder(
   if (closed) {
     const err = new Error(closed);
     (err as Error & { code?: string }).code = EPISODE_CLOSED;
+    throw err;
+  }
+
+  const { laneDenial } = await import("@/domain/sanatorium/lane-gates");
+  const lane = await laneDenial(episodeId, "labs");
+  if (lane) {
+    const err = new Error(lane.message);
+    (err as Error & { code?: string }).code = lane.code;
     throw err;
   }
 

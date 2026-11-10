@@ -209,8 +209,17 @@ export async function GET(req: Request) {
         where,
         include: {
           patientRef: true,
-          visit: true,
-          episode: { select: { roomNumber: true } },
+          visit: { include: { practitioner: { select: { fullName: true } } } },
+          episode: {
+            select: {
+              roomNumber: true,
+              careDoctors: {
+                orderBy: { assignedAt: "asc" },
+                take: 1,
+                select: { practitioner: { select: { fullName: true } } },
+              },
+            },
+          },
           items: {
             include: {
               diagnosticService: { include: { modality: true } },
@@ -231,7 +240,7 @@ export async function GET(req: Request) {
                       { resultDate: query.sortDir ?? "desc" },
                       { createdAt: query.sortDir ?? "desc" },
                     ]
-                  : [{ collectedAt: "desc" }, { createdAt: "desc" }],
+                  : [{ patientRef: { fullName: "asc" } }, { collectedAt: "desc" }, { createdAt: "desc" }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
       }),

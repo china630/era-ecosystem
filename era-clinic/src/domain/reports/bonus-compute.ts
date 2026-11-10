@@ -47,6 +47,8 @@ export type BonusLine = {
   staffKind: string;
   turnover: number;
   bonus: number;
+  /** This line's bonus as a percent of the period total, including the fund. */
+  shareOfTotal: number;
 };
 
 export type BonusMonth = {
@@ -56,11 +58,19 @@ export type BonusMonth = {
   lines: BonusLine[];
   fundTurnover: number;
   fundBonus: number;
+  fundShare: number;
   total: number;
 };
 
 export async function computeBonusMonth(from: string, to: string): Promise<BonusMonth> {
   const schedule = await loadBonusSchedule();
+  const rosterIds = [
+    ...new Set(
+      [...schedule.memberIds, schedule.labPractitionerId, schedule.usPractitionerId].filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ];
   const factor = netFactor(schedule);
   const { start } = bakuDayBounds(from);
   const { end } = bakuDayBounds(to);
@@ -98,7 +108,7 @@ export async function computeBonusMonth(from: string, to: string): Promise<Bonus
     }),
     prisma.serviceCatalogCache.findMany({ select: { code: true, amount: true } }),
     prisma.practitioner.findMany({
-      where: { active: true, staffKind: { in: ["DOCTOR", "MASSAGE", "LAB"] } },
+      where: { id: { in: rosterIds } },
       select: { id: true, fullName: true, staffKind: true },
     }),
   ]);
@@ -187,22 +197,30 @@ export async function computeBonusMonth(from: string, to: string): Promise<Bonus
     if (owner) add(owner, price, price * factor * (rates.perform / 100) * coef(owner));
   }
 
-  const lines: BonusLine[] = [...buckets.entries()]
-    .map(([id, row]) => {
-      const person = personById.get(id)!;
+  const fundTurnover = Math.max(0, allTurnover - poolTurnover);
+  const fundBonus = round2(fundTurnover * factor * (schedule.fundPercent / 100));
+  const peopleBonus = round2(
+    rosterIds.reduce((sum, id) => sum + (buckets.get(id)?.bonus ?? 0), 0),
+  );
+  const total = round2(peopleBonus + fundBonus);
+  const share = (bonus: number) => (total > 0 ? round2((bonus / total) * 100) : 0);
+  const lines: BonusLine[] = rosterIds
+    .map((id) => {
+      const person = personById.get(id);
+      if (!person) return null;
+      const row = buckets.get(id) ?? { turnover: 0, bonus: 0 };
+      const bonus = round2(row.bonus);
       return {
         practitionerId: id,
         name: person.fullName,
-        staffKind: person.staffKind,
+        staffKind: String(person.staffKind),
         turnover: round2(row.turnover),
-        bonus: round2(row.bonus),
+        bonus,
+        shareOfTotal: share(bonus),
       };
     })
+    .filter((line): line is BonusLine => line != null)
     .sort((a, b) => a.name.localeCompare(b.name));
-
-  const fundTurnover = Math.max(0, allTurnover - poolTurnover);
-  const fundBonus = round2(fundTurnover * factor * (schedule.fundPercent / 100));
-  const total = round2(lines.reduce((sum, line) => sum + line.bonus, 0) + fundBonus);
   return {
     from,
     to,
@@ -210,6 +228,7 @@ export async function computeBonusMonth(from: string, to: string): Promise<Bonus
     lines,
     fundTurnover: round2(fundTurnover),
     fundBonus,
+    fundShare: share(fundBonus),
     total,
   };
 }

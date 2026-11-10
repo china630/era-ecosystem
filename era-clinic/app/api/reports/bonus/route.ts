@@ -23,11 +23,18 @@ export async function GET(req: Request) {
     const from = (url.searchParams.get("from") ?? todayBakuYmd()).trim();
     const to = (url.searchParams.get("to") ?? from).trim();
     if (!DATE_RE.test(from) || !DATE_RE.test(to)) return jsonError("from and to must be YYYY-MM-DD", 400);
-    const [schedule, month, people] = await Promise.all([
-      loadBonusSchedule(),
+    const schedule = await loadBonusSchedule();
+    const [month, people] = await Promise.all([
       computeBonusMonth(from, to),
       prisma.practitioner.findMany({
-        where: { active: true, staffKind: { in: ["DOCTOR", "MASSAGE", "LAB"] } },
+        where: {
+          OR: [
+            { active: true, cpEmploymentId: { not: null } },
+            { id: { in: schedule.memberIds } },
+            ...(schedule.labPractitionerId ? [{ id: schedule.labPractitionerId }] : []),
+            ...(schedule.usPractitionerId ? [{ id: schedule.usPractitionerId }] : []),
+          ],
+        },
         select: { id: true, fullName: true, staffKind: true },
         orderBy: { fullName: "asc" },
       }),
@@ -56,6 +63,7 @@ const bodySchema = z.object({
   labPractitionerId: z.string().nullable(),
   usPractitionerId: z.string().nullable(),
   coefficients: z.record(z.string(), z.number()),
+  memberIds: z.array(z.string()).optional(),
   walkIn: table,
   inHouse: table,
 });

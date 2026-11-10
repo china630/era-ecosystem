@@ -12,7 +12,7 @@ import {
   replaceProcedureAllocations,
   type AllocationWrite,
 } from "@/domain/procedure/procedure-allocation.service";
-import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
+import { ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
   episodeCareTeamDenied,
@@ -572,9 +572,10 @@ async function loadEpisodeForAssign(
     throw new PackageAssignError("No program instance", "NO_PROGRAM");
   }
   if (requireClinicalGates) {
-    const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
-    if (anamnesisDenied) {
-      throw new PackageAssignError(anamnesisDenied, ANAMNESIS_REQUIRED);
+    const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+    const denied = await procedureLaneDenial(episodeId);
+    if (denied) {
+      throw new PackageAssignError(denied.message, denied.code);
     }
     const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
     if (careDenied) {
@@ -742,9 +743,10 @@ export async function getPackageAssignSnapshot(
     templateMembers: blockMemberRows,
   });
 
-  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
+  const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+  const laneDeniedRow = await procedureLaneDenial(episodeId);
   const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
-  const softWarnDay1 = careDenied ?? anamnesisDenied;
+  const softWarnDay1 = careDenied ?? laneDeniedRow?.message ?? null;
 
   // Heal auto analyses/diagnostics created without package stamp so the modal
   // right column (assignedStudies) and left studyBalances stay honest.
@@ -1592,8 +1594,8 @@ function assignFailure(err: unknown): PackageAssignError {
       ? (err as { code: string }).code
       : "";
   const message = err instanceof Error ? err.message : "Package seating failed";
-  if (code === ANAMNESIS_REQUIRED) {
-    return new PackageAssignError(message, ANAMNESIS_REQUIRED, 409, [
+  if (code === ANAMNESIS_REQUIRED || code === "COMPLAINT_REQUIRED" || code === "DIAGNOSIS_REQUIRED") {
+    return new PackageAssignError(message, code, 409, [
       { ymd: "", procedureCode: "", procedureName: "", reason: "anamnesis" },
     ]);
   }
@@ -2469,8 +2471,12 @@ export async function transferBathQuota(
   if (qty < 1) {
     throw new PackageAssignError("qty must be >= 1", "INVALID", 400);
   }
-  if (reason.length < 2) {
-    throw new PackageAssignError("Contraindication reason is required", "REASON_REQUIRED", 400);
+  if (reason.length < 7) {
+    throw new PackageAssignError(
+      "Replacement reason must be at least 7 characters",
+      "REASON_REQUIRED",
+      400,
+    );
   }
   if (isPackagePoolCode(input.toCode) || isBathTransferQuota(input.toCode)) {
     throw new PackageAssignError(

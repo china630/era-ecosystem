@@ -18,12 +18,6 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { resolveExtraPrescriber } from "@/lib/extra-prescriber";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
-import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
-import {
-  CARE_TEAM_REQUIRED,
-  episodeCareTeamDenied,
-} from "@/domain/sanatorium/episode-care-team-gates";
-import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { parseBakuDateTime } from "@/lib/baku-day";
 
 export type DiagnosticPrescribeLine = {
@@ -51,14 +45,6 @@ async function loadEpisode(episodeId: string) {
   if (!episode) throw new PackageAssignError("Episode not found", "NOT_FOUND", 404);
   if (episode.status !== "OPEN") {
     throw new PackageAssignError("Episode is not OPEN", "NOT_OPEN");
-  }
-  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
-  if (anamnesisDenied) {
-    throw new PackageAssignError(anamnesisDenied, ANAMNESIS_REQUIRED);
-  }
-  const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
-  if (careDenied) {
-    throw new PackageAssignError(careDenied, CARE_TEAM_REQUIRED);
   }
   return episode;
 }
@@ -149,6 +135,8 @@ export async function prescribeDiagnosticsExtras(
   const origin = episode.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE";
   const labOrderIds: string[] = [];
   const visitIds: string[] = [];
+  let labsChecked = false;
+  let visitsChecked = false;
 
   const { resolvePackageStampForEpisode, isOverEntitlementQuota } = await import(
     "@/domain/sanatorium/entitlement-usage.service"
@@ -198,6 +186,12 @@ export async function prescribeDiagnosticsExtras(
     }
 
     if (service.kind === "visit") {
+      if (!visitsChecked) {
+        visitsChecked = true;
+        const { laneDenial } = await import("@/domain/sanatorium/lane-gates");
+        const denied = await laneDenial(episodeId, "visits");
+        if (denied) throw new PackageAssignError(denied.message, denied.code);
+      }
       const doctorId =
         prescribedByPractitionerId ??
         (
@@ -267,6 +261,13 @@ export async function prescribeDiagnosticsExtras(
         visitIds.push(visit.id);
       }
       continue;
+    }
+
+    if (!labsChecked) {
+      labsChecked = true;
+      const { laneDenial } = await import("@/domain/sanatorium/lane-gates");
+      const denied = await laneDenial(episodeId, "labs");
+      if (denied) throw new PackageAssignError(denied.message, denied.code);
     }
 
     for (let i = 0; i < line.qty; i++) {

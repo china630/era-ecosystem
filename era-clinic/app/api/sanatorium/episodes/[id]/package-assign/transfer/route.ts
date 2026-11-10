@@ -17,7 +17,7 @@ const schema = z.object({
   fromCode: z.string().min(1),
   toCode: z.string().min(1),
   qty: z.number().int().positive().max(40),
-  reason: z.string().min(2).max(2000),
+  reason: z.string().min(7).max(2000),
 });
 
 export async function POST(

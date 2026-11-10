@@ -96,6 +96,8 @@ export function handleRouteError(err: unknown) {
     const code = (err as { code: string }).code;
     const conflictCodes = new Set([
       "ANAMNESIS_REQUIRED",
+      "COMPLAINT_REQUIRED",
+      "DIAGNOSIS_REQUIRED",
       "WALK_IN_OPEN_EXISTS",
       "EPISODE_CLOSED",
       "EPISODE_NOT_IDLE",

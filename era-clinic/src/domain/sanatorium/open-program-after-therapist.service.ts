@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
 import { linkExistingAutoOrdersToPackage } from "@/domain/sanatorium/package-auto-apply.service";
-import { episodeAnamnesisDenied } from "@/domain/sanatorium/episode-gates";
 import { episodeCareTeamDenied } from "@/domain/sanatorium/episode-care-team-gates";
 import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { QuotaBelowMinError } from "@/lib/program-quota";
@@ -68,15 +67,15 @@ export async function tryOpenProgramAfterTherapistStage(
   if (episode.status !== "OPEN") return { opened: false, reason: "NOT_OPEN" };
   if (episode.programInstance) return { opened: false, reason: "ALREADY_OPEN" };
 
-  if (episodeAnamnesisDenied(episode.anamnesisText)) {
-    return { opened: false, reason: "NO_ANAMNESIS" };
-  }
-  if (episode.complaints.length === 0) {
-    return { opened: false, reason: "NO_COMPLAINT" };
-  }
-  if (episode.diagnoses.length === 0) {
-    return { opened: false, reason: "NO_DIAGNOSIS" };
-  }
+  const { laneDenied, loadLaneGate } = await import("@/domain/sanatorium/lane-gates");
+  const denied = laneDenied(await loadLaneGate(), "procedures", {
+    anamnesisText: episode.anamnesisText,
+    complaintCount: episode.complaints.length,
+    diagnosisCount: episode.diagnoses.length,
+  });
+  if (denied?.code === "ANAMNESIS_REQUIRED") return { opened: false, reason: "NO_ANAMNESIS" };
+  if (denied?.code === "COMPLAINT_REQUIRED") return { opened: false, reason: "NO_COMPLAINT" };
+  if (denied?.code === "DIAGNOSIS_REQUIRED") return { opened: false, reason: "NO_DIAGNOSIS" };
 
   const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
   if (careDenied) return { opened: false, reason: "NO_CARE_TEAM" };

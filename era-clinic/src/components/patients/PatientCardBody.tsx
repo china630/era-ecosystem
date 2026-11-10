@@ -10,6 +10,12 @@ import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses
 import { PatientCardComplaints } from "@/components/patients/PatientCardComplaints";
 import { PatientCardAnamnesis } from "@/components/patients/PatientCardAnamnesis";
 import { day1ProgramToast } from "@/lib/day1-program-toast";
+import {
+  NAFTA_LANE_GATE,
+  laneDenied,
+  normalizeLaneGate,
+  type LaneGatePolicy,
+} from "@/domain/sanatorium/lane-gate-policy";
 import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
@@ -178,6 +184,7 @@ export function PatientCardBody({
   const [careTeamCount, setCareTeamCount] = useState(0);
   const [complaintCount, setComplaintCount] = useState(0);
   const [diagnosisCount, setDiagnosisCount] = useState(0);
+  const [laneGate, setLaneGate] = useState<LaneGatePolicy>(NAFTA_LANE_GATE);
   const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
   const [cardTab, setCardTab] = useState<PatientCardTab>(() => tabFromCardPanel(panel));
   const [printOpen, setPrintOpen] = useState(false);
@@ -216,7 +223,16 @@ export function PatientCardBody({
   const episodeReadOnly = selectedEpisode?.status !== "OPEN";
   const anamnesisOk = Boolean(anamnesis.trim());
   const careTeamOk = careTeamCount > 0;
-  const studiesUnlocked = anamnesisOk && complaintCount > 0 && diagnosisCount > 0;
+  const studiesUnlocked = !laneDenied(laneGate, "procedures", {
+    anamnesisText: anamnesis,
+    complaintCount,
+    diagnosisCount,
+  });
+  const labsUnlocked = !laneDenied(laneGate, "labs", {
+    anamnesisText: anamnesis,
+    complaintCount,
+    diagnosisCount,
+  });
 
   const sexLabel = useCallback(
     (sex: PatientSex | undefined) => {
@@ -239,6 +255,7 @@ export function PatientCardBody({
     const parsed = await res.json();
     const items = (parsed.data?.items ?? parsed.items ?? []) as EpisodeOption[];
     setEpisodes(items);
+    setLaneGate(normalizeLaneGate(parsed.data?.laneGate ?? parsed.laneGate));
     if (items.length > 0) {
       const preferred =
         items.find((item) => item.id === initialEpisodeId) ??
@@ -697,8 +714,8 @@ export function PatientCardBody({
             episodeId={selectedEpisodeId}
             patientOrigin={selectedEpisode.patientOrigin}
             readOnly={episodeReadOnly}
-            anamnesisOk={anamnesisOk}
             studiesUnlocked={studiesUnlocked}
+            labsUnlocked={labsUnlocked}
             refreshKey={clinicalRefreshKey}
             section={cardTab}
             episodeClosed={selectedEpisode.status === "CLOSED"}

@@ -18,7 +18,6 @@ import {
   createEpisodeLabOrder,
   getEpisode,
 } from "@/lib/services/sanatorium.service";
-import { ANAMNESIS_REQUIRED, episodeAnamnesisDenied } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
   episodeCareTeamDenied,
@@ -264,11 +263,9 @@ export async function POST(
       if (existing) return jsonError("Program already assigned", 409);
       const episode = await prisma.clinicalEpisode.findUnique({ where: { id } });
       if (!episode) return jsonError("Episode not found", 404);
-      const { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } = await import(
-        "@/domain/sanatorium/episode-gates"
-      );
-      const denied = episodeAnamnesisDenied(episode.anamnesisText);
-      if (denied) return jsonError(denied, 409, { code: ANAMNESIS_REQUIRED });
+      const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+      const denied = await procedureLaneDenial(id);
+      if (denied) return jsonError(denied.message, 409, { code: denied.code });
       const instance = await instantiateProgramFromTemplate({
         episodeId: id,
         programCode: parsed.programCode,
