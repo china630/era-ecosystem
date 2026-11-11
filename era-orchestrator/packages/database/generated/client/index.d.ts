@@ -104416,8 +104416,18 @@ export namespace Prisma {
 
   export type AggregateOrganizationGuestApp = {
     _count: OrganizationGuestAppCountAggregateOutputType | null
+    _avg: OrganizationGuestAppAvgAggregateOutputType | null
+    _sum: OrganizationGuestAppSumAggregateOutputType | null
     _min: OrganizationGuestAppMinAggregateOutputType | null
     _max: OrganizationGuestAppMaxAggregateOutputType | null
+  }
+
+  export type OrganizationGuestAppAvgAggregateOutputType = {
+    leadAlertMinutes: number | null
+  }
+
+  export type OrganizationGuestAppSumAggregateOutputType = {
+    leadAlertMinutes: number | null
   }
 
   export type OrganizationGuestAppMinAggregateOutputType = {
@@ -104428,6 +104438,9 @@ export namespace Prisma {
     logoUrl: string | null
     locale: string | null
     deskPhone: string | null
+    postStayMessage: string | null
+    doctorOnDutyPhone: string | null
+    leadAlertMinutes: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -104440,6 +104453,9 @@ export namespace Prisma {
     logoUrl: string | null
     locale: string | null
     deskPhone: string | null
+    postStayMessage: string | null
+    doctorOnDutyPhone: string | null
+    leadAlertMinutes: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -104452,11 +104468,25 @@ export namespace Prisma {
     logoUrl: number
     locale: number
     deskPhone: number
+    catalogJson: number
+    postStayMessage: number
+    offersJson: number
+    doctorOnDutyPhone: number
+    leadAlertMinutes: number
+    enabledOrderKinds: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
+
+  export type OrganizationGuestAppAvgAggregateInputType = {
+    leadAlertMinutes?: true
+  }
+
+  export type OrganizationGuestAppSumAggregateInputType = {
+    leadAlertMinutes?: true
+  }
 
   export type OrganizationGuestAppMinAggregateInputType = {
     organizationId?: true
@@ -104466,6 +104496,9 @@ export namespace Prisma {
     logoUrl?: true
     locale?: true
     deskPhone?: true
+    postStayMessage?: true
+    doctorOnDutyPhone?: true
+    leadAlertMinutes?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -104478,6 +104511,9 @@ export namespace Prisma {
     logoUrl?: true
     locale?: true
     deskPhone?: true
+    postStayMessage?: true
+    doctorOnDutyPhone?: true
+    leadAlertMinutes?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -104490,6 +104526,12 @@ export namespace Prisma {
     logoUrl?: true
     locale?: true
     deskPhone?: true
+    catalogJson?: true
+    postStayMessage?: true
+    offersJson?: true
+    doctorOnDutyPhone?: true
+    leadAlertMinutes?: true
+    enabledOrderKinds?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -104533,6 +104575,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: OrganizationGuestAppAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrganizationGuestAppSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: OrganizationGuestAppMinAggregateInputType
@@ -104563,6 +104617,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: OrganizationGuestAppCountAggregateInputType | true
+    _avg?: OrganizationGuestAppAvgAggregateInputType
+    _sum?: OrganizationGuestAppSumAggregateInputType
     _min?: OrganizationGuestAppMinAggregateInputType
     _max?: OrganizationGuestAppMaxAggregateInputType
   }
@@ -104575,9 +104631,17 @@ export namespace Prisma {
     logoUrl: string | null
     locale: string | null
     deskPhone: string | null
+    catalogJson: JsonValue | null
+    postStayMessage: string | null
+    offersJson: JsonValue | null
+    doctorOnDutyPhone: string | null
+    leadAlertMinutes: number | null
+    enabledOrderKinds: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: OrganizationGuestAppCountAggregateOutputType | null
+    _avg: OrganizationGuestAppAvgAggregateOutputType | null
+    _sum: OrganizationGuestAppSumAggregateOutputType | null
     _min: OrganizationGuestAppMinAggregateOutputType | null
     _max: OrganizationGuestAppMaxAggregateOutputType | null
   }
@@ -104604,6 +104668,12 @@ export namespace Prisma {
     logoUrl?: boolean
     locale?: boolean
     deskPhone?: boolean
+    catalogJson?: boolean
+    postStayMessage?: boolean
+    offersJson?: boolean
+    doctorOnDutyPhone?: boolean
+    leadAlertMinutes?: boolean
+    enabledOrderKinds?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -104617,6 +104687,12 @@ export namespace Prisma {
     logoUrl?: boolean
     locale?: boolean
     deskPhone?: boolean
+    catalogJson?: boolean
+    postStayMessage?: boolean
+    offersJson?: boolean
+    doctorOnDutyPhone?: boolean
+    leadAlertMinutes?: boolean
+    enabledOrderKinds?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -104630,6 +104706,12 @@ export namespace Prisma {
     logoUrl?: boolean
     locale?: boolean
     deskPhone?: boolean
+    catalogJson?: boolean
+    postStayMessage?: boolean
+    offersJson?: boolean
+    doctorOnDutyPhone?: boolean
+    leadAlertMinutes?: boolean
+    enabledOrderKinds?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -104643,11 +104725,17 @@ export namespace Prisma {
     logoUrl?: boolean
     locale?: boolean
     deskPhone?: boolean
+    catalogJson?: boolean
+    postStayMessage?: boolean
+    offersJson?: boolean
+    doctorOnDutyPhone?: boolean
+    leadAlertMinutes?: boolean
+    enabledOrderKinds?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type OrganizationGuestAppOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "enabled" | "displayName" | "primaryColor" | "logoUrl" | "locale" | "deskPhone" | "createdAt" | "updatedAt", ExtArgs["result"]["organizationGuestApp"]>
+  export type OrganizationGuestAppOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "enabled" | "displayName" | "primaryColor" | "logoUrl" | "locale" | "deskPhone" | "catalogJson" | "postStayMessage" | "offersJson" | "doctorOnDutyPhone" | "leadAlertMinutes" | "enabledOrderKinds" | "createdAt" | "updatedAt", ExtArgs["result"]["organizationGuestApp"]>
   export type OrganizationGuestAppInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
@@ -104671,6 +104759,15 @@ export namespace Prisma {
       logoUrl: string | null
       locale: string | null
       deskPhone: string | null
+      /**
+       * Hotel tab catalog blocks (packages, season, how to get there) — CP-GUEST-APP-02.
+       */
+      catalogJson: Prisma.JsonValue | null
+      postStayMessage: string | null
+      offersJson: Prisma.JsonValue | null
+      doctorOnDutyPhone: string | null
+      leadAlertMinutes: number | null
+      enabledOrderKinds: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["organizationGuestApp"]>
@@ -105104,6 +105201,12 @@ export namespace Prisma {
     readonly logoUrl: FieldRef<"OrganizationGuestApp", 'String'>
     readonly locale: FieldRef<"OrganizationGuestApp", 'String'>
     readonly deskPhone: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly catalogJson: FieldRef<"OrganizationGuestApp", 'Json'>
+    readonly postStayMessage: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly offersJson: FieldRef<"OrganizationGuestApp", 'Json'>
+    readonly doctorOnDutyPhone: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly leadAlertMinutes: FieldRef<"OrganizationGuestApp", 'Int'>
+    readonly enabledOrderKinds: FieldRef<"OrganizationGuestApp", 'Json'>
     readonly createdAt: FieldRef<"OrganizationGuestApp", 'DateTime'>
     readonly updatedAt: FieldRef<"OrganizationGuestApp", 'DateTime'>
   }
@@ -166737,6 +166840,12 @@ export namespace Prisma {
     logoUrl: 'logoUrl',
     locale: 'locale',
     deskPhone: 'deskPhone',
+    catalogJson: 'catalogJson',
+    postStayMessage: 'postStayMessage',
+    offersJson: 'offersJson',
+    doctorOnDutyPhone: 'doctorOnDutyPhone',
+    leadAlertMinutes: 'leadAlertMinutes',
+    enabledOrderKinds: 'enabledOrderKinds',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -175496,6 +175605,12 @@ export namespace Prisma {
     logoUrl?: StringNullableFilter<"OrganizationGuestApp"> | string | null
     locale?: StringNullableFilter<"OrganizationGuestApp"> | string | null
     deskPhone?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    catalogJson?: JsonNullableFilter<"OrganizationGuestApp">
+    postStayMessage?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    offersJson?: JsonNullableFilter<"OrganizationGuestApp">
+    doctorOnDutyPhone?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    leadAlertMinutes?: IntNullableFilter<"OrganizationGuestApp"> | number | null
+    enabledOrderKinds?: JsonNullableFilter<"OrganizationGuestApp">
     createdAt?: DateTimeFilter<"OrganizationGuestApp"> | Date | string
     updatedAt?: DateTimeFilter<"OrganizationGuestApp"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -175509,6 +175624,12 @@ export namespace Prisma {
     logoUrl?: SortOrderInput | SortOrder
     locale?: SortOrderInput | SortOrder
     deskPhone?: SortOrderInput | SortOrder
+    catalogJson?: SortOrderInput | SortOrder
+    postStayMessage?: SortOrderInput | SortOrder
+    offersJson?: SortOrderInput | SortOrder
+    doctorOnDutyPhone?: SortOrderInput | SortOrder
+    leadAlertMinutes?: SortOrderInput | SortOrder
+    enabledOrderKinds?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
@@ -175525,6 +175646,12 @@ export namespace Prisma {
     logoUrl?: StringNullableFilter<"OrganizationGuestApp"> | string | null
     locale?: StringNullableFilter<"OrganizationGuestApp"> | string | null
     deskPhone?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    catalogJson?: JsonNullableFilter<"OrganizationGuestApp">
+    postStayMessage?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    offersJson?: JsonNullableFilter<"OrganizationGuestApp">
+    doctorOnDutyPhone?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    leadAlertMinutes?: IntNullableFilter<"OrganizationGuestApp"> | number | null
+    enabledOrderKinds?: JsonNullableFilter<"OrganizationGuestApp">
     createdAt?: DateTimeFilter<"OrganizationGuestApp"> | Date | string
     updatedAt?: DateTimeFilter<"OrganizationGuestApp"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -175538,11 +175665,19 @@ export namespace Prisma {
     logoUrl?: SortOrderInput | SortOrder
     locale?: SortOrderInput | SortOrder
     deskPhone?: SortOrderInput | SortOrder
+    catalogJson?: SortOrderInput | SortOrder
+    postStayMessage?: SortOrderInput | SortOrder
+    offersJson?: SortOrderInput | SortOrder
+    doctorOnDutyPhone?: SortOrderInput | SortOrder
+    leadAlertMinutes?: SortOrderInput | SortOrder
+    enabledOrderKinds?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: OrganizationGuestAppCountOrderByAggregateInput
+    _avg?: OrganizationGuestAppAvgOrderByAggregateInput
     _max?: OrganizationGuestAppMaxOrderByAggregateInput
     _min?: OrganizationGuestAppMinOrderByAggregateInput
+    _sum?: OrganizationGuestAppSumOrderByAggregateInput
   }
 
   export type OrganizationGuestAppScalarWhereWithAggregatesInput = {
@@ -175556,6 +175691,12 @@ export namespace Prisma {
     logoUrl?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
     locale?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
     deskPhone?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    catalogJson?: JsonNullableWithAggregatesFilter<"OrganizationGuestApp">
+    postStayMessage?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    offersJson?: JsonNullableWithAggregatesFilter<"OrganizationGuestApp">
+    doctorOnDutyPhone?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    leadAlertMinutes?: IntNullableWithAggregatesFilter<"OrganizationGuestApp"> | number | null
+    enabledOrderKinds?: JsonNullableWithAggregatesFilter<"OrganizationGuestApp">
     createdAt?: DateTimeWithAggregatesFilter<"OrganizationGuestApp"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"OrganizationGuestApp"> | Date | string
   }
@@ -187128,6 +187269,12 @@ export namespace Prisma {
     logoUrl?: string | null
     locale?: string | null
     deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutGuestAppInput
@@ -187141,6 +187288,12 @@ export namespace Prisma {
     logoUrl?: string | null
     locale?: string | null
     deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -187152,6 +187305,12 @@ export namespace Prisma {
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     locale?: NullableStringFieldUpdateOperationsInput | string | null
     deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutGuestAppNestedInput
@@ -187165,6 +187324,12 @@ export namespace Prisma {
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     locale?: NullableStringFieldUpdateOperationsInput | string | null
     deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -187177,6 +187342,12 @@ export namespace Prisma {
     logoUrl?: string | null
     locale?: string | null
     deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -187188,6 +187359,12 @@ export namespace Prisma {
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     locale?: NullableStringFieldUpdateOperationsInput | string | null
     deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -187200,6 +187377,12 @@ export namespace Prisma {
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     locale?: NullableStringFieldUpdateOperationsInput | string | null
     deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -197577,8 +197760,18 @@ export namespace Prisma {
     logoUrl?: SortOrder
     locale?: SortOrder
     deskPhone?: SortOrder
+    catalogJson?: SortOrder
+    postStayMessage?: SortOrder
+    offersJson?: SortOrder
+    doctorOnDutyPhone?: SortOrder
+    leadAlertMinutes?: SortOrder
+    enabledOrderKinds?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type OrganizationGuestAppAvgOrderByAggregateInput = {
+    leadAlertMinutes?: SortOrder
   }
 
   export type OrganizationGuestAppMaxOrderByAggregateInput = {
@@ -197589,6 +197782,9 @@ export namespace Prisma {
     logoUrl?: SortOrder
     locale?: SortOrder
     deskPhone?: SortOrder
+    postStayMessage?: SortOrder
+    doctorOnDutyPhone?: SortOrder
+    leadAlertMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -197601,8 +197797,15 @@ export namespace Prisma {
     logoUrl?: SortOrder
     locale?: SortOrder
     deskPhone?: SortOrder
+    postStayMessage?: SortOrder
+    doctorOnDutyPhone?: SortOrder
+    leadAlertMinutes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type OrganizationGuestAppSumOrderByAggregateInput = {
+    leadAlertMinutes?: SortOrder
   }
 
   export type EnumOrgContactKindFilter<$PrismaModel = never> = {
@@ -241834,6 +242037,12 @@ export namespace Prisma {
     logoUrl?: string | null
     locale?: string | null
     deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -241845,6 +242054,12 @@ export namespace Prisma {
     logoUrl?: string | null
     locale?: string | null
     deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -244039,6 +244254,12 @@ export namespace Prisma {
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     locale?: NullableStringFieldUpdateOperationsInput | string | null
     deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -244050,6 +244271,12 @@ export namespace Prisma {
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     locale?: NullableStringFieldUpdateOperationsInput | string | null
     deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

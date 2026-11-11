@@ -2129,16 +2129,23 @@ model OrganizationProfile {
 
 /// White-label guest phone brand. Not letterhead (CP-GUEST-APP-01).
 model OrganizationGuestApp {
-  organizationId String       @id @map("organization_id") @db.Uuid
-  enabled        Boolean      @default(false)
-  displayName    String?      @map("display_name")
-  primaryColor   String?      @map("primary_color") @db.VarChar(7)
-  logoUrl        String?      @map("logo_url")
-  locale         String?      @db.VarChar(2)
-  deskPhone      String?      @map("desk_phone")
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId    String       @id @map("organization_id") @db.Uuid
+  enabled           Boolean      @default(false)
+  displayName       String?      @map("display_name")
+  primaryColor      String?      @map("primary_color") @db.VarChar(7)
+  logoUrl           String?      @map("logo_url")
+  locale            String?      @db.VarChar(2)
+  deskPhone         String?      @map("desk_phone")
+  /// Hotel tab catalog blocks (packages, season, how to get there) — CP-GUEST-APP-02.
+  catalogJson       Json?        @map("catalog_json")
+  postStayMessage   String?      @map("post_stay_message")
+  offersJson        Json?        @map("offers_json")
+  doctorOnDutyPhone String?      @map("doctor_on_duty_phone")
+  leadAlertMinutes  Int?         @map("lead_alert_minutes")
+  enabledOrderKinds Json?        @map("enabled_order_kinds")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("organization_guest_apps")
 }

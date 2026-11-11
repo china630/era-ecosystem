@@ -1117,6 +1117,12 @@ exports.Prisma.OrganizationGuestAppScalarFieldEnum = {
   logoUrl: 'logoUrl',
   locale: 'locale',
   deskPhone: 'deskPhone',
+  catalogJson: 'catalogJson',
+  postStayMessage: 'postStayMessage',
+  offersJson: 'offersJson',
+  doctorOnDutyPhone: 'doctorOnDutyPhone',
+  leadAlertMinutes: 'leadAlertMinutes',
+  enabledOrderKinds: 'enabledOrderKinds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
