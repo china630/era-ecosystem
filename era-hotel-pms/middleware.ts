@@ -6,9 +6,11 @@ import {
   getBearerOrCookieToken,
   redirectNoStore,
   redirectReferralToOrchestratorRegister,
+  staffAccessDeniedRedirect,
   stripSessionHeaders,
   verifyAgencySession,
 } from '@era/satellite-kit/auth/middleware-edge';
+import { placementFrozenWriteResponse } from '@era/satellite-kit/placement/freeze';
 import type { NextRequest } from 'next/server';
 import {
   isPosBridgeApiPath,
@@ -70,9 +72,7 @@ const staffGate = createSatelliteStaffMiddleware<NextRequest>({
     if (required && required.some((p) => sessionHasHotelPermission(sessionView, p))) {
       return null;
     }
-    const forbiddenUrl = new URL('/login', request.url);
-    forbiddenUrl.searchParams.set('error', 'forbidden');
-    return redirectNoStore(forbiddenUrl);
+    return staffAccessDeniedRedirect(request);
   },
   authorizeApi: ({ request, pathname, session }) =>
     frozenOrgResponse(request.method, pathname, session.organizationId),
@@ -84,22 +84,16 @@ function frozenOrgResponse(
   pathname: string,
   organizationId: string | undefined,
 ): Response | null {
-  const verb = method.toUpperCase();
-  if (verb === 'GET' || verb === 'HEAD' || verb === 'OPTIONS') return null;
-  if (pathname.startsWith('/api/auth/')) return null;
-  const frozen =
-    process.env.ERA_PLACEMENT_FROZEN_ORG_IDS?.split(',')
-      .map((s) => s.trim())
-      .filter(Boolean) ?? [];
-  if (!frozen.length) return null;
-  const org = organizationId?.trim() || '';
-  if (org && frozen.includes(org)) {
-    return NextResponse.json(
-      { error: 'Organization frozen for placement hop' },
-      { status: 423 },
-    );
-  }
-  return null;
+  const frozen = placementFrozenWriteResponse({
+    method,
+    pathname,
+    organizationId,
+  });
+  if (!frozen) return null;
+  return NextResponse.json(
+    { error: 'Organization frozen for placement hop' },
+    { status: 423 },
+  );
 }
 
 async function agencyResponse(request: NextRequest, pathname: string): Promise<Response> {

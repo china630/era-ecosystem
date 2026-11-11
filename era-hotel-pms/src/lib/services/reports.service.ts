@@ -115,7 +115,7 @@ export async function listReservationTimes(q: ReservationTimesQuery) {
 }
 
 export async function listRoomChangePlans() {
-  return prisma.roomChangePlan.findMany({
+  const rows = await prisma.roomChangePlan.findMany({
     include: {
       reservation: { include: { guest: true } },
       fromRoom: true,
@@ -124,6 +124,21 @@ export async function listRoomChangePlans() {
     orderBy: { effectiveAt: 'desc' },
     take: 200,
   });
+  const actorIds = [
+    ...new Set(rows.map((row) => row.createdByUserId).filter((id): id is string => Boolean(id))),
+  ];
+  const actors =
+    actorIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: actorIds } },
+          select: { id: true, fullName: true },
+        })
+      : [];
+  const actorName = new Map(actors.map((user) => [user.id, user.fullName]));
+  return rows.map((row) => ({
+    ...row,
+    createdByName: row.createdByUserId ? (actorName.get(row.createdByUserId) ?? null) : null,
+  }));
 }
 
 export async function createRoomChangePlan(input: {

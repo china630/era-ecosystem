@@ -50,17 +50,20 @@ export function routePermissions(pathname: string): Permission[] | null {
   if (pathname.startsWith("/executive")) {
     return [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.SCREEN_FO];
   }
-  if (pathname.startsWith("/guests") || pathname.startsWith("/reservations")) {
+  if (pathname.startsWith("/guests")) {
+    return [PERMISSIONS.SCREEN_GUESTS];
+  }
+  if (pathname.startsWith("/reservations")) {
     return [PERMISSIONS.SCREEN_FO];
   }
   if (pathname.startsWith("/service/guest")) {
-    return [PERMISSIONS.SCREEN_FO];
+    return [PERMISSIONS.SCREEN_SERVICE_GUEST];
   }
   if (pathname.startsWith("/service")) {
     return [PERMISSIONS.SCREEN_HK];
   }
   if (pathname.startsWith("/migration")) {
-    return [PERMISSIONS.SCREEN_FO];
+    return [PERMISSIONS.SCREEN_MIGRATION];
   }
   if (pathname.startsWith("/procedures") || pathname.startsWith("/spa")) {
     return [PERMISSIONS.SCREEN_MEDICAL];
@@ -72,11 +75,17 @@ export function routePermissions(pathname: string): Permission[] | null {
   ) {
     return [PERMISSIONS.SCREEN_TOURS];
   }
-  if (pathname.startsWith("/banquets") || pathname.startsWith("/dispatch")) {
-    return [PERMISSIONS.SCREEN_FO];
+  if (pathname.startsWith("/banquets")) {
+    return [PERMISSIONS.SCREEN_BANQUETS];
   }
-  if (pathname.startsWith("/concierge") || pathname.startsWith("/pos")) {
-    return [PERMISSIONS.SCREEN_FO];
+  if (pathname.startsWith("/dispatch")) {
+    return [PERMISSIONS.SCREEN_DISPATCH];
+  }
+  if (pathname.startsWith("/concierge")) {
+    return [PERMISSIONS.SCREEN_CONCIERGE];
+  }
+  if (pathname.startsWith("/pos")) {
+    return [PERMISSIONS.SCREEN_POS];
   }
   // Mutation audit journal — reports grant, not blanket SCREEN_ADMIN (ADR era-mutation-audit-standard).
   if (pathname === "/admin/audit" || pathname.startsWith("/admin/audit/")) {

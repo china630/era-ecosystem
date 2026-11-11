@@ -1,6 +1,8 @@
 import { cookies, headers } from "next/headers";
+import { nestHttpFrame } from "@/lib/nest-http-context";
 import {
   readSatelliteStaffSession,
+  type SatelliteStaffSession,
   type SatelliteStaffSessionPayload,
 } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
@@ -14,37 +16,34 @@ import { ALL_PERMISSIONS, effectiveRolePermissions } from "@/lib/auth/permission
  * No session → null (401); module off → IndustryModuleInactiveError (403).
  * Call once per handler, inside try, and pass the session on.
  */
-export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayload | null> {
-  let cookieStore: Awaited<ReturnType<typeof cookies>>;
-  let headerStore: Awaited<ReturnType<typeof headers>>;
-  try {
-    cookieStore = await cookies();
-    headerStore = await headers();
-  } catch {
-    return null;
-  }
-  const staff = await readSatelliteStaffSession({
-    cookies: cookieStore,
-    headers: headerStore,
-    loadUser: async ({ sub }) => {
-      const user = await prisma.user.findUnique({
-        where: { id: sub },
-        select: {
-          organizationId: true,
-          status: true,
-          role: { select: { code: true, permissionsJson: true } },
-        },
-      });
-      return user
-        ? { organizationId: user.organizationId, active: user.status === "ACTIVE", role: user.role }
-        : null;
+export type HotelSessionUser = {
+  organizationId: string;
+  active: boolean;
+  role: { code: string; permissionsJson: string | null };
+};
+
+export async function loadHotelSessionUser(session: {
+  sub: string;
+}): Promise<HotelSessionUser | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: session.sub },
+    select: {
+      organizationId: true,
+      status: true,
+      role: { select: { code: true, permissionsJson: true } },
     },
   });
-  if (!staff) return null;
+  return user
+    ? { organizationId: user.organizationId, active: user.status === "ACTIVE", role: user.role }
+    : null;
+}
+
+export async function enrichHotelStaffSession(
+  staff: SatelliteStaffSession<HotelSessionUser>,
+  pathname?: string,
+): Promise<SatelliteStaffSessionPayload> {
   const { session, user } = staff;
-
-  await assertHotelApiEntitled(undefined, session.organizationId);
-
+  await assertHotelApiEntitled(pathname, session.organizationId);
   const isOwner = session.isOwner === true || session.role === "BUSINESS_OWNER";
   const isPlatformSuperAdmin = isPlatformSuperAdminUser({
     login: session.login,
@@ -54,6 +53,26 @@ export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayloa
     isOwner || isPlatformSuperAdmin
       ? [...ALL_PERMISSIONS]
       : effectiveRolePermissions(user.role.code, user.role.permissionsJson);
-
   return { ...session, permissions, isOwner };
+}
+
+export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayload | null> {
+  let cookieStore: { get(name: string): { value: string } | undefined };
+  let headerStore: { get(name: string): string | null };
+  try {
+    cookieStore = await cookies();
+    headerStore = await headers();
+  } catch {
+    const frame = nestHttpFrame();
+    if (!frame) return null;
+    cookieStore = frame.cookies;
+    headerStore = frame.headers;
+  }
+  const staff = await readSatelliteStaffSession({
+    cookies: cookieStore,
+    headers: headerStore,
+    loadUser: loadHotelSessionUser,
+  });
+  if (!staff) return null;
+  return enrichHotelStaffSession(staff);
 }

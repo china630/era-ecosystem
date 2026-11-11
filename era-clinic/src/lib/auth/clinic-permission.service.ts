@@ -13,7 +13,7 @@ import {
 export { sessionHasClinicPermission, resolveSessionPermissions };
 
 function jsonForbidden(message: string) {
-  return NextResponse.json({ error: message }, { status: 403 });
+  return NextResponse.json({ error: message, code: "FORBIDDEN" }, { status: 403 });
 }
 
 function jsonUnauthorized() {

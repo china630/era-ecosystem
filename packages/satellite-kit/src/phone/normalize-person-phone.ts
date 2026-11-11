@@ -1,6 +1,27 @@
-import parsePhoneNumberFromString, {
-  type CountryCode,
-} from "libphonenumber-js";
+import {
+  parsePhoneNumberFromString as parseWithMetadata,
+} from "libphonenumber-js/core";
+import type { CountryCode } from "libphonenumber-js";
+import rawMetadata from "libphonenumber-js/metadata.min.json";
+
+function phoneMetadata(): { countries: object } {
+  const loaded = rawMetadata as {
+    countries?: object;
+    default?: { countries?: object };
+  };
+  if (loaded.countries) return loaded as { countries: object };
+  if (loaded.default?.countries) return loaded.default as { countries: object };
+  throw new Error("libphonenumber-js metadata is missing countries");
+}
+
+const metadata = phoneMetadata();
+
+function parsePhoneNumberFromString(text: string, country?: CountryCode) {
+  const phoneMetadataJson = metadata as never;
+  return country
+    ? parseWithMetadata(text, country, phoneMetadataJson)
+    : parseWithMetadata(text, phoneMetadataJson);
+}
 
 /** ISO regions where national (non-+) numbers may be polished to E.164 in MVP. */
 export const PERSON_PHONE_POLISH_REGIONS = ["AZ", "KZ", "RU", "TR"] as const;

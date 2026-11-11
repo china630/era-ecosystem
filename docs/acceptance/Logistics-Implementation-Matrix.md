@@ -22,7 +22,7 @@
 | AC-LOG-REF | Customs / FX / HS preview via Finance | ✅ | [ ] | `__tests__/log-ref-negative.spec.ts` + LOG-REF-01 | Negative: short HS code; missing FX from; Finance HS/FX failure → explicit 500 (not silent success) |
 | AC-LOG-PLAT | Platform add-ons on trip complete | ✅ | [ ] | `__tests__/log-plat-negative.spec.ts` + L4 hooks | Negative: events/dispatch missing/wrong token → 401; notify soft-skip when token unset |
 | AC-LOG-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit tenant extension | **Excluded from Scaffold BE rollup.** Schema + filter landed; not Scaffold ✅ (no live SHARED pool / field two-org UAT) |
-| AC-LOG-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `logistics-rbac` + `logistics-rbac-doors` + page/API inventory + role-name grep; ADR logistics-domain-permissions-and-rbac; `/admin/access` clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
+| AC-LOG-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `logistics-rbac` + `logistics-rbac-doors` + page/API inventory + role-name grep; ADR logistics-domain-permissions-and-rbac; `/admin/access` entity grid, catalog v2, clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 
 **Edition / wave rollup (BE, in-scope)** = worst(TRIP, POD, REF, PLAT) → **✅**.  
 AC-LOG-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.  

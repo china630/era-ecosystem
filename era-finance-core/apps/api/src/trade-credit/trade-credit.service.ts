@@ -12,6 +12,7 @@ import {
 } from "@erafinance/database";
 import { createHash, randomBytes } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import {
@@ -73,6 +74,34 @@ export class TradeCreditService {
     private readonly policy: TradeCreditPolicyService,
     private readonly phase2: TradeCreditPhase2Service,
   ) {}
+
+  findCounterpartyForBuyerExchange(
+    organizationId: string,
+    counterpartyId: string,
+  ): Promise<{ id: string } | null> {
+    return runWithTenantContextAsync(
+      { organizationId, skipTenantFilter: false },
+      () =>
+        this.prisma.counterparty.findFirst({
+          where: {
+            id: counterpartyId,
+            organizationId,
+            deletedAt: null,
+          },
+          select: { id: true },
+        }),
+    );
+  }
+
+  findCounterpartyTaxIdForInvite(
+    organizationId: string,
+    counterpartyId: string,
+  ): Promise<{ id: string; taxIdCipher: string | null } | null> {
+    return this.prisma.counterparty.findFirst({
+      where: { id: counterpartyId, organizationId, deletedAt: null },
+      select: { id: true, taxIdCipher: true },
+    });
+  }
 
   async assertSku(organizationId: string): Promise<void> {
     const ok = await this.subscription.hasModule(

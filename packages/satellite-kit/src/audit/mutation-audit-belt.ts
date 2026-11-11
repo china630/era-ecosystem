@@ -1,12 +1,10 @@
 /**
- * Layer A HTTP mutation belt helpers — see docs/adr/era-mutation-audit-standard.md.
- * Middleware already stamps `x-era-method` / `x-era-pathname`; apps call
- * `scheduleHttpMutationAuditFromHeaders` from successful `jsonOk` responses.
+ * Layer A helpers. The writer is SatelliteMutationAuditInterceptor.
+ * These functions classify the request. They do not schedule a row.
  */
 
 import {
   auditMutation,
-  type MutationAuditContext,
   type SatelliteAuditWriter,
 } from "./satellite-audit";
 
@@ -102,51 +100,6 @@ export type ScheduleHttpMutationAuditDeps = {
   resolveUserId?: (headers: HttpMutationAuditHeaderBag) => string | null;
   resolveIp?: (headers: HttpMutationAuditHeaderBag) => string | null;
 };
-
-/**
- * Fire-and-forget Layer A row after a successful mutation response.
- * Safe to call from `jsonOk`; never throws to the caller.
- */
-export function scheduleHttpMutationAuditFromHeaders(
-  headers: HttpMutationAuditHeaderBag,
-  statusCode: number,
-  deps: ScheduleHttpMutationAuditDeps,
-): void {
-  if (statusCode < 200 || statusCode >= 400) return;
-
-  const method = headers.get("x-era-method")?.trim().toUpperCase() ?? "";
-  const path = headers.get("x-era-pathname")?.trim() || "";
-  if (!isHttpMutationMethod(method) || !path) return;
-  if (isMutationAuditExemptPath(path, deps.extraExemptPrefixes)) return;
-
-  const userId =
-    deps.resolveUserId?.(headers) ?? headers.get("x-user-id")?.trim() ?? null;
-  const ip =
-    deps.resolveIp?.(headers) ??
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    headers.get("x-real-ip");
-  const actorKind = inferActorKind({
-    pathname: path,
-    userActorHeader: headers.get("x-user-actor"),
-  });
-  const entityId = inferMutationEntityId(path);
-  const changes = buildHttpMutationChanges({
-    method,
-    path,
-    statusCode,
-    actorKind,
-    correlationId: headers.get("x-request-id") ?? headers.get("x-correlation-id"),
-  });
-
-  void auditMutation(
-    deps.write,
-    { userId, ipAddress: ip } satisfies MutationAuditContext,
-    HTTP_MUTATION_ENTITY_TYPE,
-    entityId,
-    method,
-    changes,
-  );
-}
 
 export type MutationAuditHandler = (
   request: Request,

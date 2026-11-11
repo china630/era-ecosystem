@@ -25,7 +25,7 @@ ERA **cloud**: one process per satellite type, many orgs. Staff use the same sat
 | SHARED cron: **orch pool members** only (`GET /v1/internal/satellite-pool/members`, kit backoff); empty / unreachable → 503 | |
 | Hotel + clinic **lab** two-org isolation CI | Field SHARED pool isolation UAT |
 | HOT-06 lab SHOW; extension write HEADLESS | |
-| Placement: hotel curated JSON slice + **artifact on job** + host agent import-slice + apply log | Field migrate UAT; multi-sat slices |
+| Placement: OrgFullSliceV2 hotel/clinic + **artifact on job** + host agent import-slice + apply log | Field migrate UAT; blob copy; remaining sat routes |
 | EW ingest ALS-first; Sync **skips** `applyOrganizationBind` when topology SHARED | |
 | Entitlement: request org argument + CP snapshot (hotel/clinic session/header); Sync `activeModules` = cache | Sync bind required after every SHARED restart |
 | Live pool smoke scripts (Wave 9) | Field signoff pass / sell pool |
@@ -55,9 +55,9 @@ Hotel + clinic CI suites prove ALS + `mergeWhere` isolation (Org B cannot see Or
 
 Lab CI + signoff: [`reports/hot06-lab-signoff.md`](../reports/hot06-lab-signoff.md). Super-Admin policy + clinic Issue-ticket **SHOW**. Extension SPA Insert remains HEADLESS / field-open. **Not SHIPPED**.
 
-## Placement lab hop (Wave 7) + hotel slice dump (Wave 11)
+## Placement lab hop + hotel/clinic slice
 
-PlacementJob SHARED→DEDICATED full advance chain + SHARED↔ONPREM REJECTED. Wave 11: hotel curated JSON slice (`role`/`user`/`guest`) via kit + hotel internal export-slice; orch `sliceMeta` stores counts/`hotel curated json slice v1` (not `not implemented full dump`). Signoff: [`reports/placement-lab-hop-signoff.md`](../reports/placement-lab-hop-signoff.md). Host apply / field UAT still open — AC-CP-TOPO **🟡**.
+Placement engineering: `PlacementBatch` Start → PROVISION → CONFIGURE → FREEZE → PREFLIGHT (migration-hash + disk) → EXPORT → IMPORT → CUTOVER → SMOKE (health+login) → DONE. Hotel slice includes roomType/mealPlan/ratePlan/room; clinic role/user/patientRef; freeze skips cron orgs; UI banner/rollback. SHARED↔ONPREM REJECTED. Signoff: [`reports/placement-lab-hop-signoff.md`](../reports/placement-lab-hop-signoff.md). Field UAT / folio restore / remaining sat slices still open — AC-CP-TOPO **🟡**.
 
 ## EW ingest ALS stamps (Wave 8)
 

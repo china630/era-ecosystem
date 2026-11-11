@@ -20,7 +20,7 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Implementation plans index | [IMPLEMENTATION_PLANS.md](./IMPLEMENTATION_PLANS.md) |
 | In-app user help (policy) | [USER_DOCUMENTATION.md](./USER_DOCUMENTATION.md) |
 | Control plane architecture | [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) |
-| Deployment topology (SHARED / DEDICATED / ONPREM) | [adr/deployment-topology.md](./adr/deployment-topology.md) — bind + runtime-config + PlacementJob **API scaffold** + host agent stub; **not** live SaaS pool / automated migrate sell |
+| Deployment topology (SHARED / DEDICATED / ONPREM) | [adr/deployment-topology.md](./adr/deployment-topology.md) — bind + runtime-config + PlacementBatch **Wave 2** (Start→CONFIGURE + process log) + host agent; **not** live SaaS pool / automated migrate sell |
 | SaaS request tenant + vendor bridges | [SAAS_SHARED_RUNTIME.md](./SAAS_SHARED_RUNTIME.md) · [adr/saas-request-tenant-and-vendor-bridges.md](./adr/saas-request-tenant-and-vendor-bridges.md) · [acceptance/SaaS-Honesty-Closeout.md](./acceptance/SaaS-Honesty-Closeout.md) — Waves 1–11 runtime prep **landed**; sell SHARED pool / `ga` / field TENANT + HOT-06 SHIPPED still **open** |
 | Public org number + login Host | [adr/org-public-number-and-login-host.md](./adr/org-public-number-and-login-host.md) — **implemented** (A1–A6, B1–B4); SHARED login `orgNo`; white-label = `platform_domain` 19 / `platform_domain_org` 29 — not sell/SHIPPED without TLS UAT |
 | Satellite org bind + boot hydrate | [adr/satellite-organization-bind.md](./adr/satellite-organization-bind.md) — Wave 3: request-time `satelliteOrganizationId()` (no import-time env for product handlers) |

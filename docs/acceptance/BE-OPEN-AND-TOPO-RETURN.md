@@ -61,19 +61,23 @@ Engine routes exist. Proof is **curl-only stretch**. Canon: no Scaffold ✅ with
 
 ### What it is
 
-Control-plane **placement product**: freeze → org slice → provision → bind/runtime-config → cutover `SatelliteEndpoint` → smoke → unfreeze. Hops: SHARED⇄DEDICATED⇄ONPREM (no single-shot SHARED↔ONPREM).
+Control-plane **placement product**: provision clone → configure → freeze → export → import → cutover `SatelliteEndpoint` → smoke. Hops: SHARED⇄DEDICATED⇄ONPREM (no single-shot SHARED↔ONPREM).
 
 ### Why 🟡 (in rollup)
 
-PlacementJob **API scaffold** exists. Live dump/import, host apply of a real stack, and live SHARED **pool ops** do not. Owner: hop/pool is part of Platform BE, not a silent exclude. Field-intent migrate stays max 🟡 until field proof — but **API hop** can become Scaffold ✅ with negatives + lab slice UAT (not sell).
+PlacementBatch engineering exists through DONE (hash/disk preflight, hotel+clinic slices, cron freeze skip, UI banner/rollback). **Field UAT**, reservation/folio/object-storage restore, remaining satellite slices, and live SHARED **pool ops** do not. Owner: hop/pool is part of Platform BE, not a silent exclude. Field-intent migrate stays max 🟡 until field proof. **Do not mark Scaffold ✅ without field/lab UAT signoff.**
 
 ### Already landed (do not rebuild)
 
-- ADR [deployment-topology.md](../adr/deployment-topology.md) §4–§5
-- Prisma `PlacementJob` + `PlacementJobService` + admin/agent HTTP
-- SHARED↔ONPREM → REJECTED (`placement-job.service.spec.ts`)
-- Host poll stub: `scripts/era-placement-agent.mjs`
-- Kit `exportOrgSlice` metadata stub (not full dump)
+- ADR [deployment-topology.md](../adr/deployment-topology.md) §4–§5 (clone-then-freeze order)
+- Prisma `PlacementBatch` + `recipeJson`/`composeYaml` + `PlacementProcessLog` + `PlacementJob` + admin/agent HTTP
+- Start requires targetHost; recipe stored; process log on phases; inline lab + autopilot (env-gated)
+- Configure = Sync + secret markers; freeze = `settings.placementFreeze` → Sync → satellite **423**
+- Hotel export/import slice; cutover `SatelliteEndpoint`; smoke `/api/health` (or lab)
+- Agent `report-provision` + compose up path (`ERA_PLACEMENT_CLONE_MODE=compose`)
+- SHARED↔ONPREM → REJECTED; second active batch → Conflict (`placement-job.service.spec.ts`)
+- Host agent: `scripts/era-placement-agent.mjs`
+- Kit `@era/satellite-kit/placement` (+ `/freeze`) slice + freeze helpers
 - Bind + runtime-config Sync on industry + finance + bank (separate ACs ✅)
 - `organizationId` + kit filter (CP-TENANT-01 API; TENANT ACs out of satellite BE rollup)
 - License defaults CP-LIC-01 (not a pool)
@@ -90,13 +94,15 @@ PlacementJob **API scaffold** exists. Live dump/import, host apply of a real sta
 
 ### Close checklist (Scaffold ✅ = lab hop, not sell)
 
-1. Real slice export `WHERE organizationId = ?` (ops tables + audit prefix) — not metadata stub.
-2. Negative: SHARED↔ONPREM still REJECTED; migration-hash mismatch stops; freeze blocks writes.
-3. Lab UAT: one hop SHARED→DEDICATED **or** documented dry-run signoff `reports/placement-shared-to-dedicated-signoff.md` (UI or ops runbook — not curl-only if SuperAdmin button exists).
-4. Host agent applies **something** observable (compose/k8s apply log), not only poll+log.
+Code residual alone does **not** satisfy Scaffold ✅ without:
+
+1. Broader slice restore (reservation/folio + object-storage prefix; remaining satellites beyond hotel/clinic).
+2. Field proof: migration-hash + disk gates on real iron (lab envs `*_LAB=1` do not count).
+3. Lab/field UAT: one hop SHARED→DEDICATED via UI Start past DONE **or** documented signoff `reports/placement-shared-to-dedicated-signoff.md` (not curl-only).
+4. Host agent compose apply on customer iron (path exists; field proof open).
 5. Implementation-Matrix: TOPO ✅ only per §3.2; **still not** Pilot-ready / `ga` / «SaaS pool».
 6. Product-Readiness: BE ✅ when TOPO ✅; **Sell unchanged** until pool/migrate are explicit sell claims + Pilot field.
-7. COVERAGE CP-PLACE-01 stays API until SuperAdmin hop UI + UAT-SMOKE.
+7. COVERAGE CP-PLACE-01 stays API until SuperAdmin Start + UAT-SMOKE field path.
 8. `check:acceptance`. Forbidden: TOPO ✅ → edition `ga` or «продаём SHARED».
 
 Live SHARED **pool** (many orgs, one process) is a **later** sell gate (topology program wave 17). TOPO Scaffold ✅ can mean «lab hop works» without pool ops.

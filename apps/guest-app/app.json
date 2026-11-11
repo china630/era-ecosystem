@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Guest",
+    "slug": "guest-app",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Scan passport MRZ for pre-arrival questionnaire."
+        }
+      ],
+      "expo-notifications",
+      "expo-status-bar"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "online.era365.guest",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Unlock your cached trip on this device."
+      }
+    },
+    "android": {
+      "package": "online.era365.guest",
+      "permissions": [
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "VIBRATE"
+      ]
+    }
+  }
+}

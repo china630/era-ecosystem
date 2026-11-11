@@ -23,7 +23,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { HkStatusMark } from '@/components/HkStatusMark';
-import { Cake, MessageSquare, Plus } from 'lucide-react';
+import { Cake, Car, MessageSquare, Plus, Shirt } from 'lucide-react';
 import { bakuDateDisplay, todayBakuYmd } from '@era/satellite-kit/time';
 import { birthdayIconVisible, birthdayNightInStay } from '@/lib/stay-birthday';
 import ReservationCardModal from '@/components/ReservationCardModal';
@@ -67,6 +67,8 @@ type Row = {
   hasNotes?: boolean;
   notePreview?: string | null;
   notes?: Array<{ noteType: string; text: string }>;
+  transfers?: Array<{ direction: 'IN' | 'OUT'; pickupOn: string }>;
+  laundryOpen?: boolean;
 };
 
 type NumberedRow = Row & { rowNo: number };
@@ -406,8 +408,23 @@ export default function ReservationsListPage() {
                       r.guestSegments && r.guestSegments.length > 0
                         ? r.guestSegments
                         : [{ name: r.guestLabel || r.guest.fullName, departed: false }];
+                    const transferTitle = (r.transfers ?? [])
+                      .map((row) =>
+                        row.direction === 'OUT'
+                          ? t('transferOut', { date: bakuDateDisplay(row.pickupOn) })
+                          : t('transferIn', { date: bakuDateDisplay(row.pickupOn) }),
+                      )
+                      .join(' · ');
                     return (
                       <span className="inline-flex flex-wrap items-center gap-1">
+                        {transferTitle ? (
+                          <Car
+                            className="h-4 w-4 shrink-0 text-[#2980B9]"
+                            aria-label={transferTitle}
+                            title={transferTitle}
+                            role="img"
+                          />
+                        ) : null}
                         {showCake ? (
                           <Cake
                             className="h-4 w-4 shrink-0 text-amber-500"
@@ -430,6 +447,14 @@ export default function ReservationsListPage() {
                             </span>
                           </span>
                         ))}
+                        {r.laundryOpen ? (
+                          <Shirt
+                            className="h-4 w-4 shrink-0 text-[#8E44AD]"
+                            aria-label={t('laundryOpen')}
+                            title={t('laundryOpen')}
+                            role="img"
+                          />
+                        ) : null}
                       </span>
                     );
                   },

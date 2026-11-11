@@ -30,6 +30,7 @@ Menu section **Transfers** (`hotel_transfers`):
 | Transfers | `/transfers` | A→B; filter «with flight» replaces Airport |
 | Tours | `/tours` | Departures grid; create/edit in modals |
 | Departure roster | `/tours` roster modal (`?roster=`) | Summary + roster grid; boarding checkboxes; icon toolbar |
+| Stay lifecycle | cancel / early-out / room move | RESERVED seats drop when stay cancels or early-out cuts the departure day; room on manifest is live from stay ([ADR](../../docs/adr/hotel-transfer-tour-stay-lifecycle.md)) |
 | Fleet | `/fleet` | TransferVehicle CRUD (grid + modal) |
 | Policy | `/settings/policies#tours` | `TourOpsPolicy` |
 

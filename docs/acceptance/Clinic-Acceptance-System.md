@@ -12,7 +12,7 @@
 
 ## Scope
 
-- In scope: ops clinic + sanatorium day-ops, SatAdmin catalogs, cashier settle/ops (stub fiscal), print forms, lab orders ops, Nafta pilot contours
+- In scope: ops clinic + sanatorium day-ops, SatAdmin catalogs, cashier settle/ops (stub fiscal), print forms, lab orders ops, Nafta pilot contours, hotel guest-care S2S (AC-CLI-GUEST-CARE 🟡, internal only, not guest UI, not sellable)
 - Out of scope: live HL7 LIS vendor (CLI-23 External), real NBC fiscal / KKM (CLI-24 External), retail pharmacy / Rx reserve
 - **Declared, not built:** procedure TTK → Finance inventory — [clinic-procedure-consumable-ttk.md](../adr/clinic-procedure-consumable-ttk.md) (CLI-47 STUB)
 - **Episode as care course (CLI-55 SCREEN):** [clinic-episode-as-clinical-course.md](../adr/clinic-episode-as-clinical-course.md) — card switcher + walk-in close landed; AC-CLI-EPISODE 🟡 out of BE rollup until field UAT; not SHIPPED / not Pilot

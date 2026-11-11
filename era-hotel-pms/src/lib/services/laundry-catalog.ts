@@ -1,5 +1,8 @@
 /** Nafta guest laundry blank — wash/iron null means service not offered. */
 
+import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
+
 export type LaundryCatalogSeedRow = {
   code: string;
   category: 'MEN' | 'WOMEN' | 'CHILD';
@@ -95,4 +98,22 @@ export function pickLaundryUnitPrices(
     ironPrice: iron,
     missingExpress: wash == null && iron == null,
   };
+}
+
+export async function listLaundryCatalogItems() {
+  return prisma.laundryItem.findMany({ orderBy: [{ category: 'asc' }, { code: 'asc' }] });
+}
+
+export async function findLaundryCatalogItem(id: string) {
+  return prisma.laundryItem.findUnique({ where: { id } });
+}
+
+export async function createLaundryCatalogItem(
+  data: Omit<Prisma.LaundryItemCreateInput, "organization" | "organizationId">,
+) {
+  return prisma.laundryItem.create({ data: data as Prisma.LaundryItemCreateInput });
+}
+
+export async function updateLaundryCatalogItem(id: string, data: Prisma.LaundryItemUpdateInput) {
+  return prisma.laundryItem.update({ where: { id }, data });
 }

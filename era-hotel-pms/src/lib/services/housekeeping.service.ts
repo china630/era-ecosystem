@@ -87,6 +87,28 @@ export async function completeTask(
   return updated;
 }
 
+export async function listMaintenanceWorkOrders() {
+  return prisma.maintenanceWorkOrder.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  });
+}
+
+export async function createMaintenanceWorkOrder(input: {
+  roomId?: string | null;
+  title: string;
+  reportedBy?: string | null;
+}) {
+  return prisma.maintenanceWorkOrder.create({
+    data: {
+      roomId: input.roomId ?? null,
+      title: input.title,
+      reportedBy: input.reportedBy ?? null,
+      status: 'OPEN',
+    },
+  });
+}
+
 export async function markInspected(roomId: string) {
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) throw new Error('Room not found');

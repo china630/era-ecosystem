@@ -4,6 +4,7 @@ import { toDecimal } from '@/lib/decimal';
 import { prisma } from '@/lib/prisma';
 import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { getReservation } from '@/lib/services/reservation.service';
+import { restoreTransferOutSnapshots } from '@/lib/services/stay-mobility-sync.service';
 
 function revertFromAuditJson(changesJson: string): EarlyCheckoutRevert | null {
   try {
@@ -144,6 +145,12 @@ export async function undoCheckout(
       include: { room: true, guest: true, ratePlan: true, roomType: true },
     });
   });
+
+  if (revert?.transferOut?.length) {
+    await restoreTransferOutSnapshots(revert.transferOut).catch((e) =>
+      console.error('Transfer OUT restore on undo checkout failed', e),
+    );
+  }
 
   const { recordReservationAudit } = await import('@/lib/reservation-audit');
   await recordReservationAudit(id, 'RESTORE', audit, {

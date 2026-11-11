@@ -267,6 +267,14 @@ export async function listRevenueCodes() {
   });
 }
 
+export async function listActiveRevenueCodeSummaries() {
+  return prisma.revenueCode.findMany({
+    where: { active: true },
+    select: { code: true, name: true },
+    orderBy: { code: 'asc' },
+  });
+}
+
 export async function createRevenueCode(input: {
   code: string;
   name: string;
@@ -339,6 +347,29 @@ export async function updateRevenueCode(
       include: { department: true, routingRule: true },
     });
   });
+}
+
+const BOARD_MEAL_PLANS: ReadonlyArray<readonly [string, string]> = [
+  ['RO', 'Room only'],
+  ['BB', 'Breakfast'],
+  ['HB', 'Half board'],
+  ['FB', 'Full board'],
+  ['AI', 'All inclusive'],
+];
+
+export async function listMealPlansForBoard(organizationId: string) {
+  try {
+    for (const [code, name] of BOARD_MEAL_PLANS) {
+      await prisma.mealPlan.upsert({
+        where: { organizationId_code: { organizationId, code } },
+        create: { organizationId, code, name },
+        update: {},
+      });
+    }
+  } catch {
+    /* list still returns existing rows */
+  }
+  return prisma.mealPlan.findMany({ orderBy: { code: 'asc' } });
 }
 
 export async function listMealPlans() {

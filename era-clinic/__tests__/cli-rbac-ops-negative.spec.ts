@@ -120,7 +120,7 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
       CLINIC_PERMISSION.API_QUEUE,
     );
     expect(opsApiRoutePermission("/api/lab-orders/x/collect")).toBe(
-      CLINIC_PERMISSION.API_LAB_ORDERS,
+      CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT,
     );
     expect(opsApiRoutePermission("/api/lab/import")).toBe(
       CLINIC_PERMISSION.API_LAB_ORDERS,
@@ -133,7 +133,13 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
       CLINIC_PERMISSION.API_CASHIER,
     );
     expect(opsApiRoutePermission("/api/fiscal/devices")).toBe(
-      CLINIC_PERMISSION.API_CASHIER,
+      CLINIC_PERMISSION.API_FISCAL,
+    );
+    expect(opsApiRoutePermission("/api/patients", "GET")).toBe(
+      CLINIC_PERMISSION.API_PATIENTS_READ,
+    );
+    expect(opsApiRoutePermission("/api/patients", "POST")).toBe(
+      CLINIC_PERMISSION.API_PATIENTS,
     );
     expect(opsApiRoutePermission("/api/procedures/confirm")).toBe(
       CLINIC_PERMISSION.API_PROCEDURES_CONFIRM,

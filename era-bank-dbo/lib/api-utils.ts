@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
+import { nestHttpFrame } from "@/lib/nest-http-context";
 import type { CustomerSession } from "@prisma/client";
 import { enterSatelliteTenant } from "@era/satellite-kit";
 import { resolveCustomerSession } from "@/lib/customer-session";
@@ -41,8 +42,17 @@ export function handleRouteError(err: unknown) {
 }
 
 export async function getSessionTokenFromRequest(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
+  let cookieStore: { get(name: string): { value: string } | undefined };
+  let headerStore: { get(name: string): string | null };
+  try {
+    cookieStore = await cookies();
+    headerStore = await headers();
+  } catch {
+    const frame = nestHttpFrame();
+    if (!frame) return null;
+    cookieStore = frame.cookies;
+    headerStore = frame.headers;
+  }
   const cookieToken = cookieStore.get(DBO_SESSION_COOKIE)?.value;
   if (cookieToken) return cookieToken;
   const auth = headerStore.get("authorization");

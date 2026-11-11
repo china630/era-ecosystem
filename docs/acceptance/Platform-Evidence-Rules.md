@@ -50,7 +50,7 @@ UAT source: `era-orchestrator/doc/UAT-SMOKE-PLATFORM.md`, `UAT-SMOKE-RBAC.md`
 
 | Claim | Reality |
 |-------|---------|
-| Scaffold BE Product-Readiness | **🟡** — TOPO in rollup (PlacementJob API ≠ live hop) |
+| Scaffold BE Product-Readiness | **🟡** — TOPO in rollup (PlacementBatch Wave 2 CONFIGURE ≠ live hop) |
 | How to close | [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) §2 |
 | Topology honesty | SHARED pool **Not built**; migrate **not sellable** |
 | Sell / edition | `mvp` / `pilot_ready: false`; no GA / no SaaS pool |

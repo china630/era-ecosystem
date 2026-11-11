@@ -222,6 +222,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     permission: CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   },
   {
+    href: "/reports/paid-punches",
+    labelKey: "paidPunchReport",
+    icon: FileSpreadsheet,
+    group: "reports",
+    permission: CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
+  {
     href: "/reports/procedures",
     labelKey: "procedureReport",
     icon: FileSpreadsheet,
@@ -395,7 +403,13 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "masterData",
     icon: Database,
     group: "setup:rules",
-    permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA,
+    anyPermission: [
+      CLINIC_PERMISSION.SCREEN_ADMIN_PRACTITIONERS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_ROOMS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_RESOURCES,
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_TYPES,
+      CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG_FAVORITES,
+    ],
   },
   {
     href: "/admin/lookups",
@@ -418,7 +432,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "opsWipe",
     icon: Trash2,
     group: "platform",
-    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_OPS_WIPE,
   },
   {
     href: "/admin/audit",
@@ -432,7 +446,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "adminLinks",
     icon: Link2,
     group: "platform",
-    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_LINKS,
   },
   {
     href: "/admin/settings",
@@ -446,20 +460,23 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     labelKey: "workingHours",
     icon: Clock,
     group: "platform",
-    permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+    permission: CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
   },
   {
     labelKey: "accounts",
     icon: Users,
     group: "platform",
-    anyPermission: [CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS],
+    anyPermission: [
+      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
+    ],
     children: [
       {
         href: "/admin/users",
         labelKey: "users",
         icon: Users,
         group: "platform",
-        permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+        permission: CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
       },
       {
         href: "/admin/access",
@@ -473,7 +490,7 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
         labelKey: "logins",
         icon: ClipboardList,
         group: "platform",
-        permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+        permission: CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
       },
     ],
   },

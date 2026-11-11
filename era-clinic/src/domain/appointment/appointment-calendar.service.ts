@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import { listClinicDays } from "@/domain/planning/clinic-day";
-import { addBakuDays } from "@/lib/baku-day";
+import { addBakuDays, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 import {
   intervalsCover,
   resolveManyDayIntervals,
@@ -217,4 +217,345 @@ export async function getPractitionerDayMatrix(dayInput: Date): Promise<{
     visitServices: visits,
     resources,
   };
+}
+
+export async function listAppointmentsRecent(take = 100) {
+  return prisma.appointment.findMany({
+    include: { patientRef: true, practitioner: true, visit: true },
+    orderBy: { scheduledAt: "desc" },
+    take,
+  });
+}
+
+export async function resolvePatientForAppointment(
+  organizationId: string,
+  patientRefId?: string,
+  patientRefCode?: string,
+) {
+  if (patientRefId) {
+    return prisma.patientRef.findUnique({ where: { id: patientRefId } });
+  }
+  return prisma.patientRef.findFirst({
+    where: { organizationId, refCode: patientRefCode! },
+  });
+}
+
+export async function findPractitionerByCode(code: string) {
+  return prisma.practitioner.findFirst({
+    where: { code },
+  });
+}
+
+export async function findPractitionerById(id: string) {
+  return prisma.practitioner.findUnique({
+    where: { id },
+  });
+}
+
+export async function findServiceCatalogLine(organizationId: string, serviceCode: string) {
+  return prisma.serviceCatalogCache.findFirst({
+    where: { organizationId, code: serviceCode },
+    select: { description: true, amount: true, listAmount: true },
+  });
+}
+
+export async function createAppointmentWithVisit(input: {
+  organizationId: string;
+  patientRefId: string;
+  practitionerId: string;
+  scheduledAt: Date;
+  durationMinutes: number;
+  roomCode: string | null;
+  resourceId: string | null;
+  amountNet: number;
+  serviceLines: Array<{ serviceCode: string; description: string; amount: number }>;
+}) {
+  return prisma.appointment.create({
+    data: {
+      organizationId: input.organizationId,
+      patientRefId: input.patientRefId,
+      practitionerId: input.practitionerId,
+      scheduledAt: input.scheduledAt,
+      durationMinutes: input.durationMinutes,
+      roomCode: input.roomCode,
+      resourceId: input.resourceId,
+      visit: {
+        create: {
+          organizationId: input.organizationId,
+          patientRefId: input.patientRefId,
+          practitionerId: input.practitionerId,
+          amountNet: input.amountNet,
+          serviceLines: {
+            create: input.serviceLines.map((line) => ({
+              serviceCode: line.serviceCode,
+              description: line.description,
+              amount: line.amount,
+            })),
+          },
+        },
+      },
+    },
+    include: {
+      patientRef: true,
+      practitioner: true,
+      visit: { include: { serviceLines: true } },
+    },
+  });
+}
+
+export async function createScheduledBookingAppointment(input: {
+  organizationId: string;
+  patientRefId: string;
+  practitionerId: string;
+  scheduledAt: Date;
+  durationMinutes: number;
+}) {
+  return prisma.appointment.create({
+    data: {
+      organizationId: input.organizationId,
+      patientRefId: input.patientRefId,
+      practitionerId: input.practitionerId,
+      scheduledAt: input.scheduledAt,
+      durationMinutes: input.durationMinutes,
+      status: "SCHEDULED",
+    },
+    include: { patientRef: true, practitioner: true },
+  });
+}
+
+export async function findAppointmentForReschedule(id: string) {
+  return prisma.appointment.findUnique({
+    where: { id },
+    include: { practitioner: true },
+  });
+}
+
+export async function updateAppointmentReschedule(input: {
+  id: string;
+  scheduledAt: Date;
+  practitionerId: string;
+  roomCode: string | null;
+  resourceId: string | null;
+}) {
+  return prisma.appointment.update({
+    where: { id: input.id },
+    data: {
+      scheduledAt: input.scheduledAt,
+      practitionerId: input.practitionerId,
+      roomCode: input.roomCode,
+      resourceId: input.resourceId,
+    },
+    include: { patientRef: true, practitioner: true, visit: true },
+  });
+}
+
+export async function findAppointmentWithVisit(id: string) {
+  return prisma.appointment.findUnique({
+    where: { id },
+    include: { visit: true },
+  });
+}
+
+export async function cancelAppointmentWithVisit(id: string) {
+  const appt = await findAppointmentWithVisit(id);
+  if (!appt) return null;
+  if (appt.visit && appt.visit.status !== "CANCELLED" && appt.visit.status !== "COMPLETED") {
+    await prisma.visit.update({
+      where: { id: appt.visit.id },
+      data: { status: "CANCELLED" },
+    });
+  }
+  return prisma.appointment.update({
+    where: { id },
+    data: { status: "CANCELLED" },
+    include: { patientRef: true, practitioner: true, visit: true },
+  });
+}
+
+async function nextQueueNumberForToday(): Promise<number> {
+  const { start: startOfDay, end: endOfDay } = bakuDayBounds(todayBakuYmd());
+  const last = await prisma.queueTicket.findFirst({
+    where: { createdAt: { gte: startOfDay, lt: endOfDay } },
+    orderBy: { queueNumber: "desc" },
+    select: { queueNumber: true },
+  });
+  return (last?.queueNumber ?? 0) + 1;
+}
+
+export async function checkInScheduledAppointment(id: string) {
+  const appointment = await prisma.appointment.findUnique({
+    where: { id },
+    include: { visit: true },
+  });
+  if (!appointment) return { kind: "not_found" as const };
+  if (appointment.status !== "SCHEDULED") {
+    return { kind: "bad_status" as const, status: appointment.status };
+  }
+
+  const updated = await prisma.appointment.update({
+    where: { id },
+    data: { status: "CHECKED_IN" },
+    include: { patientRef: true, practitioner: true, visit: true },
+  });
+
+  if (updated.visit) {
+    await prisma.visit.update({
+      where: { id: updated.visit.id },
+      data: { status: "IN_PROGRESS" },
+    });
+
+    await prisma.queueTicket.create({
+      data: {
+        visitId: updated.visit.id,
+        queueNumber: await nextQueueNumberForToday(),
+      },
+    });
+  }
+
+  return { kind: "ok" as const, appointment: updated };
+}
+
+export async function findVisitById(visitId: string) {
+  return prisma.visit.findUnique({ where: { id: visitId } });
+}
+
+export async function findActiveQueueTicketForVisit(visitId: string) {
+  return prisma.queueTicket.findFirst({
+    where: { visitId, status: { in: ["WAITING", "CALLED"] } },
+  });
+}
+
+export async function createQueueTicket(input: { visitId: string; desk?: string }) {
+  return prisma.queueTicket.create({
+    data: {
+      visitId: input.visitId,
+      queueNumber: await nextQueueNumberForToday(),
+      desk: input.desk,
+    },
+    include: {
+      visit: { include: { patientRef: true, practitioner: true } },
+    },
+  });
+}
+
+export async function findQueueTicketById(id: string) {
+  return prisma.queueTicket.findUnique({ where: { id } });
+}
+
+export async function callQueueTicket(id: string, desk?: string) {
+  const ticket = await prisma.queueTicket.findUnique({ where: { id } });
+  if (!ticket) return { kind: "not_found" as const };
+  if (ticket.status !== "WAITING") {
+    return { kind: "bad_status" as const, status: ticket.status };
+  }
+  const updated = await prisma.queueTicket.update({
+    where: { id },
+    data: {
+      status: "CALLED",
+      calledAt: new Date(),
+      desk: desk ?? ticket.desk,
+    },
+    include: {
+      visit: { include: { patientRef: true, practitioner: true } },
+    },
+  });
+  return { kind: "ok" as const, ticket: updated };
+}
+
+export async function listQueueBoardTickets(take = 50) {
+  return prisma.queueTicket.findMany({
+    where: { status: { in: ["WAITING", "CALLED"] } },
+    include: {
+      visit: { include: { patientRef: true, practitioner: true } },
+    },
+    orderBy: [{ status: "asc" }, { queueNumber: "asc" }],
+    take,
+  });
+}
+
+export async function processAppointmentRemindersForOrganization(organizationId: string) {
+  const now = new Date();
+  const in24h = new Date(now.getTime() + 24 * 3600_000);
+  const windowStart = new Date(in24h.getTime() - 30 * 60_000);
+  const windowEnd = new Date(in24h.getTime() + 30 * 60_000);
+
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      scheduledAt: { gte: windowStart, lte: windowEnd },
+      reminderSentAt: null,
+    },
+    include: { patientRef: true, practitioner: true },
+  });
+
+  const { sendNotification, createBookingAppointment } = await import(
+    "@/integration/control-plane-platform.client"
+  );
+
+  let sent = 0;
+  for (const appt of appointments) {
+    const phone = appt.patientRef.phone?.trim();
+    if (!phone) continue;
+
+    await sendNotification(
+      {
+        templateKey: "clinic.appointment.reminder",
+        channel: "WHATSAPP",
+        messageClass: "TRANSACTIONAL",
+        recipient: phone,
+        sourceEntityType: "appointment",
+        sourceEntityId: appt.id,
+        body: `Напоминание: приём ${appt.scheduledAt.toISOString()} — ${appt.practitioner.fullName}`,
+        payload: {
+          scheduledAt: appt.scheduledAt.toISOString(),
+          practitionerName: appt.practitioner.fullName,
+        },
+      },
+      { organizationId },
+    );
+
+    await createBookingAppointment(
+      {
+        customerRef: appt.patientRef.refCode,
+        customerPhone: phone,
+        customerName: appt.patientRef.fullName,
+        scheduledAt: appt.scheduledAt.toISOString(),
+        resourceKey: appt.practitioner.code,
+        metadata: { appointmentId: appt.id },
+      },
+      { organizationId },
+    ).catch(() => undefined);
+
+    await prisma.appointment.update({
+      where: { id: appt.id },
+      data: { reminderSentAt: new Date() },
+    });
+    sent++;
+  }
+
+  return { scanned: appointments.length, sent };
+}
+
+export async function listNurseSheetFormOptions(organizationId: string) {
+  const [procedures, inactiveDepts] = await Promise.all([
+    prisma.procedureType.findMany({
+      where: { organizationId, active: true },
+      select: { code: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.serviceDepartment.findMany({
+      where: { organizationId, active: false },
+      select: { code: true },
+    }),
+  ]);
+  const off = new Set(inactiveDepts.map((row) => row.code));
+  const catalog = off.size
+    ? await prisma.serviceCatalogCache.findMany({
+        where: { organizationId, code: { in: procedures.map((row) => row.code) } },
+        select: { code: true, departmentCode: true },
+      })
+    : [];
+  const hidden = new Set(
+    catalog.filter((row) => row.departmentCode && off.has(row.departmentCode)).map((row) => row.code),
+  );
+  return procedures.filter((row) => !hidden.has(row.code));
 }

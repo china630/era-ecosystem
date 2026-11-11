@@ -137,7 +137,7 @@ export default function GuestsPage() {
     setCardOpen(true);
   }
 
-  if (!can(PERMISSIONS.RESERVATIONS_READ)) {
+  if (!can(PERMISSIONS.GUESTS_READ)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 
@@ -148,7 +148,7 @@ export default function GuestsPage() {
           className="!mb-0"
           title={t('title')}
           actions={
-            can(PERMISSIONS.RESERVATIONS_WRITE) ? (
+            can(PERMISSIONS.GUESTS_WRITE) ? (
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
                 {t('addGuest')}
               </button>
@@ -308,7 +308,7 @@ export default function GuestsPage() {
                 key: 'actions',
                 header: tc('actions'),
                 render: (r) =>
-                  can(PERMISSIONS.RESERVATIONS_WRITE) ? (
+                  can(PERMISSIONS.GUESTS_WRITE) ? (
                     <button
                       type="button"
                       className="text-[#2980B9] hover:underline"

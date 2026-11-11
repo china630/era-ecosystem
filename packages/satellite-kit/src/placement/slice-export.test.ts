@@ -5,6 +5,7 @@ import {
   exportOrgSlice,
   exportOrgSliceLabSummary,
   importOrgSlice,
+  sliceNotImplementedNote,
 } from "./slice-export.js";
 
 const ORG_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -104,5 +105,14 @@ describe("exportOrgSliceLabSummary", () => {
     assert.match(meta.note, /hotel curated json slice v1/);
     assert.ok(!meta.note.includes("not implemented"));
     assert.ok(meta.rowCounts);
+  });
+});
+
+describe("sliceNotImplementedNote", () => {
+  it("names the satellite key for fail-closed export", () => {
+    assert.equal(
+      sliceNotImplementedNote("industry_clinic"),
+      "slice not implemented for industry_clinic",
+    );
   });
 });

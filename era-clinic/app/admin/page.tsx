@@ -39,5 +39,5 @@ export default async function AdminIndexPage() {
   }
 
   const href = firstAllowedAdminHref(permissions);
-  redirect(href ?? "/?error=forbidden");
+  redirect(href ?? "/access-denied");
 }

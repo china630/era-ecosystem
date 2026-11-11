@@ -3,7 +3,7 @@ import {
   sessionHasFnbPermission,
   type FnbPermissionSession,
 } from "@/lib/auth/permission-check";
-import type { SatelliteSessionPayload } from "@era/satellite-kit";
+import { roleForbiddenBody, type SatelliteSessionPayload } from "@era/satellite-kit";
 
 function toCheckSession(
   session: SatelliteSessionPayload | FnbPermissionSession,
@@ -51,13 +51,10 @@ export function denyUnlessPermission(
     });
   }
   if (!sessionHasFnbPermission(toCheckSession(session), permission)) {
-    return new Response(
-      JSON.stringify({ error: "Forbidden: insufficient permissions" }),
-      {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return new Response(JSON.stringify(roleForbiddenBody("Forbidden: insufficient permissions")), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
   }
   return null;
 }
@@ -74,13 +71,10 @@ export function denyUnlessAnyPermission(
   }
   const check = toCheckSession(session);
   if (!permissions.some((p) => sessionHasFnbPermission(check, p))) {
-    return new Response(
-      JSON.stringify({ error: "Forbidden: insufficient permissions" }),
-      {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return new Response(JSON.stringify(roleForbiddenBody("Forbidden: insufficient permissions")), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
   }
   return null;
 }

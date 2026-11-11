@@ -1,8 +1,11 @@
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import {
   createSatelliteStaffMiddleware,
   redirectNoStore,
+  staffAccessDeniedRedirect,
 } from "@era/satellite-kit/auth/middleware-edge";
+import { placementFrozenWriteResponse } from "@era/satellite-kit/placement/freeze";
 import { CLINIC_SATELLITE_KEY } from "@/lib/clinic-satellite-key";
 import { sessionHasAnyClinicPermission } from "@/lib/auth/clinic-permission-check";
 import {
@@ -19,10 +22,7 @@ import {
 } from "@/domain/presets/preset-cookie";
 
 function roleGuardResponse(request: NextRequest) {
-  const url = request.nextUrl.clone();
-  url.pathname = "/login";
-  url.searchParams.set("error", "forbidden");
-  return redirectNoStore(url);
+  return staffAccessDeniedRedirect(request);
 }
 
 export const middleware = createSatelliteStaffMiddleware<NextRequest>({
@@ -81,6 +81,18 @@ export const middleware = createSatelliteStaffMiddleware<NextRequest>({
       }
     }
     return null;
+  },
+  authorizeApi: ({ request, pathname, session }) => {
+    const frozen = placementFrozenWriteResponse({
+      method: request.method,
+      pathname,
+      organizationId: session.organizationId,
+    });
+    if (!frozen) return null;
+    return NextResponse.json(
+      { error: "Organization frozen for placement hop" },
+      { status: 423 },
+    );
   },
 });
 

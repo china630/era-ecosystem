@@ -15,7 +15,6 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { OrganizationId } from "../common/org-id.decorator";
-import { PrismaService } from "../prisma/prisma.service";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
@@ -25,7 +24,6 @@ import {
   DisposeIntangibleAssetDto,
 } from "./dto/intangible-lifecycle.dto";
 import { RunIntangibleAmortizationDto } from "./dto/run-intangible-amortization.dto";
-import { IntangibleAmortizationService } from "./intangible-amortization.service";
 import { IntangibleAssetsService } from "./intangible-assets.service";
 
 @ApiTags("intangible-assets")
@@ -34,11 +32,7 @@ import { IntangibleAssetsService } from "./intangible-assets.service";
 @RequiresModule(ModuleEntitlement.FIXED_ASSETS)
 @Controller("intangible-assets")
 export class IntangibleAssetsController {
-  constructor(
-    private readonly assets: IntangibleAssetsService,
-    private readonly amortization: IntangibleAmortizationService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly assets: IntangibleAssetsService) {}
 
   @Get()
   @ApiOperation({ summary: "List intangible assets" })
@@ -65,13 +59,10 @@ export class IntangibleAssetsController {
     @OrganizationId() organizationId: string,
     @Query() query: RunIntangibleAmortizationDto,
   ) {
-    return this.prisma.$transaction((tx) =>
-      this.amortization.applyForClosedMonth(
-        tx,
-        organizationId,
-        query.year,
-        query.month,
-      ),
+    return this.assets.runAmortizationInTransaction(
+      organizationId,
+      query.year,
+      query.month,
     );
   }
 
@@ -104,9 +95,7 @@ export class IntangibleAssetsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: AcquireIntangibleAssetDto,
   ) {
-    return this.prisma.$transaction((tx) =>
-      this.amortization.acquireInTransaction(tx, organizationId, id, dto),
-    );
+    return this.assets.acquireInTransaction(organizationId, id, dto);
   }
 
   @Post(":id/dispose")
@@ -118,8 +107,6 @@ export class IntangibleAssetsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: DisposeIntangibleAssetDto,
   ) {
-    return this.prisma.$transaction((tx) =>
-      this.amortization.disposeInTransaction(tx, organizationId, id, dto),
-    );
+    return this.assets.disposeInTransaction(organizationId, id, dto);
   }
 }

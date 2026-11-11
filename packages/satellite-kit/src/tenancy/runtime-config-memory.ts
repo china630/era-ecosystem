@@ -18,6 +18,13 @@ export type SatelliteRuntimeConfig = {
    * MUST NEVER disable or skip the organizationId tenant filter — topology is packaging.
    */
   deploymentTopology?: "SHARED" | "DEDICATED" | "ONPREM";
+  /**
+   * Write-freeze during SHARED→DEDICATED hop (DEDICATED process or last Sync stamp).
+   * Prefer `placementFrozenOrgIds` on SHARED pools.
+   */
+  placementFreeze?: boolean;
+  /** Org UUIDs currently frozen for placement (SHARED-safe). */
+  placementFrozenOrgIds?: string[];
   /** Commercial / edition label from subscription (string; not a sell gate). */
   edition?: string;
   /**

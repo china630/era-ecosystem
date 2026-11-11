@@ -15,6 +15,10 @@ export type EnsureOpenCashShiftInput = {
  * Prefer the primary OPEN shift; otherwise any OPEN.
  * Normal ops keep at most one OPEN (API open refuses a second).
  */
+export async function listRecentCashShifts() {
+  return prisma.cashShift.findMany({ orderBy: { openedAt: 'desc' }, take: 20 });
+}
+
 export async function findOpenCashShift() {
   let shift = await prisma.cashShift.findFirst({
     where: { status: 'OPEN', isPrimary: true },

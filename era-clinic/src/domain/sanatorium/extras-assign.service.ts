@@ -814,6 +814,8 @@ export async function payAndScheduleExtras(
       data: {
         status: "SCHEDULED",
         paymentReceiptRef: receiptRef,
+        paidAt: new Date(),
+        paidByUserId: actorUserId,
         inPackage: false,
       },
     });
@@ -824,6 +826,8 @@ export async function payAndScheduleExtras(
       data: {
         status: "PROPOSED",
         paymentReceiptRef: receiptRef,
+        paidAt: new Date(),
+        paidByUserId: actorUserId,
         inPackage: false,
       },
     });
@@ -900,7 +904,7 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
   if (order.resourceId) {
     await prisma.procedureOrder.update({
       where: { id: order.id },
-      data: { status: "SCHEDULED", inPackage: false },
+      data: { status: "SCHEDULED", inPackage: false, paidAt: order.paidAt ?? new Date() },
     });
   } else if (
     order.schedulingMode === "OPEN" &&
@@ -909,14 +913,14 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
     // PLAN_BEFORE_PAY already day-bucketed this OPEN row — keep the pin.
     await prisma.procedureOrder.update({
       where: { id: order.id },
-      data: { status: "SCHEDULED", inPackage: false },
+      data: { status: "SCHEDULED", inPackage: false, paidAt: order.paidAt ?? new Date() },
     });
   } else {
     // Money is confirmed at hotel first. Placement may wait on anamnesis / care team —
     // do not reject settlement-confirmed for those gates (hotel already PAID).
     await prisma.procedureOrder.update({
       where: { id: order.id },
-      data: { status: "PROPOSED", inPackage: false },
+      data: { status: "PROPOSED", inPackage: false, paidAt: order.paidAt ?? new Date() },
     });
     try {
       if (order.schedulingMode === "OPEN") {

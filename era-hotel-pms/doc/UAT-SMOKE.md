@@ -147,6 +147,10 @@ Room plan UI (Wave C+ / EW palette):
 2. Book OUT transfer for stay-linked guest (autocomplete OPTION/CONFIRMED/IN_HOUSE) — status BOOKED.
 3. Assign vehicle → Complete → `TRANSFER` charge on guest folio; order status DONE.
 4. Cancel DONE+charged → void when possible. Print driver sheet for the pickup date.
+5. **Stay cancel / no-show** — open BOOKED/CONFIRMED transfers auto-cancel; reservation card chips clear.
+6. **Date amend** — change check-in/out with open transfers → ASK modal (SHIFT/KEEP/CANCEL); save blocked until decided (`TRANSFER_DATE_PENDING`).
+7. **Early check-out** — open OUT → checkout block SHIFT/CANCEL/LEAVE (`TRANSFER_OUT_PENDING` if missing). Room move → driver sheet/list show new room number without editing the transfer.
+8. Card header — transfer chips (all open) + tour count; chip opens `/transfers?reservationId=`.
 
 ## 14b. TOURS (HOT-TOUR-01) — boarding-first default
 
@@ -162,6 +166,7 @@ Spec: [TOURS-NAFTA-OPS.md](./TOURS-NAFTA-OPS.md). SKU `hotel_transfers`. Policy:
 8. Confirm **no** extra row on `/front-cash/pending` for the tour.
 9. Optional: switch policy to `CHARGE_ON_ADD` → add posts `TOUR` immediately (legacy).
 10. Legacy `/tours/[id]` redirects to `/tours?roster=<id>`.
+11. **Early check-out / stay cancel** — `RESERVED` seats on departures on/after new out (or all RESERVED on cancel) drop automatically; roster headcount falls. Boarded CHARGED/PAID untouched. Room move → manifest/roster show new room live.
 
 ## 15. BANQUET BEO / MICE (Stage 21 / HN-8 / H-BL-31)
 

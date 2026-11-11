@@ -24,7 +24,6 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagg
 import { Response } from "express";
 import { CounterpartyRole, CounterpartyLegalForm } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
-import { PrismaService } from "../prisma/prisma.service";
 import { counterpartyKindFromLegalForm } from "./counterparty-kind.util";
 import { CreateCounterpartyBankAccountDto } from "./dto/create-counterparty-bank-account.dto";
 import { CreateCounterpartyDto } from "./dto/create-counterparty.dto";
@@ -72,7 +71,6 @@ function counterpartyExtraFields(dto: CreateCounterpartyDto) {
 @Permissions(CP_PERMISSION.API_REPORTS_NAS)
 export class CounterpartiesController {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly svc: CounterpartiesService,
     private readonly orchestratorMdm: OrchestratorMdmClientService,
     private readonly dataHub: DataHubClientService,
@@ -98,7 +96,7 @@ export class CounterpartiesController {
         };
       }
     }
-    const local = await this.prisma.globalCounterparty.findUnique({ where: { taxId: id } });
+    const local = await this.svc.findGlobalCounterpartyByTaxId(id);
     if (local) {
       return {
         found: true,
@@ -187,15 +185,13 @@ export class CounterpartiesController {
           ]
         : null;
 
-    return this.prisma.counterparty.findMany({
-      where: {
-        organizationId: orgId,
+    return this.svc.listCounterparties({
+      organizationId: orgId,
+      whereExtras: {
         ...roleFilter,
         ...(searchOr && searchOr.length > 0 ? { OR: searchOr } : {}),
       },
-      orderBy: { createdAt: "desc" },
-      include: { global: true },
-      ...(take !== undefined ? { take } : {}),
+      take,
     });
   }
 
@@ -241,25 +237,7 @@ export class CounterpartiesController {
     @Param("id") id: string,
   ) {
     await this.svc.assertLocal(orgId, id);
-    const rows = await this.prisma.agencyCityLedgerSnapshot.findMany({
-      where: {
-        organizationId: orgId,
-        OR: [{ counterpartyId: id }, { hotelAgencyId: id }],
-      },
-      orderBy: [{ asOfDate: "desc" }, { createdAt: "desc" }],
-      take: 10,
-      select: {
-        id: true,
-        agencyCode: true,
-        asOfDate: true,
-        balance: true,
-        periodCharges: true,
-        periodPayments: true,
-        currency: true,
-        correlationId: true,
-        createdAt: true,
-      },
-    });
+    const rows = await this.svc.listAgencyCityLedgerSnapshots(orgId, id);
     return { items: rows };
   }
 
@@ -272,35 +250,14 @@ export class CounterpartiesController {
     @Param("id") id: string,
   ) {
     await this.svc.assertLocal(orgId, id);
-    const rows = await this.prisma.agencyCommissionPayableSnapshot.findMany({
-      where: {
-        organizationId: orgId,
-        OR: [{ counterpartyId: id }, { hotelAgencyId: id }],
-      },
-      orderBy: [{ asOfDate: "desc" }, { createdAt: "desc" }],
-      take: 20,
-      select: {
-        id: true,
-        agencyCode: true,
-        hotelBatchId: true,
-        asOfDate: true,
-        totalAmount: true,
-        lineCount: true,
-        currency: true,
-        correlationId: true,
-        createdAt: true,
-      },
-    });
+    const rows = await this.svc.listAgencyCommissionPayableSnapshots(orgId, id);
     return { items: rows };
   }
 
   @Get("card-requests")
   @ApiOperation({ summary: "Companies and agencies waiting for a Finance card" })
   async cardRequests(@OrganizationId() orgId: string) {
-    const rows = await this.prisma.counterpartyCardRequest.findMany({
-      where: { organizationId: orgId, status: "PENDING" },
-      orderBy: { createdAt: "asc" },
-    });
+    const rows = await this.svc.listPendingCounterpartyCardRequests(orgId);
     return rows.map((row) => ({
       id: row.id,
       partyKind: row.partyKind,
@@ -374,10 +331,10 @@ export class CounterpartiesController {
           taxId: voen,
           nameFallback: name,
         });
-        await this.prisma.counterparty.update({
-          where: { id: linked.id },
-          data: { legalForm: legalRaw as CounterpartyLegalForm },
-        });
+        await this.svc.updateCounterpartyLegalForm(
+          linked.id,
+          legalRaw as CounterpartyLegalForm,
+        );
         created.push(voen);
       } catch (err) {
         errors.push(`${voen || r}: ${err instanceof Error ? err.message : "failed"}`);
@@ -389,10 +346,7 @@ export class CounterpartiesController {
   @Get(":id")
   @ApiOperation({ summary: "Контрагент по id" })
   async getOne(@OrganizationId() orgId: string, @Param("id") id: string) {
-    const row = await this.prisma.counterparty.findFirst({
-      where: { id, organizationId: orgId },
-      include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
-    });
+    const row = await this.svc.findCounterpartyDetail(orgId, id);
     if (!row) {
       throw new NotFoundException("Counterparty not found");
     }
@@ -412,12 +366,7 @@ export class CounterpartiesController {
     }
     const taxId = dto.taxId.trim();
     const taxIdBlindIndex = blindIndex("voen", normalizeVoen(taxId));
-    const dup = await this.prisma.counterparty.findFirst({
-      where: {
-        organizationId: orgId,
-        taxIdBlindIndex,
-      },
-    });
+    const dup = await this.svc.findCounterpartyByTaxIdBlindIndex(orgId, taxIdBlindIndex);
     if (dup) {
       throw new ConflictException(
         "A counterparty with this VÖEN already exists in the organization",
@@ -450,60 +399,17 @@ export class CounterpartiesController {
         legalAddressFallback: dto.address ?? null,
         vatStatusFallback: dto.isVatPayer ?? null,
       });
-      const updated = await this.prisma.counterparty.update({
-        where: { id: linked.id },
-        data: {
-          kind,
-          role: dto.role ?? CounterpartyRole.CUSTOMER,
-          legalForm: dto.legalForm,
-          address: dto.address ?? null,
-          country: dto.country?.trim().toUpperCase() || null,
-          email: dto.email?.trim() || null,
-          isVatPayer: dto.isVatPayer ?? linked.isVatPayer ?? false,
-          nameCipher: encryptText(normalizeName(name)),
-          taxIdCipher: encryptText(normalizeVoen(taxId)),
-          taxIdBlindIndex,
-          ...(dto.portalLocale !== undefined && {
-            portalLocale: dto.portalLocale,
-          }),
-          ...(dto.paymentTermsDays !== undefined && {
-            paymentTermsDays: dto.paymentTermsDays,
-          }),
-          ...(globalPersonId ? { globalPersonId } : {}),
-          ...counterpartyExtraFields(dto),
-        },
-        include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
-      });
-      await this.svc.syncDirectoryAfterLocalSave(orgId, updated.id);
-      return updated;
-    } catch (e) {
-      await this.prisma.auditLog.create({
-        data: {
-          organizationId: orgId,
-          userId: null,
-          entityType: "Counterparty",
-          entityId: taxId,
-          action: "DEGRADED_MODE_ETAXES_FALLBACK",
-          newValues: {
-            reason: e instanceof Error ? e.message : String(e),
-            taxId,
-          } as object,
-        },
-      });
-    }
-    const created = await this.prisma.counterparty.create({
-      data: {
-        organizationId: orgId,
-        nameCipher: encryptText(normalizeName(name)),
-        taxIdCipher: encryptText(normalizeVoen(taxId)),
-        taxIdBlindIndex,
+      const updated = await this.svc.updateCounterpartyFromCreate(linked.id, {
         kind,
         role: dto.role ?? CounterpartyRole.CUSTOMER,
         legalForm: dto.legalForm,
         address: dto.address ?? null,
         country: dto.country?.trim().toUpperCase() || null,
         email: dto.email?.trim() || null,
-        isVatPayer: dto.isVatPayer ?? false,
+        isVatPayer: dto.isVatPayer ?? linked.isVatPayer ?? false,
+        nameCipher: encryptText(normalizeName(name)),
+        taxIdCipher: encryptText(normalizeVoen(taxId)),
+        taxIdBlindIndex,
         ...(dto.portalLocale !== undefined && {
           portalLocale: dto.portalLocale,
         }),
@@ -512,8 +418,36 @@ export class CounterpartiesController {
         }),
         ...(globalPersonId ? { globalPersonId } : {}),
         ...counterpartyExtraFields(dto),
-      },
-      include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
+      });
+      await this.svc.syncDirectoryAfterLocalSave(orgId, updated.id);
+      return updated;
+    } catch (e) {
+      await this.svc.createDegradedModeEtaxesAuditLog({
+        organizationId: orgId,
+        taxId,
+        reason: e instanceof Error ? e.message : String(e),
+      });
+    }
+    const created = await this.svc.createLocalCounterparty({
+      organizationId: orgId,
+      nameCipher: encryptText(normalizeName(name)),
+      taxIdCipher: encryptText(normalizeVoen(taxId)),
+      taxIdBlindIndex,
+      kind,
+      role: dto.role ?? CounterpartyRole.CUSTOMER,
+      legalForm: dto.legalForm,
+      address: dto.address ?? null,
+      country: dto.country?.trim().toUpperCase() || null,
+      email: dto.email?.trim() || null,
+      isVatPayer: dto.isVatPayer ?? false,
+      ...(dto.portalLocale !== undefined && {
+        portalLocale: dto.portalLocale,
+      }),
+      ...(dto.paymentTermsDays !== undefined && {
+        paymentTermsDays: dto.paymentTermsDays,
+      }),
+      ...(globalPersonId ? { globalPersonId } : {}),
+      ...counterpartyExtraFields(dto),
     });
     await this.svc.syncDirectoryAfterLocalSave(orgId, created.id);
     return created;
@@ -527,9 +461,7 @@ export class CounterpartiesController {
     @Param("id") id: string,
     @Body() dto: UpdateCounterpartyDto,
   ) {
-    const existing = await this.prisma.counterparty.findFirst({
-      where: { id, organizationId: orgId },
-    });
+    const existing = await this.svc.findCounterpartyForUpdate(orgId, id);
     if (!existing) {
       throw new NotFoundException("Counterparty not found");
     }
@@ -540,13 +472,11 @@ export class CounterpartiesController {
       if (sameAsCurrent) {
         // no-op for duplicate check when taxId didn't really change
       } else {
-      const dup = await this.prisma.counterparty.findFirst({
-        where: {
-          organizationId: orgId,
-          taxIdBlindIndex: nextTaxIdBlindIndex,
-          NOT: { id },
-        },
-      });
+      const dup = await this.svc.findCounterpartyByTaxIdBlindIndexExcluding(
+        orgId,
+        nextTaxIdBlindIndex,
+        id,
+      );
       if (dup) {
         throw new ConflictException(
           "A counterparty with this VÖEN already exists in the organization",
@@ -558,31 +488,27 @@ export class CounterpartiesController {
       dto.legalForm !== undefined
         ? { kind: counterpartyKindFromLegalForm(dto.legalForm) }
         : {};
-    const updated = await this.prisma.counterparty.update({
-      where: { id },
-      data: {
-        ...(dto.name !== undefined && {
-          nameCipher: encryptText(normalizeName(dto.name.trim())),
-        }),
-        ...(dto.taxId !== undefined && {
-          taxIdCipher: encryptText(normalizeVoen(dto.taxId.trim())),
-          taxIdBlindIndex: blindIndex("voen", normalizeVoen(dto.taxId.trim())),
-        }),
-        ...kindPatch,
-        ...(dto.role !== undefined && { role: dto.role }),
-        ...(dto.legalForm !== undefined && { legalForm: dto.legalForm }),
-        ...(dto.address !== undefined && { address: dto.address || null }),
-        ...(dto.country !== undefined && { country: dto.country?.trim().toUpperCase() || null }),
-        ...(dto.email !== undefined && { email: dto.email?.trim() || null }),
-        ...(dto.isVatPayer !== undefined && { isVatPayer: dto.isVatPayer }),
-        ...(dto.portalLocale !== undefined && {
-          portalLocale: dto.portalLocale,
-        }),
-        ...(dto.paymentTermsDays !== undefined && {
-          paymentTermsDays: dto.paymentTermsDays,
-        }),
-      },
-      include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
+    const updated = await this.svc.updateCounterparty(id, {
+      ...(dto.name !== undefined && {
+        nameCipher: encryptText(normalizeName(dto.name.trim())),
+      }),
+      ...(dto.taxId !== undefined && {
+        taxIdCipher: encryptText(normalizeVoen(dto.taxId.trim())),
+        taxIdBlindIndex: blindIndex("voen", normalizeVoen(dto.taxId.trim())),
+      }),
+      ...kindPatch,
+      ...(dto.role !== undefined && { role: dto.role }),
+      ...(dto.legalForm !== undefined && { legalForm: dto.legalForm }),
+      ...(dto.address !== undefined && { address: dto.address || null }),
+      ...(dto.country !== undefined && { country: dto.country?.trim().toUpperCase() || null }),
+      ...(dto.email !== undefined && { email: dto.email?.trim() || null }),
+      ...(dto.isVatPayer !== undefined && { isVatPayer: dto.isVatPayer }),
+      ...(dto.portalLocale !== undefined && {
+        portalLocale: dto.portalLocale,
+      }),
+      ...(dto.paymentTermsDays !== undefined && {
+        paymentTermsDays: dto.paymentTermsDays,
+      }),
     });
     await this.svc.syncDirectoryAfterLocalSave(orgId, updated.id);
     return updated;

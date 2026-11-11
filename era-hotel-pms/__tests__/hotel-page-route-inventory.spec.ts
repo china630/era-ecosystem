@@ -32,6 +32,7 @@ describe("hotel page route inventory (Wave 1 fail-closed)", () => {
     for (const file of walkPages(appRoot)) {
       const pathname = pageToPathname(appRoot, file);
       if (isPublicStaffPage(pathname)) continue;
+      if (pathname === "/access-denied") continue;
       if (pathname === "/agency" || pathname.startsWith("/agency/")) continue;
       if (routePermissions(pathname) == null) {
         missing.push(pathname);

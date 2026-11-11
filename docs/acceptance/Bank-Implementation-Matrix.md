@@ -33,7 +33,7 @@
 | AC-BNK-WEALTH | Custody safekeeping thin | ✅ | [ ] | banking_wealth; FOP receive; no FO | Ops `/wealth`; Derivatives FO OUT |
 | AC-BNK-AML-RTF | AML case + fraud score lab | ✅ | [ ] | aml cases + `/aml/fraud/score` | Ops `/aml/cases`; live feed BLOCKED |
 | AC-BNK-DBO-H2H | DBO H2H + OB consent API | ✅ | [ ] | dbo-ops | ASAN live YC-E3 |
-| AC-BNK-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `bank-rbac` + page inventory + role-name grep; ADR bank-domain-permissions-and-rbac; `/admin/access` clone | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
+| AC-BNK-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `bank-rbac` + `entity-matrix` + page inventory + role-name grep; ADR bank-domain-permissions-and-rbac; `/admin/access` entity grid | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 | AC-BANK-TENANT | `organizationId` + kit Prisma filter on bank / dbo / core rows | 🟡 | [ ] | CP-TENANT-01; B7 schema+migration+mergeWhere tests; fail-closed unbound | **Excluded from Scaffold BE rollup.** Ops `orgNo` login + engine `X-Organization-Id` ALS landed (code). Remaining = live SHARED pool + field isolation UAT (same as hotel/clinic TENANT). Not a bank-only ban. |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-BANK-TENANT and AC-BNK-RBAC).  

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 /**
  * One paid lab per flagged service when the episode opens.
  * Package quota does not make it free. A missing price does not block the episode.
- * An open order is left alone. A cancelled one is created again.
+ * Any non-cancelled order for that code is left alone, including a completed or package one. A cancelled one is created again.
  */
 export async function seedAutoPaidLabs(episodeId: string): Promise<void> {
   const episode = await prisma.clinicalEpisode.findUnique({

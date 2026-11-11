@@ -221,13 +221,8 @@ export async function listExtrasAwaitingTicket(
             }
           : {
               OR: [
-                {
-                  settledAt: null,
-                  OR: [
-                    { scheduledCollectionAt: { gte: start } },
-                    { scheduledCollectionAt: null, createdAt: { gte: start } },
-                  ],
-                },
+                // Unpaid labs stay on the open desk until paid. Procedures keep today's window.
+                { settledAt: null },
                 {
                   settledAt: { not: null },
                   paymentReceiptRef: { not: null },
@@ -357,13 +352,17 @@ export async function listExtrasAwaitingTicket(
     }),
   ]);
 
-  function decorate(row: Omit<ExtraTicketListRow, "bucket" | "printPath">): ExtraTicketListRow | null {
-    const bucket = classifyExtraListBucket({
+  function decorate(
+    row: Omit<ExtraTicketListRow, "bucket" | "printPath">,
+    stayDue = false,
+  ): ExtraTicketListRow | null {
+    let bucket = classifyExtraListBucket({
       status: row.status,
       scheduledAt: row.scheduledAt,
       issuedAt: row.extraTicketIssuedAt,
       todayStart,
     });
+    if (stayDue && bucket === "overdue") bucket = "due";
     const keepIssuedToday =
       scope === "due" &&
       bucket === "issued" &&
@@ -426,7 +425,7 @@ export async function listExtrasAwaitingTicket(
         status: paid ? "PAID" : "AWAITING_PAYMENT",
         extraTicketIssuedAt: paid ? o.settledAt : null,
         extraTicketId: null,
-      });
+      }, !paid);
     }),
     ...visits.map((v) => {
       const line = v.serviceLines[0];

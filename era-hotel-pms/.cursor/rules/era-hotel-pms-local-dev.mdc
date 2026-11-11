@@ -25,6 +25,8 @@ Next.js App Router: `app/` (UI) + `app/api/` (Route Handlers). Prisma: `prisma/s
 
 `DATABASE_URL`, `ERA_SATELLITE_ORGANIZATION_ID`, `ERA_HOTEL_GUEST_MDM_STRICT` (prod: `true`), `CONTROL_PLANE_URL`, `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SSO_SHARED_SECRET`, JWT/cookie secrets. Optional `HOTEL_DATA_DIR` — folder for the letterhead logo (default `./data` under the app; mount a volume in Docker so the logo survives rebuilds).
 
+**Guest Care proxy (HOT-GUEST-APP-05/06):** hotel Nest calls clinic S2S. Set `CLINIC_INTERNAL_URL` (preferred) or `CLINIC_URL` to the clinic Nest origin (local `http://127.0.0.1:13203`), plus the same `SATELLITE_EVENT_SERVICE_TOKEN` as clinic. Without both, Care returns empty with `reason: clinic_unconfigured`.
+
 ## i18n
 
 `messages/{az,ru,en}.json` + `@era/i18n-common`. New UI strings: all three locales.

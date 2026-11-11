@@ -18,6 +18,6 @@ import { PublicTranslationsController } from "./public-translations.controller";
     PublicTranslationsController,
   ],
   providers: [AdminService, AdminCatalogService, AdminAuditLogsService, PricingService],
-  exports: [AdminService, PricingService],
+  exports: [AdminService, PricingService, AdminAuditLogsService],
 })
 export class AdminModule {}

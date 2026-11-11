@@ -118,6 +118,105 @@ export type RoleCode = (typeof ROLE_CODES)[keyof typeof ROLE_CODES];
 
 export const ALL_PERMISSIONS = Object.values(PERMISSIONS);
 
+export type AccessColumn = "view" | "change" | "operate" | "admin";
+
+/** One row per entity. Each catalog key appears in exactly one cell. */
+export const ENTITY_ACCESS_MATRIX: {
+  id: string;
+  cells: Partial<Record<AccessColumn, Permission[]>>;
+}[] = [
+  { id: "summary", cells: { view: [PERMISSIONS.SCREEN_DASHBOARD, PERMISSIONS.SCREEN_EXECUTIVE] } },
+  { id: "cif", cells: { view: [PERMISSIONS.SCREEN_CIF, PERMISSIONS.CIF_READ], change: [PERMISSIONS.CIF_WRITE] } },
+  { id: "account", cells: { view: [PERMISSIONS.SCREEN_ACCOUNTS, PERMISSIONS.ACCOUNTS_READ], change: [PERMISSIONS.ACCOUNTS_WRITE] } },
+  {
+    id: "posting",
+    cells: {
+      view: [PERMISSIONS.SCREEN_POSTINGS, PERMISSIONS.POSTINGS_READ],
+      change: [PERMISSIONS.POSTINGS_WRITE],
+      operate: [PERMISSIONS.POSTINGS_APPROVE, PERMISSIONS.POSTINGS_REJECT, PERMISSIONS.POSTINGS_REVERSE],
+    },
+  },
+  {
+    id: "payment",
+    cells: {
+      view: [PERMISSIONS.SCREEN_PAYMENTS, PERMISSIONS.PAYMENTS_READ],
+      change: [PERMISSIONS.PAYMENTS_WRITE],
+      operate: [PERMISSIONS.PAYMENTS_APPROVE, PERMISSIONS.PAYMENTS_REJECT],
+    },
+  },
+  { id: "cash", cells: { view: [PERMISSIONS.SCREEN_CASH, PERMISSIONS.CASH_READ], change: [PERMISSIONS.CASH_WRITE] } },
+  { id: "fee", cells: { view: [PERMISSIONS.SCREEN_FEES, PERMISSIONS.FEES_READ], change: [PERMISSIONS.FEES_WRITE] } },
+  {
+    id: "deposit",
+    cells: {
+      view: [PERMISSIONS.SCREEN_DEPOSITS, PERMISSIONS.DEPOSITS_READ],
+      change: [PERMISSIONS.DEPOSITS_WRITE],
+      operate: [PERMISSIONS.DEPOSITS_APPROVE, PERMISSIONS.DEPOSITS_REJECT],
+    },
+  },
+  {
+    id: "loan",
+    cells: {
+      view: [PERMISSIONS.SCREEN_LOANS, PERMISSIONS.LOANS_READ],
+      change: [PERMISSIONS.LOANS_WRITE],
+      operate: [PERMISSIONS.LOANS_APPROVE, PERMISSIONS.LOANS_REJECT],
+    },
+  },
+  {
+    id: "collection",
+    cells: {
+      view: [PERMISSIONS.SCREEN_COLLECTIONS, PERMISSIONS.COLLECTIONS_READ],
+      change: [PERMISSIONS.COLLECTIONS_WRITE],
+      operate: [PERMISSIONS.COLLECTIONS_APPROVE],
+    },
+  },
+  { id: "gl", cells: { view: [PERMISSIONS.SCREEN_GL, PERMISSIONS.GL_READ], change: [PERMISSIONS.GL_WRITE] } },
+  {
+    id: "aml",
+    cells: {
+      view: [PERMISSIONS.SCREEN_AML, PERMISSIONS.AML_READ],
+      change: [PERMISSIONS.AML_WRITE],
+      operate: [PERMISSIONS.AML_FMN],
+    },
+  },
+  { id: "report", cells: { view: [PERMISSIONS.SCREEN_REPORTS, PERMISSIONS.REPORTS_READ] } },
+  {
+    id: "card",
+    cells: {
+      view: [PERMISSIONS.SCREEN_CARDS, PERMISSIONS.CARDS_READ],
+      change: [PERMISSIONS.CARDS_WRITE],
+      operate: [PERMISSIONS.CARDS_ISSUE],
+    },
+  },
+  { id: "cardTxn", cells: { view: [PERMISSIONS.SCREEN_CARD_TXNS, PERMISSIONS.CARD_TXNS_READ], change: [PERMISSIONS.CARD_TXNS_WRITE] } },
+  { id: "atm", cells: { view: [PERMISSIONS.ATM_READ], change: [PERMISSIONS.ATM_WRITE] } },
+  {
+    id: "treasury",
+    cells: {
+      view: [PERMISSIONS.SCREEN_TREASURY, PERMISSIONS.TREASURY_READ],
+      change: [PERMISSIONS.TREASURY_WRITE],
+      operate: [PERMISSIONS.TREASURY_FX],
+    },
+  },
+  { id: "trade", cells: { view: [PERMISSIONS.SCREEN_TRADE, PERMISSIONS.TRADE_READ], change: [PERMISSIONS.TRADE_WRITE] } },
+  { id: "islamic", cells: { view: [PERMISSIONS.SCREEN_ISLAMIC, PERMISSIONS.ISLAMIC_READ], change: [PERMISSIONS.ISLAMIC_WRITE] } },
+  { id: "wealth", cells: { view: [PERMISSIONS.SCREEN_WEALTH, PERMISSIONS.WEALTH_READ], change: [PERMISSIONS.WEALTH_WRITE] } },
+  {
+    id: "risk",
+    cells: {
+      view: [PERMISSIONS.SCREEN_RISK, PERMISSIONS.RISK_READ],
+      change: [PERMISSIONS.RISK_WRITE],
+      operate: [PERMISSIONS.RISK_APPROVE, PERMISSIONS.RISK_REJECT],
+    },
+  },
+  { id: "market", cells: { view: [PERMISSIONS.SCREEN_MARKETS, PERMISSIONS.MARKETS_READ], change: [PERMISSIONS.MARKETS_WRITE] } },
+  { id: "branch", cells: { view: [PERMISSIONS.SCREEN_ADMIN_BRANCHES, PERMISSIONS.BRANCHES_READ], change: [PERMISSIONS.BRANCHES_WRITE] } },
+  { id: "eod", cells: { view: [PERMISSIONS.SCREEN_ADMIN_EOD], operate: [PERMISSIONS.EOD_RUN] } },
+  { id: "factory", cells: { view: [PERMISSIONS.SCREEN_ADMIN_PRODUCT_FACTORY], admin: [PERMISSIONS.PRODUCT_FACTORY_MANAGE] } },
+  { id: "audit", cells: { view: [PERMISSIONS.SCREEN_ADMIN_AUDIT, PERMISSIONS.AUDIT_READ] } },
+  { id: "access", cells: { view: [PERMISSIONS.SCREEN_ADMIN_ACCESS], admin: [PERMISSIONS.ACCESS_MANAGE, PERMISSIONS.USERS] } },
+];
+
 export const SYSTEM_BANK_ROLES: RoleCode[] = [
   ROLE_CODES.TELLER,
   ROLE_CODES.BRANCH_MANAGER,

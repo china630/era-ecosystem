@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { ActivityStreamModule } from "../activity-stream/activity-stream.module";
+import { AdminModule } from "../admin/admin.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { AuditArchiveQueueService } from "./audit-archive.queue";
 import { AuditArchiveWorker } from "./audit-archive.worker";
@@ -12,7 +13,7 @@ import { AuditService } from "./audit.service";
 import { AuditChainCronService } from "./audit-chain-cron.service";
 
 @Module({
-  imports: [PrismaModule, ConfigModule, ActivityStreamModule],
+  imports: [PrismaModule, ConfigModule, ActivityStreamModule, AdminModule],
   controllers: [AdminMutationAuditController],
   providers: [
     DataMaskingService,

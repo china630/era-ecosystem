@@ -264,3 +264,114 @@ async function assertCityLedgerParty(
     );
   }
 }
+
+export async function getLastCityLedgerSnapshotAudit(entityId: string) {
+  return prisma.satelliteAuditLog.findFirst({
+    where: { entityType: 'CityLedgerSnapshot', entityId },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+type CityLedgerPaymentCallbackInput = {
+  folioId: string;
+  invoiceId: string;
+  paymentId: string;
+  amount: number;
+  fullyPaid: boolean;
+};
+
+export async function applyCityLedgerPaymentFromFinance(body: CityLedgerPaymentCallbackInput) {
+  const { postPayment, folioBalance } = await import('@/lib/services/folio.service');
+
+  const existing = await prisma.folioPayment.findFirst({
+    where: {
+      folioId: body.folioId,
+      registerRef: body.paymentId,
+      kind: 'PAYMENT',
+    },
+    select: { id: true },
+  });
+  if (existing) {
+    const refreshed = await prisma.folio.findUnique({
+      where: { id: body.folioId },
+      include: { charges: true, payments: true },
+    });
+    if (!refreshed) throw new Error('Folio disappeared during idempotency check');
+
+    const bal = folioBalance(refreshed.charges, refreshed.payments);
+    const nextStatus =
+      Math.abs(bal) <= 0.01 || body.fullyPaid ? 'CLOSED' : 'TRANSFERRED_AR';
+
+    await prisma.folio.update({
+      where: { id: refreshed.id },
+      data: { status: nextStatus },
+    });
+    if (nextStatus === 'CLOSED') {
+      const { maybeMarkReservationSettled } = await import(
+        '@/lib/services/unsettled-departures.service'
+      );
+      await maybeMarkReservationSettled(refreshed.reservationId);
+    }
+
+    return {
+      id: existing.id,
+      paymentId: body.paymentId,
+      folioId: refreshed.id,
+      balance: bal,
+      status: nextStatus,
+      alreadyApplied: true as const,
+    };
+  }
+
+  const folio = await prisma.folio.findUnique({
+    where: { id: body.folioId },
+    include: { charges: true, payments: true },
+  });
+  if (!folio) return null;
+
+  if (folio.status !== 'OPEN') {
+    await prisma.folio.update({
+      where: { id: folio.id },
+      data: { status: 'OPEN' },
+    });
+  }
+
+  const payment = await postPayment({
+    folioId: folio.id,
+    amount: body.amount,
+    paymentMethod: 'COMPANY_ACCOUNT',
+    registerRef: body.paymentId,
+    bankReference: body.invoiceId,
+    skipCityLedgerGate: true,
+  });
+
+  const refreshed = await prisma.folio.findUnique({
+    where: { id: folio.id },
+    include: { charges: true, payments: true },
+  });
+  if (!refreshed) throw new Error('Folio disappeared during payment apply');
+
+  const bal = folioBalance(refreshed.charges, refreshed.payments);
+  const nextStatus =
+    Math.abs(bal) <= 0.01 || body.fullyPaid ? 'CLOSED' : 'TRANSFERRED_AR';
+
+  await prisma.folio.update({
+    where: { id: folio.id },
+    data: { status: nextStatus },
+  });
+  if (nextStatus === 'CLOSED') {
+    const { maybeMarkReservationSettled } = await import(
+      '@/lib/services/unsettled-departures.service'
+    );
+    await maybeMarkReservationSettled(folio.reservationId);
+  }
+
+  return {
+    id: payment.id,
+    paymentId: body.paymentId,
+    folioId: folio.id,
+    balance: bal,
+    status: nextStatus,
+    alreadyApplied: false as const,
+  };
+}

@@ -1,3 +1,4 @@
+import { READ_OF_WRITE } from "@/lib/auth/permissions";
 import { apiRoutePermissions } from "@/lib/auth/api-route-permissions";
 import {
   sessionHasAnyPermission,
@@ -50,6 +51,7 @@ export function assertAnyPermission(
 export function assertApiRouteGrant(
   session: PermissionSession,
   pathname: string | null | undefined,
+  method?: string | null,
 ): void {
   if (pathname && !pathname.startsWith("/api/")) return;
   if (!pathname?.startsWith("/api/")) {
@@ -60,5 +62,10 @@ export function assertApiRouteGrant(
   if (required === null) {
     throw new PermissionDeniedError("Forbidden: route is not in the permission catalog");
   }
-  assertAnyPermission(session, required);
+  const verb = method?.trim().toUpperCase();
+  const grants =
+    verb === "GET" || verb === "HEAD"
+      ? required.map((key) => READ_OF_WRITE[key] ?? key)
+      : required;
+  assertAnyPermission(session, grants);
 }

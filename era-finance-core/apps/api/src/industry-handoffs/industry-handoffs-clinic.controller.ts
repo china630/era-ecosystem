@@ -5,7 +5,7 @@ import { Public } from "../auth/decorators/public.decorator";
 import { IsArray, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 import { OrganizationId } from "../common/org-id.decorator";
-import { PrismaService } from "../prisma/prisma.service";
+import { IndustryHandoffsService } from "./industry-handoffs.service";
 
 class ClinicServiceLineDto {
   @IsString()
@@ -47,7 +47,7 @@ function authorize(authorization?: string, xServiceToken?: string) {
 @ApiTags("industry-handoffs")
 @Controller("industry-handoffs")
 export class IndustryHandoffsClinicController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly handoffs: IndustryHandoffsService) {}
 
   @Get("clinic-service-catalog")
   @ApiOperation({ summary: "CLINIC channel prices for the clinic reception sync" })
@@ -57,23 +57,7 @@ export class IndustryHandoffsClinicController {
     @Headers("x-service-token") xServiceToken?: string,
   ) {
     authorize(authorization, xServiceToken);
-    const lines = await this.prisma.priceListLine.findMany({
-      where: {
-        organizationId,
-        priceList: { organizationId, isActive: true, channel: "CLINIC" },
-      },
-      include: { product: true },
-    });
-    return {
-      items: lines
-        .filter((line) => line.product && !line.product.deletedAt)
-        .map((line) => ({
-          code: line.product.sku,
-          description: line.product.name,
-          amount: Number(line.unitPrice),
-          sku: line.product.sku,
-        })),
-    };
+    return this.handoffs.listClinicServiceCatalog(organizationId);
   }
 
   @Post("clinic-service-catalog")
@@ -86,29 +70,6 @@ export class IndustryHandoffsClinicController {
     @Headers("x-service-token") xServiceToken?: string,
   ) {
     authorize(authorization, xServiceToken);
-    const items: Array<{ code: string; sku: string; amount: number }> = [];
-    for (const service of body.services ?? []) {
-      const sku = service.code.trim();
-      const product = await this.prisma.product.upsert({
-        where: { organizationId_sku: { organizationId, sku } },
-        create: {
-          organizationId,
-          sku,
-          name: service.name,
-          price: service.amount,
-          vatRate: 0,
-          isService: true,
-          revenueAccountCode: service.revenueAccountCode?.trim() || null,
-        },
-        update: {
-          name: service.name,
-          price: service.amount,
-          isService: true,
-          deletedAt: null,
-        },
-      });
-      items.push({ code: sku, sku: product.sku, amount: service.amount });
-    }
-    return { items };
+    return this.handoffs.pushClinicServiceCatalog(organizationId, body.services);
   }
 }

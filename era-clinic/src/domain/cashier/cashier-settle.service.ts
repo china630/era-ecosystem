@@ -501,3 +501,110 @@ export async function settleChargeLogLocally(input: {
   });
   return { receipt: paid, fiscal };
 }
+
+export async function settleBridgeLabOrder(
+  labId: string,
+  pendingId: string,
+): Promise<{ ok: true; labOrderId: string } | { ok: false; reason: "not_found" }> {
+  const lab = await prisma.labOrder.findUnique({ where: { id: labId } });
+  if (!lab) return { ok: false, reason: "not_found" };
+  if (!lab.settledAt) {
+    await prisma.labOrder.update({
+      where: { id: lab.id },
+      data: {
+        settledAt: new Date(),
+        paidAt: lab.paidAt ?? new Date(),
+        settlementPendingId: pendingId,
+      },
+    });
+  }
+  return { ok: true, labOrderId: lab.id };
+}
+
+export async function findBridgeProcedureOrder(sourceRef: string) {
+  return prisma.procedureOrder.findUnique({
+    where: { id: sourceRef },
+    select: { id: true, status: true },
+  });
+}
+
+export async function loadVisitForBridgeSettlement(visitId: string) {
+  return prisma.visit.findUnique({
+    where: { id: visitId },
+    include: { patientRef: true, serviceLines: true, receipts: true },
+  });
+}
+
+export async function peelVisitSettlementPendingId(
+  visit: { id: string; settlementPendingId: string | null },
+  pendingId: string,
+): Promise<{ kind: "waiting"; left: number } | { kind: "continue" }> {
+  const storedPendingIds = visit.settlementPendingId?.trim() ?? "";
+  if (!storedPendingIds.startsWith("[")) return { kind: "continue" };
+  const parsed = JSON.parse(storedPendingIds) as unknown;
+  const ids = Array.isArray(parsed)
+    ? parsed.filter((id): id is string => typeof id === "string")
+    : [];
+  const left = ids.filter((id) => id !== pendingId);
+  if (left.length > 0) {
+    await prisma.visit.update({
+      where: { id: visit.id },
+      data: { settlementPendingId: JSON.stringify(left) },
+    });
+    return { kind: "waiting", left: left.length };
+  }
+  return { kind: "continue" };
+}
+
+export async function finalizeVisitBridgeSettlement(
+  visitId: string,
+  input: {
+    pendingId: string;
+    fiscalReceiptId: string | null | undefined;
+    paidAt: Date | null;
+  },
+) {
+  await prisma.visit.update({
+    where: { id: visitId },
+    data: {
+      billingTarget: "SETTLEMENT_HUB",
+      settlementPendingId: input.pendingId,
+      hubFiscalReceiptId: input.fiscalReceiptId ?? null,
+      settledAt: new Date(),
+      paidAt: input.paidAt ?? new Date(),
+    },
+  });
+}
+
+export async function listOverQuotaChargeLogs(input: {
+  page: number;
+  pageSize: number;
+  dateFrom?: string;
+  dateTo?: string;
+  unsettledOnly?: boolean;
+  overQuotaOnly?: boolean;
+}) {
+  const createdAt: { gte?: Date; lt?: Date } = {};
+  if (input.dateFrom) createdAt.gte = bakuDayBounds(input.dateFrom).start;
+  if (input.dateTo) createdAt.lt = bakuDayBounds(input.dateTo).end;
+
+  const where = {
+    ...(input.overQuotaOnly !== false ? { overQuota: true } : {}),
+    ...(input.unsettledOnly ? { settledLocally: false } : {}),
+    ...(Object.keys(createdAt).length ? { createdAt } : {}),
+  };
+
+  const [total, data] = await Promise.all([
+    prisma.procedureChargeLog.count({ where }),
+    prisma.procedureChargeLog.findMany({
+      where,
+      include: {
+        patientRef: { select: { id: true, refCode: true, fullName: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (input.page - 1) * input.pageSize,
+      take: input.pageSize,
+    }),
+  ]);
+  return { data, total, page: input.page, pageSize: input.pageSize };
+}

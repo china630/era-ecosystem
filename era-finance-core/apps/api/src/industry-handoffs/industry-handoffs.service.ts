@@ -373,4 +373,59 @@ export class IndustryHandoffsService {
       purchase: result,
     };
   }
+
+  async listClinicServiceCatalog(organizationId: string) {
+    const lines = await this.prisma.priceListLine.findMany({
+      where: {
+        organizationId,
+        priceList: { organizationId, isActive: true, channel: "CLINIC" },
+      },
+      include: { product: true },
+    });
+    return {
+      items: lines
+        .filter((line) => line.product && !line.product.deletedAt)
+        .map((line) => ({
+          code: line.product.sku,
+          description: line.product.name,
+          amount: Number(line.unitPrice),
+          sku: line.product.sku,
+        })),
+    };
+  }
+
+  async pushClinicServiceCatalog(
+    organizationId: string,
+    services: Array<{
+      code: string;
+      name: string;
+      amount: number;
+      revenueAccountCode?: string;
+    }>,
+  ) {
+    const items: Array<{ code: string; sku: string; amount: number }> = [];
+    for (const service of services ?? []) {
+      const sku = service.code.trim();
+      const product = await this.prisma.product.upsert({
+        where: { organizationId_sku: { organizationId, sku } },
+        create: {
+          organizationId,
+          sku,
+          name: service.name,
+          price: service.amount,
+          vatRate: 0,
+          isService: true,
+          revenueAccountCode: service.revenueAccountCode?.trim() || null,
+        },
+        update: {
+          name: service.name,
+          price: service.amount,
+          isService: true,
+          deletedAt: null,
+        },
+      });
+      items.push({ code: sku, sku: product.sku, amount: service.amount });
+    }
+    return { items };
+  }
 }

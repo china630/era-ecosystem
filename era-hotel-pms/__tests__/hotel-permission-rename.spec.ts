@@ -77,6 +77,12 @@ describe("hotel permission rename (Wave 2)", () => {
     expect(s).not.toContain("access:manage");
   });
 
+  it("pairs settings screen from a catalog key without master_data", () => {
+    expect(withPairedScreens(["admin:pricing"])).toEqual(
+      expect.arrayContaining(["admin:pricing", "screen:settings"]),
+    );
+  });
+
   it("withPairedScreens adds folio screen without folio.void", () => {
     expect(
       withPairedScreens(["api:folio.read", "api:reservations.read"]),

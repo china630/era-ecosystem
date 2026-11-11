@@ -10,7 +10,7 @@ import { requiredPermissionsForEngineProxy } from "@/lib/auth/bff-permission-map
 import { denyUnlessAnyPermission } from "@/lib/auth/require";
 import { sanitizeLimitsJson } from "@/lib/auth/permissions";
 
-type ProxyOptions = {
+export type ProxyOptions = {
   enginePrefix: string;
   entitlementModule?: string;
   logAction?: string;
@@ -82,7 +82,7 @@ async function denyIfOverDebitLimit(
   return null;
 }
 
-async function proxyRequest(
+export async function proxyRequest(
   request: NextRequest,
   pathSegments: string[] | undefined,
   options: ProxyOptions,

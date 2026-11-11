@@ -68,7 +68,7 @@ ADR: [finance-trade-credit-control.md](../../../docs/adr/finance-trade-credit-co
 | Policy (staff) | `GET/PUT /api/trade-credit/policy` (Phase 3 knobs: `limitK`, `trialLimitAzn`, haircuts, `enrichTtlDays`, `restoreProposalEnabled`, …); `POST .../policy/pin`, `accept-raise`, `reject-raise`, `restore-after-block`, `reclassify` |
 | Limit decisions (staff) | `GET /api/trade-credit/limit-decisions` — Accept/Reject feedback + 30d DPD follow-up (finance-only) |
 | Buyer invite (staff) | `POST /api/counterparties/:id/trade-credit/invite` → Orch `/buyer-portal/invite` (VÖEN required) |
-| Buyer SSO | `POST /api/auth/buyer-sso/exchange` (web + Nest); cookie `era_buyer_session` |
+| Buyer SSO | `POST /api/auth/buyer-sso/exchange` on Nest; web rewrites `/api/*` there; cookie `era_buyer_session` |
 | Buyer cabinet API | `GET /api/buyer/trade-credit` (+ `factorLeadEnabled`); `POST .../grants`; `GET .../grants/:id`; `GET .../invoices`; `POST .../invoices/:id/pay-link`; `GET/PUT .../notify-prefs`; `POST .../factor-leads` — **no** `policyGroup` |
 | Internal consume | `POST /api/internal/v1/trade-credit/grants/consume` (service token) |
 | Meter stub | `TradeCreditMeterService.snapshotBilledBuyers` — soft `TRADE_CREDIT_BUYER` overage; enrich soft `TRADE_CREDIT_ENRICH` |

@@ -28,12 +28,28 @@ export const PERMISSIONS = {
 
   ADMIN_IMPORT: "admin:import",
   ADMIN_SETTINGS: "admin:settings",
+  ADMIN_MARKETPLACE: "admin:marketplace",
   ACCESS_MANAGE: "admin:access_manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 export const ALL_PERMISSIONS: readonly Permission[] = Object.values(PERMISSIONS);
+
+export function expandRetailCatalog(keys: readonly string[]): Permission[] {
+  const known = new Set<string>(ALL_PERMISSIONS);
+  const out: Permission[] = [];
+  const have = new Set<string>();
+  for (const key of keys) {
+    if (!known.has(key) || have.has(key)) continue;
+    have.add(key);
+    out.push(key as Permission);
+  }
+  if (have.has(PERMISSIONS.ADMIN_SETTINGS) && !have.has(PERMISSIONS.ADMIN_MARKETPLACE)) {
+    out.push(PERMISSIONS.ADMIN_MARKETPLACE);
+  }
+  return out;
+}
 
 export const ROLE_CODES = {
   CASHIER: "CASHIER",
@@ -72,7 +88,7 @@ export const ROLE_ALIASES: Record<string, RoleCode> = {
   SUPERVISOR: ROLE_CODES.SHIFT_SUPERVISOR,
 };
 
-export const PERMISSION_CATALOG_VERSION = 1;
+export const PERMISSION_CATALOG_VERSION = 2;
 
 export type PermissionGroup = {
   id: string;
@@ -162,3 +178,51 @@ export const ROLE_TEMPLATES: Record<RoleCode, readonly Permission[]> = {
   PLATFORM_MEMBER: CASHIER_TEMPLATE,
   SATELLITE_OPERATOR: CASHIER_TEMPLATE,
 };
+
+export type AccessColumn = "view" | "change" | "operate" | "admin";
+
+export const ENTITY_ACCESS_MATRIX: {
+  id: string;
+  cells: Partial<Record<AccessColumn, Permission[]>>;
+}[] = [
+  {
+    id: "receipt",
+    cells: {
+      view: [PERMISSIONS.SCREEN_HOME, PERMISSIONS.SCREEN_POS],
+      operate: [PERMISSIONS.RECEIPTS_SELL, PERMISSIONS.RECEIPTS_VOID_LINE],
+    },
+  },
+  {
+    id: "shift",
+    cells: { operate: [PERMISSIONS.SHIFTS_OPEN, PERMISSIONS.SHIFTS_CLOSE, PERMISSIONS.SHIFTS_X_REPORT] },
+  },
+  {
+    id: "stock",
+    cells: {
+      view: [PERMISSIONS.SCREEN_STOCK_CHECK, PERMISSIONS.STOCK_CHECK],
+      admin: [PERMISSIONS.INTEGRATIONS_STOCK],
+    },
+  },
+  {
+    id: "till",
+    cells: {
+      operate: [PERMISSIONS.FISCAL_DEVICES, PERMISSIONS.PRESETS, PERMISSIONS.OFFLINE_SYNC, PERMISSIONS.UPLOADS],
+      admin: [PERMISSIONS.ADMIN_IMPORT],
+    },
+  },
+  { id: "hotel", cells: { view: [PERMISSIONS.HOTEL_REVENUE_CODES] } },
+  {
+    id: "settings",
+    cells: {
+      view: [PERMISSIONS.SCREEN_SETTINGS],
+      admin: [PERMISSIONS.ADMIN_SETTINGS, PERMISSIONS.ADMIN_MARKETPLACE],
+    },
+  },
+  {
+    id: "access",
+    cells: {
+      view: [PERMISSIONS.SCREEN_ADMIN_ACCESS],
+      admin: [PERMISSIONS.ACCESS_MANAGE],
+    },
+  },
+];

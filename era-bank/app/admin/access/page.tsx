@@ -13,7 +13,8 @@ import {
   showSuccess,
 } from "@era/satellite-kit/ui";
 import {
-  PERMISSION_GROUPS,
+  ENTITY_ACCESS_MATRIX,
+  type AccessColumn,
   type Permission,
 } from "@/lib/auth/permissions";
 
@@ -416,29 +417,42 @@ export default function BankAccessPage() {
               </div>
             ) : null}
 
-            <div className="space-y-4">
-              {PERMISSION_GROUPS.map((group) => (
-                <div key={group.id}>
-                  <h3 className="mb-2 text-sm font-semibold">
-                    {t(group.labelKey)}
-                  </h3>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {group.permissions.map((p) => (
-                      <label
-                        key={p}
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={draft.has(p)}
-                          onChange={() => togglePermission(p)}
-                        />
-                        <span className="font-mono text-xs">{p}</span>
-                      </label>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="py-2 pr-3">{t("entityColumn")}</th>
+                    {(["view", "change", "operate", "admin"] as AccessColumn[]).map((col) => (
+                      <th key={col} className="py-2 pr-3">{t(`col_${col}`)}</th>
                     ))}
-                  </div>
-                </div>
-              ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ENTITY_ACCESS_MATRIX.map((row) => (
+                    <tr key={row.id} className="border-b align-top">
+                      <td className="py-2 pr-3 font-medium">
+                        {t.has(`entity_${row.id}` as "title") ? t(`entity_${row.id}` as "title") : row.id}
+                      </td>
+                      {(["view", "change", "operate", "admin"] as AccessColumn[]).map((col) => (
+                        <td key={col} className="py-2 pr-3">
+                          <div className="flex flex-col gap-1">
+                            {(row.cells[col] ?? []).map((perm) => (
+                              <label key={perm} className="flex items-start gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={draft.has(perm)}
+                                  onChange={() => togglePermission(perm)}
+                                />
+                                <span className="font-mono text-xs">{perm}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

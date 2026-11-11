@@ -39,7 +39,7 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'guests',
   label: 'Guests',
   order: 10,
-  permission: PERMISSIONS.RESERVATIONS_WRITE,
+  permission: PERMISSIONS.GUESTS_WRITE,
   templateHint: '10-Guest-Cards.xlsx — EW Guest Cards',
   headerAliases: {
     'Guest Id': 'externalRef',

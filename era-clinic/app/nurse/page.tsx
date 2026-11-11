@@ -6,6 +6,7 @@ import { Info, Maximize2, Printer, X } from "lucide-react";
 import {
   APP_SHELL_CLASS,
   CARD_CONTAINER_CLASS,
+  CatalogField,
   CHIP_ACTIVE_CLASS,
   CHIP_CLASS,
   DatePicker,
@@ -351,8 +352,11 @@ export default function NursePage() {
   }
 
   function patientLine(order: Proc) {
-    const room = order.clinicalEpisode?.roomNumber?.trim();
-    return room ? `${order.patientRef.fullName} · ${room}` : order.patientRef.fullName;
+    return order.patientRef.fullName;
+  }
+
+  function roomLine(order: Proc) {
+    return order.clinicalEpisode?.roomNumber?.trim() || "";
   }
 
   function noteLine(order: Proc) {
@@ -368,6 +372,11 @@ export default function NursePage() {
       .filter(Boolean)
       .join(" · ");
     return [zones, settings, note].filter(Boolean).join(" — ") || "—";
+  }
+
+  function printAllStaff() {
+    const params = new URLSearchParams({ date, lang: locale, autoprint: "1", bundle: "staff" });
+    window.open(`/print/nurse-day?${params.toString()}`, "_blank", "noopener");
   }
 
   function printSheet() {
@@ -456,6 +465,12 @@ export default function NursePage() {
             <p className="break-words text-sm font-semibold leading-snug text-[#34495E]">
               {order.patientRef.fullName}
             </p>
+            {roomLine(order) ? (
+              <p className="text-[12px] text-[#34495E]">
+                <span className={TEXT_MUTED_CLASS}>{t("colRoom")}: </span>
+                {roomLine(order)}
+              </p>
+            ) : null}
             <p className="break-words text-[13px] font-medium leading-snug text-[#34495E]">
               {order.procedureName}
             </p>
@@ -614,6 +629,18 @@ export default function NursePage() {
               {t("printSheet")}
             </button>
           ) : null}
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("printCut")}
+            value="staff"
+            onChange={() => undefined}
+            options={[{ value: "staff", label: t("printCutStaff") }]}
+            widthPreset="select"
+          />
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={printAllStaff}>
+            <Printer className="h-3.5 w-3.5" aria-hidden />
+            {t("printAll")}
+          </button>
           {fullscreen || view === "list" ? null : (
             <button
               type="button"
@@ -709,15 +736,21 @@ export default function NursePage() {
                 {isoDateToDisplay(date) || date}
               </p>
             </div>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setFullscreen(false)}
-              aria-label={t("exitFullscreen")}
-            >
-              <X className="h-4 w-4" aria-hidden />
-              {t("exitFullscreen")}
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={printAllStaff}>
+                <Printer className="h-3.5 w-3.5" aria-hidden />
+                {t("printAll")}
+              </button>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setFullscreen(false)}
+                aria-label={t("exitFullscreen")}
+              >
+                <X className="h-4 w-4" aria-hidden />
+                {t("exitFullscreen")}
+              </button>
+            </div>
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3 pt-2 sm:px-4">
             {unlinkedNotice}
@@ -737,6 +770,7 @@ export default function NursePage() {
                     <th className="p-2">{t("timeLabel")}</th>
                     <th className="p-2">{t("colProcedure")}</th>
                     <th className="p-2">{t("colPatient")}</th>
+                    <th className="p-2">{t("colRoom")}</th>
                     <th className="p-2">{t("colNote")}</th>
                   </tr>
                 </thead>
@@ -746,12 +780,13 @@ export default function NursePage() {
                       <td className="whitespace-nowrap p-2">{timeRange(order)}</td>
                       <td className="p-2">{order.procedureName}</td>
                       <td className="p-2">{patientLine(order)}</td>
+                      <td className="whitespace-nowrap p-2">{roomLine(order)}</td>
                       <td className="p-2">{noteLine(order)}</td>
                     </tr>
                   ))}
                   {sheetRows.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="p-3 text-slate-500">
+                      <td colSpan={5} className="p-3 text-slate-500">
                         {boardReady ? t("sheetEmpty") : tc("loading")}
                       </td>
                     </tr>

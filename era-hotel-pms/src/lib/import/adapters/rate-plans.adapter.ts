@@ -14,7 +14,7 @@ export const ratePlansAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'rate-plans',
   label: 'Rate Codes',
   order: 7,
-  permission: PERMISSIONS.MASTER_DATA_MANAGE,
+  permission: PERMISSIONS.RATES_ADMIN,
   templateHint: '07-Rate-Codes.xlsx — EW Rate Codes',
   headerAliases: {
     'Rate Code': 'code',

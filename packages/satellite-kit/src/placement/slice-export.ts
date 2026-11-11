@@ -1,10 +1,11 @@
 /**
- * Org-slice export/import for PlacementJob (CP-PLACE-01).
- * Hotel curated JSON slice v1 — not a full property pg_dump.
+ * @deprecated Curated JSON slice v1 — lab/fixture only.
+ * Product path for PlacementJob is OrgFullSliceV2 (`./full-org-slice`).
  */
 
 export const ORG_SLICE_FORMAT_VERSION = 1 as const;
 export const ORG_SLICE_NOTE_HOTEL_V1 = "hotel curated json slice v1";
+export const ORG_SLICE_NOTE_CLINIC_V1 = "clinic curated json slice v1";
 
 export type SliceModelDelegate = {
   findMany: (args: {
@@ -29,6 +30,30 @@ export type OrgSliceExportResult = {
   note: string;
 };
 
+/** POST /api/internal/v1/placement/export-slice body. */
+export type OrgSliceExportRequest = {
+  organizationId: string;
+  includeRows?: boolean;
+};
+
+/** Summary returned when includeRows is false (or orch lab path). */
+export type OrgSliceExportSummary = {
+  organizationId: string;
+  formatVersion: typeof ORG_SLICE_FORMAT_VERSION;
+  tables: OrgSliceTableMeta[];
+  rowCounts: Record<string, number>;
+  note: string;
+  artifactRef?: string;
+  rows?: Record<string, Record<string, unknown>[]>;
+};
+
+/** POST /api/internal/v1/placement/import-slice body. */
+export type OrgSliceImportRequest = {
+  organizationId: string;
+  mode: "validate" | "upsert";
+  slice: OrgSliceExportResult | OrgSliceExportSummary;
+};
+
 export type OrgSliceImportResult =
   | {
       ok: true;
@@ -36,6 +61,11 @@ export type OrgSliceImportResult =
       tables: OrgSliceTableMeta[];
     }
   | { ok: false; reason: string };
+
+/** Non-hotel / unimplemented satellite key — orch marks job FAILED (fail-closed). */
+export function sliceNotImplementedNote(satelliteKey: string): string {
+  return `slice not implemented for ${satelliteKey.trim()}`;
+}
 
 function requireOrgId(organizationId: string): string {
   const id = organizationId?.trim();

@@ -207,7 +207,7 @@ export default function SalesContractsPage() {
   }, [tc]);
 
   useEffect(() => {
-    if (can(PERMISSIONS.MASTER_DATA_MANAGE)) void load();
+    if (can(PERMISSIONS.CONTRACTS_ADMIN)) void load();
   }, [can, load]);
 
   const filteredContracts = useMemo(() => {
@@ -265,7 +265,7 @@ export default function SalesContractsPage() {
     return contracts.find((c) => c.id === manageContract.id) ?? manageContract;
   }, [contracts, manageContract]);
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.CONTRACTS_ADMIN)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 

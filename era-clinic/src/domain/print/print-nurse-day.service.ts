@@ -22,6 +22,7 @@ export type NurseDayPrintRow = {
   time: string;
   name: string;
   patient: string;
+  room: string;
   zones: string;
   settings: string;
   note: string;
@@ -46,6 +47,8 @@ export async function buildNurseDayPrint(input: {
   procedure?: string | null;
   /** Exact procedure type code. Reception sheet uses this instead of a text search. */
   procedureCode?: string | null;
+  /** Orders with no STAFF allocation. */
+  unassignedStaff?: boolean;
   /** Mine was asked and this login has no practitioner. */
   empty?: boolean;
 }): Promise<NurseDayPrintDocument> {
@@ -92,7 +95,11 @@ export async function buildNurseDayPrint(input: {
       { OR: [{ clinicalEpisodeId: null }, { clinicalEpisode: { status: "OPEN" } }] },
     ],
   };
-  if (staffId) {
+  if (input.unassignedStaff) {
+    where.NOT = {
+      allocations: { some: { role: "STAFF", practitionerId: { not: null } } },
+    };
+  } else if (staffId) {
     where.allocations = { some: { role: "STAFF", practitionerId: staffId } };
   }
   const patientQ = input.patient?.trim();
@@ -188,8 +195,8 @@ export async function buildNurseDayPrint(input: {
       sites: order.sites,
       listTitles,
     });
-    const room = order.clinicalEpisode?.roomNumber?.trim();
-    const patient = [order.patientRef.fullName?.trim(), room].filter(Boolean).join(" · ");
+    const room = order.clinicalEpisode?.roomNumber?.trim() || "";
+    const patient = order.patientRef.fullName?.trim() || "—";
     const ends = !openUnseated && order.endsAt ? `-${bakuTimeLabel(order.endsAt)}` : "";
     return {
       no: index + 1,
@@ -197,7 +204,8 @@ export async function buildNurseDayPrint(input: {
         ? printLabel(input.lang, "openAttendance")
         : `${bakuTimeLabel(order.scheduledAt)}${ends}`,
       name: resolveOrderDisplayName(order, catalogNames),
-      patient: patient || "—",
+      patient,
+      room,
       zones: [instruction.bodyPart, ...instruction.sites].filter(Boolean).join(", "),
       settings: [instruction.applyMode, ...instruction.fields].filter(Boolean).join(" · "),
       note: [
@@ -213,7 +221,69 @@ export async function buildNurseDayPrint(input: {
   return {
     branding,
     titleDate: printDateFromYmd(date),
-    staffName: staff?.fullName?.trim() || printLabel(input.lang, "allStaff"),
+    staffName: input.unassignedStaff
+      ? printLabel(input.lang, "noStaff")
+      : staff?.fullName?.trim() || printLabel(input.lang, "allStaff"),
     rows,
   };
+}
+
+/** One sheet per masseur on the day, then a sheet for sessions with nobody assigned. */
+export async function buildNurseDayStaffBundle(input: {
+  lang: PrintLang;
+  date: string;
+}): Promise<NurseDayPrintDocument[]> {
+  const { start, end } = bakuDayBounds(input.date);
+  const orders = await prisma.procedureOrder.findMany({
+    where: {
+      scheduledAt: { gte: start, lt: end },
+      OR: [
+        { status: { in: SHEET_STATUSES } },
+        { status: "PENDING_PAY", resourceId: { not: null } },
+      ],
+      AND: [
+        { OR: [{ status: { not: "PENDING_PAY" } }, { resourceId: { not: null } }] },
+        { OR: [{ clinicalEpisodeId: null }, { clinicalEpisode: { status: "OPEN" } }] },
+      ],
+    },
+    select: {
+      allocations: {
+        where: { role: "STAFF", practitionerId: { not: null } },
+        select: {
+          practitioner: { select: { id: true, fullName: true } },
+        },
+      },
+    },
+  });
+  const people = new Map<string, string>();
+  let unassigned = false;
+  for (const order of orders) {
+    const staff = order.allocations
+      .map((row) => row.practitioner)
+      .filter((person): person is { id: string; fullName: string } => Boolean(person?.id));
+    if (staff.length === 0) {
+      unassigned = true;
+      continue;
+    }
+    for (const person of staff) people.set(person.id, person.fullName?.trim() || person.id);
+  }
+  const docs: NurseDayPrintDocument[] = [];
+  const sorted = [...people.entries()].sort((a, b) => a[1].localeCompare(b[1], input.lang));
+  for (const [id] of sorted) {
+    const doc = await buildNurseDayPrint({
+      lang: input.lang,
+      date: input.date,
+      practitionerId: id,
+    });
+    if (doc.rows.length > 0) docs.push(doc);
+  }
+  if (unassigned) {
+    const doc = await buildNurseDayPrint({
+      lang: input.lang,
+      date: input.date,
+      unassignedStaff: true,
+    });
+    if (doc.rows.length > 0) docs.push(doc);
+  }
+  return docs;
 }

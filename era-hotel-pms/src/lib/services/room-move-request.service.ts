@@ -57,7 +57,7 @@ async function doorReadyForMove(roomId: string, reservationId: string): Promise<
   return canAssignDoor(room, Boolean(occupied));
 }
 
-async function applyGuestClass(reservationId: string, doorRoomTypeId: string, effectiveYmd: string) {
+export async function applyGuestClass(reservationId: string, doorRoomTypeId: string, effectiveYmd: string) {
   await prisma.reservation.update({
     where: { id: reservationId },
     data: { roomTypeId: doorRoomTypeId, givenRoomTypeId: null },

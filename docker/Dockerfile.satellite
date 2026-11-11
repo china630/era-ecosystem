@@ -51,6 +51,14 @@ RUN for i in 1 2 3 4 5; do ./node_modules/.bin/prisma generate && break || sleep
   && ./node_modules/.bin/prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/baseline.sql \
   && grep -q CREATE prisma/baseline.sql \
   && npm run build
+# Nest cutover images pack the API runtime. Other satellites leave this empty
+# and keep serving /api from Next on the public port.
+RUN mkdir -p /opt/nest-runtime \
+  && if [ -f nest/main.ts ]; then \
+       mkdir -p /opt/nest-runtime/app \
+       && cp -a nest src tsconfig.json package.json node_modules /opt/nest-runtime/app/ \
+       && touch /opt/nest-runtime/enabled; \
+     fi
 
 FROM node:22-alpine AS runner
 ARG SATELLITE_DIR
@@ -70,16 +78,26 @@ COPY --from=builder /workspace/${SATELLITE_DIR}/.next/static ./.next/static
 COPY --from=builder /workspace/${SATELLITE_DIR}/prisma ./prisma
 COPY docker/scripts/docker-migrate-deploy.mjs ./scripts/docker-migrate-deploy.mjs
 COPY docker/scripts/satellite-entrypoint.sh /app/docker-entrypoint.sh
+COPY docker/scripts/satellite-serve.sh /app/satellite-serve.sh
+COPY docker/scripts/satellite-front.mjs /app/satellite-front.mjs
+COPY --from=builder /opt/nest-runtime /opt/nest-runtime
 COPY --from=builder /workspace/${SATELLITE_DIR}/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /workspace/${SATELLITE_DIR}/package.json ./package.json
 COPY --from=builder /workspace/packages /packages
 RUN mkdir -p ./node_modules/@era \
   && ln -sfn /packages/satellite-kit ./node_modules/@era/satellite-kit \
-  && sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh \
-  && chown -R nextjs:nodejs /app /packages
+  && if [ -d /opt/nest-runtime/app/node_modules/@era ]; then \
+       for link in /opt/nest-runtime/app/node_modules/@era/*; do \
+         name=$(basename "$link"); \
+         if [ -e "/packages/$name" ]; then ln -sfn "/packages/$name" "$link"; fi; \
+       done; \
+     fi \
+  && sed -i 's/\r$//' /app/docker-entrypoint.sh /app/satellite-serve.sh \
+  && chmod +x /app/docker-entrypoint.sh /app/satellite-serve.sh \
+  && chown -R nextjs:nodejs /app /packages /opt/nest-runtime
 USER nextjs
 EXPOSE ${SATELLITE_PORT}
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
   CMD wget -qO- http://127.0.0.1:${PORT}/api/health || exit 1
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["node", "server.js"]
+CMD ["/app/satellite-serve.sh"]

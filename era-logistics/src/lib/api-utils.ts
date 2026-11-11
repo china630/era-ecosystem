@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
+import { nestHttpFrame } from "@/lib/nest-http-context";
 import {
   readSatelliteStaffSession,
   type SatelliteStaffSessionPayload,
@@ -65,7 +66,10 @@ export async function getSatelliteSession(): Promise<StaffSession | null> {
     cookieStore = await cookies();
     headerStore = await headers();
   } catch {
-    return null;
+    const frame = nestHttpFrame();
+    if (!frame) return null;
+    cookieStore = frame.cookies as Awaited<ReturnType<typeof cookies>>;
+    headerStore = frame.headers as Awaited<ReturnType<typeof headers>>;
   }
   const staff = await readSatelliteStaffSession({
     cookies: cookieStore,
@@ -106,6 +110,6 @@ export async function getSatelliteSession(): Promise<StaffSession | null> {
       pin: staff.session.pin === true,
     }),
   };
-  assertApiRouteGrant(session, headerStore.get(PATHNAME_HEADER));
+  assertApiRouteGrant(session, headerStore.get(PATHNAME_HEADER), headerStore.get("x-era-method"));
   return session;
 }

@@ -615,6 +615,10 @@ model Visit {
   settledAt           DateTime?
   /// Clinic receipt number once reception Pay / walk-in send stamped this visit.
   paymentReceiptRef   String?              @map("payment_receipt_ref")
+  /// When reception or the hotel confirmation stamped this visit as paid.
+  paidAt              DateTime?            @map("paid_at")
+  /// Clinic user who punched the cheque. Null when the hotel confirmed without a clinic user.
+  paidByUserId        String?              @map("paid_by_user_id")
   reservationId       String?
   roomNumber          String?
   amountNet           Decimal              @default(0) @db.Decimal(12, 2)
@@ -694,6 +698,10 @@ model LabOrder {
   prescribedByPractitionerId String?     @map("prescribed_by_practitioner_id")
   /// Clinic receipt number once reception Pay / walk-in send stamped this order.
   paymentReceiptRef     String?          @map("payment_receipt_ref")
+  /// When reception or the hotel confirmation stamped this order as paid.
+  paidAt                DateTime?        @map("paid_at")
+  /// Clinic user who punched the cheque. Null when the hotel confirmed without a clinic user.
+  paidByUserId          String?          @map("paid_by_user_id")
   /// Lab works before pay; guest blank stays closed until settledAt. Ignored when inPackage.
   releaseAfterPay       Boolean          @default(false) @map("release_after_pay")
   /// Created by the paid-on-open flag. Day-end cheque skip stays. Checkout cancels an ORDERED row.
@@ -2217,6 +2225,10 @@ model ProcedureOrder {
   packageQuotaCode           String?                  @map("package_quota_code")
   /// Clinic reception confirmed guest payment receipt before Pay (walk-in / extras).
   paymentReceiptRef          String?                  @map("payment_receipt_ref")
+  /// When reception Pay or hotel confirmation stamped this extra as paid.
+  paidAt                     DateTime?                @map("paid_at")
+  /// Clinic user who punched the cheque. Null when the hotel confirmed without a clinic user.
+  paidByUserId               String?                  @map("paid_by_user_id")
   quantity                   Int                      @default(1)
   patientOrigin              PatientOrigin            @default(WALK_IN)
   reservationId              String?
@@ -2574,6 +2586,8 @@ model Role {
   staffKind       String? @map("staff_kind")
   /// Custom role created by cloning; Reset copies donor's effective grants.
   cloneFromCode   String? @map("clone_from_code")
+  /// 0 = row from before the entity grid. Empty [] only bumps the version.
+  permissionCatalogVersion Int @default(0) @map("permission_catalog_version")
   users           User[]
 
   @@unique([organizationId, code])

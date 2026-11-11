@@ -120,10 +120,10 @@ describe("Clinic RBAC admin matrix (Wave 2)", () => {
 
   it("adminApiRoutePermission maps clinic-days and peak-rules to settings", () => {
     expect(adminApiRoutePermission("/api/admin/clinic-days")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
     );
     expect(adminApiRoutePermission("/api/admin/peak-rules/x")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
     );
   });
 

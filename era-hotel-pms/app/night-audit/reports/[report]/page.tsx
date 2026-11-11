@@ -39,6 +39,22 @@ function todayIso() {
   return hotelDateKey();
 }
 
+function roomMoveReasonCell(
+  row: Record<string, unknown>,
+  t: (key: string, values?: Record<string, string>) => string,
+  dash: string,
+) {
+  if (row.reasonCode !== 'SWAP') return String(row.reason ?? dash);
+  const room = typeof row.swapWith === 'string' ? row.swapWith : '';
+  const base = room ? t('reasonSwapWith', { room }) : t('reasonSwap');
+  const settlement = typeof row.settlement === 'string' ? row.settlement : '';
+  if (settlement === 'HOTEL') return `${base} · ${t('settlementHotel')}`;
+  if (settlement === 'GUEST_PAY') return `${base} · ${t('settlementGuest')}`;
+  if (settlement === 'HOTEL_REFUND') return `${base} · ${t('settlementRefund')}`;
+  if (settlement === 'GUEST_CHEAPER') return `${base} · ${t('settlementCheaper')}`;
+  return base;
+}
+
 function isReport(v: string): v is ReportKey {
   return (REPORTS as readonly string[]).includes(v);
 }
@@ -200,6 +216,8 @@ export default function NightAuditEodReportPage() {
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colGuest')}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colFromRoom')}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colToRoom')}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colReason')}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colActor')}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('colStatus')}</th>
                     <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('actions')}</th>
                   </>
@@ -296,6 +314,8 @@ export default function NightAuditEodReportPage() {
                       </td>
                       <td className={DATA_TABLE_TD_CLASS}>{String(r.fromRoom ?? tc('dash'))}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{String(r.toRoom ?? tc('dash'))}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{roomMoveReasonCell(r, t, tc('dash'))}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{String(r.actorName ?? tc('dash'))}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{String(r.status ?? tc('dash'))}</td>
                       <td className={DATA_TABLE_TD_CLASS}>
                         <Link

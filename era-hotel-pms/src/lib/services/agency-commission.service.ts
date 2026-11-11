@@ -19,6 +19,12 @@ import type {
 
 const TERMINAL_LINE: AgencyCommissionLineStatus[] = ['PAID', 'VOID', 'IN_PAYMENT'];
 
+export async function findAgencyCommissionBatchById(batchId: string) {
+  return prisma.agencyCommissionBatch.findUnique({
+    where: { id: batchId },
+  });
+}
+
 function resolvePercent(
   contractPct: number | null | undefined,
   agencyPct: number | null | undefined,

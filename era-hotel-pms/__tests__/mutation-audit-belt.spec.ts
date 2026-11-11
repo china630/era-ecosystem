@@ -2,7 +2,8 @@ import {
   HTTP_MUTATION_ENTITY_TYPE,
   isMutationAuditExemptPath,
 } from '@era/satellite-kit';
-import { HOTEL_MUTATION_AUDIT_EXEMPT_PREFIXES } from '@/lib/mutation-audit-belt';
+
+const HOTEL_REFRESH_EXEMPT = ['/api/auth/session/refresh-permissions'] as const;
 
 describe('hotel mutation audit belt', () => {
   it('exports HTTP_MUTATION entity type', () => {
@@ -15,14 +16,10 @@ describe('hotel mutation audit belt', () => {
     expect(
       isMutationAuditExemptPath(
         '/api/auth/session/refresh-permissions',
-        HOTEL_MUTATION_AUDIT_EXEMPT_PREFIXES,
+        HOTEL_REFRESH_EXEMPT,
       ),
     ).toBe(true);
-    expect(
-      isMutationAuditExemptPath('/api/reservations', HOTEL_MUTATION_AUDIT_EXEMPT_PREFIXES),
-    ).toBe(false);
-    expect(
-      isMutationAuditExemptPath('/api/outlets/select', HOTEL_MUTATION_AUDIT_EXEMPT_PREFIXES),
-    ).toBe(false);
+    expect(isMutationAuditExemptPath('/api/reservations', HOTEL_REFRESH_EXEMPT)).toBe(false);
+    expect(isMutationAuditExemptPath('/api/outlets/select', HOTEL_REFRESH_EXEMPT)).toBe(false);
   });
 });

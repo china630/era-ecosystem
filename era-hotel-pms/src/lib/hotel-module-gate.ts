@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { nestHttpFrame } from "@/lib/nest-http-context";
 import {
   requireSatelliteModule,
   IndustryModuleInactiveError,
@@ -39,7 +40,7 @@ export async function assertHotelApiEntitled(
     try {
       path = (await headers()).get(ERA_PATHNAME_HEADER)?.trim() || "";
     } catch {
-      path = "";
+      path = nestHttpFrame()?.headers.get(ERA_PATHNAME_HEADER)?.trim() || "";
     }
   }
   if (!path || AUTH_EXEMPT_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) {

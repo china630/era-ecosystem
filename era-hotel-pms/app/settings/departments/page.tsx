@@ -58,7 +58,7 @@ export default function DepartmentsPage() {
     void load();
   }, [load]);
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.DEPARTMENTS_ADMIN)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 

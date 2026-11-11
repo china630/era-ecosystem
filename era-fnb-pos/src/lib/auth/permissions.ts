@@ -20,6 +20,9 @@ export const PERMISSIONS = {
   SCREEN_ADMIN_BUFFET: "screen:admin.buffet",
   SCREEN_ADMIN_IMPORT: "screen:admin.import",
   SCREEN_ADMIN_SETTINGS: "screen:admin.settings",
+  SCREEN_ADMIN_AUDIT: "screen:admin.audit",
+  SCREEN_ADMIN_LINKS: "screen:admin.links",
+  SCREEN_ADMIN_LIMITS: "screen:admin.limits",
   SCREEN_ADMIN_INTEGRATION: "screen:admin.integration",
   SCREEN_ADMIN_ACCESS: "screen:admin.access",
   SCREEN_ADMIN_ROSTER: "screen:admin.roster",
@@ -28,7 +31,6 @@ export const PERMISSIONS = {
   ACCESS_MANAGE: "admin:access_manage",
   STAFF_PIN: "admin:staff_pin",
   OUTLET_BIND: "admin:outlet_bind",
-  MASTER_DATA: "admin:master_data",
 
   // Tickets / till
   TICKETS_OPEN: "api:tickets.open",
@@ -78,6 +80,28 @@ export const ROLE_CODES = {
 export type RoleCode = (typeof ROLE_CODES)[keyof typeof ROLE_CODES];
 
 export const ALL_PERMISSIONS = Object.values(PERMISSIONS);
+
+const LEGACY_MASTER_DATA = "admin:master_data";
+
+/** Copy the doors that used to ride on settings. Drop the unused master-data key. */
+export function expandFnbCatalog(keys: readonly string[]): Permission[] {
+  const known = new Set<string>(ALL_PERMISSIONS);
+  const out = new Set<Permission>();
+  for (const key of keys) {
+    if (key === LEGACY_MASTER_DATA) continue;
+    if (known.has(key)) out.add(key as Permission);
+  }
+  if (out.has(PERMISSIONS.SCREEN_ADMIN_SETTINGS)) {
+    out.add(PERMISSIONS.SCREEN_ADMIN_AUDIT);
+    out.add(PERMISSIONS.SCREEN_ADMIN_LINKS);
+    out.add(PERMISSIONS.SCREEN_ADMIN_LIMITS);
+    out.add(PERMISSIONS.SCREEN_ADMIN_BUFFET);
+    out.add(PERMISSIONS.ADMIN_BUFFET);
+    out.add(PERMISSIONS.SCREEN_ADMIN_INTEGRATION);
+    out.add(PERMISSIONS.ADMIN_INTEGRATION);
+  }
+  return [...out];
+}
 
 export const SYSTEM_FNB_ROLES: RoleCode[] = [
   ROLE_CODES.WAITER,
@@ -180,7 +204,6 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       PERMISSIONS.ACCESS_MANAGE,
       PERMISSIONS.STAFF_PIN,
       PERMISSIONS.OUTLET_BIND,
-      PERMISSIONS.MASTER_DATA,
     ],
   },
 ];
@@ -383,3 +406,78 @@ export function roleCodeToPinRole(code: RoleCode): string {
       return "MANAGER";
   }
 }
+
+export type AccessColumn = "view" | "change" | "operate" | "admin";
+
+export const ENTITY_ACCESS_MATRIX: {
+  id: string;
+  cells: Partial<Record<AccessColumn, Permission[]>>;
+}[] = [
+  {
+    id: "ticket",
+    cells: {
+      view: [PERMISSIONS.SCREEN_HOME, PERMISSIONS.SCREEN_FLOOR, PERMISSIONS.SCREEN_ORDERS, PERMISSIONS.SCREEN_SALES],
+      change: [PERMISSIONS.TICKETS_LINES],
+      operate: [
+        PERMISSIONS.TICKETS_OPEN,
+        PERMISSIONS.TICKETS_FIRE,
+        PERMISSIONS.TICKETS_SPLIT,
+        PERMISSIONS.TICKETS_PAY,
+        PERMISSIONS.TICKETS_LIMIT,
+        PERMISSIONS.TICKETS_IKRAM,
+        PERMISSIONS.TICKETS_MOVE,
+        PERMISSIONS.TICKETS_DISCOUNT,
+        PERMISSIONS.TICKETS_VOID,
+        PERMISSIONS.TICKETS_OFFLINE_REPLAY,
+      ],
+    },
+  },
+  {
+    id: "hotel",
+    cells: {
+      view: [PERMISSIONS.SCREEN_CALENDAR, PERMISSIONS.SCREEN_EXECUTIVE, PERMISSIONS.PMS_ENTITLEMENTS],
+      operate: [PERMISSIONS.ROOM_CHARGE, PERMISSIONS.DEFER_HUB, PERMISSIONS.ROOM_SERVICE, PERMISSIONS.RESERVATIONS_OPEN_TICKET],
+    },
+  },
+  {
+    id: "kitchen",
+    cells: {
+      view: [PERMISSIONS.SCREEN_KDS],
+      operate: [PERMISSIONS.KDS_BUMP, PERMISSIONS.MENU_SOLD_OUT],
+      admin: [PERMISSIONS.MENU_MANAGE, PERMISSIONS.SCREEN_ADMIN_MENU, PERMISSIONS.HOTEL_REVENUE_CODES],
+    },
+  },
+  { id: "tables", cells: { admin: [PERMISSIONS.TABLES_MANAGE, PERMISSIONS.OUTLETS_MANAGE, PERMISSIONS.SCREEN_ADMIN_TABLES] } },
+  { id: "shift", cells: { operate: [PERMISSIONS.SHIFTS_OPEN, PERMISSIONS.SHIFTS_CLOSE] } },
+  {
+    id: "roster",
+    cells: {
+      view: [PERMISSIONS.LABOR_ROSTER_READ, PERMISSIONS.SCREEN_ADMIN_ROSTER],
+      change: [PERMISSIONS.LABOR_ROSTER_WRITE],
+      operate: [PERMISSIONS.STAFF_PIN],
+    },
+  },
+  {
+    id: "buffet",
+    cells: {
+      view: [PERMISSIONS.SCREEN_ADMIN_DAILY_MENU, PERMISSIONS.SCREEN_ADMIN_BUFFET],
+      admin: [PERMISSIONS.ADMIN_DAILY_MENU, PERMISSIONS.ADMIN_BUFFET],
+    },
+  },
+  {
+    id: "integration",
+    cells: {
+      view: [PERMISSIONS.SCREEN_ADMIN_IMPORT, PERMISSIONS.SCREEN_ADMIN_INTEGRATION],
+      admin: [PERMISSIONS.ADMIN_INTEGRATION, PERMISSIONS.IMPORT_CUTOVER, PERMISSIONS.OUTLET_BIND],
+    },
+  },
+  { id: "settings", cells: {
+      view: [PERMISSIONS.SCREEN_ADMIN_SETTINGS],
+      admin: [
+        PERMISSIONS.SCREEN_ADMIN_AUDIT,
+        PERMISSIONS.SCREEN_ADMIN_LINKS,
+        PERMISSIONS.SCREEN_ADMIN_LIMITS,
+      ],
+    } },
+  { id: "access", cells: { view: [PERMISSIONS.SCREEN_ADMIN_ACCESS], admin: [PERMISSIONS.ACCESS_MANAGE] } },
+];

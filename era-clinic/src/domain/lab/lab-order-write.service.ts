@@ -442,14 +442,15 @@ export async function createLabOrderWithItems(
     let conflict = await findPatientLabConflict(params.patientRefId, codes, tx);
     if (params.autoPaidStay && conflict) {
       const existing = await tx.labOrder.findUnique({ where: { id: conflict.orderId } });
-      const openNonPackage =
-        existing != null &&
-        !existing.inPackage &&
-        existing.status !== "CANCELLED" &&
-        existing.status !== "PUBLISHED" &&
-        existing.status !== "COMPLETED";
-      if (openNonPackage && existing) {
-        if (!existing.settledAt) {
+      const sameEpisode =
+        !params.clinicalEpisodeId || existing?.clinicalEpisodeId === params.clinicalEpisodeId;
+      if (existing && existing.status !== "CANCELLED" && sameEpisode) {
+        const openUnpaid =
+          !existing.inPackage &&
+          !existing.settledAt &&
+          existing.status !== "PUBLISHED" &&
+          existing.status !== "COMPLETED";
+        if (openUnpaid) {
           await tx.labOrder.update({
             where: { id: existing.id },
             data: { amountNet: orderAmountNet, releaseAfterPay: true, autoPaidStay: true },
@@ -457,7 +458,6 @@ export async function createLabOrderWithItems(
         }
         return existing.id;
       }
-      if (existing?.inPackage || conflict.kind === "COMPLETED") conflict = null;
     } else if (forcePaid && releaseAfterPay && conflict) {
       const existing = await tx.labOrder.findUnique({ where: { id: conflict.orderId } });
       if (existing && !existing.inPackage && !existing.settledAt) {
@@ -548,6 +548,7 @@ export async function createLabOrderWithItems(
 export async function writeLabResultsForOrder(
   orderId: string,
   rawLines: ResultLineInput[],
+  options?: { preservePublication?: boolean },
 ): Promise<{
   order: Prisma.LabOrderGetPayload<{ include: typeof labOrderFullInclude }>;
   enrichedLines: ResultLineInput[];
@@ -602,10 +603,12 @@ export async function writeLabResultsForOrder(
 
     await tx.labOrder.update({
       where: { id: order.id },
-      data: {
-        status: "RESULT_READY",
-        resultJson: JSON.stringify(enrichedLines),
-      },
+      data: options?.preservePublication
+        ? { resultJson: JSON.stringify(enrichedLines) }
+        : {
+            status: "RESULT_READY",
+            resultJson: JSON.stringify(enrichedLines),
+          },
     });
   });
 
@@ -676,5 +679,168 @@ export async function createImportedLabOrder(params: {
   return prisma.labOrder.findUniqueOrThrow({
     where: { id: orderId },
     include: labOrderFullInclude,
+  });
+}
+
+const labOrderListInclude = {
+  patientRef: true,
+  visit: { include: { practitioner: { select: { fullName: true } } } },
+  episode: {
+    select: {
+      roomNumber: true,
+      careDoctors: {
+        orderBy: { assignedAt: "asc" },
+        take: 1,
+        select: { practitioner: { select: { fullName: true } } },
+      },
+    },
+  },
+  items: {
+    include: {
+      diagnosticService: { include: { modality: true } },
+      results: true,
+    },
+  },
+} satisfies Prisma.LabOrderInclude;
+
+const labOrderDetailInclude = {
+  patientRef: true,
+  visit: true,
+  items: {
+    orderBy: { sortOrder: "asc" },
+    include: {
+      diagnosticService: { include: { modality: true } },
+      results: true,
+    },
+  },
+} satisfies Prisma.LabOrderInclude;
+
+export async function countLabOrders(where?: Prisma.LabOrderWhereInput): Promise<number> {
+  return prisma.labOrder.count({ where });
+}
+
+export async function findLabOrdersPage(input: {
+  where?: Prisma.LabOrderWhereInput;
+  orderBy: Prisma.LabOrderOrderByWithRelationInput | Prisma.LabOrderOrderByWithRelationInput[];
+  skip: number;
+  take: number;
+}) {
+  return prisma.labOrder.findMany({
+    where: input.where,
+    include: labOrderListInclude,
+    orderBy: input.orderBy,
+    skip: input.skip,
+    take: input.take,
+  });
+}
+
+export async function ensurePatientRefForLabOrder(input: {
+  organizationId: string;
+  refCode: string;
+  fullName: string;
+}) {
+  let patient = await prisma.patientRef.findFirst({
+    where: { organizationId: input.organizationId, refCode: input.refCode },
+  });
+  if (!patient) {
+    patient = await prisma.patientRef.create({
+      data: {
+        organizationId: input.organizationId,
+        refCode: input.refCode,
+        fullName: input.fullName,
+      },
+    });
+  }
+  if (!patient) throw new Error("Failed to ensure patient ref");
+  return patient;
+}
+
+export async function findVisitById(visitId: string) {
+  return prisma.visit.findUnique({ where: { id: visitId } });
+}
+
+export async function findLabOrderDetail(id: string) {
+  return prisma.labOrder.findUnique({
+    where: { id },
+    include: labOrderDetailInclude,
+  });
+}
+
+export async function findLabOrderById(id: string) {
+  return prisma.labOrder.findUnique({ where: { id } });
+}
+
+export async function findLabOrderWithPatientVisit(id: string) {
+  return prisma.labOrder.findUnique({
+    where: { id },
+    include: { patientRef: true, visit: true },
+  });
+}
+
+export async function findLabOrderWithPatientVisitItems(id: string) {
+  return prisma.labOrder.findUnique({
+    where: { id },
+    include: { patientRef: true, visit: true, items: true },
+  });
+}
+
+export async function findLabOrderPayGateFields(id: string) {
+  return prisma.labOrder.findUnique({
+    where: { id },
+    select: { amountNet: true, settledAt: true, releaseAfterPay: true },
+  });
+}
+
+export async function findLabOrderFileMeta(id: string) {
+  return prisma.labOrder.findUnique({
+    where: { id },
+    select: { id: true, resultJson: true },
+  });
+}
+
+export async function findLabResultCodeValues(labOrderId: string) {
+  return prisma.labResult.findMany({
+    where: { labOrderItem: { labOrderId } },
+    select: { code: true, value: true },
+  });
+}
+
+export async function collectLabOrder(id: string) {
+  return prisma.labOrder.update({
+    where: { id },
+    data: { status: "COLLECTED", collectedAt: new Date() },
+    include: { patientRef: true, visit: true },
+  });
+}
+
+export async function markLabOrderCompleted(id: string) {
+  return prisma.labOrder.update({
+    where: { id },
+    data: { status: "COMPLETED", completedAt: new Date() },
+    include: { patientRef: true, visit: true },
+  });
+}
+
+export async function markLabOrderPublished(id: string, telehealthUrl: string | null) {
+  return prisma.labOrder.update({
+    where: { id },
+    data: {
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+      telehealthUrl,
+    },
+    include: { patientRef: true, visit: true },
+  });
+}
+
+export async function findLisFileProfileById(profileId: string) {
+  return prisma.lisFileProfile.findUnique({ where: { id: profileId } });
+}
+
+export async function listActiveLabBlankProfiles() {
+  return prisma.labBlankProfile.findMany({
+    where: { active: true },
+    select: { id: true, name: true, kind: true, serviceCode: true },
+    orderBy: { name: "asc" },
   });
 }

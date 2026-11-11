@@ -25,11 +25,21 @@ export type EarlyCheckoutSliceSnap = {
   deleted: boolean;
 };
 
+export type EarlyCheckoutTransferOutSnap = {
+  orderId: string;
+  action: string;
+  priorPickupAt: string;
+  priorVehicleId: string | null;
+  priorStatus: string;
+};
+
 export type EarlyCheckoutRevert = {
   checkOut: string;
   totalAmount: string;
   rates: EarlyCheckoutRateSnap[];
   slices: EarlyCheckoutSliceSnap[];
+  /** OUT transfer decisions applied during early checkout (SHIFT undo support). */
+  transferOut?: EarlyCheckoutTransferOutSnap[];
 };
 
 /** Slice vs the new departure civil instant (UTC midnight of that hotel date). */

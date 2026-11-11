@@ -135,7 +135,7 @@ export default function PricingComponentsPage() {
     }
   }
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.PRICING_ADMIN)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 

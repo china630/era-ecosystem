@@ -217,3 +217,7 @@ Phase B (CP matrix sync) still later.
 3. UAT-SMOKE: RECEPTION denied `screen:sanatorium.nurse_roster`; DOCTOR denied `screen:sanatorium.resources` if unchecked; Wave 2/3 admin + patients/appointments hide. ✅ documented
 4. `era-clinic/.cursor/rules/era-clinic-module-map.mdc` lists `/admin/access` + permission API + `opsApiRoutePermission`. ✅
 5. `npm run check:acceptance` PASS after COVERAGE row update (SatAdmin + OpsUI). ✅
+
+### D-entity grid (2026-11-10)
+
+`/admin/access` is an entity × View / Change / Operate / Admin grid. Catalog version `2` on `Role.permissionCatalogVersion` copies read keys once from the wide key and splits legacy `screen:admin.master_data` into practitioners, rooms, resources, procedure types, and catalog favorites. Settings stays on `/admin/settings` and `/admin/links`. Working hours, workforce policy, and ops wipe have their own keys. Users and logins use `admin:access_manage`. An empty grant list only bumps the version. AC-CLI-RBAC stays yellow until field UAT.

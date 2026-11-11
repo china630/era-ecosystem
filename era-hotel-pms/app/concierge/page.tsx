@@ -48,7 +48,7 @@ export default function ConciergePage() {
   const t = useTranslations('concierge');
   const tc = useTranslations('common');
   const { can } = useAuth();
-  const canWrite = can(PERMISSIONS.RESERVATIONS_WRITE);
+  const canWrite = can(PERMISSIONS.CONCIERGE_WRITE);
   const { byKind } = useHotelLookupOptions([...LOOKUP_KINDS]);
   const categoryOptions = useMemo(() => byKind.CONCIERGE_CATEGORY ?? [], [byKind]);
   const [products, setProducts] = useState<Product[]>([]);

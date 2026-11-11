@@ -589,6 +589,33 @@ export class CardsService {
     });
   }
 
+  listCardIdsForCustomer(customerId: string) {
+    return this.prisma.card.findMany({
+      where: { bankOrgId: this.bankOrg.bankOrgId, customerId },
+      select: { id: true },
+    });
+  }
+
+  listThreeDsForCards(cardIds: string[]) {
+    return this.prisma.threeDsChallenge.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        cardId: { in: cardIds },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  findThreeDs(id: string) {
+    return this.prisma.threeDsChallenge.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+  }
+
+  findThreeDsById(id: string) {
+    return this.prisma.threeDsChallenge.findFirst({ where: { id } });
+  }
+
   listThreeDs(cardId?: string) {
     return this.prisma.threeDsChallenge.findMany({
       where: {

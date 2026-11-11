@@ -479,8 +479,15 @@ export async function applyPackageAutoBlocks(
       });
       const refreshed = await prisma.programInstance.findUnique({
         where: { id: instance.id },
-        select: { entitlementSnapshot: true, template: { include: { procedures: true } } },
+        select: {
+          entitlementSnapshot: true,
+          procedureLines: true,
+          template: { include: { procedures: true } },
+        },
       });
+      if (refreshed?.procedureLines) {
+        instance.procedureLines = refreshed.procedureLines;
+      }
       const refreshedSnap = refreshed
         ? parseEntitlementSnapshot(refreshed.entitlementSnapshot)
         : null;

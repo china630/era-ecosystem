@@ -1,7 +1,10 @@
 import type {
+  ClinicLookupKind,
   ProcedureRequirementRole,
   ProcedureStaffMode,
+  Prisma,
   ResourceKind,
+  ServiceCatalogKind,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { recordClinicAudit } from "@/lib/satellite-audit";
@@ -581,4 +584,365 @@ export async function auditMasterChange(
   changes?: Record<string, unknown>,
 ) {
   await recordClinicAudit(ctx, entityType, entityId, action, changes);
+}
+
+export async function getProcedureTypeById(id: string) {
+  return prisma.procedureType.findUnique({ where: { id } });
+}
+
+export async function findServiceCatalogForProcedureName(code: string) {
+  return prisma.serviceCatalogCache.findFirst({
+    where: { code: code.trim() },
+    select: {
+      code: true,
+      description: true,
+      descriptionAz: true,
+      descriptionRu: true,
+      descriptionEn: true,
+    },
+  });
+}
+
+export async function listActiveProcedureTypesRaw() {
+  return prisma.procedureType.findMany({
+    where: { active: true },
+    orderBy: { code: "asc" },
+  });
+}
+
+export async function listInactiveServiceDepartmentCodes(codes: string[]) {
+  if (codes.length === 0) return [] as string[];
+  const rows = await prisma.serviceDepartment.findMany({
+    where: { code: { in: codes }, active: false },
+    select: { code: true },
+  });
+  return rows.map((row) => row.code);
+}
+
+export type ServiceCatalogAdminListFilter = {
+  kinds?: ServiceCatalogKind[];
+  q?: string;
+  limit?: number;
+  missingListPrice?: boolean;
+};
+
+export async function listServiceCatalogAdminRows(filter: ServiceCatalogAdminListFilter) {
+  const where: Prisma.ServiceCatalogCacheWhereInput = {};
+  if (filter.kinds?.length) where.kind = { in: filter.kinds };
+  if (filter.q) {
+    const q = filter.q;
+    where.OR = [
+      { code: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
+      { descriptionAz: { contains: q, mode: "insensitive" } },
+      { descriptionRu: { contains: q, mode: "insensitive" } },
+      { descriptionEn: { contains: q, mode: "insensitive" } },
+    ];
+  }
+  if (filter.missingListPrice) {
+    where.AND = [{ amount: 0 }, { OR: [{ listAmount: null }, { listAmount: 0 }] }];
+  }
+  const rows = await prisma.serviceCatalogCache.findMany({
+    where: Object.keys(where).length ? where : undefined,
+    orderBy: { code: "asc" },
+    ...(filter.limit != null ? { take: filter.limit } : {}),
+  });
+  const prices = await prisma.serviceCatalogPrice.findMany({
+    orderBy: { effectiveFrom: "desc" },
+    select: { code: true, effectiveFrom: true },
+  });
+  const effectiveFrom = new Map<string, string>();
+  for (const price of prices) {
+    if (!effectiveFrom.has(price.code)) {
+      effectiveFrom.set(price.code, price.effectiveFrom.toISOString());
+    }
+  }
+  return rows.map((row) => ({
+    ...row,
+    effectiveFrom: effectiveFrom.get(row.code) ?? row.syncedAt.toISOString(),
+  }));
+}
+
+export async function listServiceCatalogCacheRows() {
+  return prisma.serviceCatalogCache.findMany({ orderBy: { code: "asc" } });
+}
+
+export async function findServiceCatalogByCode(code: string) {
+  return prisma.serviceCatalogCache.findFirst({ where: { code } });
+}
+
+export async function getServiceCatalogById(id: string) {
+  return prisma.serviceCatalogCache.findFirst({ where: { id } });
+}
+
+export async function listServiceCatalogPricesByCatalogId(catalogId: string) {
+  return prisma.serviceCatalogPrice.findMany({
+    where: { catalogId },
+    orderBy: { effectiveFrom: "desc" },
+  });
+}
+
+export async function createServiceCatalogRow(data: {
+  organizationId: string;
+  code: string;
+  description: string;
+  descriptionAz: string | null;
+  descriptionRu: string | null;
+  descriptionEn: string | null;
+  amount: number;
+  listAmount: number | null;
+  department: string | null;
+  departmentCode: string | null;
+  kind: ServiceCatalogKind;
+  syncedAt: Date;
+}) {
+  return prisma.serviceCatalogCache.create({
+    data: {
+      organizationId: data.organizationId,
+      code: data.code,
+      description: data.description,
+      descriptionAz: data.descriptionAz,
+      descriptionRu: data.descriptionRu,
+      descriptionEn: data.descriptionEn,
+      amount: data.amount,
+      listAmount: data.listAmount,
+      packageIncluded: false,
+      department: data.department,
+      departmentCode: data.departmentCode,
+      kind: data.kind,
+      syncedAt: data.syncedAt,
+    },
+  });
+}
+
+export async function updateServiceCatalogRow(
+  id: string,
+  data: Prisma.ServiceCatalogCacheUpdateInput,
+) {
+  return prisma.serviceCatalogCache.update({ where: { id }, data });
+}
+
+export async function deleteServiceCatalogIfUnused(id: string): Promise<
+  | { ok: true }
+  | { ok: false; reason: "NOT_FOUND" | "IN_USE" }
+> {
+  const existing = await prisma.serviceCatalogCache.findFirst({ where: { id } });
+  if (!existing) return { ok: false, reason: "NOT_FOUND" };
+  const orgId = existing.organizationId;
+  const code = existing.code;
+  const [procedures, visitLines, labItems, receipts, labHeaders] = await Promise.all([
+    prisma.procedureOrder.count({
+      where: { organizationId: orgId, procedureCode: code },
+    }),
+    prisma.visitServiceLine.count({
+      where: { organizationId: orgId, serviceCode: code },
+    }),
+    prisma.labOrderItem.count({
+      where: { organizationId: orgId, serviceCode: code },
+    }),
+    prisma.clinicReceiptLine.count({
+      where: { organizationId: orgId, serviceCode: code },
+    }),
+    prisma.labOrder.count({
+      where: {
+        organizationId: orgId,
+        OR: [
+          { testCode: code },
+          { testCode: { startsWith: `${code},` } },
+          { testCode: { endsWith: `,${code}` } },
+          { testCode: { contains: `,${code},` } },
+        ],
+      },
+    }),
+  ]);
+  if (procedures + visitLines + labItems + receipts + labHeaders > 0) {
+    return { ok: false, reason: "IN_USE" };
+  }
+  await prisma.serviceCatalogCache.delete({ where: { id } });
+  return { ok: true };
+}
+
+type FinanceCatalogItem = { code: string; description: string; amount: number };
+
+export async function pushClinicSkusToFinance(organizationId: string): Promise<number> {
+  const base = (
+    process.env.ERA_FINANCE_API_URL ??
+    process.env.FINANCE_API_URL ??
+    "http://127.0.0.1:3001"
+  ).replace(/\/$/, "");
+  const token =
+    process.env.FINANCE_SERVICE_TOKEN ?? process.env.SATELLITE_EVENT_SERVICE_TOKEN;
+  const procedures = await prisma.procedureType.findMany({
+    select: { id: true, code: true, name: true, financeSku: true },
+  });
+  const diagnostics = await prisma.diagnosticService.findMany({
+    select: { id: true, code: true, titleEn: true, financeSku: true },
+  });
+  const services = [
+    ...procedures.map((row) => ({ code: row.code, name: row.name, amount: 0 })),
+    ...diagnostics.map((row) => ({ code: row.code, name: row.titleEn, amount: 0 })),
+  ];
+  if (services.length === 0) return 0;
+  const res = await fetch(`${base}/api/industry-handoffs/clinic-service-catalog`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "x-organization-id": organizationId,
+    },
+    body: JSON.stringify({ services }),
+    signal: AbortSignal.timeout(20000),
+  }).catch(() => null);
+  if (!res?.ok) return 0;
+  const body = (await res.json()) as { items?: Array<{ code: string; sku: string }> };
+  for (const item of body.items ?? []) {
+    await prisma.procedureType.updateMany({
+      where: { code: item.code, financeSku: null },
+      data: { financeSku: item.sku },
+    });
+    await prisma.diagnosticService.updateMany({
+      where: { code: item.code, financeSku: null },
+      data: { financeSku: item.sku },
+    });
+  }
+  return body.items?.length ?? 0;
+}
+
+export async function fetchFinanceServiceCatalog(organizationId: string): Promise<FinanceCatalogItem[]> {
+  const base = (
+    process.env.ERA_FINANCE_API_URL ??
+    process.env.FINANCE_API_URL ??
+    "http://127.0.0.1:3001"
+  ).replace(/\/$/, "");
+  const token =
+    process.env.FINANCE_SERVICE_TOKEN ?? process.env.SATELLITE_EVENT_SERVICE_TOKEN;
+  const res = await fetch(`${base}/api/industry-handoffs/clinic-service-catalog`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "x-organization-id": organizationId,
+    },
+    signal: AbortSignal.timeout(10000),
+  }).catch(() => null);
+  if (!res?.ok) return [];
+  const data = (await res.json()) as { items?: FinanceCatalogItem[] };
+  return data.items ?? [];
+}
+
+export async function upsertServiceCatalogFinanceRows(
+  organizationId: string,
+  items: FinanceCatalogItem[],
+): Promise<number> {
+  for (const item of items) {
+    const listAmount = item.amount > 0 ? item.amount : null;
+    await prisma.serviceCatalogCache.upsert({
+      where: { organizationId_code: { organizationId, code: item.code } },
+      create: {
+        organizationId,
+        code: item.code,
+        description: item.description,
+        amount: item.amount,
+        listAmount,
+      },
+      update: {
+        description: item.description,
+        amount: item.amount,
+        listAmount,
+        syncedAt: new Date(),
+      },
+    });
+  }
+  return items.length;
+}
+
+export async function listClinicLookups(opts?: {
+  kind?: ClinicLookupKind;
+  activeOnly?: boolean;
+}) {
+  return prisma.clinicLookup.findMany({
+    where: {
+      ...(opts?.kind ? { kind: opts.kind } : {}),
+      ...(opts?.activeOnly ? { active: true } : {}),
+    },
+    orderBy: [{ kind: "asc" }, { sortOrder: "asc" }, { code: "asc" }],
+  });
+}
+
+export async function createClinicLookup(data: {
+  kind: ClinicLookupKind;
+  code: string;
+  name: string;
+  sortOrder?: number;
+}) {
+  return prisma.clinicLookup.create({
+    data: {
+      kind: data.kind,
+      code: data.code.trim().toUpperCase(),
+      name: data.name.trim(),
+      sortOrder: data.sortOrder ?? 0,
+    },
+  });
+}
+
+export async function updateClinicLookup(
+  id: string,
+  data: { name?: string; active?: boolean; sortOrder?: number },
+) {
+  return prisma.clinicLookup.update({
+    where: { id },
+    data: {
+      ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+      ...(data.active !== undefined ? { active: data.active } : {}),
+      ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+    },
+  });
+}
+
+export async function listLisFileProfiles() {
+  return prisma.lisFileProfile.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function getLisFileProfileById(id: string) {
+  return prisma.lisFileProfile.findUnique({ where: { id } });
+}
+
+export async function createLisFileProfile(data: {
+  name: string;
+  format: "CSV" | "HL7_FRAGMENT";
+  delimiter: string;
+  columnMappingJson: string;
+}) {
+  return prisma.lisFileProfile.create({
+    data: {
+      name: data.name,
+      format: data.format,
+      delimiter: data.delimiter,
+      columnMapping: data.columnMappingJson,
+    },
+  });
+}
+
+export async function updateLisFileProfile(
+  id: string,
+  data: {
+    name?: string;
+    format?: "CSV" | "HL7_FRAGMENT";
+    delimiter?: string;
+    columnMappingJson?: string;
+  },
+) {
+  return prisma.lisFileProfile.update({
+    where: { id },
+    data: {
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.format !== undefined ? { format: data.format } : {}),
+      ...(data.delimiter !== undefined ? { delimiter: data.delimiter } : {}),
+      ...(data.columnMappingJson !== undefined
+        ? { columnMapping: data.columnMappingJson }
+        : {}),
+    },
+  });
+}
+
+export async function deleteLisFileProfile(id: string) {
+  await prisma.lisFileProfile.delete({ where: { id } });
 }

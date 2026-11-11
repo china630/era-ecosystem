@@ -108,7 +108,7 @@ export default function BanquetsPage() {
     );
   }, [events, debouncedQ]);
 
-  if (!can(PERMISSIONS.RESERVATIONS_READ)) {
+  if (!can(PERMISSIONS.BANQUETS_READ)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
@@ -166,7 +166,7 @@ export default function BanquetsPage() {
         title={t('title')}
         subtitle={t('subtitle')}
         actions={
-          can(PERMISSIONS.RESERVATIONS_WRITE) ? (
+          can(PERMISSIONS.BANQUETS_WRITE) ? (
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateModal}>
               <Plus className="h-4 w-4" aria-hidden />
               {t('create')}
@@ -214,7 +214,7 @@ export default function BanquetsPage() {
                   <td className="py-2 pr-3">{ev.advanceAmount}</td>
                   <td className="py-2 pr-3">{ev.status}</td>
                   <td className="py-2">
-                    {ev.status === 'DRAFT' && can(PERMISSIONS.RESERVATIONS_WRITE) && (
+                    {ev.status === 'DRAFT' && can(PERMISSIONS.BANQUETS_WRITE) && (
                       <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => confirm(ev.id)}>
                         {t('confirm')}
                       </button>

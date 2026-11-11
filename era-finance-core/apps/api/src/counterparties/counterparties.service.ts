@@ -431,6 +431,219 @@ export class CounterpartiesService {
     return { ok, counts };
   }
 
+  async findGlobalCounterpartyByTaxId(taxId: string) {
+    return this.prisma.globalCounterparty.findUnique({ where: { taxId } });
+  }
+
+  async listCounterparties(params: {
+    organizationId: string;
+    whereExtras: Prisma.CounterpartyWhereInput;
+    take?: number;
+  }) {
+    return this.prisma.counterparty.findMany({
+      where: {
+        organizationId: params.organizationId,
+        ...params.whereExtras,
+      },
+      orderBy: { createdAt: "desc" },
+      include: { global: true },
+      ...(params.take !== undefined ? { take: params.take } : {}),
+    });
+  }
+
+  async listAgencyCityLedgerSnapshots(organizationId: string, counterpartyId: string) {
+    return this.prisma.agencyCityLedgerSnapshot.findMany({
+      where: {
+        organizationId,
+        OR: [{ counterpartyId }, { hotelAgencyId: counterpartyId }],
+      },
+      orderBy: [{ asOfDate: "desc" }, { createdAt: "desc" }],
+      take: 10,
+      select: {
+        id: true,
+        agencyCode: true,
+        asOfDate: true,
+        balance: true,
+        periodCharges: true,
+        periodPayments: true,
+        currency: true,
+        correlationId: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async listAgencyCommissionPayableSnapshots(organizationId: string, counterpartyId: string) {
+    return this.prisma.agencyCommissionPayableSnapshot.findMany({
+      where: {
+        organizationId,
+        OR: [{ counterpartyId }, { hotelAgencyId: counterpartyId }],
+      },
+      orderBy: [{ asOfDate: "desc" }, { createdAt: "desc" }],
+      take: 20,
+      select: {
+        id: true,
+        agencyCode: true,
+        hotelBatchId: true,
+        asOfDate: true,
+        totalAmount: true,
+        lineCount: true,
+        currency: true,
+        correlationId: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async listPendingCounterpartyCardRequests(organizationId: string) {
+    return this.prisma.counterpartyCardRequest.findMany({
+      where: { organizationId, status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
+  async updateCounterpartyLegalForm(counterpartyId: string, legalForm: CounterpartyLegalForm) {
+    return this.prisma.counterparty.update({
+      where: { id: counterpartyId },
+      data: { legalForm },
+    });
+  }
+
+  async findCounterpartyDetail(organizationId: string, id: string) {
+    return this.prisma.counterparty.findFirst({
+      where: { id, organizationId },
+      include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
+    });
+  }
+
+  async findCounterpartyByTaxIdBlindIndex(organizationId: string, taxIdBlindIndex: string) {
+    return this.prisma.counterparty.findFirst({
+      where: { organizationId, taxIdBlindIndex },
+    });
+  }
+
+  async findCounterpartyByTaxIdBlindIndexExcluding(
+    organizationId: string,
+    taxIdBlindIndex: string,
+    excludeId: string,
+  ) {
+    return this.prisma.counterparty.findFirst({
+      where: {
+        organizationId,
+        taxIdBlindIndex,
+        NOT: { id: excludeId },
+      },
+    });
+  }
+
+  async findCounterpartyIdByTaxIdBlindIndex(
+    organizationId: string,
+    taxIdBlindIndex: string,
+  ): Promise<{ id: string } | null> {
+    return this.prisma.counterparty.findFirst({
+      where: { organizationId, taxIdBlindIndex, deletedAt: null },
+      select: { id: true },
+    });
+  }
+
+  async updateCounterpartyFromCreate(
+    counterpartyId: string,
+    data: Prisma.CounterpartyUpdateInput,
+  ) {
+    return this.prisma.counterparty.update({
+      where: { id: counterpartyId },
+      data,
+      include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
+    });
+  }
+
+  async createDegradedModeEtaxesAuditLog(params: {
+    organizationId: string;
+    taxId: string;
+    reason: string;
+  }) {
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId: params.organizationId,
+        userId: null,
+        entityType: "Counterparty",
+        entityId: params.taxId,
+        action: "DEGRADED_MODE_ETAXES_FALLBACK",
+        newValues: {
+          reason: params.reason,
+          taxId: params.taxId,
+        } as object,
+      },
+    });
+  }
+
+  async createLocalCounterparty(data: Prisma.CounterpartyUncheckedCreateInput) {
+    return this.prisma.counterparty.create({
+      data,
+      include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
+    });
+  }
+
+  async findCounterpartyForUpdate(organizationId: string, id: string) {
+    return this.prisma.counterparty.findFirst({
+      where: { id, organizationId },
+    });
+  }
+
+  async updateCounterparty(id: string, data: Prisma.CounterpartyUpdateInput) {
+    return this.prisma.counterparty.update({
+      where: { id },
+      data,
+      include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
+    });
+  }
+
+  async queueCardRequestIfAbsent(params: {
+    organizationId: string;
+    taxIdBlindIndex: string;
+    taxIdCipher: string;
+    nameCipher: string;
+    partyKind: "COMPANY" | "AGENCY";
+    legalForm: CounterpartyLegalForm;
+  }): Promise<{ queued: false; counterpartyId: string } | { queued: true }> {
+    const existing = await this.prisma.counterparty.findFirst({
+      where: {
+        organizationId: params.organizationId,
+        taxIdBlindIndex: params.taxIdBlindIndex,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      return { queued: false, counterpartyId: existing.id };
+    }
+    await this.prisma.counterpartyCardRequest.upsert({
+      where: {
+        organizationId_taxIdBlindIndex: {
+          organizationId: params.organizationId,
+          taxIdBlindIndex: params.taxIdBlindIndex,
+        },
+      },
+      create: {
+        organizationId: params.organizationId,
+        taxIdBlindIndex: params.taxIdBlindIndex,
+        taxIdCipher: params.taxIdCipher,
+        nameCipher: params.nameCipher,
+        partyKind: params.partyKind,
+        legalForm: params.legalForm,
+        status: "PENDING",
+        source: "HOTEL",
+      },
+      update: {
+        nameCipher: params.nameCipher,
+        partyKind: params.partyKind,
+        legalForm: params.legalForm,
+        status: "PENDING",
+      },
+    });
+    return { queued: true };
+  }
+
   /** CRM v3.0: find-or-create individual counterparty from lead convert event. */
   async findOrCreateIndividualForCrm(params: {
     organizationId: string;

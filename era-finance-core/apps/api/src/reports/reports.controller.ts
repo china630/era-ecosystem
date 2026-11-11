@@ -18,7 +18,6 @@ import { LedgerType, UserRole, SignatureProvider } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { MailService } from "../mail/mail.service";
-import { PrismaService } from "../prisma/prisma.service";
 import { ReportingService } from "../reporting/reporting.service";
 import { SignatureService } from "../signature/signature.service";
 import { InitiateSignatureDto } from "../invoices/dto/initiate-signature.dto";
@@ -45,7 +44,6 @@ export class ReportsController {
     private readonly cashFlow: CashFlowService,
     private readonly financial: FinancialReportService,
     private readonly reporting: ReportingService,
-    private readonly prisma: PrismaService,
     private readonly mail: MailService,
     private readonly signatures: SignatureService,
   ) {}
@@ -348,9 +346,10 @@ export class ReportsController {
         "startDate and endDate (or dateFrom/dateTo) are required (YYYY-MM-DD)",
       );
     }
-    const cp = await this.prisma.counterparty.findFirst({
-      where: { id: counterpartyId, organizationId },
-    });
+    const cp = await this.financial.findCounterpartyForReconciliationEmail(
+      organizationId,
+      counterpartyId,
+    );
     if (!cp) {
       throw new NotFoundException("Counterparty not found");
     }

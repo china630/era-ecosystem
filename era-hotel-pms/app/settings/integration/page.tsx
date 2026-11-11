@@ -335,7 +335,7 @@ export default function IntegrationAdminPage() {
   }, []);
 
   useEffect(() => {
-    if (can(PERMISSIONS.MASTER_DATA_MANAGE)) load();
+    if (can(PERMISSIONS.INTEGRATION_ADMIN)) load();
   }, [load, can]);
 
   async function save() {
@@ -466,7 +466,7 @@ export default function IntegrationAdminPage() {
     glAccountPresence,
   ]);
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.INTEGRATION_ADMIN)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 

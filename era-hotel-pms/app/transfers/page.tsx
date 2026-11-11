@@ -65,6 +65,7 @@ export default function TransfersPage() {
   const { can } = useAuth();
   const searchParams = useSearchParams();
   const guestIdFilter = searchParams.get('guestId');
+  const reservationIdFilter = searchParams.get('reservationId');
   const hasFlightParam = searchParams.get('hasFlight') === '1' || searchParams.get('hasFlight') === 'true';
   const t = useTranslations('transfers');
   const tc = useTranslations('common');
@@ -96,6 +97,7 @@ export default function TransfersPage() {
   const load = useCallback(async () => {
     const qParams = new URLSearchParams();
     if (guestIdFilter) qParams.set('guestId', guestIdFilter);
+    if (reservationIdFilter) qParams.set('reservationId', reservationIdFilter);
     if (hasFlightOnly) qParams.set('hasFlight', '1');
     if (statusFilter) qParams.set('status', statusFilter);
     if (directionFilter) qParams.set('direction', directionFilter);
@@ -117,7 +119,7 @@ export default function TransfersPage() {
     setOrders(transferData.orders ?? []);
     setVehicles(transferData.vehicles ?? []);
     setReservations(Array.isArray(resData) ? resData : []);
-  }, [guestIdFilter, hasFlightOnly, statusFilter, directionFilter, tc]);
+  }, [guestIdFilter, reservationIdFilter, hasFlightOnly, statusFilter, directionFilter, tc]);
 
   useEffect(() => {
     void load();
@@ -136,7 +138,7 @@ export default function TransfersPage() {
 
   const visibleOrders = useMemo(() => {
     let list = orders;
-    if (boardDate) {
+    if (boardDate && !reservationIdFilter) {
       list = list.filter((o) => o.pickupAt.slice(0, 10) === boardDate);
     }
     const qq = debouncedQ.trim().toLowerCase();
@@ -146,7 +148,7 @@ export default function TransfersPage() {
         .toLowerCase()
         .includes(qq),
     );
-  }, [orders, debouncedQ, boardDate]);
+  }, [orders, debouncedQ, boardDate, reservationIdFilter]);
 
   function statusLabel(s: string) {
     const map: Record<string, string> = {
@@ -196,7 +198,7 @@ export default function TransfersPage() {
     w.document.close();
   }
 
-  if (!can(PERMISSIONS.RESERVATIONS_WRITE)) {
+  if (!can(PERMISSIONS.TRANSFERS_WRITE)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 

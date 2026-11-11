@@ -10,7 +10,6 @@ import { parseIsoDateOnly } from "../reporting/reporting-period.util";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
-import { PrismaService } from "../prisma/prisma.service";
 import {
   ReconcileVatDepositDto,
   RemitVatDepositDto,
@@ -23,10 +22,7 @@ import { VatDepositService } from "./vat-deposit.service";
 @Controller("accounting/vat-deposit")
 @UseGuards(PermissionsGuard)
 export class VatDepositController {
-  constructor(
-    private readonly vatDeposit: VatDepositService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly vatDeposit: VatDepositService) {}
 
   @Get("balance")
   @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
@@ -65,16 +61,14 @@ export class VatDepositController {
     const payDate = dto.paymentDate?.trim()
       ? parseIsoDateOnly(dto.paymentDate)
       : new Date();
-    return this.prisma.$transaction((tx) =>
-      this.vatDeposit.routeIncomingVatPortion(tx, organizationId, {
-        paymentAmount: dto.paymentAmount,
-        vatPortion: dto.vatPortion,
-        bankAccountId: dto.bankAccountId,
-        counterpartyId: dto.counterpartyId,
-        note: dto.note,
-        paymentDate: payDate,
-      }),
-    );
+    return this.vatDeposit.routeIncomingVatPortionInTransaction(organizationId, {
+      paymentAmount: dto.paymentAmount,
+      vatPortion: dto.vatPortion,
+      bankAccountId: dto.bankAccountId,
+      counterpartyId: dto.counterpartyId,
+      note: dto.note,
+      paymentDate: payDate,
+    });
   }
 
   @Post("remit")
@@ -91,14 +85,12 @@ export class VatDepositController {
     const payDate = dto.paymentDate?.trim()
       ? parseIsoDateOnly(dto.paymentDate)
       : new Date();
-    return this.prisma.$transaction((tx) =>
-      this.vatDeposit.payVatFromDeposit(tx, organizationId, {
-        amount: dto.amount,
-        bankAccountId: dto.bankAccountId,
-        note: dto.note,
-        paymentDate: payDate,
-      }),
-    );
+    return this.vatDeposit.payVatFromDepositInTransaction(organizationId, {
+      amount: dto.amount,
+      bankAccountId: dto.bankAccountId,
+      note: dto.note,
+      paymentDate: payDate,
+    });
   }
 
   @Post("reconcile")

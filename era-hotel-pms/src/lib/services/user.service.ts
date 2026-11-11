@@ -1,3 +1,4 @@
+import { runWithSatelliteTenant } from '@era/satellite-kit';
 import { bakuDayBounds } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth/password';
@@ -158,19 +159,21 @@ export async function recordUserLogin(
   user: { id: string; organizationId: string; login: string },
   request: Request,
 ) {
-  try {
-    await prisma.userLogin.create({
-      data: {
-        organizationId: user.organizationId,
-        userId: user.id,
-        login: user.login,
-        ipAddress: clientIp(request),
-        userAgent: request.headers.get('user-agent'),
-      },
-    });
-  } catch {
-    // Sign-in continues when the login journal is not migrated yet.
-  }
+  await runWithSatelliteTenant({ organizationId: user.organizationId }, async () => {
+    try {
+      await prisma.userLogin.create({
+        data: {
+          organizationId: user.organizationId,
+          userId: user.id,
+          login: user.login,
+          ipAddress: clientIp(request),
+          userAgent: request.headers.get('user-agent'),
+        },
+      });
+    } catch {
+      // Sign-in continues when the login journal is not migrated yet.
+    }
+  });
 }
 
 export function userPermissions(user: {

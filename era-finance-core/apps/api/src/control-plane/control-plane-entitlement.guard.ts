@@ -9,8 +9,8 @@ import { Reflector } from "@nestjs/core";
 import { BillingStatus } from "@erafinance/database";
 import { IS_PUBLIC_KEY } from "../auth/constants";
 import type { AuthUser } from "../auth/types/auth-user";
-import { PrismaService } from "../prisma/prisma.service";
 import { ControlPlaneClient } from "./control-plane.client";
+import { ControlPlaneOrganizationService } from "./control-plane-organization.service";
 
 /**
  * Validates tenant billing / entitlements via era-orchestrator.
@@ -20,7 +20,7 @@ import { ControlPlaneClient } from "./control-plane.client";
 export class ControlPlaneEntitlementGuard implements CanActivate {
   constructor(
     private readonly controlPlane: ControlPlaneClient,
-    private readonly prisma: PrismaService,
+    private readonly organizations: ControlPlaneOrganizationService,
     private readonly reflector: Reflector,
   ) {}
 
@@ -75,11 +75,9 @@ export class ControlPlaneEntitlementGuard implements CanActivate {
     method: string,
     path: string,
   ): Promise<boolean> {
-    const org = await this.prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { billingStatus: true },
-    });
-    const status = org?.billingStatus ?? BillingStatus.ACTIVE;
+    const billingStatus =
+      await this.organizations.findLegacyBillingStatus(organizationId);
+    const status = billingStatus ?? BillingStatus.ACTIVE;
     const normalized = this.normalizePath(path);
 
     if (status === BillingStatus.SOFT_BLOCK) {

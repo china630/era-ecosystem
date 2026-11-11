@@ -63,7 +63,13 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
   const navReady = status === "ready" && profile != null;
   const canAdmin = profile?.raw.canViewClinicAdmin === true;
   const canMasterData =
-    (profile?.permissions ?? []).includes(CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA) || canAdmin;
+    [
+      CLINIC_PERMISSION.SCREEN_ADMIN_PRACTITIONERS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_ROOMS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_RESOURCES,
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_TYPES,
+      CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG_FAVORITES,
+    ].some((key) => (profile?.permissions ?? []).includes(key)) || canAdmin;
 
   const codeCheckIn = profile?.raw.checkInMode === "CODE";
   const isPlatformSuperAdmin = profile?.isPlatformSuperAdmin === true;

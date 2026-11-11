@@ -32,5 +32,3 @@ CREATE TABLE IF NOT EXISTS "TourOpsPolicy" (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "TourOpsPolicy_organizationId_key" ON "TourOpsPolicy"("organizationId");
-
-ALTER TABLE "TourBooking" ALTER COLUMN "status" SET DEFAULT 'RESERVED';

@@ -134,8 +134,28 @@ export async function getReservationFull(id: string) {
     }));
   }
 
+  const actorIds = [
+    ...new Set(
+      reservation.roomChanges
+        .map((row) => row.createdByUserId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const actors =
+    actorIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: actorIds } },
+          select: { id: true, fullName: true },
+        })
+      : [];
+  const actorName = new Map(actors.map((user) => [user.id, user.fullName]));
+
   const result = {
     ...reservation,
+    roomChanges: reservation.roomChanges.map((row) => ({
+      ...row,
+      createdByName: row.createdByUserId ? (actorName.get(row.createdByUserId) ?? null) : null,
+    })),
     totalAmount: decimalToNumber(reservation.totalAmount),
     discountPercent: reservation.discountPercent
       ? decimalToNumber(reservation.discountPercent)
@@ -248,6 +268,12 @@ export async function patchReservationFull(
     contractRef?: string | null;
     partyBillingMode?: PartyBillingMode;
     notes?: Partial<Record<string, string>>;
+    /** When check-in/out change: SHIFT | KEEP | CANCEL for each open transfer. */
+    transferDecisions?: Array<{
+      orderId: string;
+      action: 'SHIFT' | 'KEEP' | 'CANCEL' | 'LEAVE';
+      pickupAt?: string;
+    }>;
     paxGuests?: Array<{
       id?: string;
       guestId?: string | null;
@@ -866,6 +892,37 @@ export async function patchReservationFull(
     (data.checkOutDate && data.checkOutDate.getTime() !== existing.checkOutDate.getTime());
   const roomChanged = data.roomId !== undefined && data.roomId !== existing.roomId;
 
+  if (datesChanged) {
+    const {
+      assertTransferDateDecisionsOrThrow,
+      applyTransferDecisions,
+      proposeTransferShiftsForStay,
+      cancelReservedToursOutsideStay,
+    } = await import('@/lib/services/stay-mobility-sync.service');
+    await assertTransferDateDecisionsOrThrow(id, data.transferDecisions);
+    const nextIn = data.checkInDate ?? existing.checkInDate;
+    const nextOut = data.checkOutDate ?? existing.checkOutDate;
+    const proposed = await proposeTransferShiftsForStay(id, {
+      checkInDate: nextIn,
+      checkOutDate: nextOut,
+    });
+    const proposedById = new Map(proposed.map((p) => [p.id, p]));
+    const decisions = (data.transferDecisions ?? []).map((d) => {
+      if (d.action !== 'SHIFT') return d;
+      const row = proposedById.get(d.orderId);
+      return {
+        ...d,
+        pickupAt: d.pickupAt ?? row?.proposedPickupAt.toISOString(),
+      };
+    });
+    if (decisions.length) await applyTransferDecisions(id, decisions);
+    await cancelReservedToursOutsideStay(
+      id,
+      hotelDateKey(nextOut),
+      'Stay dates shortened',
+    );
+  }
+
   const clientDailyRates = datesChanged ? undefined : dailyRates;
   if (datesChanged) {
     const checkIn = data.checkInDate ?? existing.checkInDate;
@@ -1359,6 +1416,33 @@ export async function listReservationsForGrid(
   const order = new Map(pageIds.map((id, index) => [id, index]));
   const rows = loaded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 
+  const [transferRows, laundryRows] =
+    pageIds.length === 0
+      ? [[], []]
+      : await Promise.all([
+          prisma.transferOrder.findMany({
+            where: {
+              reservationId: { in: pageIds },
+              status: { in: ['BOOKED', 'CONFIRMED'] },
+            },
+            select: { reservationId: true, direction: true, pickupAt: true, status: true },
+          }),
+          prisma.laundryTicket.findMany({
+            where: { reservationId: { in: pageIds }, status: 'IN_PLANT' },
+            select: { reservationId: true },
+          }),
+        ]);
+  const { stayTransferHints } = await import('@/lib/stay-alert-icons');
+  const transfersByStay = new Map<string, Array<{ direction: string; pickupAt: Date; status: string }>>();
+  for (const order of transferRows) {
+    const list = transfersByStay.get(order.reservationId) ?? [];
+    list.push(order);
+    transfersByStay.set(order.reservationId, list);
+  }
+  const laundryStays = new Set(
+    laundryRows.map((row) => row.reservationId).filter((id): id is string => Boolean(id)),
+  );
+
   const items = rows.map((r) => {
     const filled = r.notes.filter((n) => (n.text ?? '').trim().length > 0);
     const preview = filled[0]?.text?.trim().slice(0, 80) ?? null;
@@ -1373,6 +1457,8 @@ export async function listReservationsForGrid(
       notePreview: preview,
       noteText: filled.map((n) => n.text.trim()).join(' / '),
       noteTypes: filled.map((n) => n.noteType),
+      transfers: stayTransferHints(transfersByStay.get(r.id) ?? [], todayBakuYmd()),
+      laundryOpen: laundryStays.has(r.id),
     };
   });
 

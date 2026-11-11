@@ -220,6 +220,18 @@
     "phaseProgress": "Фаза {current} из {total}"
   },
   "settingsAccess": {
+    "entityColumn": "Сущность",
+    "col_view": "Просмотр",
+    "col_change": "Изменение",
+    "col_operate": "Действие",
+    "col_admin": "Админ",
+    "entity_receipt": "Чек",
+    "entity_shift": "Смена",
+    "entity_stock": "Остаток",
+    "entity_till": "Касса",
+    "entity_hotel": "Отель",
+    "entity_settings": "Настройки",
+    "entity_access": "Доступ",
     "title": "Роли и доступ",
     "subtitle": "Пакеты ролей и экраны и действия, которые они дают",
     "loading": "Загрузка…",
@@ -271,6 +283,7 @@
       "api_integrations_stock": "Складские хуки клиники",
       "admin_import": "Импорт, сверка поставщиков, пополнение",
       "admin_settings": "Интеграции точки",
+      "admin_marketplace": "Маркетплейс",
       "admin_access_manage": "Управление ролями и доступом"
     }
   },

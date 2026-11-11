@@ -290,10 +290,12 @@ export async function prescribeDiagnosticsExtras(
         labOrderIds.push(order.id);
       } catch (err) {
         const code = (err as { code?: string }).code;
-        if (code === LAB_ALREADY_OPEN) {
+        if (code === LAB_ALREADY_OPEN || code === "LAB_UNPAID_EXISTS") {
           throw new PackageAssignError(
-            "An open lab order already exists for this study",
-            "LAB_ALREADY_OPEN",
+            code === "LAB_UNPAID_EXISTS"
+              ? "This study already has an unpaid cheque — pay that one"
+              : "An open lab order already exists for this study",
+            code === "LAB_UNPAID_EXISTS" ? "LAB_UNPAID_EXISTS" : "LAB_ALREADY_OPEN",
             409,
           );
         }
@@ -705,6 +707,8 @@ export async function payDiagnosticsExtras(
             where: { id: order.id },
             data: {
               settledAt: new Date(),
+              paidAt: new Date(),
+              paidByUserId: actorUserId,
               paymentReceiptRef: receipt,
               reservationId,
             },
@@ -732,6 +736,7 @@ export async function payDiagnosticsExtras(
             data: {
               settlementPendingId: receipt,
               paymentReceiptRef: receipt,
+              paidByUserId: actorUserId,
             },
           });
           rejected.push({
@@ -797,6 +802,8 @@ export async function payDiagnosticsExtras(
           where: { id: visit.id },
           data: {
             settledAt: new Date(),
+            paidAt: new Date(),
+            paidByUserId: actorUserId,
             paymentReceiptRef: receipt,
             billingTarget: "HOTEL_FOLIO",
             reservationId,
@@ -825,6 +832,7 @@ export async function payDiagnosticsExtras(
           data: {
             settlementPendingId: receipt,
             paymentReceiptRef: receipt,
+            paidByUserId: actorUserId,
           },
         });
         rejected.push({
@@ -844,7 +852,6 @@ export async function payDiagnosticsExtras(
     }
   }
 
-  void actorUserId;
   return { paymentReceiptRef: receipt, accepted, rejected };
 }
 
@@ -870,6 +877,8 @@ export async function reverseDiagnosticPayment(input: {
       where: { id: order.id },
       data: {
         settledAt: null,
+        paidAt: null,
+        paidByUserId: null,
         settlementPendingId: null,
         paymentReceiptRef: null,
       },
@@ -882,6 +891,8 @@ export async function reverseDiagnosticPayment(input: {
     where: { id: visit.id },
     data: {
       settledAt: null,
+      paidAt: null,
+      paidByUserId: null,
       settlementPendingId: null,
       paymentReceiptRef: null,
     },

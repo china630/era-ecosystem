@@ -51,7 +51,7 @@ Sidebar IA (URLs flat): floor work top-level; **HK staff** = maids → rotation 
 | Stay amendment | `POST …/relocate` (comp), `POST …/amendments`, `POST …/pricing/spread`, `GET …/room-changes`; date amend via `PATCH` reservation-full → `SATELLITE_HOTEL_STAY_PRODUCT_CHANGED` (checkIn/checkOut) for clinic quota recalc (CLI-51) | Door vs paid product from date; ADR `hotel-stay-amendment-and-pricing.md` |
 | Depart guest | `POST /api/reservations/:id/pax/:paxId/depart` → `SATELLITE_HOTEL_GUEST_DEPARTED` | Exclusive party only; stay IN_HOUSE; ADR `hotel-reservation-card-and-party-ops.md` D4 |
 | Move guest | `POST /api/reservations/:id/pax/:paxId/move` → `SATELLITE_HOTEL_GUEST_MOVED` | Sibling `ReservationGroup` only; stable paxKey |
-| Swap rooms | `POST /api/reservations/:id/swap-room` | Sibling group; transactional door swap |
+| Swap rooms | `POST /api/reservations/:id/swap-room` | Any two in-house doors; no empty room; class difference asks who pays |
 | Share rooming queue | `GET /api/fo/share-rooming-queue`, `GET /api/fo/share-rooming-suggestions` | **API-only** (no FO screen); not required for HOT-FO-03 SHIPPED |
 
 ## hotel_distribution (H-BL-30)
@@ -113,6 +113,15 @@ Cross-app: fb-pos tickets with `beoId` — extras only on event day; base packag
 | Guest card merge | `POST /api/mdm/person-merge` | Foreigner → citizen FIN merge |
 | Guest create/edit | `POST /api/guests`, `PATCH /api/guests/:id/full`, `POST /api/guests/:id/contacts` | Transient identity → `linkPersonIdentity`; no local FIN/passport columns. Phone polish via kit `normalizePersonPhone` (nationality region; Guest.phone + MOBILE/PHONE/WHATSAPP; nationality-only PATCH re-polishes) |
 | Passport MRZ | `POST /api/guests/mrz-match` | Super-admin only. Photo or PDF (first page via pdfjs → `/pdf.worker.min.mjs`; Docker builder/dev run `scripts/copy-pdf-worker.mjs` because deps use `--ignore-scripts`). Crop on guest card and stay guest row (pointer draw, skew angle −45…+45, min 8px, img not draggable). `GuestDocument.mrzNameField` stores raw ICAO name. Match: raw MRZ → passport → exact name → translit/typo/metaphone confirm-only. Catalog `hotel_passport_scan` does not unlock the button |
+| Guest app link | `POST /api/guest-app/reservations/:id/pax/:paxId/link`, `…/unlink`, `POST /api/guest-app/exchange`, `GET /api/guest-app/trip` | Nest guest routes (`nest/guest-app-routes.ts`). Desk QR / 6-digit, 2 min, one use; one device; trip pack booking+transfer. HOT-GUEST-APP-01 |
+| Guest questionnaire | `GET /api/guest-app/reservations/:id/questionnaire`, `PATCH /api/guest-app/questionnaire` | Same check-in gaps; locked after IN_HOUSE. Live MRZ frame on Guests tab (`MrzLiveFrame`). HOT-GUEST-APP-02 |
+| Guest booking request | `POST/GET /api/guest-app/booking-requests`, staff answer + `/fo/guest-requests` | Request only (not live rate sale). HOT-GUEST-APP-03 |
+| Guest stay orders | `POST/GET /api/guest-app/orders`, staff patch status | HOUSEKEEPING…ARRIVAL_TIME; offline QUEUED. HOT-GUEST-APP-04 |
+| Guest Care proxy | `GET /api/guest-app/care/timetable|results|episodes` | Hotel Nest → clinic S2S; empty when unconfigured. HOT-GUEST-APP-05/06 |
+| Guest family grant | `POST /api/guest-app/family-grants`, staff confirm | Timetable only after desk confirm; no results. HOT-GUEST-APP-07 |
+| Guest phone OTP | `POST /api/guest-app/auth/phone/start|verify`, `…/auth/confirmation` | GuestNotifyAdapter; SMS/WA STUB; limited confirmation pack. HOT-GUEST-APP-08 |
+| Guest folio / board | `GET /api/guest-app/folio`, `GET /api/guest-app/board` | Own folio lines (open/settled); meal entitlements. HOT-GUEST-APP-04/10 |
+| Guest bell inbox | `GET/PATCH /api/guest-app/messages`, staff `POST …/pax/:paxId/messages` | RECEPTION/CLINIC/MARKETING; mute marketing on phone. HOT-GUEST-APP-09 |
 | Guest list | `GET /api/guests?q=&page=&pageSize=` | Paged `{ items, total, page, pageSize }`; UI `EraListWorkspace` |
 
 Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYSTEM_URLS.md`).
@@ -135,7 +144,7 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 | Composed package sell (HOT-PKG-03) | `nafta-package-compose.service` + `syncComposedDailyRates`; `STANDART_COMPANION` pricing component (96); night audit on resolved SKU; FO reservation card pricing tab `packageCompose` | Wave D; not SHIPPED |
 | Per-pax lifecycle (HOT-PKG-04) | check-in **N events** per `ReservationGuest` (`programCode` + `paxKey` + `globalPersonId`); each event is a `clinic_lifecycle_outbox` row retried until ack; clinic opens one episode per pax | Wave E; share rooms stay two reservations |
 | (clinic cutover glue) | `GET /api/internal/v1/guests/by-identity` | Clinic `#21` — name + birthDate + optional phone → `Guest.globalPersonId` |
-| (placement slice) | `POST /api/internal/v1/placement/export-slice`, `…/import-slice` | Hotel curated JSON org slice + host agent upsert path (AC-CP-TOPO Scaffold ✅ still open) |
+| (placement slice) | `POST /api/internal/v1/placement/export-slice`, `…/import-slice`, `GET/POST …/preflight` | OrgFullSliceV2 (all `organizationId` models via DMMF) + storage stub + migration-hash/disk preflight (AC-CP-TOPO Scaffold ✅ still open) |
 | (request org) | `src/lib/request-organization.ts` | SHARED ops stamps: ALS/`requestOrganizationId` (not process bind) |
 
 Policy: hire master = orchestrator CP; hotel admin user create remains secondary seat guard only.
@@ -172,8 +181,9 @@ Env: `FNB_POS_URL`, `CLINIC_URL` for settlement-confirmed callbacks. ADR: `docs/
 
 | Route | Status |
 |-------|--------|
-| `/transfers` (`/transfers/airport` → `?hasFlight=1`) | SHIPPED — folio `TRANSFER` on complete, cancel/void, day-board print (HOT-XFER-01); stay autocomplete OPTION+CONFIRMED+IN_HOUSE; grid + modals |
-| `/tours` (roster/edit modals; legacy `/tours/[id]` → `?roster=`), bare `/tours/[id]/print`, `/fleet`, `/settings/policies#tours` | SHIPPED — group excursions + boarding roster + `TOUR` folio + fleet + `TourOpsPolicy` (HOT-TOUR-01). Spec: [`doc/TOURS-NAFTA-OPS.md`](../../doc/TOURS-NAFTA-OPS.md) · ADR `hotel-guest-tours`. |
+| `/transfers` (`/transfers/airport` → `?hasFlight=1`; `?reservationId=`) | SHIPPED — folio `TRANSFER` on complete, cancel/void, day-board print (HOT-XFER-01); stay lifecycle (cancel auto, date ASK, early-out OUT C); card chips. ADR `hotel-transfer-tour-stay-lifecycle`. |
+| `/tours` (roster/edit modals; legacy `/tours/[id]` → `?roster=`), bare `/tours/[id]/print`, `/fleet`, `/settings/policies#tours` | SHIPPED — boarding roster + `TOUR` folio + fleet + `TourOpsPolicy` (HOT-TOUR-01); RESERVED drop on stay cancel/early-out. Spec: [`doc/TOURS-NAFTA-OPS.md`](../../doc/TOURS-NAFTA-OPS.md) · ADR `hotel-guest-tours` + stay-lifecycle. |
+| `GET /api/transfers/stay-open`, `POST /api/transfers/stay-preview`, `POST /api/transfers/stay-apply` | Stay mobility sync for transfers (+ open tours for card chips) |
 | `/banquets*` | SHIPPED — BEO + printable day sheet + preferred folio (HOT-BEO-01); not full Opera S&C |
 | Reservation card folio routing | `GET/PUT /api/reservations/[id]/folio-routing` | Stay overrides (HOT-CL-01) |
 | Reservation room payer / gross-net | `POST /api/reservations`, `POST /api/reservation-groups/book`, `PATCH /api/reservations/[id]/full` (`roomPayer`, `commissionBasis`, `commercialAmendMode`) | Card **Travel agent / Company** group-box; payer and Gross/Net on one row; contract locks basis. Müqavilə when AGENCY/COMPANY only (list scoped to that payer if both party set). NET discounts the ROOM post and the package night that replaces it. ADR hotel-room-payer-and-commission-basis |

@@ -185,4 +185,30 @@ export class AdminAuditLogsService {
       pageSize: query.pageSize,
     };
   }
+
+  async countMutationAuditLogs(where: Prisma.AuditLogWhereInput): Promise<number> {
+    return this.prisma.auditLog.count({ where });
+  }
+
+  async findManyMutationAuditLogs(
+    args: Prisma.AuditLogFindManyArgs,
+  ) {
+    return this.prisma.auditLog.findMany(args);
+  }
+
+  async findMutationAuditLogById(organizationId: string, id: string) {
+    return this.prisma.auditLog.findFirst({
+      where: { id, organizationId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstNameCipher: true,
+            lastNameCipher: true,
+          },
+        },
+      },
+    });
+  }
 }

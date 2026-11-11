@@ -8,7 +8,6 @@ import {
   inferMutationEntityId,
   isHttpMutationMethod,
   isMutationAuditExemptPath,
-  scheduleHttpMutationAuditFromHeaders,
 } from "./mutation-audit-belt";
 
 describe("mutation-audit-belt", () => {
@@ -61,58 +60,5 @@ describe("mutation-audit-belt", () => {
     });
     assert.equal(HTTP_MUTATION_ENTITY_TYPE, "HTTP_MUTATION");
     assert.ok(DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES.length > 0);
-  });
-
-  it("schedules audit on success and skips exempt / GET / 4xx", async () => {
-    const writes: unknown[] = [];
-    const write = async (row: unknown) => {
-      writes.push(row);
-    };
-    const headers = {
-      get(name: string) {
-        const map: Record<string, string> = {
-          "x-era-method": "POST",
-          "x-era-pathname": "/api/reservations",
-          "x-user-id": "u1",
-        };
-        return map[name] ?? null;
-      },
-    };
-    scheduleHttpMutationAuditFromHeaders(headers, 201, { write });
-    await new Promise((r) => setTimeout(r, 20));
-    assert.equal(writes.length, 1);
-
-    writes.length = 0;
-    scheduleHttpMutationAuditFromHeaders(
-      {
-        get(name: string) {
-          if (name === "x-era-method") return "GET";
-          if (name === "x-era-pathname") return "/api/reservations";
-          return null;
-        },
-      },
-      200,
-      { write },
-    );
-    await new Promise((r) => setTimeout(r, 20));
-    assert.equal(writes.length, 0);
-
-    scheduleHttpMutationAuditFromHeaders(headers, 400, { write });
-    await new Promise((r) => setTimeout(r, 20));
-    assert.equal(writes.length, 0);
-
-    scheduleHttpMutationAuditFromHeaders(
-      {
-        get(name: string) {
-          if (name === "x-era-method") return "POST";
-          if (name === "x-era-pathname") return "/api/auth/login";
-          return null;
-        },
-      },
-      200,
-      { write },
-    );
-    await new Promise((r) => setTimeout(r, 20));
-    assert.equal(writes.length, 0);
   });
 });

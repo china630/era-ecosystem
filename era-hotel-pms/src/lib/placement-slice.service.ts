@@ -1,88 +1,68 @@
+import { Prisma } from "@prisma/client";
 import {
-  exportOrgSlice,
-  importOrgSlice,
+  buildDelegatesFromPrismaClient,
+  exportFullOrgSlice,
+  fullOrgSliceSummary,
+  importFullOrgSlice,
   runWithSatelliteTenant,
-  type OrgSliceExportResult,
-  type OrgSliceImportResult,
-  type SliceModelDelegate,
+  type OrgFullSliceV2,
 } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
-import { HOTEL_PLACEMENT_SLICE_MODEL_ORDER } from "@/lib/placement-slice-models";
 
-function hotelSliceModels(): Record<string, SliceModelDelegate> {
-  return {
-    role: {
-      findMany: (args) =>
-        prisma.role.findMany({
-          where: { organizationId: args.where.organizationId },
-        }) as Promise<Record<string, unknown>[]>,
-      create: ({ data }) => prisma.role.create({ data: data as never }),
-      deleteMany: (args) =>
-        prisma.role.deleteMany({
-          where: { organizationId: args.where.organizationId },
-        }),
-    },
-    user: {
-      findMany: (args) =>
-        prisma.user.findMany({
-          where: { organizationId: args.where.organizationId },
-        }) as Promise<Record<string, unknown>[]>,
-      create: ({ data }) => prisma.user.create({ data: data as never }),
-      deleteMany: (args) =>
-        prisma.user.deleteMany({
-          where: { organizationId: args.where.organizationId },
-        }),
-    },
-    guest: {
-      findMany: (args) =>
-        prisma.guest.findMany({
-          where: { organizationId: args.where.organizationId },
-        }) as Promise<Record<string, unknown>[]>,
-      create: ({ data }) => prisma.guest.create({ data: data as never }),
-      deleteMany: (args) =>
-        prisma.guest.deleteMany({
-          where: { organizationId: args.where.organizationId },
-        }),
-    },
-  };
+const SATELLITE_KEY = "industry_hotel_pms";
+
+function hotelDelegates() {
+  return buildDelegatesFromPrismaClient(
+    Prisma as never,
+    prisma as unknown as Record<string, unknown>,
+  );
 }
 
+/** Full org migrate for hotel satellite (all organizationId models + storage manifest stub). */
 export async function exportHotelOrgSlice(
   organizationId: string,
-): Promise<OrgSliceExportResult> {
-  return runWithSatelliteTenant({ organizationId }, () =>
-    exportOrgSlice({
+): Promise<OrgFullSliceV2> {
+  return runWithSatelliteTenant({ organizationId }, async () => {
+    const { modelOrder, models } = hotelDelegates();
+    return exportFullOrgSlice({
       organizationId,
-      models: hotelSliceModels(),
-    }),
-  );
+      satelliteKey: SATELLITE_KEY,
+      modelOrder,
+      models,
+      objectStorage: {
+        prefix: `org/${organizationId}/`,
+        // Listing hooked when hotel blob SoR is wired; stub keeps contract honest.
+      },
+    });
+  });
 }
 
 export async function importHotelOrgSlice(input: {
   organizationId: string;
-  slice: OrgSliceExportResult;
+  slice: OrgFullSliceV2;
   mode: "validate" | "upsert";
-}): Promise<OrgSliceImportResult> {
-  return runWithSatelliteTenant({ organizationId: input.organizationId }, () =>
-    importOrgSlice({
+}): Promise<
+  | { ok: true; mode: "validate" | "upsert"; tables: OrgFullSliceV2["tables"] }
+  | { ok: false; reason: string }
+> {
+  return runWithSatelliteTenant({ organizationId: input.organizationId }, async () => {
+    const { models } = hotelDelegates();
+    return importFullOrgSlice({
       organizationId: input.organizationId,
+      models,
       slice: input.slice,
       mode: input.mode,
-      modelOrder: [...HOTEL_PLACEMENT_SLICE_MODEL_ORDER],
-      models: hotelSliceModels(),
-    }),
-  );
+      copyObjectStorage: async (manifest) => {
+        if (manifest.stub || !manifest.entries.length) return;
+        // Target copy lands when blob SoR exposes copy-by-key; fail closed if entries present but no hook.
+        throw new Error(
+          "object-storage copy not configured for hotel (manifest has entries)",
+        );
+      },
+    });
+  });
 }
 
-/** Summary for orch PlacementJob.sliceMeta (no full row payload). */
-export function hotelSliceMetaSummary(slice: OrgSliceExportResult) {
-  return {
-    organizationId: slice.organizationId,
-    formatVersion: slice.formatVersion,
-    tables: slice.tables,
-    rowCounts: Object.fromEntries(
-      slice.tables.map((t) => [t.name, t.rowCount]),
-    ),
-    note: slice.note,
-  };
+export function hotelSliceMetaSummary(slice: OrgFullSliceV2) {
+  return fullOrgSliceSummary(slice);
 }
