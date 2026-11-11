@@ -151,6 +151,7 @@ describe('FO gates negative paths (AC-HOT-FO)', () => {
         shareGender: null,
         guest: { fullName: 'Ali Mammadov' },
         paxGuests: [{ firstName: 'Ali', lastName: 'Mammadov', isPrimary: true }],
+        organizationId: 'org-1',
         checkInDate: new Date('2026-08-10'),
         checkOutDate: new Date('2026-08-12'),
       });

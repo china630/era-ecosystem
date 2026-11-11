@@ -18,7 +18,8 @@ jest.mock("@/lib/services/auto-bar-engine.service", () => ({
 
 import { runCronForEachTenant } from "@era/satellite-kit";
 import { fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
-import { POST } from "../app/api/cron/auto-bar/route";
+import { register } from "../nest/generated/cron_auto-bar";
+import { invokeNest } from "./nest-invoke";
 
 describe("saas wave 10 hotel cron discover", () => {
   beforeEach(() => {
@@ -42,12 +43,9 @@ describe("saas wave 10 hotel cron discover", () => {
       },
     );
 
-    const res = await POST(
-      new Request("http://localhost/api/cron/auto-bar", {
-        method: "POST",
-        headers: { authorization: "Bearer test" },
-      }),
-    );
+    const res = await invokeNest(register, "post", "/api/cron/auto-bar", {
+      headers: { authorization: "Bearer test" },
+    });
     const body = await res.json();
     expect(body.byOrganization).toHaveLength(2);
     expect(body.byOrganization[0].organizationId).toBe(
@@ -62,9 +60,7 @@ describe("saas wave 10 hotel cron discover", () => {
       status: 503,
       reason: "pool_registry_empty",
     });
-    const res = await POST(
-      new Request("http://localhost/api/cron/auto-bar", { method: "POST" }),
-    );
+    const res = await invokeNest(register, "post", "/api/cron/auto-bar");
     expect(res.status).toBe(503);
     expect(await res.json()).toEqual({ error: "pool_registry_empty" });
   });

@@ -42,8 +42,9 @@ jest.mock("@/lib/prisma", () => ({
 }));
 
 import { exportHotelOrgSlice, importHotelOrgSlice } from "@/lib/placement-slice.service";
-import { POST as exportPost } from "../app/api/internal/v1/placement/export-slice/route";
+import { register as registerExport } from "../nest/generated/internal_v1_placement_export-slice";
 import { ORG_FULL_SLICE_FORMAT_VERSION } from "@era/satellite-kit";
+import { invokeNest } from "./nest-invoke";
 
 const ORG_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const ORG_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -74,16 +75,13 @@ describe("saas wave 11 hotel placement slice", () => {
   });
 
   it("POST export-slice returns summary with rowCounts", async () => {
-    const res = await exportPost(
-      new Request("http://localhost/api/internal/v1/placement/export-slice", {
-        method: "POST",
-        headers: {
-          authorization: "Bearer test-token",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ organizationId: ORG_A, includeRows: false }),
-      }),
-    );
+    const res = await invokeNest(registerExport, "post", "/api/internal/v1/placement/export-slice", {
+      headers: {
+        authorization: "Bearer test-token",
+        "content-type": "application/json",
+      },
+      body: { organizationId: ORG_A, includeRows: false },
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.formatVersion).toBe(ORG_FULL_SLICE_FORMAT_VERSION);

@@ -23,7 +23,8 @@ jest.mock("@/lib/services/service-work-order.service", () => ({
 }));
 
 import { runCronForEachTenant } from "@era/satellite-kit";
-import { PUT } from "../app/api/service/recurring/route";
+import { register } from "../nest/generated/service_recurring";
+import { invokeNest } from "./nest-invoke";
 
 describe("saas wave 4 hotel recurring cron", () => {
   beforeEach(() => {
@@ -39,12 +40,9 @@ describe("saas wave 4 hotel recurring cron", () => {
       },
     );
 
-    const res = await PUT(
-      new Request("http://localhost/api/service/recurring", {
-        method: "PUT",
-        headers: { authorization: "Bearer test" },
-      }),
-    );
+    const res = await invokeNest(register, "put", "/api/service/recurring", {
+      headers: { authorization: "Bearer test" },
+    });
     const body = await res.json();
     expect(body.byOrganization).toHaveLength(2);
     expect(body.byOrganization[0].organizationId).toBe(
@@ -62,9 +60,7 @@ describe("saas wave 4 hotel recurring cron", () => {
       status: 401,
       reason: "unauthorized",
     });
-    const res = await PUT(
-      new Request("http://localhost/api/service/recurring", { method: "PUT" }),
-    );
+    const res = await invokeNest(register, "put", "/api/service/recurring");
     expect(res.status).toBe(401);
   });
 });

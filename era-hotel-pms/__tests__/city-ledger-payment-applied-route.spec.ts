@@ -50,9 +50,8 @@ describe("city-ledger payment-applied (idempotency)", () => {
   });
 
   it("does not double-post when FolioPayment with registerRef exists", async () => {
-    const { POST } = await import(
-      "../app/api/internal/v1/city-ledger/payment-applied/route"
-    );
+    const { register } = await import("../nest/generated/internal_v1_city-ledger_payment-applied");
+    const { invokeNest } = await import("./nest-invoke");
 
     mockedPrisma.folioPayment.findFirst.mockResolvedValue({ id: "fp-1" });
 
@@ -67,20 +66,17 @@ describe("city-ledger payment-applied (idempotency)", () => {
         payments: [],
       });
 
-    const req = new Request("http://localhost/api/internal/v1/city-ledger/payment-applied", {
-      method: "POST",
+    const res = await invokeNest(register, "post", "/api/internal/v1/city-ledger/payment-applied", {
       headers: { authorization: "Bearer test-token", "content-type": "application/json" },
-      body: JSON.stringify({
+      body: {
         folioId: "folio-1",
         invoiceId: "inv-1",
         paymentId: "pay-1",
         amount: 10,
         currency: "AZN",
         fullyPaid: true,
-      }),
+      },
     });
-
-    const res = await POST(req);
     const body = await res.json();
 
     expect(mockedFolioService.postPayment).not.toHaveBeenCalled();
