@@ -13,6 +13,7 @@ import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { SuperAdminGuard } from "../common/guards/super-admin.guard";
 import { CreatePlacementJobDto } from "./dto/create-placement-job.dto";
+import { CreatePlacementBatchDto } from "./dto/create-placement-batch.dto";
 import { AdvancePlacementJobDto } from "./dto/advance-placement-job.dto";
 import { PlacementJobService } from "./placement-job.service";
 import type { TopologyCode } from "./placement-hops";
@@ -23,6 +24,27 @@ import type { TopologyCode } from "./placement-hops";
 export class PlacementJobController {
   constructor(private readonly jobs: PlacementJobService) {}
 
+  @Post("v1/admin/orgs/:orgId/placement-batches")
+  createBatch(
+    @Param("orgId", ParseUUIDPipe) orgId: string,
+    @Body() body: CreatePlacementBatchDto,
+  ) {
+    return this.jobs.createBatch({
+      organizationId: orgId,
+      satelliteKeys: body.satelliteKeys,
+      fromTopology: body.fromTopology as TopologyCode,
+      toTopology: body.toTopology as TopologyCode,
+      packaging: body.packaging,
+      targetHost: body.targetHost,
+    });
+  }
+
+  @Get("v1/admin/orgs/:orgId/placement-batches")
+  listBatches(@Param("orgId", ParseUUIDPipe) orgId: string) {
+    return this.jobs.listBatchesForOrg(orgId);
+  }
+
+  /** Legacy single-job create (kept for older clients / tests). Prefer placement-batches. */
   @Post("v1/admin/orgs/:orgId/placement-jobs")
   create(
     @Param("orgId", ParseUUIDPipe) orgId: string,

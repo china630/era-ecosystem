@@ -308,9 +308,25 @@ exports.Prisma.SatelliteEndpointScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PlacementBatchScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  satelliteKeys: 'satelliteKeys',
+  fromTopology: 'fromTopology',
+  toTopology: 'toTopology',
+  packaging: 'packaging',
+  targetHost: 'targetHost',
+  recipeJson: 'recipeJson',
+  status: 'status',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.PlacementJobScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
+  batchId: 'batchId',
   satelliteKey: 'satelliteKey',
   fromTopology: 'fromTopology',
   toTopology: 'toTopology',
@@ -323,6 +339,17 @@ exports.Prisma.PlacementJobScalarFieldEnum = {
   targetBaseUrl: 'targetBaseUrl',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PlacementProcessLogScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  jobId: 'jobId',
+  phase: 'phase',
+  level: 'level',
+  message: 'message',
+  detail: 'detail',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.WorkforceAssignmentScalarFieldEnum = {
@@ -1082,6 +1109,18 @@ exports.Prisma.OrganizationProfileScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.OrganizationGuestAppScalarFieldEnum = {
+  organizationId: 'organizationId',
+  enabled: 'enabled',
+  displayName: 'displayName',
+  primaryColor: 'primaryColor',
+  logoUrl: 'logoUrl',
+  locale: 'locale',
+  deskPhone: 'deskPhone',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.OrganizationContactChannelScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
@@ -1814,6 +1853,11 @@ exports.DeploymentTopology = exports.$Enums.DeploymentTopology = {
   ONPREM: 'ONPREM'
 };
 
+exports.PlacementPackaging = exports.$Enums.PlacementPackaging = {
+  PER_SATELLITE: 'PER_SATELLITE',
+  SINGLE_STACK: 'SINGLE_STACK'
+};
+
 exports.PlacementJobStatus = exports.$Enums.PlacementJobStatus = {
   PENDING: 'PENDING',
   FREEZE: 'FREEZE',
@@ -1824,7 +1868,10 @@ exports.PlacementJobStatus = exports.$Enums.PlacementJobStatus = {
   SMOKE: 'SMOKE',
   DONE: 'DONE',
   FAILED: 'FAILED',
-  REJECTED: 'REJECTED'
+  REJECTED: 'REJECTED',
+  CONFIGURE: 'CONFIGURE',
+  IMPORT: 'IMPORT',
+  ROLLBACK: 'ROLLBACK'
 };
 
 exports.WorkforceAssignmentStatus = exports.$Enums.WorkforceAssignmentStatus = {
@@ -2309,7 +2356,9 @@ exports.Prisma.ModelName = {
   Satellite: 'Satellite',
   OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
   SatelliteEndpoint: 'SatelliteEndpoint',
+  PlacementBatch: 'PlacementBatch',
   PlacementJob: 'PlacementJob',
+  PlacementProcessLog: 'PlacementProcessLog',
   WorkforceAssignment: 'WorkforceAssignment',
   WorkforceScope: 'WorkforceScope',
   WorkforceGrade: 'WorkforceGrade',
@@ -2365,6 +2414,7 @@ exports.Prisma.ModelName = {
   Organization: 'Organization',
   OrganizationAccessCredential: 'OrganizationAccessCredential',
   OrganizationProfile: 'OrganizationProfile',
+  OrganizationGuestApp: 'OrganizationGuestApp',
   OrganizationContactChannel: 'OrganizationContactChannel',
   OrganizationAddress: 'OrganizationAddress',
   ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',

@@ -89,6 +89,13 @@ type ProfileBundle = OrganizationProfile & {
 export class OrganizationProfileService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findByPublicNumber(publicOrgNumber: number) {
+    return this.prisma.organization.findFirst({
+      where: { publicOrgNumber, deletedAt: null },
+      select: { id: true, publicOrgNumber: true, name: true },
+    });
+  }
+
   async assertOrgMember(userId: string, organizationId: string) {
     const membership = await this.prisma.organizationMembership.findFirst({
       where: { userId, organizationId },

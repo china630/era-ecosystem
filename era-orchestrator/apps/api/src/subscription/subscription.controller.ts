@@ -11,7 +11,6 @@ import type { EraJwtPayload } from "../auth/jwt-payload.type";
 import { AccessControlService } from "../access/access-control.service";
 import { OrganizationId } from "../common/org-id.decorator";
 import { QuotaService } from "../quota/quota.service";
-import { PrismaService } from "../prisma/prisma.service";
 import { BillingSatelliteNotifyService } from "../billing/billing-satellite-notify.service";
 import { SatelliteConnectService } from "./satellite-connect.service";
 import { SubscriptionAccessService } from "./subscription-access.service";
@@ -30,7 +29,6 @@ export class SubscriptionController {
     private readonly access: SubscriptionAccessService,
     private readonly accessControl: AccessControlService,
     private readonly quota: QuotaService,
-    private readonly prisma: PrismaService,
     private readonly connect: SatelliteConnectService,
     private readonly trialResolver: TrialEntitlementResolver,
     private readonly moduleRef: ModuleRef,
@@ -48,20 +46,7 @@ export class SubscriptionController {
       this.quota.getEmployeeQuotaSnapshot(organizationId),
       this.quota.getInvoiceMonthlyQuotaSnapshot(organizationId),
       this.quota.getStorageQuotaSnapshot(organizationId),
-      this.prisma.organization.findUnique({
-        where: { id: organizationId },
-        select: {
-          id: true,
-          billingStatus: true,
-          whatsappAlertsUsed: true,
-          publicOrgNumber: true,
-          operatingMode: true,
-          parentOrgId: true,
-          fiscalRouting: true,
-          revenueRouting: true,
-          settings: true,
-        },
-      }),
+      this.access.findOrganizationForSubscriptionMe(organizationId),
     ]);
     const expiresAt = snapshot.expiresAt;
     const now = Date.now();
@@ -83,24 +68,10 @@ export class SubscriptionController {
         this.trialResolver.listModuleTrials(organizationId),
         this.trialResolver.listConnectableSatelliteKeys(organizationId),
         org?.parentOrgId
-          ? this.prisma.organization.findUnique({
-              where: { id: org.parentOrgId },
-              select: {
-                id: true,
-                operatingMode: true,
-                parentOrgId: true,
-                fiscalRouting: true,
-                settings: true,
-              },
-            })
+          ? this.access.findParentOrganizationForSettlement(org.parentOrgId)
           : Promise.resolve(null),
         org?.operatingMode === "STANDALONE"
-          ? this.prisma.organization.count({
-              where: {
-                parentOrgId: organizationId,
-                fiscalRouting: "PARENT",
-              },
-            })
+          ? this.access.countDepartmentChildrenWithParentFiscal(organizationId)
           : Promise.resolve(0),
       ]);
     const settlementPolicy = org
@@ -121,13 +92,10 @@ export class SubscriptionController {
     ];
     let activeModules = [...snapshot.activeModules];
     if (connectedSatelliteKeys.length > 0) {
-      const freeModules = await this.prisma.pricingModule.findMany({
-        where: {
-          satelliteKey: { in: connectedSatelliteKeys },
-          pricePerMonth: { lte: 0 },
-        },
-        select: { key: true },
-      });
+      const freeModules =
+        await this.access.findFreePricingModulesBySatelliteKeys(
+          connectedSatelliteKeys,
+        );
       activeModules = [
         ...new Set([...activeModules, ...freeModules.map((m) => m.key)]),
       ];

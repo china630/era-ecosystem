@@ -1,0 +1,11 @@
+import type { PublicPricingResponse } from "../public-pricing-types";
+import { type CalcState, type QuoteCatalog } from "./quote-calculator";
+export type PresetId = "core" | "hotel_city" | "hotel_resort" | "sanatorium" | "clinic" | "kafe" | "retail";
+export declare function bundleSatelliteKey(keys: readonly string[]): string | null;
+export declare function catalogFromSnapshot(snapshot: PublicPricingResponse): QuoteCatalog;
+export declare function applyPreset(id: PresetId, catalog: QuoteCatalog): CalcState;
+export declare function toggleModule(state: CalcState, key: string, catalog: QuoteCatalog): CalcState;
+export declare function toggleBundle(state: CalcState, marketingId: string, catalog: QuoteCatalog): CalcState;
+export declare function setWorkforcePackage(state: CalcState, rank: 0 | 1 | 2 | 3): CalcState;
+export declare function serializeCalcState(state: CalcState): string;
+export declare function parseCalcState(raw: string): CalcState | null;

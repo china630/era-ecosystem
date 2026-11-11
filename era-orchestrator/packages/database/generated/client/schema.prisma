@@ -495,6 +495,8 @@ model SatelliteEndpoint {
 
 /// PlacementJob state machine (API scaffold). Real DB dump / live migrate not implemented.
 /// Direct SHARED ↔ ONPREM is REJECTED — two hops via DEDICATED only.
+/// Wave 1 advance order: PENDING → PROVISION → CONFIGURE → FREEZE → EXPORT → IMPORT → CUTOVER → SMOKE → DONE.
+/// Enum member order keeps historical PG values; CONFIGURE/IMPORT/ROLLBACK appended.
 enum PlacementJobStatus {
   PENDING
   FREEZE
@@ -506,33 +508,87 @@ enum PlacementJobStatus {
   DONE
   FAILED
   REJECTED
+  CONFIGURE
+  IMPORT
+  ROLLBACK
 }
 
-model PlacementJob {
-  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId String             @map("organization_id") @db.Uuid
-  satelliteKey   String             @map("satellite_key")
-  fromTopology   DeploymentTopology @map("from_topology")
-  toTopology     DeploymentTopology @map("to_topology")
-  status         PlacementJobStatus @default(PENDING)
-  errorMessage   String?            @map("error_message")
-  /// Metadata from exportSlice (counts + format note).
-  sliceMeta      Json?              @map("slice_meta")
-  /// Durable slice artifact path or opaque ref for host agent download.
-  artifactRef    String?            @map("artifact_ref")
-  /// Curated org-slice JSON body (lab / host restore). Prefer artifactRef for large blobs.
-  artifactJson   Json?              @map("artifact_json")
-  /// Host agent apply log (observable provision step).
-  applyLog       String?            @map("apply_log") @db.Text
-  /// Optional target URL for cutoverEndpoint.
-  targetBaseUrl  String?            @map("target_base_url")
-  createdAt      DateTime           @default(now()) @map("created_at")
-  updatedAt      DateTime           @updatedAt @map("updated_at")
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+enum PlacementPackaging {
+  PER_SATELLITE
+  SINGLE_STACK
+}
+
+/// One platform Start for an org: many satellite PlacementJobs under one recipe.
+model PlacementBatch {
+  id             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                @map("organization_id") @db.Uuid
+  satelliteKeys  String[]              @map("satellite_keys")
+  fromTopology   DeploymentTopology    @map("from_topology")
+  toTopology     DeploymentTopology    @map("to_topology")
+  packaging      PlacementPackaging    @default(PER_SATELLITE)
+  targetHost     String?               @map("target_host")
+  /// Wave 2 clone recipe (services, images, compose plan). Not applied by orch itself.
+  recipeJson     Json?                 @map("recipe_json")
+  status         PlacementJobStatus    @default(PENDING)
+  errorMessage   String?               @map("error_message")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jobs           PlacementJob[]
+  processLogs    PlacementProcessLog[]
 
   @@index([organizationId])
   @@index([status])
+  @@map("placement_batches")
+}
+
+model PlacementJob {
+  id             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                @map("organization_id") @db.Uuid
+  batchId        String?               @map("batch_id") @db.Uuid
+  satelliteKey   String                @map("satellite_key")
+  fromTopology   DeploymentTopology    @map("from_topology")
+  toTopology     DeploymentTopology    @map("to_topology")
+  status         PlacementJobStatus    @default(PENDING)
+  errorMessage   String?               @map("error_message")
+  /// Metadata from exportSlice (counts + format note).
+  sliceMeta      Json?                 @map("slice_meta")
+  /// Durable slice artifact path or opaque ref for host agent download.
+  artifactRef    String?               @map("artifact_ref")
+  /// Curated org-slice JSON body (lab / host restore). Prefer artifactRef for large blobs.
+  artifactJson   Json?                 @map("artifact_json")
+  /// Host agent apply log (observable provision step).
+  applyLog       String?               @map("apply_log") @db.Text
+  /// Optional target URL for cutoverEndpoint.
+  targetBaseUrl  String?               @map("target_base_url")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  batch          PlacementBatch?       @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  processLogs    PlacementProcessLog[]
+
+  @@index([organizationId])
+  @@index([batchId])
+  @@index([status])
   @@map("placement_jobs")
+}
+
+/// Append-only process timeline for placement batches/jobs (Wave 2+).
+model PlacementProcessLog {
+  id        String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  batchId   String?         @map("batch_id") @db.Uuid
+  jobId     String?         @map("job_id") @db.Uuid
+  phase     String
+  level     String          @default("INFO")
+  message   String
+  detail    Json?
+  createdAt DateTime        @default(now()) @map("created_at")
+  batch     PlacementBatch? @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  job       PlacementJob?   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, createdAt])
+  @@index([jobId, createdAt])
+  @@map("placement_process_logs")
 }
 
 enum WorkforceAssignmentStatus {
@@ -1954,6 +2010,7 @@ model Organization {
   platformLoyaltyLedger            PlatformLoyaltyLedger[]
   satelliteEndpoints               SatelliteEndpoint[]
   placementJobs                    PlacementJob[]
+  placementBatches                 PlacementBatch[]
   satelliteEntitlements            OrganizationSatelliteEntitlement[]
   commercialOutlets                CommercialOutlet[]
   moduleGraces                     OrganizationModuleGrace[]
@@ -1998,6 +2055,7 @@ model Organization {
   agencyPropertyGrants             AgencyPropertyGrant[]
   buyerOrgGrants                   BuyerOrgGrant[]
   profile                          OrganizationProfile?
+  guestApp                         OrganizationGuestApp?
 
   @@index([ownerId])
   @@index([parentOrgId])
@@ -2067,6 +2125,22 @@ model OrganizationProfile {
   addresses            OrganizationAddress[]
 
   @@map("organization_profiles")
+}
+
+/// White-label guest phone brand. Not letterhead (CP-GUEST-APP-01).
+model OrganizationGuestApp {
+  organizationId String       @id @map("organization_id") @db.Uuid
+  enabled        Boolean      @default(false)
+  displayName    String?      @map("display_name")
+  primaryColor   String?      @map("primary_color") @db.VarChar(7)
+  logoUrl        String?      @map("logo_url")
+  locale         String?      @db.VarChar(2)
+  deskPhone      String?      @map("desk_phone")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_guest_apps")
 }
 
 model OrganizationContactChannel {

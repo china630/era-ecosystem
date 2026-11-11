@@ -1,9 +1,11 @@
-import { BadRequestException, Body, Controller, Get, Headers, Param, Patch, Post, Put, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Headers, Param, Patch, Post, Put, Query, UseInterceptors } from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
+import { MdmOrganizationBodyInterceptor } from "./mdm-organization-body.interceptor";
 import { MdmService } from "./mdm.service";
 import type { ResolvePersonInput } from "./mdm-person-identity.types";
 
 @Public()
+@UseInterceptors(MdmOrganizationBodyInterceptor)
 @Controller("internal/v1/mdm")
 export class MdmController {
   constructor(private readonly mdm: MdmService) {}

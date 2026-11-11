@@ -8,7 +8,6 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { OrganizationId } from "../common/org-id.decorator";
-import { PrismaService } from "../prisma/prisma.service";
 import { SatelliteEndpointRegistryService } from "./satellite-endpoint-registry.service";
 
 /**
@@ -19,10 +18,7 @@ import { SatelliteEndpointRegistryService } from "./satellite-endpoint-registry.
 @ApiBearerAuth("bearer")
 @Controller("v1/satellites")
 export class SatelliteLaunchUrlController {
-  constructor(
-    private readonly registry: SatelliteEndpointRegistryService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly registry: SatelliteEndpointRegistryService) {}
 
   @Get("launch-url")
   @ApiOperation({
@@ -37,12 +33,10 @@ export class SatelliteLaunchUrlController {
     if (!key) {
       throw new BadRequestException("satelliteKey is required");
     }
-    const ent = await this.prisma.organizationSatelliteEntitlement.findUnique({
-      where: {
-        organizationId_satelliteKey: { organizationId, satelliteKey: key },
-      },
-      select: { suspendedAt: true },
-    });
+    const ent = await this.registry.findOrganizationSatelliteEntitlement(
+      organizationId,
+      key,
+    );
     if (ent?.suspendedAt != null) {
       throw new ForbiddenException({
         code: "SATELLITE_SUSPENDED",

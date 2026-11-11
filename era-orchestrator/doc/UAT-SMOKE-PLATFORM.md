@@ -200,15 +200,16 @@ CI: `placement-job.service.spec.ts` — SHARED→DEDICATED full advance chain; S
 cd era-orchestrator/apps/api && npm test -- --testPathPattern=placement-job.service
 ```
 
-### Lab dump (SaaS Wave 11) — hotel curated JSON slice
+### Lab dump (SaaS Wave 11 → OrgFullSliceV2) — hotel/clinic full-org slice
 
 Between Wave 7 hop and field host apply:
 
-1. Hotel CI: `npm test -- --testPathPattern=saas-wave11-placement-slice` in `era-hotel-pms`.
-2. Orch CI with `ERA_PLACEMENT_SLICE_LAB=1` (suite sets this) — `sliceMeta.note` matches `hotel curated json slice v1`, not `not implemented full dump`.
-3. Live hotel (optional): `POST {hotel}/api/internal/v1/placement/export-slice` with Bearer `SATELLITE_EVENT_SERVICE_TOKEN` and `{ "organizationId": "<uuid>", "includeRows": false }` → `rowCounts` + `formatVersion: 1`.
+1. Hotel CI: `npm test -- --testPathPattern=saas-wave11-placement-slice` in `era-hotel-pms` (clinic: `placement-full-org-slice`).
+2. Kit: `node --test dist/placement/full-org-slice.test.js` after `npm run build` in `packages/satellite-kit`.
+3. Orch CI with `ERA_PLACEMENT_SLICE_LAB=1` — `sliceMeta.note` matches `satellite full org slice v2`, `formatVersion: 2`, not `slice not implemented`.
+4. Live hotel/clinic (optional): `POST {sat}/api/internal/v1/placement/export-slice` with Bearer `SATELLITE_EVENT_SERVICE_TOKEN` and `{ "organizationId": "<uuid>", "includeRows": false }` → `rowCounts` + `formatVersion: 2` + `checksum` + `modelOrder`.
 
-Curated models: role → user → guest. Host compose/restore still **pending**.
+Product models: all Prisma models with scalar `organizationId` (DMMF). Object-storage manifest stub until copy hook. Host compose/restore / field UAT still **pending**.
 Host agent `scripts/era-placement-agent.mjs` polls PENDING/PROVISION and **logs** apply steps only (no live dump/compose).
 
 ## CP-CHANNELS harden (2026-11-05)
@@ -243,5 +244,5 @@ Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readine
 | Referrals | `/super-admin/referrals` | list |
 | Landing | `/super-admin/landing` | list |
 | Owner billing | `/settings/subscription`, `/settings/invoices`, `/settings/orders` | pages load for owner |
-| Placement hop | `/super-admin/orgs/{id}/placement` | create SHARED→DEDICATED; advance lab states; create SHARED→ONPREM shows REJECTED (Wave 7 lab) |
+| Placement hop | `platform…/orgs/{id}/placement` (legacy `/super-admin/…/placement`) | Start batch (targetHost required) → PROVISION + recipe; after agent → CONFIGURE + process log; Start SHARED→ONPREM → REJECTED (Wave 2) |
 | Integration channels | `platform…/orgs/{id}` Channels + sat `/admin/links` | Resync; inbound disable; shared `SatelliteAdminLinksPage`. **Open** — harden lab partial; not Demo/SHIPPED |

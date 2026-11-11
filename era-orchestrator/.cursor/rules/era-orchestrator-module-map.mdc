@@ -60,7 +60,7 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `/login` | `apps/platform-web/app/login/page.tsx` | Operator-only; `showAccountLinks={false}` |
 | `/` | `apps/platform-web/app/(console)/page.tsx` | → `/billing/pricing` |
 | `/billing/**` | `apps/platform-web/app/(console)/billing/**` | Pricing, addons, quotas, packages, trial-allowlist, settings |
-| `/orgs`, `/orgs/[orgId]`, `…/structure`, `…/subscription`, `…/modules`, `…/connections`, `…/payments`, `…/access`, `…/channels`, `…/cutover`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org shell: card (read-only), structure (mode/depts), license, modules, app URLs + Sync, payments/KKM, access keys (org id + secret; API URL stays in the catalog), channels, Elektraweb cutover (hotel/clinic), placement lab hop. Payment methods `GET/POST/PUT/DELETE /v1/admin/orgs/:orgId/payment-methods`. Access `GET/PUT/POST /v1/admin/orgs/:orgId/access` |
+| `/orgs`, `/orgs/[orgId]`, `…/structure`, `…/subscription`, `…/modules`, `…/connections`, `…/payments`, `…/access`, `…/channels`, `…/cutover`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org shell: card (read-only), structure (mode/depts), license, modules, app URLs + Sync, payments/KKM, access keys (org id + secret; API URL stays in the catalog), channels, Elektraweb cutover (hotel/clinic), placement Start→DONE (banner + rollback + process log; field UAT open). Payment methods `GET/POST/PUT/DELETE /v1/admin/orgs/:orgId/payment-methods`. Access `GET/PUT/POST /v1/admin/orgs/:orgId/access` |
 | `/mdm`, `/mdm/companies`, `/mdm/persons`, `/mdm/persons/dedup` | `apps/platform-web/app/(console)/mdm/**` | MDM overview, directories, suspected-person queue |
 | `/reference`, `/early-access`, `/referrals`, `/landing`, `/security`, `/vendors/channex` | matching `app/(console)/*` | Same surfaces as former client super-admin |
 
@@ -89,6 +89,9 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `GET /v1/invites/pending` | `organization.controller.ts` — pending invites for current user email (company-less onboarding) |
 | `POST /v1/invites/:id/accept` | `organization.controller.ts` — accept invite → create membership |
 | `GET/PATCH /platform/v1/organizations/me/profile` | `organization-profile.controller.ts` — OrgOwner branding SoR (multi-contact/address); CP-ORG-PROFILE-01 |
+| `GET/PATCH /platform/v1/organizations/me/guest-app` | `guest-app.controller.ts` — OrgOwner guest-phone brand; CP-GUEST-APP-01. Not letterhead |
+| `GET /platform/v1/guest-app/:organizationId/brand` | `guest-app.controller.ts` — public brand for `apps/guest-app` (empty when disabled) |
+| `GET /internal/v1/organizations/:id/guest-app-snapshot` | `internal-organizations.controller.ts` — same brand, service token |
 | `GET/PATCH /platform/v1/organizations/:id/profile` | same; membership or super-admin |
 | `GET /internal/v1/organizations/:id/profile-snapshot` | `internal-organizations.controller.ts` — S2S branding snapshot (service token) |
 | `PATCH /internal/v1/organizations/:id/profile-bank-line` | `internal-organizations.controller.ts` — Finance primary bank → denormalized `bankLine` (service token; CP-ORG-PROFILE-01) |
@@ -131,11 +134,14 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `GET/PUT /v1/admin/orgs/:orgId/elektraweb-bridge` | `elektraweb-bridge-policy.controller.ts` — hotel Elektraweb dual-run policy (PSA) |
 | `GET/PUT /v1/admin/orgs/:orgId/clinic-cutover` | `elektraweb-bridge-policy.controller.ts` — clinic dual-run + hotel org link |
 | `POST /v1/admin/orgs/:orgId/sync-satellite-bindings` | `satellite-org-bind-sync.controller.ts` — bind + runtime-config (incl. vendor policies) |
-| `POST /v1/admin/orgs/:orgId/placement-jobs` | `placement-job.controller.ts` — create PlacementJob (SHARED↔ONPREM → REJECTED) |
+| `POST /v1/admin/orgs/:orgId/placement-batches` | `placement-job.controller.ts` — Start → PROVISION + recipe/composeYaml + process log; inline lab + autopilot→DONE (env); targetHost required; SHARED↔ONPREM → REJECTED |
+| `GET /v1/admin/orgs/:orgId/placement-batches` | `placement-job.controller.ts` — batch + jobs + processLogs |
+| `POST /v1/admin/orgs/:orgId/placement-jobs` | `placement-job.controller.ts` — legacy single PlacementJob create |
 | `GET /v1/admin/orgs/:orgId/placement-jobs` | `placement-job.controller.ts` |
-| `POST /v1/admin/placement-jobs/:id/advance` | `placement-job.controller.ts` — freeze/exportSlice/…/complete stubs |
-| `GET /v1/placement-agent/jobs` | `placement-agent.controller.ts` — host poll EXPORT/PROVISION (Bearer host token) |
-| `POST /v1/placement-agent/jobs/:id/apply-log` | Host agent observable apply log |
+| `POST /v1/admin/placement-jobs/:id/advance` | `placement-job.controller.ts` — configure/freeze/export/import/cutover/smoke/complete/rollback (service) |
+| `GET /v1/placement-agent/jobs` | `placement-agent.controller.ts` — host poll PROVISION + recipe (Bearer host token) |
+| `POST /v1/placement-agent/jobs/:id/apply-log` | Host agent apply log (+ process log line) |
+| `POST /v1/placement-agent/jobs/:id/report-provision` | ok → CONFIGURE (Sync) + autopilot FREEZE→DONE unless ERA_PLACEMENT_AUTOPILOT=0; fail → FAILED |
 | `GET /v1/internal/satellite-pool/members` | Pool org list by `satelliteKey`+`baseUrl` (service token; cron SoR) |
 
 ## Platform catalog gateway (API — industry satellites)
