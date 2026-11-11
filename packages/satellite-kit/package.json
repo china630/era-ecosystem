@@ -67,8 +67,8 @@
       "default": "./dist/placement/index.js"
     },
     "./placement/freeze": {
-      "types": "./dist/placement/placement-freeze.d.ts",
-      "default": "./dist/placement/placement-freeze.js"
+      "types": "./dist/placement/placement-freeze-edge.d.ts",
+      "default": "./dist/placement/placement-freeze-edge.js"
     },
     "./bff/voen-preview": {
       "types": "./dist/bff/voen-preview-route.d.ts",
