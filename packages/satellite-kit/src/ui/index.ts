@@ -75,6 +75,8 @@ export { PageHeader } from "./page-header";
 export { PlatformAccountBar } from "./platform-account-bar";
 export { PlatformSessionBarServer } from "./platform-session-bar-server";
 export { SsoCallbackPage } from "./sso-callback-page";
+export { AccessDeniedPage } from "./access-denied-page";
+export { useCan, useCanAny } from "./use-can";
 export {
   EraOpsShell,
 } from "./era-ops-shell";
