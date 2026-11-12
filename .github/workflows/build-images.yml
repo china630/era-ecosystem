@@ -44,7 +44,14 @@ jobs:
         run: |
           set -euo pipefail
           owner=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')
-          echo "package_image_fallback=${{ env.REGISTRY }}/${owner}/era-ecosystem/workspace-packages:${REF_NAME}" >> "$GITHUB_OUTPUT"
+          # Feature branches contain '/', which is not a valid image tag.
+          # A hotel-only dispatch also skips the packages rebuild, so reuse dev.
+          if [ "$REF_NAME" = "dev" ] || [ "$REF_NAME" = "master" ]; then
+            pkg_ref="$REF_NAME"
+          else
+            pkg_ref="dev"
+          fi
+          echo "package_image_fallback=${{ env.REGISTRY }}/${owner}/era-ecosystem/workspace-packages:${pkg_ref}" >> "$GITHUB_OUTPUT"
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             plan=$(node scripts/ci-changed-ghcr-services.mjs --dispatch-services "$DISPATCH_SERVICES")
           elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
