@@ -32,7 +32,7 @@ import { UniversalBankExportService } from "./universal-bank-export.service";
   imports: [
     PrismaModule,
     IntegrationsModule,
-    AuditModule,
+    forwardRef(() => AuditModule),
     forwardRef(() => AccountingModule),
     FxModule,
     InvoicesModule,
