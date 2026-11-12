@@ -50,7 +50,7 @@ export function register(http: { get: Function; post: Function; put: Function; p
     const scope = (EXTRA_LIST_SCOPES as readonly string[]).includes(scopeRaw)
       ? (scopeRaw as ExtraListScope)
       : "due";
-    const { dualRun, orders, needsFilter, needsDates } = await listExtrasAwaitingTicket(
+    const { dualRun, orders, needsFilter, needsDates, truncated } = await listExtrasAwaitingTicket(
       session?.organizationId,
       {
         room: url.searchParams.get("room"),
@@ -69,6 +69,7 @@ export function register(http: { get: Function; post: Function; put: Function; p
       dualRun,
       needsFilter,
       needsDates,
+      truncated,
       scope,
       count: orders.length,
       orders: orders.map((o) => ({

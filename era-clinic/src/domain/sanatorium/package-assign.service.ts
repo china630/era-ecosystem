@@ -464,6 +464,8 @@ export type PackageBalanceRow = {
   fulfillment?: "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
   /** Order in the procedure list. */
   procedureOrder?: number;
+  /** Block checkbox: show Əvəz et. */
+  allowReplace?: boolean;
   /** Quota moved from unused baths or paraffin — not auto-seated. */
   isTransfer?: boolean;
   transfers?: Array<{ createdAt: string; qty: number; reason: string; fromCode: string }>;
@@ -905,6 +907,9 @@ export async function getPackageAssignSnapshot(
     const showFlag = tplRow
       ? tplRow.showInProcedures === true
       : snapRow?.showInProcedures === true;
+    const allowReplace = tplRow
+      ? tplRow.allowReplace === true
+      : snapRow?.allowReplace === true;
     const procedureOrder =
       snapRow?.procedureOrder ?? tplRow?.procedureOrder ?? tplRow?.sortOrder ?? 0;
     const rawFulfillment = snapRow?.fulfillment ?? tplRow?.fulfillment ?? "PROCEDURE_ORDER";
@@ -957,6 +962,7 @@ export async function getPackageAssignSnapshot(
       assignable,
       fulfillment,
       procedureOrder,
+      allowReplace,
       isTransfer: isBathTransferQuota(line.procedureCode),
       transfers: (instance.quotaTransfers ?? [])
         .filter((row) => row.toQuotaCode === line.procedureCode)
@@ -2495,12 +2501,17 @@ export async function transferBathQuota(
   const { loadCatalogDisplayNameMap } = await import(
     "@/domain/catalog/catalog-display-name.service"
   );
-  const names = await loadCatalogDisplayNameMap([input.fromCode, input.toCode], "az");
-  const fromName = names.get(input.fromCode) ?? input.fromCode;
+  const names = await loadCatalogDisplayNameMap([input.toCode], "az");
   const toName = names.get(input.toCode) ?? input.toCode;
-  if (!isReplaceableQuotaLine(input.fromCode, fromName)) {
+  const snapMeta = parseEntitlementSnapshot(instance.entitlementSnapshot);
+  const snapRow = (snapMeta?.procedures ?? []).find((row) => row.procedureCode === input.fromCode);
+  const tplRow = instance.template?.procedures?.find((row) => row.procedureCode === input.fromCode);
+  const allowReplace = tplRow
+    ? tplRow.allowReplace === true
+    : snapRow?.allowReplace === true;
+  if (!allowReplace) {
     throw new PackageAssignError(
-      "Only unused bath or paraffin quota can be transferred",
+      "This package block cannot be replaced",
       "NOT_REPLACEABLE",
       400,
     );

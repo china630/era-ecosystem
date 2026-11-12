@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ModalShell,
@@ -257,13 +257,15 @@ export function DiagnosticsAssignModal({
     }
   }, [episodeId]);
 
+  const loadRef = useRef(load);
+  loadRef.current = load;
   useEffect(() => {
     if (!open) return;
     setPkgDraft([]);
     setExtraDraft([]);
     setOpenGroups(new Set());
-    void load();
-  }, [open, load]);
+    void loadRef.current();
+  }, [open, episodeId]);
 
   const draftRemaining = useMemo(() => {
     const map = new Map(studyBalances.map((b) => [b.procedureCode, b.remaining]));

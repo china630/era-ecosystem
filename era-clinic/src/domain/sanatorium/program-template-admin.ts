@@ -33,9 +33,12 @@ const procedureSchema = z
     dailyUseCap: z.number().int().min(1).max(12).nullable().optional(),
     sortOrder: z.number().int().nonnegative().optional(),
     showInProcedures: z.boolean().optional(),
+    allowReplace: z.boolean().optional(),
     procedureOrder: z.number().int().nonnegative().optional(),
     memberCodes: z.array(z.string().min(1)).optional(),
     assignMode: assignModeSchema.optional(),
+    autoStep: z.enum(["CHECKIN", "DOCTOR", "CLINICAL"]).nullable().optional(),
+    includedInPackage: z.boolean().optional(),
     fulfillment: fulfillmentSchema.optional(),
     fulfillmentExplicit: z.boolean().optional(),
     quotaBasis: quotaBasisSchema.optional(),
@@ -141,6 +144,8 @@ export type EntitlementBlockAxes = {
   fulfillmentExplicit: boolean;
   quotaBasis: "PER_NIGHTS" | "PER_STAY";
   requiresDoctor: boolean;
+  autoStep?: "CHECKIN" | "DOCTOR" | "CLINICAL" | null;
+  includedInPackage?: boolean;
 };
 
 export type EntitlementSnapshot = {
@@ -161,6 +166,7 @@ export type EntitlementSnapshot = {
     quotaPerWeek?: number | null;
     dailyUseCap?: number | null;
     showInProcedures?: boolean;
+    allowReplace?: boolean;
     procedureOrder?: number;
   } & EntitlementBlockAxes>;
   knots: Array<{ nights: number; procedureCode: string; qty: number }>;
@@ -353,11 +359,14 @@ export function buildEntitlementSnapshot(input: {
     quotaPerWeek?: number | null;
     dailyUseCap?: number | null;
     showInProcedures?: boolean;
+    allowReplace?: boolean;
     procedureOrder?: number;
     assignMode?: string | null;
     fulfillment?: string | null;
     quotaBasis?: string | null;
     requiresDoctor?: boolean | null;
+    autoStep?: string | null;
+    includedInPackage?: boolean | null;
   }>;
   knots: Array<{ nights: number; procedureCode: string; qty: number }>;
   members: Array<{ blockCode: string; procedureCode: string }>;
@@ -380,7 +389,13 @@ export function buildEntitlementSnapshot(input: {
       quotaPerWeek: p.quotaPerWeek ?? null,
       dailyUseCap: p.dailyUseCap ?? null,
       showInProcedures: p.showInProcedures === true,
+      allowReplace: p.allowReplace === true,
       procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
+      autoStep:
+        p.autoStep === "CHECKIN" || p.autoStep === "DOCTOR" || p.autoStep === "CLINICAL"
+          ? p.autoStep
+          : null,
+      includedInPackage: p.includedInPackage !== false,
       ...normalizeBlockAxes(p),
     })),
     knots: input.knots.map((k) => ({
@@ -453,12 +468,18 @@ export async function replaceTemplateProceduresAndKnots(
           kind: p.kind ?? null,
           sortOrder: p.sortOrder ?? i,
           showInProcedures: p.showInProcedures === true,
+          allowReplace: p.allowReplace === true,
           procedureOrder: p.procedureOrder ?? p.sortOrder ?? i,
           assignMode: axes.assignMode,
           fulfillment: axes.fulfillment,
           fulfillmentExplicit: axes.fulfillmentExplicit,
           quotaBasis: axes.quotaBasis,
           requiresDoctor: axes.requiresDoctor,
+          autoStep:
+            p.autoStep === "CHECKIN" || p.autoStep === "DOCTOR" || p.autoStep === "CLINICAL"
+              ? p.autoStep
+              : null,
+          includedInPackage: p.includedInPackage !== false,
           blockQuotaMode: p.blockQuotaMode ?? null,
           dailyDistinctCap: p.dailyDistinctCap ?? null,
           quotaPerNight:
@@ -512,6 +533,7 @@ function compositionFingerprint(
         kind: p.kind ?? null,
         sortOrder: p.sortOrder ?? 0,
         showInProcedures: p.showInProcedures === true,
+        allowReplace: p.allowReplace === true,
         procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
         memberCodes: [...(p.memberCodes ?? [])].sort(),
         blockQuotaMode: p.blockQuotaMode ?? null,
@@ -545,6 +567,7 @@ export function compositionChanged(
       quotaBasis?: string | null;
       requiresDoctor?: boolean | null;
       showInProcedures?: boolean | null;
+      allowReplace?: boolean | null;
       procedureOrder?: number | null;
     }>;
     quotaKnots: Array<{ nights: number; procedureCode: string; qty: number }>;
@@ -576,6 +599,7 @@ export function compositionChanged(
         kind: (p.kind as ProgramProcedureInput["kind"]) ?? null,
         sortOrder: p.sortOrder,
         showInProcedures: p.showInProcedures === true,
+        allowReplace: p.allowReplace === true,
         procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
         memberCodes: p.memberCodes,
         blockQuotaMode: snapshotBlockMode(row.blockQuotaMode),
@@ -660,6 +684,9 @@ function proceduresFromExisting(existing: {
     quotaPerNight?: unknown;
     quotaPerWeek?: number | null;
     dailyUseCap?: number | null;
+    showInProcedures?: boolean | null;
+    allowReplace?: boolean | null;
+    procedureOrder?: number | null;
   }>;
   blockMembers: Array<{ blockCode: string; procedureCode: string }>;
 }): ProgramProcedureInput[] {
@@ -684,6 +711,9 @@ function proceduresFromExisting(existing: {
       quotaPerNight: snapshotQuotaRate(p.quotaPerNight),
       quotaPerWeek: p.quotaPerWeek ?? null,
       dailyUseCap: p.dailyUseCap ?? null,
+      showInProcedures: p.showInProcedures === true,
+      allowReplace: p.allowReplace === true,
+      procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
       ...axes,
     };
   });

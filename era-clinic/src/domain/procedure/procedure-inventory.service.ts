@@ -174,6 +174,7 @@ export async function getResourceDayMatrix(date: Date) {
             procedureCode: true,
             manuallyAdjusted: true,
             schedulingMode: true,
+            patientRef: { select: { refCode: true } },
             clinicalEpisode: { select: { roomNumber: true, status: true } },
           },
         })
@@ -197,6 +198,7 @@ export async function getResourceDayMatrix(date: Date) {
           ...s,
           status: gone ? undefined : ord?.status,
           patientRefId: gone ? undefined : ord?.patientRefId,
+          patientRefCode: gone ? undefined : ord?.patientRef?.refCode ?? undefined,
           roomNumber: gone ? undefined : ord?.clinicalEpisode?.roomNumber ?? undefined,
           procedureCode: gone ? undefined : ord?.procedureCode,
           manuallyAdjusted: ord?.manuallyAdjusted,

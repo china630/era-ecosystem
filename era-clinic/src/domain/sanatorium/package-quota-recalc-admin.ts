@@ -261,6 +261,7 @@ export async function publishFixedAsDailyRate(
       dailyUseCap,
       sortOrder: p.sortOrder,
       showInProcedures: p.showInProcedures === true,
+      allowReplace: p.allowReplace === true,
       procedureOrder: p.procedureOrder,
       memberCodes: members,
       assignMode: p.assignMode as

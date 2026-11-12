@@ -246,8 +246,6 @@ export async function openEpisodeFromStay(input: {
             where: { id: existing.id },
             include: episodeInclude,
           });
-    const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-    await seedAutoPaidLabs(row.id);
     return row;
   };
 
@@ -373,8 +371,6 @@ export async function openEpisodeFromStay(input: {
   }
 
   await fillPatientDemographics(created.patientRefId);
-  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-  await seedAutoPaidLabs(created.id);
   return created;
 }
 
@@ -506,8 +502,6 @@ export async function registerWalkInEpisode(input: {
     },
     include: { patientRef: true },
   });
-  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-  await seedAutoPaidLabs(episode.id);
   return episode;
 }
 
@@ -574,6 +568,8 @@ export async function listOpenEpisodes(input?: {
   roomNumber?: string;
   programCode?: string;
   course?: "ready" | "attention" | "blocked";
+  /** YYYY-MM-DD. Keeps rows whose arrival (hotel check-in, else program start, else opened day) is on or after this day. */
+  arrivalFrom?: string;
   includeHotelRooms?: boolean;
   includeProgramCodes?: boolean;
   sort?: "patient" | "room" | "origin" | "program" | "status" | "arrival";
@@ -677,6 +673,11 @@ export async function listOpenEpisodes(input?: {
 
   const sortDir = input?.sortDir === "desc" ? "desc" : "asc";
   const sortArrival = input?.sort === "arrival";
+  const arrivalFrom =
+    input?.arrivalFrom && /^\d{4}-\d{2}-\d{2}$/.test(input.arrivalFrom)
+      ? input.arrivalFrom
+      : null;
+  const pageInMemory = sortArrival || Boolean(arrivalFrom);
   const orderBy: Prisma.ClinicalEpisodeOrderByWithRelationInput =
     input?.sort === "patient"
       ? { patientRef: { fullName: sortDir } }
@@ -729,14 +730,14 @@ export async function listOpenEpisodes(input?: {
     },
   };
 
-  const [total, episodesRaw, hotelRooms, programCodes] = await Promise.all([
+  const [sqlTotal, episodesRaw, hotelRooms, programCodes] = await Promise.all([
     prisma.clinicalEpisode.count({ where }),
     prisma.clinicalEpisode.findMany({
       where,
       include: episodeInclude,
       orderBy,
       // Arrival uses hotel check-in after fetch — load the matching set then page in memory.
-      ...(sortArrival
+      ...(pageInMemory
         ? {}
         : { skip: (page - 1) * pageSize, take: pageSize }),
     }),
@@ -770,13 +771,16 @@ export async function listOpenEpisodes(input?: {
   }
 
   /** Ops package signal for list badges / filters. */
+  const { laneDenied, loadLaneGate } = await import("@/domain/sanatorium/lane-gates");
+  const lanePolicy = await loadLaneGate();
   function courseMark(
     hasCareTeam: boolean,
     signal: "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED",
+    clinicalReady: boolean,
   ): "ready" | "attention" | "blocked" {
     if (!hasCareTeam) return "blocked";
-    if (signal === "OK") return "ready";
-    return "attention";
+    if (signal !== "OK" || !clinicalReady) return "attention";
+    return "ready";
   }
 
   function packageSignal(e: {
@@ -815,7 +819,15 @@ export async function listOpenEpisodes(input?: {
       ...flagged,
       programInstance,
       packageSignal: packageSignal(e),
-      courseMark: courseMark(flagged.hasCareTeam, packageSignal(e)),
+      courseMark: courseMark(
+        flagged.hasCareTeam,
+        packageSignal(e),
+        !laneDenied(lanePolicy, "procedures", {
+          anamnesisText: (e as { anamnesisText?: string | null }).anamnesisText,
+          complaintCount: (e as { complaints?: unknown[] }).complaints?.length ?? 0,
+          diagnosisCount: (e as { diagnoses?: unknown[] }).diagnoses?.length ?? 0,
+        }),
+      ),
     };
   }
 
@@ -855,6 +867,9 @@ export async function listOpenEpisodes(input?: {
     departureOn: departureByEpisodeId.get(row.id) ?? null,
   });
 
+  if (arrivalFrom) {
+    episodes = episodes.filter((e) => (arrivalByEpisodeId.get(e.id) ?? "") >= arrivalFrom);
+  }
   if (sortArrival) {
     episodes = [...episodes].sort((a, b) => {
       const av = arrivalByEpisodeId.get(a.id) ?? "";
@@ -862,6 +877,9 @@ export async function listOpenEpisodes(input?: {
       const cmp = av.localeCompare(bv);
       return sortDir === "desc" ? -cmp : cmp;
     });
+  }
+  const total = pageInMemory ? episodes.length : sqlTotal;
+  if (pageInMemory) {
     episodes = episodes.slice((page - 1) * pageSize, page * pageSize);
   }
 

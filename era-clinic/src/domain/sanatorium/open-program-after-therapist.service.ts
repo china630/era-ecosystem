@@ -49,8 +49,56 @@ function isTemplateMissing(err: unknown, programCode: string): boolean {
 }
 
 /**
+ * Hotel already sent a package code. The first doctor opens that package
+ * without waiting for anamnesis, complaints, or a diagnosis.
+ * Returns true when this call created the ProgramInstance.
+ */
+export async function openHotelPackageOnDoctor(episodeId: string): Promise<boolean> {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: {
+      id: true,
+      status: true,
+      programCode: true,
+      reservationId: true,
+      programInstance: { select: { id: true } },
+    },
+  });
+  if (!episode || episode.status !== "OPEN" || episode.programInstance) return false;
+  const programCode = episode.programCode?.trim();
+  if (!programCode) return false;
+
+  try {
+    const { lookupHotelStayWindow } = await import("@/lib/hotel-stay-person");
+    const { nightsBetween } = await import("@/lib/program-quota");
+    const hotel = episode.reservationId
+      ? await lookupHotelStayWindow(episode.reservationId)
+      : null;
+    const checkIn = hotel ? new Date(hotel.checkInDate) : new Date();
+    const checkOut = hotel ? new Date(hotel.checkOutDate) : undefined;
+    await instantiateProgramFromTemplate({
+      episodeId,
+      programCode,
+      reservationId: episode.reservationId ?? undefined,
+      startsOn: checkIn,
+      checkInDate: hotel ? checkIn : undefined,
+      checkOutDate: checkOut,
+      nights: hotel && checkOut ? nightsBetween(checkIn, checkOut) || undefined : undefined,
+      skipAutoStudies: true,
+    });
+    await linkExistingAutoOrdersToPackage(episodeId);
+    return true;
+  } catch (err) {
+    if (isUniqueViolation(err)) return false;
+    console.error("[care-team] open hotel package", episodeId, err);
+    return false;
+  }
+}
+
+/**
  * Day-1 package open — anamnesis AND ≥1 complaint AND ≥1 ICD-10 (all required).
  * Concurrent twin calls → ALREADY_OPEN via unique(episodeId).
+ * Auto labs no longer wait on this gate; the first doctor opens the hotel package.
  */
 export async function tryOpenProgramAfterTherapistStage(
   episodeId: string,
@@ -65,7 +113,6 @@ export async function tryOpenProgramAfterTherapistStage(
   });
   if (!episode) return { opened: false, reason: "NOT_FOUND" };
   if (episode.status !== "OPEN") return { opened: false, reason: "NOT_OPEN" };
-  if (episode.programInstance) return { opened: false, reason: "ALREADY_OPEN" };
 
   const { laneDenied, loadLaneGate } = await import("@/domain/sanatorium/lane-gates");
   const denied = laneDenied(await loadLaneGate(), "procedures", {
@@ -79,6 +126,17 @@ export async function tryOpenProgramAfterTherapistStage(
 
   const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
   if (careDenied) return { opened: false, reason: "NO_CARE_TEAM" };
+
+  if (episode.programInstance) {
+    // Package was opened when the doctor was assigned. Visits still wait for this gate.
+    const { applyPackageAutoBlocks } = await import(
+      "@/domain/sanatorium/package-auto-apply.service"
+    );
+    await applyPackageAutoBlocks(episodeId, { trigger: "CARE_TEAM", step: "CLINICAL" }).catch((err) => {
+      console.error("[day1] visits after clinical gate", episodeId, err);
+    });
+    return { opened: false, reason: "ALREADY_OPEN" };
+  }
 
   const programCode = episode.programCode?.trim();
   if (!programCode) return { opened: false, reason: "NO_PROGRAM_CODE" };

@@ -273,11 +273,15 @@ export default function SanatoriumResourcesPage() {
         </div>
       }
     >
-      <OccupiedRoomFilter
-        label={t("filterRoom")}
-        value={roomFilter}
-        onChange={setRoomFilter}
-        allLabel={tc("all")}
+      <Field
+        label={t("filterLookup")}
+        preset="shortText"
+        value={resourceFilter}
+        onChange={(e) => {
+          setResourceFilter(e.target.value);
+          setPatientFilter(e.target.value);
+        }}
+        placeholder={t("filterLookupPlaceholder")}
       />
       <DatePicker
         label={t("date")}
@@ -286,18 +290,11 @@ export default function SanatoriumResourcesPage() {
         placeholder={tc("datePlaceholder")}
         openCalendarLabel={tc("openCalendar")}
       />
-      <Field
-        label={t("filterResource")}
-        preset="shortText"
-        value={resourceFilter}
-        onChange={(e) => setResourceFilter(e.target.value)}
-      />
-      <Field
-        label={t("filterPatient")}
-        preset="shortText"
-        value={patientFilter}
-        onChange={(e) => setPatientFilter(e.target.value)}
-        placeholder={t("filterPatientPlaceholder")}
+      <OccupiedRoomFilter
+        label={t("filterRoom")}
+        value={roomFilter}
+        onChange={setRoomFilter}
+        allLabel={tc("all")}
       />
       <FieldSelect
         label={t("filterHorizon")}
