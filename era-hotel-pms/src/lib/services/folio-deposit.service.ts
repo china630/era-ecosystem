@@ -51,6 +51,14 @@ export async function listDeposits(reservationId: string) {
   });
 }
 
+export async function getFolioReservationId(folioId: string) {
+  const folio = await prisma.folio.findUnique({
+    where: { id: folioId },
+    select: { reservationId: true },
+  });
+  return folio?.reservationId ?? null;
+}
+
 const OPEN_FOR_DEPOSIT = ['OPTION', 'CONFIRMED', 'IN_HOUSE'] as const;
 
 /**

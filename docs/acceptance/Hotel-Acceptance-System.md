@@ -12,7 +12,7 @@
 
 ## Scope
 
-- In scope: FO screen chain, cash/city ledger MVP, HK, rates, guest MDM, Nafta ops
+- In scope: FO screen chain, cash/city ledger MVP, HK, rates, guest MDM, Nafta ops, guest phone link/questionnaire/MRZ + booking/orders/Care/family/OTP (AC-HOT-GUEST-APP + AC-HOT-GUEST-APP-REQ + AC-HOT-GUEST-APP-HARDEN 🟡, not sellable, not SHIPPED)
 - Out of scope: Opera-depth AR, live NBC KKM, door locks field certification
 - **Declared spec (not SHIPPED):** Management Reports catalog + nightly ZIP — [`era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md`](../../era-hotel-pms/doc/MANAGEMENT-REPORTS-CATALOG.md) (HOT-RPT-01/02 API/SCREEN; out of Scaffold BE rollup)
 - **Nafta placement:** hotel-pms runs SHARED (one process, one DB, many `organizationId`), including child and line tables. **Not this edition:** selling that pool, and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). AC-HOT-TENANT stays 🟡 until field two-org UAT.

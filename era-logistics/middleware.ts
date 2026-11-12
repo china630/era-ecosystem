@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import {
   createSatelliteStaffMiddleware,
-  redirectNoStore,
+  staffAccessDeniedRedirect,
 } from "@era/satellite-kit/auth/middleware-edge";
 import { isPublicStaffPage, routePermissions } from "@/lib/auth/page-route-permissions";
 import { sessionHasAnyPermission } from "@/lib/auth/permission-check";
@@ -12,11 +12,7 @@ export const middleware = createSatelliteStaffMiddleware<NextRequest>({
     const required = routePermissions(pathname);
     if (required === "auth") return null;
     if (required && sessionHasAnyPermission(session, required)) return null;
-    const forbiddenUrl = request.nextUrl.clone();
-    forbiddenUrl.pathname = "/login";
-    forbiddenUrl.search = "";
-    forbiddenUrl.searchParams.set("error", "forbidden");
-    return redirectNoStore(forbiddenUrl);
+    return staffAccessDeniedRedirect(request);
   },
 });
 

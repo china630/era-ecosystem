@@ -1,5 +1,5 @@
 /**
- * Inventory: every app/api/admin route.ts that calls assertClinicAdmin*
+ * Inventory: every Nest admin handler that calls assertClinicAdmin*
  * must match ADMIN_API_PREFIX_PERMISSIONS (or allowlisted exceptions).
  */
 import fs from "node:fs";
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clinicRoot = path.resolve(__dirname, "..");
-const adminApiRoot = path.join(clinicRoot, "app", "api", "admin");
+const generatedRoot = path.join(clinicRoot, "nest", "generated");
 const permissionsFile = path.join(
   clinicRoot,
   "src",
@@ -29,25 +29,23 @@ const SA_ONLY_ALLOWLIST = new Set([
  */
 const SPECIAL_MAPPED = new Set(["hotel-revenue-codes"]);
 
-function walkRoutes(dir, acc = []) {
-  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, ent.name);
-    if (ent.isDirectory()) walkRoutes(p, acc);
-    else if (ent.name === "route.ts") acc.push(p);
-  }
-  return acc;
+function walkRoutes(dir) {
+  return fs
+    .readdirSync(dir)
+    .filter((name) => name.startsWith("admin_") && name.endsWith(".ts"))
+    .map((name) => path.join(dir, name));
 }
 
+/** `admin_wards__id_beds.ts` → `/api/admin/wards/x/beds`. */
 function routeToApiPath(abs) {
-  const rel = path
-    .relative(adminApiRoot, abs)
-    .replace(/\\/g, "/")
-    .replace(/\/route\.ts$/, "");
-  const normalized = rel
-    .split("/")
-    .map((seg) => (seg.startsWith("[") && seg.endsWith("]") ? "x" : seg))
-    .join("/");
-  return { rel, apiPath: `/api/admin/${normalized}`, top: rel.split("/")[0] };
+  const chunks = path.basename(abs, ".ts").split("__");
+  const segs = chunks[0].split("_").slice(1);
+  for (const chunk of chunks.slice(1)) {
+    const parts = chunk.split("_");
+    segs.push("x", ...parts.slice(1));
+  }
+  const rel = segs.join("/");
+  return { rel, apiPath: `/api/admin/${rel}`, top: segs[0] };
 }
 
 const src = fs.readFileSync(permissionsFile, "utf8");
@@ -65,7 +63,7 @@ function isMapped(apiPath, top) {
   return prefixes.some((p) => apiPath === p || apiPath.startsWith(`${p}/`));
 }
 
-const routes = walkRoutes(adminApiRoot);
+const routes = walkRoutes(generatedRoot);
 const gaps = [];
 const saOnly = [];
 const other = [];

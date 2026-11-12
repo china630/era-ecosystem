@@ -36,6 +36,7 @@ import { StructureModule } from "./structure/structure.module";
 import { ChannelsModule } from "./channels/channels.module";
 import { CommsModule } from "./comms/comms.module";
 import { DocumentsModule } from "./documents/documents.module";
+import { LocaleController } from "./locale/locale.controller";
 
 @Module({
   imports: [
@@ -82,7 +83,7 @@ import { DocumentsModule } from "./documents/documents.module";
     CommsModule,
     DocumentsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, LocaleController],
   providers: [
     {
       provide: APP_GUARD,

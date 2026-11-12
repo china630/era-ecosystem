@@ -21,6 +21,7 @@ import { GuestCardCrmDialog } from '@/components/guest-card/GuestCardCrmDialog';
 import { crmTabButtons, reservationDetailsButtons } from '@/lib/guest-crm-config';
 import { PassportScanModal } from '@/components/guest-card/PassportScanModal';
 import { useAuth } from '@/hooks/useAuth';
+import { PERMISSIONS } from '@/lib/auth/permissions';
 import { guestComposedFullName, splitStoredFullName } from '@/lib/guest-identity.shared';
 import { guestIdentityGaps, type IdentityField } from '@/lib/guest-stay-requirements';
 import { pickPrimaryContact, pickPrimaryDocument } from '@/lib/guest-card-primary';
@@ -79,7 +80,8 @@ export default function GuestCardModal({
   openIdReaderOnOpen?: boolean;
 }) {
   const t = useTranslations('guestCard');
-  const { isPlatformSuperAdmin } = useAuth();
+  const { can, isPlatformSuperAdmin } = useAuth();
+  const canScanPassport = isPlatformSuperAdmin || can(PERMISSIONS.GUESTS_MRZ);
   const tc = useTranslations('common');
   const [tab, setTab] = useState<GuestTabId>('identity');
   const [loading, setLoading] = useState(true);
@@ -317,9 +319,9 @@ export default function GuestCardModal({
       setIdReaderOpen(false);
       return;
     }
-    if (!openIdReaderOnOpen || !isPlatformSuperAdmin) return;
+    if (!openIdReaderOnOpen || !canScanPassport) return;
     setIdReaderOpen(true);
-  }, [open, openIdReaderOnOpen, guestId, isPlatformSuperAdmin]);
+  }, [open, openIdReaderOnOpen, guestId, canScanPassport]);
 
   const crmActions = crmTabButtons(guestId, crmBadges);
   const resActions = reservationDetailsButtons(guestId, crmBadges);
@@ -637,7 +639,7 @@ export default function GuestCardModal({
           onToggleLock={() => void toggleGuestLock()}
           onPrint={printCard}
           onIdReader={
-            isPlatformSuperAdmin && !isLocked ? () => setIdReaderOpen(true) : undefined
+            canScanPassport && !isLocked ? () => setIdReaderOpen(true) : undefined
           }
         />
       }

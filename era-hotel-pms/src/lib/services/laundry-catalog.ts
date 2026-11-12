@@ -1,5 +1,8 @@
 /** Nafta guest laundry blank — wash/iron null means service not offered. */
 
+import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
+
 export type LaundryCatalogSeedRow = {
   code: string;
   category: 'MEN' | 'WOMEN' | 'CHILD';
@@ -51,48 +54,24 @@ export const NAFTA_LAUNDRY_CATALOG: LaundryCatalogSeedRow[] = [
   { code: 'C-SOCKS', category: 'CHILD', nameAz: 'Corab', nameEn: 'Socks', nameRu: 'Носки', washPrice: 0.5, ironPrice: null },
 ];
 
-export function laundryItemDisplayName(
-  item: {
-    name?: string | null;
-    nameAz?: string | null;
-    nameRu?: string | null;
-    nameEn?: string | null;
-  },
-  locale?: string | null,
-): string {
-  const loc = (locale ?? 'en').slice(0, 2).toLowerCase();
-  if (loc === 'az' && item.nameAz?.trim()) return item.nameAz.trim();
-  if (loc === 'ru' && item.nameRu?.trim()) return item.nameRu.trim();
-  if (item.nameEn?.trim()) return item.nameEn.trim();
-  return item.name?.trim() || '—';
+import { laundryItemDisplayName, pickLaundryUnitPrices } from "@/lib/laundry-catalog-view";
+
+export { laundryItemDisplayName, pickLaundryUnitPrices };
+
+export async function listLaundryCatalogItems() {
+  return prisma.laundryItem.findMany({ orderBy: [{ category: 'asc' }, { code: 'asc' }] });
 }
 
-export function pickLaundryUnitPrices(
-  item: {
-    washPrice?: number | string | null;
-    ironPrice?: number | string | null;
-    expressWashPrice?: number | string | null;
-    expressIronPrice?: number | string | null;
-  },
-  express: boolean,
-): { washPrice: number | null; ironPrice: number | null; missingExpress: boolean } {
-  const asNum = (v: unknown): number | null => {
-    if (v == null || v === '') return null;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  };
-  if (!express) {
-    return {
-      washPrice: asNum(item.washPrice),
-      ironPrice: asNum(item.ironPrice),
-      missingExpress: false,
-    };
-  }
-  const wash = asNum(item.expressWashPrice);
-  const iron = asNum(item.expressIronPrice);
-  return {
-    washPrice: wash,
-    ironPrice: iron,
-    missingExpress: wash == null && iron == null,
-  };
+export async function findLaundryCatalogItem(id: string) {
+  return prisma.laundryItem.findUnique({ where: { id } });
+}
+
+export async function createLaundryCatalogItem(
+  data: Omit<Prisma.LaundryItemCreateInput, "organization" | "organizationId">,
+) {
+  return prisma.laundryItem.create({ data: data as Prisma.LaundryItemCreateInput });
+}
+
+export async function updateLaundryCatalogItem(id: string, data: Prisma.LaundryItemUpdateInput) {
+  return prisma.laundryItem.update({ where: { id }, data });
 }

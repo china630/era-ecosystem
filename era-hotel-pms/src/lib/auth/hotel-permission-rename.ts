@@ -39,6 +39,49 @@ export const HOTEL_CANONICAL_PERMISSIONS = [
   "api:reservations.cancel",
   "api:reservations.agency_pick",
   "api:reservations.company_pick",
+  "api:guests.read",
+  "api:guests.write",
+  "api:banquets.read",
+  "api:banquets.write",
+  "api:concierge.read",
+  "api:concierge.write",
+  "api:tours.write",
+  "api:transfers.write",
+  "api:fleet.write",
+  "api:pos.read",
+  "api:pos.write",
+  "api:spa.places.read",
+  "api:dispatch.read",
+  "api:dispatch.write",
+  "api:migration.registrations.read",
+  "api:migration.registrations.write",
+  "api:guests.mrz",
+  "admin:rooms",
+  "admin:stock",
+  "admin:hotel_profile",
+  "admin:parties",
+  "admin:rates",
+  "admin:seasons",
+  "admin:yield",
+  "admin:child_matrix",
+  "admin:pricing",
+  "admin:departments",
+  "admin:allotment",
+  "admin:contracts",
+  "admin:promo",
+  "admin:agency_commission",
+  "admin:integration",
+  "admin:revenue",
+  "admin:lookups",
+  "admin:spa_places",
+  "api:meal_plans.read",
+  "api:booking_sources.read",
+  "api:rooms.list",
+  "api:rate_plans.read",
+  "api:room_types.read",
+  "api:contracts.read",
+  "api:revenue_codes.read",
+  "api:lookups.read",
   "api:folio.read",
   "api:folio.charge",
   "api:folio.payment",
@@ -58,6 +101,13 @@ export const HOTEL_CANONICAL_PERMISSIONS = [
   "api:integration.elektraweb_bridge",
   "screen:home",
   "screen:fo",
+  "screen:guests",
+  "screen:banquets",
+  "screen:concierge",
+  "screen:pos",
+  "screen:migration",
+  "screen:dispatch",
+  "screen:service_guest",
   "screen:hk",
   "screen:schedules",
   "screen:medical",
@@ -115,7 +165,22 @@ export function screensImpliedByCanonKeys(keys: readonly string[]): string[] {
     add("screen:home");
   }
   if (have.has("api:reservations.read")) add("screen:fo");
-  if (have.has("api:reservations.write")) add("screen:tours");
+  if (have.has("api:guests.read")) add("screen:guests");
+  if (have.has("api:banquets.read")) add("screen:banquets");
+  if (have.has("api:concierge.read")) add("screen:concierge");
+  if (have.has("api:pos.read")) add("screen:pos");
+  if (
+    have.has("api:tours.write") ||
+    have.has("api:transfers.write") ||
+    have.has("api:fleet.write")
+  ) {
+    add("screen:tours");
+  }
+  if (have.has("api:import.elektraweb") || have.has("api:migration.registrations.read")) {
+    add("screen:migration");
+  }
+  if (have.has("api:dispatch.read")) add("screen:dispatch");
+  if (have.has("api:reservations.read")) add("screen:service_guest");
   if (have.has("api:folio.read")) add("screen:folio");
   if (
     have.has("api:folio.read") ||
@@ -137,7 +202,29 @@ export function screensImpliedByCanonKeys(keys: readonly string[]): string[] {
   if (have.has("admin:master_data") || have.has("api:channel.manage")) {
     add("screen:admin");
   }
-  if (have.has("admin:master_data")) add("screen:settings");
+  if (
+    have.has("admin:master_data") ||
+    have.has("admin:rates") ||
+    have.has("admin:seasons") ||
+    have.has("admin:yield") ||
+    have.has("admin:rooms") ||
+    have.has("admin:stock") ||
+    have.has("admin:hotel_profile") ||
+    have.has("admin:parties") ||
+    have.has("admin:child_matrix") ||
+    have.has("admin:pricing") ||
+    have.has("admin:departments") ||
+    have.has("admin:allotment") ||
+    have.has("admin:contracts") ||
+    have.has("admin:promo") ||
+    have.has("admin:agency_commission") ||
+    have.has("admin:integration") ||
+    have.has("admin:revenue") ||
+    have.has("admin:lookups") ||
+    have.has("admin:spa_places")
+  ) {
+    add("screen:settings");
+  }
   if (have.has("admin:users")) add("screen:settings.users");
   if (have.has("admin:access_manage")) add("screen:settings.access");
   if (have.has("api:import.elektraweb")) add("screen:settings.import");
@@ -146,4 +233,150 @@ export function screensImpliedByCanonKeys(keys: readonly string[]): string[] {
 
 export function withPairedScreens(keys: readonly string[]): string[] {
   return remapPermissionList([...keys, ...screensImpliedByCanonKeys(keys)]);
+}
+
+/**
+ * Catalog v4: guest, banquet, concierge, tours, transfers, fleet, POS and spa
+ * places used to ride on reservations.read / reservations.write.
+ * One-shot expand so an existing grant keeps those doors until an admin unchecks them.
+ */
+export function expandEntityGrants(keys: readonly string[]): string[] {
+  const out: string[] = [];
+  const have = new Set<string>();
+  const add = (s: string) => {
+    if (!have.has(s)) {
+      have.add(s);
+      out.push(s);
+    }
+  };
+  for (const key of keys) add(key);
+  if (have.has("api:reservations.read")) {
+    add("api:guests.read");
+    add("api:banquets.read");
+    add("api:concierge.read");
+    add("api:pos.read");
+    add("api:spa.places.read");
+  }
+  if (have.has("api:reservations.write")) {
+    add("api:guests.write");
+    add("api:banquets.write");
+    add("api:concierge.write");
+    add("api:tours.write");
+    add("api:transfers.write");
+    add("api:fleet.write");
+    add("api:pos.write");
+  }
+  return out;
+}
+
+/** Catalog v5: dispatch, migration registrations, and the master-data split. */
+export function expandCatalogV5(keys: readonly string[]): string[] {
+  const out: string[] = [];
+  const have = new Set<string>();
+  const add = (s: string) => {
+    if (!have.has(s)) {
+      have.add(s);
+      out.push(s);
+    }
+  };
+  for (const key of keys) add(key);
+  if (have.has("api:reservations.read")) {
+    add("api:dispatch.read");
+    add("api:migration.registrations.read");
+    add("screen:service_guest");
+  }
+  if (have.has("api:reservations.write")) {
+    add("api:dispatch.write");
+    add("api:migration.registrations.write");
+  }
+  if (have.has("admin:master_data")) {
+    add("admin:rooms");
+    add("admin:stock");
+    add("admin:hotel_profile");
+    add("admin:parties");
+  }
+  return out;
+}
+
+/** Catalog v6: rates, seasons, yield and the booking pick-lists. */
+export function expandCatalogV6(keys: readonly string[]): string[] {
+  const out: string[] = [];
+  const have = new Set<string>();
+  const add = (s: string) => {
+    if (!have.has(s)) {
+      have.add(s);
+      out.push(s);
+    }
+  };
+  for (const key of keys) add(key);
+  if (have.has("api:reservations.read")) {
+    add("api:meal_plans.read");
+    add("api:booking_sources.read");
+    add("api:rooms.list");
+  }
+  if (have.has("admin:master_data")) {
+    add("admin:rates");
+    add("admin:seasons");
+    add("admin:yield");
+    add("admin:child_matrix");
+    add("admin:pricing");
+    add("admin:departments");
+    add("admin:allotment");
+    add("admin:contracts");
+    add("admin:promo");
+    add("admin:agency_commission");
+    add("admin:integration");
+    add("admin:revenue");
+    add("admin:lookups");
+    add("admin:spa_places");
+  }
+  return out;
+}
+
+/** Catalog v7: booking lists for rates and lookups; drop the inert master-data key. */
+export function expandCatalogV7(keys: readonly string[]): string[] {
+  const out: string[] = [];
+  const have = new Set<string>();
+  const add = (s: string) => {
+    if (!have.has(s)) {
+      have.add(s);
+      out.push(s);
+    }
+  };
+  for (const key of keys) {
+    if (key !== "admin:master_data") add(key);
+  }
+  if (have.has("api:reservations.read")) {
+    add("api:rate_plans.read");
+    add("api:lookups.read");
+  }
+  return out.filter((key) => key !== "admin:master_data");
+}
+
+/** Catalog v8: lists the booking card and the folio charge dialog still need. */
+export function expandCatalogV8(keys: readonly string[]): string[] {
+  const out: string[] = [];
+  const have = new Set<string>();
+  const add = (s: string) => {
+    if (!have.has(s)) {
+      have.add(s);
+      out.push(s);
+    }
+  };
+  for (const key of keys) add(key);
+  if (have.has("api:reservations.read")) {
+    add("api:room_types.read");
+    add("api:contracts.read");
+  }
+  if (have.has("api:folio.read") || have.has("api:folio.charge")) {
+    add("api:revenue_codes.read");
+  }
+  if (
+    have.has("api:guests.read") ||
+    have.has("api:banquets.read") ||
+    have.has("api:concierge.read")
+  ) {
+    add("api:lookups.read");
+  }
+  return out;
 }

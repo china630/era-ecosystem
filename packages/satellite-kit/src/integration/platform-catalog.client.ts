@@ -83,6 +83,14 @@ export async function platformCatalogGet<T>(
   }
 }
 
+export class FxRateNotFoundError extends Error {
+  readonly status = 400;
+  constructor(message: string) {
+    super(message);
+    this.name = "FxRateNotFoundError";
+  }
+}
+
 export async function platformFxConvert(
   params: { from: string; to?: string; amount: number; date?: string },
   opts?: PlatformCatalogClientOptions,
@@ -93,10 +101,36 @@ export async function platformFxConvert(
     to: (params.to ?? "AZN").trim().toUpperCase(),
   });
   if (params.date?.trim()) q.set("date", params.date.trim());
-  const body = await platformCatalogGet<FxConvertResult & FinanceFxPreviewResult>(
-    `/fx/convert?${q}`,
-    opts,
-  );
+  const path = `/fx/convert?${q}`;
+  if (!catalogEnabled(opts)) return null;
+  const token = serviceToken(opts);
+  const orgId = organizationId(opts);
+  if (!token || !orgId) return null;
+  const url = `${baseUrl(opts)}/platform/v1/catalog${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: authHeaders(token, orgId),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    return null;
+  }
+  if (res.status === 400) {
+    const text = await res.text();
+    let message = "No FINAL rate";
+    try {
+      const parsed = JSON.parse(text) as { message?: unknown };
+      if (typeof parsed.message === "string" && parsed.message.trim()) {
+        message = parsed.message.trim();
+      }
+    } catch {
+      if (text.trim()) message = text.trim().slice(0, 300);
+    }
+    throw new FxRateNotFoundError(message);
+  }
+  if (!res.ok) return null;
+  const body = (await res.json()) as FxConvertResult & FinanceFxPreviewResult;
   if (!body || typeof body.result !== "number") return null;
   return {
     from: body.from,

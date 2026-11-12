@@ -205,6 +205,29 @@ export async function listMinibarItems() {
   return prisma.minibarItem.findMany({ where: { active: true }, orderBy: { code: 'asc' } });
 }
 
+export async function listMinibarOpsBoard() {
+  const rooms = await prisma.room.findMany({
+    where: { deleted: false, disabled: false },
+    orderBy: { roomNumber: 'asc' },
+    select: { id: true, roomNumber: true, floor: true },
+  });
+  const postings = await prisma.minibarPosting.findMany({
+    orderBy: { postedAt: 'desc' },
+    take: 40,
+    include: { item: true, room: { select: { roomNumber: true } } },
+  });
+  return { rooms, postings };
+}
+
+export async function createMinibarCatalogItem(data: {
+  code: string;
+  name: string;
+  price: ReturnType<typeof toDecimal>;
+  financeSku: string | null;
+}) {
+  return prisma.minibarItem.create({ data });
+}
+
 export async function postMinibar(input: {
   roomId: string;
   itemId: string;

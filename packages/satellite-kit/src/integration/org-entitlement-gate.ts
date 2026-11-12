@@ -19,6 +19,7 @@ import {
   getSatelliteTenantContext,
   runWithSatelliteTenant,
 } from "../tenancy/satellite-tenant-context";
+import { isOrganizationPlacementFrozen } from "../placement/placement-freeze";
 
 export {
   HOTEL_MODULE_BY_ROUTE,
@@ -364,6 +365,10 @@ export async function runCronForEachTenant<T>(
     const results: T[] = [];
     let denied: Extract<CronEntitlementResult, { ok: false }> | null = null;
     for (const organizationId of ids) {
+      if (isOrganizationPlacementFrozen(organizationId)) {
+        // Placement hop write-freeze — skip cron mutations for this org.
+        continue;
+      }
       const entitled = await checkCronEntitlement(opts, organizationId);
       if (!entitled.ok) {
         denied = entitled;

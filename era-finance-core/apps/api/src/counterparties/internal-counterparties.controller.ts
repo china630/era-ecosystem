@@ -4,7 +4,6 @@ import { z } from "zod";
 import { assertEnvServiceToken } from "@era/satellite-kit";
 import { Public } from "../auth/decorators/public.decorator";
 import { OrganizationId } from "../common/org-id.decorator";
-import { PrismaService } from "../prisma/prisma.service";
 import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { CounterpartiesService } from "./counterparties.service";
 import { blindIndex, encryptText, normalizeName, normalizeVoen } from "../security/pii-crypto.util";
@@ -30,10 +29,7 @@ const cardRequestSchema = z.object({
 @Controller("internal/v1/counterparties")
 @Public()
 export class InternalCounterpartiesController {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly counterparties: CounterpartiesService,
-  ) {}
+  constructor(private readonly counterparties: CounterpartiesService) {}
 
   private authorize(authorization?: string, xServiceToken?: string) {
     const auth = assertEnvServiceToken({
@@ -72,10 +68,10 @@ export class InternalCounterpartiesController {
     const row = await runWithTenantContextAsync(
       { organizationId, skipTenantFilter: false },
       () =>
-        this.prisma.counterparty.findFirst({
-          where: { organizationId, taxIdBlindIndex, deletedAt: null },
-          select: { id: true },
-        }),
+        this.counterparties.findCounterpartyIdByTaxIdBlindIndex(
+          organizationId,
+          taxIdBlindIndex,
+        ),
     );
     if (!row) {
       throw new NotFoundException("Counterparty not found for VOEN");
@@ -124,33 +120,16 @@ export class InternalCounterpartiesController {
       throw new NotFoundException("Invalid VÖEN");
     }
     const taxIdBlindIndex = blindIndex("voen", normalized);
-    return runWithTenantContextAsync({ organizationId, skipTenantFilter: false }, async () => {
-      const existing = await this.prisma.counterparty.findFirst({
-        where: { organizationId, taxIdBlindIndex, deletedAt: null },
-        select: { id: true },
-      });
-      if (existing) return { queued: false, counterpartyId: existing.id };
-      await this.prisma.counterpartyCardRequest.upsert({
-        where: { organizationId_taxIdBlindIndex: { organizationId, taxIdBlindIndex } },
-        create: {
-          organizationId,
-          taxIdBlindIndex,
-          taxIdCipher: encryptText(normalized),
-          nameCipher: encryptText(normalizeName(parsed.name.trim())),
-          partyKind: parsed.partyKind,
-          legalForm: parsed.legalForm ?? CounterpartyLegalForm.LLC,
-          status: "PENDING",
-          source: "HOTEL",
-        },
-        update: {
-          nameCipher: encryptText(normalizeName(parsed.name.trim())),
-          partyKind: parsed.partyKind,
-          legalForm: parsed.legalForm ?? CounterpartyLegalForm.LLC,
-          status: "PENDING",
-        },
-      });
-      return { queued: true };
-    });
+    return runWithTenantContextAsync({ organizationId, skipTenantFilter: false }, () =>
+      this.counterparties.queueCardRequestIfAbsent({
+        organizationId,
+        taxIdBlindIndex,
+        taxIdCipher: encryptText(normalized),
+        nameCipher: encryptText(normalizeName(parsed.name.trim())),
+        partyKind: parsed.partyKind,
+        legalForm: parsed.legalForm ?? CounterpartyLegalForm.LLC,
+      }),
+    );
   }
 }
 

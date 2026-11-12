@@ -46,7 +46,7 @@ function buildProductAdapter(
     entity,
     label,
     order,
-    permission: PERMISSIONS.MASTER_DATA_MANAGE,
+    permission: PERMISSIONS.STOCK_MANAGE,
     templateHint,
     headerAliases: {
       Id: 'ewId',

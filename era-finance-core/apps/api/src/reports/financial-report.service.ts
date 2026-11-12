@@ -226,5 +226,14 @@ export class FinancialReportService {
       netProfitMtd: String(pl.netProfit ?? "0"),
     };
   }
+
+  findCounterpartyForReconciliationEmail(
+    organizationId: string,
+    counterpartyId: string,
+  ) {
+    return this.prisma.counterparty.findFirst({
+      where: { id: counterpartyId, organizationId },
+    });
+  }
 }
 

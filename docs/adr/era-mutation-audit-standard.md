@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-10-27  
-**Implementation:** **Partial (2026-10-29).** Kit belt + `jsonOk` on Hotel/F&B/Clinic. **Wave A fail-closed:** CI scans mutation `route.ts` for silent success bypass. **Wave B Layer B:** F&B pay/discount/room-charge + PosShift open/close; Hotel CashShift open/close + night-audit `DAY_CLOSE` (folio/stay journal already Layer B); Clinic cashier SETTLE/VOID + ClinicShift open/close. **Wave C Finance kit-align:** Nest deny-list → kit `isMutationAuditExemptPath` + `DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES` (+ Finance extras); `DataMaskingService` → kit `isAuditPiiKey` (+ Finance extras); no hash-chain rewrite. **Wave D Finance journal UI:** `/admin/audit` uses kit `CatalogField` + `EraListFilterBar` + `DatePicker`; Reset → `HTTP_MUTATION`. **Wave E infra:** compound `(organizationId, createdAt)` on Hotel/Clinic/F&B `SatelliteAuditLog`; satellite hash-chain deferred. **UI/API parity:** `/admin/audit` + `GET /api/admin/audit`; Finance OWNER `/admin/security-audit`. CI: `npm run check:mutation-audit-belt`. **Not SHIPPED** until UAT (HOT-AUD-01 / FNB-AUD-01 API/SCREEN; Clinic HTTP_MUTATION UAT open). FIN-AUD-01 SHIPPED (Nest Layer A); AC-FIN-AUD stays 🟡 (AuthZ negatives residual). Open debts below.  
+**Implementation:** **Partial (2026-11-12).** All eleven industry satellites write Layer A through `SatelliteMutationAuditInterceptor` on the Nest `/api` controller (Finance interceptor shape, `SatelliteAuditLog` rows, no hash-chain). Nest stamps `x-era-pathname` from the request URL. Staff session cookie and JWT are both 8 hours. Orchestrator website `/api` proxies are Next rewrites onto the Nest API, including `POST /v1/locale`. Other control-plane routes keep their own journals. **Wave A fail-closed:** CI checks all eleven industry `nest/main.ts` files mount the interceptor through a Nest controller. **Wave B Layer B:** F&B pay/discount/room-charge + PosShift open/close; Hotel CashShift open/close + night-audit `DAY_CLOSE` (folio/stay journal already Layer B); Clinic cashier SETTLE/VOID + ClinicShift open/close. **Wave C Finance kit-align:** Nest deny-list → kit `isMutationAuditExemptPath` + `DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES` (+ Finance extras); `DataMaskingService` → kit `isAuditPiiKey` (+ Finance extras); no hash-chain rewrite. **Wave D Finance journal UI:** `/admin/audit` uses kit `CatalogField` + `EraListFilterBar` + `DatePicker`; Reset → `HTTP_MUTATION`. **Wave E infra:** compound `(organizationId, createdAt)` on Hotel/Clinic/F&B `SatelliteAuditLog`; satellite hash-chain deferred. **UI/API parity:** `/admin/audit` + `GET /api/admin/audit`; Finance OWNER `/admin/security-audit`. CI: `npm run check:mutation-audit-belt`. **Not SHIPPED** until UAT (HOT-AUD-01 / FNB-AUD-01 API/SCREEN; Clinic HTTP_MUTATION UAT open). FIN-AUD-01 SHIPPED (Nest Layer A); AC-FIN-AUD stays 🟡 (AuthZ negatives residual). Open debts below.  
 **Related:**
 
 - [satellite-mutation-audit.md](./satellite-mutation-audit.md) — first-wave satellite helper + `SatelliteAuditLog` (still the storage contract for industry satellites)
@@ -10,7 +10,7 @@
 - [workforce-dual-audit.md](./workforce-dual-audit.md) — CP workforce log vs satellite ops log (orthogonal)
 - [era-bank-risk-and-audit.md](./era-bank-risk-and-audit.md) — bank two-tier pattern (same idea, different tables)
 - [era-common-laws.mdc](../../.cursor/rules/era-common-laws.mdc) — mutations require an audit trail where the app supports it
-- [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) — **P0 platform debt**: industry API Nest cutover is **not** part of audit waves; dual Nest/Next stack is accepted until that ADR is Implemented
+- [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) — industry HTTP is Nest as of 2026-11-12; Next remains the UI. Not a sell or Pilot claim.
 
 ## Context
 
@@ -21,7 +21,7 @@ Today the estate is uneven:
 | Plane | Mechanism | Coverage |
 |-------|-----------|----------|
 | Finance | Global Nest `AuditMutationInterceptor` on POST/PATCH/PUT/DELETE; hash-chain; archive | Broad Layer A; rich snapshots for allowlisted entities |
-| Hotel / F&B / Clinic | Opt-in `record*Audit` → `SatelliteAuditLog` via `@era/satellite-kit` | Strong on stay/folio and some admin; many mutation routes have **no** row |
+| Hotel / F&B / Clinic / Retail | Nest `SatelliteMutationAuditInterceptor` → `SatelliteAuditLog` | Layer A on controller mutations; domain journals stay Layer B |
 | Orchestrator | `platform_audit_logs`, `WorkforceAuditLog`, billing coverage rows | Domain-specific; not a uniform HTTP belt |
 | Bank | Kernel + ops action log (see bank ADR) | Two-tier by design |
 
@@ -63,7 +63,7 @@ Cross-plane correlation uses existing stamps: `organizationId`, optional `cpEmpl
 
 ### HTTP belt (Layer A) — stack pattern
 
-**One audit contract, two adapters.** Finance Nest interceptor is the fail-closed reference. Industry satellites stay on Next until [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) is scheduled. Audit waves must make the Next adapter **fail-closed** (no silent bypass), not wait for Nest.
+**One audit contract.** Finance Nest interceptor is the fail-closed reference. Industry satellites mount the same Nest belt (`SatelliteMutationAuditInterceptor`) after the 2026-11-12 HTTP cutover ([industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md)).
 
 | Stack | Mechanism |
 |-------|-----------|
@@ -211,21 +211,29 @@ Implementation PRs must update this ADR’s **Implementation** line and the firs
 
 ## Open debts (planes without full Layer A / Layer B)
 
+### Audit exempt list is not a setting (open)
+
+`DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES` is hardcoded in `@era/satellite-kit`. These actions are not written to `SatelliteAuditLog` today: login, logout, SSO exchange, agency SSO exchange, register, refresh, health, ready, locale, early-access events. The same class of action on Finance uses the kit deny-list plus Finance extras.
+
+Product requirement: whether each of these actions is logged must be a setting, not a code constant. **Where that setting lives is not decided.** Two homes are still open and neither is chosen:
+
+- Orchestrator organization settings (one switch for the org, satellites read it).
+- Each satellite's own admin settings (the org can differ per product).
+
+Do not build either store, screen, or sync until that placement is decided. Until then the kit list stays the behavior.
+
 | Plane | Layer A today | Layer B / UI | Debt |
 |-------|---------------|--------------|------|
-| Hotel | `jsonOk` → belt + CI scan (Wave A) | Stay/folio journal + CashShift + `BusinessDay` DAY_CLOSE + `/admin/audit` | UAT; Wave E compound `(organizationId, createdAt)` landed; hash-chain deferred. CORS IBE uses explicit `scheduleHotelHttpMutationAudit` |
-| F&B | same | Void/roles + Ticket PAY/DISCOUNT/ROOM_CHARGE/DEFER_HUB + PosShift OPEN/CLOSE + `/admin/audit` | UAT later; Wave E compound index landed; residual ordinary menu CRUD = Layer A only; hash-chain deferred |
-| Clinic | same | Opt-in writers + ClinicReceipt SETTLE/VOID + ClinicShift OPEN/CLOSE + `/admin/audit` | HTTP_MUTATION UAT later; Wave E compound index landed; hash-chain deferred |
+| Hotel | Nest `SatelliteMutationAuditInterceptor` | Stay/folio journal + CashShift + `BusinessDay` DAY_CLOSE + `/admin/audit` | UAT; hash-chain deferred. Refresh-permissions stays exempt |
+| F&B | same | Void/roles + Ticket PAY/DISCOUNT/ROOM_CHARGE/DEFER_HUB + PosShift OPEN/CLOSE + `/admin/audit` | UAT later; residual ordinary menu CRUD = Layer A only; hash-chain deferred |
+| Clinic | same | Opt-in writers + ClinicReceipt SETTLE/VOID + ClinicShift OPEN/CLOSE + `/admin/audit` | HTTP_MUTATION UAT later; hash-chain deferred |
+| Retail / CRM / Logistics / Wholesale / Construction / Auto / Bank / Bank DBO | same interceptor | Domain journals where they already exist | Bank and Bank DBO gained `satellite_audit_logs` for this belt. Their ops/action logs stay separate |
 | Finance | Nest `AuditMutationInterceptor` (SHIPPED) | `/admin/audit` + `/admin/security-audit` + hash-chain; Wave D filter bar = CatalogField + EraListFilterBar + kit DatePicker | Wave C–D landed; AC-FIN-AUD 🟡 AuthZ/UAT residual; satellite hash-chain stays out of Finance rewrite |
 | Orchestrator | Partial: `WorkforceAuditLog`, `platform_audit_logs`, billing | CP security audit screens | Inventory gaps: org/security-admin mutations not on those tables; no uniform HTTP belt |
-| **Industry API Nest cutover** | N/A (platform) | N/A | **P0** — [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md). Out of audit waves. |
-| Retail (`era-retail-pos`) | None | None / thin | Port kit belt + `SatelliteAuditLog` + org audit UI when mutation API volume justifies |
-| CRM | None | None | Same as retail |
-| Wholesale / Logistics / Construction / Auto | None | None | Same — thin-industry backlog |
-| Bank / Bank DBO | Own two-tier (bank ADR) | Ops action log | Align vocabulary with this ADR; do not merge stores |
+| **Industry API Nest cutover** | Nest HTTP in tree 2026-11-12 | Next UI unchanged | Not a sell/Pilot claim — [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) |
 | Data Hub | HEADLESS / policy APIs | Orch settings | Document HEADLESS exceptions; no cashier audit UI |
 
-**CI:** `npm run check:mutation-audit-belt` (wired in `run:quality-gates`) — Hotel / F&B / Clinic: requires `jsonOk` hook **and** fails on mutation `route.ts` success `NextResponse.json` without `jsonOk` / `schedule*HttpMutationAudit` / `// audit-exempt:`. Thin sats later.
+**CI:** `npm run check:mutation-audit-belt` — all eleven industry `nest/main.ts` files must mount `SatelliteMutationAuditInterceptor` through `createSatelliteApiController` and must not register the route table on the raw Express adapter.
 
 ## Non-goals
 

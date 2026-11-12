@@ -9,7 +9,7 @@ export const barBootstrapAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'bar-bootstrap',
   label: 'BAR bootstrap',
   order: 20.5,
-  permission: PERMISSIONS.MASTER_DATA_MANAGE,
+  permission: PERMISSIONS.RATES_ADMIN,
   templateHint: 'No file — run bootstrap',
   fileless: true,
   headerAliases: {},

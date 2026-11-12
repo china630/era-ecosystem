@@ -4,10 +4,10 @@ import type { DataSourceService } from "../src/prisma/data-source.service";
 
 describe("Data Hub FX negative paths (AC-DH-FX)", () => {
   it("convert throws RATE_NOT_FOUND when no FINAL CBAR rate", async () => {
-    const findUnique = jest.fn().mockResolvedValue(null);
+    const findFirst = jest.fn().mockResolvedValue(null);
     const ds = {
       referenceDb: () => ({
-        cbarOfficialRate: { findUnique },
+        cbarOfficialRate: { findFirst },
       }),
     } as unknown as DataSourceService;
     const fx = new FxService(ds, { getFxDashboardCurrencyCodes: async () => ["USD"], getFxCbarCheckCurrencyCodes: async () => ["USD"] } as never);
@@ -25,6 +25,23 @@ describe("Data Hub FX negative paths (AC-DH-FX)", () => {
       expect(body.code).toBe("RATE_NOT_FOUND");
       expect(body.message).toMatch(/No FINAL rate for USD/);
     }
+  });
+
+  it("convert uses the latest FINAL on or before the date when that day has none", async () => {
+    const prior = new Date("2026-11-06T12:00:00.000Z");
+    const findFirst = jest.fn().mockResolvedValue({
+      rate: 1.7,
+      rateDate: prior,
+      status: "FINAL",
+    });
+    const ds = {
+      referenceDb: () => ({ cbarOfficialRate: { findFirst } }),
+    } as unknown as DataSourceService;
+    const fx = new FxService(ds, {} as never);
+    const body = await fx.convert("USD", "AZN", "10", "2026-11-11");
+    expect(body.result).toBe(17);
+    expect(body.rateDate).toBe("2026-11-06");
+    expect(body.isFallback).toBe(true);
   });
 
   it("rates without fallback stays empty when the date has no FINAL row", async () => {

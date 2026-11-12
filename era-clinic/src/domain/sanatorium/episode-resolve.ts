@@ -152,3 +152,117 @@ export async function resolveEpisodeForPatient(
     },
   });
 }
+
+export async function findEpisodeAnamnesisPatchBase(episodeId: string) {
+  return prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: {
+      id: true,
+      status: true,
+      anamnesisText: true,
+      anamnesisByPractitionerId: true,
+    },
+  });
+}
+
+export async function updateEpisodeAnamnesis(
+  episodeId: string,
+  data: {
+    anamnesisText?: string | null;
+    anamnesisUpdatedAt?: Date | null;
+    anamnesisByPractitionerId?: string | null;
+  },
+) {
+  return prisma.clinicalEpisode.update({
+    where: { id: episodeId },
+    data,
+    include: {
+      anamnesisByPractitioner: { select: { fullName: true, specialty: true } },
+    },
+  });
+}
+
+export async function findProgramInstanceForEpisode(episodeId: string) {
+  return prisma.programInstance.findUnique({ where: { episodeId } });
+}
+
+export async function findEpisodeReservationForProgram(episodeId: string) {
+  return prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { reservationId: true },
+  });
+}
+
+export async function findEpisodeOrganizationId(episodeId: string) {
+  return prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { id: true, organizationId: true },
+  });
+}
+
+export async function listActiveDoctorPractitioners(organizationId: string) {
+  return prisma.practitioner.findMany({
+    where: { organizationId, active: true, staffKind: "DOCTOR" },
+    orderBy: { fullName: "asc" },
+    select: { id: true, code: true, fullName: true, specialty: true },
+  });
+}
+
+export async function findProgramInstanceAutoApplyState(episodeId: string) {
+  return prisma.programInstance.findFirst({
+    where: { episodeId },
+    select: { autoApplyState: true },
+  });
+}
+
+export async function findEpisodePatientDisplayName(episodeId: string) {
+  const row = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { patientRef: { select: { fullName: true } } },
+  });
+  return row?.patientRef?.fullName?.trim() ?? null;
+}
+
+export async function confirmEpisodeNoPackage(episodeId: string, userId: string) {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { id: true, status: true, noPackageConfirmedAt: true },
+  });
+  if (!episode) return { ok: false as const, kind: "NOT_FOUND" as const };
+  if (episode.status !== "OPEN") {
+    return { ok: false as const, kind: "CLOSED" as const };
+  }
+  const updated = await prisma.clinicalEpisode.update({
+    where: { id: episodeId },
+    data: {
+      noPackageConfirmedAt: episode.noPackageConfirmedAt ?? new Date(),
+      noPackageConfirmedByUserId: userId,
+    },
+    select: {
+      id: true,
+      noPackageConfirmedAt: true,
+      noPackageConfirmedByUserId: true,
+    },
+  });
+  return { ok: true as const, row: updated };
+}
+
+export async function clearEpisodeNoPackageConfirm(episodeId: string) {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { id: true },
+  });
+  if (!episode) return null;
+  return prisma.clinicalEpisode.update({
+    where: { id: episodeId },
+    data: {
+      noPackageConfirmedAt: null,
+      noPackageConfirmedByUserId: null,
+    },
+    select: {
+      id: true,
+      noPackageConfirmedAt: true,
+      noPackageConfirmedByUserId: true,
+    },
+  });
+}

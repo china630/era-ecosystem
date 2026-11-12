@@ -31,13 +31,18 @@ export function routePermissions(pathname: string): Permission[] | null {
   }
   if (
     pathname === "/admin/settings" ||
-    pathname.startsWith("/admin/settings/") ||
-    pathname === "/admin/audit" ||
-    pathname.startsWith("/admin/audit/") ||
-    pathname === "/admin/links" ||
-    pathname.startsWith("/admin/links/")
+    pathname.startsWith("/admin/settings/")
   ) {
     return [PERMISSIONS.SCREEN_ADMIN_SETTINGS];
+  }
+  if (pathname === "/admin/audit" || pathname.startsWith("/admin/audit/")) {
+    return [PERMISSIONS.SCREEN_ADMIN_AUDIT];
+  }
+  if (pathname === "/admin/links" || pathname.startsWith("/admin/links/")) {
+    return [PERMISSIONS.SCREEN_ADMIN_LINKS];
+  }
+  if (pathname === "/admin/limits" || pathname.startsWith("/admin/limits/")) {
+    return [PERMISSIONS.SCREEN_ADMIN_LIMITS];
   }
   if (
     pathname === "/admin/integration" ||

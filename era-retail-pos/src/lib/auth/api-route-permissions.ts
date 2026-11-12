@@ -59,7 +59,7 @@ export const API_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/api/integration/prescription-queue/*", [P.RECEIPTS_SELL]],
   ["/api/integration/prescription-reserve", [P.INTEGRATIONS_STOCK]],
   ["/api/integration/stock-write-off", [P.INTEGRATIONS_STOCK]],
-  ["/api/integrations/marketplace", [P.ADMIN_SETTINGS]],
+  ["/api/integrations/marketplace", [P.ADMIN_MARKETPLACE]],
   ["/api/import", [P.ADMIN_IMPORT]],
   ["/api/import/*", [P.ADMIN_IMPORT]],
   ["/api/replenishment/suggestions", [P.ADMIN_IMPORT]],

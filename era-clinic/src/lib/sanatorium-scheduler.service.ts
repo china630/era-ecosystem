@@ -356,6 +356,10 @@ export async function recalcProgramQuotas(
   const newCodes = new Set(
     template.procedures.map((p: { procedureCode: string }) => p.procedureCode),
   );
+  const keptServiceCodes = new Set<string>([
+    ...newCodes,
+    ...template.blockMembers.map((member: { procedureCode: string }) => member.procedureCode),
+  ]);
   const existingByCode = new Map(
     instance.procedureLines.map((l) => [l.procedureCode, l]),
   );
@@ -401,32 +405,67 @@ export async function recalcProgramQuotas(
     }
   }
 
-  // Codes removed from the package: delete an unused balance. Keep a row that
-  // already has a document. Bath-transfer buckets (XFER-*) are not template lines.
+  // Codes removed from the package: cancel an empty lab that is not a service of
+  // the new package, then delete the balance. A lab that already has results stays
+  // on the chart, but its quota line does not — otherwise the next apply stamps it
+  // again. A service of the new package keeps both the order and the line.
+  // Bath-transfer buckets (XFER-*) are not template lines.
   for (const line of instance.procedureLines) {
     if (line.procedureCode.toUpperCase().startsWith("XFER-")) continue;
     if (!newCodes.has(line.procedureCode)) {
-      const [orders, labs, visits] = await Promise.all([
+      const droppedLabs = await prisma.labOrder.findMany({
+        where: {
+          clinicalEpisodeId: instance.episodeId,
+          status: { not: "CANCELLED" },
+          OR: [
+            { packageQuotaCode: line.procedureCode },
+            { testCode: line.procedureCode },
+            { items: { some: { packageQuotaCode: line.procedureCode } } },
+          ],
+        },
+        select: {
+          id: true,
+          items: {
+            select: {
+              serviceCode: true,
+              results: { select: { id: true }, take: 1 },
+            },
+          },
+        },
+      });
+      const sharesKeptService = (lab: (typeof droppedLabs)[number]) =>
+        lab.items.some((item) => keptServiceCodes.has(item.serviceCode));
+      const toCancel = droppedLabs.filter((lab) => {
+        if (sharesKeptService(lab)) return false;
+        return lab.items.every((item) => item.results.length === 0);
+      });
+      if (toCancel.length > 0) {
+        await prisma.labOrder.updateMany({
+          where: { id: { in: toCancel.map((lab) => lab.id) } },
+          data: {
+            status: "CANCELLED",
+            cancelledAt: new Date(),
+            cancelReason: "package_code_dropped",
+          },
+        });
+      }
+      const [orders, visits] = await Promise.all([
         prisma.procedureOrder.count({
           where: {
             clinicalEpisodeId: instance.episodeId,
             packageQuotaCode: line.procedureCode,
-          },
-        }),
-        prisma.labOrderItem.count({
-          where: {
-            packageQuotaCode: line.procedureCode,
-            labOrder: { clinicalEpisodeId: instance.episodeId },
+            status: { not: "CANCELLED" },
           },
         }),
         prisma.visitServiceLine.count({
           where: {
             packageQuotaCode: line.procedureCode,
-            visit: { clinicalEpisodeId: instance.episodeId },
+            visit: { clinicalEpisodeId: instance.episodeId, status: { not: "CANCELLED" } },
           },
         }),
       ]);
-      if (line.quotaUsed === 0 && orders + labs + visits === 0) {
+      const keptSharedLab = droppedLabs.some(sharesKeptService);
+      if (!keptSharedLab && orders + visits === 0) {
         await prisma.programProcedureBalance.delete({ where: { id: line.id } });
         continue;
       }

@@ -497,3 +497,137 @@ export async function updatePatient(
 
   return withDerivedDemographics(updated);
 }
+
+export async function findPatientRefId(id: string): Promise<string | null> {
+  const row = await prisma.patientRef.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  return row?.id ?? null;
+}
+
+export async function isPatientOnCareTeam(
+  patientRefId: string,
+  practitionerId: string,
+): Promise<boolean> {
+  const hit = await prisma.patientRef.findFirst({
+    where: {
+      id: patientRefId,
+      episodes: {
+        some: {
+          careDoctors: { some: { practitionerId } },
+        },
+      },
+    },
+    select: { id: true },
+  });
+  return Boolean(hit);
+}
+
+export async function findPatientRefByGlobalPersonId(globalPersonId: string) {
+  return prisma.patientRef.findFirst({
+    where: { globalPersonId },
+  });
+}
+
+export async function findPatientRefForGuestQr(patientRefId: string) {
+  return prisma.patientRef.findUnique({
+    where: { id: patientRefId },
+  });
+}
+
+export async function listPatientProcedureOrdersForDay(input: {
+  patientRefId: string;
+  dayStart: Date;
+  dayEnd: Date;
+}) {
+  return prisma.procedureOrder.findMany({
+    where: {
+      patientRefId: input.patientRefId,
+      scheduledAt: { gte: input.dayStart, lt: input.dayEnd },
+      status: { in: ["SCHEDULED", "CHECKED_IN"] },
+    },
+    include: { patientRef: true },
+    orderBy: { scheduledAt: "asc" },
+  });
+}
+
+export async function listPatientContraindications(
+  patientRefId: string,
+  episodeId?: string | null,
+) {
+  return prisma.patientContraindication.findMany({
+    where: {
+      patientRefId,
+      ...(episodeId ? { episodeId } : {}),
+    },
+  });
+}
+
+export async function findPatientContraindicationForDelete(
+  patientRefId: string,
+  rowId: string,
+) {
+  return prisma.patientContraindication.findFirst({
+    where: { id: rowId, patientRefId },
+    select: { id: true, episodeId: true, episode: { select: { status: true } } },
+  });
+}
+
+export async function deletePatientContraindication(patientRefId: string, rowId: string) {
+  await prisma.patientContraindication.deleteMany({
+    where: { id: rowId, patientRefId },
+  });
+}
+
+export async function findClinicalEpisodeForPatient(episodeId: string, patientRefId: string) {
+  return prisma.clinicalEpisode.findFirst({
+    where: { id: episodeId, patientRefId },
+    select: { id: true, status: true },
+  });
+}
+
+export async function createPatientContraindication(data: {
+  patientRefId: string;
+  episodeId: string;
+  bodyPart: string;
+  note?: string;
+}) {
+  return prisma.patientContraindication.create({
+    data: {
+      patientRefId: data.patientRefId,
+      episodeId: data.episodeId,
+      bodyPart: data.bodyPart,
+      note: data.note,
+    },
+  });
+}
+
+export async function findOrCreateBookingPatientStub(input: {
+  organizationId: string;
+  refCode: string;
+  fullName: string;
+  phone?: string;
+}) {
+  let patient = await prisma.patientRef.findFirst({
+    where: { organizationId: input.organizationId, refCode: input.refCode },
+  });
+  if (!patient) {
+    patient = await prisma.patientRef.create({
+      data: {
+        organizationId: input.organizationId,
+        refCode: input.refCode,
+        fullName: input.fullName,
+        phone: input.phone,
+      },
+    });
+  }
+  return patient;
+}
+
+export async function getBedAssignmentDischargeMeta(id: string) {
+  return prisma.bedAssignment.findUnique({
+    where: { id },
+    select: { admissionId: true, dischargedAt: true },
+  });
+}

@@ -25,11 +25,23 @@ export type EarlyCheckoutSliceSnap = {
   deleted: boolean;
 };
 
+import type { TransferStayAction } from '@/lib/services/stay-mobility-sync.service';
+
+export type EarlyCheckoutTransferOutSnap = {
+  orderId: string;
+  action: TransferStayAction;
+  priorPickupAt: string;
+  priorVehicleId: string | null;
+  priorStatus: string;
+};
+
 export type EarlyCheckoutRevert = {
   checkOut: string;
   totalAmount: string;
   rates: EarlyCheckoutRateSnap[];
   slices: EarlyCheckoutSliceSnap[];
+  /** OUT transfer decisions applied during early checkout (SHIFT undo support). */
+  transferOut?: EarlyCheckoutTransferOutSnap[];
 };
 
 /** Slice vs the new departure civil instant (UTC midnight of that hotel date). */

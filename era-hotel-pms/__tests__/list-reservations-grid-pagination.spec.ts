@@ -7,6 +7,8 @@ jest.mock('@/lib/prisma', () => ({
     reservationNote: {
       findMany: jest.fn(),
     },
+    transferOrder: { findMany: jest.fn().mockResolvedValue([]) },
+    laundryTicket: { findMany: jest.fn().mockResolvedValue([]) },
     hotelProfile: {
       findFirst: jest.fn().mockResolvedValue(null),
     },

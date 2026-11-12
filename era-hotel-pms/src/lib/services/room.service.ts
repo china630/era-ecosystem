@@ -228,6 +228,46 @@ export async function assignRoomType(id: string, roomTypeId: string) {
 
 
 
+export async function setHousekeepingCondition(
+  roomId: string,
+  hkCondition: RoomHkCondition,
+  audit: RoomAuditCtx | undefined,
+  allowOccupiedHk: boolean,
+) {
+  const room = await prisma.room.findUnique({ where: { id: roomId } });
+  if (!room) throw new Error('Room not found');
+  const inventory: RoomInventoryStatus =
+    room.inventoryStatus === 'OOO' || room.inventoryStatus === 'OOS' ? room.inventoryStatus : 'IN_SERVICE';
+  return updateRoomAxes(roomId, hkCondition, inventory, room.inventoryReason, audit, { allowOccupiedHk });
+}
+
+export async function applyFrontOfficeRoomStatus(
+  id: string,
+  body: { status?: string; hkCondition?: RoomHkCondition; inventoryStatus?: RoomInventoryStatus },
+  audit?: RoomAuditCtx,
+) {
+  if (body.hkCondition || body.inventoryStatus) {
+    const fromStatus =
+      body.status === 'INSPECTED' || body.status === 'DIRTY' || body.status === 'PICKUP' || body.status === 'CLEAN'
+        ? (body.status as RoomHkCondition)
+        : null;
+    const current = await prisma.room.findUnique({
+      where: { id },
+      select: { hkCondition: true },
+    });
+    if (!current) throw new Error('Room not found');
+    const hk = (body.hkCondition ?? fromStatus ?? current.hkCondition) as RoomHkCondition;
+    const inv =
+      body.inventoryStatus ??
+      (body.status === 'OOO' ? 'OOO' : body.status === 'OOS' || body.status === 'MAINTENANCE' ? 'OOS' : 'IN_SERVICE');
+    return updateRoomAxes(id, hk, inv, null, audit);
+  }
+  if (!body.status || body.status === 'PICKUP') {
+    return updateRoomAxes(id, 'PICKUP', 'IN_SERVICE', null, audit);
+  }
+  return updateRoomStatus(id, body.status as RoomStatus, audit);
+}
+
 export async function updateRoomStatus(id: string, status: RoomStatus, audit?: RoomAuditCtx) {
   const room = await prisma.room.findUnique({ where: { id } });
   if (!room) throw new Error('Room not found');

@@ -21,7 +21,7 @@ export const roomsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'rooms',
   label: 'Rooms',
   order: 8,
-  permission: PERMISSIONS.MASTER_DATA_MANAGE,
+  permission: PERMISSIONS.ROOMS_ADMIN,
   templateHint: '08-Rooms.xlsx — EW Rooms',
   headerAliases: {
     'Room No': 'roomNumber',

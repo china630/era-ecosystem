@@ -1,6 +1,6 @@
 # ADR: Hotel domain permissions and configurable RBAC (Variant A)
 
-**Status:** Accepted — Variant A + Wave 1 hole-close + Wave 2 fleet-canon keys + Wave 3 screen/api split  
+**Status:** Accepted — Variant A + Wave 1 hole-close + Wave 2 fleet-canon keys + Wave 3 screen/api split + Wave 4 entity keys  
 **Date:** 2026-09-10 (amended 2026-09-18 Wave 1 / Wave 2)  
 **Coverage:** HOT-RBAC-01 · AC-HOT-RBAC 🟡 (out of BE rollup until field UAT)
 
@@ -32,7 +32,12 @@ Clinic proved Variant A (system seed, clone, DB-authoritative guards, `CLINIC_AD
 6. Bypass: platform super-admin + OrgOwner (`isOwner` / `BUSINESS_OWNER`) only. **`Hotel_Admin` does not bypass.**
 7. JWT carries `permissions[]`; `POST /api/auth/session/refresh-permissions` after Save (expands ALL for SA/owner like `/me`). API `getSatelliteSession` reloads grants from DB.
 8. Page middleware maps coarse pathnames → **any-of** `screen:*` keys. APIs keep `api:*` / `admin:*`. Wave 3 catalogVersion **3** expands stored API grants into paired screens (strips of void etc. survive).
-9. Provision: unknown `satelliteRole` → error; CP aliases map to system codes only.
+9. Wave 4 catalogVersion **4** gives guest, banquet, concierge, tours, transfers, fleet, POS and spa-place read their own keys. Stored `api:reservations.read` / `write` is expanded once into those keys so existing roles keep the doors; a later uncheck stays off. `/settings/access` is an entity × View / Change / Operate / Admin grid.
+10. Wave 5 catalogVersion **5** splits dispatch, migration registrations, room catalog, stock, hotel profile, and agency/company cards off the borrowed keys. Passport scan is `api:guests.mrz` (Hotel_Admin and an explicit grant; not copied from guest write).
+11. Wave 6 catalogVersion **6** splits rates, seasons, yield, child matrix, pricing, departments, allotment, contracts, promo, agency commission, integration, revenue codes, and lookups off `admin:master_data`. Meal plans, booking sources, and the rack room list are their own read keys. `admin:master_data` stays in the catalog so an old grant still parses; routes no longer check it. `screen:settings` is paired from any catalog admin key, not only `admin:master_data`.
+12. Wave 7 catalogVersion **7** removes `admin:master_data` from stored roles and hides that row. Rate-plan and lookup lists used on a booking are `api:rate_plans.read` and `api:lookups.read`. Catalog reads no longer accept reservation or folio grants.
+13. Wave 8 catalogVersion **8** gives the booking card `api:room_types.read` and `api:contracts.read`, the folio charge dialog `api:revenue_codes.read`, and guest, banquet, and concierge screens `api:lookups.read`.
+14. Provision: unknown `satelliteRole` → error; CP aliases map to system codes only.
 
 ### D2′ — Catalog keys (fleet canon, Wave 2)
 

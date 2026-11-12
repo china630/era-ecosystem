@@ -105,6 +105,10 @@ export async function openShift(
   return created;
 }
 
+export async function getClinicShiftById(shiftId: string) {
+  return prisma.clinicShift.findUnique({ where: { id: shiftId } });
+}
+
 export async function closeShift(shiftId: string, userId?: string | null) {
   const shift = await prisma.clinicShift.findUnique({ where: { id: shiftId } });
   if (!shift) throw new Error("Shift not found");

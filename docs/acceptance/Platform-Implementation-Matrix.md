@@ -4,6 +4,14 @@
 **Not readiness:** for sell/show/UI use [`Platform-Product-Readiness-Matrix.md`](./Platform-Product-Readiness-Matrix.md)  
 **Coverage facts:** [`COVERAGE_MATRIX.md`](../COVERAGE_MATRIX.md)
 
+**Closeout (2026-11-11 guest app frame):** AC-CP-GUEST-APP 🟡 out of BE rollup. CP-GUEST-APP-01 API/SCREEN. Brand is not letterhead. Phone shell is `apps/guest-app` (empty rows, no guest journey). Gate/Pilot/edition unchanged. `platform.yaml` untouched. `READINESS_MATRIX` N/A. Not Scaffold ✅. Not SHIPPED.
+
+**Closeout (2026-11-11 guest app catalog):** AC-CP-GUEST-APP-CATALOG 🟡 out of BE rollup. CP-GUEST-APP-02 API/SCREEN. Owner catalog/offers/lead-alert. Gate/Pilot/edition unchanged. `platform.yaml` untouched. Not Scaffold ✅.
+
+**Closeout (2026-11-11 guest app preview):** AC-CP-GUEST-APP-PREVIEW 🟡 out of BE rollup. CP-GUEST-APP-03 SCREEN. Live form-state phone chrome. Gate/Pilot/edition/`platform.yaml` untouched. Not Scaffold ✅. Not SHIPPED.
+
+**Closeout (2026-11-11 guest phone product polish):** Hotel phone UI deepen; CP-GUEST-APP-01…03 / AC-CP-GUEST-APP* unchanged 🟡. Gate/Pilot/edition/`platform.yaml` untouched. Not Scaffold ✅. Not SHIPPED.
+
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
@@ -27,8 +35,11 @@
 | AC-CP-INT | Integration audit boundaries (MDM/hub/events) | ✅ | [ ] | `cp-int-negative.spec.ts` + `npm run audit:integration:strict` | Negative: catalog gateway wrong/missing token 401; CI audit gate |
 | AC-CP-BIND | Satellite org UUID bind + sync endpoints | ✅ | [ ] | `cp-bind-negative.spec.ts`; ADR satellite-organization-bind | Negative: POST organization/bind bad/missing Bearer → 401 |
 | AC-CP-CFG | Desired-state runtime config push (SSO secret, PSA, event URL/token) | ✅ | [ ] | `cp-cfg-negative.spec.ts`; CP-CFG-01 | Negative: runtime-config without Bearer 401; short SSO (<16) 400; Sync omits short/folklore secret; **self `publicBaseUrl` = SatelliteEndpoint** (not orch public). CP-PEER-01 (`peer-endpoint`) API deepen 2026-10-27 — does not reopen Scaffold; Pilot open |
-| AC-CP-TOPO | SHARED/DEDICATED/ONPREM placement + org slice + hops | 🟡 | [ ] | ADR §4–§5; SuperAdmin `platform…/orgs/{id}/placement` (table + next-step UI; create modal; i18n); SHARED↔ONPREM reject; Wave 7 lab hop; Wave 11 hotel curated JSON slice | **In BE rollup.** Lab: [`reports/placement-lab-hop-signoff.md`](../../reports/placement-lab-hop-signoff.md). Not Scaffold ✅ (host apply + field UAT open). Not SaaS pool sellable. [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) |
+| AC-CP-TOPO | SHARED/DEDICATED/ONPREM placement + org slice + hops | 🟡 | [ ] | ADR §4–§5; Start→DONE; hash/disk preflight; OrgFullSliceV2 hotel+clinic; freeze 423+cron skip; smoke login; UI banner/rollback; SHARED↔ONPREM reject | **In BE rollup.** Lab: [`reports/placement-lab-hop-signoff.md`](../../reports/placement-lab-hop-signoff.md). Not Scaffold ✅ (field UAT / live blob copy / other sats open). Not SaaS pool sellable. [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) |
 | AC-CP-ORG-PROFILE | Org legal/branding profile (multi-contact, logo; Sync to satellites) | 🟡 | [ ] | ADR [cp-organization-profile-and-branding.md](../adr/cp-organization-profile-and-branding.md); `organization-profile.service.spec.ts`; kit `org-profile.test.ts`; CP-ORG-PROFILE-01; backfill; F&B/Retail `org-print-contacts` + Outlet contact columns | **Out of BE rollup** until Pilot UAT. Negatives: duplicate primary PHONE 400; invalid +994 400; non-member 403; DEPARTMENT inherits parent phone when empty / own phone wins. Finance legal PATCH/logo → `ORG_PROFILE_MOVED_TO_CONTROL_PLANE`; primary bank → orch `bankLine`; hotel/clinic header locks when CP Sync present; F&B/Retail pay `printChrome` + outlet overlay. Not Scaffold ✅. |
+| AC-CP-GUEST-APP | Guest phone brand + shell (name, color, logo, locale, desk phone). Not a guest journey. | 🟡 | [ ] | ADR [guest-stay-app.md](../adr/guest-stay-app.md) §9–§11; `guest-app-brand.spec.ts`; CP-GUEST-APP-01; `apps/guest-app` | **Out of BE rollup.** Negatives: bad locale/color rejected; disabled or missing row is an empty brand (not another hotel, not a DEPARTMENT parent). Non-member PATCH uses the same `assertOrgMember` 403 as the profile card. No HTTP suite. QR, MRZ, timetable, offline trip are not in this AC. Not Scaffold ✅. Not Pilot. |
+| AC-CP-GUEST-APP-CATALOG | Guest app owner catalog / offers / lead-alert / order kinds | 🟡 | [ ] | ADR guest-stay-app §10; CP-GUEST-APP-02; `OrganizationGuestApp` catalog fields | **Out of BE rollup.** Owner content only; leadAlertMinutes 5\|10; not store binary/EAS. Not Pilot. |
+| AC-CP-GUEST-APP-PREVIEW | OrgOwner live phone preview (form state before Save) | 🟡 | [ ] | CP-GUEST-APP-03; `guest-app-phone-preview.tsx` | **Out of BE rollup.** Honest shell only; phases/tabs/bell; no Nest from orch. Not Pilot. |
 | AC-CP-CHANNELS | Satellite integration channels (folio/settlement/revenue/ops-handoff policy graph) | 🟡 | [ ] | ADR [satellite-integration-channels.md](../adr/satellite-integration-channels.md); `cp-channels-negative.spec.ts`; kit `satellite-channels.test.ts`; CP-CHANNELS-01; [`reports/platform-channels-harden-signoff.md`](../../reports/platform-channels-harden-signoff.md); hotel `hotel-page-route-inventory` `/admin/links`→SETTINGS | **Out of BE rollup** until human UAT-SMOKE signed. Negatives: acceptor-only; missing row; OWN self REVENUE; PARENT no self; ACCEPTOR survives; finance suspend drops PLATFORM revenue; OPS_HANDOFF wholesale→retail. Peer-links parity 2026-11-06: 10 mesh `/admin/links`; retail POS edition folio/settlement UI; money assert **before** F&B CLOSE/Z-close/**hub settle** (SHARED tenant enter); retail PAID/return/hub-settle/Z-close + `events/dispatch`; clinic visit/procedure/lab/hub-settle + `events/dispatch`; room-charge skips revenue; hotel OpsShell links + channel-disabled 403. Call-site OPS_HANDOFF gate TBD. CP-COMMS separate. Not Scaffold ✅; not Pilot. |
 | AC-CP-DOC | Organization document register + position route | 🟡 | [ ] | ADR [cp-document-register.md](../adr/cp-document-register.md); `documents.service.spec.ts`; `documents-route.util.spec.ts`; CP-DOC-01 | **Out of BE rollup.** Negatives: second start; empty seat waits for assign; wrong seat; register non-draft; skip below amount; chain hole `DOC_ROUTE_GAP`; layout point for an unknown step `DOC_LAYOUT_STEP`; file add or replace after start `DOC_FILE_LOCKED`; reply to self or a draft `DOC_REPLY_SELF` / `DOC_REPLY_UNREGISTERED`; return to a later step `DOC_RETURN_STEP`; step edit while an OPEN route uses the template `DOC_TEMPLATE_IN_USE`. Canvas does not redefine the route. Not Scaffold ✅. Not Pilot. |
 | AC-CP-PAY-METHODS | Org payment methods SoR (KKM-adjacent catalog; Sync to satellites) | 🟡 | [ ] | ADR [managed-lists-vs-enums.md](../adr/managed-lists-vs-enums.md) A3; CP-PAY-METHODS-01; kit `payment-method-catalog`; Finance tenders PUT 410; hotel/clinic/F&B `GET /api/payment-methods` | **Out of BE rollup.** API+SCREEN on SuperAdmin `platform…/orgs/[id]/payments` ModalShell CRUD. **No dedicated negative suite yet** — not Scaffold ✅. DEPARTMENT `fiscalRouting=PARENT` inherits parent methods+devices (banner; no local CRUD). Consumers: hotel desks + clinic settle assert + F&B floor/orders; Finance code-only. Not Pilot. |
@@ -72,7 +83,7 @@ Do not call this table «product readiness».
 | AC-CP-INT | Integration audit residual shrink (ongoing) | Code | Gate G1 + negative suite |
 | AC-CP-BIND | UAT bind smoke / field isolation | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-CFG | UAT runtime-config signoff | Code | Out of Scaffold ✅ (Pilot) |
-| AC-CP-TOPO | Live slice dump + host apply + field migrate UAT (pool ops = later sell) | Code | Wave 7 hop + Wave 11 hotel JSON lab; residual = host apply + field |
+| AC-CP-TOPO | Live slice dump + host apply + field migrate UAT (pool ops = later sell) | Code | code Start→DONE + hash/disk + OrgFullSliceV2 hotel/clinic; residual = field UAT + blob copy + other sat full-org routes |
 
 ### Negative-path proof index
 
@@ -114,7 +125,8 @@ Do not call this table «product readiness».
 | `era-orchestrator/apps/api/src/platform/catalog/cp-int-negative.spec.ts` | AC-CP-INT |
 | `era-orchestrator/apps/api/src/admin/cp-bind-negative.spec.ts` | AC-CP-BIND |
 | `era-orchestrator/apps/api/src/admin/cp-cfg-negative.spec.ts` | AC-CP-CFG |
-| `era-orchestrator/apps/api/src/placement/placement-job.service.spec.ts` (SHARED↔ONPREM + Wave 7 advance chain) | AC-CP-TOPO (still 🟡) |
+| `era-orchestrator/apps/api/src/placement/placement-job.service.spec.ts` (recipe/composeYaml, freeze, autopilot→DONE, SHARED↔ONPREM, fail-closed export + empty OrgFullSliceV2 modelOrder) | AC-CP-TOPO (still 🟡) |
+| `packages/satellite-kit` `full-org-slice.test.ts` (checksum + empty modelOrder) | AC-CP-TOPO (still 🟡) |
 
 | 2026-11-05 | AC-CP-HOME residual deepen + second-pass (still out of BE, not Scaffold ✅): Structure owner UX + Home summary; token/label/create guards; UAT-SMOKE UI rows; negatives unchanged. No Scaffold ✅ / Pilot / edition change. |
 | 2026-11-05 | AC-CP-CHANNELS spine deepen (still 🟡 out of BE): same-org REVENUE_EVENT; revenue publish gates; retail+clinic guest fail-closed; links on finance+retail+ops sats. Negatives extended. No Scaffold ✅ / Pilot / edition change. |

@@ -20,7 +20,7 @@
 | AC-RET-STOCK | Mobile stock / replenishment / SRM | ✅ | [ ] | `__tests__/ret-stock-negative.spec.ts` | Negative: module gate 403; empty write-off lines |
 | AC-RET-FISCAL | Offline queue / fiscal KKM / marketplace | 🟡 | [ ] | M8–M10 stubs where applicable | Explicit stub — **excluded from Scaffold BE rollup** (External ⏸; Hotel INT) |
 | AC-RET-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit tenant extension; Wave 3 login/JWT/`enterSatelliteTenant` | **Excluded from Scaffold BE rollup.** Schema + request tenant code landed; still not Scaffold ✅ (no live SHARED pool / field two-org UAT) |
-| AC-RET-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `retail-rbac` + `retail-rbac-doors` + page/API inventory + role-name grep; ADR retail-domain-permissions-and-rbac; `/admin/access` clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
+| AC-RET-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `retail-rbac` + `retail-rbac-doors` + page/API inventory + role-name grep; ADR retail-domain-permissions-and-rbac; `/admin/access` entity grid, catalog v2, clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 
 **Edition / wave rollup (BE only)** = worst(POS, STOCK) → **✅**.  
 AC-RET-FISCAL remains 🟡 and is **out of Scaffold BE rollup** until vendor/fiscal modes leave STUB. Do **not** mark FISCAL Scaffold ✅.  

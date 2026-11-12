@@ -10,7 +10,6 @@ import {
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Public } from "../auth/decorators/public.decorator";
 import { InternalServiceTokenGuard } from "../common/guards/internal-service-token.guard";
-import { PrismaService } from "../prisma/prisma.service";
 import { runWithTenantContextAsync } from "../prisma/tenant-context";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
 import { WorkforceOpeningDto } from "./dto/workforce-opening.dto";
@@ -22,7 +21,6 @@ import { EmployeesService } from "./employees.service";
 @UseGuards(InternalServiceTokenGuard)
 export class InternalWorkforceEmployeesController {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly subscriptionAccess: SubscriptionAccessService,
     private readonly employees: EmployeesService,
   ) {}
@@ -117,17 +115,10 @@ export class InternalWorkforceEmployeesController {
     const row = await runWithTenantContextAsync(
       { organizationId: orgId, skipTenantFilter: false },
       () =>
-        this.prisma.employee.findFirst({
-          where: {
-            organizationId: orgId,
-            cpEmploymentId: cpEmploymentId.trim(),
-          },
-          select: {
-            salary: true,
-            vacationDaysBalance: true,
-            employmentStatus: true,
-          },
-        }),
+        this.employees.findContractSnapshotByCpEmployment(
+          orgId,
+          cpEmploymentId.trim(),
+        ),
     );
     if (!row) {
       return {

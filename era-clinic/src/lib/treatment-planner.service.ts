@@ -25,6 +25,7 @@ import { isAbsentOnYmd, resolveDutyCandidates } from "@/domain/staff/staff-kind"
 import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
 import {
   nextSearchStart,
+  orderScarceSeriesFirst,
   scanProcedureSlots,
   type PlacementFailure,
   type ScanAllocation,
@@ -742,7 +743,17 @@ export async function placeConfirmedProcedures(
   }
 
   const scanned = scanProcedureSlots({
-    orders: scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),
+    orders: orderScarceSeriesFirst(
+      scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),
+      {
+        now,
+        slotMinutes,
+        horizonEndYmd,
+        noonCheckoutYmd,
+        closedYmds,
+        allocations,
+      },
+    ),
     now,
     slotMinutes,
     packageCap: 12,

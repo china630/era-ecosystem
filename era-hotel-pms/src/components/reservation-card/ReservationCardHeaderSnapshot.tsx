@@ -9,6 +9,13 @@ import {
 
 export type OccupancyWorld = 'exclusive' | 'share' | 'booking';
 
+export type MobilityChip = {
+  key: string;
+  label: string;
+  value: string;
+  onClick?: () => void;
+};
+
 export type ReservationCardHeaderSnapshotProps = {
   isCreate: boolean;
   categorySpend: Record<PaymentCategory, number>;
@@ -18,6 +25,8 @@ export type ReservationCardHeaderSnapshotProps = {
   bookingRoomCount?: number;
   /** When booking world — click N-rooms chip to focus family StaysBar. */
   onOccupancyClick?: () => void;
+  /** Last chips: open transfers / tours on this stay. */
+  mobilityChips?: MobilityChip[];
 };
 
 const STAT_COLORS = [
@@ -89,6 +98,18 @@ export function ReservationCardHeaderSnapshot(props: ReservationCardHeaderSnapsh
     });
   }
 
+  for (const chip of props.mobilityChips ?? []) {
+    items.push({
+      key: chip.key,
+      label: chip.label,
+      value: chip.value,
+      danger: false,
+      clickable: typeof chip.onClick === 'function',
+    });
+  }
+
+  const mobilityClick = new Map((props.mobilityChips ?? []).map((c) => [c.key, c.onClick]));
+
   const colClass =
     items.length <= 5 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3';
 
@@ -111,14 +132,18 @@ export function ReservationCardHeaderSnapshot(props: ReservationCardHeaderSnapsh
             </>
           );
           if (s.clickable) {
+            const onClick =
+              s.key === 'world' ? props.onOccupancyClick : mobilityClick.get(s.key);
             return (
               <button
                 key={s.key}
                 type="button"
                 className="rounded-lg border border-[#D5DADF] bg-white p-2 text-center shadow-sm hover:border-sky-400"
-                data-testid="reservation-occupancy-chip"
-                title={t('focusFamilyBar')}
-                onClick={props.onOccupancyClick}
+                data-testid={
+                  s.key === 'world' ? 'reservation-occupancy-chip' : `reservation-mobility-${s.key}`
+                }
+                title={s.key === 'world' ? t('focusFamilyBar') : s.value}
+                onClick={onClick}
               >
                 {inner}
               </button>

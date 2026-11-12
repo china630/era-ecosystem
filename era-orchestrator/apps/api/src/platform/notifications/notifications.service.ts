@@ -163,4 +163,10 @@ export class NotificationsService {
     }
     return entry;
   }
+
+  listTemplatesForAdmin() {
+    return this.prisma.notificationTemplate.findMany({
+      orderBy: [{ templateKey: "asc" }, { channel: "asc" }],
+    });
+  }
 }

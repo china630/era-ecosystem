@@ -80,3 +80,21 @@ model PaymentSignRequest {
   @@index([customerId, status])
   @@index([organizationId])
 }
+
+/// HTTP mutation belt. Same shape as the other industry satellites.
+model SatelliteAuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?  @map("user_id")
+  entityType     String   @map("entity_type")
+  entityId       String   @map("entity_id")
+  action         String
+  changesJson    String   @default("{}") @map("changes_json")
+  ipAddress      String?  @map("ip_address")
+  integrityHash  String?  @map("integrity_hash")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("satellite_audit_logs")
+}

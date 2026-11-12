@@ -81,13 +81,11 @@ describe("ensureSystemClinicRoles", () => {
       { code: CLINIC_ROLE.RECEPTION, permissionsJson: custom, staffKind: "NONE" },
     ]);
     await ensureSystemClinicRoles(db, "org-1");
-    expect(db.store.get(CLINIC_ROLE.RECEPTION)!.permissionsJson).toBe(custom);
-    const receptionUpdates = (db.role.update as jest.Mock).mock.calls.filter(
-      (c) => c[0].where.id === "id-RECEPTION",
-    );
-    for (const call of receptionUpdates) {
-      expect(call[0].data.permissionsJson).toBeUndefined();
-    }
+    const stored = parseRolePermissions(db.store.get(CLINIC_ROLE.RECEPTION)!.permissionsJson);
+    expect(stored).toContain(CLINIC_PERMISSION.SCREEN_HOME);
+    expect(stored).toContain(CLINIC_PERMISSION.API_CASHIER);
+    expect(stored).toContain(CLINIC_PERMISSION.API_BILLING_READ);
+    expect(stored).not.toContain(CLINIC_PERMISSION.API_PATIENTS);
   });
 
   it("does not refill intentional empty permissionsJson", async () => {

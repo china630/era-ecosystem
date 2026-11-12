@@ -1120,6 +1120,7 @@ export function PackageAssignModal({
     if (code === "NO_SERVICE") return tPhysio("packageAssignNoService");
     if (code === "NO_CARE_TEAM") return tPhysio("packageAssignNoCareTeam");
     if (code === "LAB_ALREADY_OPEN") return tPhysio("packageAssignLabOpen");
+    if (code === "LAB_UNPAID_EXISTS") return tPhysio("labUnpaidCheque");
     if (code === "LAB_ONE") return tPhysio("packageAssignLabOne");
     if (code === "REASON_REQUIRED") return replaceReasonToast();
     if (serverError) return code && code !== "PLACE_FAILED" && !serverError.includes(code)

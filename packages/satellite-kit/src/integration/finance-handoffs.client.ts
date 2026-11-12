@@ -3,6 +3,7 @@
  * FX display convert and VÖEN directory delegate to orchestrator platform catalog (W2).
  */
 
+import { peekSatelliteRequestOrganizationId } from "../tenancy/satellite-tenant-context";
 import {
   platformFxConvert,
   platformVoenLookup,
@@ -160,7 +161,9 @@ export function financeFxPreview(
   params: { from: string; to?: string; amount: number; date?: string },
   _opts?: FinanceHandoffOptions,
 ) {
-  return platformFxConvert(params).then((preview) => {
+  return platformFxConvert(params, {
+    organizationId: peekSatelliteRequestOrganizationId(),
+  }).then((preview) => {
     if (!preview) {
       throw new Error(
         "FX preview unavailable (orchestrator platform catalog — check ORCHESTRATOR_URL and SATELLITE_EVENT_SERVICE_TOKEN)",

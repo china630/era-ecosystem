@@ -171,11 +171,24 @@ function clearFinanceSessionAndRedirectToLogin(): void {
   }
 }
 
+function roleDeniedToast(): string {
+  const match = document.cookie.match(/(?:^|; )era_i18n_lang=([^;]+)/);
+  const value = match?.[1] ? decodeURIComponent(match[1]) : "";
+  if (value === "ru") return "У вашей роли нет этого действия.";
+  if (value === "az") return "Bu əməliyyata icazəniz yoxdur.";
+  return "Your role does not include this action.";
+}
+
 async function emitApiErrorToast(res: Response): Promise<void> {
   try {
     const text = await res.clone().text();
     const parsed = parseApiErrorPayload(text);
-    const message = parsed.message || `HTTP ${res.status}`;
+    const roleDenied =
+      parsed.code === "FORBIDDEN" ||
+      parsed.message.trim() === "Forbidden: insufficient permissions";
+    const message = roleDenied
+      ? roleDeniedToast()
+      : parsed.message || `HTTP ${res.status}`;
     window.dispatchEvent(
       new CustomEvent("erafinance:api-error", {
         detail: { status: res.status, message, code: parsed.code },

@@ -193,6 +193,11 @@ export function FolioCheckoutModal({
   const [laundryBusy, setLaundryBusy] = useState(false);
   const [guestTenders, setGuestTenders] = useState<string[]>([...FALLBACK_GUEST_TENDERS]);
   const [payerTenders, setPayerTenders] = useState<string[]>([...FALLBACK_PAYER_TENDERS]);
+  const [outTransfers, setOutTransfers] = useState<
+    Array<{ id: string; pickupAt: string; flightNo: string | null; status: string }>
+  >([]);
+  const [outActions, setOutActions] = useState<Record<string, 'SHIFT' | 'CANCEL' | 'LEAVE'>>({});
+  const tt = useTranslations('transfers');
 
   const loadFolios = useCallback(async () => {
     setLoading(true);
@@ -225,6 +230,33 @@ export function FolioCheckoutModal({
     setRefundReason('');
     setError('');
     setClinic(null);
+    setOutTransfers([]);
+    setOutActions({});
+    void fetch(`/api/transfers/stay-open?reservationId=${encodeURIComponent(reservationId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const payload = body?.data ?? body;
+        const rows = (payload?.transfers ?? []) as Array<{
+          id: string;
+          direction: string;
+          pickupAt: string;
+          flightNo: string | null;
+          status: string;
+        }>;
+        const outs = rows.filter((row) => row.direction === 'OUT');
+        setOutTransfers(
+          outs.map((row) => ({
+            id: row.id,
+            pickupAt: row.pickupAt,
+            flightNo: row.flightNo,
+            status: row.status,
+          })),
+        );
+        const next: Record<string, 'SHIFT' | 'CANCEL' | 'LEAVE'> = {};
+        for (const row of outs) next[row.id] = 'SHIFT';
+        setOutActions(next);
+      })
+      .catch(() => undefined);
     void fetch(`/api/reservations/${reservationId}/clinic-checkout`)
       .then((res) => (res.ok ? res.json() : null))
       .then((body) => {
@@ -254,7 +286,17 @@ export function FolioCheckoutModal({
       .then((r) => r.json())
       .then((data) => {
         const payload = data.data ?? data;
-        if (!payload) return;
+        if (!payload) {
+          setEarly({
+            applicable: false,
+            unusedNights: 0,
+            unusedSellGross: 0,
+            vatWithheld: 0,
+            guestCashRefund: 0,
+            reversalByFolio: {},
+          });
+          return;
+        }
         setEarly({
           applicable: !!payload.applicable,
           unusedNights: Number(payload.unusedNights) || 0,
@@ -266,7 +308,16 @@ export function FolioCheckoutModal({
             : {},
         });
       })
-      .catch(() => null);
+      .catch(() =>
+        setEarly({
+          applicable: false,
+          unusedNights: 0,
+          unusedSellGross: 0,
+          vatWithheld: 0,
+          guestCashRefund: 0,
+          reversalByFolio: {},
+        }),
+      );
   }, [open, reservationId, loadFolios]);
 
   const stayGuest = folios[0]?.reservation?.guest?.fullName?.trim() ?? '';
@@ -403,6 +454,11 @@ export function FolioCheckoutModal({
       }
     }
     if (anyGuestDebt && !guestDebtNote.trim()) return t('checkoutDebtReasonRequired');
+    if (early?.applicable && outTransfers.length > 0) {
+      for (const row of outTransfers) {
+        if (!outActions[row.id]) return tt('outDecisionRequired');
+      }
+    }
     if (refundNeeded) {
       if (!refundMethod) return t('checkoutPickRefundMethod');
       if (refundMethod === 'CARD' && !refundTerminal) return t('checkoutPickTerminal');
@@ -480,6 +536,13 @@ export function FolioCheckoutModal({
           surplusBankTerminalId:
             lines[blocks.find((b) => b.credit > 0.01)?.folio.id ?? '']?.[0]?.bankTerminalId ||
             undefined,
+          transferOutDecisions:
+            early?.applicable && outTransfers.length > 0
+              ? outTransfers.map((row) => ({
+                  orderId: row.id,
+                  action: outActions[row.id] ?? 'SHIFT',
+                }))
+              : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -511,6 +574,44 @@ export function FolioCheckoutModal({
         setLaundryTicketId(tickets[0]?.id ?? '');
         setLaundryScan('');
         showApiError({ error: tHk('laundryOpenCheckout'), code: 'LAUNDRY_OPEN' });
+        return;
+      }
+      if (payload.code === 'TRANSFER_OUT_PENDING') {
+        const rows = Array.isArray(payload.transfers)
+          ? (payload.transfers as Array<{
+              id: string;
+              pickupAt: string;
+              flightNo?: string | null;
+              status?: string;
+            }>)
+          : [];
+        if (rows.length > 0) {
+          setOutTransfers(
+            rows.map((row) => ({
+              id: row.id,
+              pickupAt: row.pickupAt,
+              flightNo: row.flightNo ?? null,
+              status: row.status ?? 'BOOKED',
+            })),
+          );
+          const next: Record<string, 'SHIFT' | 'CANCEL' | 'LEAVE'> = {};
+          for (const row of rows) next[row.id] = outActions[row.id] ?? 'SHIFT';
+          setOutActions(next);
+        }
+        setEarly((prev) =>
+          prev
+            ? { ...prev, applicable: true }
+            : {
+                applicable: true,
+                unusedNights: 0,
+                unusedSellGross: 0,
+                vatWithheld: 0,
+                guestCashRefund: 0,
+                reversalByFolio: {},
+              },
+        );
+        setError(tt('outDecisionRequired'));
+        showApiError(data, tt('outDecisionRequired'));
         return;
       }
       showApiError(data, tc('error'));
@@ -958,6 +1059,34 @@ export function FolioCheckoutModal({
               value={guestDebtNote}
               onChange={(e) => setGuestDebtNote(e.target.value)}
             />
+          ) : null}
+          {early?.applicable && outTransfers.length > 0 ? (
+            <FieldSection title={tt('outAtCheckoutTitle')}>
+              <div className="space-y-3">
+                <p className="m-0 text-[12px] text-[#7F8C8D]">{tt('outAtCheckoutHint')}</p>
+                {outTransfers.map((row) => (
+                  <CatalogField
+                    key={row.id}
+                    kind="CLOSED_SMALL"
+                    label={`${tt('directionOut')} · ${row.pickupAt.slice(0, 16).replace('T', ' ')}${
+                      row.flightNo ? ` · ${row.flightNo}` : ''
+                    }`}
+                    value={outActions[row.id] ?? 'SHIFT'}
+                    onChange={(v) =>
+                      setOutActions((prev) => ({
+                        ...prev,
+                        [row.id]: String(v) as 'SHIFT' | 'CANCEL' | 'LEAVE',
+                      }))
+                    }
+                    options={[
+                      { value: 'SHIFT', label: tt('actionShift') },
+                      { value: 'CANCEL', label: tt('actionCancel') },
+                      { value: 'LEAVE', label: tt('actionLeave') },
+                    ]}
+                  />
+                ))}
+              </div>
+            </FieldSection>
           ) : null}
           {early?.applicable ? (
             <FieldSection title={t('earlyCheckoutTitle')}>

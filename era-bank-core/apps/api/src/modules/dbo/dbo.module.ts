@@ -7,6 +7,7 @@ import { LedgerModule } from "../../kernel/ledger/ledger.module";
 import { PostingEngineModule } from "../../kernel/posting-engine/posting-engine.module";
 import { AmlModule } from "../aml/aml.module";
 import { CardsModule } from "../cards/cards.module";
+import { IslamicModule } from "../islamic/islamic.module";
 import { DboCardsController } from "./dbo-cards.controller";
 import { LoansModule } from "../loans/loans.module";
 import { PaymentsModule } from "../payments/payments.module";
@@ -43,6 +44,7 @@ import { OpenApiGuard } from "./open-api.guard";
     LoansModule,
     AmlModule,
     CardsModule,
+    IslamicModule,
   ],
   controllers: [
     DboController,

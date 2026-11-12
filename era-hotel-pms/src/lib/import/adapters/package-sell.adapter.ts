@@ -48,7 +48,7 @@ export const packageSellAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: "package-sell",
   label: "Package sell (desk)",
   order: 14,
-  permission: PERMISSIONS.MASTER_DATA_MANAGE,
+  permission: PERMISSIONS.PRICING_ADMIN,
   templateHint: "14-Package-Sell-2026.xlsx — PDF NAFTA PRICE & PACKAGES LIST (not EW)",
   headerAliases: {
     packageCode: "packageCode",

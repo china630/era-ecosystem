@@ -1,6 +1,14 @@
 import type { ServiceCadence, ServicePriority, ServiceRequestSource } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
+export async function findRoomIdByNumber(roomNumber: string) {
+  const room = await prisma.room.findFirst({
+    where: { roomNumber },
+    select: { id: true },
+  });
+  return room?.id;
+}
+
 export async function listServiceRequests(status?: string) {
   return prisma.maintenanceWorkOrder.findMany({
     where: status ? { status: status as never } : undefined,
@@ -72,6 +80,37 @@ function addCadence(base: Date, cadence: ServiceCadence): Date {
       d.setDate(d.getDate() + 1);
   }
   return d;
+}
+
+export async function listRecurringServiceSchedules() {
+  return prisma.recurringServiceSchedule.findMany({
+    orderBy: { nextDueAt: 'asc' },
+    take: 100,
+  });
+}
+
+export async function createRecurringServiceSchedule(input: {
+  organizationId: string;
+  title: string;
+  category?: string;
+  cadence: ServiceCadence;
+  nextDueAt: Date;
+  roomId?: string;
+  location?: string;
+  eventKey?: string;
+}) {
+  return prisma.recurringServiceSchedule.create({
+    data: {
+      organizationId: input.organizationId,
+      title: input.title,
+      category: input.category,
+      cadence: input.cadence,
+      nextDueAt: input.nextDueAt,
+      roomId: input.roomId,
+      location: input.location,
+      eventKey: input.eventKey,
+    },
+  });
 }
 
 export async function runDueRecurringSchedules() {

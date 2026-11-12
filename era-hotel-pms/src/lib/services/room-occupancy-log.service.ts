@@ -8,11 +8,22 @@ export async function recordRoomMove(input: {
   notes?: string;
   reasonCode?: string;
   createdByUserId?: string;
+  organizationId?: string;
   kind?: 'OCCURRED' | 'SCHEDULED';
   status?: 'PENDING' | 'APPLIED' | 'CANCELLED';
 }) {
+  const organizationId =
+    input.organizationId ??
+    (
+      await prisma.reservation.findUnique({
+        where: { id: input.reservationId },
+        select: { organizationId: true },
+      })
+    )?.organizationId;
+  if (!organizationId) throw new Error('Reservation not found');
   return prisma.roomChangePlan.create({
     data: {
+      organizationId,
       reservationId: input.reservationId,
       fromRoomId: input.fromRoomId ?? undefined,
       toRoomId: input.toRoomId ?? undefined,

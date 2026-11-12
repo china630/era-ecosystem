@@ -22,8 +22,8 @@ export async function assertOpsApiPermission(
   if (!session) return { error: jsonError("Unauthorized", 401) };
   const permission =
     permissionOverride ??
-    opsApiRoutePermission(new URL(req.url).pathname);
-  if (!permission) return { error: jsonError("Forbidden", 403) };
+    opsApiRoutePermission(new URL(req.url).pathname, req.method);
+  if (!permission) return { error: jsonError("Forbidden", 403, { code: "FORBIDDEN" }) };
   const denied = await requireClinicPermission(session, permission);
   if (denied) return { error: denied };
   return { session };

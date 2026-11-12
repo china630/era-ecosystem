@@ -157,7 +157,12 @@ export function scanWorkforceDualPath(app, tsFiles, allText) {
     return true;
   }
   const norm = (p) => p.replace(/\\/g, "/");
-  const postRoute = tsFiles.find((f) => /\/admin\/practitioners\/route\.ts$/.test(norm(f)));
+  let postRoute = tsFiles.find((f) => /\/app\/api\/admin\/practitioners\/route\.ts$/.test(norm(f)));
+  if (!postRoute) {
+    // Nest cutover: generated handlers live under a dir the repo walk skips.
+    const nestHandler = join(ROOT, "era-clinic/nest/generated/admin_practitioners.ts");
+    if (existsSync(nestHandler)) postRoute = nestHandler;
+  }
   if (!postRoute) return true;
   const text = readFileSync(postRoute, "utf8");
   if (text.includes("createPractitionerLocalMaster")) return true;

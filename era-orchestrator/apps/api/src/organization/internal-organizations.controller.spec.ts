@@ -22,13 +22,15 @@ describe("InternalOrganizationsController byPublicNumber", () => {
     else process.env[key] = value;
   }
 
-  function controller(findFirst: (args: unknown) => Promise<unknown>) {
+  function controller(findByPublicNumber: (orgNo: number) => Promise<unknown>) {
     return new InternalOrganizationsController(
       {
-        organization: { findFirst },
+        findByPublicNumber,
+        getSnapshot: jest.fn(),
+        patchBankLineFromService: jest.fn(),
       } as never,
-      { getSnapshot: jest.fn() } as never,
       { resolveForService: jest.fn() } as never,
+      { getBrand: jest.fn() } as never,
     );
   }
 
@@ -54,9 +56,8 @@ describe("InternalOrganizationsController byPublicNumber", () => {
   it("returns the DEPARTMENT row, not the parent", async () => {
     process.env.SATELLITE_EVENT_SERVICE_TOKEN = "sat-token";
     const childId = "22222222-2222-4222-8222-222222222222";
-    const c = controller(async (args) => {
-      const where = (args as { where: { publicOrgNumber: number } }).where;
-      expect(where.publicOrgNumber).toBe(204222);
+    const c = controller(async (orgNo) => {
+      expect(orgNo).toBe(204222);
       return {
         id: childId,
         publicOrgNumber: 204222,

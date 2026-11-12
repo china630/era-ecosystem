@@ -11,6 +11,7 @@ import {
   Lock,
   LockOpen,
   MoreVertical,
+  ArrowLeftRight,
   Trash2,
   Paperclip,
   Zap,
@@ -42,6 +43,7 @@ export type ReservationCardToolbarProps = {
   onPrint?: () => void;
   onPrintForm?: (kind: 'registration' | 'proforma' | 'confirmation') => void;
   onDeleteStay?: () => void;
+  onSwapRooms?: () => void;
   onUndoCheckout?: () => void;
   onConfirmCheckIn?: () => void;
   onHistory?: () => void;
@@ -72,6 +74,7 @@ export function ReservationCardActions({
   onAmendProduct,
   onPrintForm,
   onDeleteStay,
+  onSwapRooms,
   onUndoCheckout,
   attachOpen,
   onAttachToggle,
@@ -171,6 +174,14 @@ export function ReservationCardActions({
               <span className="inline-flex items-center gap-2">
                 {isLocked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
                 {isLocked ? t('unlock') : t('lock')}
+              </span>
+            </EraMenuItem>
+          ) : null}
+          {onSwapRooms ? (
+            <EraMenuItem onSelect={onSwapRooms}>
+              <span className="inline-flex items-center gap-2">
+                <ArrowLeftRight className="h-3.5 w-3.5" />
+                {t('swapRooms')}
               </span>
             </EraMenuItem>
           ) : null}

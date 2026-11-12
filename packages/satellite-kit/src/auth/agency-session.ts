@@ -36,7 +36,7 @@ export async function signAgencySession(
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
-    .setExpirationTime("12h")
+    .setExpirationTime("8h")
     .sign(getSessionSecret());
 }
 

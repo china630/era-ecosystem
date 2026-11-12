@@ -107,8 +107,9 @@ export class FxService {
   }
 
   /**
-   * Accounting convert: FINAL on the requested Baku date only.
-   * A missing day is RATE_NOT_FOUND. Dashboard display uses GET /fx/rates?fallback=previous.
+   * Convert via AZN. CBAR publishes a bulletin only on working days and shows that
+   * bulletin through the next holiday. Use FINAL on the requested Baku date, or the
+   * latest FINAL on or before it. RATE_NOT_FOUND only when nothing was ever published.
    */
   async convert(
     from: string,
@@ -125,33 +126,41 @@ export class FxService {
     const toU = to.trim().toUpperCase();
     const db = this.ds.referenceDb();
 
-    const rateOn = async (code: string): Promise<number> => {
-      if (code === "AZN" || code === "AZM") return 1;
-      const row = await db.cbarOfficialRate.findUnique({
+    const rateOn = async (code: string): Promise<{ rate: number; rateDate: Date }> => {
+      if (code === "AZN" || code === "AZM") return { rate: 1, rateDate: asOf };
+      const row = await db.cbarOfficialRate.findFirst({
         where: {
-          rateDate_currencyCode: { rateDate: asOf, currencyCode: code },
+          currencyCode: code,
+          rateDate: { lte: asOf },
+          status: CbarRateStatus.FINAL,
         },
+        orderBy: { rateDate: "desc" },
       });
-      if (!row || row.status !== CbarRateStatus.FINAL) {
+      if (!row) {
         throw new BadRequestException({
           code: "RATE_NOT_FOUND",
-          message: `No FINAL rate for ${code} on ${bakuDateKey(asOf)}`,
+          message: `No FINAL rate for ${code} on or before ${bakuDateKey(asOf)}`,
         });
       }
-      return Number(row.rate);
+      return { rate: Number(row.rate), rateDate: row.rateDate };
     };
 
-    const azn =
-      fromU === "AZN" || fromU === "AZM" ? amount : amount * (await rateOn(fromU));
-    const result =
-      toU === "AZN" || toU === "AZM" ? azn : azn / (await rateOn(toU));
+    const left = await rateOn(fromU);
+    const right = await rateOn(toU);
+    const azn = fromU === "AZN" || fromU === "AZM" ? amount : amount * left.rate;
+    const result = toU === "AZN" || toU === "AZM" ? azn : azn / right.rate;
+    const bulletin = left.rateDate < right.rateDate ? left.rateDate : right.rateDate;
+    const requestedKey = bakuDateKey(asOf);
+    const bulletinKey = bakuDateKey(bulletin);
 
     return {
-      meta: registryMeta("cbar", bakuDateKey(asOf)),
+      meta: registryMeta("cbar", bulletinKey),
       from: fromU,
       to: toU,
       amount,
       result: Number(result.toFixed(8)),
+      rateDate: bulletinKey,
+      isFallback: bulletinKey !== requestedKey,
     };
   }
 }

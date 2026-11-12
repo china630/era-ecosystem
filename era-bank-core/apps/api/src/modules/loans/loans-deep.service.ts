@@ -47,6 +47,23 @@ export class LoansDeepService {
     });
   }
 
+  listApplicationsForCustomer(customerId: string) {
+    return this.prisma.loanApplication.findMany({
+      where: { bankOrgId: this.bankOrg.bankOrgId, customerId },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  findApplicationForCustomer(id: string, customerId: string) {
+    return this.prisma.loanApplication.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId, customerId },
+    });
+  }
+
+  findApplicationById(id: string) {
+    return this.prisma.loanApplication.findFirst({ where: { id } });
+  }
+
   createApplication(input: {
     customerId: string;
     productTemplateId: string;

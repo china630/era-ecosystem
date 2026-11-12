@@ -49,8 +49,12 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-25 | Category revenue code + day document v2 | [~] | AC-HOT-REV 🟡; HOT-REV-01 API; Nafta v2 + SatAdmin manual flags + seed PROCEDURE; one-shot remap scripts removed 2026-10-31; 2026-10-27 SQL seeds archive-only; not SHIPPED; out of BE and SHOW rollup |
 | S-26 | e-qaimə hold on night audit | [~] | FIN-EQAIME-DAY-01 API; rule off by default; HOT-NA-01 stays SHIPPED; not SHOW |
 | S-27 | Transfers/Tours boarding-first + Airport fold | [x] | HOT-XFER-01 / HOT-TOUR-01 SHIPPED SCREEN; AC-HOT-XFER/TOUR Scaffold ✅ out of BE rollup; UX closeout (list+modals, icon toolbar, bare print+letterhead); UAT §14/§14b; edition `mvp` unchanged |
-| S-28 | Mutation audit Layer A belt (ecosystem standard) | [~] | Kit + `jsonOk` + `/admin/audit`; CI fail-closed; Wave B DAY_CLOSE; Wave E compound `(organizationId, createdAt)` 2026-10-29; HOT-AUD-01 / AC-HOT-AUD 🟡; hash-chain deferred; next = UAT; Nest API cutover is **P0 platform debt** ([industry-satellite-api-nest-migration](../adr/industry-satellite-api-nest-migration.md)) |
+| S-28 | Transfer+tour stay lifecycle | [x] | Cancel/no-show auto; date ASK; early-out OUT C (UI only when early); RESERVED tour drop; card chips; room live; ADR hotel-transfer-tour-stay-lifecycle; second-pass stay-open read grant; UAT §14/§14b; edition `mvp` unchanged |
+| S-28 | Mutation audit Layer A belt (ecosystem standard) | [~] | Kit + `jsonOk` + `/admin/audit`; CI fail-closed; Wave B DAY_CLOSE; Wave E compound `(organizationId, createdAt)` 2026-10-29; HOT-AUD-01 / AC-HOT-AUD 🟡; hash-chain deferred; next = UAT. Industry HTTP is Nest as of 2026-11-12; that move is not a hotel Scaffold ✅ ([industry-satellite-api-nest-migration](../adr/industry-satellite-api-nest-migration.md)) |
 | S-29 | Department duty schedules (reception / security / engineering) | [~] | HOT-DUTY-01 / AC-HOT-DUTY 🟡; Schedules last before Settings; Workforce picker; UAT open — not SHIPPED/SHOW; out of BE/SHOW rollup; Gate/Pilot/edition unchanged |
+| S-30 | Guest phone app (cycles 2–10) | [~] | HOT-GUEST-APP-01…08 API/SCREEN; AC-HOT-GUEST-APP + AC-HOT-GUEST-APP-REQ 🟡 out of BE rollup; Nest + `/fo/guest-requests` + Guests stay-orders/family Ops + `apps/guest-app`; SMS/WA STUB; `KIND_DISABLED`; not SHIPPED; gate/sell/`hotel.yaml` unchanged |
+| S-31 | Guest phone harden + orch preview (waves A–J) | [~] | 2026-11-11 — Care/clinic, offline, alarm/bio, bell, folio/board, notify adapters, MRZ/EAS, store runbook, UAT template; HOT-GUEST-APP-01…10 + Ops send-to-phone; AC-HOT-GUEST-APP-HARDEN 🟡; evidence `reports/guest-app-uat-smoke.md` unsigned; not SHIPPED/SHOW; hotel.yaml untouched; readiness-matrix N/A |
+| S-32 | Guest phone product polish | [~] | 2026-11-11 — `apps/guest-app` screens/chrome/theme; trip-phase Today; auth/lists/i18n; HOT-GUEST-APP-01…10 SCREEN deepen; still AC 🟡; UAT unsigned; not SHIPPED/SHOW; hotel.yaml untouched |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 
@@ -59,3 +63,13 @@ Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 **2026-11-06:** HOT-DUTY-01 UX deepen (chip assign, week chrome, copy week, axes settings) — still SCREEN / AC 🟡 / not SHOW; Gate/Pilot/edition/Sell unchanged; second-pass copy/axis harden — same statuses; `era-readiness-matrix` skipped.
 
 **2026-11-10:** Schedules IA — section last before Settings; HK roster only under Schedules; P2002-safe binding/axes/week; settings collapsed; sidebar best-href. Still SCREEN / AC 🟡; Gate/Pilot/edition/Sell unchanged; `era-readiness-matrix` skipped.
+
+**2026-11-11:** Guest phone cycles 2–3 (desk link, offline trip pack, questionnaire, live MRZ). HOT-GUEST-APP-01/02 API/SCREEN; AC-HOT-GUEST-APP 🟡; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` skipped.
+
+**2026-11-11:** Guest phone cycles 4–10 (booking request, stay orders, Care proxy, family, phone OTP STUB, catalog). HOT-GUEST-APP-03…08 + CP-GUEST-APP-02 API/SCREEN; AC-HOT-GUEST-APP-REQ 🟡; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` skipped (N/A).
+
+**2026-11-11 (second-pass):** Stay-orders Ops on Guests tab; family phone grant + party `id` in trip pack; orch `enabledOrderKinds` → `KIND_DISABLED`. Statuses unchanged (API/SCREEN / AC 🟡); Gate/Pilot/edition/Sell unchanged; `era-readiness-matrix` N/A.
+
+**2026-11-11 (harden A–J + second-pass):** HOT-GUEST-APP-01…10 deepen; Ops send-to-phone; AC-HOT-GUEST-APP-HARDEN 🟡; UAT template `reports/guest-app-uat-smoke.md` open; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A.
+
+**2026-11-11 (product polish):** `apps/guest-app` screen modules + trip-driven Today + product copy az/ru/en. HOT-GUEST-APP-01…10 stay API/SCREEN; AC-HOT-GUEST-APP* 🟡; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A.

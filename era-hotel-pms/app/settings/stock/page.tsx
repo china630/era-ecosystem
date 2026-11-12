@@ -82,7 +82,7 @@ export default function StockAdminPage() {
   }
 
   useEffect(() => {
-    if (can(PERMISSIONS.MASTER_DATA_MANAGE)) void load();
+    if (can(PERMISSIONS.STOCK_MANAGE)) void load();
   }, [can]);
 
   const filteredProducts = useMemo(
@@ -137,7 +137,7 @@ export default function StockAdminPage() {
     }
   }
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.STOCK_MANAGE)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 

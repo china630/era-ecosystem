@@ -52,6 +52,7 @@ export class RegistryCacheHeadersInterceptor implements NestInterceptor {
             if (body === undefined) return;
             const json = JSON.stringify(body);
             void this.cache.set(key, json, ttl).then((etag) => {
+              if (res.headersSent) return;
               res.setHeader("ETag", etag);
               res.setHeader("Cache-Control", `public, max-age=${ttl}`);
             });

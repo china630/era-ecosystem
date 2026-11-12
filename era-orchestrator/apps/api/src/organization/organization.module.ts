@@ -5,6 +5,8 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { PrismaModule } from "../prisma/prisma.module";
 import { InternalOrganizationsController } from "./internal-organizations.controller";
 import { OrganizationController } from "./organization.controller";
+import { GuestAppController, GuestAppPublicController } from "./guest-app.controller";
+import { GuestAppService } from "./guest-app.service";
 import { OrganizationProfileController } from "./organization-profile.controller";
 import { OrganizationProfileService } from "./organization-profile.service";
 import { OrganizationService } from "./organization.service";
@@ -15,11 +17,14 @@ import { OrgAccessCredentialService } from "../admin/org-access-credential.servi
   controllers: [
     OrganizationController,
     OrganizationProfileController,
+    GuestAppController,
+    GuestAppPublicController,
     InternalOrganizationsController,
   ],
   providers: [
     OrganizationService,
     OrganizationProfileService,
+    GuestAppService,
     OrgAccessCredentialService,
     JwtAuthGuard,
     PermissionsGuard,

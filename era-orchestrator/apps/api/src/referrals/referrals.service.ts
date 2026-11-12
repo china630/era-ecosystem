@@ -49,6 +49,16 @@ export class ReferralsService {
     ).replace(/\/$/, "");
   }
 
+  async attachReferralOnSignup(params: {
+    organizationId: string;
+    organizationCreatedAt: Date;
+    referralCode?: string | null;
+  }): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.attachReferralOnSignupTx(tx, params);
+    });
+  }
+
   async attachReferralOnSignupTx(
     tx: Prisma.TransactionClient,
     params: {

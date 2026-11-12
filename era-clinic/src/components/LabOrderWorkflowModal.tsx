@@ -19,6 +19,7 @@ import {
   TEXT_MUTED_CLASS,
   TEXT_SUCCESS_CLASS,
   showApiError,
+  useCan,
 } from "@era/satellite-kit/ui";
 import { labStatusTone } from "@/components/lab-status-tone";
 import {
@@ -28,6 +29,7 @@ import {
   type ResultLineState,
 } from "@/components/TemplateResultForm";
 import { bakuDateTimeDisplay } from "@/lib/baku-day";
+import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import type {
   CatalogFieldDef,
   DiagnosticCatalogItem,
@@ -85,6 +87,7 @@ type LabOrder = {
 };
 
 const EDITABLE_STATUSES = ["COLLECTED", "IN_PROGRESS", "RESULT_READY"];
+const CORRECTABLE_STATUSES = ["COMPLETED", "PUBLISHED"];
 const STEP_KEYS = ["collect", "results", "publish", "complete"] as const;
 
 function labOrderStatusLabel(
@@ -221,7 +224,21 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
           ) ?? null;
         setCatalogItem(item);
 
-        if (found.resultJson) {
+        const savedLines = (found.items ?? []).flatMap((row) => row.results ?? []);
+        if (item?.kind === "lab_panel" && savedLines.length > 0) {
+          setResultLines(
+            savedLines.map((row) => ({
+              code: row.code,
+              value: row.value,
+              unit: row.unit ?? undefined,
+              refMin: row.refMin ?? undefined,
+              refMax: row.refMax ?? undefined,
+              normTextEn: row.normTextEn ?? undefined,
+              normTextRu: row.normTextRu ?? undefined,
+              normTextAz: row.normTextAz ?? undefined,
+            })),
+          );
+        } else if (found.resultJson) {
           try {
             const raw: unknown =
               typeof found.resultJson === "string"
@@ -422,8 +439,16 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
     return formatNameAndCode(name, item.serviceCode);
   }
 
+  const canCollect = useCan(CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT);
+  const canWriteResults = useCan(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE);
+  const canPublish = useCan(CLINIC_PERMISSION.API_LAB_ORDERS_PUBLISH);
+  const canComplete = useCan(CLINIC_PERMISSION.API_LAB_ORDERS_COMPLETE);
+  const canBlank = useCan(CLINIC_PERMISSION.API_LAB_ORDERS_BLANK);
   const currentStep = order ? stepIndex(order.status) : 0;
-  const canEditResults = Boolean(order && EDITABLE_STATUSES.includes(order.status));
+  const canEditResults = Boolean(
+    order && (EDITABLE_STATUSES.includes(order.status) || CORRECTABLE_STATUSES.includes(order.status)),
+  );
+  const correcting = Boolean(order && CORRECTABLE_STATUSES.includes(order.status));
   const serviceTitle =
     order != null
       ? order.items?.length
@@ -528,7 +553,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                 ))}
               </ol>
 
-              {order.status === "ORDERED" ? (
+              {order.status === "ORDERED" && canCollect ? (
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
@@ -539,7 +564,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                 </button>
               ) : null}
 
-              {order.status === "COLLECTED" || order.status === "IN_PROGRESS" ? (
+              {(order.status === "COLLECTED" || order.status === "IN_PROGRESS") && canWriteResults ? (
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
@@ -633,8 +658,20 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                 )}
               </div>
 
+              {correcting && canWriteResults ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={busy}
+                  onClick={openResultsEntry}
+                >
+                  {t("correctResults")}
+                </button>
+              ) : null}
+
               {order.status === "RESULT_READY" ? (
                 <div className="flex flex-wrap gap-2">
+                  {canWriteResults ? (
                   <button
                     type="button"
                     className={SECONDARY_BUTTON_CLASS}
@@ -643,6 +680,8 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                   >
                     {t("editResults")}
                   </button>
+                  ) : null}
+                  {canPublish ? (
                   <button
                     type="button"
                     className={PRIMARY_BUTTON_CLASS}
@@ -651,10 +690,11 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
                   >
                     {t("publishToDoctor")}
                   </button>
+                  ) : null}
                 </div>
               ) : null}
 
-              {order.status === "PUBLISHED" ? (
+              {order.status === "PUBLISHED" && canComplete ? (
                 <div className="space-y-2">
                   <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("resultsReadOnly")}</p>
                   <button
@@ -685,12 +725,13 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
       </ModalShell>
 
       <ModalShell
-        open={resultsModalOpen && canEditResults}
+        open={resultsModalOpen && canEditResults && canWriteResults}
         title={t("resultLines")}
         onClose={() => setResultsModalOpen(false)}
         closeLabel={tc("close")}
         maxWidthClass="max-w-3xl w-full"
         headerActions={
+          canBlank ? (
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
@@ -699,6 +740,7 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
           >
             {t("loadWord")}
           </button>
+          ) : null
         }
         footer={
           <ModalFooter

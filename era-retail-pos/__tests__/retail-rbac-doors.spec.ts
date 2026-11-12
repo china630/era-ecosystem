@@ -22,11 +22,15 @@ jest.mock("@era/satellite-kit", () => {
     IndustryModuleInactiveError,
     requireSatelliteModule: jest.fn(async () => undefined),
     readSatelliteStaffSession: jest.fn(async () => null),
+    runWithSatelliteTenant: async (_ctx: unknown, fn: () => Promise<unknown>) => fn(),
   };
 });
 
 import { readSatelliteStaffSession } from "@era/satellite-kit";
 import { PERMISSIONS, ROLE_CODES, ROLE_TEMPLATES, PERMISSION_CATALOG_VERSION } from "@/lib/auth/permissions";
+import { invokeNest } from "./nest-invoke";
+import { register as registerLineVoid } from "../nest/generated/receipts__id_lines__lineId_void";
+import { register as registerReceiptVoid } from "../nest/generated/receipts__id_void";
 
 function staffAs(roleCode: string, permissions: readonly string[] = ROLE_TEMPLATES[roleCode as keyof typeof ROLE_TEMPLATES]) {
   (readSatelliteStaffSession as jest.Mock).mockResolvedValue({
@@ -67,8 +71,9 @@ describe("Retail doors (RET-RBAC-01)", () => {
   it("cashier void line → 403 from the handler", async () => {
     headerValues["x-era-pathname"] = "/api/receipts/r1/lines/l1/void";
     staffAs(ROLE_CODES.CASHIER);
-    const { POST } = await import("../app/api/receipts/[id]/lines/[lineId]/void/route");
-    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: "r1", lineId: "l1" }) });
+    const res = await invokeNest(registerLineVoid, "post", "/api/receipts/:id/lines/:lineId/void", {
+      params: { id: "r1", lineId: "l1" },
+    });
     expect(res.status).toBe(403);
     expect(findUnique).not.toHaveBeenCalled();
   });
@@ -76,16 +81,18 @@ describe("Retail doors (RET-RBAC-01)", () => {
   it("cashier receipt void → 403 from the handler", async () => {
     headerValues["x-era-pathname"] = "/api/receipts/r1/void";
     staffAs(ROLE_CODES.CASHIER);
-    const { POST } = await import("../app/api/receipts/[id]/void/route");
-    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: "r1" }) });
+    const res = await invokeNest(registerReceiptVoid, "post", "/api/receipts/:id/void", {
+      params: { id: "r1" },
+    });
     expect(res.status).toBe(403);
   });
 
   it("supervisor passes the void door (then 404 on the missing receipt)", async () => {
     headerValues["x-era-pathname"] = "/api/receipts/r1/void";
     staffAs(ROLE_CODES.SHIFT_SUPERVISOR);
-    const { POST } = await import("../app/api/receipts/[id]/void/route");
-    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: "r1" }) });
+    const res = await invokeNest(registerReceiptVoid, "post", "/api/receipts/:id/void", {
+      params: { id: "r1" },
+    });
     expect(res.status).toBe(404);
   });
 
@@ -95,8 +102,9 @@ describe("Retail doors (RET-RBAC-01)", () => {
       ROLE_CODES.SHIFT_SUPERVISOR,
       ROLE_TEMPLATES[ROLE_CODES.SHIFT_SUPERVISOR].filter((p) => p !== PERMISSIONS.RECEIPTS_VOID_LINE),
     );
-    const { POST } = await import("../app/api/receipts/[id]/void/route");
-    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: "r1" }) });
+    const res = await invokeNest(registerReceiptVoid, "post", "/api/receipts/:id/void", {
+      params: { id: "r1" },
+    });
     expect(res.status).toBe(403);
   });
 

@@ -407,6 +407,8 @@ export function DiagnosticsAssignModal({
                         defaultValue:
                           "An open lab order already exists for this study",
                       })
+                    : code === "LAB_UNPAID_EXISTS"
+                      ? t("labUnpaidCheque")
                     : code === "NO_CARE_TEAM"
                       ? t("careTeamRequired", {
                           defaultValue: "A care-team doctor is required",

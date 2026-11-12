@@ -89,7 +89,7 @@ describe('channel manager tenant isolation', () => {
   });
 
   it('Channex webhook enters request tenant only after property bind', () => {
-    const src = readFileSync(join(root, 'app/api/integrations/channex/webhook/route.ts'), 'utf8');
+    const src = readFileSync(join(root, 'nest/generated/integrations_channex_webhook.ts'), 'utf8');
     expect(src.indexOf('enterRequestTenant(')).toBeGreaterThan(
       src.indexOf('getChannelManagerBindingByPropertyId('),
     );

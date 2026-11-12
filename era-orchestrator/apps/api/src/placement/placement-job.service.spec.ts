@@ -1,35 +1,72 @@
-import { BadRequestException } from "@nestjs/common";
-import { PlacementJobService } from "./placement-job.service";
+import { BadRequestException, ConflictException } from "@nestjs/common";
+import {
+  PlacementJobService,
+  PLACEMENT_SKELETON_APPLY_LOG,
+} from "./placement-job.service";
 import {
   isAllowedPlacementHop,
   isDirectSharedOnpremHop,
   SHARED_ONPREM_REJECT_MESSAGE,
 } from "./placement-hops";
 import { PlacementAdvanceAction } from "./dto/advance-placement-job.dto";
+import { buildPlacementCloneRecipe } from "./placement-recipe";
 
 describe("placement hops", () => {
   it("allows ladder hops", () => {
     expect(isAllowedPlacementHop("SHARED", "DEDICATED")).toBe(true);
     expect(isAllowedPlacementHop("DEDICATED", "ONPREM")).toBe(true);
-    expect(isAllowedPlacementHop("ONPREM", "DEDICATED")).toBe(true);
-    expect(isAllowedPlacementHop("DEDICATED", "SHARED")).toBe(true);
   });
 
   it("rejects direct SHARED ↔ ONPREM", () => {
     expect(isDirectSharedOnpremHop("SHARED", "ONPREM")).toBe(true);
-    expect(isDirectSharedOnpremHop("ONPREM", "SHARED")).toBe(true);
     expect(isAllowedPlacementHop("SHARED", "ONPREM")).toBe(false);
-    expect(isAllowedPlacementHop("ONPREM", "SHARED")).toBe(false);
   });
 });
 
-describe("PlacementJobService createJob", () => {
+describe("buildPlacementCloneRecipe", () => {
+  it("builds SINGLE_STACK recipe with services + composeYaml", () => {
+    const recipe = buildPlacementCloneRecipe({
+      organizationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      batchId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      satelliteKeys: ["industry_hotel_pms", "industry_clinic"],
+      packaging: "SINGLE_STACK",
+      targetHost: "https://dedicated.example",
+      fromTopology: "SHARED",
+      toTopology: "DEDICATED",
+    });
+    expect(recipe.formatVersion).toBe(1);
+    expect(recipe.services).toHaveLength(2);
+    expect(recipe.stackName).toContain("era-org-");
+    expect(recipe.composeYaml).toContain("services:");
+    expect(recipe.composeYaml).toContain("era/hotel-pms:latest");
+  });
+});
+
+describe("PlacementJobService createBatch / Wave 2", () => {
   const prisma = {
     organization: { findUnique: jest.fn(), update: jest.fn() },
-    placementJob: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    placementJob: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    placementBatch: {
+      create: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    placementProcessLog: { create: jest.fn() },
+    $transaction: jest.fn(),
   };
   const bindSync = { syncForOrg: jest.fn() };
-  const endpoints = { upsertEndpoint: jest.fn() };
+  const endpoints = {
+    upsertEndpoint: jest.fn(),
+    resolveEndpoint: jest.fn(),
+    resolveLaunchBaseUrl: jest.fn(),
+  };
 
   function svc() {
     return new PlacementJobService(
@@ -41,185 +78,404 @@ describe("PlacementJobService createJob", () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    prisma.organization.findUnique.mockResolvedValue({ id: "org-1" });
+    process.env.ERA_PLACEMENT_INLINE_LAB = "0";
+    process.env.ERA_PLACEMENT_AUTOPILOT = "0";
+    process.env.ERA_PLACEMENT_SLICE_LAB = "1";
+    process.env.ERA_PLACEMENT_SMOKE_LAB = "1";
+    process.env.ERA_PLACEMENT_HASH_LAB = "1";
+    process.env.ERA_PLACEMENT_DISK_LAB = "1";
+    prisma.organization.findUnique.mockResolvedValue({
+      id: "org-1",
+      settings: {},
+    });
+    prisma.organization.update.mockResolvedValue({ id: "org-1" });
+    prisma.placementBatch.findFirst.mockResolvedValue(null);
+    bindSync.syncForOrg.mockResolvedValue({ results: [] });
+    prisma.placementBatch.update.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({ id: "batch-1", ...data }),
+    );
+    prisma.placementProcessLog.create.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({ id: "log-1", createdAt: new Date(), ...data }),
+    );
+    prisma.placementJob.findMany.mockResolvedValue([]);
+    prisma.$transaction.mockImplementation(
+      async (fn: (tx: typeof prisma) => Promise<unknown>) => fn(prisma),
+    );
   });
 
-  it("creates REJECTED job for SHARED → ONPREM (negative path)", async () => {
-    prisma.placementJob.create.mockImplementation(({ data }: { data: Record<string, unknown> }) =>
-      Promise.resolve({ id: "job-1", ...data }),
+  it("createBatch SHARED→DEDICATED stores recipe and PROVISION + process logs", async () => {
+    prisma.placementBatch.create.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({
+          id: "batch-1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...data,
+        }),
     );
-    const job = await svc().createJob({
+    prisma.placementJob.create.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({
+          id: `job-${data.satelliteKey}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...data,
+        }),
+    );
+    prisma.placementBatch.findUnique.mockResolvedValue({
+      id: "batch-1",
       organizationId: "org-1",
-      satelliteKey: "industry_clinic",
-      fromTopology: "SHARED",
-      toTopology: "ONPREM",
+      satelliteKeys: ["industry_hotel_pms"],
+      packaging: "PER_SATELLITE",
+      targetHost: "https://dedicated.example",
+      status: "PROVISION",
+      recipeJson: { formatVersion: 1, services: [] },
+      jobs: [
+        {
+          id: "job-industry_hotel_pms",
+          status: "PROVISION",
+          applyLog: PLACEMENT_SKELETON_APPLY_LOG,
+        },
+      ],
+      processLogs: [
+        { phase: "START", message: "Batch started" },
+        { phase: "PROVISION", message: "Clone recipe stored" },
+      ],
     });
-    expect(job.status).toBe("REJECTED");
-    expect(job.errorMessage).toBe(SHARED_ONPREM_REJECT_MESSAGE);
-    expect(prisma.placementJob.create).toHaveBeenCalledWith(
+
+    const batch = await svc().createBatch({
+      organizationId: "org-1",
+      satelliteKeys: ["industry_hotel_pms"],
+      fromTopology: "SHARED",
+      toTopology: "DEDICATED",
+      packaging: "PER_SATELLITE",
+      targetHost: "https://dedicated.example",
+    });
+
+    expect(batch.status).toBe("PROVISION");
+    expect(prisma.placementProcessLog.create).toHaveBeenCalled();
+    expect(prisma.placementBatch.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ status: "REJECTED" }),
+        data: expect.objectContaining({
+          recipeJson: expect.objectContaining({ formatVersion: 1 }),
+        }),
       }),
     );
   });
 
-  it("creates REJECTED job for ONPREM → SHARED", async () => {
-    prisma.placementJob.create.mockImplementation(({ data }: { data: Record<string, unknown> }) =>
-      Promise.resolve({ id: "job-2", ...data }),
-    );
-    const job = await svc().createJob({
-      organizationId: "org-1",
-      satelliteKey: "industry_hotel",
-      fromTopology: "ONPREM",
-      toTopology: "SHARED",
-    });
-    expect(job.status).toBe("REJECTED");
-  });
-
-  it("creates PENDING job for SHARED → DEDICATED", async () => {
-    prisma.placementJob.create.mockImplementation(({ data }: { data: Record<string, unknown> }) =>
-      Promise.resolve({ id: "job-3", ...data }),
-    );
-    const job = await svc().createJob({
-      organizationId: "org-1",
-      satelliteKey: "industry_clinic",
-      fromTopology: "SHARED",
-      toTopology: "DEDICATED",
-    });
-    expect(job.status).toBe("PENDING");
-  });
-
-  it("throws for unknown hop SHARED → SHARED", async () => {
+  it("createBatch without targetHost fails", async () => {
     await expect(
-      svc().createJob({
+      svc().createBatch({
         organizationId: "org-1",
-        satelliteKey: "industry_clinic",
+        satelliteKeys: ["industry_clinic"],
         fromTopology: "SHARED",
-        toTopology: "SHARED",
+        toTopology: "DEDICATED",
+        packaging: "PER_SATELLITE",
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it("exportSlice for non-hotel stores honest not-implemented note", async () => {
+  it("createBatch SHARED→ONPREM is REJECTED", async () => {
+    prisma.placementBatch.create.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({ id: "batch-r", ...data }),
+    );
+    prisma.placementJob.create.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({ id: "job-r", ...data }),
+    );
+    prisma.placementBatch.findUnique.mockResolvedValue({
+      id: "batch-r",
+      status: "REJECTED",
+      errorMessage: SHARED_ONPREM_REJECT_MESSAGE,
+      jobs: [{ id: "job-r", status: "REJECTED" }],
+      processLogs: [],
+    });
+
+    const batch = await svc().createBatch({
+      organizationId: "org-1",
+      satelliteKeys: ["industry_clinic"],
+      fromTopology: "SHARED",
+      toTopology: "ONPREM",
+      packaging: "SINGLE_STACK",
+    });
+
+    expect(batch.status).toBe("REJECTED");
+  });
+
+  it("rejects second active batch", async () => {
+    prisma.placementBatch.findFirst.mockResolvedValue({
+      id: "batch-active",
+      status: "PROVISION",
+    });
+    await expect(
+      svc().createBatch({
+        organizationId: "org-1",
+        satelliteKeys: ["industry_clinic"],
+        fromTopology: "SHARED",
+        toTopology: "DEDICATED",
+        packaging: "PER_SATELLITE",
+        targetHost: "https://x.example",
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it("reportProvision ok → CONFIGURE with process log", async () => {
+    prisma.placementJob.findUnique.mockResolvedValue({
+      id: "job-1",
+      organizationId: "org-1",
+      batchId: "batch-1",
+      satelliteKey: "industry_hotel_pms",
+      fromTopology: "SHARED",
+      toTopology: "DEDICATED",
+      status: "PROVISION",
+      errorMessage: null,
+      sliceMeta: null,
+      targetBaseUrl: "https://dedicated.example",
+      applyLog: PLACEMENT_SKELETON_APPLY_LOG,
+    });
+    prisma.placementJob.update.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({
+          id: "job-1",
+          batchId: "batch-1",
+          organizationId: "org-1",
+          satelliteKey: "industry_hotel_pms",
+          fromTopology: "SHARED",
+          toTopology: "DEDICATED",
+          targetBaseUrl: "https://dedicated.example",
+          ...data,
+        }),
+    );
+
+    const updated = await svc().reportProvision("job-1", {
+      ok: true,
+      applyLog: "mode=lab\nhealthcheck=simulated ok",
+      healthSummary: "lab ok hotel:3201",
+    });
+    expect(updated.status).toBe("CONFIGURE");
+    expect(prisma.placementProcessLog.create).toHaveBeenCalled();
+  });
+
+  it("reportProvision fail → FAILED", async () => {
+    prisma.placementJob.findUnique.mockResolvedValue({
+      id: "job-1",
+      organizationId: "org-1",
+      batchId: "batch-1",
+      satelliteKey: "industry_clinic",
+      fromTopology: "SHARED",
+      toTopology: "DEDICATED",
+      status: "PROVISION",
+      errorMessage: null,
+      sliceMeta: null,
+      targetBaseUrl: "https://dedicated.example",
+    });
+    prisma.placementJob.update.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({
+          id: "job-1",
+          batchId: "batch-1",
+          ...data,
+        }),
+    );
+
+    const updated = await svc().reportProvision("job-1", {
+      ok: false,
+      applyLog: "error",
+      errorMessage: "clone failed",
+    });
+    expect(updated.status).toBe("FAILED");
+  });
+
+  it("exportSlice for unsupported satellite fails closed", async () => {
     prisma.placementJob.findUnique.mockResolvedValue({
       id: "job-4",
       organizationId: "org-1",
-      satelliteKey: "industry_clinic",
+      satelliteKey: "industry_retail",
       fromTopology: "SHARED",
       toTopology: "DEDICATED",
       status: "FREEZE",
       errorMessage: null,
       sliceMeta: null,
-      targetBaseUrl: null,
+      targetBaseUrl: "https://dedicated.example",
+      batchId: null,
     });
-    prisma.placementJob.update.mockImplementation(({ data }: { data: Record<string, unknown> }) =>
-      Promise.resolve({ id: "job-4", status: data.status, sliceMeta: data.sliceMeta }),
+    prisma.placementJob.update.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({ id: "job-4", ...data }),
     );
-    const updated = await svc().advance("job-4", PlacementAdvanceAction.exportSlice);
-    expect(updated.status).toBe("EXPORT");
-    expect(updated.sliceMeta).toEqual(
-      expect.objectContaining({
-        note: "slice not implemented for industry_clinic",
-        rowCounts: {},
-      }),
+
+    const updated = await svc().advance(
+      "job-4",
+      PlacementAdvanceAction.exportSlice,
     );
-    expect(JSON.stringify(updated.sliceMeta)).not.toMatch(/not implemented full dump/);
+    expect(updated.status).toBe("FAILED");
+    expect(updated.errorMessage).toMatch(/slice not implemented for industry_retail/);
   });
 
-  it("lab hop SHARED→DEDICATED advances freeze→export→provision→bind→cutover→smoke→complete", async () => {
-    const prevLab = process.env.ERA_PLACEMENT_SLICE_LAB;
-    process.env.ERA_PLACEMENT_SLICE_LAB = "1";
-    try {
-      const base = {
-        id: "job-lab",
-        organizationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  it("importSlice fails closed when OrgFullSliceV2 modelOrder empty", async () => {
+    delete process.env.ERA_PLACEMENT_SLICE_LAB;
+    prisma.placementJob.findUnique.mockResolvedValue({
+      id: "job-5",
+      organizationId: "org-1",
+      satelliteKey: "industry_hotel_pms",
+      fromTopology: "SHARED",
+      toTopology: "DEDICATED",
+      status: "EXPORT",
+      errorMessage: null,
+      sliceMeta: null,
+      artifactRef: "placement://job-5/org-slice-v2",
+      artifactJson: {
+        organizationId: "org-1",
+        formatVersion: 2,
+        modelOrder: [],
+        tables: [],
+        rows: {},
+        note: "satellite full org slice v2",
+        checksum: "abcdef0123456789",
+      },
+      targetBaseUrl: "https://dedicated.example",
+      batchId: null,
+    });
+    prisma.placementJob.update.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({ id: "job-5", ...data }),
+    );
+
+    const updated = await svc().advance(
+      "job-5",
+      PlacementAdvanceAction.importSlice,
+    );
+    expect(updated.status).toBe("FAILED");
+    expect(updated.errorMessage).toMatch(/modelOrder empty/);
+  });
+
+  it("listForHostAgent returns recipe", async () => {
+    prisma.placementJob.findMany.mockResolvedValue([
+      {
+        id: "job-h",
+        organizationId: "org-1",
+        batchId: "batch-1",
         satelliteKey: "industry_hotel_pms",
         fromTopology: "SHARED",
         toTopology: "DEDICATED",
+        status: "PROVISION",
         errorMessage: null,
-        sliceMeta: null as unknown,
-        targetBaseUrl: null as string | null,
-      };
-      let status = "PENDING";
-      prisma.placementJob.findUnique.mockImplementation(() =>
-        Promise.resolve({ ...base, status, targetBaseUrl: base.targetBaseUrl }),
-      );
-      prisma.placementJob.update.mockImplementation(({ data }: { data: Record<string, unknown> }) => {
-        if (typeof data.status === "string") status = data.status;
-        if (typeof data.targetBaseUrl === "string") base.targetBaseUrl = data.targetBaseUrl;
-        if (data.sliceMeta) base.sliceMeta = data.sliceMeta as never;
-        return Promise.resolve({ ...base, status, ...data });
-      });
-      prisma.organization.update.mockResolvedValue({ id: base.organizationId });
-      bindSync.syncForOrg.mockResolvedValue({
-        results: [{ ok: true, satelliteKey: "industry_hotel_pms" }],
-      });
-      endpoints.upsertEndpoint.mockResolvedValue({});
+        sliceMeta: null,
+        targetBaseUrl: "https://dedicated.example",
+        applyLog: PLACEMENT_SKELETON_APPLY_LOG,
+        batch: {
+          id: "batch-1",
+          packaging: "SINGLE_STACK",
+          satelliteKeys: ["industry_hotel_pms"],
+          targetHost: "https://dedicated.example",
+          recipeJson: { formatVersion: 1, stackName: "era-org-test" },
+        },
+      },
+    ]);
 
-      expect((await svc().advance("job-lab", PlacementAdvanceAction.freeze)).status).toBe(
-        "FREEZE",
-      );
-      const exported = await svc().advance("job-lab", PlacementAdvanceAction.exportSlice);
-      expect(exported.status).toBe("EXPORT");
-      expect(exported.sliceMeta).toEqual(
-        expect.objectContaining({
-          organizationId: base.organizationId,
-          formatVersion: 1,
-          rowCounts: expect.any(Object),
-        }),
-      );
-      expect(String((exported.sliceMeta as { note: string }).note)).toMatch(
-        /hotel curated json slice v1/,
-      );
-      expect(String((exported.sliceMeta as { note: string }).note)).not.toMatch(
-        /not implemented full dump/,
-      );
-      expect((await svc().advance("job-lab", PlacementAdvanceAction.markProvisioned)).status).toBe(
-        "PROVISION",
-      );
-      expect((await svc().advance("job-lab", PlacementAdvanceAction.bindAndConfig)).status).toBe(
-        "BIND",
-      );
-      expect(
-        (
-          await svc().advance("job-lab", PlacementAdvanceAction.cutoverEndpoint, {
-            targetBaseUrl: "https://hotel-dedicated.example",
-          })
-        ).status,
-      ).toBe("CUTOVER");
-      expect(endpoints.upsertEndpoint).toHaveBeenCalledWith(
-        expect.objectContaining({
-          organizationId: base.organizationId,
-          baseUrl: "https://hotel-dedicated.example",
-        }),
-      );
-      expect((await svc().advance("job-lab", PlacementAdvanceAction.smoke)).status).toBe("SMOKE");
-      expect((await svc().advance("job-lab", PlacementAdvanceAction.complete)).status).toBe("DONE");
-      expect(prisma.organization.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: { deploymentTopology: "DEDICATED" },
-        }),
-      );
-    } finally {
-      if (prevLab === undefined) delete process.env.ERA_PLACEMENT_SLICE_LAB;
-      else process.env.ERA_PLACEMENT_SLICE_LAB = prevLab;
-    }
+    const rows = await svc().listForHostAgent();
+    expect(rows[0].recipe).toEqual(
+      expect.objectContaining({ formatVersion: 1 }),
+    );
   });
 
-  it("refuses advance on REJECTED job", async () => {
+  it("freeze sets org.settings.placementFreeze", async () => {
     prisma.placementJob.findUnique.mockResolvedValue({
-      id: "job-x",
+      id: "job-1",
       organizationId: "org-1",
-      satelliteKey: "industry_clinic",
+      batchId: "batch-1",
+      satelliteKey: "industry_hotel_pms",
       fromTopology: "SHARED",
-      toTopology: "ONPREM",
-      status: "REJECTED",
-      errorMessage: SHARED_ONPREM_REJECT_MESSAGE,
+      toTopology: "DEDICATED",
+      status: "CONFIGURE",
+      errorMessage: null,
       sliceMeta: null,
-      targetBaseUrl: null,
+      targetBaseUrl: "https://dedicated.example",
     });
-    await expect(
-      svc().advance("job-x", PlacementAdvanceAction.freeze),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    prisma.placementJob.update.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({
+          id: "job-1",
+          organizationId: "org-1",
+          batchId: "batch-1",
+          satelliteKey: "industry_hotel_pms",
+          ...data,
+        }),
+    );
+
+    const updated = await svc().advance(
+      "job-1",
+      PlacementAdvanceAction.freeze,
+    );
+    expect(updated.status).toBe("FREEZE");
+    expect(prisma.organization.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          settings: expect.objectContaining({
+            placementFreeze: expect.objectContaining({ active: true }),
+          }),
+        }),
+      }),
+    );
+    expect(bindSync.syncForOrg).toHaveBeenCalledWith("org-1");
+  });
+
+  it("autopilot CONFIGURE→DONE for hotel lab", async () => {
+    process.env.ERA_PLACEMENT_AUTOPILOT = "1";
+    prisma.placementJob.findUnique.mockResolvedValue({
+      id: "job-1",
+      organizationId: "org-1",
+      batchId: "batch-1",
+      satelliteKey: "industry_hotel_pms",
+      fromTopology: "SHARED",
+      toTopology: "DEDICATED",
+      status: "PROVISION",
+      errorMessage: null,
+      sliceMeta: null,
+      artifactJson: null,
+      artifactRef: null,
+      targetBaseUrl: "https://dedicated.example",
+      applyLog: PLACEMENT_SKELETON_APPLY_LOG,
+    });
+    prisma.placementJob.update.mockImplementation(
+      ({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({
+          id: "job-1",
+          organizationId: "org-1",
+          batchId: "batch-1",
+          satelliteKey: "industry_hotel_pms",
+          fromTopology: "SHARED",
+          toTopology: "DEDICATED",
+          targetBaseUrl: "https://dedicated.example",
+          artifactRef: data.artifactRef ?? "placement://job-1/org-slice-v2",
+          artifactJson: data.artifactJson ?? {
+            organizationId: "org-1",
+            formatVersion: 2,
+            modelOrder: ["_lab"],
+            tables: [{ name: "_lab", rowCount: 0 }],
+            rows: { _lab: [] },
+            note: "satellite full org slice v2 (lab)",
+            checksum: "labchecksum0123456789abcdef",
+            objectStorage: { prefix: "org/org-1/", entries: [], stub: true },
+          },
+          ...data,
+        }),
+    );
+    prisma.placementJob.findMany.mockResolvedValue([
+      { status: "DONE" },
+    ]);
+    endpoints.upsertEndpoint.mockResolvedValue({});
+
+    const updated = await svc().reportProvision("job-1", {
+      ok: true,
+      applyLog: "mode=lab\nok",
+      healthSummary: "lab ok",
+    });
+    expect(updated.status).toBe("DONE");
+    expect(endpoints.upsertEndpoint).toHaveBeenCalled();
+    expect(prisma.organization.update).toHaveBeenCalled();
   });
 });

@@ -24,13 +24,13 @@ export async function assertClinicAdminRoute(
   const session = await getSatelliteSession();
   if (!session) return { error: jsonError("Unauthorized", 401) };
   const permissions = adminApiRoutePermissions(new URL(req.url).pathname);
-  if (!permissions || permissions.length === 0) return { error: jsonError("Forbidden", 403) };
+  if (!permissions || permissions.length === 0) return { error: jsonError("Forbidden", 403, { code: "FORBIDDEN" }) };
   let denied: NextResponse | null = null;
   for (const permission of permissions) {
     denied = await requireClinicPermission(session, permission);
     if (!denied) return { session };
   }
-  return { error: denied ?? jsonError("Forbidden", 403) };
+  return { error: denied ?? jsonError("Forbidden", 403, { code: "FORBIDDEN" }) };
 }
 
 /** Alias of assertClinicAdminRoute — Request required (no binary CLINIC_ADMIN bypass). */

@@ -33,7 +33,7 @@ export default function PriceSeasonsPage() {
   const t = useTranslations('priceSeasons');
   const tc = useTranslations('common');
   const { can } = useAuth();
-  const canWrite = can(PERMISSIONS.MASTER_DATA_MANAGE);
+  const canWrite = can(PERMISSIONS.SEASONS_ADMIN);
   const [rows, setRows] = useState<Season[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
 

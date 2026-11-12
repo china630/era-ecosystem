@@ -17,6 +17,18 @@ export const FO_BOOKING_SOURCES: ReadonlyArray<readonly [string, string]> = [
 const CODE_BY_KIND: Partial<Record<BookingSourceKind, readonly [string, string]>> =
   Object.fromEntries(FO_BOOKING_SOURCES.map((row) => [bookingSourceKind(row[0]), row]));
 
+export async function listBookingSources(organizationId: string) {
+  try {
+    await ensureFoBookingSources(organizationId);
+  } catch {
+    /* list still returns existing rows */
+  }
+  return prisma.bookingSource.findMany({
+    orderBy: { code: 'asc' },
+    select: { id: true, code: true, name: true },
+  });
+}
+
 export async function ensureFoBookingSources(organizationId: string): Promise<void> {
   for (const [code, name] of FO_BOOKING_SOURCES) {
     await prisma.bookingSource.upsert({

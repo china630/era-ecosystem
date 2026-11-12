@@ -205,4 +205,12 @@ export class BankSubaccountService {
     });
     return { ...created, created: true };
   }
+
+  listNasAccountsForOrganization(organizationId: string) {
+    return this.prisma.account.findMany({
+      where: { organizationId, ledgerType: LedgerType.NAS },
+      orderBy: { code: "asc" },
+      select: { code: true, nameAz: true, nameRu: true, currency: true },
+    });
+  }
 }

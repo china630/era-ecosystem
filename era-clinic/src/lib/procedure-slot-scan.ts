@@ -693,6 +693,125 @@ export function placementBlockReason(
 }
 
 /**
+ * Sanatorium seating: a procedure with fewer free cabin windows on the horizon
+ * is seated as a whole series before a looser one. Sessions of one code keep
+ * their order. A pinned day stays in its place. Cabin occupancy already loaded
+ * for the scan is the only input — this does not walk staff or the patient.
+ */
+export function orderScarceSeriesFirst(
+  orders: ScanOrder[],
+  input: {
+    now: Date;
+    slotMinutes: number;
+    horizonEndYmd: string;
+    closedYmds: Set<string>;
+    noonCheckoutYmd?: string;
+    allocations: ScanAllocation[];
+  },
+): ScanOrder[] {
+  if (orders.length < 2) return orders;
+  const loose = orders.filter((order) => !order.pinYmd);
+  if (loose.length < 2) return orders;
+
+  const byResource = new Map<string, ScanAllocation[]>();
+  for (const row of input.allocations) {
+    if ((row.role !== "LOCATION" && row.role !== "EQUIPMENT") || !row.resourceId) continue;
+    const list = byResource.get(row.resourceId) ?? [];
+    list.push(row);
+    byResource.set(row.resourceId, list);
+  }
+
+  const windowsByCode = new Map<string, { windows: number; first: number }>();
+  loose.forEach((order, index) => {
+    if (windowsByCode.has(order.procedureCode)) return;
+    windowsByCode.set(order.procedureCode, {
+      windows: countFreeCabinWindows(order, input, byResource),
+      first: index,
+    });
+  });
+
+  const sorted = [...loose].sort((a, b) => {
+    const left = windowsByCode.get(a.procedureCode)!;
+    const right = windowsByCode.get(b.procedureCode)!;
+    if (left.windows !== right.windows) return left.windows - right.windows;
+    return left.first - right.first;
+  });
+
+  const result = orders.slice();
+  let next = 0;
+  for (let i = 0; i < result.length; i++) {
+    if (result[i]!.pinYmd) continue;
+    result[i] = sorted[next++]!;
+  }
+  return result;
+}
+
+function countFreeCabinWindows(
+  order: ScanOrder,
+  input: {
+    now: Date;
+    slotMinutes: number;
+    horizonEndYmd: string;
+    closedYmds: Set<string>;
+    noonCheckoutYmd?: string;
+  },
+  byResource: Map<string, ScanAllocation[]>,
+): number {
+  if (order.resources.length === 0) return Number.MAX_SAFE_INTEGER;
+  const step = Math.max(1, input.slotMinutes);
+  let windows = 0;
+  let ymd = bakuDateKey(input.now);
+  for (let day = 0; day < 40 && ymd < input.horizonEndYmd; day++) {
+    const cursorDay = ymd;
+    ymd = addBakuDays(ymd, 1);
+    if (input.closedYmds.has(cursorDay)) continue;
+    const win = windowForDay(order, cursorDay);
+    const endHour =
+      input.noonCheckoutYmd && cursorDay === input.noonCheckoutYmd
+        ? Math.min(win.endHour, 12)
+        : win.endHour;
+    if (endHour <= win.startHour) continue;
+    let slot = bakuWallTime(bakuDayBounds(cursorDay).start, win.startHour);
+    if (cursorDay === bakuDateKey(input.now) && input.now.getTime() > slot.getTime()) {
+      slot = snapUpToSlot(input.now, step);
+    }
+    for (let guard = 0; guard < 300; guard++) {
+      if (bakuDateKey(slot) !== cursorDay) break;
+      if (bakuHourMinute(slot).hour >= endHour) break;
+      const hour = bakuHourMinute(slot).hour;
+      const lunchStart = order.typeHours.lunchStartHour;
+      const lunchEnd = order.typeHours.lunchEndHour;
+      if (hour >= lunchStart && hour < lunchEnd) {
+        slot = bakuWallTime(slot, lunchEnd);
+        continue;
+      }
+      if (!order.afterLunchAllowed && hour >= lunchEnd) break;
+      if (!order.beforeLunchAllowed && hour < lunchEnd) {
+        slot = bakuWallTime(slot, lunchEnd);
+        continue;
+      }
+      const slotEnd = addMinutes(slot, order.durationMin);
+      if (bakuDateKey(slotEnd) !== cursorDay || bakuHourMinute(slotEnd).hour > endHour) break;
+      const overlapsLunch =
+        slot.getTime() < bakuWallTime(slot, lunchEnd).getTime() &&
+        slotEnd.getTime() > bakuWallTime(slot, lunchStart).getTime();
+      if (overlapsLunch) {
+        slot = bakuWallTime(slot, lunchEnd);
+        continue;
+      }
+      const open = order.resources.some(
+        (resource) =>
+          resourceUsed(byResource.get(resource.id) ?? [], resource.id, slot, slotEnd, order.id) <
+          resource.capacity,
+      );
+      if (open) windows += 1;
+      slot = addMinutes(slot, step);
+    }
+  }
+  return windows;
+}
+
+/**
  * Place each order on the first legal slot inside the stay.
  * Occupancy, staff and rules are the arrays passed in — this function does not touch the database.
  * Later orders in the same batch see earlier placements.

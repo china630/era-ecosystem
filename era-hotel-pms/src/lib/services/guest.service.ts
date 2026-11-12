@@ -169,6 +169,14 @@ function guestListWhere(input: ListGuestsQuery): Prisma.GuestWhereInput {
   return { AND: and };
 }
 
+export async function linkGuestGlobalPerson(guestId: string, globalPersonId: string) {
+  await prisma.guest.update({
+    where: { id: guestId },
+    data: { globalPersonId },
+  });
+  return { globalPersonId };
+}
+
 export async function listGuests(
   input: ListGuestsQuery | string = {},
 ): Promise<PaginatedList<GuestListItem>> {

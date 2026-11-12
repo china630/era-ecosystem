@@ -76,14 +76,14 @@ export default function BanquetDetailPage() {
   }, [params.id, resourceSaloonId]);
 
   useEffect(() => {
-    if (can(PERMISSIONS.RESERVATIONS_READ)) void load();
+    if (can(PERMISSIONS.BANQUETS_READ)) void load();
   }, [can, load]);
 
   useEffect(() => {
     if (!lineKind && lineKindOptions[0]) setLineKind(lineKindOptions[0].value);
   }, [lineKind, lineKindOptions]);
 
-  if (!can(PERMISSIONS.RESERVATIONS_READ)) {
+  if (!can(PERMISSIONS.BANQUETS_READ)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
@@ -263,7 +263,7 @@ export default function BanquetDetailPage() {
             >
               {t('printDaySheet')}
             </button>
-            {event?.status === 'DRAFT' && can(PERMISSIONS.RESERVATIONS_WRITE) && (
+            {event?.status === 'DRAFT' && can(PERMISSIONS.BANQUETS_WRITE) && (
               <>
                 <FieldSelect
                   label={t('preferredFolio')}
@@ -377,7 +377,7 @@ export default function BanquetDetailPage() {
               </li>
             ))}
           </ul>
-          {event?.status === 'DRAFT' && can(PERMISSIONS.RESERVATIONS_WRITE) && (
+          {event?.status === 'DRAFT' && can(PERMISSIONS.BANQUETS_WRITE) && (
             <form onSubmit={addResource} className={`${FORM_STACK_CLASS} mt-6 max-w-md`}>
               <CatalogField
                 kind="ENTITY_REF"

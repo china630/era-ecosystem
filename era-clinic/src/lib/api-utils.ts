@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import {
   readSatelliteStaffSession,
+  type SatelliteStaffSession,
   type SatelliteStaffSessionPayload,
   SATELLITE_ROLE,
   sessionHasRole,
   type SatelliteSessionPayload,
 } from "@era/satellite-kit";
+import { nestHttpFrame } from "@/lib/nest-http-context";
 import { isSatelliteBillingBlockedError } from "@era/satellite-kit/billing/gate";
 import {
   hasClinicAdminAccess,
@@ -21,11 +23,7 @@ import {
 } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 
-import { scheduleClinicHttpMutationAudit } from "@/lib/mutation-audit-belt";
-
 export function jsonOk<T>(data: T, status = 200) {
-  // Layer A HTTP belt — ADR era-mutation-audit-standard / CLI-19 Layer A
-  scheduleClinicHttpMutationAudit(status);
   return NextResponse.json(data, { status });
 }
 
@@ -104,6 +102,7 @@ export function handleRouteError(err: unknown) {
       "NO_OPEN_EPISODE",
       "LAB_NOT_ORDERED",
       "LAB_ALREADY_OPEN",
+      "LAB_UNPAID_EXISTS",
       "LAB_ALREADY_COMPLETED",
       "LAB_OVER_QUOTA_BLOCKED",
       "IN_USE",
@@ -154,42 +153,60 @@ export function handleRouteError(err: unknown) {
  * No session → null (401); module off → IndustryModuleInactiveError (403).
  * Call once per handler, inside try, and pass the session on.
  */
+export type ClinicSessionUser = {
+  organizationId: string;
+  active: boolean;
+  role: { code: string; permissionsJson: string | null };
+};
+
+export async function loadClinicSessionUser(session: {
+  sub: string;
+}): Promise<ClinicSessionUser | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: session.sub },
+    select: {
+      organizationId: true,
+      status: true,
+      role: { select: { code: true, permissionsJson: true } },
+    },
+  });
+  return user
+    ? { organizationId: user.organizationId, active: user.status === "ACTIVE", role: user.role }
+    : null;
+}
+
+export async function enrichClinicStaffSession(
+  staff: SatelliteStaffSession<ClinicSessionUser>,
+  pathname?: string,
+): Promise<SatelliteStaffSessionPayload> {
+  const { session, user } = staff;
+  const { assertClinicApiEntitled } = await import("@/lib/clinic-module-gate");
+  await assertClinicApiEntitled(pathname, session.organizationId);
+  const permissions = hasClinicPermissionBypass(session)
+    ? [...ALL_CLINIC_PERMISSIONS]
+    : effectiveRolePermissions(user.role.code, user.role.permissionsJson ?? "[]");
+  return { ...session, permissions };
+}
+
 export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayload | null> {
-  let cookieStore: Awaited<ReturnType<typeof cookies>>;
-  let headerStore: Awaited<ReturnType<typeof headers>>;
+  let cookieStore: { get(name: string): { value: string } | undefined };
+  let headerStore: { get(name: string): string | null };
   try {
     cookieStore = await cookies();
     headerStore = await headers();
   } catch {
-    return null;
+    const frame = nestHttpFrame();
+    if (!frame) return null;
+    cookieStore = frame.cookies;
+    headerStore = frame.headers;
   }
   const staff = await readSatelliteStaffSession({
     cookies: cookieStore,
     headers: headerStore,
-    loadUser: async ({ sub }) => {
-      const user = await prisma.user.findUnique({
-        where: { id: sub },
-        select: {
-          organizationId: true,
-          status: true,
-          role: { select: { code: true, permissionsJson: true } },
-        },
-      });
-      return user
-        ? { organizationId: user.organizationId, active: user.status === "ACTIVE", role: user.role }
-        : null;
-    },
+    loadUser: loadClinicSessionUser,
   });
   if (!staff) return null;
-  const { session, user } = staff;
-
-  const { assertClinicApiEntitled } = await import("@/lib/clinic-module-gate");
-  await assertClinicApiEntitled(undefined, session.organizationId);
-
-  const permissions = hasClinicPermissionBypass(session)
-    ? [...ALL_CLINIC_PERMISSIONS]
-    : effectiveRolePermissions(user.role.code, user.role.permissionsJson);
-  return { ...session, permissions };
+  return enrichClinicStaffSession(staff);
 }
 
 /** @deprecated Prefer hasClinicAdminAccess — name implies role-code bypass. */

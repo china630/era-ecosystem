@@ -21,6 +21,7 @@ import {
   TEXT_SUCCESS_CLASS,
 } from '@era/satellite-kit/ui';
 import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { readSettlement, swapCounterpartRoom, type ClassSettlement } from '@/lib/room-move-settlement';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
 import { NightsCountField } from '@/components/reservation-card/NightsCountField';
@@ -70,15 +71,27 @@ function gridPriceLabel(rp: RatePlanOption, roomTypeId: string, adults: string, 
   return cell ? ` · ${cell.sellPrice}` : '';
 }
 
+function settlementWord(code: ClassSettlement, t: (key: string) => string) {
+  if (code === 'HOTEL') return t('classHotelCovers');
+  if (code === 'GUEST_PAY') return t('classGuestPays');
+  if (code === 'HOTEL_REFUND') return t('classHotelRefund');
+  return t('classGuestCheaper');
+}
+
 function moveReasonLabel(
   code: string | null | undefined,
   notes: string | null | undefined,
-  t: (key: string) => string,
+  t: (key: string, values?: Record<string, string>) => string,
 ): string {
   const raw = (code ?? '').trim();
   const note = (notes ?? '').trim();
   if (raw === 'CARD_ASSIGN' || note === 'CARD_ASSIGN') return t('roomMoveReasonCard');
-  if (raw === 'SWAP') return t('roomMoveReasonSwap');
+  if (raw === 'SWAP') {
+    const room = swapCounterpartRoom(note);
+    const base = room ? t('roomMoveReasonSwapWith', { room }) : t('roomMoveReasonSwap');
+    const settlement = readSettlement(note);
+    return settlement ? `${base} · ${settlementWord(settlement, t)}` : base;
+  }
   if (raw === 'RELOCATE' || raw === 'RACK_DND') return t('roomMoveReasonRelocate');
   if (raw === 'GUEST_REFUSED') return t('moveReason.GUEST_REFUSED');
   if (raw === 'DID_NOT_OCCUPY') return t('moveReason.DID_NOT_OCCUPY');
@@ -99,6 +112,7 @@ function RoomMoves({
     toRoom?: { roomNumber: string } | null;
     reasonCode?: string | null;
     notes?: string | null;
+    createdByName?: string | null;
   }>;
   slices?: Array<{
     id: string;
@@ -123,6 +137,7 @@ function RoomMoves({
             <li key={c.id}>
               {c.fromRoom?.roomNumber ?? '—'} → {c.toRoom?.roomNumber ?? '—'},{' '}
               {bakuDateTimeDisplay(c.effectiveAt)}, {moveReasonLabel(c.reasonCode, c.notes, t)}
+              {c.createdByName ? ` · ${c.createdByName}` : ''}
               {c.status === 'PENDING' ? ` · ${t('roomMoveWaiting')}` : ''}
             </li>
           ))}
@@ -302,6 +317,7 @@ export type ReservationCardLeftPanelProps = {
     toRoom?: { roomNumber: string } | null;
     reasonCode?: string | null;
     notes?: string | null;
+    createdByName?: string | null;
   }>;
   salesContractId: string;
   roomPayer: 'GUEST' | 'AGENCY' | 'COMPANY';

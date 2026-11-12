@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 export const LAB_ALREADY_OPEN = "LAB_ALREADY_OPEN";
 export const LAB_ALREADY_COMPLETED = "LAB_ALREADY_COMPLETED";
+/** Priced order still has no settledAt. A repeat must not open a second cheque. */
+export const LAB_UNPAID_EXISTS = "LAB_UNPAID_EXISTS";
 
 const OPEN_DUPLICATE_STATUSES = [
   "ORDERED",
@@ -15,7 +17,7 @@ const OPEN_DUPLICATE_STATUSES = [
 const COMPLETED_DUPLICATE_STATUSES = ["PUBLISHED", "COMPLETED"] as const;
 
 export type EpisodeLabConflict = {
-  kind: "OPEN" | "COMPLETED";
+  kind: "OPEN" | "COMPLETED" | "UNPAID";
   orderId: string;
   testCode: string;
 };
@@ -39,6 +41,8 @@ type LabConflictDb = {
         id: string;
         status: string;
         testCode: string;
+        amountNet?: unknown;
+        settledAt?: Date | null;
         items: Array<{ serviceCode: string }>;
       }>
     >;
@@ -50,11 +54,14 @@ function scanConflicts(
     id: string;
     status: string;
     testCode: string;
+    amountNet?: unknown;
+    settledAt?: Date | null;
     items: Array<{ serviceCode: string }>;
   }>,
   wanted: Set<string>,
 ): EpisodeLabConflict | null {
   let openHit: EpisodeLabConflict | null = null;
+  let unpaidHit: EpisodeLabConflict | null = null;
   let completedHit: EpisodeLabConflict | null = null;
   for (const order of orders) {
     const codes = orderServiceCodes(
@@ -68,6 +75,17 @@ function scanConflicts(
       openHit = { kind: "OPEN", orderId: order.id, testCode: hit };
       break;
     }
+    const pricedUnsettled = Number(order.amountNet) > 0 && !order.settledAt;
+    if (
+      !unpaidHit &&
+      pricedUnsettled &&
+      COMPLETED_DUPLICATE_STATUSES.includes(
+        order.status as (typeof COMPLETED_DUPLICATE_STATUSES)[number],
+      )
+    ) {
+      unpaidHit = { kind: "UNPAID", orderId: order.id, testCode: hit };
+      continue;
+    }
     if (
       !completedHit &&
       COMPLETED_DUPLICATE_STATUSES.includes(
@@ -77,7 +95,7 @@ function scanConflicts(
       completedHit = { kind: "COMPLETED", orderId: order.id, testCode: hit };
     }
   }
-  return openHit ?? completedHit;
+  return openHit ?? unpaidHit ?? completedHit;
 }
 
 /** Same patient, any episode and orders with no episode. */
@@ -146,6 +164,14 @@ export function assertLabOrderCanCreate(
       `An open lab order already exists for ${conflict.testCode} for this patient`,
     );
     (err as Error & { code?: string; testCode?: string }).code = LAB_ALREADY_OPEN;
+    (err as Error & { testCode?: string }).testCode = conflict.testCode;
+    throw err;
+  }
+  if (conflict.kind === "UNPAID") {
+    const err = new Error(
+      `Lab ${conflict.testCode} is already on this stay and its cheque is still unpaid`,
+    );
+    (err as Error & { code?: string; testCode?: string }).code = LAB_UNPAID_EXISTS;
     (err as Error & { testCode?: string }).testCode = conflict.testCode;
     throw err;
   }

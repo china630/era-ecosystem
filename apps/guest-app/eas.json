@@ -1,0 +1,31 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_ORGANIZATION_ID": "${EXPO_PUBLIC_ORGANIZATION_ID}",
+        "EXPO_PUBLIC_ORCH_URL": "${EXPO_PUBLIC_ORCH_URL}",
+        "EXPO_PUBLIC_HOTEL_URL": "${EXPO_PUBLIC_HOTEL_URL}"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_ORGANIZATION_ID": "${EXPO_PUBLIC_ORGANIZATION_ID}",
+        "EXPO_PUBLIC_ORCH_URL": "${EXPO_PUBLIC_ORCH_URL}",
+        "EXPO_PUBLIC_HOTEL_URL": "${EXPO_PUBLIC_HOTEL_URL}"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

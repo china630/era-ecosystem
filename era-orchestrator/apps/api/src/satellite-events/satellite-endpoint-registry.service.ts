@@ -129,6 +129,18 @@ export class SatelliteEndpointRegistryService {
    * Owner / workspace launcher base URL: SatelliteEndpoint registry first,
    * then NEXT_PUBLIC_* / ERA_*_ORIGIN for local-dev. Does not return secrets.
    */
+  findOrganizationSatelliteEntitlement(
+    organizationId: string,
+    satelliteKey: string,
+  ) {
+    return this.prisma.organizationSatelliteEntitlement.findUnique({
+      where: {
+        organizationId_satelliteKey: { organizationId, satelliteKey },
+      },
+      select: { suspendedAt: true },
+    });
+  }
+
   async resolveLaunchBaseUrl(
     organizationId: string,
     satelliteKey: string,

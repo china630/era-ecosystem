@@ -15,16 +15,23 @@ import {
 } from "@/lib/auth/permissions";
 import {
   HOTEL_LEGACY_PERMISSION_STRINGS,
+  expandCatalogV5,
+  expandCatalogV6,
+  expandCatalogV7,
+  expandCatalogV8,
+  expandEntityGrants,
   remapPermissionList,
   withPairedScreens,
 } from "@/lib/auth/hotel-permission-rename";
 
 /**
+ * Wave 4: split guest / banquet / concierge / tours / transfers / fleet / POS / spa places
+ * off reservations.* (catalogVersion 4).
  * Wave 3: pair screen:* with api:/admin: (catalogVersion 3).
  * Wave 2: fleet-canon rename (catalogVersion 2).
  * Wave 1 additive (0→1) still applied when jumping from v0.
  */
-export const HOTEL_PERMISSION_CATALOG_VERSION = 3;
+export const HOTEL_PERMISSION_CATALOG_VERSION = 8;
 
 /** Only these keys are one-shot-added on catalogVersion 0→1 (before Wave-2 remap). */
 export const WAVE1_ADDITIVE_PERMISSIONS: Permission[] = [
@@ -243,6 +250,26 @@ export function bumpCatalogVersionPatch(row: RoleRow): {
 
   if (ver < 3) {
     next = withPairedScreens(next) as Permission[];
+  }
+
+  if (ver < 4) {
+    next = withPairedScreens(expandEntityGrants(next)) as Permission[];
+  }
+
+  if (ver < 5) {
+    next = withPairedScreens(expandCatalogV5(next)) as Permission[];
+  }
+
+  if (ver < 6) {
+    next = withPairedScreens(expandCatalogV6(next)) as Permission[];
+  }
+
+  if (ver < 7) {
+    next = withPairedScreens(expandCatalogV7(next)) as Permission[];
+  }
+
+  if (ver < 8) {
+    next = withPairedScreens(expandCatalogV8(next)) as Permission[];
   }
 
   const remapped = serializePermissions(next);

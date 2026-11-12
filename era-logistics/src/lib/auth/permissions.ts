@@ -15,6 +15,7 @@ export const PERMISSIONS = {
   SCREEN_ADMIN_ACCESS: "screen:admin.access",
 
   TRIPS: "api:trips",
+  TRIPS_READ: "api:trips.read",
   TRIPS_WAYBILL: "api:trips.waybill",
   TRIPS_POD: "api:trips.pod",
   TRIPS_COMPLETE: "api:trips.complete",
@@ -69,7 +70,28 @@ export const ROLE_ALIASES: Record<string, RoleCode> = {
   COURIER: ROLE_CODES.DRIVER,
 };
 
-export const PERMISSION_CATALOG_VERSION = 1;
+export const PERMISSION_CATALOG_VERSION = 2;
+
+export const READ_OF_WRITE: Readonly<Record<string, Permission>> = {
+  [PERMISSIONS.TRIPS]: PERMISSIONS.TRIPS_READ,
+};
+
+export function expandEntityReads(keys: readonly string[]): Permission[] {
+  const out: Permission[] = [];
+  const have = new Set<string>();
+  const add = (key: string) => {
+    if (!have.has(key)) {
+      have.add(key);
+      out.push(key as Permission);
+    }
+  };
+  for (const key of keys) add(key);
+  for (const key of keys) {
+    const read = READ_OF_WRITE[key];
+    if (read) add(read);
+  }
+  return out;
+}
 
 export type PermissionGroup = {
   id: string;
@@ -97,6 +119,7 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     labelKey: "groups.trips",
     permissions: [
       PERMISSIONS.TRIPS,
+      PERMISSIONS.TRIPS_READ,
       PERMISSIONS.TRIPS_WAYBILL,
       PERMISSIONS.TRIPS_POD,
       PERMISSIONS.TRIPS_COMPLETE,
@@ -145,8 +168,36 @@ const OPS_TEMPLATE: readonly Permission[] = [
 /** Seed packages. Driver and dispatcher keep the same trip flow (the PRD split is not enforced today); settings and access go to the dispatcher. */
 export const ROLE_TEMPLATES: Record<RoleCode, readonly Permission[]> = {
   DISPATCHER: ALL_PERMISSIONS,
-  DRIVER: OPS_TEMPLATE,
+  DRIVER: expandEntityReads(OPS_TEMPLATE),
   BUSINESS_OWNER: ALL_PERMISSIONS,
-  PLATFORM_MEMBER: OPS_TEMPLATE,
-  SATELLITE_OPERATOR: OPS_TEMPLATE,
+  PLATFORM_MEMBER: expandEntityReads(OPS_TEMPLATE),
+  SATELLITE_OPERATOR: expandEntityReads(OPS_TEMPLATE),
 };
+
+export type AccessColumn = "view" | "change" | "operate" | "admin";
+
+export const ENTITY_ACCESS_MATRIX: {
+  id: string;
+  cells: Partial<Record<AccessColumn, Permission[]>>;
+}[] = [
+  {
+    id: "trip",
+    cells: {
+      view: [PERMISSIONS.TRIPS_READ, PERMISSIONS.SCREEN_TRIPS, PERMISSIONS.SCREEN_TRIPS_DETAIL, PERMISSIONS.SCREEN_HOME],
+      change: [PERMISSIONS.TRIPS],
+      operate: [PERMISSIONS.TRIPS_WAYBILL, PERMISSIONS.TRIPS_POD, PERMISSIONS.TRIPS_COMPLETE, PERMISSIONS.TRIPS_POINTS],
+    },
+  },
+  { id: "driver", cells: { view: [PERMISSIONS.DRIVER_TRIPS] } },
+  { id: "fleet", cells: { view: [PERMISSIONS.FLEET_ALERTS, PERMISSIONS.SCREEN_FLEET], operate: [PERMISSIONS.HUB_SCAN] } },
+  { id: "customs", cells: { view: [PERMISSIONS.CUSTOMS_PREVIEW, PERMISSIONS.SCREEN_CUSTOMS] } },
+  { id: "fuel", cells: { view: [PERMISSIONS.REPORTS_FUEL, PERMISSIONS.SCREEN_REPORTS_FUEL] } },
+  { id: "cod", cells: { operate: [PERMISSIONS.COD_SETTLE] } },
+  {
+    id: "access",
+    cells: {
+      view: [PERMISSIONS.SCREEN_ADMIN_ACCESS, PERMISSIONS.SCREEN_ADMIN_SETTINGS],
+      admin: [PERMISSIONS.ACCESS_MANAGE],
+    },
+  },
+];

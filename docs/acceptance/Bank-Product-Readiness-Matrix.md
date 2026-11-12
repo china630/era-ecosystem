@@ -13,6 +13,10 @@
 **Row rollup** = worst(Gate, Scaffold BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.  
 **Line rollup** = worst across **all** module rows in § Modules × layers.
 
+**Closeout (2026-11-10 access denied):** A missing screen grant opens `/access-denied`. AC-BNK-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
+**Closeout (2026-11-10 entity grid):** `/admin/access` is an entity × View / Change / Operate / Admin grid. No new permission keys. AC-BNK-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
 ---
 
 ## Line summary (SSOT readiness)

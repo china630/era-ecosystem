@@ -20,9 +20,9 @@ import {
 import { Prisma } from "@era365/database";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { SuperAdminGuard } from "../common/guards/super-admin.guard";
-import { PrismaService } from "../prisma/prisma.service";
 import { SatelliteOrgBindSyncService } from "./satellite-org-bind-sync.service";
 import { DataHubAdminClient } from "./data-hub-admin.client";
+import { AdminOrganizationsService } from "./admin-organizations.service";
 
 class PolicyRowDto {
   @IsString()
@@ -68,7 +68,7 @@ function readReferenceSource(settings: Prisma.JsonValue): "hub" | "excel" {
 export class AdminReferenceController {
   constructor(
     private readonly hub: DataHubAdminClient,
-    private readonly prisma: PrismaService,
+    private readonly organizations: AdminOrganizationsService,
     private readonly sync: SatelliteOrgBindSyncService,
   ) {}
 
@@ -87,12 +87,7 @@ export class AdminReferenceController {
   @Get("orgs")
   @ApiOperation({ summary: "Per-org reference source (hub or excel)" })
   async orgs() {
-    const rows = await this.prisma.organization.findMany({
-      where: { deletedAt: null },
-      select: { id: true, name: true, publicOrgNumber: true, settings: true },
-      orderBy: { name: "asc" },
-      take: 200,
-    });
+    const rows = await this.organizations.listOrganizationsForReferenceSource();
     return {
       orgs: rows.map((row) => ({
         id: row.id,
@@ -109,10 +104,8 @@ export class AdminReferenceController {
     @Param("orgId") orgId: string,
     @Body() body: UpdateOrgReferenceSourceDto,
   ) {
-    const org = await this.prisma.organization.findUnique({
-      where: { id: orgId },
-      select: { id: true, settings: true, deletedAt: true },
-    });
+    const org =
+      await this.organizations.findOrganizationForReferenceSourcePatch(orgId);
     if (!org || org.deletedAt) {
       throw new BadRequestException("Organization not found");
     }
@@ -120,12 +113,10 @@ export class AdminReferenceController {
       org.settings && typeof org.settings === "object" && !Array.isArray(org.settings)
         ? (org.settings as Record<string, unknown>)
         : {};
-    await this.prisma.organization.update({
-      where: { id: orgId },
-      data: {
-        settings: { ...current, referenceSource: body.referenceSource } as Prisma.InputJsonValue,
-      },
-    });
+    await this.organizations.updateOrganizationReferenceSourceSettings(orgId, {
+      ...current,
+      referenceSource: body.referenceSource,
+    } as Prisma.InputJsonValue);
     const pushed = await this.sync.syncForOrg(orgId);
     return { id: orgId, referenceSource: body.referenceSource, sync: pushed };
   }

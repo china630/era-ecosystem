@@ -108,6 +108,7 @@ const EN: Dict = {
   nurseDay: "Nurse day sheet",
   staff: "Staff",
   allStaff: "All staff",
+  noStaff: "No masseur",
 };
 
 const RU: Dict = {
@@ -215,6 +216,7 @@ const RU: Dict = {
   nurseDay: "Лист медсестры",
   staff: "Сотрудник",
   allStaff: "Все сотрудники",
+  noStaff: "Без массажиста",
   openAttendance: "Свободное посещение",
 };
 
@@ -323,6 +325,7 @@ const AZ: Dict = {
   nurseDay: "Tibb bacısı vərəqi",
   staff: "İşçi",
   allStaff: "Bütün işçilər",
+  noStaff: "Masajçı yoxdur",
   openAttendance: "Sərbəst ziyarət",
 };
 

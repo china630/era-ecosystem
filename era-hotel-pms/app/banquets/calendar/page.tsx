@@ -49,10 +49,10 @@ export default function BanquetCalendarPage() {
   }, [from, to, tc]);
 
   useEffect(() => {
-    if (can(PERMISSIONS.RESERVATIONS_READ)) void load();
+    if (can(PERMISSIONS.BANQUETS_READ)) void load();
   }, [can, load]);
 
-  if (!can(PERMISSIONS.RESERVATIONS_READ)) {
+  if (!can(PERMISSIONS.BANQUETS_READ)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 

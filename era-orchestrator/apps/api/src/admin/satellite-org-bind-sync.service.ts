@@ -319,6 +319,18 @@ export class SatelliteOrgBindSyncService {
     if (source === "hub" || source === "excel") {
       body.referenceSource = source;
     }
+    const placementFreeze = settings.placementFreeze;
+    if (
+      placementFreeze &&
+      typeof placementFreeze === "object" &&
+      !Array.isArray(placementFreeze) &&
+      (placementFreeze as { active?: unknown }).active === true
+    ) {
+      body.placementFreeze = true;
+      body.placementFrozenOrgIds = [organizationId];
+    } else {
+      body.placementFreeze = false;
+    }
     if (org?.deletedAt) {
       body.revokePublicOrgNumber = true;
       body.loginHostnames = [];

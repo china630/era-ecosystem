@@ -20,30 +20,21 @@ describe("CounterpartiesController degraded mode", () => {
   });
 
   it("creates counterparty manually and writes audit event when e-taxes path fails", async () => {
-    const prisma = {
-      counterparty: {
-        findFirst: jest
-          .fn()
-          .mockResolvedValueOnce(null) // dup check
-          .mockResolvedValueOnce(null), // update path lookup not used
-        create: jest.fn().mockResolvedValue({
-          id: "cp-1",
-          organizationId: "org-1",
-          taxId: "1234567890",
-          name: "Manual LLC",
-        }),
-      },
-      auditLog: {
-        create: jest.fn().mockResolvedValue({}),
-      },
-    } as any;
     const svc = {
+      findCounterpartyByTaxIdBlindIndex: jest.fn().mockResolvedValue(null),
       findOrCreateByVoen: jest.fn().mockRejectedValue(new Error("e-taxes down")),
+      createDegradedModeEtaxesAuditLog: jest.fn().mockResolvedValue(undefined),
+      createLocalCounterparty: jest.fn().mockResolvedValue({
+        id: "cp-1",
+        organizationId: "org-1",
+        taxId: "1234567890",
+        name: "Manual LLC",
+      }),
       syncDirectoryAfterLocalSave: jest.fn().mockResolvedValue(undefined),
     } as any;
     const mdm = { lookupByFin: jest.fn() } as any;
     const dataHub = { isEnabled: jest.fn().mockReturnValue(false), getCompanyByVoen: jest.fn() } as any;
-    const controller = new CounterpartiesController(prisma, svc, mdm, dataHub);
+    const controller = new CounterpartiesController(svc, mdm, dataHub);
 
     const out = await controller.create("org-1", {
       name: "Manual LLC",
@@ -57,12 +48,11 @@ describe("CounterpartiesController degraded mode", () => {
     });
 
     expect(out.id).toBe("cp-1");
-    expect(prisma.auditLog.create).toHaveBeenCalled();
-    expect(prisma.counterparty.create).toHaveBeenCalled();
+    expect(svc.createDegradedModeEtaxesAuditLog).toHaveBeenCalled();
+    expect(svc.createLocalCounterparty).toHaveBeenCalled();
   });
 
   it("delegates merge request to service", async () => {
-    const prisma = {} as any;
     const svc = {
       mergeCounterparties: jest
         .fn()
@@ -70,7 +60,7 @@ describe("CounterpartiesController degraded mode", () => {
     } as any;
     const mdm = { lookupByFin: jest.fn() } as any;
     const dataHub = { isEnabled: jest.fn().mockReturnValue(false), getCompanyByVoen: jest.fn() } as any;
-    const controller = new CounterpartiesController(prisma, svc, mdm, dataHub);
+    const controller = new CounterpartiesController(svc, mdm, dataHub);
 
     const out = await controller.merge("org-1", {
       sourceId: "11111111-1111-4111-8111-111111111111",

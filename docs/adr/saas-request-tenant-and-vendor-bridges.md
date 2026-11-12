@@ -109,7 +109,7 @@ These are **not** Nafta Elektraweb ids. They belong to the **hotel (or clinic) p
 | **8** | EW ingest stamps: `bridgeRequestOrganizationId` (ALS first) in folio/reservation/resnameid | **Landed** — HOT-06 still not SHIPPED |
 | **9** | Live SHARED pool smoke scripts (hotel + clinic, `ERA_WAVE9_POOL_SMOKE`) + field runbooks / signoff middle tier | **Landed** — field evidence open; TENANT 🟡; HOT-06 not SHIPPED |
 | **10** | Cron org DB-discover: `listOrganizationIds` + User DISTINCT; env `ERA_CRON_ORGANIZATION_IDS` still wins | **Superseded** — orch registry only (kit `listCronOrganizationIds`); see §7 |
-| **11** | Hotel curated JSON org-slice dump + orch `sliceMeta` counts; lab import validate | **Landed** — AC-CP-TOPO 🟡; host apply open; not SHIPPED / not `ga` |
+| **11** | Org-slice dump + orch `sliceMeta` (curated v1 → **OrgFullSliceV2** product path) | **Landed** — AC-CP-TOPO 🟡; host apply / field UAT open; not SHIPPED / not `ga` |
 | **12** | Honesty closeout: status drift fix + acceptance SaaS false-green bans | **Landed** — no Scaffold/SHIPPED/`ga` flips |
 
 Nafta on **ERA cloud** as the first hotel org in a SHARED-ready process is allowed **after wave 1**. Until wave 1, enabling the current env bridge on a process that already hosts other hotel orgs is **forbidden** (wrong folio / wrong `HOTELID`).
@@ -124,7 +124,7 @@ Nafta on **ERA cloud** as the first hotel org in a SHARED-ready process is allow
 - **Wave 8:** Elektraweb ingest create/update stamps use `bridgeRequestOrganizationId()` (ALS before process bind) — SHARED pool no longer stamps wrong org via `satelliteOrganizationId()` on folio/reservation/resnameid.
 - **Wave 9:** opt-in live pool smoke (`ERA_WAVE9_POOL_SMOKE=1`) + HOT-06 field runbook; field signoff rows stay pending — live smoke ≠ Scaffold ✅ / SHIPPED.
 - **Wave 10:** cron `listOrganizationIds` (DISTINCT staff `User`) when env unset; env override wins; org without User rows skipped — not TENANT Scaffold ✅.
-- **Wave 11:** hotel curated JSON slice (role/user/guest) + orch `sliceMeta`; host compose/restore still open — AC-CP-TOPO 🟡.
+- **Wave 11:** org slice + orch `sliceMeta`; product path now **OrgFullSliceV2** (hotel/clinic DMMF full-org; other sats fail-closed); host compose/restore / field UAT still open — AC-CP-TOPO 🟡.
 - **Wave 12:** honesty closeout — [SaaS-Honesty-Closeout.md](../acceptance/SaaS-Honesty-Closeout.md); `check:acceptance` SaaS bans; no claim flips.
 - AC-*-TENANT / AC-CP-TOPO stay 🟡 (no live SHARED pool field UAT / Scaffold ✅).
 - Do not mark edition `ga` or “SaaS pool ready” from this ADR alone.

@@ -12,9 +12,8 @@ import { ConfigService } from "@nestjs/config";
 import { IsOptional, IsString } from "class-validator";
 import { BankAuthGuard } from "../../auth/bank-auth.guard";
 import { BankingModuleGuard, RequireBankingModule } from "../../auth/banking-module.guard";
-import { BankOrgConfig } from "../../common/bank-org.config";
-import { PrismaService } from "../../prisma/prisma.service";
 import { signCustomerJwt, verifyCustomerJwt } from "./dbo-crypto.util";
+import { DboAccountsService } from "./dbo-accounts.service";
 import { DboOpenApiService } from "./dbo-open-api.service";
 import { OpenApiGuard, type OpenApiRequest } from "./open-api.guard";
 
@@ -26,19 +25,12 @@ export class DboOpenAccountsController {
   constructor(
     private readonly openApi: DboOpenApiService,
     private readonly config: ConfigService,
-    private readonly prisma: PrismaService,
-    private readonly bankOrg: BankOrgConfig,
+    private readonly accounts: DboAccountsService,
   ) {}
 
   private async authFromKey(req: OpenApiRequest) {
     const key = req.openApiKey!;
-    const accounts = await this.prisma.account.findMany({
-      where: {
-        bankOrgId: this.bankOrg.bankOrgId,
-        customerId: key.customerId,
-        status: "ACTIVE",
-      },
-    });
+    const accounts = await this.accounts.listActiveAccountsForCustomer(key.customerId);
     const secret = this.config.get<string>("BANK_DBO_JWT_SECRET") ?? "";
     const customerJwt = signCustomerJwt(
       {
@@ -71,11 +63,6 @@ export class DboOpenAccountsController {
   @Get("consents")
   async listConsents(@Req() req: OpenApiRequest) {
     this.openApi.assertPermission(req.openApiKey!, "accounts:read");
-    return this.prisma.openBankingConsent.findMany({
-      where: {
-        bankOrgId: this.bankOrg.bankOrgId,
-        customerId: req.openApiKey!.customerId,
-      },
-    });
+    return this.accounts.listOpenBankingConsents(req.openApiKey!.customerId);
   }
 }

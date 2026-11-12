@@ -459,8 +459,8 @@ export default function LabOrdersPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      if (res.status === 409 && data.code === "LAB_ALREADY_OPEN") {
-        showApiError(data, t("labAlreadyOpen"));
+      if (res.status === 409 && (data.code === "LAB_ALREADY_OPEN" || data.code === "LAB_UNPAID_EXISTS")) {
+        showApiError(data, data.code === "LAB_UNPAID_EXISTS" ? t("labUnpaidCheque") : t("labAlreadyOpen"));
         setPendingCreatePayload(null);
         return;
       }
@@ -726,7 +726,7 @@ export default function LabOrdersPage() {
                                 <td className={DATA_TABLE_TD_CLASS}>
                                   <button
                                     type="button"
-                                    className="font-medium text-[#2980B9] hover:underline"
+                                    className="text-left font-medium text-[#2980B9] hover:underline"
                                     onClick={(event) => {
                                       event.stopPropagation();
                                       setWorkflowId(order.id);

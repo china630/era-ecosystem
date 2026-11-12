@@ -50,13 +50,14 @@ export default async function PrintReceptionDayPage({ searchParams }: Props) {
         {" · "}
         <strong>{printLabel(lang, "staff")}:</strong> {sliceLabel}
       </p>
-      <table className="w-full border-collapse text-[10px]">
+      <table className="w-full border-collapse text-[12px]">
         <thead>
           <tr className="border-b border-black">
             <th className="p-1 text-left">{printLabel(lang, "no")}</th>
             <th className="p-1 text-left">{printLabel(lang, "time")}</th>
             <th className="p-1 text-left">{printLabel(lang, "procedureName")}</th>
             <th className="p-1 text-left">{printLabel(lang, "patient")}</th>
+            <th className="whitespace-nowrap p-1 text-left">{printLabel(lang, "hotelRoom")}</th>
             <th className="p-1 w-[34%] text-left">{printLabel(lang, "note")}</th>
           </tr>
         </thead>
@@ -67,6 +68,7 @@ export default async function PrintReceptionDayPage({ searchParams }: Props) {
               <td className="p-1 whitespace-nowrap">{row.time}</td>
               <td className="p-1">{row.name}</td>
               <td className="p-1">{row.patient}</td>
+              <td className="whitespace-nowrap p-1">{row.room}</td>
               <td className="p-1">{row.note}</td>
             </tr>
           ))}

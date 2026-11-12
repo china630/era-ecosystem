@@ -49,9 +49,9 @@ export default function PoliciesPage() {
   const tc = useTranslations('common');
   const { can } = useAuth();
   const canHk = can(PERMISSIONS.HOUSEKEEPING_MANAGE);
-  const canPrice = can(PERMISSIONS.MASTER_DATA_MANAGE);
+  const canPrice = can(PERMISSIONS.PRICING_ADMIN);
   const canPack = can(PERMISSIONS.USERS_MANAGE);
-  const canTours = can(PERMISSIONS.MASTER_DATA_MANAGE);
+  const canTours = can(PERMISSIONS.TOURS_WRITE);
 
   const [linen, setLinen] = useState(3);
   const [deep, setDeep] = useState(5);

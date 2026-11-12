@@ -33,6 +33,13 @@ export async function deleteWard(id: string) {
   await prisma.ward.delete({ where: { id } });
 }
 
+export async function listBedsByWard(wardId: string) {
+  return prisma.bed.findMany({
+    where: { wardId },
+    orderBy: { code: "asc" },
+  });
+}
+
 export async function createBed(data: {
   wardId: string;
   code: string;

@@ -201,3 +201,16 @@ export async function getOpsDaySummary(
 
   return summary;
 }
+
+export async function countExecutiveRangeMetrics(range: { start: Date; end: Date }) {
+  const visitWhere = {
+    createdAt: { gte: range.start, lt: range.end },
+  };
+  const [visitsToday, openLabOrders] = await Promise.all([
+    prisma.visit.count({ where: visitWhere }),
+    prisma.labOrder.count({
+      where: { status: { not: "COMPLETED" } },
+    }),
+  ]);
+  return { visitsToday, openLabOrders };
+}

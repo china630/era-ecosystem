@@ -89,10 +89,20 @@ export type OrganizationSatelliteEntitlement = $Result.DefaultSelection<Prisma.$
  */
 export type SatelliteEndpoint = $Result.DefaultSelection<Prisma.$SatelliteEndpointPayload>
 /**
+ * Model PlacementBatch
+ * One platform Start for an org: many satellite PlacementJobs under one recipe.
+ */
+export type PlacementBatch = $Result.DefaultSelection<Prisma.$PlacementBatchPayload>
+/**
  * Model PlacementJob
  * 
  */
 export type PlacementJob = $Result.DefaultSelection<Prisma.$PlacementJobPayload>
+/**
+ * Model PlacementProcessLog
+ * Append-only process timeline for placement batches/jobs (Wave 2+).
+ */
+export type PlacementProcessLog = $Result.DefaultSelection<Prisma.$PlacementProcessLogPayload>
 /**
  * Model WorkforceAssignment
  * Cross-org workforce registry — no PII, only MDM person reference.
@@ -369,6 +379,11 @@ export type OrganizationAccessCredential = $Result.DefaultSelection<Prisma.$Orga
  * Legal/branding SoR for print, letterhead, receipts (CP-ORG-PROFILE-01).
  */
 export type OrganizationProfile = $Result.DefaultSelection<Prisma.$OrganizationProfilePayload>
+/**
+ * Model OrganizationGuestApp
+ * White-label guest phone brand. Not letterhead (CP-GUEST-APP-01).
+ */
+export type OrganizationGuestApp = $Result.DefaultSelection<Prisma.$OrganizationGuestAppPayload>
 /**
  * Model OrganizationContactChannel
  * 
@@ -939,10 +954,21 @@ export const PlacementJobStatus: {
   SMOKE: 'SMOKE',
   DONE: 'DONE',
   FAILED: 'FAILED',
-  REJECTED: 'REJECTED'
+  REJECTED: 'REJECTED',
+  CONFIGURE: 'CONFIGURE',
+  IMPORT: 'IMPORT',
+  ROLLBACK: 'ROLLBACK'
 };
 
 export type PlacementJobStatus = (typeof PlacementJobStatus)[keyof typeof PlacementJobStatus]
+
+
+export const PlacementPackaging: {
+  PER_SATELLITE: 'PER_SATELLITE',
+  SINGLE_STACK: 'SINGLE_STACK'
+};
+
+export type PlacementPackaging = (typeof PlacementPackaging)[keyof typeof PlacementPackaging]
 
 
 export const WorkforceAssignmentStatus: {
@@ -1543,6 +1569,10 @@ export type PlacementJobStatus = $Enums.PlacementJobStatus
 
 export const PlacementJobStatus: typeof $Enums.PlacementJobStatus
 
+export type PlacementPackaging = $Enums.PlacementPackaging
+
+export const PlacementPackaging: typeof $Enums.PlacementPackaging
+
 export type WorkforceAssignmentStatus = $Enums.WorkforceAssignmentStatus
 
 export const WorkforceAssignmentStatus: typeof $Enums.WorkforceAssignmentStatus
@@ -2011,6 +2041,16 @@ export class PrismaClient<
   get satelliteEndpoint(): Prisma.SatelliteEndpointDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.placementBatch`: Exposes CRUD operations for the **PlacementBatch** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlacementBatches
+    * const placementBatches = await prisma.placementBatch.findMany()
+    * ```
+    */
+  get placementBatch(): Prisma.PlacementBatchDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.placementJob`: Exposes CRUD operations for the **PlacementJob** model.
     * Example usage:
     * ```ts
@@ -2019,6 +2059,16 @@ export class PrismaClient<
     * ```
     */
   get placementJob(): Prisma.PlacementJobDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.placementProcessLog`: Exposes CRUD operations for the **PlacementProcessLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlacementProcessLogs
+    * const placementProcessLogs = await prisma.placementProcessLog.findMany()
+    * ```
+    */
+  get placementProcessLog(): Prisma.PlacementProcessLogDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.workforceAssignment`: Exposes CRUD operations for the **WorkforceAssignment** model.
@@ -2569,6 +2619,16 @@ export class PrismaClient<
     * ```
     */
   get organizationProfile(): Prisma.OrganizationProfileDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.organizationGuestApp`: Exposes CRUD operations for the **OrganizationGuestApp** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrganizationGuestApps
+    * const organizationGuestApps = await prisma.organizationGuestApp.findMany()
+    * ```
+    */
+  get organizationGuestApp(): Prisma.OrganizationGuestAppDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.organizationContactChannel`: Exposes CRUD operations for the **OrganizationContactChannel** model.
@@ -3538,7 +3598,9 @@ export namespace Prisma {
     Satellite: 'Satellite',
     OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
     SatelliteEndpoint: 'SatelliteEndpoint',
+    PlacementBatch: 'PlacementBatch',
     PlacementJob: 'PlacementJob',
+    PlacementProcessLog: 'PlacementProcessLog',
     WorkforceAssignment: 'WorkforceAssignment',
     WorkforceScope: 'WorkforceScope',
     WorkforceGrade: 'WorkforceGrade',
@@ -3594,6 +3656,7 @@ export namespace Prisma {
     Organization: 'Organization',
     OrganizationAccessCredential: 'OrganizationAccessCredential',
     OrganizationProfile: 'OrganizationProfile',
+    OrganizationGuestApp: 'OrganizationGuestApp',
     OrganizationContactChannel: 'OrganizationContactChannel',
     OrganizationAddress: 'OrganizationAddress',
     ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
@@ -3661,7 +3724,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "organizationSatelliteChannel" | "billingInvoiceItem" | "organizationModuleGrace" | "commercialOutlet" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementJob" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationAccessCredential" | "organizationProfile" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "orgPaymentMethod" | "user" | "commsThread" | "commsMessage" | "commsParticipant" | "docLocation" | "docRouteTemplate" | "docRouteStep" | "docRouteEdge" | "docCase" | "docFile" | "docRouteInstance" | "docRouteTask" | "docRouteDecision" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "organizationSatelliteChannel" | "billingInvoiceItem" | "organizationModuleGrace" | "commercialOutlet" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementBatch" | "placementJob" | "placementProcessLog" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationAccessCredential" | "organizationProfile" | "organizationGuestApp" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "orgPaymentMethod" | "user" | "commsThread" | "commsMessage" | "commsParticipant" | "docLocation" | "docRouteTemplate" | "docRouteStep" | "docRouteEdge" | "docCase" | "docFile" | "docRouteInstance" | "docRouteTask" | "docRouteDecision" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4775,6 +4838,80 @@ export namespace Prisma {
           }
         }
       }
+      PlacementBatch: {
+        payload: Prisma.$PlacementBatchPayload<ExtArgs>
+        fields: Prisma.PlacementBatchFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlacementBatchFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlacementBatchFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>
+          }
+          findFirst: {
+            args: Prisma.PlacementBatchFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlacementBatchFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>
+          }
+          findMany: {
+            args: Prisma.PlacementBatchFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>[]
+          }
+          create: {
+            args: Prisma.PlacementBatchCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>
+          }
+          createMany: {
+            args: Prisma.PlacementBatchCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlacementBatchCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>[]
+          }
+          delete: {
+            args: Prisma.PlacementBatchDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>
+          }
+          update: {
+            args: Prisma.PlacementBatchUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlacementBatchDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlacementBatchUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlacementBatchUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlacementBatchUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementBatchPayload>
+          }
+          aggregate: {
+            args: Prisma.PlacementBatchAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlacementBatch>
+          }
+          groupBy: {
+            args: Prisma.PlacementBatchGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlacementBatchGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlacementBatchCountArgs<ExtArgs>
+            result: $Utils.Optional<PlacementBatchCountAggregateOutputType> | number
+          }
+        }
+      }
       PlacementJob: {
         payload: Prisma.$PlacementJobPayload<ExtArgs>
         fields: Prisma.PlacementJobFieldRefs
@@ -4846,6 +4983,80 @@ export namespace Prisma {
           count: {
             args: Prisma.PlacementJobCountArgs<ExtArgs>
             result: $Utils.Optional<PlacementJobCountAggregateOutputType> | number
+          }
+        }
+      }
+      PlacementProcessLog: {
+        payload: Prisma.$PlacementProcessLogPayload<ExtArgs>
+        fields: Prisma.PlacementProcessLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlacementProcessLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlacementProcessLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>
+          }
+          findFirst: {
+            args: Prisma.PlacementProcessLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlacementProcessLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>
+          }
+          findMany: {
+            args: Prisma.PlacementProcessLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>[]
+          }
+          create: {
+            args: Prisma.PlacementProcessLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>
+          }
+          createMany: {
+            args: Prisma.PlacementProcessLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlacementProcessLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>[]
+          }
+          delete: {
+            args: Prisma.PlacementProcessLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>
+          }
+          update: {
+            args: Prisma.PlacementProcessLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlacementProcessLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlacementProcessLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlacementProcessLogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlacementProcessLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlacementProcessLogPayload>
+          }
+          aggregate: {
+            args: Prisma.PlacementProcessLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlacementProcessLog>
+          }
+          groupBy: {
+            args: Prisma.PlacementProcessLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlacementProcessLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlacementProcessLogCountArgs<ExtArgs>
+            result: $Utils.Optional<PlacementProcessLogCountAggregateOutputType> | number
           }
         }
       }
@@ -8919,6 +9130,80 @@ export namespace Prisma {
           }
         }
       }
+      OrganizationGuestApp: {
+        payload: Prisma.$OrganizationGuestAppPayload<ExtArgs>
+        fields: Prisma.OrganizationGuestAppFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrganizationGuestAppFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrganizationGuestAppFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>
+          }
+          findFirst: {
+            args: Prisma.OrganizationGuestAppFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrganizationGuestAppFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>
+          }
+          findMany: {
+            args: Prisma.OrganizationGuestAppFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>[]
+          }
+          create: {
+            args: Prisma.OrganizationGuestAppCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>
+          }
+          createMany: {
+            args: Prisma.OrganizationGuestAppCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrganizationGuestAppCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>[]
+          }
+          delete: {
+            args: Prisma.OrganizationGuestAppDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>
+          }
+          update: {
+            args: Prisma.OrganizationGuestAppUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrganizationGuestAppDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrganizationGuestAppUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OrganizationGuestAppUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>[]
+          }
+          upsert: {
+            args: Prisma.OrganizationGuestAppUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationGuestAppPayload>
+          }
+          aggregate: {
+            args: Prisma.OrganizationGuestAppAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrganizationGuestApp>
+          }
+          groupBy: {
+            args: Prisma.OrganizationGuestAppGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationGuestAppGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrganizationGuestAppCountArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationGuestAppCountAggregateOutputType> | number
+          }
+        }
+      }
       OrganizationContactChannel: {
         payload: Prisma.$OrganizationContactChannelPayload<ExtArgs>
         fields: Prisma.OrganizationContactChannelFieldRefs
@@ -12890,7 +13175,9 @@ export namespace Prisma {
     satellite?: SatelliteOmit
     organizationSatelliteEntitlement?: OrganizationSatelliteEntitlementOmit
     satelliteEndpoint?: SatelliteEndpointOmit
+    placementBatch?: PlacementBatchOmit
     placementJob?: PlacementJobOmit
+    placementProcessLog?: PlacementProcessLogOmit
     workforceAssignment?: WorkforceAssignmentOmit
     workforceScope?: WorkforceScopeOmit
     workforceGrade?: WorkforceGradeOmit
@@ -12946,6 +13233,7 @@ export namespace Prisma {
     organization?: OrganizationOmit
     organizationAccessCredential?: OrganizationAccessCredentialOmit
     organizationProfile?: OrganizationProfileOmit
+    organizationGuestApp?: OrganizationGuestAppOmit
     organizationContactChannel?: OrganizationContactChannelOmit
     organizationAddress?: OrganizationAddressOmit
     elektrawebBridgePolicy?: ElektrawebBridgePolicyOmit
@@ -13159,6 +13447,77 @@ export namespace Prisma {
    */
   export type SatelliteCountOutputTypeCountEntitlementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrganizationSatelliteEntitlementWhereInput
+  }
+
+
+  /**
+   * Count Type PlacementBatchCountOutputType
+   */
+
+  export type PlacementBatchCountOutputType = {
+    jobs: number
+    processLogs: number
+  }
+
+  export type PlacementBatchCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    jobs?: boolean | PlacementBatchCountOutputTypeCountJobsArgs
+    processLogs?: boolean | PlacementBatchCountOutputTypeCountProcessLogsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PlacementBatchCountOutputType without action
+   */
+  export type PlacementBatchCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatchCountOutputType
+     */
+    select?: PlacementBatchCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PlacementBatchCountOutputType without action
+   */
+  export type PlacementBatchCountOutputTypeCountJobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlacementJobWhereInput
+  }
+
+  /**
+   * PlacementBatchCountOutputType without action
+   */
+  export type PlacementBatchCountOutputTypeCountProcessLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlacementProcessLogWhereInput
+  }
+
+
+  /**
+   * Count Type PlacementJobCountOutputType
+   */
+
+  export type PlacementJobCountOutputType = {
+    processLogs: number
+  }
+
+  export type PlacementJobCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    processLogs?: boolean | PlacementJobCountOutputTypeCountProcessLogsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PlacementJobCountOutputType without action
+   */
+  export type PlacementJobCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJobCountOutputType
+     */
+    select?: PlacementJobCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PlacementJobCountOutputType without action
+   */
+  export type PlacementJobCountOutputTypeCountProcessLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlacementProcessLogWhereInput
   }
 
 
@@ -14220,6 +14579,7 @@ export namespace Prisma {
     platformLoyaltyLedger: number
     satelliteEndpoints: number
     placementJobs: number
+    placementBatches: number
     satelliteEntitlements: number
     commercialOutlets: number
     moduleGraces: number
@@ -14284,6 +14644,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: boolean | OrganizationCountOutputTypeCountPlatformLoyaltyLedgerArgs
     satelliteEndpoints?: boolean | OrganizationCountOutputTypeCountSatelliteEndpointsArgs
     placementJobs?: boolean | OrganizationCountOutputTypeCountPlacementJobsArgs
+    placementBatches?: boolean | OrganizationCountOutputTypeCountPlacementBatchesArgs
     satelliteEntitlements?: boolean | OrganizationCountOutputTypeCountSatelliteEntitlementsArgs
     commercialOutlets?: boolean | OrganizationCountOutputTypeCountCommercialOutletsArgs
     moduleGraces?: boolean | OrganizationCountOutputTypeCountModuleGracesArgs
@@ -14500,6 +14861,13 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountPlacementJobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PlacementJobWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPlacementBatchesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlacementBatchWhereInput
   }
 
   /**
@@ -32683,6 +33051,1213 @@ export namespace Prisma {
 
 
   /**
+   * Model PlacementBatch
+   */
+
+  export type AggregatePlacementBatch = {
+    _count: PlacementBatchCountAggregateOutputType | null
+    _min: PlacementBatchMinAggregateOutputType | null
+    _max: PlacementBatchMaxAggregateOutputType | null
+  }
+
+  export type PlacementBatchMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    fromTopology: $Enums.DeploymentTopology | null
+    toTopology: $Enums.DeploymentTopology | null
+    packaging: $Enums.PlacementPackaging | null
+    targetHost: string | null
+    status: $Enums.PlacementJobStatus | null
+    errorMessage: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlacementBatchMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    fromTopology: $Enums.DeploymentTopology | null
+    toTopology: $Enums.DeploymentTopology | null
+    packaging: $Enums.PlacementPackaging | null
+    targetHost: string | null
+    status: $Enums.PlacementJobStatus | null
+    errorMessage: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlacementBatchCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    satelliteKeys: number
+    fromTopology: number
+    toTopology: number
+    packaging: number
+    targetHost: number
+    recipeJson: number
+    status: number
+    errorMessage: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PlacementBatchMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    fromTopology?: true
+    toTopology?: true
+    packaging?: true
+    targetHost?: true
+    status?: true
+    errorMessage?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlacementBatchMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    fromTopology?: true
+    toTopology?: true
+    packaging?: true
+    targetHost?: true
+    status?: true
+    errorMessage?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlacementBatchCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKeys?: true
+    fromTopology?: true
+    toTopology?: true
+    packaging?: true
+    targetHost?: true
+    recipeJson?: true
+    status?: true
+    errorMessage?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PlacementBatchAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlacementBatch to aggregate.
+     */
+    where?: PlacementBatchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementBatches to fetch.
+     */
+    orderBy?: PlacementBatchOrderByWithRelationInput | PlacementBatchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlacementBatchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementBatches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementBatches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlacementBatches
+    **/
+    _count?: true | PlacementBatchCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlacementBatchMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlacementBatchMaxAggregateInputType
+  }
+
+  export type GetPlacementBatchAggregateType<T extends PlacementBatchAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlacementBatch]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlacementBatch[P]>
+      : GetScalarType<T[P], AggregatePlacementBatch[P]>
+  }
+
+
+
+
+  export type PlacementBatchGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlacementBatchWhereInput
+    orderBy?: PlacementBatchOrderByWithAggregationInput | PlacementBatchOrderByWithAggregationInput[]
+    by: PlacementBatchScalarFieldEnum[] | PlacementBatchScalarFieldEnum
+    having?: PlacementBatchScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlacementBatchCountAggregateInputType | true
+    _min?: PlacementBatchMinAggregateInputType
+    _max?: PlacementBatchMaxAggregateInputType
+  }
+
+  export type PlacementBatchGroupByOutputType = {
+    id: string
+    organizationId: string
+    satelliteKeys: string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging: $Enums.PlacementPackaging
+    targetHost: string | null
+    recipeJson: JsonValue | null
+    status: $Enums.PlacementJobStatus
+    errorMessage: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: PlacementBatchCountAggregateOutputType | null
+    _min: PlacementBatchMinAggregateOutputType | null
+    _max: PlacementBatchMaxAggregateOutputType | null
+  }
+
+  type GetPlacementBatchGroupByPayload<T extends PlacementBatchGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlacementBatchGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlacementBatchGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlacementBatchGroupByOutputType[P]>
+            : GetScalarType<T[P], PlacementBatchGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlacementBatchSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKeys?: boolean
+    fromTopology?: boolean
+    toTopology?: boolean
+    packaging?: boolean
+    targetHost?: boolean
+    recipeJson?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    jobs?: boolean | PlacementBatch$jobsArgs<ExtArgs>
+    processLogs?: boolean | PlacementBatch$processLogsArgs<ExtArgs>
+    _count?: boolean | PlacementBatchCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["placementBatch"]>
+
+  export type PlacementBatchSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKeys?: boolean
+    fromTopology?: boolean
+    toTopology?: boolean
+    packaging?: boolean
+    targetHost?: boolean
+    recipeJson?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["placementBatch"]>
+
+  export type PlacementBatchSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKeys?: boolean
+    fromTopology?: boolean
+    toTopology?: boolean
+    packaging?: boolean
+    targetHost?: boolean
+    recipeJson?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["placementBatch"]>
+
+  export type PlacementBatchSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    satelliteKeys?: boolean
+    fromTopology?: boolean
+    toTopology?: boolean
+    packaging?: boolean
+    targetHost?: boolean
+    recipeJson?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PlacementBatchOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "satelliteKeys" | "fromTopology" | "toTopology" | "packaging" | "targetHost" | "recipeJson" | "status" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["placementBatch"]>
+  export type PlacementBatchInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    jobs?: boolean | PlacementBatch$jobsArgs<ExtArgs>
+    processLogs?: boolean | PlacementBatch$processLogsArgs<ExtArgs>
+    _count?: boolean | PlacementBatchCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PlacementBatchIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlacementBatchIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $PlacementBatchPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlacementBatch"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      jobs: Prisma.$PlacementJobPayload<ExtArgs>[]
+      processLogs: Prisma.$PlacementProcessLogPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      satelliteKeys: string[]
+      fromTopology: $Enums.DeploymentTopology
+      toTopology: $Enums.DeploymentTopology
+      packaging: $Enums.PlacementPackaging
+      targetHost: string | null
+      /**
+       * Wave 2 clone recipe (services, images, compose plan). Not applied by orch itself.
+       */
+      recipeJson: Prisma.JsonValue | null
+      status: $Enums.PlacementJobStatus
+      errorMessage: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["placementBatch"]>
+    composites: {}
+  }
+
+  type PlacementBatchGetPayload<S extends boolean | null | undefined | PlacementBatchDefaultArgs> = $Result.GetResult<Prisma.$PlacementBatchPayload, S>
+
+  type PlacementBatchCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlacementBatchFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlacementBatchCountAggregateInputType | true
+    }
+
+  export interface PlacementBatchDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlacementBatch'], meta: { name: 'PlacementBatch' } }
+    /**
+     * Find zero or one PlacementBatch that matches the filter.
+     * @param {PlacementBatchFindUniqueArgs} args - Arguments to find a PlacementBatch
+     * @example
+     * // Get one PlacementBatch
+     * const placementBatch = await prisma.placementBatch.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlacementBatchFindUniqueArgs>(args: SelectSubset<T, PlacementBatchFindUniqueArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlacementBatch that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlacementBatchFindUniqueOrThrowArgs} args - Arguments to find a PlacementBatch
+     * @example
+     * // Get one PlacementBatch
+     * const placementBatch = await prisma.placementBatch.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlacementBatchFindUniqueOrThrowArgs>(args: SelectSubset<T, PlacementBatchFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlacementBatch that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementBatchFindFirstArgs} args - Arguments to find a PlacementBatch
+     * @example
+     * // Get one PlacementBatch
+     * const placementBatch = await prisma.placementBatch.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlacementBatchFindFirstArgs>(args?: SelectSubset<T, PlacementBatchFindFirstArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlacementBatch that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementBatchFindFirstOrThrowArgs} args - Arguments to find a PlacementBatch
+     * @example
+     * // Get one PlacementBatch
+     * const placementBatch = await prisma.placementBatch.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlacementBatchFindFirstOrThrowArgs>(args?: SelectSubset<T, PlacementBatchFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlacementBatches that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementBatchFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlacementBatches
+     * const placementBatches = await prisma.placementBatch.findMany()
+     * 
+     * // Get first 10 PlacementBatches
+     * const placementBatches = await prisma.placementBatch.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const placementBatchWithIdOnly = await prisma.placementBatch.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlacementBatchFindManyArgs>(args?: SelectSubset<T, PlacementBatchFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlacementBatch.
+     * @param {PlacementBatchCreateArgs} args - Arguments to create a PlacementBatch.
+     * @example
+     * // Create one PlacementBatch
+     * const PlacementBatch = await prisma.placementBatch.create({
+     *   data: {
+     *     // ... data to create a PlacementBatch
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlacementBatchCreateArgs>(args: SelectSubset<T, PlacementBatchCreateArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlacementBatches.
+     * @param {PlacementBatchCreateManyArgs} args - Arguments to create many PlacementBatches.
+     * @example
+     * // Create many PlacementBatches
+     * const placementBatch = await prisma.placementBatch.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlacementBatchCreateManyArgs>(args?: SelectSubset<T, PlacementBatchCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlacementBatches and returns the data saved in the database.
+     * @param {PlacementBatchCreateManyAndReturnArgs} args - Arguments to create many PlacementBatches.
+     * @example
+     * // Create many PlacementBatches
+     * const placementBatch = await prisma.placementBatch.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlacementBatches and only return the `id`
+     * const placementBatchWithIdOnly = await prisma.placementBatch.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlacementBatchCreateManyAndReturnArgs>(args?: SelectSubset<T, PlacementBatchCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlacementBatch.
+     * @param {PlacementBatchDeleteArgs} args - Arguments to delete one PlacementBatch.
+     * @example
+     * // Delete one PlacementBatch
+     * const PlacementBatch = await prisma.placementBatch.delete({
+     *   where: {
+     *     // ... filter to delete one PlacementBatch
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlacementBatchDeleteArgs>(args: SelectSubset<T, PlacementBatchDeleteArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlacementBatch.
+     * @param {PlacementBatchUpdateArgs} args - Arguments to update one PlacementBatch.
+     * @example
+     * // Update one PlacementBatch
+     * const placementBatch = await prisma.placementBatch.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlacementBatchUpdateArgs>(args: SelectSubset<T, PlacementBatchUpdateArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlacementBatches.
+     * @param {PlacementBatchDeleteManyArgs} args - Arguments to filter PlacementBatches to delete.
+     * @example
+     * // Delete a few PlacementBatches
+     * const { count } = await prisma.placementBatch.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlacementBatchDeleteManyArgs>(args?: SelectSubset<T, PlacementBatchDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlacementBatches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementBatchUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlacementBatches
+     * const placementBatch = await prisma.placementBatch.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlacementBatchUpdateManyArgs>(args: SelectSubset<T, PlacementBatchUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlacementBatches and returns the data updated in the database.
+     * @param {PlacementBatchUpdateManyAndReturnArgs} args - Arguments to update many PlacementBatches.
+     * @example
+     * // Update many PlacementBatches
+     * const placementBatch = await prisma.placementBatch.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlacementBatches and only return the `id`
+     * const placementBatchWithIdOnly = await prisma.placementBatch.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlacementBatchUpdateManyAndReturnArgs>(args: SelectSubset<T, PlacementBatchUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlacementBatch.
+     * @param {PlacementBatchUpsertArgs} args - Arguments to update or create a PlacementBatch.
+     * @example
+     * // Update or create a PlacementBatch
+     * const placementBatch = await prisma.placementBatch.upsert({
+     *   create: {
+     *     // ... data to create a PlacementBatch
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlacementBatch we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlacementBatchUpsertArgs>(args: SelectSubset<T, PlacementBatchUpsertArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlacementBatches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementBatchCountArgs} args - Arguments to filter PlacementBatches to count.
+     * @example
+     * // Count the number of PlacementBatches
+     * const count = await prisma.placementBatch.count({
+     *   where: {
+     *     // ... the filter for the PlacementBatches we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlacementBatchCountArgs>(
+      args?: Subset<T, PlacementBatchCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlacementBatchCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlacementBatch.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementBatchAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlacementBatchAggregateArgs>(args: Subset<T, PlacementBatchAggregateArgs>): Prisma.PrismaPromise<GetPlacementBatchAggregateType<T>>
+
+    /**
+     * Group by PlacementBatch.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementBatchGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlacementBatchGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlacementBatchGroupByArgs['orderBy'] }
+        : { orderBy?: PlacementBatchGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlacementBatchGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlacementBatchGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlacementBatch model
+   */
+  readonly fields: PlacementBatchFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlacementBatch.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlacementBatchClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    jobs<T extends PlacementBatch$jobsArgs<ExtArgs> = {}>(args?: Subset<T, PlacementBatch$jobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    processLogs<T extends PlacementBatch$processLogsArgs<ExtArgs> = {}>(args?: Subset<T, PlacementBatch$processLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlacementBatch model
+   */
+  interface PlacementBatchFieldRefs {
+    readonly id: FieldRef<"PlacementBatch", 'String'>
+    readonly organizationId: FieldRef<"PlacementBatch", 'String'>
+    readonly satelliteKeys: FieldRef<"PlacementBatch", 'String[]'>
+    readonly fromTopology: FieldRef<"PlacementBatch", 'DeploymentTopology'>
+    readonly toTopology: FieldRef<"PlacementBatch", 'DeploymentTopology'>
+    readonly packaging: FieldRef<"PlacementBatch", 'PlacementPackaging'>
+    readonly targetHost: FieldRef<"PlacementBatch", 'String'>
+    readonly recipeJson: FieldRef<"PlacementBatch", 'Json'>
+    readonly status: FieldRef<"PlacementBatch", 'PlacementJobStatus'>
+    readonly errorMessage: FieldRef<"PlacementBatch", 'String'>
+    readonly createdAt: FieldRef<"PlacementBatch", 'DateTime'>
+    readonly updatedAt: FieldRef<"PlacementBatch", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlacementBatch findUnique
+   */
+  export type PlacementBatchFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementBatch to fetch.
+     */
+    where: PlacementBatchWhereUniqueInput
+  }
+
+  /**
+   * PlacementBatch findUniqueOrThrow
+   */
+  export type PlacementBatchFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementBatch to fetch.
+     */
+    where: PlacementBatchWhereUniqueInput
+  }
+
+  /**
+   * PlacementBatch findFirst
+   */
+  export type PlacementBatchFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementBatch to fetch.
+     */
+    where?: PlacementBatchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementBatches to fetch.
+     */
+    orderBy?: PlacementBatchOrderByWithRelationInput | PlacementBatchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlacementBatches.
+     */
+    cursor?: PlacementBatchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementBatches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementBatches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementBatches.
+     */
+    distinct?: PlacementBatchScalarFieldEnum | PlacementBatchScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementBatch findFirstOrThrow
+   */
+  export type PlacementBatchFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementBatch to fetch.
+     */
+    where?: PlacementBatchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementBatches to fetch.
+     */
+    orderBy?: PlacementBatchOrderByWithRelationInput | PlacementBatchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlacementBatches.
+     */
+    cursor?: PlacementBatchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementBatches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementBatches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementBatches.
+     */
+    distinct?: PlacementBatchScalarFieldEnum | PlacementBatchScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementBatch findMany
+   */
+  export type PlacementBatchFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementBatches to fetch.
+     */
+    where?: PlacementBatchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementBatches to fetch.
+     */
+    orderBy?: PlacementBatchOrderByWithRelationInput | PlacementBatchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlacementBatches.
+     */
+    cursor?: PlacementBatchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementBatches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementBatches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementBatches.
+     */
+    distinct?: PlacementBatchScalarFieldEnum | PlacementBatchScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementBatch create
+   */
+  export type PlacementBatchCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PlacementBatch.
+     */
+    data: XOR<PlacementBatchCreateInput, PlacementBatchUncheckedCreateInput>
+  }
+
+  /**
+   * PlacementBatch createMany
+   */
+  export type PlacementBatchCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlacementBatches.
+     */
+    data: PlacementBatchCreateManyInput | PlacementBatchCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlacementBatch createManyAndReturn
+   */
+  export type PlacementBatchCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlacementBatches.
+     */
+    data: PlacementBatchCreateManyInput | PlacementBatchCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlacementBatch update
+   */
+  export type PlacementBatchUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PlacementBatch.
+     */
+    data: XOR<PlacementBatchUpdateInput, PlacementBatchUncheckedUpdateInput>
+    /**
+     * Choose, which PlacementBatch to update.
+     */
+    where: PlacementBatchWhereUniqueInput
+  }
+
+  /**
+   * PlacementBatch updateMany
+   */
+  export type PlacementBatchUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlacementBatches.
+     */
+    data: XOR<PlacementBatchUpdateManyMutationInput, PlacementBatchUncheckedUpdateManyInput>
+    /**
+     * Filter which PlacementBatches to update
+     */
+    where?: PlacementBatchWhereInput
+    /**
+     * Limit how many PlacementBatches to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlacementBatch updateManyAndReturn
+   */
+  export type PlacementBatchUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * The data used to update PlacementBatches.
+     */
+    data: XOR<PlacementBatchUpdateManyMutationInput, PlacementBatchUncheckedUpdateManyInput>
+    /**
+     * Filter which PlacementBatches to update
+     */
+    where?: PlacementBatchWhereInput
+    /**
+     * Limit how many PlacementBatches to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlacementBatch upsert
+   */
+  export type PlacementBatchUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PlacementBatch to update in case it exists.
+     */
+    where: PlacementBatchWhereUniqueInput
+    /**
+     * In case the PlacementBatch found by the `where` argument doesn't exist, create a new PlacementBatch with this data.
+     */
+    create: XOR<PlacementBatchCreateInput, PlacementBatchUncheckedCreateInput>
+    /**
+     * In case the PlacementBatch was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlacementBatchUpdateInput, PlacementBatchUncheckedUpdateInput>
+  }
+
+  /**
+   * PlacementBatch delete
+   */
+  export type PlacementBatchDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    /**
+     * Filter which PlacementBatch to delete.
+     */
+    where: PlacementBatchWhereUniqueInput
+  }
+
+  /**
+   * PlacementBatch deleteMany
+   */
+  export type PlacementBatchDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlacementBatches to delete
+     */
+    where?: PlacementBatchWhereInput
+    /**
+     * Limit how many PlacementBatches to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlacementBatch.jobs
+   */
+  export type PlacementBatch$jobsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    where?: PlacementJobWhereInput
+    orderBy?: PlacementJobOrderByWithRelationInput | PlacementJobOrderByWithRelationInput[]
+    cursor?: PlacementJobWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlacementJobScalarFieldEnum | PlacementJobScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementBatch.processLogs
+   */
+  export type PlacementBatch$processLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    where?: PlacementProcessLogWhereInput
+    orderBy?: PlacementProcessLogOrderByWithRelationInput | PlacementProcessLogOrderByWithRelationInput[]
+    cursor?: PlacementProcessLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlacementProcessLogScalarFieldEnum | PlacementProcessLogScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementBatch without action
+   */
+  export type PlacementBatchDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model PlacementJob
    */
 
@@ -32695,6 +34270,7 @@ export namespace Prisma {
   export type PlacementJobMinAggregateOutputType = {
     id: string | null
     organizationId: string | null
+    batchId: string | null
     satelliteKey: string | null
     fromTopology: $Enums.DeploymentTopology | null
     toTopology: $Enums.DeploymentTopology | null
@@ -32710,6 +34286,7 @@ export namespace Prisma {
   export type PlacementJobMaxAggregateOutputType = {
     id: string | null
     organizationId: string | null
+    batchId: string | null
     satelliteKey: string | null
     fromTopology: $Enums.DeploymentTopology | null
     toTopology: $Enums.DeploymentTopology | null
@@ -32725,6 +34302,7 @@ export namespace Prisma {
   export type PlacementJobCountAggregateOutputType = {
     id: number
     organizationId: number
+    batchId: number
     satelliteKey: number
     fromTopology: number
     toTopology: number
@@ -32744,6 +34322,7 @@ export namespace Prisma {
   export type PlacementJobMinAggregateInputType = {
     id?: true
     organizationId?: true
+    batchId?: true
     satelliteKey?: true
     fromTopology?: true
     toTopology?: true
@@ -32759,6 +34338,7 @@ export namespace Prisma {
   export type PlacementJobMaxAggregateInputType = {
     id?: true
     organizationId?: true
+    batchId?: true
     satelliteKey?: true
     fromTopology?: true
     toTopology?: true
@@ -32774,6 +34354,7 @@ export namespace Prisma {
   export type PlacementJobCountAggregateInputType = {
     id?: true
     organizationId?: true
+    batchId?: true
     satelliteKey?: true
     fromTopology?: true
     toTopology?: true
@@ -32864,6 +34445,7 @@ export namespace Prisma {
   export type PlacementJobGroupByOutputType = {
     id: string
     organizationId: string
+    batchId: string | null
     satelliteKey: string
     fromTopology: $Enums.DeploymentTopology
     toTopology: $Enums.DeploymentTopology
@@ -32898,6 +34480,7 @@ export namespace Prisma {
   export type PlacementJobSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     organizationId?: boolean
+    batchId?: boolean
     satelliteKey?: boolean
     fromTopology?: boolean
     toTopology?: boolean
@@ -32911,11 +34494,15 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    batch?: boolean | PlacementJob$batchArgs<ExtArgs>
+    processLogs?: boolean | PlacementJob$processLogsArgs<ExtArgs>
+    _count?: boolean | PlacementJobCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["placementJob"]>
 
   export type PlacementJobSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     organizationId?: boolean
+    batchId?: boolean
     satelliteKey?: boolean
     fromTopology?: boolean
     toTopology?: boolean
@@ -32929,11 +34516,13 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    batch?: boolean | PlacementJob$batchArgs<ExtArgs>
   }, ExtArgs["result"]["placementJob"]>
 
   export type PlacementJobSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     organizationId?: boolean
+    batchId?: boolean
     satelliteKey?: boolean
     fromTopology?: boolean
     toTopology?: boolean
@@ -32947,11 +34536,13 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    batch?: boolean | PlacementJob$batchArgs<ExtArgs>
   }, ExtArgs["result"]["placementJob"]>
 
   export type PlacementJobSelectScalar = {
     id?: boolean
     organizationId?: boolean
+    batchId?: boolean
     satelliteKey?: boolean
     fromTopology?: boolean
     toTopology?: boolean
@@ -32966,25 +34557,33 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type PlacementJobOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "satelliteKey" | "fromTopology" | "toTopology" | "status" | "errorMessage" | "sliceMeta" | "artifactRef" | "artifactJson" | "applyLog" | "targetBaseUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["placementJob"]>
+  export type PlacementJobOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "batchId" | "satelliteKey" | "fromTopology" | "toTopology" | "status" | "errorMessage" | "sliceMeta" | "artifactRef" | "artifactJson" | "applyLog" | "targetBaseUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["placementJob"]>
   export type PlacementJobInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    batch?: boolean | PlacementJob$batchArgs<ExtArgs>
+    processLogs?: boolean | PlacementJob$processLogsArgs<ExtArgs>
+    _count?: boolean | PlacementJobCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PlacementJobIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    batch?: boolean | PlacementJob$batchArgs<ExtArgs>
   }
   export type PlacementJobIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    batch?: boolean | PlacementJob$batchArgs<ExtArgs>
   }
 
   export type $PlacementJobPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "PlacementJob"
     objects: {
       organization: Prisma.$OrganizationPayload<ExtArgs>
+      batch: Prisma.$PlacementBatchPayload<ExtArgs> | null
+      processLogs: Prisma.$PlacementProcessLogPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       organizationId: string
+      batchId: string | null
       satelliteKey: string
       fromTopology: $Enums.DeploymentTopology
       toTopology: $Enums.DeploymentTopology
@@ -33407,6 +35006,8 @@ export namespace Prisma {
   export interface Prisma__PlacementJobClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    batch<T extends PlacementJob$batchArgs<ExtArgs> = {}>(args?: Subset<T, PlacementJob$batchArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    processLogs<T extends PlacementJob$processLogsArgs<ExtArgs> = {}>(args?: Subset<T, PlacementJob$processLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -33438,6 +35039,7 @@ export namespace Prisma {
   interface PlacementJobFieldRefs {
     readonly id: FieldRef<"PlacementJob", 'String'>
     readonly organizationId: FieldRef<"PlacementJob", 'String'>
+    readonly batchId: FieldRef<"PlacementJob", 'String'>
     readonly satelliteKey: FieldRef<"PlacementJob", 'String'>
     readonly fromTopology: FieldRef<"PlacementJob", 'DeploymentTopology'>
     readonly toTopology: FieldRef<"PlacementJob", 'DeploymentTopology'>
@@ -33851,6 +35453,49 @@ export namespace Prisma {
   }
 
   /**
+   * PlacementJob.batch
+   */
+  export type PlacementJob$batchArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    where?: PlacementBatchWhereInput
+  }
+
+  /**
+   * PlacementJob.processLogs
+   */
+  export type PlacementJob$processLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    where?: PlacementProcessLogWhereInput
+    orderBy?: PlacementProcessLogOrderByWithRelationInput | PlacementProcessLogOrderByWithRelationInput[]
+    cursor?: PlacementProcessLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlacementProcessLogScalarFieldEnum | PlacementProcessLogScalarFieldEnum[]
+  }
+
+  /**
    * PlacementJob without action
    */
   export type PlacementJobDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -33866,6 +35511,1150 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PlacementJobInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PlacementProcessLog
+   */
+
+  export type AggregatePlacementProcessLog = {
+    _count: PlacementProcessLogCountAggregateOutputType | null
+    _min: PlacementProcessLogMinAggregateOutputType | null
+    _max: PlacementProcessLogMaxAggregateOutputType | null
+  }
+
+  export type PlacementProcessLogMinAggregateOutputType = {
+    id: string | null
+    batchId: string | null
+    jobId: string | null
+    phase: string | null
+    level: string | null
+    message: string | null
+    createdAt: Date | null
+  }
+
+  export type PlacementProcessLogMaxAggregateOutputType = {
+    id: string | null
+    batchId: string | null
+    jobId: string | null
+    phase: string | null
+    level: string | null
+    message: string | null
+    createdAt: Date | null
+  }
+
+  export type PlacementProcessLogCountAggregateOutputType = {
+    id: number
+    batchId: number
+    jobId: number
+    phase: number
+    level: number
+    message: number
+    detail: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type PlacementProcessLogMinAggregateInputType = {
+    id?: true
+    batchId?: true
+    jobId?: true
+    phase?: true
+    level?: true
+    message?: true
+    createdAt?: true
+  }
+
+  export type PlacementProcessLogMaxAggregateInputType = {
+    id?: true
+    batchId?: true
+    jobId?: true
+    phase?: true
+    level?: true
+    message?: true
+    createdAt?: true
+  }
+
+  export type PlacementProcessLogCountAggregateInputType = {
+    id?: true
+    batchId?: true
+    jobId?: true
+    phase?: true
+    level?: true
+    message?: true
+    detail?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type PlacementProcessLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlacementProcessLog to aggregate.
+     */
+    where?: PlacementProcessLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementProcessLogs to fetch.
+     */
+    orderBy?: PlacementProcessLogOrderByWithRelationInput | PlacementProcessLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlacementProcessLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementProcessLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementProcessLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlacementProcessLogs
+    **/
+    _count?: true | PlacementProcessLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlacementProcessLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlacementProcessLogMaxAggregateInputType
+  }
+
+  export type GetPlacementProcessLogAggregateType<T extends PlacementProcessLogAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlacementProcessLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlacementProcessLog[P]>
+      : GetScalarType<T[P], AggregatePlacementProcessLog[P]>
+  }
+
+
+
+
+  export type PlacementProcessLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlacementProcessLogWhereInput
+    orderBy?: PlacementProcessLogOrderByWithAggregationInput | PlacementProcessLogOrderByWithAggregationInput[]
+    by: PlacementProcessLogScalarFieldEnum[] | PlacementProcessLogScalarFieldEnum
+    having?: PlacementProcessLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlacementProcessLogCountAggregateInputType | true
+    _min?: PlacementProcessLogMinAggregateInputType
+    _max?: PlacementProcessLogMaxAggregateInputType
+  }
+
+  export type PlacementProcessLogGroupByOutputType = {
+    id: string
+    batchId: string | null
+    jobId: string | null
+    phase: string
+    level: string
+    message: string
+    detail: JsonValue | null
+    createdAt: Date
+    _count: PlacementProcessLogCountAggregateOutputType | null
+    _min: PlacementProcessLogMinAggregateOutputType | null
+    _max: PlacementProcessLogMaxAggregateOutputType | null
+  }
+
+  type GetPlacementProcessLogGroupByPayload<T extends PlacementProcessLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlacementProcessLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlacementProcessLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlacementProcessLogGroupByOutputType[P]>
+            : GetScalarType<T[P], PlacementProcessLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlacementProcessLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    batchId?: boolean
+    jobId?: boolean
+    phase?: boolean
+    level?: boolean
+    message?: boolean
+    detail?: boolean
+    createdAt?: boolean
+    batch?: boolean | PlacementProcessLog$batchArgs<ExtArgs>
+    job?: boolean | PlacementProcessLog$jobArgs<ExtArgs>
+  }, ExtArgs["result"]["placementProcessLog"]>
+
+  export type PlacementProcessLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    batchId?: boolean
+    jobId?: boolean
+    phase?: boolean
+    level?: boolean
+    message?: boolean
+    detail?: boolean
+    createdAt?: boolean
+    batch?: boolean | PlacementProcessLog$batchArgs<ExtArgs>
+    job?: boolean | PlacementProcessLog$jobArgs<ExtArgs>
+  }, ExtArgs["result"]["placementProcessLog"]>
+
+  export type PlacementProcessLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    batchId?: boolean
+    jobId?: boolean
+    phase?: boolean
+    level?: boolean
+    message?: boolean
+    detail?: boolean
+    createdAt?: boolean
+    batch?: boolean | PlacementProcessLog$batchArgs<ExtArgs>
+    job?: boolean | PlacementProcessLog$jobArgs<ExtArgs>
+  }, ExtArgs["result"]["placementProcessLog"]>
+
+  export type PlacementProcessLogSelectScalar = {
+    id?: boolean
+    batchId?: boolean
+    jobId?: boolean
+    phase?: boolean
+    level?: boolean
+    message?: boolean
+    detail?: boolean
+    createdAt?: boolean
+  }
+
+  export type PlacementProcessLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "batchId" | "jobId" | "phase" | "level" | "message" | "detail" | "createdAt", ExtArgs["result"]["placementProcessLog"]>
+  export type PlacementProcessLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    batch?: boolean | PlacementProcessLog$batchArgs<ExtArgs>
+    job?: boolean | PlacementProcessLog$jobArgs<ExtArgs>
+  }
+  export type PlacementProcessLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    batch?: boolean | PlacementProcessLog$batchArgs<ExtArgs>
+    job?: boolean | PlacementProcessLog$jobArgs<ExtArgs>
+  }
+  export type PlacementProcessLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    batch?: boolean | PlacementProcessLog$batchArgs<ExtArgs>
+    job?: boolean | PlacementProcessLog$jobArgs<ExtArgs>
+  }
+
+  export type $PlacementProcessLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlacementProcessLog"
+    objects: {
+      batch: Prisma.$PlacementBatchPayload<ExtArgs> | null
+      job: Prisma.$PlacementJobPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      batchId: string | null
+      jobId: string | null
+      phase: string
+      level: string
+      message: string
+      detail: Prisma.JsonValue | null
+      createdAt: Date
+    }, ExtArgs["result"]["placementProcessLog"]>
+    composites: {}
+  }
+
+  type PlacementProcessLogGetPayload<S extends boolean | null | undefined | PlacementProcessLogDefaultArgs> = $Result.GetResult<Prisma.$PlacementProcessLogPayload, S>
+
+  type PlacementProcessLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlacementProcessLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlacementProcessLogCountAggregateInputType | true
+    }
+
+  export interface PlacementProcessLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlacementProcessLog'], meta: { name: 'PlacementProcessLog' } }
+    /**
+     * Find zero or one PlacementProcessLog that matches the filter.
+     * @param {PlacementProcessLogFindUniqueArgs} args - Arguments to find a PlacementProcessLog
+     * @example
+     * // Get one PlacementProcessLog
+     * const placementProcessLog = await prisma.placementProcessLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlacementProcessLogFindUniqueArgs>(args: SelectSubset<T, PlacementProcessLogFindUniqueArgs<ExtArgs>>): Prisma__PlacementProcessLogClient<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlacementProcessLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlacementProcessLogFindUniqueOrThrowArgs} args - Arguments to find a PlacementProcessLog
+     * @example
+     * // Get one PlacementProcessLog
+     * const placementProcessLog = await prisma.placementProcessLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlacementProcessLogFindUniqueOrThrowArgs>(args: SelectSubset<T, PlacementProcessLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlacementProcessLogClient<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlacementProcessLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementProcessLogFindFirstArgs} args - Arguments to find a PlacementProcessLog
+     * @example
+     * // Get one PlacementProcessLog
+     * const placementProcessLog = await prisma.placementProcessLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlacementProcessLogFindFirstArgs>(args?: SelectSubset<T, PlacementProcessLogFindFirstArgs<ExtArgs>>): Prisma__PlacementProcessLogClient<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlacementProcessLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementProcessLogFindFirstOrThrowArgs} args - Arguments to find a PlacementProcessLog
+     * @example
+     * // Get one PlacementProcessLog
+     * const placementProcessLog = await prisma.placementProcessLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlacementProcessLogFindFirstOrThrowArgs>(args?: SelectSubset<T, PlacementProcessLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlacementProcessLogClient<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlacementProcessLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementProcessLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlacementProcessLogs
+     * const placementProcessLogs = await prisma.placementProcessLog.findMany()
+     * 
+     * // Get first 10 PlacementProcessLogs
+     * const placementProcessLogs = await prisma.placementProcessLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const placementProcessLogWithIdOnly = await prisma.placementProcessLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlacementProcessLogFindManyArgs>(args?: SelectSubset<T, PlacementProcessLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlacementProcessLog.
+     * @param {PlacementProcessLogCreateArgs} args - Arguments to create a PlacementProcessLog.
+     * @example
+     * // Create one PlacementProcessLog
+     * const PlacementProcessLog = await prisma.placementProcessLog.create({
+     *   data: {
+     *     // ... data to create a PlacementProcessLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlacementProcessLogCreateArgs>(args: SelectSubset<T, PlacementProcessLogCreateArgs<ExtArgs>>): Prisma__PlacementProcessLogClient<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlacementProcessLogs.
+     * @param {PlacementProcessLogCreateManyArgs} args - Arguments to create many PlacementProcessLogs.
+     * @example
+     * // Create many PlacementProcessLogs
+     * const placementProcessLog = await prisma.placementProcessLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlacementProcessLogCreateManyArgs>(args?: SelectSubset<T, PlacementProcessLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlacementProcessLogs and returns the data saved in the database.
+     * @param {PlacementProcessLogCreateManyAndReturnArgs} args - Arguments to create many PlacementProcessLogs.
+     * @example
+     * // Create many PlacementProcessLogs
+     * const placementProcessLog = await prisma.placementProcessLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlacementProcessLogs and only return the `id`
+     * const placementProcessLogWithIdOnly = await prisma.placementProcessLog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlacementProcessLogCreateManyAndReturnArgs>(args?: SelectSubset<T, PlacementProcessLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlacementProcessLog.
+     * @param {PlacementProcessLogDeleteArgs} args - Arguments to delete one PlacementProcessLog.
+     * @example
+     * // Delete one PlacementProcessLog
+     * const PlacementProcessLog = await prisma.placementProcessLog.delete({
+     *   where: {
+     *     // ... filter to delete one PlacementProcessLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlacementProcessLogDeleteArgs>(args: SelectSubset<T, PlacementProcessLogDeleteArgs<ExtArgs>>): Prisma__PlacementProcessLogClient<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlacementProcessLog.
+     * @param {PlacementProcessLogUpdateArgs} args - Arguments to update one PlacementProcessLog.
+     * @example
+     * // Update one PlacementProcessLog
+     * const placementProcessLog = await prisma.placementProcessLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlacementProcessLogUpdateArgs>(args: SelectSubset<T, PlacementProcessLogUpdateArgs<ExtArgs>>): Prisma__PlacementProcessLogClient<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlacementProcessLogs.
+     * @param {PlacementProcessLogDeleteManyArgs} args - Arguments to filter PlacementProcessLogs to delete.
+     * @example
+     * // Delete a few PlacementProcessLogs
+     * const { count } = await prisma.placementProcessLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlacementProcessLogDeleteManyArgs>(args?: SelectSubset<T, PlacementProcessLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlacementProcessLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementProcessLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlacementProcessLogs
+     * const placementProcessLog = await prisma.placementProcessLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlacementProcessLogUpdateManyArgs>(args: SelectSubset<T, PlacementProcessLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlacementProcessLogs and returns the data updated in the database.
+     * @param {PlacementProcessLogUpdateManyAndReturnArgs} args - Arguments to update many PlacementProcessLogs.
+     * @example
+     * // Update many PlacementProcessLogs
+     * const placementProcessLog = await prisma.placementProcessLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlacementProcessLogs and only return the `id`
+     * const placementProcessLogWithIdOnly = await prisma.placementProcessLog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlacementProcessLogUpdateManyAndReturnArgs>(args: SelectSubset<T, PlacementProcessLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlacementProcessLog.
+     * @param {PlacementProcessLogUpsertArgs} args - Arguments to update or create a PlacementProcessLog.
+     * @example
+     * // Update or create a PlacementProcessLog
+     * const placementProcessLog = await prisma.placementProcessLog.upsert({
+     *   create: {
+     *     // ... data to create a PlacementProcessLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlacementProcessLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlacementProcessLogUpsertArgs>(args: SelectSubset<T, PlacementProcessLogUpsertArgs<ExtArgs>>): Prisma__PlacementProcessLogClient<$Result.GetResult<Prisma.$PlacementProcessLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlacementProcessLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementProcessLogCountArgs} args - Arguments to filter PlacementProcessLogs to count.
+     * @example
+     * // Count the number of PlacementProcessLogs
+     * const count = await prisma.placementProcessLog.count({
+     *   where: {
+     *     // ... the filter for the PlacementProcessLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlacementProcessLogCountArgs>(
+      args?: Subset<T, PlacementProcessLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlacementProcessLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlacementProcessLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementProcessLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlacementProcessLogAggregateArgs>(args: Subset<T, PlacementProcessLogAggregateArgs>): Prisma.PrismaPromise<GetPlacementProcessLogAggregateType<T>>
+
+    /**
+     * Group by PlacementProcessLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlacementProcessLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlacementProcessLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlacementProcessLogGroupByArgs['orderBy'] }
+        : { orderBy?: PlacementProcessLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlacementProcessLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlacementProcessLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlacementProcessLog model
+   */
+  readonly fields: PlacementProcessLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlacementProcessLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlacementProcessLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    batch<T extends PlacementProcessLog$batchArgs<ExtArgs> = {}>(args?: Subset<T, PlacementProcessLog$batchArgs<ExtArgs>>): Prisma__PlacementBatchClient<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    job<T extends PlacementProcessLog$jobArgs<ExtArgs> = {}>(args?: Subset<T, PlacementProcessLog$jobArgs<ExtArgs>>): Prisma__PlacementJobClient<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlacementProcessLog model
+   */
+  interface PlacementProcessLogFieldRefs {
+    readonly id: FieldRef<"PlacementProcessLog", 'String'>
+    readonly batchId: FieldRef<"PlacementProcessLog", 'String'>
+    readonly jobId: FieldRef<"PlacementProcessLog", 'String'>
+    readonly phase: FieldRef<"PlacementProcessLog", 'String'>
+    readonly level: FieldRef<"PlacementProcessLog", 'String'>
+    readonly message: FieldRef<"PlacementProcessLog", 'String'>
+    readonly detail: FieldRef<"PlacementProcessLog", 'Json'>
+    readonly createdAt: FieldRef<"PlacementProcessLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlacementProcessLog findUnique
+   */
+  export type PlacementProcessLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementProcessLog to fetch.
+     */
+    where: PlacementProcessLogWhereUniqueInput
+  }
+
+  /**
+   * PlacementProcessLog findUniqueOrThrow
+   */
+  export type PlacementProcessLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementProcessLog to fetch.
+     */
+    where: PlacementProcessLogWhereUniqueInput
+  }
+
+  /**
+   * PlacementProcessLog findFirst
+   */
+  export type PlacementProcessLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementProcessLog to fetch.
+     */
+    where?: PlacementProcessLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementProcessLogs to fetch.
+     */
+    orderBy?: PlacementProcessLogOrderByWithRelationInput | PlacementProcessLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlacementProcessLogs.
+     */
+    cursor?: PlacementProcessLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementProcessLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementProcessLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementProcessLogs.
+     */
+    distinct?: PlacementProcessLogScalarFieldEnum | PlacementProcessLogScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementProcessLog findFirstOrThrow
+   */
+  export type PlacementProcessLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementProcessLog to fetch.
+     */
+    where?: PlacementProcessLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementProcessLogs to fetch.
+     */
+    orderBy?: PlacementProcessLogOrderByWithRelationInput | PlacementProcessLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlacementProcessLogs.
+     */
+    cursor?: PlacementProcessLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementProcessLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementProcessLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementProcessLogs.
+     */
+    distinct?: PlacementProcessLogScalarFieldEnum | PlacementProcessLogScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementProcessLog findMany
+   */
+  export type PlacementProcessLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * Filter, which PlacementProcessLogs to fetch.
+     */
+    where?: PlacementProcessLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlacementProcessLogs to fetch.
+     */
+    orderBy?: PlacementProcessLogOrderByWithRelationInput | PlacementProcessLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlacementProcessLogs.
+     */
+    cursor?: PlacementProcessLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlacementProcessLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlacementProcessLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlacementProcessLogs.
+     */
+    distinct?: PlacementProcessLogScalarFieldEnum | PlacementProcessLogScalarFieldEnum[]
+  }
+
+  /**
+   * PlacementProcessLog create
+   */
+  export type PlacementProcessLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PlacementProcessLog.
+     */
+    data: XOR<PlacementProcessLogCreateInput, PlacementProcessLogUncheckedCreateInput>
+  }
+
+  /**
+   * PlacementProcessLog createMany
+   */
+  export type PlacementProcessLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlacementProcessLogs.
+     */
+    data: PlacementProcessLogCreateManyInput | PlacementProcessLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlacementProcessLog createManyAndReturn
+   */
+  export type PlacementProcessLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlacementProcessLogs.
+     */
+    data: PlacementProcessLogCreateManyInput | PlacementProcessLogCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlacementProcessLog update
+   */
+  export type PlacementProcessLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PlacementProcessLog.
+     */
+    data: XOR<PlacementProcessLogUpdateInput, PlacementProcessLogUncheckedUpdateInput>
+    /**
+     * Choose, which PlacementProcessLog to update.
+     */
+    where: PlacementProcessLogWhereUniqueInput
+  }
+
+  /**
+   * PlacementProcessLog updateMany
+   */
+  export type PlacementProcessLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlacementProcessLogs.
+     */
+    data: XOR<PlacementProcessLogUpdateManyMutationInput, PlacementProcessLogUncheckedUpdateManyInput>
+    /**
+     * Filter which PlacementProcessLogs to update
+     */
+    where?: PlacementProcessLogWhereInput
+    /**
+     * Limit how many PlacementProcessLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlacementProcessLog updateManyAndReturn
+   */
+  export type PlacementProcessLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * The data used to update PlacementProcessLogs.
+     */
+    data: XOR<PlacementProcessLogUpdateManyMutationInput, PlacementProcessLogUncheckedUpdateManyInput>
+    /**
+     * Filter which PlacementProcessLogs to update
+     */
+    where?: PlacementProcessLogWhereInput
+    /**
+     * Limit how many PlacementProcessLogs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlacementProcessLog upsert
+   */
+  export type PlacementProcessLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PlacementProcessLog to update in case it exists.
+     */
+    where: PlacementProcessLogWhereUniqueInput
+    /**
+     * In case the PlacementProcessLog found by the `where` argument doesn't exist, create a new PlacementProcessLog with this data.
+     */
+    create: XOR<PlacementProcessLogCreateInput, PlacementProcessLogUncheckedCreateInput>
+    /**
+     * In case the PlacementProcessLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlacementProcessLogUpdateInput, PlacementProcessLogUncheckedUpdateInput>
+  }
+
+  /**
+   * PlacementProcessLog delete
+   */
+  export type PlacementProcessLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
+    /**
+     * Filter which PlacementProcessLog to delete.
+     */
+    where: PlacementProcessLogWhereUniqueInput
+  }
+
+  /**
+   * PlacementProcessLog deleteMany
+   */
+  export type PlacementProcessLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlacementProcessLogs to delete
+     */
+    where?: PlacementProcessLogWhereInput
+    /**
+     * Limit how many PlacementProcessLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlacementProcessLog.batch
+   */
+  export type PlacementProcessLog$batchArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    where?: PlacementBatchWhereInput
+  }
+
+  /**
+   * PlacementProcessLog.job
+   */
+  export type PlacementProcessLog$jobArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementJob
+     */
+    select?: PlacementJobSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementJob
+     */
+    omit?: PlacementJobOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementJobInclude<ExtArgs> | null
+    where?: PlacementJobWhereInput
+  }
+
+  /**
+   * PlacementProcessLog without action
+   */
+  export type PlacementProcessLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementProcessLog
+     */
+    select?: PlacementProcessLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementProcessLog
+     */
+    omit?: PlacementProcessLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementProcessLogInclude<ExtArgs> | null
   }
 
 
@@ -96369,6 +99158,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: boolean | Organization$platformLoyaltyLedgerArgs<ExtArgs>
     satelliteEndpoints?: boolean | Organization$satelliteEndpointsArgs<ExtArgs>
     placementJobs?: boolean | Organization$placementJobsArgs<ExtArgs>
+    placementBatches?: boolean | Organization$placementBatchesArgs<ExtArgs>
     satelliteEntitlements?: boolean | Organization$satelliteEntitlementsArgs<ExtArgs>
     commercialOutlets?: boolean | Organization$commercialOutletsArgs<ExtArgs>
     moduleGraces?: boolean | Organization$moduleGracesArgs<ExtArgs>
@@ -96413,6 +99203,7 @@ export namespace Prisma {
     agencyPropertyGrants?: boolean | Organization$agencyPropertyGrantsArgs<ExtArgs>
     buyerOrgGrants?: boolean | Organization$buyerOrgGrantsArgs<ExtArgs>
     profile?: boolean | Organization$profileArgs<ExtArgs>
+    guestApp?: boolean | Organization$guestAppArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
@@ -96539,6 +99330,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: boolean | Organization$platformLoyaltyLedgerArgs<ExtArgs>
     satelliteEndpoints?: boolean | Organization$satelliteEndpointsArgs<ExtArgs>
     placementJobs?: boolean | Organization$placementJobsArgs<ExtArgs>
+    placementBatches?: boolean | Organization$placementBatchesArgs<ExtArgs>
     satelliteEntitlements?: boolean | Organization$satelliteEntitlementsArgs<ExtArgs>
     commercialOutlets?: boolean | Organization$commercialOutletsArgs<ExtArgs>
     moduleGraces?: boolean | Organization$moduleGracesArgs<ExtArgs>
@@ -96583,6 +99375,7 @@ export namespace Prisma {
     agencyPropertyGrants?: boolean | Organization$agencyPropertyGrantsArgs<ExtArgs>
     buyerOrgGrants?: boolean | Organization$buyerOrgGrantsArgs<ExtArgs>
     profile?: boolean | Organization$profileArgs<ExtArgs>
+    guestApp?: boolean | Organization$guestAppArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -96624,6 +99417,7 @@ export namespace Prisma {
       platformLoyaltyLedger: Prisma.$PlatformLoyaltyLedgerPayload<ExtArgs>[]
       satelliteEndpoints: Prisma.$SatelliteEndpointPayload<ExtArgs>[]
       placementJobs: Prisma.$PlacementJobPayload<ExtArgs>[]
+      placementBatches: Prisma.$PlacementBatchPayload<ExtArgs>[]
       satelliteEntitlements: Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>[]
       commercialOutlets: Prisma.$CommercialOutletPayload<ExtArgs>[]
       moduleGraces: Prisma.$OrganizationModuleGracePayload<ExtArgs>[]
@@ -96668,6 +99462,7 @@ export namespace Prisma {
       agencyPropertyGrants: Prisma.$AgencyPropertyGrantPayload<ExtArgs>[]
       buyerOrgGrants: Prisma.$BuyerOrgGrantPayload<ExtArgs>[]
       profile: Prisma.$OrganizationProfilePayload<ExtArgs> | null
+      guestApp: Prisma.$OrganizationGuestAppPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -97125,6 +99920,7 @@ export namespace Prisma {
     platformLoyaltyLedger<T extends Organization$platformLoyaltyLedgerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformLoyaltyLedgerArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformLoyaltyLedgerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     satelliteEndpoints<T extends Organization$satelliteEndpointsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$satelliteEndpointsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     placementJobs<T extends Organization$placementJobsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$placementJobsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    placementBatches<T extends Organization$placementBatchesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$placementBatchesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlacementBatchPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     satelliteEntitlements<T extends Organization$satelliteEntitlementsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$satelliteEntitlementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     commercialOutlets<T extends Organization$commercialOutletsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$commercialOutletsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommercialOutletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     moduleGraces<T extends Organization$moduleGracesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$moduleGracesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationModuleGracePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -97169,6 +99965,7 @@ export namespace Prisma {
     agencyPropertyGrants<T extends Organization$agencyPropertyGrantsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$agencyPropertyGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgencyPropertyGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     buyerOrgGrants<T extends Organization$buyerOrgGrantsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$buyerOrgGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BuyerOrgGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     profile<T extends Organization$profileArgs<ExtArgs> = {}>(args?: Subset<T, Organization$profileArgs<ExtArgs>>): Prisma__OrganizationProfileClient<$Result.GetResult<Prisma.$OrganizationProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    guestApp<T extends Organization$guestAppArgs<ExtArgs> = {}>(args?: Subset<T, Organization$guestAppArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -98221,6 +101018,30 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.placementBatches
+   */
+  export type Organization$placementBatchesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlacementBatch
+     */
+    select?: PlacementBatchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlacementBatch
+     */
+    omit?: PlacementBatchOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlacementBatchInclude<ExtArgs> | null
+    where?: PlacementBatchWhereInput
+    orderBy?: PlacementBatchOrderByWithRelationInput | PlacementBatchOrderByWithRelationInput[]
+    cursor?: PlacementBatchWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlacementBatchScalarFieldEnum | PlacementBatchScalarFieldEnum[]
+  }
+
+  /**
    * Organization.satelliteEntitlements
    */
   export type Organization$satelliteEntitlementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -99239,6 +102060,25 @@ export namespace Prisma {
      */
     include?: OrganizationProfileInclude<ExtArgs> | null
     where?: OrganizationProfileWhereInput
+  }
+
+  /**
+   * Organization.guestApp
+   */
+  export type Organization$guestAppArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    where?: OrganizationGuestAppWhereInput
   }
 
   /**
@@ -101567,6 +104407,1224 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: OrganizationProfileInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrganizationGuestApp
+   */
+
+  export type AggregateOrganizationGuestApp = {
+    _count: OrganizationGuestAppCountAggregateOutputType | null
+    _avg: OrganizationGuestAppAvgAggregateOutputType | null
+    _sum: OrganizationGuestAppSumAggregateOutputType | null
+    _min: OrganizationGuestAppMinAggregateOutputType | null
+    _max: OrganizationGuestAppMaxAggregateOutputType | null
+  }
+
+  export type OrganizationGuestAppAvgAggregateOutputType = {
+    leadAlertMinutes: number | null
+  }
+
+  export type OrganizationGuestAppSumAggregateOutputType = {
+    leadAlertMinutes: number | null
+  }
+
+  export type OrganizationGuestAppMinAggregateOutputType = {
+    organizationId: string | null
+    enabled: boolean | null
+    displayName: string | null
+    primaryColor: string | null
+    logoUrl: string | null
+    locale: string | null
+    deskPhone: string | null
+    postStayMessage: string | null
+    doctorOnDutyPhone: string | null
+    leadAlertMinutes: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationGuestAppMaxAggregateOutputType = {
+    organizationId: string | null
+    enabled: boolean | null
+    displayName: string | null
+    primaryColor: string | null
+    logoUrl: string | null
+    locale: string | null
+    deskPhone: string | null
+    postStayMessage: string | null
+    doctorOnDutyPhone: string | null
+    leadAlertMinutes: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationGuestAppCountAggregateOutputType = {
+    organizationId: number
+    enabled: number
+    displayName: number
+    primaryColor: number
+    logoUrl: number
+    locale: number
+    deskPhone: number
+    catalogJson: number
+    postStayMessage: number
+    offersJson: number
+    doctorOnDutyPhone: number
+    leadAlertMinutes: number
+    enabledOrderKinds: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OrganizationGuestAppAvgAggregateInputType = {
+    leadAlertMinutes?: true
+  }
+
+  export type OrganizationGuestAppSumAggregateInputType = {
+    leadAlertMinutes?: true
+  }
+
+  export type OrganizationGuestAppMinAggregateInputType = {
+    organizationId?: true
+    enabled?: true
+    displayName?: true
+    primaryColor?: true
+    logoUrl?: true
+    locale?: true
+    deskPhone?: true
+    postStayMessage?: true
+    doctorOnDutyPhone?: true
+    leadAlertMinutes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationGuestAppMaxAggregateInputType = {
+    organizationId?: true
+    enabled?: true
+    displayName?: true
+    primaryColor?: true
+    logoUrl?: true
+    locale?: true
+    deskPhone?: true
+    postStayMessage?: true
+    doctorOnDutyPhone?: true
+    leadAlertMinutes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationGuestAppCountAggregateInputType = {
+    organizationId?: true
+    enabled?: true
+    displayName?: true
+    primaryColor?: true
+    logoUrl?: true
+    locale?: true
+    deskPhone?: true
+    catalogJson?: true
+    postStayMessage?: true
+    offersJson?: true
+    doctorOnDutyPhone?: true
+    leadAlertMinutes?: true
+    enabledOrderKinds?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OrganizationGuestAppAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationGuestApp to aggregate.
+     */
+    where?: OrganizationGuestAppWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationGuestApps to fetch.
+     */
+    orderBy?: OrganizationGuestAppOrderByWithRelationInput | OrganizationGuestAppOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrganizationGuestAppWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationGuestApps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationGuestApps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrganizationGuestApps
+    **/
+    _count?: true | OrganizationGuestAppCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OrganizationGuestAppAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrganizationGuestAppSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrganizationGuestAppMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrganizationGuestAppMaxAggregateInputType
+  }
+
+  export type GetOrganizationGuestAppAggregateType<T extends OrganizationGuestAppAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrganizationGuestApp]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrganizationGuestApp[P]>
+      : GetScalarType<T[P], AggregateOrganizationGuestApp[P]>
+  }
+
+
+
+
+  export type OrganizationGuestAppGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationGuestAppWhereInput
+    orderBy?: OrganizationGuestAppOrderByWithAggregationInput | OrganizationGuestAppOrderByWithAggregationInput[]
+    by: OrganizationGuestAppScalarFieldEnum[] | OrganizationGuestAppScalarFieldEnum
+    having?: OrganizationGuestAppScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrganizationGuestAppCountAggregateInputType | true
+    _avg?: OrganizationGuestAppAvgAggregateInputType
+    _sum?: OrganizationGuestAppSumAggregateInputType
+    _min?: OrganizationGuestAppMinAggregateInputType
+    _max?: OrganizationGuestAppMaxAggregateInputType
+  }
+
+  export type OrganizationGuestAppGroupByOutputType = {
+    organizationId: string
+    enabled: boolean
+    displayName: string | null
+    primaryColor: string | null
+    logoUrl: string | null
+    locale: string | null
+    deskPhone: string | null
+    catalogJson: JsonValue | null
+    postStayMessage: string | null
+    offersJson: JsonValue | null
+    doctorOnDutyPhone: string | null
+    leadAlertMinutes: number | null
+    enabledOrderKinds: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    _count: OrganizationGuestAppCountAggregateOutputType | null
+    _avg: OrganizationGuestAppAvgAggregateOutputType | null
+    _sum: OrganizationGuestAppSumAggregateOutputType | null
+    _min: OrganizationGuestAppMinAggregateOutputType | null
+    _max: OrganizationGuestAppMaxAggregateOutputType | null
+  }
+
+  type GetOrganizationGuestAppGroupByPayload<T extends OrganizationGuestAppGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrganizationGuestAppGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrganizationGuestAppGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrganizationGuestAppGroupByOutputType[P]>
+            : GetScalarType<T[P], OrganizationGuestAppGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrganizationGuestAppSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    enabled?: boolean
+    displayName?: boolean
+    primaryColor?: boolean
+    logoUrl?: boolean
+    locale?: boolean
+    deskPhone?: boolean
+    catalogJson?: boolean
+    postStayMessage?: boolean
+    offersJson?: boolean
+    doctorOnDutyPhone?: boolean
+    leadAlertMinutes?: boolean
+    enabledOrderKinds?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationGuestApp"]>
+
+  export type OrganizationGuestAppSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    enabled?: boolean
+    displayName?: boolean
+    primaryColor?: boolean
+    logoUrl?: boolean
+    locale?: boolean
+    deskPhone?: boolean
+    catalogJson?: boolean
+    postStayMessage?: boolean
+    offersJson?: boolean
+    doctorOnDutyPhone?: boolean
+    leadAlertMinutes?: boolean
+    enabledOrderKinds?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationGuestApp"]>
+
+  export type OrganizationGuestAppSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    enabled?: boolean
+    displayName?: boolean
+    primaryColor?: boolean
+    logoUrl?: boolean
+    locale?: boolean
+    deskPhone?: boolean
+    catalogJson?: boolean
+    postStayMessage?: boolean
+    offersJson?: boolean
+    doctorOnDutyPhone?: boolean
+    leadAlertMinutes?: boolean
+    enabledOrderKinds?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationGuestApp"]>
+
+  export type OrganizationGuestAppSelectScalar = {
+    organizationId?: boolean
+    enabled?: boolean
+    displayName?: boolean
+    primaryColor?: boolean
+    logoUrl?: boolean
+    locale?: boolean
+    deskPhone?: boolean
+    catalogJson?: boolean
+    postStayMessage?: boolean
+    offersJson?: boolean
+    doctorOnDutyPhone?: boolean
+    leadAlertMinutes?: boolean
+    enabledOrderKinds?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OrganizationGuestAppOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "enabled" | "displayName" | "primaryColor" | "logoUrl" | "locale" | "deskPhone" | "catalogJson" | "postStayMessage" | "offersJson" | "doctorOnDutyPhone" | "leadAlertMinutes" | "enabledOrderKinds" | "createdAt" | "updatedAt", ExtArgs["result"]["organizationGuestApp"]>
+  export type OrganizationGuestAppInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type OrganizationGuestAppIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type OrganizationGuestAppIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $OrganizationGuestAppPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrganizationGuestApp"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      organizationId: string
+      enabled: boolean
+      displayName: string | null
+      primaryColor: string | null
+      logoUrl: string | null
+      locale: string | null
+      deskPhone: string | null
+      /**
+       * Hotel tab catalog blocks (packages, season, how to get there) — CP-GUEST-APP-02.
+       */
+      catalogJson: Prisma.JsonValue | null
+      postStayMessage: string | null
+      offersJson: Prisma.JsonValue | null
+      doctorOnDutyPhone: string | null
+      leadAlertMinutes: number | null
+      enabledOrderKinds: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["organizationGuestApp"]>
+    composites: {}
+  }
+
+  type OrganizationGuestAppGetPayload<S extends boolean | null | undefined | OrganizationGuestAppDefaultArgs> = $Result.GetResult<Prisma.$OrganizationGuestAppPayload, S>
+
+  type OrganizationGuestAppCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OrganizationGuestAppFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OrganizationGuestAppCountAggregateInputType | true
+    }
+
+  export interface OrganizationGuestAppDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrganizationGuestApp'], meta: { name: 'OrganizationGuestApp' } }
+    /**
+     * Find zero or one OrganizationGuestApp that matches the filter.
+     * @param {OrganizationGuestAppFindUniqueArgs} args - Arguments to find a OrganizationGuestApp
+     * @example
+     * // Get one OrganizationGuestApp
+     * const organizationGuestApp = await prisma.organizationGuestApp.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrganizationGuestAppFindUniqueArgs>(args: SelectSubset<T, OrganizationGuestAppFindUniqueArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OrganizationGuestApp that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OrganizationGuestAppFindUniqueOrThrowArgs} args - Arguments to find a OrganizationGuestApp
+     * @example
+     * // Get one OrganizationGuestApp
+     * const organizationGuestApp = await prisma.organizationGuestApp.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrganizationGuestAppFindUniqueOrThrowArgs>(args: SelectSubset<T, OrganizationGuestAppFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationGuestApp that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationGuestAppFindFirstArgs} args - Arguments to find a OrganizationGuestApp
+     * @example
+     * // Get one OrganizationGuestApp
+     * const organizationGuestApp = await prisma.organizationGuestApp.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrganizationGuestAppFindFirstArgs>(args?: SelectSubset<T, OrganizationGuestAppFindFirstArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationGuestApp that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationGuestAppFindFirstOrThrowArgs} args - Arguments to find a OrganizationGuestApp
+     * @example
+     * // Get one OrganizationGuestApp
+     * const organizationGuestApp = await prisma.organizationGuestApp.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrganizationGuestAppFindFirstOrThrowArgs>(args?: SelectSubset<T, OrganizationGuestAppFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OrganizationGuestApps that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationGuestAppFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrganizationGuestApps
+     * const organizationGuestApps = await prisma.organizationGuestApp.findMany()
+     * 
+     * // Get first 10 OrganizationGuestApps
+     * const organizationGuestApps = await prisma.organizationGuestApp.findMany({ take: 10 })
+     * 
+     * // Only select the `organizationId`
+     * const organizationGuestAppWithOrganizationIdOnly = await prisma.organizationGuestApp.findMany({ select: { organizationId: true } })
+     * 
+     */
+    findMany<T extends OrganizationGuestAppFindManyArgs>(args?: SelectSubset<T, OrganizationGuestAppFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OrganizationGuestApp.
+     * @param {OrganizationGuestAppCreateArgs} args - Arguments to create a OrganizationGuestApp.
+     * @example
+     * // Create one OrganizationGuestApp
+     * const OrganizationGuestApp = await prisma.organizationGuestApp.create({
+     *   data: {
+     *     // ... data to create a OrganizationGuestApp
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrganizationGuestAppCreateArgs>(args: SelectSubset<T, OrganizationGuestAppCreateArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OrganizationGuestApps.
+     * @param {OrganizationGuestAppCreateManyArgs} args - Arguments to create many OrganizationGuestApps.
+     * @example
+     * // Create many OrganizationGuestApps
+     * const organizationGuestApp = await prisma.organizationGuestApp.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrganizationGuestAppCreateManyArgs>(args?: SelectSubset<T, OrganizationGuestAppCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrganizationGuestApps and returns the data saved in the database.
+     * @param {OrganizationGuestAppCreateManyAndReturnArgs} args - Arguments to create many OrganizationGuestApps.
+     * @example
+     * // Create many OrganizationGuestApps
+     * const organizationGuestApp = await prisma.organizationGuestApp.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrganizationGuestApps and only return the `organizationId`
+     * const organizationGuestAppWithOrganizationIdOnly = await prisma.organizationGuestApp.createManyAndReturn({
+     *   select: { organizationId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrganizationGuestAppCreateManyAndReturnArgs>(args?: SelectSubset<T, OrganizationGuestAppCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OrganizationGuestApp.
+     * @param {OrganizationGuestAppDeleteArgs} args - Arguments to delete one OrganizationGuestApp.
+     * @example
+     * // Delete one OrganizationGuestApp
+     * const OrganizationGuestApp = await prisma.organizationGuestApp.delete({
+     *   where: {
+     *     // ... filter to delete one OrganizationGuestApp
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrganizationGuestAppDeleteArgs>(args: SelectSubset<T, OrganizationGuestAppDeleteArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OrganizationGuestApp.
+     * @param {OrganizationGuestAppUpdateArgs} args - Arguments to update one OrganizationGuestApp.
+     * @example
+     * // Update one OrganizationGuestApp
+     * const organizationGuestApp = await prisma.organizationGuestApp.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrganizationGuestAppUpdateArgs>(args: SelectSubset<T, OrganizationGuestAppUpdateArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OrganizationGuestApps.
+     * @param {OrganizationGuestAppDeleteManyArgs} args - Arguments to filter OrganizationGuestApps to delete.
+     * @example
+     * // Delete a few OrganizationGuestApps
+     * const { count } = await prisma.organizationGuestApp.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrganizationGuestAppDeleteManyArgs>(args?: SelectSubset<T, OrganizationGuestAppDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationGuestApps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationGuestAppUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrganizationGuestApps
+     * const organizationGuestApp = await prisma.organizationGuestApp.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrganizationGuestAppUpdateManyArgs>(args: SelectSubset<T, OrganizationGuestAppUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationGuestApps and returns the data updated in the database.
+     * @param {OrganizationGuestAppUpdateManyAndReturnArgs} args - Arguments to update many OrganizationGuestApps.
+     * @example
+     * // Update many OrganizationGuestApps
+     * const organizationGuestApp = await prisma.organizationGuestApp.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OrganizationGuestApps and only return the `organizationId`
+     * const organizationGuestAppWithOrganizationIdOnly = await prisma.organizationGuestApp.updateManyAndReturn({
+     *   select: { organizationId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OrganizationGuestAppUpdateManyAndReturnArgs>(args: SelectSubset<T, OrganizationGuestAppUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OrganizationGuestApp.
+     * @param {OrganizationGuestAppUpsertArgs} args - Arguments to update or create a OrganizationGuestApp.
+     * @example
+     * // Update or create a OrganizationGuestApp
+     * const organizationGuestApp = await prisma.organizationGuestApp.upsert({
+     *   create: {
+     *     // ... data to create a OrganizationGuestApp
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrganizationGuestApp we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrganizationGuestAppUpsertArgs>(args: SelectSubset<T, OrganizationGuestAppUpsertArgs<ExtArgs>>): Prisma__OrganizationGuestAppClient<$Result.GetResult<Prisma.$OrganizationGuestAppPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OrganizationGuestApps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationGuestAppCountArgs} args - Arguments to filter OrganizationGuestApps to count.
+     * @example
+     * // Count the number of OrganizationGuestApps
+     * const count = await prisma.organizationGuestApp.count({
+     *   where: {
+     *     // ... the filter for the OrganizationGuestApps we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrganizationGuestAppCountArgs>(
+      args?: Subset<T, OrganizationGuestAppCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrganizationGuestAppCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrganizationGuestApp.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationGuestAppAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrganizationGuestAppAggregateArgs>(args: Subset<T, OrganizationGuestAppAggregateArgs>): Prisma.PrismaPromise<GetOrganizationGuestAppAggregateType<T>>
+
+    /**
+     * Group by OrganizationGuestApp.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationGuestAppGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrganizationGuestAppGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrganizationGuestAppGroupByArgs['orderBy'] }
+        : { orderBy?: OrganizationGuestAppGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrganizationGuestAppGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrganizationGuestAppGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrganizationGuestApp model
+   */
+  readonly fields: OrganizationGuestAppFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrganizationGuestApp.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrganizationGuestAppClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrganizationGuestApp model
+   */
+  interface OrganizationGuestAppFieldRefs {
+    readonly organizationId: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly enabled: FieldRef<"OrganizationGuestApp", 'Boolean'>
+    readonly displayName: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly primaryColor: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly logoUrl: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly locale: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly deskPhone: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly catalogJson: FieldRef<"OrganizationGuestApp", 'Json'>
+    readonly postStayMessage: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly offersJson: FieldRef<"OrganizationGuestApp", 'Json'>
+    readonly doctorOnDutyPhone: FieldRef<"OrganizationGuestApp", 'String'>
+    readonly leadAlertMinutes: FieldRef<"OrganizationGuestApp", 'Int'>
+    readonly enabledOrderKinds: FieldRef<"OrganizationGuestApp", 'Json'>
+    readonly createdAt: FieldRef<"OrganizationGuestApp", 'DateTime'>
+    readonly updatedAt: FieldRef<"OrganizationGuestApp", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrganizationGuestApp findUnique
+   */
+  export type OrganizationGuestAppFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationGuestApp to fetch.
+     */
+    where: OrganizationGuestAppWhereUniqueInput
+  }
+
+  /**
+   * OrganizationGuestApp findUniqueOrThrow
+   */
+  export type OrganizationGuestAppFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationGuestApp to fetch.
+     */
+    where: OrganizationGuestAppWhereUniqueInput
+  }
+
+  /**
+   * OrganizationGuestApp findFirst
+   */
+  export type OrganizationGuestAppFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationGuestApp to fetch.
+     */
+    where?: OrganizationGuestAppWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationGuestApps to fetch.
+     */
+    orderBy?: OrganizationGuestAppOrderByWithRelationInput | OrganizationGuestAppOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationGuestApps.
+     */
+    cursor?: OrganizationGuestAppWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationGuestApps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationGuestApps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationGuestApps.
+     */
+    distinct?: OrganizationGuestAppScalarFieldEnum | OrganizationGuestAppScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationGuestApp findFirstOrThrow
+   */
+  export type OrganizationGuestAppFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationGuestApp to fetch.
+     */
+    where?: OrganizationGuestAppWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationGuestApps to fetch.
+     */
+    orderBy?: OrganizationGuestAppOrderByWithRelationInput | OrganizationGuestAppOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationGuestApps.
+     */
+    cursor?: OrganizationGuestAppWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationGuestApps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationGuestApps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationGuestApps.
+     */
+    distinct?: OrganizationGuestAppScalarFieldEnum | OrganizationGuestAppScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationGuestApp findMany
+   */
+  export type OrganizationGuestAppFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationGuestApps to fetch.
+     */
+    where?: OrganizationGuestAppWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationGuestApps to fetch.
+     */
+    orderBy?: OrganizationGuestAppOrderByWithRelationInput | OrganizationGuestAppOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrganizationGuestApps.
+     */
+    cursor?: OrganizationGuestAppWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationGuestApps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationGuestApps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationGuestApps.
+     */
+    distinct?: OrganizationGuestAppScalarFieldEnum | OrganizationGuestAppScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationGuestApp create
+   */
+  export type OrganizationGuestAppCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrganizationGuestApp.
+     */
+    data: XOR<OrganizationGuestAppCreateInput, OrganizationGuestAppUncheckedCreateInput>
+  }
+
+  /**
+   * OrganizationGuestApp createMany
+   */
+  export type OrganizationGuestAppCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrganizationGuestApps.
+     */
+    data: OrganizationGuestAppCreateManyInput | OrganizationGuestAppCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrganizationGuestApp createManyAndReturn
+   */
+  export type OrganizationGuestAppCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * The data used to create many OrganizationGuestApps.
+     */
+    data: OrganizationGuestAppCreateManyInput | OrganizationGuestAppCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationGuestApp update
+   */
+  export type OrganizationGuestAppUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrganizationGuestApp.
+     */
+    data: XOR<OrganizationGuestAppUpdateInput, OrganizationGuestAppUncheckedUpdateInput>
+    /**
+     * Choose, which OrganizationGuestApp to update.
+     */
+    where: OrganizationGuestAppWhereUniqueInput
+  }
+
+  /**
+   * OrganizationGuestApp updateMany
+   */
+  export type OrganizationGuestAppUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrganizationGuestApps.
+     */
+    data: XOR<OrganizationGuestAppUpdateManyMutationInput, OrganizationGuestAppUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationGuestApps to update
+     */
+    where?: OrganizationGuestAppWhereInput
+    /**
+     * Limit how many OrganizationGuestApps to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationGuestApp updateManyAndReturn
+   */
+  export type OrganizationGuestAppUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * The data used to update OrganizationGuestApps.
+     */
+    data: XOR<OrganizationGuestAppUpdateManyMutationInput, OrganizationGuestAppUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationGuestApps to update
+     */
+    where?: OrganizationGuestAppWhereInput
+    /**
+     * Limit how many OrganizationGuestApps to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationGuestApp upsert
+   */
+  export type OrganizationGuestAppUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrganizationGuestApp to update in case it exists.
+     */
+    where: OrganizationGuestAppWhereUniqueInput
+    /**
+     * In case the OrganizationGuestApp found by the `where` argument doesn't exist, create a new OrganizationGuestApp with this data.
+     */
+    create: XOR<OrganizationGuestAppCreateInput, OrganizationGuestAppUncheckedCreateInput>
+    /**
+     * In case the OrganizationGuestApp was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrganizationGuestAppUpdateInput, OrganizationGuestAppUncheckedUpdateInput>
+  }
+
+  /**
+   * OrganizationGuestApp delete
+   */
+  export type OrganizationGuestAppDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
+    /**
+     * Filter which OrganizationGuestApp to delete.
+     */
+    where: OrganizationGuestAppWhereUniqueInput
+  }
+
+  /**
+   * OrganizationGuestApp deleteMany
+   */
+  export type OrganizationGuestAppDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationGuestApps to delete
+     */
+    where?: OrganizationGuestAppWhereInput
+    /**
+     * Limit how many OrganizationGuestApps to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationGuestApp without action
+   */
+  export type OrganizationGuestAppDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationGuestApp
+     */
+    select?: OrganizationGuestAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationGuestApp
+     */
+    omit?: OrganizationGuestAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationGuestAppInclude<ExtArgs> | null
   }
 
 
@@ -161799,9 +165857,28 @@ export namespace Prisma {
   export type SatelliteEndpointScalarFieldEnum = (typeof SatelliteEndpointScalarFieldEnum)[keyof typeof SatelliteEndpointScalarFieldEnum]
 
 
+  export const PlacementBatchScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    satelliteKeys: 'satelliteKeys',
+    fromTopology: 'fromTopology',
+    toTopology: 'toTopology',
+    packaging: 'packaging',
+    targetHost: 'targetHost',
+    recipeJson: 'recipeJson',
+    status: 'status',
+    errorMessage: 'errorMessage',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PlacementBatchScalarFieldEnum = (typeof PlacementBatchScalarFieldEnum)[keyof typeof PlacementBatchScalarFieldEnum]
+
+
   export const PlacementJobScalarFieldEnum: {
     id: 'id',
     organizationId: 'organizationId',
+    batchId: 'batchId',
     satelliteKey: 'satelliteKey',
     fromTopology: 'fromTopology',
     toTopology: 'toTopology',
@@ -161817,6 +165894,20 @@ export namespace Prisma {
   };
 
   export type PlacementJobScalarFieldEnum = (typeof PlacementJobScalarFieldEnum)[keyof typeof PlacementJobScalarFieldEnum]
+
+
+  export const PlacementProcessLogScalarFieldEnum: {
+    id: 'id',
+    batchId: 'batchId',
+    jobId: 'jobId',
+    phase: 'phase',
+    level: 'level',
+    message: 'message',
+    detail: 'detail',
+    createdAt: 'createdAt'
+  };
+
+  export type PlacementProcessLogScalarFieldEnum = (typeof PlacementProcessLogScalarFieldEnum)[keyof typeof PlacementProcessLogScalarFieldEnum]
 
 
   export const WorkforceAssignmentScalarFieldEnum: {
@@ -162739,6 +166830,27 @@ export namespace Prisma {
   };
 
   export type OrganizationProfileScalarFieldEnum = (typeof OrganizationProfileScalarFieldEnum)[keyof typeof OrganizationProfileScalarFieldEnum]
+
+
+  export const OrganizationGuestAppScalarFieldEnum: {
+    organizationId: 'organizationId',
+    enabled: 'enabled',
+    displayName: 'displayName',
+    primaryColor: 'primaryColor',
+    logoUrl: 'logoUrl',
+    locale: 'locale',
+    deskPhone: 'deskPhone',
+    catalogJson: 'catalogJson',
+    postStayMessage: 'postStayMessage',
+    offersJson: 'offersJson',
+    doctorOnDutyPhone: 'doctorOnDutyPhone',
+    leadAlertMinutes: 'leadAlertMinutes',
+    enabledOrderKinds: 'enabledOrderKinds',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OrganizationGuestAppScalarFieldEnum = (typeof OrganizationGuestAppScalarFieldEnum)[keyof typeof OrganizationGuestAppScalarFieldEnum]
 
 
   export const OrganizationContactChannelScalarFieldEnum: {
@@ -163801,6 +167913,20 @@ export namespace Prisma {
    * Reference to a field of type 'DeploymentTopology[]'
    */
   export type ListEnumDeploymentTopologyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeploymentTopology[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlacementPackaging'
+   */
+  export type EnumPlacementPackagingFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlacementPackaging'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlacementPackaging[]'
+   */
+  export type ListEnumPlacementPackagingFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlacementPackaging[]'>
     
 
 
@@ -165992,12 +170118,109 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"SatelliteEndpoint"> | Date | string
   }
 
+  export type PlacementBatchWhereInput = {
+    AND?: PlacementBatchWhereInput | PlacementBatchWhereInput[]
+    OR?: PlacementBatchWhereInput[]
+    NOT?: PlacementBatchWhereInput | PlacementBatchWhereInput[]
+    id?: UuidFilter<"PlacementBatch"> | string
+    organizationId?: UuidFilter<"PlacementBatch"> | string
+    satelliteKeys?: StringNullableListFilter<"PlacementBatch">
+    fromTopology?: EnumDeploymentTopologyFilter<"PlacementBatch"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFilter<"PlacementBatch"> | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFilter<"PlacementBatch"> | $Enums.PlacementPackaging
+    targetHost?: StringNullableFilter<"PlacementBatch"> | string | null
+    recipeJson?: JsonNullableFilter<"PlacementBatch">
+    status?: EnumPlacementJobStatusFilter<"PlacementBatch"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableFilter<"PlacementBatch"> | string | null
+    createdAt?: DateTimeFilter<"PlacementBatch"> | Date | string
+    updatedAt?: DateTimeFilter<"PlacementBatch"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    jobs?: PlacementJobListRelationFilter
+    processLogs?: PlacementProcessLogListRelationFilter
+  }
+
+  export type PlacementBatchOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKeys?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    packaging?: SortOrder
+    targetHost?: SortOrderInput | SortOrder
+    recipeJson?: SortOrderInput | SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    jobs?: PlacementJobOrderByRelationAggregateInput
+    processLogs?: PlacementProcessLogOrderByRelationAggregateInput
+  }
+
+  export type PlacementBatchWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PlacementBatchWhereInput | PlacementBatchWhereInput[]
+    OR?: PlacementBatchWhereInput[]
+    NOT?: PlacementBatchWhereInput | PlacementBatchWhereInput[]
+    organizationId?: UuidFilter<"PlacementBatch"> | string
+    satelliteKeys?: StringNullableListFilter<"PlacementBatch">
+    fromTopology?: EnumDeploymentTopologyFilter<"PlacementBatch"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFilter<"PlacementBatch"> | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFilter<"PlacementBatch"> | $Enums.PlacementPackaging
+    targetHost?: StringNullableFilter<"PlacementBatch"> | string | null
+    recipeJson?: JsonNullableFilter<"PlacementBatch">
+    status?: EnumPlacementJobStatusFilter<"PlacementBatch"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableFilter<"PlacementBatch"> | string | null
+    createdAt?: DateTimeFilter<"PlacementBatch"> | Date | string
+    updatedAt?: DateTimeFilter<"PlacementBatch"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    jobs?: PlacementJobListRelationFilter
+    processLogs?: PlacementProcessLogListRelationFilter
+  }, "id">
+
+  export type PlacementBatchOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKeys?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    packaging?: SortOrder
+    targetHost?: SortOrderInput | SortOrder
+    recipeJson?: SortOrderInput | SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PlacementBatchCountOrderByAggregateInput
+    _max?: PlacementBatchMaxOrderByAggregateInput
+    _min?: PlacementBatchMinOrderByAggregateInput
+  }
+
+  export type PlacementBatchScalarWhereWithAggregatesInput = {
+    AND?: PlacementBatchScalarWhereWithAggregatesInput | PlacementBatchScalarWhereWithAggregatesInput[]
+    OR?: PlacementBatchScalarWhereWithAggregatesInput[]
+    NOT?: PlacementBatchScalarWhereWithAggregatesInput | PlacementBatchScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PlacementBatch"> | string
+    organizationId?: UuidWithAggregatesFilter<"PlacementBatch"> | string
+    satelliteKeys?: StringNullableListFilter<"PlacementBatch">
+    fromTopology?: EnumDeploymentTopologyWithAggregatesFilter<"PlacementBatch"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyWithAggregatesFilter<"PlacementBatch"> | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingWithAggregatesFilter<"PlacementBatch"> | $Enums.PlacementPackaging
+    targetHost?: StringNullableWithAggregatesFilter<"PlacementBatch"> | string | null
+    recipeJson?: JsonNullableWithAggregatesFilter<"PlacementBatch">
+    status?: EnumPlacementJobStatusWithAggregatesFilter<"PlacementBatch"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableWithAggregatesFilter<"PlacementBatch"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"PlacementBatch"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PlacementBatch"> | Date | string
+  }
+
   export type PlacementJobWhereInput = {
     AND?: PlacementJobWhereInput | PlacementJobWhereInput[]
     OR?: PlacementJobWhereInput[]
     NOT?: PlacementJobWhereInput | PlacementJobWhereInput[]
     id?: UuidFilter<"PlacementJob"> | string
     organizationId?: UuidFilter<"PlacementJob"> | string
+    batchId?: UuidNullableFilter<"PlacementJob"> | string | null
     satelliteKey?: StringFilter<"PlacementJob"> | string
     fromTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
     toTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
@@ -166011,11 +170234,14 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
     updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    batch?: XOR<PlacementBatchNullableScalarRelationFilter, PlacementBatchWhereInput> | null
+    processLogs?: PlacementProcessLogListRelationFilter
   }
 
   export type PlacementJobOrderByWithRelationInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    batchId?: SortOrderInput | SortOrder
     satelliteKey?: SortOrder
     fromTopology?: SortOrder
     toTopology?: SortOrder
@@ -166029,6 +170255,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
+    batch?: PlacementBatchOrderByWithRelationInput
+    processLogs?: PlacementProcessLogOrderByRelationAggregateInput
   }
 
   export type PlacementJobWhereUniqueInput = Prisma.AtLeast<{
@@ -166037,6 +170265,7 @@ export namespace Prisma {
     OR?: PlacementJobWhereInput[]
     NOT?: PlacementJobWhereInput | PlacementJobWhereInput[]
     organizationId?: UuidFilter<"PlacementJob"> | string
+    batchId?: UuidNullableFilter<"PlacementJob"> | string | null
     satelliteKey?: StringFilter<"PlacementJob"> | string
     fromTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
     toTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
@@ -166050,11 +170279,14 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
     updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    batch?: XOR<PlacementBatchNullableScalarRelationFilter, PlacementBatchWhereInput> | null
+    processLogs?: PlacementProcessLogListRelationFilter
   }, "id">
 
   export type PlacementJobOrderByWithAggregationInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    batchId?: SortOrderInput | SortOrder
     satelliteKey?: SortOrder
     fromTopology?: SortOrder
     toTopology?: SortOrder
@@ -166078,6 +170310,7 @@ export namespace Prisma {
     NOT?: PlacementJobScalarWhereWithAggregatesInput | PlacementJobScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"PlacementJob"> | string
     organizationId?: UuidWithAggregatesFilter<"PlacementJob"> | string
+    batchId?: UuidNullableWithAggregatesFilter<"PlacementJob"> | string | null
     satelliteKey?: StringWithAggregatesFilter<"PlacementJob"> | string
     fromTopology?: EnumDeploymentTopologyWithAggregatesFilter<"PlacementJob"> | $Enums.DeploymentTopology
     toTopology?: EnumDeploymentTopologyWithAggregatesFilter<"PlacementJob"> | $Enums.DeploymentTopology
@@ -166090,6 +170323,79 @@ export namespace Prisma {
     targetBaseUrl?: StringNullableWithAggregatesFilter<"PlacementJob"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PlacementJob"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PlacementJob"> | Date | string
+  }
+
+  export type PlacementProcessLogWhereInput = {
+    AND?: PlacementProcessLogWhereInput | PlacementProcessLogWhereInput[]
+    OR?: PlacementProcessLogWhereInput[]
+    NOT?: PlacementProcessLogWhereInput | PlacementProcessLogWhereInput[]
+    id?: UuidFilter<"PlacementProcessLog"> | string
+    batchId?: UuidNullableFilter<"PlacementProcessLog"> | string | null
+    jobId?: UuidNullableFilter<"PlacementProcessLog"> | string | null
+    phase?: StringFilter<"PlacementProcessLog"> | string
+    level?: StringFilter<"PlacementProcessLog"> | string
+    message?: StringFilter<"PlacementProcessLog"> | string
+    detail?: JsonNullableFilter<"PlacementProcessLog">
+    createdAt?: DateTimeFilter<"PlacementProcessLog"> | Date | string
+    batch?: XOR<PlacementBatchNullableScalarRelationFilter, PlacementBatchWhereInput> | null
+    job?: XOR<PlacementJobNullableScalarRelationFilter, PlacementJobWhereInput> | null
+  }
+
+  export type PlacementProcessLogOrderByWithRelationInput = {
+    id?: SortOrder
+    batchId?: SortOrderInput | SortOrder
+    jobId?: SortOrderInput | SortOrder
+    phase?: SortOrder
+    level?: SortOrder
+    message?: SortOrder
+    detail?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    batch?: PlacementBatchOrderByWithRelationInput
+    job?: PlacementJobOrderByWithRelationInput
+  }
+
+  export type PlacementProcessLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PlacementProcessLogWhereInput | PlacementProcessLogWhereInput[]
+    OR?: PlacementProcessLogWhereInput[]
+    NOT?: PlacementProcessLogWhereInput | PlacementProcessLogWhereInput[]
+    batchId?: UuidNullableFilter<"PlacementProcessLog"> | string | null
+    jobId?: UuidNullableFilter<"PlacementProcessLog"> | string | null
+    phase?: StringFilter<"PlacementProcessLog"> | string
+    level?: StringFilter<"PlacementProcessLog"> | string
+    message?: StringFilter<"PlacementProcessLog"> | string
+    detail?: JsonNullableFilter<"PlacementProcessLog">
+    createdAt?: DateTimeFilter<"PlacementProcessLog"> | Date | string
+    batch?: XOR<PlacementBatchNullableScalarRelationFilter, PlacementBatchWhereInput> | null
+    job?: XOR<PlacementJobNullableScalarRelationFilter, PlacementJobWhereInput> | null
+  }, "id">
+
+  export type PlacementProcessLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    batchId?: SortOrderInput | SortOrder
+    jobId?: SortOrderInput | SortOrder
+    phase?: SortOrder
+    level?: SortOrder
+    message?: SortOrder
+    detail?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: PlacementProcessLogCountOrderByAggregateInput
+    _max?: PlacementProcessLogMaxOrderByAggregateInput
+    _min?: PlacementProcessLogMinOrderByAggregateInput
+  }
+
+  export type PlacementProcessLogScalarWhereWithAggregatesInput = {
+    AND?: PlacementProcessLogScalarWhereWithAggregatesInput | PlacementProcessLogScalarWhereWithAggregatesInput[]
+    OR?: PlacementProcessLogScalarWhereWithAggregatesInput[]
+    NOT?: PlacementProcessLogScalarWhereWithAggregatesInput | PlacementProcessLogScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PlacementProcessLog"> | string
+    batchId?: UuidNullableWithAggregatesFilter<"PlacementProcessLog"> | string | null
+    jobId?: UuidNullableWithAggregatesFilter<"PlacementProcessLog"> | string | null
+    phase?: StringWithAggregatesFilter<"PlacementProcessLog"> | string
+    level?: StringWithAggregatesFilter<"PlacementProcessLog"> | string
+    message?: StringWithAggregatesFilter<"PlacementProcessLog"> | string
+    detail?: JsonNullableWithAggregatesFilter<"PlacementProcessLog">
+    createdAt?: DateTimeWithAggregatesFilter<"PlacementProcessLog"> | Date | string
   }
 
   export type WorkforceAssignmentWhereInput = {
@@ -170800,6 +175106,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerListRelationFilter
     satelliteEndpoints?: SatelliteEndpointListRelationFilter
     placementJobs?: PlacementJobListRelationFilter
+    placementBatches?: PlacementBatchListRelationFilter
     satelliteEntitlements?: OrganizationSatelliteEntitlementListRelationFilter
     commercialOutlets?: CommercialOutletListRelationFilter
     moduleGraces?: OrganizationModuleGraceListRelationFilter
@@ -170844,6 +175151,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantListRelationFilter
     buyerOrgGrants?: BuyerOrgGrantListRelationFilter
     profile?: XOR<OrganizationProfileNullableScalarRelationFilter, OrganizationProfileWhereInput> | null
+    guestApp?: XOR<OrganizationGuestAppNullableScalarRelationFilter, OrganizationGuestAppWhereInput> | null
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -170899,6 +175207,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerOrderByRelationAggregateInput
     satelliteEndpoints?: SatelliteEndpointOrderByRelationAggregateInput
     placementJobs?: PlacementJobOrderByRelationAggregateInput
+    placementBatches?: PlacementBatchOrderByRelationAggregateInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementOrderByRelationAggregateInput
     commercialOutlets?: CommercialOutletOrderByRelationAggregateInput
     moduleGraces?: OrganizationModuleGraceOrderByRelationAggregateInput
@@ -170943,6 +175252,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantOrderByRelationAggregateInput
     buyerOrgGrants?: BuyerOrgGrantOrderByRelationAggregateInput
     profile?: OrganizationProfileOrderByWithRelationInput
+    guestApp?: OrganizationGuestAppOrderByWithRelationInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -171001,6 +175311,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerListRelationFilter
     satelliteEndpoints?: SatelliteEndpointListRelationFilter
     placementJobs?: PlacementJobListRelationFilter
+    placementBatches?: PlacementBatchListRelationFilter
     satelliteEntitlements?: OrganizationSatelliteEntitlementListRelationFilter
     commercialOutlets?: CommercialOutletListRelationFilter
     moduleGraces?: OrganizationModuleGraceListRelationFilter
@@ -171045,6 +175356,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantListRelationFilter
     buyerOrgGrants?: BuyerOrgGrantListRelationFilter
     profile?: XOR<OrganizationProfileNullableScalarRelationFilter, OrganizationProfileWhereInput> | null
+    guestApp?: XOR<OrganizationGuestAppNullableScalarRelationFilter, OrganizationGuestAppWhereInput> | null
   }, "id" | "publicOrgNumber" | "taxIdBlindIndex" | "drakarisClientId">
 
   export type OrganizationOrderByWithAggregationInput = {
@@ -171280,6 +175592,113 @@ export namespace Prisma {
     bankLine?: StringNullableWithAggregatesFilter<"OrganizationProfile"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"OrganizationProfile"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"OrganizationProfile"> | Date | string
+  }
+
+  export type OrganizationGuestAppWhereInput = {
+    AND?: OrganizationGuestAppWhereInput | OrganizationGuestAppWhereInput[]
+    OR?: OrganizationGuestAppWhereInput[]
+    NOT?: OrganizationGuestAppWhereInput | OrganizationGuestAppWhereInput[]
+    organizationId?: UuidFilter<"OrganizationGuestApp"> | string
+    enabled?: BoolFilter<"OrganizationGuestApp"> | boolean
+    displayName?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    primaryColor?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    logoUrl?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    locale?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    deskPhone?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    catalogJson?: JsonNullableFilter<"OrganizationGuestApp">
+    postStayMessage?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    offersJson?: JsonNullableFilter<"OrganizationGuestApp">
+    doctorOnDutyPhone?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    leadAlertMinutes?: IntNullableFilter<"OrganizationGuestApp"> | number | null
+    enabledOrderKinds?: JsonNullableFilter<"OrganizationGuestApp">
+    createdAt?: DateTimeFilter<"OrganizationGuestApp"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationGuestApp"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type OrganizationGuestAppOrderByWithRelationInput = {
+    organizationId?: SortOrder
+    enabled?: SortOrder
+    displayName?: SortOrderInput | SortOrder
+    primaryColor?: SortOrderInput | SortOrder
+    logoUrl?: SortOrderInput | SortOrder
+    locale?: SortOrderInput | SortOrder
+    deskPhone?: SortOrderInput | SortOrder
+    catalogJson?: SortOrderInput | SortOrder
+    postStayMessage?: SortOrderInput | SortOrder
+    offersJson?: SortOrderInput | SortOrder
+    doctorOnDutyPhone?: SortOrderInput | SortOrder
+    leadAlertMinutes?: SortOrderInput | SortOrder
+    enabledOrderKinds?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type OrganizationGuestAppWhereUniqueInput = Prisma.AtLeast<{
+    organizationId?: string
+    AND?: OrganizationGuestAppWhereInput | OrganizationGuestAppWhereInput[]
+    OR?: OrganizationGuestAppWhereInput[]
+    NOT?: OrganizationGuestAppWhereInput | OrganizationGuestAppWhereInput[]
+    enabled?: BoolFilter<"OrganizationGuestApp"> | boolean
+    displayName?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    primaryColor?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    logoUrl?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    locale?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    deskPhone?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    catalogJson?: JsonNullableFilter<"OrganizationGuestApp">
+    postStayMessage?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    offersJson?: JsonNullableFilter<"OrganizationGuestApp">
+    doctorOnDutyPhone?: StringNullableFilter<"OrganizationGuestApp"> | string | null
+    leadAlertMinutes?: IntNullableFilter<"OrganizationGuestApp"> | number | null
+    enabledOrderKinds?: JsonNullableFilter<"OrganizationGuestApp">
+    createdAt?: DateTimeFilter<"OrganizationGuestApp"> | Date | string
+    updatedAt?: DateTimeFilter<"OrganizationGuestApp"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "organizationId">
+
+  export type OrganizationGuestAppOrderByWithAggregationInput = {
+    organizationId?: SortOrder
+    enabled?: SortOrder
+    displayName?: SortOrderInput | SortOrder
+    primaryColor?: SortOrderInput | SortOrder
+    logoUrl?: SortOrderInput | SortOrder
+    locale?: SortOrderInput | SortOrder
+    deskPhone?: SortOrderInput | SortOrder
+    catalogJson?: SortOrderInput | SortOrder
+    postStayMessage?: SortOrderInput | SortOrder
+    offersJson?: SortOrderInput | SortOrder
+    doctorOnDutyPhone?: SortOrderInput | SortOrder
+    leadAlertMinutes?: SortOrderInput | SortOrder
+    enabledOrderKinds?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: OrganizationGuestAppCountOrderByAggregateInput
+    _avg?: OrganizationGuestAppAvgOrderByAggregateInput
+    _max?: OrganizationGuestAppMaxOrderByAggregateInput
+    _min?: OrganizationGuestAppMinOrderByAggregateInput
+    _sum?: OrganizationGuestAppSumOrderByAggregateInput
+  }
+
+  export type OrganizationGuestAppScalarWhereWithAggregatesInput = {
+    AND?: OrganizationGuestAppScalarWhereWithAggregatesInput | OrganizationGuestAppScalarWhereWithAggregatesInput[]
+    OR?: OrganizationGuestAppScalarWhereWithAggregatesInput[]
+    NOT?: OrganizationGuestAppScalarWhereWithAggregatesInput | OrganizationGuestAppScalarWhereWithAggregatesInput[]
+    organizationId?: UuidWithAggregatesFilter<"OrganizationGuestApp"> | string
+    enabled?: BoolWithAggregatesFilter<"OrganizationGuestApp"> | boolean
+    displayName?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    primaryColor?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    logoUrl?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    locale?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    deskPhone?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    catalogJson?: JsonNullableWithAggregatesFilter<"OrganizationGuestApp">
+    postStayMessage?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    offersJson?: JsonNullableWithAggregatesFilter<"OrganizationGuestApp">
+    doctorOnDutyPhone?: StringNullableWithAggregatesFilter<"OrganizationGuestApp"> | string | null
+    leadAlertMinutes?: IntNullableWithAggregatesFilter<"OrganizationGuestApp"> | number | null
+    enabledOrderKinds?: JsonNullableWithAggregatesFilter<"OrganizationGuestApp">
+    createdAt?: DateTimeWithAggregatesFilter<"OrganizationGuestApp"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"OrganizationGuestApp"> | Date | string
   }
 
   export type OrganizationContactChannelWhereInput = {
@@ -176779,6 +181198,118 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PlacementBatchCreateInput = {
+    id?: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlacementBatchesInput
+    jobs?: PlacementJobCreateNestedManyWithoutBatchInput
+    processLogs?: PlacementProcessLogCreateNestedManyWithoutBatchInput
+  }
+
+  export type PlacementBatchUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobs?: PlacementJobUncheckedCreateNestedManyWithoutBatchInput
+    processLogs?: PlacementProcessLogUncheckedCreateNestedManyWithoutBatchInput
+  }
+
+  export type PlacementBatchUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlacementBatchesNestedInput
+    jobs?: PlacementJobUpdateManyWithoutBatchNestedInput
+    processLogs?: PlacementProcessLogUpdateManyWithoutBatchNestedInput
+  }
+
+  export type PlacementBatchUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobs?: PlacementJobUncheckedUpdateManyWithoutBatchNestedInput
+    processLogs?: PlacementProcessLogUncheckedUpdateManyWithoutBatchNestedInput
+  }
+
+  export type PlacementBatchCreateManyInput = {
+    id?: string
+    organizationId: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlacementBatchUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementBatchUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type PlacementJobCreateInput = {
     id?: string
     satelliteKey: string
@@ -176794,11 +181325,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutPlacementJobsInput
+    batch?: PlacementBatchCreateNestedOneWithoutJobsInput
+    processLogs?: PlacementProcessLogCreateNestedManyWithoutJobInput
   }
 
   export type PlacementJobUncheckedCreateInput = {
     id?: string
     organizationId: string
+    batchId?: string | null
     satelliteKey: string
     fromTopology: $Enums.DeploymentTopology
     toTopology: $Enums.DeploymentTopology
@@ -176811,6 +181345,7 @@ export namespace Prisma {
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    processLogs?: PlacementProcessLogUncheckedCreateNestedManyWithoutJobInput
   }
 
   export type PlacementJobUpdateInput = {
@@ -176828,11 +181363,14 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutPlacementJobsNestedInput
+    batch?: PlacementBatchUpdateOneWithoutJobsNestedInput
+    processLogs?: PlacementProcessLogUpdateManyWithoutJobNestedInput
   }
 
   export type PlacementJobUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteKey?: StringFieldUpdateOperationsInput | string
     fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
@@ -176845,11 +181383,13 @@ export namespace Prisma {
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processLogs?: PlacementProcessLogUncheckedUpdateManyWithoutJobNestedInput
   }
 
   export type PlacementJobCreateManyInput = {
     id?: string
     organizationId: string
+    batchId?: string | null
     satelliteKey: string
     fromTopology: $Enums.DeploymentTopology
     toTopology: $Enums.DeploymentTopology
@@ -176883,6 +181423,7 @@ export namespace Prisma {
   export type PlacementJobUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteKey?: StringFieldUpdateOperationsInput | string
     fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
@@ -176895,6 +181436,81 @@ export namespace Prisma {
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementProcessLogCreateInput = {
+    id?: string
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    batch?: PlacementBatchCreateNestedOneWithoutProcessLogsInput
+    job?: PlacementJobCreateNestedOneWithoutProcessLogsInput
+  }
+
+  export type PlacementProcessLogUncheckedCreateInput = {
+    id?: string
+    batchId?: string | null
+    jobId?: string | null
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlacementProcessLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    batch?: PlacementBatchUpdateOneWithoutProcessLogsNestedInput
+    job?: PlacementJobUpdateOneWithoutProcessLogsNestedInput
+  }
+
+  export type PlacementProcessLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementProcessLogCreateManyInput = {
+    id?: string
+    batchId?: string | null
+    jobId?: string | null
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlacementProcessLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementProcessLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type WorkforceAssignmentCreateInput = {
@@ -182029,6 +186645,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -182073,6 +186690,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -182128,6 +186746,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -182169,6 +186788,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUpdateInput = {
@@ -182221,6 +186841,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -182265,6 +186886,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -182320,6 +186942,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -182361,6 +186984,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -182634,6 +187258,131 @@ export namespace Prisma {
     stampUrl?: NullableStringFieldUpdateOperationsInput | string | null
     signatureDirectorUrl?: NullableStringFieldUpdateOperationsInput | string | null
     bankLine?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationGuestAppCreateInput = {
+    enabled?: boolean
+    displayName?: string | null
+    primaryColor?: string | null
+    logoUrl?: string | null
+    locale?: string | null
+    deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutGuestAppInput
+  }
+
+  export type OrganizationGuestAppUncheckedCreateInput = {
+    organizationId: string
+    enabled?: boolean
+    displayName?: string | null
+    primaryColor?: string | null
+    logoUrl?: string | null
+    locale?: string | null
+    deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationGuestAppUpdateInput = {
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    locale?: NullableStringFieldUpdateOperationsInput | string | null
+    deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutGuestAppNestedInput
+  }
+
+  export type OrganizationGuestAppUncheckedUpdateInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    locale?: NullableStringFieldUpdateOperationsInput | string | null
+    deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationGuestAppCreateManyInput = {
+    organizationId: string
+    enabled?: boolean
+    displayName?: string | null
+    primaryColor?: string | null
+    logoUrl?: string | null
+    locale?: string | null
+    deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationGuestAppUpdateManyMutationInput = {
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    locale?: NullableStringFieldUpdateOperationsInput | string | null
+    deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationGuestAppUncheckedUpdateManyInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    locale?: NullableStringFieldUpdateOperationsInput | string | null
+    deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -188468,6 +193217,13 @@ export namespace Prisma {
     not?: NestedEnumDeploymentTopologyFilter<$PrismaModel> | $Enums.DeploymentTopology
   }
 
+  export type EnumPlacementPackagingFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementPackaging | EnumPlacementPackagingFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementPackaging[] | ListEnumPlacementPackagingFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementPackaging[] | ListEnumPlacementPackagingFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementPackagingFilter<$PrismaModel> | $Enums.PlacementPackaging
+  }
+
   export type EnumPlacementJobStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.PlacementJobStatus | EnumPlacementJobStatusFieldRefInput<$PrismaModel>
     in?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
@@ -188475,9 +193231,106 @@ export namespace Prisma {
     not?: NestedEnumPlacementJobStatusFilter<$PrismaModel> | $Enums.PlacementJobStatus
   }
 
+  export type PlacementJobListRelationFilter = {
+    every?: PlacementJobWhereInput
+    some?: PlacementJobWhereInput
+    none?: PlacementJobWhereInput
+  }
+
+  export type PlacementProcessLogListRelationFilter = {
+    every?: PlacementProcessLogWhereInput
+    some?: PlacementProcessLogWhereInput
+    none?: PlacementProcessLogWhereInput
+  }
+
+  export type PlacementJobOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PlacementProcessLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PlacementBatchCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKeys?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    packaging?: SortOrder
+    targetHost?: SortOrder
+    recipeJson?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlacementBatchMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    packaging?: SortOrder
+    targetHost?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlacementBatchMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    fromTopology?: SortOrder
+    toTopology?: SortOrder
+    packaging?: SortOrder
+    targetHost?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumDeploymentTopologyWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DeploymentTopology | EnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    in?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
+    not?: NestedEnumDeploymentTopologyWithAggregatesFilter<$PrismaModel> | $Enums.DeploymentTopology
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
+    _max?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
+  }
+
+  export type EnumPlacementPackagingWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementPackaging | EnumPlacementPackagingFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementPackaging[] | ListEnumPlacementPackagingFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementPackaging[] | ListEnumPlacementPackagingFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementPackagingWithAggregatesFilter<$PrismaModel> | $Enums.PlacementPackaging
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlacementPackagingFilter<$PrismaModel>
+    _max?: NestedEnumPlacementPackagingFilter<$PrismaModel>
+  }
+
+  export type EnumPlacementJobStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementJobStatus | EnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementJobStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlacementJobStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlacementJobStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlacementJobStatusFilter<$PrismaModel>
+  }
+
+  export type PlacementBatchNullableScalarRelationFilter = {
+    is?: PlacementBatchWhereInput | null
+    isNot?: PlacementBatchWhereInput | null
+  }
+
   export type PlacementJobCountOrderByAggregateInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    batchId?: SortOrder
     satelliteKey?: SortOrder
     fromTopology?: SortOrder
     toTopology?: SortOrder
@@ -188495,6 +193348,7 @@ export namespace Prisma {
   export type PlacementJobMaxOrderByAggregateInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    batchId?: SortOrder
     satelliteKey?: SortOrder
     fromTopology?: SortOrder
     toTopology?: SortOrder
@@ -188510,6 +193364,7 @@ export namespace Prisma {
   export type PlacementJobMinOrderByAggregateInput = {
     id?: SortOrder
     organizationId?: SortOrder
+    batchId?: SortOrder
     satelliteKey?: SortOrder
     fromTopology?: SortOrder
     toTopology?: SortOrder
@@ -188522,24 +193377,40 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type EnumDeploymentTopologyWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.DeploymentTopology | EnumDeploymentTopologyFieldRefInput<$PrismaModel>
-    in?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
-    notIn?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
-    not?: NestedEnumDeploymentTopologyWithAggregatesFilter<$PrismaModel> | $Enums.DeploymentTopology
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
-    _max?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
+  export type PlacementJobNullableScalarRelationFilter = {
+    is?: PlacementJobWhereInput | null
+    isNot?: PlacementJobWhereInput | null
   }
 
-  export type EnumPlacementJobStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.PlacementJobStatus | EnumPlacementJobStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPlacementJobStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlacementJobStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumPlacementJobStatusFilter<$PrismaModel>
-    _max?: NestedEnumPlacementJobStatusFilter<$PrismaModel>
+  export type PlacementProcessLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    batchId?: SortOrder
+    jobId?: SortOrder
+    phase?: SortOrder
+    level?: SortOrder
+    message?: SortOrder
+    detail?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PlacementProcessLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    batchId?: SortOrder
+    jobId?: SortOrder
+    phase?: SortOrder
+    level?: SortOrder
+    message?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PlacementProcessLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    batchId?: SortOrder
+    jobId?: SortOrder
+    phase?: SortOrder
+    level?: SortOrder
+    message?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type EnumWorkforceAssignmentStatusFilter<$PrismaModel = never> = {
@@ -192282,10 +197153,10 @@ export namespace Prisma {
     none?: PlatformLoyaltyLedgerWhereInput
   }
 
-  export type PlacementJobListRelationFilter = {
-    every?: PlacementJobWhereInput
-    some?: PlacementJobWhereInput
-    none?: PlacementJobWhereInput
+  export type PlacementBatchListRelationFilter = {
+    every?: PlacementBatchWhereInput
+    some?: PlacementBatchWhereInput
+    none?: PlacementBatchWhereInput
   }
 
   export type CommercialOutletListRelationFilter = {
@@ -192461,6 +197332,11 @@ export namespace Prisma {
     isNot?: OrganizationProfileWhereInput | null
   }
 
+  export type OrganizationGuestAppNullableScalarRelationFilter = {
+    is?: OrganizationGuestAppWhereInput | null
+    isNot?: OrganizationGuestAppWhereInput | null
+  }
+
   export type UsageMeterEventOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -192541,7 +197417,7 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
-  export type PlacementJobOrderByRelationAggregateInput = {
+  export type PlacementBatchOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -192874,6 +197750,62 @@ export namespace Prisma {
     bankLine?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type OrganizationGuestAppCountOrderByAggregateInput = {
+    organizationId?: SortOrder
+    enabled?: SortOrder
+    displayName?: SortOrder
+    primaryColor?: SortOrder
+    logoUrl?: SortOrder
+    locale?: SortOrder
+    deskPhone?: SortOrder
+    catalogJson?: SortOrder
+    postStayMessage?: SortOrder
+    offersJson?: SortOrder
+    doctorOnDutyPhone?: SortOrder
+    leadAlertMinutes?: SortOrder
+    enabledOrderKinds?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationGuestAppAvgOrderByAggregateInput = {
+    leadAlertMinutes?: SortOrder
+  }
+
+  export type OrganizationGuestAppMaxOrderByAggregateInput = {
+    organizationId?: SortOrder
+    enabled?: SortOrder
+    displayName?: SortOrder
+    primaryColor?: SortOrder
+    logoUrl?: SortOrder
+    locale?: SortOrder
+    deskPhone?: SortOrder
+    postStayMessage?: SortOrder
+    doctorOnDutyPhone?: SortOrder
+    leadAlertMinutes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationGuestAppMinOrderByAggregateInput = {
+    organizationId?: SortOrder
+    enabled?: SortOrder
+    displayName?: SortOrder
+    primaryColor?: SortOrder
+    logoUrl?: SortOrder
+    locale?: SortOrder
+    deskPhone?: SortOrder
+    postStayMessage?: SortOrder
+    doctorOnDutyPhone?: SortOrder
+    leadAlertMinutes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationGuestAppSumOrderByAggregateInput = {
+    leadAlertMinutes?: SortOrder
   }
 
   export type EnumOrgContactKindFilter<$PrismaModel = never> = {
@@ -196349,18 +201281,149 @@ export namespace Prisma {
     update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutEndpointsInput, SatelliteUpdateWithoutEndpointsInput>, SatelliteUncheckedUpdateWithoutEndpointsInput>
   }
 
-  export type OrganizationCreateNestedOneWithoutPlacementJobsInput = {
-    create?: XOR<OrganizationCreateWithoutPlacementJobsInput, OrganizationUncheckedCreateWithoutPlacementJobsInput>
-    connectOrCreate?: OrganizationCreateOrConnectWithoutPlacementJobsInput
+  export type PlacementBatchCreatesatelliteKeysInput = {
+    set: string[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutPlacementBatchesInput = {
+    create?: XOR<OrganizationCreateWithoutPlacementBatchesInput, OrganizationUncheckedCreateWithoutPlacementBatchesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlacementBatchesInput
     connect?: OrganizationWhereUniqueInput
+  }
+
+  export type PlacementJobCreateNestedManyWithoutBatchInput = {
+    create?: XOR<PlacementJobCreateWithoutBatchInput, PlacementJobUncheckedCreateWithoutBatchInput> | PlacementJobCreateWithoutBatchInput[] | PlacementJobUncheckedCreateWithoutBatchInput[]
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutBatchInput | PlacementJobCreateOrConnectWithoutBatchInput[]
+    createMany?: PlacementJobCreateManyBatchInputEnvelope
+    connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+  }
+
+  export type PlacementProcessLogCreateNestedManyWithoutBatchInput = {
+    create?: XOR<PlacementProcessLogCreateWithoutBatchInput, PlacementProcessLogUncheckedCreateWithoutBatchInput> | PlacementProcessLogCreateWithoutBatchInput[] | PlacementProcessLogUncheckedCreateWithoutBatchInput[]
+    connectOrCreate?: PlacementProcessLogCreateOrConnectWithoutBatchInput | PlacementProcessLogCreateOrConnectWithoutBatchInput[]
+    createMany?: PlacementProcessLogCreateManyBatchInputEnvelope
+    connect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+  }
+
+  export type PlacementJobUncheckedCreateNestedManyWithoutBatchInput = {
+    create?: XOR<PlacementJobCreateWithoutBatchInput, PlacementJobUncheckedCreateWithoutBatchInput> | PlacementJobCreateWithoutBatchInput[] | PlacementJobUncheckedCreateWithoutBatchInput[]
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutBatchInput | PlacementJobCreateOrConnectWithoutBatchInput[]
+    createMany?: PlacementJobCreateManyBatchInputEnvelope
+    connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+  }
+
+  export type PlacementProcessLogUncheckedCreateNestedManyWithoutBatchInput = {
+    create?: XOR<PlacementProcessLogCreateWithoutBatchInput, PlacementProcessLogUncheckedCreateWithoutBatchInput> | PlacementProcessLogCreateWithoutBatchInput[] | PlacementProcessLogUncheckedCreateWithoutBatchInput[]
+    connectOrCreate?: PlacementProcessLogCreateOrConnectWithoutBatchInput | PlacementProcessLogCreateOrConnectWithoutBatchInput[]
+    createMany?: PlacementProcessLogCreateManyBatchInputEnvelope
+    connect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+  }
+
+  export type PlacementBatchUpdatesatelliteKeysInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type EnumDeploymentTopologyFieldUpdateOperationsInput = {
     set?: $Enums.DeploymentTopology
   }
 
+  export type EnumPlacementPackagingFieldUpdateOperationsInput = {
+    set?: $Enums.PlacementPackaging
+  }
+
   export type EnumPlacementJobStatusFieldUpdateOperationsInput = {
     set?: $Enums.PlacementJobStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPlacementBatchesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPlacementBatchesInput, OrganizationUncheckedCreateWithoutPlacementBatchesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlacementBatchesInput
+    upsert?: OrganizationUpsertWithoutPlacementBatchesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlacementBatchesInput, OrganizationUpdateWithoutPlacementBatchesInput>, OrganizationUncheckedUpdateWithoutPlacementBatchesInput>
+  }
+
+  export type PlacementJobUpdateManyWithoutBatchNestedInput = {
+    create?: XOR<PlacementJobCreateWithoutBatchInput, PlacementJobUncheckedCreateWithoutBatchInput> | PlacementJobCreateWithoutBatchInput[] | PlacementJobUncheckedCreateWithoutBatchInput[]
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutBatchInput | PlacementJobCreateOrConnectWithoutBatchInput[]
+    upsert?: PlacementJobUpsertWithWhereUniqueWithoutBatchInput | PlacementJobUpsertWithWhereUniqueWithoutBatchInput[]
+    createMany?: PlacementJobCreateManyBatchInputEnvelope
+    set?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    disconnect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    delete?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    update?: PlacementJobUpdateWithWhereUniqueWithoutBatchInput | PlacementJobUpdateWithWhereUniqueWithoutBatchInput[]
+    updateMany?: PlacementJobUpdateManyWithWhereWithoutBatchInput | PlacementJobUpdateManyWithWhereWithoutBatchInput[]
+    deleteMany?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
+  }
+
+  export type PlacementProcessLogUpdateManyWithoutBatchNestedInput = {
+    create?: XOR<PlacementProcessLogCreateWithoutBatchInput, PlacementProcessLogUncheckedCreateWithoutBatchInput> | PlacementProcessLogCreateWithoutBatchInput[] | PlacementProcessLogUncheckedCreateWithoutBatchInput[]
+    connectOrCreate?: PlacementProcessLogCreateOrConnectWithoutBatchInput | PlacementProcessLogCreateOrConnectWithoutBatchInput[]
+    upsert?: PlacementProcessLogUpsertWithWhereUniqueWithoutBatchInput | PlacementProcessLogUpsertWithWhereUniqueWithoutBatchInput[]
+    createMany?: PlacementProcessLogCreateManyBatchInputEnvelope
+    set?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    disconnect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    delete?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    connect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    update?: PlacementProcessLogUpdateWithWhereUniqueWithoutBatchInput | PlacementProcessLogUpdateWithWhereUniqueWithoutBatchInput[]
+    updateMany?: PlacementProcessLogUpdateManyWithWhereWithoutBatchInput | PlacementProcessLogUpdateManyWithWhereWithoutBatchInput[]
+    deleteMany?: PlacementProcessLogScalarWhereInput | PlacementProcessLogScalarWhereInput[]
+  }
+
+  export type PlacementJobUncheckedUpdateManyWithoutBatchNestedInput = {
+    create?: XOR<PlacementJobCreateWithoutBatchInput, PlacementJobUncheckedCreateWithoutBatchInput> | PlacementJobCreateWithoutBatchInput[] | PlacementJobUncheckedCreateWithoutBatchInput[]
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutBatchInput | PlacementJobCreateOrConnectWithoutBatchInput[]
+    upsert?: PlacementJobUpsertWithWhereUniqueWithoutBatchInput | PlacementJobUpsertWithWhereUniqueWithoutBatchInput[]
+    createMany?: PlacementJobCreateManyBatchInputEnvelope
+    set?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    disconnect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    delete?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+    update?: PlacementJobUpdateWithWhereUniqueWithoutBatchInput | PlacementJobUpdateWithWhereUniqueWithoutBatchInput[]
+    updateMany?: PlacementJobUpdateManyWithWhereWithoutBatchInput | PlacementJobUpdateManyWithWhereWithoutBatchInput[]
+    deleteMany?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
+  }
+
+  export type PlacementProcessLogUncheckedUpdateManyWithoutBatchNestedInput = {
+    create?: XOR<PlacementProcessLogCreateWithoutBatchInput, PlacementProcessLogUncheckedCreateWithoutBatchInput> | PlacementProcessLogCreateWithoutBatchInput[] | PlacementProcessLogUncheckedCreateWithoutBatchInput[]
+    connectOrCreate?: PlacementProcessLogCreateOrConnectWithoutBatchInput | PlacementProcessLogCreateOrConnectWithoutBatchInput[]
+    upsert?: PlacementProcessLogUpsertWithWhereUniqueWithoutBatchInput | PlacementProcessLogUpsertWithWhereUniqueWithoutBatchInput[]
+    createMany?: PlacementProcessLogCreateManyBatchInputEnvelope
+    set?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    disconnect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    delete?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    connect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    update?: PlacementProcessLogUpdateWithWhereUniqueWithoutBatchInput | PlacementProcessLogUpdateWithWhereUniqueWithoutBatchInput[]
+    updateMany?: PlacementProcessLogUpdateManyWithWhereWithoutBatchInput | PlacementProcessLogUpdateManyWithWhereWithoutBatchInput[]
+    deleteMany?: PlacementProcessLogScalarWhereInput | PlacementProcessLogScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutPlacementJobsInput = {
+    create?: XOR<OrganizationCreateWithoutPlacementJobsInput, OrganizationUncheckedCreateWithoutPlacementJobsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlacementJobsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type PlacementBatchCreateNestedOneWithoutJobsInput = {
+    create?: XOR<PlacementBatchCreateWithoutJobsInput, PlacementBatchUncheckedCreateWithoutJobsInput>
+    connectOrCreate?: PlacementBatchCreateOrConnectWithoutJobsInput
+    connect?: PlacementBatchWhereUniqueInput
+  }
+
+  export type PlacementProcessLogCreateNestedManyWithoutJobInput = {
+    create?: XOR<PlacementProcessLogCreateWithoutJobInput, PlacementProcessLogUncheckedCreateWithoutJobInput> | PlacementProcessLogCreateWithoutJobInput[] | PlacementProcessLogUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: PlacementProcessLogCreateOrConnectWithoutJobInput | PlacementProcessLogCreateOrConnectWithoutJobInput[]
+    createMany?: PlacementProcessLogCreateManyJobInputEnvelope
+    connect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+  }
+
+  export type PlacementProcessLogUncheckedCreateNestedManyWithoutJobInput = {
+    create?: XOR<PlacementProcessLogCreateWithoutJobInput, PlacementProcessLogUncheckedCreateWithoutJobInput> | PlacementProcessLogCreateWithoutJobInput[] | PlacementProcessLogUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: PlacementProcessLogCreateOrConnectWithoutJobInput | PlacementProcessLogCreateOrConnectWithoutJobInput[]
+    createMany?: PlacementProcessLogCreateManyJobInputEnvelope
+    connect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
   }
 
   export type OrganizationUpdateOneRequiredWithoutPlacementJobsNestedInput = {
@@ -196369,6 +201432,76 @@ export namespace Prisma {
     upsert?: OrganizationUpsertWithoutPlacementJobsInput
     connect?: OrganizationWhereUniqueInput
     update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlacementJobsInput, OrganizationUpdateWithoutPlacementJobsInput>, OrganizationUncheckedUpdateWithoutPlacementJobsInput>
+  }
+
+  export type PlacementBatchUpdateOneWithoutJobsNestedInput = {
+    create?: XOR<PlacementBatchCreateWithoutJobsInput, PlacementBatchUncheckedCreateWithoutJobsInput>
+    connectOrCreate?: PlacementBatchCreateOrConnectWithoutJobsInput
+    upsert?: PlacementBatchUpsertWithoutJobsInput
+    disconnect?: PlacementBatchWhereInput | boolean
+    delete?: PlacementBatchWhereInput | boolean
+    connect?: PlacementBatchWhereUniqueInput
+    update?: XOR<XOR<PlacementBatchUpdateToOneWithWhereWithoutJobsInput, PlacementBatchUpdateWithoutJobsInput>, PlacementBatchUncheckedUpdateWithoutJobsInput>
+  }
+
+  export type PlacementProcessLogUpdateManyWithoutJobNestedInput = {
+    create?: XOR<PlacementProcessLogCreateWithoutJobInput, PlacementProcessLogUncheckedCreateWithoutJobInput> | PlacementProcessLogCreateWithoutJobInput[] | PlacementProcessLogUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: PlacementProcessLogCreateOrConnectWithoutJobInput | PlacementProcessLogCreateOrConnectWithoutJobInput[]
+    upsert?: PlacementProcessLogUpsertWithWhereUniqueWithoutJobInput | PlacementProcessLogUpsertWithWhereUniqueWithoutJobInput[]
+    createMany?: PlacementProcessLogCreateManyJobInputEnvelope
+    set?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    disconnect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    delete?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    connect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    update?: PlacementProcessLogUpdateWithWhereUniqueWithoutJobInput | PlacementProcessLogUpdateWithWhereUniqueWithoutJobInput[]
+    updateMany?: PlacementProcessLogUpdateManyWithWhereWithoutJobInput | PlacementProcessLogUpdateManyWithWhereWithoutJobInput[]
+    deleteMany?: PlacementProcessLogScalarWhereInput | PlacementProcessLogScalarWhereInput[]
+  }
+
+  export type PlacementProcessLogUncheckedUpdateManyWithoutJobNestedInput = {
+    create?: XOR<PlacementProcessLogCreateWithoutJobInput, PlacementProcessLogUncheckedCreateWithoutJobInput> | PlacementProcessLogCreateWithoutJobInput[] | PlacementProcessLogUncheckedCreateWithoutJobInput[]
+    connectOrCreate?: PlacementProcessLogCreateOrConnectWithoutJobInput | PlacementProcessLogCreateOrConnectWithoutJobInput[]
+    upsert?: PlacementProcessLogUpsertWithWhereUniqueWithoutJobInput | PlacementProcessLogUpsertWithWhereUniqueWithoutJobInput[]
+    createMany?: PlacementProcessLogCreateManyJobInputEnvelope
+    set?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    disconnect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    delete?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    connect?: PlacementProcessLogWhereUniqueInput | PlacementProcessLogWhereUniqueInput[]
+    update?: PlacementProcessLogUpdateWithWhereUniqueWithoutJobInput | PlacementProcessLogUpdateWithWhereUniqueWithoutJobInput[]
+    updateMany?: PlacementProcessLogUpdateManyWithWhereWithoutJobInput | PlacementProcessLogUpdateManyWithWhereWithoutJobInput[]
+    deleteMany?: PlacementProcessLogScalarWhereInput | PlacementProcessLogScalarWhereInput[]
+  }
+
+  export type PlacementBatchCreateNestedOneWithoutProcessLogsInput = {
+    create?: XOR<PlacementBatchCreateWithoutProcessLogsInput, PlacementBatchUncheckedCreateWithoutProcessLogsInput>
+    connectOrCreate?: PlacementBatchCreateOrConnectWithoutProcessLogsInput
+    connect?: PlacementBatchWhereUniqueInput
+  }
+
+  export type PlacementJobCreateNestedOneWithoutProcessLogsInput = {
+    create?: XOR<PlacementJobCreateWithoutProcessLogsInput, PlacementJobUncheckedCreateWithoutProcessLogsInput>
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutProcessLogsInput
+    connect?: PlacementJobWhereUniqueInput
+  }
+
+  export type PlacementBatchUpdateOneWithoutProcessLogsNestedInput = {
+    create?: XOR<PlacementBatchCreateWithoutProcessLogsInput, PlacementBatchUncheckedCreateWithoutProcessLogsInput>
+    connectOrCreate?: PlacementBatchCreateOrConnectWithoutProcessLogsInput
+    upsert?: PlacementBatchUpsertWithoutProcessLogsInput
+    disconnect?: PlacementBatchWhereInput | boolean
+    delete?: PlacementBatchWhereInput | boolean
+    connect?: PlacementBatchWhereUniqueInput
+    update?: XOR<XOR<PlacementBatchUpdateToOneWithWhereWithoutProcessLogsInput, PlacementBatchUpdateWithoutProcessLogsInput>, PlacementBatchUncheckedUpdateWithoutProcessLogsInput>
+  }
+
+  export type PlacementJobUpdateOneWithoutProcessLogsNestedInput = {
+    create?: XOR<PlacementJobCreateWithoutProcessLogsInput, PlacementJobUncheckedCreateWithoutProcessLogsInput>
+    connectOrCreate?: PlacementJobCreateOrConnectWithoutProcessLogsInput
+    upsert?: PlacementJobUpsertWithoutProcessLogsInput
+    disconnect?: PlacementJobWhereInput | boolean
+    delete?: PlacementJobWhereInput | boolean
+    connect?: PlacementJobWhereUniqueInput
+    update?: XOR<XOR<PlacementJobUpdateToOneWithWhereWithoutProcessLogsInput, PlacementJobUpdateWithoutProcessLogsInput>, PlacementJobUncheckedUpdateWithoutProcessLogsInput>
   }
 
   export type OrganizationCreateNestedOneWithoutWorkforceAssignmentsInput = {
@@ -200638,6 +205771,13 @@ export namespace Prisma {
     connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
   }
 
+  export type PlacementBatchCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlacementBatchCreateWithoutOrganizationInput, PlacementBatchUncheckedCreateWithoutOrganizationInput> | PlacementBatchCreateWithoutOrganizationInput[] | PlacementBatchUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlacementBatchCreateOrConnectWithoutOrganizationInput | PlacementBatchCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlacementBatchCreateManyOrganizationInputEnvelope
+    connect?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+  }
+
   export type OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<OrganizationSatelliteEntitlementCreateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput> | OrganizationSatelliteEntitlementCreateWithoutOrganizationInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput[]
@@ -200939,6 +206079,12 @@ export namespace Prisma {
     connect?: OrganizationProfileWhereUniqueInput
   }
 
+  export type OrganizationGuestAppCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<OrganizationGuestAppCreateWithoutOrganizationInput, OrganizationGuestAppUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationGuestAppCreateOrConnectWithoutOrganizationInput
+    connect?: OrganizationGuestAppWhereUniqueInput
+  }
+
   export type UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
@@ -201111,6 +206257,13 @@ export namespace Prisma {
     connectOrCreate?: PlacementJobCreateOrConnectWithoutOrganizationInput | PlacementJobCreateOrConnectWithoutOrganizationInput[]
     createMany?: PlacementJobCreateManyOrganizationInputEnvelope
     connect?: PlacementJobWhereUniqueInput | PlacementJobWhereUniqueInput[]
+  }
+
+  export type PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlacementBatchCreateWithoutOrganizationInput, PlacementBatchUncheckedCreateWithoutOrganizationInput> | PlacementBatchCreateWithoutOrganizationInput[] | PlacementBatchUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlacementBatchCreateOrConnectWithoutOrganizationInput | PlacementBatchCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlacementBatchCreateManyOrganizationInputEnvelope
+    connect?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
   }
 
   export type OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -201394,6 +206547,12 @@ export namespace Prisma {
     create?: XOR<OrganizationProfileCreateWithoutOrganizationInput, OrganizationProfileUncheckedCreateWithoutOrganizationInput>
     connectOrCreate?: OrganizationProfileCreateOrConnectWithoutOrganizationInput
     connect?: OrganizationProfileWhereUniqueInput
+  }
+
+  export type OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<OrganizationGuestAppCreateWithoutOrganizationInput, OrganizationGuestAppUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationGuestAppCreateOrConnectWithoutOrganizationInput
+    connect?: OrganizationGuestAppWhereUniqueInput
   }
 
   export type EnumOrgOperatingModeFieldUpdateOperationsInput = {
@@ -201761,6 +206920,20 @@ export namespace Prisma {
     update?: PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput | PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: PlacementJobUpdateManyWithWhereWithoutOrganizationInput | PlacementJobUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
+  }
+
+  export type PlacementBatchUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlacementBatchCreateWithoutOrganizationInput, PlacementBatchUncheckedCreateWithoutOrganizationInput> | PlacementBatchCreateWithoutOrganizationInput[] | PlacementBatchUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlacementBatchCreateOrConnectWithoutOrganizationInput | PlacementBatchCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlacementBatchUpsertWithWhereUniqueWithoutOrganizationInput | PlacementBatchUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlacementBatchCreateManyOrganizationInputEnvelope
+    set?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+    disconnect?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+    delete?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+    connect?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+    update?: PlacementBatchUpdateWithWhereUniqueWithoutOrganizationInput | PlacementBatchUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlacementBatchUpdateManyWithWhereWithoutOrganizationInput | PlacementBatchUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlacementBatchScalarWhereInput | PlacementBatchScalarWhereInput[]
   }
 
   export type OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput = {
@@ -202351,6 +207524,16 @@ export namespace Prisma {
     update?: XOR<XOR<OrganizationProfileUpdateToOneWithWhereWithoutOrganizationInput, OrganizationProfileUpdateWithoutOrganizationInput>, OrganizationProfileUncheckedUpdateWithoutOrganizationInput>
   }
 
+  export type OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationGuestAppCreateWithoutOrganizationInput, OrganizationGuestAppUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationGuestAppCreateOrConnectWithoutOrganizationInput
+    upsert?: OrganizationGuestAppUpsertWithoutOrganizationInput
+    disconnect?: OrganizationGuestAppWhereInput | boolean
+    delete?: OrganizationGuestAppWhereInput | boolean
+    connect?: OrganizationGuestAppWhereUniqueInput
+    update?: XOR<XOR<OrganizationGuestAppUpdateToOneWithWhereWithoutOrganizationInput, OrganizationGuestAppUpdateWithoutOrganizationInput>, OrganizationGuestAppUncheckedUpdateWithoutOrganizationInput>
+  }
+
   export type UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput = {
     create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
@@ -202695,6 +207878,20 @@ export namespace Prisma {
     update?: PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput | PlacementJobUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: PlacementJobUpdateManyWithWhereWithoutOrganizationInput | PlacementJobUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
+  }
+
+  export type PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlacementBatchCreateWithoutOrganizationInput, PlacementBatchUncheckedCreateWithoutOrganizationInput> | PlacementBatchCreateWithoutOrganizationInput[] | PlacementBatchUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlacementBatchCreateOrConnectWithoutOrganizationInput | PlacementBatchCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlacementBatchUpsertWithWhereUniqueWithoutOrganizationInput | PlacementBatchUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlacementBatchCreateManyOrganizationInputEnvelope
+    set?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+    disconnect?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+    delete?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+    connect?: PlacementBatchWhereUniqueInput | PlacementBatchWhereUniqueInput[]
+    update?: PlacementBatchUpdateWithWhereUniqueWithoutOrganizationInput | PlacementBatchUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlacementBatchUpdateManyWithWhereWithoutOrganizationInput | PlacementBatchUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlacementBatchScalarWhereInput | PlacementBatchScalarWhereInput[]
   }
 
   export type OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput = {
@@ -203255,6 +208452,16 @@ export namespace Prisma {
     update?: XOR<XOR<OrganizationProfileUpdateToOneWithWhereWithoutOrganizationInput, OrganizationProfileUpdateWithoutOrganizationInput>, OrganizationProfileUncheckedUpdateWithoutOrganizationInput>
   }
 
+  export type OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationGuestAppCreateWithoutOrganizationInput, OrganizationGuestAppUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationGuestAppCreateOrConnectWithoutOrganizationInput
+    upsert?: OrganizationGuestAppUpsertWithoutOrganizationInput
+    disconnect?: OrganizationGuestAppWhereInput | boolean
+    delete?: OrganizationGuestAppWhereInput | boolean
+    connect?: OrganizationGuestAppWhereUniqueInput
+    update?: XOR<XOR<OrganizationGuestAppUpdateToOneWithWhereWithoutOrganizationInput, OrganizationGuestAppUpdateWithoutOrganizationInput>, OrganizationGuestAppUncheckedUpdateWithoutOrganizationInput>
+  }
+
   export type OrganizationCreateNestedOneWithoutAccessCredentialsInput = {
     create?: XOR<OrganizationCreateWithoutAccessCredentialsInput, OrganizationUncheckedCreateWithoutAccessCredentialsInput>
     connectOrCreate?: OrganizationCreateOrConnectWithoutAccessCredentialsInput
@@ -203365,6 +208572,20 @@ export namespace Prisma {
     update?: OrganizationAddressUpdateWithWhereUniqueWithoutProfileInput | OrganizationAddressUpdateWithWhereUniqueWithoutProfileInput[]
     updateMany?: OrganizationAddressUpdateManyWithWhereWithoutProfileInput | OrganizationAddressUpdateManyWithWhereWithoutProfileInput[]
     deleteMany?: OrganizationAddressScalarWhereInput | OrganizationAddressScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutGuestAppInput = {
+    create?: XOR<OrganizationCreateWithoutGuestAppInput, OrganizationUncheckedCreateWithoutGuestAppInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutGuestAppInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutGuestAppNestedInput = {
+    create?: XOR<OrganizationCreateWithoutGuestAppInput, OrganizationUncheckedCreateWithoutGuestAppInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutGuestAppInput
+    upsert?: OrganizationUpsertWithoutGuestAppInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutGuestAppInput, OrganizationUpdateWithoutGuestAppInput>, OrganizationUncheckedUpdateWithoutGuestAppInput>
   }
 
   export type OrganizationProfileCreateNestedOneWithoutContactsInput = {
@@ -206501,6 +211722,13 @@ export namespace Prisma {
     not?: NestedEnumDeploymentTopologyFilter<$PrismaModel> | $Enums.DeploymentTopology
   }
 
+  export type NestedEnumPlacementPackagingFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementPackaging | EnumPlacementPackagingFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementPackaging[] | ListEnumPlacementPackagingFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementPackaging[] | ListEnumPlacementPackagingFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementPackagingFilter<$PrismaModel> | $Enums.PlacementPackaging
+  }
+
   export type NestedEnumPlacementJobStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.PlacementJobStatus | EnumPlacementJobStatusFieldRefInput<$PrismaModel>
     in?: $Enums.PlacementJobStatus[] | ListEnumPlacementJobStatusFieldRefInput<$PrismaModel>
@@ -206516,6 +211744,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
     _max?: NestedEnumDeploymentTopologyFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPlacementPackagingWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlacementPackaging | EnumPlacementPackagingFieldRefInput<$PrismaModel>
+    in?: $Enums.PlacementPackaging[] | ListEnumPlacementPackagingFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlacementPackaging[] | ListEnumPlacementPackagingFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlacementPackagingWithAggregatesFilter<$PrismaModel> | $Enums.PlacementPackaging
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlacementPackagingFilter<$PrismaModel>
+    _max?: NestedEnumPlacementPackagingFilter<$PrismaModel>
   }
 
   export type NestedEnumPlacementJobStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -207817,6 +213055,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -207861,6 +213100,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSubscriptionInput = {
@@ -207915,6 +213155,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -207956,6 +213197,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSubscriptionInput = {
@@ -208023,6 +213265,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -208067,6 +213310,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSubscriptionInput = {
@@ -208121,6 +213365,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -208162,6 +213407,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BillingInvoiceItemCreateWithoutSubscriptionInvoiceInput = {
@@ -208448,6 +213694,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -208491,6 +213738,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutChannelsFromInput = {
@@ -208546,6 +213794,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -208586,6 +213835,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutChannelsFromInput = {
@@ -208643,6 +213893,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -208686,6 +213937,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutChannelsToInput = {
@@ -208741,6 +213993,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -208781,6 +214034,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutChannelsToInput = {
@@ -208849,6 +214103,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -208892,6 +214147,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutChannelsFromInput = {
@@ -208947,6 +214203,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -208987,6 +214244,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUpsertWithoutChannelsToInput = {
@@ -209050,6 +214308,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -209093,6 +214352,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutChannelsToInput = {
@@ -209148,6 +214408,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -209188,6 +214449,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type SubscriptionInvoiceCreateWithoutItemsInput = {
@@ -209276,6 +214538,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -209320,6 +214583,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput = {
@@ -209374,6 +214638,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -209415,6 +214680,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBillingInvoiceItemsInput = {
@@ -209525,6 +214791,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -209569,6 +214836,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput = {
@@ -209623,6 +214891,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -209664,6 +214933,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutModuleGracesInput = {
@@ -209716,6 +214986,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
@@ -209759,6 +215030,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutModuleGracesInput = {
@@ -209814,6 +215086,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
@@ -209854,6 +215127,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutModuleGracesInput = {
@@ -209922,6 +215196,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
@@ -209965,6 +215240,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutModuleGracesInput = {
@@ -210020,6 +215296,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
@@ -210060,6 +215337,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutCommercialOutletsInput = {
@@ -210112,6 +215390,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
@@ -210155,6 +215434,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutCommercialOutletsInput = {
@@ -210210,6 +215490,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
@@ -210250,6 +215531,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutCommercialOutletsInput = {
@@ -210318,6 +215600,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
@@ -210361,6 +215644,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutCommercialOutletsInput = {
@@ -210416,6 +215700,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
@@ -210456,6 +215741,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutUsageMeterEventsInput = {
@@ -210507,6 +215793,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -210551,6 +215838,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutUsageMeterEventsInput = {
@@ -210605,6 +215893,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -210646,6 +215935,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutUsageMeterEventsInput = {
@@ -210713,6 +216003,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -210757,6 +216048,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutUsageMeterEventsInput = {
@@ -210811,6 +216103,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -210852,6 +216145,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type PricingBundleCreateWithoutOrganizationBundlesInput = {
@@ -211222,6 +216516,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
@@ -211265,6 +216560,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput = {
@@ -211320,6 +216616,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
@@ -211360,6 +216657,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSatelliteEntitlementsInput = {
@@ -211455,6 +216753,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
@@ -211498,6 +216797,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSatelliteEntitlementsInput = {
@@ -211553,6 +216853,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
     channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
@@ -211593,6 +216894,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type SatelliteUpsertWithoutEntitlementsInput = {
@@ -211677,6 +216979,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -211721,6 +217024,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutSatelliteEndpointsInput = {
@@ -211775,6 +217079,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -211816,6 +217121,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSatelliteEndpointsInput = {
@@ -211910,6 +217216,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -211954,6 +217261,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSatelliteEndpointsInput = {
@@ -212008,6 +217316,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -212049,6 +217358,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type SatelliteUpsertWithoutEndpointsInput = {
@@ -212082,6 +217392,553 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
     entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
+  }
+
+  export type OrganizationCreateWithoutPlacementBatchesInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
+    moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
+    channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
+    channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
+    docCases?: DocCaseCreateNestedManyWithoutOrganizationInput
+    docLocations?: DocLocationCreateNestedManyWithoutOrganizationInput
+    docRouteTemplates?: DocRouteTemplateCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
+    paymentMethods?: OrgPaymentMethodCreateNestedManyWithoutOrganizationInput
+    accessCredentials?: OrganizationAccessCredentialCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPlacementBatchesInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
+    moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
+    channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
+    channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
+    docCases?: DocCaseUncheckedCreateNestedManyWithoutOrganizationInput
+    docLocations?: DocLocationUncheckedCreateNestedManyWithoutOrganizationInput
+    docRouteTemplates?: DocRouteTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    paymentMethods?: OrgPaymentMethodUncheckedCreateNestedManyWithoutOrganizationInput
+    accessCredentials?: OrganizationAccessCredentialUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPlacementBatchesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPlacementBatchesInput, OrganizationUncheckedCreateWithoutPlacementBatchesInput>
+  }
+
+  export type PlacementJobCreateWithoutBatchInput = {
+    id?: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlacementJobsInput
+    processLogs?: PlacementProcessLogCreateNestedManyWithoutJobInput
+  }
+
+  export type PlacementJobUncheckedCreateWithoutBatchInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    processLogs?: PlacementProcessLogUncheckedCreateNestedManyWithoutJobInput
+  }
+
+  export type PlacementJobCreateOrConnectWithoutBatchInput = {
+    where: PlacementJobWhereUniqueInput
+    create: XOR<PlacementJobCreateWithoutBatchInput, PlacementJobUncheckedCreateWithoutBatchInput>
+  }
+
+  export type PlacementJobCreateManyBatchInputEnvelope = {
+    data: PlacementJobCreateManyBatchInput | PlacementJobCreateManyBatchInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PlacementProcessLogCreateWithoutBatchInput = {
+    id?: string
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    job?: PlacementJobCreateNestedOneWithoutProcessLogsInput
+  }
+
+  export type PlacementProcessLogUncheckedCreateWithoutBatchInput = {
+    id?: string
+    jobId?: string | null
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlacementProcessLogCreateOrConnectWithoutBatchInput = {
+    where: PlacementProcessLogWhereUniqueInput
+    create: XOR<PlacementProcessLogCreateWithoutBatchInput, PlacementProcessLogUncheckedCreateWithoutBatchInput>
+  }
+
+  export type PlacementProcessLogCreateManyBatchInputEnvelope = {
+    data: PlacementProcessLogCreateManyBatchInput | PlacementProcessLogCreateManyBatchInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutPlacementBatchesInput = {
+    update: XOR<OrganizationUpdateWithoutPlacementBatchesInput, OrganizationUncheckedUpdateWithoutPlacementBatchesInput>
+    create: XOR<OrganizationCreateWithoutPlacementBatchesInput, OrganizationUncheckedCreateWithoutPlacementBatchesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPlacementBatchesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPlacementBatchesInput, OrganizationUncheckedUpdateWithoutPlacementBatchesInput>
+  }
+
+  export type OrganizationUpdateWithoutPlacementBatchesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
+    moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
+    channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
+    channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
+    docCases?: DocCaseUpdateManyWithoutOrganizationNestedInput
+    docLocations?: DocLocationUpdateManyWithoutOrganizationNestedInput
+    docRouteTemplates?: DocRouteTemplateUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
+    paymentMethods?: OrgPaymentMethodUpdateManyWithoutOrganizationNestedInput
+    accessCredentials?: OrganizationAccessCredentialUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPlacementBatchesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
+    moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
+    channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
+    channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
+    docCases?: DocCaseUncheckedUpdateManyWithoutOrganizationNestedInput
+    docLocations?: DocLocationUncheckedUpdateManyWithoutOrganizationNestedInput
+    docRouteTemplates?: DocRouteTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    paymentMethods?: OrgPaymentMethodUncheckedUpdateManyWithoutOrganizationNestedInput
+    accessCredentials?: OrganizationAccessCredentialUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
+  }
+
+  export type PlacementJobUpsertWithWhereUniqueWithoutBatchInput = {
+    where: PlacementJobWhereUniqueInput
+    update: XOR<PlacementJobUpdateWithoutBatchInput, PlacementJobUncheckedUpdateWithoutBatchInput>
+    create: XOR<PlacementJobCreateWithoutBatchInput, PlacementJobUncheckedCreateWithoutBatchInput>
+  }
+
+  export type PlacementJobUpdateWithWhereUniqueWithoutBatchInput = {
+    where: PlacementJobWhereUniqueInput
+    data: XOR<PlacementJobUpdateWithoutBatchInput, PlacementJobUncheckedUpdateWithoutBatchInput>
+  }
+
+  export type PlacementJobUpdateManyWithWhereWithoutBatchInput = {
+    where: PlacementJobScalarWhereInput
+    data: XOR<PlacementJobUpdateManyMutationInput, PlacementJobUncheckedUpdateManyWithoutBatchInput>
+  }
+
+  export type PlacementJobScalarWhereInput = {
+    AND?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
+    OR?: PlacementJobScalarWhereInput[]
+    NOT?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
+    id?: UuidFilter<"PlacementJob"> | string
+    organizationId?: UuidFilter<"PlacementJob"> | string
+    batchId?: UuidNullableFilter<"PlacementJob"> | string | null
+    satelliteKey?: StringFilter<"PlacementJob"> | string
+    fromTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFilter<"PlacementJob"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableFilter<"PlacementJob"> | string | null
+    sliceMeta?: JsonNullableFilter<"PlacementJob">
+    artifactRef?: StringNullableFilter<"PlacementJob"> | string | null
+    artifactJson?: JsonNullableFilter<"PlacementJob">
+    applyLog?: StringNullableFilter<"PlacementJob"> | string | null
+    targetBaseUrl?: StringNullableFilter<"PlacementJob"> | string | null
+    createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
+    updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
+  }
+
+  export type PlacementProcessLogUpsertWithWhereUniqueWithoutBatchInput = {
+    where: PlacementProcessLogWhereUniqueInput
+    update: XOR<PlacementProcessLogUpdateWithoutBatchInput, PlacementProcessLogUncheckedUpdateWithoutBatchInput>
+    create: XOR<PlacementProcessLogCreateWithoutBatchInput, PlacementProcessLogUncheckedCreateWithoutBatchInput>
+  }
+
+  export type PlacementProcessLogUpdateWithWhereUniqueWithoutBatchInput = {
+    where: PlacementProcessLogWhereUniqueInput
+    data: XOR<PlacementProcessLogUpdateWithoutBatchInput, PlacementProcessLogUncheckedUpdateWithoutBatchInput>
+  }
+
+  export type PlacementProcessLogUpdateManyWithWhereWithoutBatchInput = {
+    where: PlacementProcessLogScalarWhereInput
+    data: XOR<PlacementProcessLogUpdateManyMutationInput, PlacementProcessLogUncheckedUpdateManyWithoutBatchInput>
+  }
+
+  export type PlacementProcessLogScalarWhereInput = {
+    AND?: PlacementProcessLogScalarWhereInput | PlacementProcessLogScalarWhereInput[]
+    OR?: PlacementProcessLogScalarWhereInput[]
+    NOT?: PlacementProcessLogScalarWhereInput | PlacementProcessLogScalarWhereInput[]
+    id?: UuidFilter<"PlacementProcessLog"> | string
+    batchId?: UuidNullableFilter<"PlacementProcessLog"> | string | null
+    jobId?: UuidNullableFilter<"PlacementProcessLog"> | string | null
+    phase?: StringFilter<"PlacementProcessLog"> | string
+    level?: StringFilter<"PlacementProcessLog"> | string
+    message?: StringFilter<"PlacementProcessLog"> | string
+    detail?: JsonNullableFilter<"PlacementProcessLog">
+    createdAt?: DateTimeFilter<"PlacementProcessLog"> | Date | string
   }
 
   export type OrganizationCreateWithoutPlacementJobsInput = {
@@ -212133,6 +217990,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -212177,6 +218035,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlacementJobsInput = {
@@ -212231,6 +218090,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -212272,11 +218132,79 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlacementJobsInput = {
     where: OrganizationWhereUniqueInput
     create: XOR<OrganizationCreateWithoutPlacementJobsInput, OrganizationUncheckedCreateWithoutPlacementJobsInput>
+  }
+
+  export type PlacementBatchCreateWithoutJobsInput = {
+    id?: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlacementBatchesInput
+    processLogs?: PlacementProcessLogCreateNestedManyWithoutBatchInput
+  }
+
+  export type PlacementBatchUncheckedCreateWithoutJobsInput = {
+    id?: string
+    organizationId: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    processLogs?: PlacementProcessLogUncheckedCreateNestedManyWithoutBatchInput
+  }
+
+  export type PlacementBatchCreateOrConnectWithoutJobsInput = {
+    where: PlacementBatchWhereUniqueInput
+    create: XOR<PlacementBatchCreateWithoutJobsInput, PlacementBatchUncheckedCreateWithoutJobsInput>
+  }
+
+  export type PlacementProcessLogCreateWithoutJobInput = {
+    id?: string
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    batch?: PlacementBatchCreateNestedOneWithoutProcessLogsInput
+  }
+
+  export type PlacementProcessLogUncheckedCreateWithoutJobInput = {
+    id?: string
+    batchId?: string | null
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlacementProcessLogCreateOrConnectWithoutJobInput = {
+    where: PlacementProcessLogWhereUniqueInput
+    create: XOR<PlacementProcessLogCreateWithoutJobInput, PlacementProcessLogUncheckedCreateWithoutJobInput>
+  }
+
+  export type PlacementProcessLogCreateManyJobInputEnvelope = {
+    data: PlacementProcessLogCreateManyJobInput | PlacementProcessLogCreateManyJobInput[]
+    skipDuplicates?: boolean
   }
 
   export type OrganizationUpsertWithoutPlacementJobsInput = {
@@ -212339,6 +218267,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -212383,6 +218312,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlacementJobsInput = {
@@ -212437,6 +218367,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -212478,6 +218409,234 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
+  }
+
+  export type PlacementBatchUpsertWithoutJobsInput = {
+    update: XOR<PlacementBatchUpdateWithoutJobsInput, PlacementBatchUncheckedUpdateWithoutJobsInput>
+    create: XOR<PlacementBatchCreateWithoutJobsInput, PlacementBatchUncheckedCreateWithoutJobsInput>
+    where?: PlacementBatchWhereInput
+  }
+
+  export type PlacementBatchUpdateToOneWithWhereWithoutJobsInput = {
+    where?: PlacementBatchWhereInput
+    data: XOR<PlacementBatchUpdateWithoutJobsInput, PlacementBatchUncheckedUpdateWithoutJobsInput>
+  }
+
+  export type PlacementBatchUpdateWithoutJobsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlacementBatchesNestedInput
+    processLogs?: PlacementProcessLogUpdateManyWithoutBatchNestedInput
+  }
+
+  export type PlacementBatchUncheckedUpdateWithoutJobsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processLogs?: PlacementProcessLogUncheckedUpdateManyWithoutBatchNestedInput
+  }
+
+  export type PlacementProcessLogUpsertWithWhereUniqueWithoutJobInput = {
+    where: PlacementProcessLogWhereUniqueInput
+    update: XOR<PlacementProcessLogUpdateWithoutJobInput, PlacementProcessLogUncheckedUpdateWithoutJobInput>
+    create: XOR<PlacementProcessLogCreateWithoutJobInput, PlacementProcessLogUncheckedCreateWithoutJobInput>
+  }
+
+  export type PlacementProcessLogUpdateWithWhereUniqueWithoutJobInput = {
+    where: PlacementProcessLogWhereUniqueInput
+    data: XOR<PlacementProcessLogUpdateWithoutJobInput, PlacementProcessLogUncheckedUpdateWithoutJobInput>
+  }
+
+  export type PlacementProcessLogUpdateManyWithWhereWithoutJobInput = {
+    where: PlacementProcessLogScalarWhereInput
+    data: XOR<PlacementProcessLogUpdateManyMutationInput, PlacementProcessLogUncheckedUpdateManyWithoutJobInput>
+  }
+
+  export type PlacementBatchCreateWithoutProcessLogsInput = {
+    id?: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlacementBatchesInput
+    jobs?: PlacementJobCreateNestedManyWithoutBatchInput
+  }
+
+  export type PlacementBatchUncheckedCreateWithoutProcessLogsInput = {
+    id?: string
+    organizationId: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobs?: PlacementJobUncheckedCreateNestedManyWithoutBatchInput
+  }
+
+  export type PlacementBatchCreateOrConnectWithoutProcessLogsInput = {
+    where: PlacementBatchWhereUniqueInput
+    create: XOR<PlacementBatchCreateWithoutProcessLogsInput, PlacementBatchUncheckedCreateWithoutProcessLogsInput>
+  }
+
+  export type PlacementJobCreateWithoutProcessLogsInput = {
+    id?: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlacementJobsInput
+    batch?: PlacementBatchCreateNestedOneWithoutJobsInput
+  }
+
+  export type PlacementJobUncheckedCreateWithoutProcessLogsInput = {
+    id?: string
+    organizationId: string
+    batchId?: string | null
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlacementJobCreateOrConnectWithoutProcessLogsInput = {
+    where: PlacementJobWhereUniqueInput
+    create: XOR<PlacementJobCreateWithoutProcessLogsInput, PlacementJobUncheckedCreateWithoutProcessLogsInput>
+  }
+
+  export type PlacementBatchUpsertWithoutProcessLogsInput = {
+    update: XOR<PlacementBatchUpdateWithoutProcessLogsInput, PlacementBatchUncheckedUpdateWithoutProcessLogsInput>
+    create: XOR<PlacementBatchCreateWithoutProcessLogsInput, PlacementBatchUncheckedCreateWithoutProcessLogsInput>
+    where?: PlacementBatchWhereInput
+  }
+
+  export type PlacementBatchUpdateToOneWithWhereWithoutProcessLogsInput = {
+    where?: PlacementBatchWhereInput
+    data: XOR<PlacementBatchUpdateWithoutProcessLogsInput, PlacementBatchUncheckedUpdateWithoutProcessLogsInput>
+  }
+
+  export type PlacementBatchUpdateWithoutProcessLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlacementBatchesNestedInput
+    jobs?: PlacementJobUpdateManyWithoutBatchNestedInput
+  }
+
+  export type PlacementBatchUncheckedUpdateWithoutProcessLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobs?: PlacementJobUncheckedUpdateManyWithoutBatchNestedInput
+  }
+
+  export type PlacementJobUpsertWithoutProcessLogsInput = {
+    update: XOR<PlacementJobUpdateWithoutProcessLogsInput, PlacementJobUncheckedUpdateWithoutProcessLogsInput>
+    create: XOR<PlacementJobCreateWithoutProcessLogsInput, PlacementJobUncheckedCreateWithoutProcessLogsInput>
+    where?: PlacementJobWhereInput
+  }
+
+  export type PlacementJobUpdateToOneWithWhereWithoutProcessLogsInput = {
+    where?: PlacementJobWhereInput
+    data: XOR<PlacementJobUpdateWithoutProcessLogsInput, PlacementJobUncheckedUpdateWithoutProcessLogsInput>
+  }
+
+  export type PlacementJobUpdateWithoutProcessLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlacementJobsNestedInput
+    batch?: PlacementBatchUpdateOneWithoutJobsNestedInput
+  }
+
+  export type PlacementJobUncheckedUpdateWithoutProcessLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrganizationCreateWithoutWorkforceAssignmentsInput = {
@@ -212530,6 +218689,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -212573,6 +218733,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput = {
@@ -212628,6 +218789,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -212668,6 +218830,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput = {
@@ -212736,6 +218899,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -212779,6 +218943,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput = {
@@ -212834,6 +218999,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -212874,6 +219040,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrgUnitCreateWithoutWorkforceScopeInput = {
@@ -214876,6 +221043,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -214919,6 +221087,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOrgUnitCommercialLinksInput = {
@@ -214974,6 +221143,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -215014,6 +221184,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOrgUnitCommercialLinksInput = {
@@ -215166,6 +221337,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -215209,6 +221381,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOrgUnitCommercialLinksInput = {
@@ -215264,6 +221437,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -215304,6 +221478,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceScopeUpsertWithoutCommercialLinksInput = {
@@ -216837,6 +223012,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -216880,6 +223056,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceEmploymentsInput = {
@@ -216935,6 +223112,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -216975,6 +223153,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceEmploymentsInput = {
@@ -218219,6 +224398,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -218262,6 +224442,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceEmploymentsInput = {
@@ -218317,6 +224498,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -218357,6 +224539,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceScopeUpsertWithoutEmploymentsInput = {
@@ -219476,6 +225659,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -219519,6 +225703,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceTimesheetsInput = {
@@ -219574,6 +225759,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -219614,6 +225800,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceTimesheetsInput = {
@@ -219740,6 +225927,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -219783,6 +225971,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceTimesheetsInput = {
@@ -219838,6 +226027,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -219878,6 +226068,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceTimesheetEntryUpsertWithWhereUniqueWithoutTimesheetInput = {
@@ -220178,6 +226369,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -220221,6 +226413,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforcePlacesInput = {
@@ -220276,6 +226469,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -220316,6 +226510,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforcePlacesInput = {
@@ -220591,6 +226786,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -220634,6 +226830,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforcePlacesInput = {
@@ -220689,6 +226886,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -220729,6 +226927,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrgUnitUpsertWithoutResponsiblePlacesInput = {
@@ -220915,6 +227114,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -220958,6 +227158,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAttendanceDevicesInput = {
@@ -221013,6 +227214,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -221053,6 +227255,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAttendanceDevicesInput = {
@@ -221218,6 +227421,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -221261,6 +227465,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAttendanceDevicesInput = {
@@ -221316,6 +227521,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -221356,6 +227562,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforcePlaceUpsertWithoutAttendanceDevicesInput = {
@@ -221473,6 +227680,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -221516,6 +227724,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAttendanceIdentitiesInput = {
@@ -221571,6 +227780,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -221611,6 +227821,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAttendanceIdentitiesInput = {
@@ -221764,6 +227975,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -221807,6 +228019,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAttendanceIdentitiesInput = {
@@ -221862,6 +228075,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -221902,6 +228116,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutAttendanceIdentitiesInput = {
@@ -222045,6 +228260,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -222088,6 +228304,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAttendancePunchesInput = {
@@ -222143,6 +228360,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -222183,6 +228401,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAttendancePunchesInput = {
@@ -222444,6 +228663,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -222487,6 +228707,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAttendancePunchesInput = {
@@ -222542,6 +228763,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -222582,6 +228804,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceAttendanceDeviceUpsertWithoutPunchesInput = {
@@ -222844,6 +229067,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -222887,6 +229111,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAttendancePunchJournalsInput = {
@@ -222942,6 +229167,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -222982,6 +229208,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAttendancePunchJournalsInput = {
@@ -223099,6 +229326,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -223142,6 +229370,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAttendancePunchJournalsInput = {
@@ -223197,6 +229426,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -223237,6 +229467,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceAttendancePunchUpsertWithoutJournalInput = {
@@ -223344,6 +229575,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -223387,6 +229619,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceHourlyLeaveRequestsInput = {
@@ -223442,6 +229675,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -223482,6 +229716,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceHourlyLeaveRequestsInput = {
@@ -223635,6 +229870,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -223678,6 +229914,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceHourlyLeaveRequestsInput = {
@@ -223733,6 +229970,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -223773,6 +230011,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutHourlyLeaveRequestsInput = {
@@ -223916,6 +230155,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -223959,6 +230199,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAdvanceRequestsInput = {
@@ -224014,6 +230255,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -224054,6 +230296,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAdvanceRequestsInput = {
@@ -224207,6 +230450,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -224250,6 +230494,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAdvanceRequestsInput = {
@@ -224305,6 +230550,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -224345,6 +230591,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutAdvanceRequestsInput = {
@@ -224488,6 +230735,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -224531,6 +230779,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAnnouncementsInput = {
@@ -224586,6 +230835,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -224626,6 +230876,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceAnnouncementsInput = {
@@ -224718,6 +230969,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -224761,6 +231013,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAnnouncementsInput = {
@@ -224816,6 +231069,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -224856,6 +231110,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceAnnouncementReadUpsertWithWhereUniqueWithoutAnnouncementInput = {
@@ -225152,6 +231407,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -225195,6 +231451,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceFitnessRecordsInput = {
@@ -225250,6 +231507,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -225290,6 +231548,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceFitnessRecordsInput = {
@@ -225443,6 +231702,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -225486,6 +231746,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceFitnessRecordsInput = {
@@ -225541,6 +231802,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -225581,6 +231843,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutFitnessRecordsInput = {
@@ -225724,6 +231987,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -225767,6 +232031,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceShiftTypesInput = {
@@ -225822,6 +232087,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -225862,6 +232128,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceShiftTypesInput = {
@@ -225988,6 +232255,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -226031,6 +232299,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceShiftTypesInput = {
@@ -226086,6 +232355,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -226126,6 +232396,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceShiftCycleSlotUpsertWithWhereUniqueWithoutShiftTypeInput = {
@@ -226221,6 +232492,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -226264,6 +232536,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceShiftCyclesInput = {
@@ -226319,6 +232592,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -226359,6 +232633,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceShiftCyclesInput = {
@@ -226485,6 +232760,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -226528,6 +232804,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceShiftCyclesInput = {
@@ -226583,6 +232860,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -226623,6 +232901,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceShiftCycleSlotUpsertWithWhereUniqueWithoutCycleInput = {
@@ -226843,6 +233122,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -226886,6 +233166,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceBrigadesInput = {
@@ -226941,6 +233222,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -226981,6 +233263,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceBrigadesInput = {
@@ -227143,6 +233426,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -227186,6 +233470,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceBrigadesInput = {
@@ -227241,6 +233526,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -227281,6 +233567,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceBrigadeMemberUpsertWithWhereUniqueWithoutBrigadeInput = {
@@ -227677,6 +233964,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -227720,6 +234008,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceShiftAssignmentsInput = {
@@ -227775,6 +234064,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -227815,6 +234105,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceShiftAssignmentsInput = {
@@ -228065,6 +234356,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -228108,6 +234400,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceShiftAssignmentsInput = {
@@ -228163,6 +234456,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -228203,6 +234497,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforcePlaceUpsertWithoutAssignmentsInput = {
@@ -228461,6 +234756,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -228504,6 +234800,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceDayOverridesInput = {
@@ -228559,6 +234856,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -228599,6 +234897,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceDayOverridesInput = {
@@ -228830,6 +235129,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -228873,6 +235173,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceDayOverridesInput = {
@@ -228928,6 +235229,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -228968,6 +235270,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutDayOverridesInput = {
@@ -230010,6 +236313,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -230053,6 +236357,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceMigrationStepsInput = {
@@ -230108,6 +236413,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -230148,6 +236454,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceMigrationStepsInput = {
@@ -230216,6 +236523,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -230259,6 +236567,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceMigrationStepsInput = {
@@ -230314,6 +236623,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -230354,6 +236664,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceScopeCreateWithoutStaffScheduleRevisionsInput = {
@@ -230542,6 +236853,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -230586,6 +236898,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPaymentOrdersInput = {
@@ -230640,6 +236953,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -230681,6 +236995,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPaymentOrdersInput = {
@@ -230829,6 +237144,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -230873,6 +237189,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPaymentOrdersInput = {
@@ -230927,6 +237244,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -230968,6 +237286,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type SubscriptionInvoiceUpsertWithoutPaymentOrderInput = {
@@ -231297,6 +237616,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -231340,6 +237660,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceOrgSettingsInput = {
@@ -231395,6 +237716,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -231435,6 +237757,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceOrgSettingsInput = {
@@ -231503,6 +237826,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -231546,6 +237870,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceOrgSettingsInput = {
@@ -231601,6 +237926,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -231641,6 +237967,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutWorkforceApprovalRoutesInput = {
@@ -231693,6 +238020,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -231736,6 +238064,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceApprovalRoutesInput = {
@@ -231791,6 +238120,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -231831,6 +238161,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceApprovalRoutesInput = {
@@ -231933,6 +238264,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -231976,6 +238308,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceApprovalRoutesInput = {
@@ -232031,6 +238364,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -232071,6 +238405,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceApprovalStepUpsertWithWhereUniqueWithoutRouteInput = {
@@ -232383,6 +238718,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -232426,6 +238762,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceApprovalDecisionsInput = {
@@ -232481,6 +238818,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -232521,6 +238859,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutWorkforceApprovalDecisionsInput = {
@@ -232589,6 +238928,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -232632,6 +238972,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceApprovalDecisionsInput = {
@@ -232687,6 +239028,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -232727,6 +239069,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type WorkforceVacationPlanCreateWithoutRevisionsInput = {
@@ -233686,10 +240029,13 @@ export namespace Prisma {
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    batch?: PlacementBatchCreateNestedOneWithoutJobsInput
+    processLogs?: PlacementProcessLogCreateNestedManyWithoutJobInput
   }
 
   export type PlacementJobUncheckedCreateWithoutOrganizationInput = {
     id?: string
+    batchId?: string | null
     satelliteKey: string
     fromTopology: $Enums.DeploymentTopology
     toTopology: $Enums.DeploymentTopology
@@ -233702,6 +240048,7 @@ export namespace Prisma {
     targetBaseUrl?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    processLogs?: PlacementProcessLogUncheckedCreateNestedManyWithoutJobInput
   }
 
   export type PlacementJobCreateOrConnectWithoutOrganizationInput = {
@@ -233711,6 +240058,48 @@ export namespace Prisma {
 
   export type PlacementJobCreateManyOrganizationInputEnvelope = {
     data: PlacementJobCreateManyOrganizationInput | PlacementJobCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PlacementBatchCreateWithoutOrganizationInput = {
+    id?: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobs?: PlacementJobCreateNestedManyWithoutBatchInput
+    processLogs?: PlacementProcessLogCreateNestedManyWithoutBatchInput
+  }
+
+  export type PlacementBatchUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobs?: PlacementJobUncheckedCreateNestedManyWithoutBatchInput
+    processLogs?: PlacementProcessLogUncheckedCreateNestedManyWithoutBatchInput
+  }
+
+  export type PlacementBatchCreateOrConnectWithoutOrganizationInput = {
+    where: PlacementBatchWhereUniqueInput
+    create: XOR<PlacementBatchCreateWithoutOrganizationInput, PlacementBatchUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlacementBatchCreateManyOrganizationInputEnvelope = {
+    data: PlacementBatchCreateManyOrganizationInput | PlacementBatchCreateManyOrganizationInput[]
     skipDuplicates?: boolean
   }
 
@@ -235158,6 +241547,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -235201,6 +241591,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutDepartmentsInput = {
@@ -235256,6 +241647,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -235296,6 +241688,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutDepartmentsInput = {
@@ -235353,6 +241746,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -235396,6 +241790,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutParentOrgInput = {
@@ -235450,6 +241845,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -235491,6 +241887,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutParentOrgInput = {
@@ -235631,6 +242028,45 @@ export namespace Prisma {
   export type OrganizationProfileCreateOrConnectWithoutOrganizationInput = {
     where: OrganizationProfileWhereUniqueInput
     create: XOR<OrganizationProfileCreateWithoutOrganizationInput, OrganizationProfileUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type OrganizationGuestAppCreateWithoutOrganizationInput = {
+    enabled?: boolean
+    displayName?: string | null
+    primaryColor?: string | null
+    logoUrl?: string | null
+    locale?: string | null
+    deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationGuestAppUncheckedCreateWithoutOrganizationInput = {
+    enabled?: boolean
+    displayName?: string | null
+    primaryColor?: string | null
+    logoUrl?: string | null
+    locale?: string | null
+    deskPhone?: string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: string | null
+    leadAlertMinutes?: number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationGuestAppCreateOrConnectWithoutOrganizationInput = {
+    where: OrganizationGuestAppWhereUniqueInput
+    create: XOR<OrganizationGuestAppCreateWithoutOrganizationInput, OrganizationGuestAppUncheckedCreateWithoutOrganizationInput>
   }
 
   export type UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput = {
@@ -236376,24 +242812,38 @@ export namespace Prisma {
     data: XOR<PlacementJobUpdateManyMutationInput, PlacementJobUncheckedUpdateManyWithoutOrganizationInput>
   }
 
-  export type PlacementJobScalarWhereInput = {
-    AND?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
-    OR?: PlacementJobScalarWhereInput[]
-    NOT?: PlacementJobScalarWhereInput | PlacementJobScalarWhereInput[]
-    id?: UuidFilter<"PlacementJob"> | string
-    organizationId?: UuidFilter<"PlacementJob"> | string
-    satelliteKey?: StringFilter<"PlacementJob"> | string
-    fromTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
-    toTopology?: EnumDeploymentTopologyFilter<"PlacementJob"> | $Enums.DeploymentTopology
-    status?: EnumPlacementJobStatusFilter<"PlacementJob"> | $Enums.PlacementJobStatus
-    errorMessage?: StringNullableFilter<"PlacementJob"> | string | null
-    sliceMeta?: JsonNullableFilter<"PlacementJob">
-    artifactRef?: StringNullableFilter<"PlacementJob"> | string | null
-    artifactJson?: JsonNullableFilter<"PlacementJob">
-    applyLog?: StringNullableFilter<"PlacementJob"> | string | null
-    targetBaseUrl?: StringNullableFilter<"PlacementJob"> | string | null
-    createdAt?: DateTimeFilter<"PlacementJob"> | Date | string
-    updatedAt?: DateTimeFilter<"PlacementJob"> | Date | string
+  export type PlacementBatchUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PlacementBatchWhereUniqueInput
+    update: XOR<PlacementBatchUpdateWithoutOrganizationInput, PlacementBatchUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PlacementBatchCreateWithoutOrganizationInput, PlacementBatchUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlacementBatchUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PlacementBatchWhereUniqueInput
+    data: XOR<PlacementBatchUpdateWithoutOrganizationInput, PlacementBatchUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PlacementBatchUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PlacementBatchScalarWhereInput
+    data: XOR<PlacementBatchUpdateManyMutationInput, PlacementBatchUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PlacementBatchScalarWhereInput = {
+    AND?: PlacementBatchScalarWhereInput | PlacementBatchScalarWhereInput[]
+    OR?: PlacementBatchScalarWhereInput[]
+    NOT?: PlacementBatchScalarWhereInput | PlacementBatchScalarWhereInput[]
+    id?: UuidFilter<"PlacementBatch"> | string
+    organizationId?: UuidFilter<"PlacementBatch"> | string
+    satelliteKeys?: StringNullableListFilter<"PlacementBatch">
+    fromTopology?: EnumDeploymentTopologyFilter<"PlacementBatch"> | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFilter<"PlacementBatch"> | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFilter<"PlacementBatch"> | $Enums.PlacementPackaging
+    targetHost?: StringNullableFilter<"PlacementBatch"> | string | null
+    recipeJson?: JsonNullableFilter<"PlacementBatch">
+    status?: EnumPlacementJobStatusFilter<"PlacementBatch"> | $Enums.PlacementJobStatus
+    errorMessage?: StringNullableFilter<"PlacementBatch"> | string | null
+    createdAt?: DateTimeFilter<"PlacementBatch"> | Date | string
+    updatedAt?: DateTimeFilter<"PlacementBatch"> | Date | string
   }
 
   export type OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutOrganizationInput = {
@@ -237452,6 +243902,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -237495,6 +243946,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutDepartmentsInput = {
@@ -237550,6 +244002,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -237590,6 +244043,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUpsertWithWhereUniqueWithoutParentOrgInput = {
@@ -237782,6 +244236,51 @@ export namespace Prisma {
     addresses?: OrganizationAddressUncheckedUpdateManyWithoutProfileNestedInput
   }
 
+  export type OrganizationGuestAppUpsertWithoutOrganizationInput = {
+    update: XOR<OrganizationGuestAppUpdateWithoutOrganizationInput, OrganizationGuestAppUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<OrganizationGuestAppCreateWithoutOrganizationInput, OrganizationGuestAppUncheckedCreateWithoutOrganizationInput>
+    where?: OrganizationGuestAppWhereInput
+  }
+
+  export type OrganizationGuestAppUpdateToOneWithWhereWithoutOrganizationInput = {
+    where?: OrganizationGuestAppWhereInput
+    data: XOR<OrganizationGuestAppUpdateWithoutOrganizationInput, OrganizationGuestAppUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type OrganizationGuestAppUpdateWithoutOrganizationInput = {
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    locale?: NullableStringFieldUpdateOperationsInput | string | null
+    deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationGuestAppUncheckedUpdateWithoutOrganizationInput = {
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    locale?: NullableStringFieldUpdateOperationsInput | string | null
+    deskPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    catalogJson?: NullableJsonNullValueInput | InputJsonValue
+    postStayMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    offersJson?: NullableJsonNullValueInput | InputJsonValue
+    doctorOnDutyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    leadAlertMinutes?: NullableIntFieldUpdateOperationsInput | number | null
+    enabledOrderKinds?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrganizationCreateWithoutAccessCredentialsInput = {
     id?: string
     name: string
@@ -237832,6 +244331,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -237875,6 +244375,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutAccessCredentialsInput = {
@@ -237930,6 +244431,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -237970,6 +244472,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutAccessCredentialsInput = {
@@ -238038,6 +244541,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -238081,6 +244585,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutAccessCredentialsInput = {
@@ -238136,6 +244641,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -238176,6 +244682,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutProfileInput = {
@@ -238228,6 +244735,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -238271,6 +244779,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutProfileInput = {
@@ -238326,6 +244835,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -238366,6 +244876,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutProfileInput = {
@@ -238514,6 +245025,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -238557,6 +245069,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutProfileInput = {
@@ -238612,6 +245125,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -238652,6 +245166,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationContactChannelUpsertWithWhereUniqueWithoutProfileInput = {
@@ -238722,6 +245237,410 @@ export namespace Prisma {
     sortOrder?: IntFilter<"OrganizationAddress"> | number
     createdAt?: DateTimeFilter<"OrganizationAddress"> | Date | string
     updatedAt?: DateTimeFilter<"OrganizationAddress"> | Date | string
+  }
+
+  export type OrganizationCreateWithoutGuestAppInput = {
+    id?: string
+    name: string
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
+    moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
+    channelsFrom?: OrganizationSatelliteChannelCreateNestedManyWithoutFromOrganizationInput
+    channelsTo?: OrganizationSatelliteChannelCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadCreateNestedManyWithoutOrganizationInput
+    docCases?: DocCaseCreateNestedManyWithoutOrganizationInput
+    docLocations?: DocLocationCreateNestedManyWithoutOrganizationInput
+    docRouteTemplates?: DocRouteTemplateCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceCreateNestedManyWithoutOrganizationInput
+    paymentMethods?: OrgPaymentMethodCreateNestedManyWithoutOrganizationInput
+    accessCredentials?: OrganizationAccessCredentialCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
+    agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutGuestAppInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    publicOrgNumber: number
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    deploymentTopology?: $Enums.DeploymentTopology
+    parentOrgId?: string | null
+    holdingId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    organizationRoles?: OrganizationRoleUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
+    moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
+    channelsFrom?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutFromOrganizationInput
+    channelsTo?: OrganizationSatelliteChannelUncheckedCreateNestedManyWithoutToOrganizationInput
+    commsThreads?: CommsThreadUncheckedCreateNestedManyWithoutOrganizationInput
+    docCases?: DocCaseUncheckedCreateNestedManyWithoutOrganizationInput
+    docLocations?: DocLocationUncheckedCreateNestedManyWithoutOrganizationInput
+    docRouteTemplates?: DocRouteTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedCreateNestedManyWithoutOrganizationInput
+    workforcePlaces?: WorkforcePlaceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceBrigades?: WorkforceBrigadeUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedCreateNestedOneWithoutOrganizationInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedCreateNestedOneWithoutOrganizationInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedCreateNestedManyWithoutHotelOrganizationInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+    paymentMethods?: OrgPaymentMethodUncheckedCreateNestedManyWithoutOrganizationInput
+    accessCredentials?: OrganizationAccessCredentialUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
+    profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutGuestAppInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutGuestAppInput, OrganizationUncheckedCreateWithoutGuestAppInput>
+  }
+
+  export type OrganizationUpsertWithoutGuestAppInput = {
+    update: XOR<OrganizationUpdateWithoutGuestAppInput, OrganizationUncheckedUpdateWithoutGuestAppInput>
+    create: XOR<OrganizationCreateWithoutGuestAppInput, OrganizationUncheckedCreateWithoutGuestAppInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutGuestAppInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutGuestAppInput, OrganizationUncheckedUpdateWithoutGuestAppInput>
+  }
+
+  export type OrganizationUpdateWithoutGuestAppInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
+    moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
+    channelsFrom?: OrganizationSatelliteChannelUpdateManyWithoutFromOrganizationNestedInput
+    channelsTo?: OrganizationSatelliteChannelUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUpdateManyWithoutOrganizationNestedInput
+    docCases?: DocCaseUpdateManyWithoutOrganizationNestedInput
+    docLocations?: DocLocationUpdateManyWithoutOrganizationNestedInput
+    docRouteTemplates?: DocRouteTemplateUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUpdateManyWithoutOrganizationNestedInput
+    paymentMethods?: OrgPaymentMethodUpdateManyWithoutOrganizationNestedInput
+    accessCredentials?: OrganizationAccessCredentialUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutGuestAppInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    publicOrgNumber?: IntFieldUpdateOperationsInput | number
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    deploymentTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    organizationRoles?: OrganizationRoleUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
+    moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
+    channelsFrom?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutFromOrganizationNestedInput
+    channelsTo?: OrganizationSatelliteChannelUncheckedUpdateManyWithoutToOrganizationNestedInput
+    commsThreads?: CommsThreadUncheckedUpdateManyWithoutOrganizationNestedInput
+    docCases?: DocCaseUncheckedUpdateManyWithoutOrganizationNestedInput
+    docLocations?: DocLocationUncheckedUpdateManyWithoutOrganizationNestedInput
+    docRouteTemplates?: DocRouteTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceTimesheets?: WorkforceTimesheetUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforcePlaces?: WorkforcePlaceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftTypes?: WorkforceShiftTypeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftCycles?: WorkforceShiftCycleUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceBrigades?: WorkforceBrigadeUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceShiftAssignments?: WorkforceShiftAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceDayOverrides?: WorkforceDayOverrideUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceDevices?: WorkforceAttendanceDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendanceIdentities?: WorkforceAttendanceIdentityUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunches?: WorkforceAttendancePunchUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAttendancePunchJournals?: WorkforceAttendancePunchJournalUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceHourlyLeaveRequests?: WorkforceHourlyLeaveRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAdvanceRequests?: WorkforceAdvanceRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAnnouncements?: WorkforceAnnouncementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceFitnessRecords?: WorkforceFitnessRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceMigrationSteps?: WorkforceMigrationStepUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceOrgSettings?: WorkforceOrgSettingsUncheckedUpdateOneWithoutOrganizationNestedInput
+    workforceApprovalRoutes?: WorkforceApprovalRouteUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceApprovalDecisions?: WorkforceApprovalDecisionUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    elektrawebBridgePolicy?: ElektrawebBridgePolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverPolicy?: ClinicCutoverPolicyUncheckedUpdateOneWithoutOrganizationNestedInput
+    clinicCutoverAsHotel?: ClinicCutoverPolicyUncheckedUpdateManyWithoutHotelOrganizationNestedInput
+    fiscalHardwareDevices?: FiscalHardwareDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+    paymentMethods?: OrgPaymentMethodUncheckedUpdateManyWithoutOrganizationNestedInput
+    accessCredentials?: OrganizationAccessCredentialUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+    agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
+    profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationProfileCreateWithoutContactsInput = {
@@ -238942,6 +245861,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -238985,6 +245905,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutElektrawebBridgePolicyInput = {
@@ -239040,6 +245961,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -239080,6 +246002,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutElektrawebBridgePolicyInput = {
@@ -239148,6 +246071,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -239191,6 +246115,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutElektrawebBridgePolicyInput = {
@@ -239246,6 +246171,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -239286,6 +246212,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutClinicCutoverPolicyInput = {
@@ -239338,6 +246265,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -239381,6 +246309,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutClinicCutoverPolicyInput = {
@@ -239436,6 +246365,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -239476,6 +246406,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutClinicCutoverPolicyInput = {
@@ -239533,6 +246464,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -239576,6 +246508,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutClinicCutoverAsHotelInput = {
@@ -239631,6 +246564,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -239671,6 +246605,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutClinicCutoverAsHotelInput = {
@@ -239739,6 +246674,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -239782,6 +246718,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutClinicCutoverPolicyInput = {
@@ -239837,6 +246774,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -239877,6 +246815,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUpsertWithoutClinicCutoverAsHotelInput = {
@@ -239940,6 +246879,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -239983,6 +246923,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutClinicCutoverAsHotelInput = {
@@ -240038,6 +246979,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -240078,6 +247020,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutFiscalHardwareDevicesInput = {
@@ -240130,6 +247073,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -240173,6 +247117,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutFiscalHardwareDevicesInput = {
@@ -240228,6 +247173,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -240268,6 +247214,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutFiscalHardwareDevicesInput = {
@@ -240380,6 +247327,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -240423,6 +247371,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutFiscalHardwareDevicesInput = {
@@ -240478,6 +247427,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -240518,6 +247468,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrgPaymentMethodUpsertWithWhereUniqueWithoutFiscalDeviceInput = {
@@ -240586,6 +247537,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -240629,6 +247581,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPaymentMethodsInput = {
@@ -240684,6 +247637,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -240724,6 +247678,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPaymentMethodsInput = {
@@ -240837,6 +247792,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -240880,6 +247836,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPaymentMethodsInput = {
@@ -240935,6 +247892,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -240975,6 +247933,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type FiscalHardwareDeviceUpsertWithoutPaymentMethodsInput = {
@@ -241222,6 +248181,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -241265,6 +248225,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOwnerInput = {
@@ -241319,6 +248280,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -241360,6 +248322,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOwnerInput = {
@@ -241762,6 +248725,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -241805,6 +248769,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutCommsThreadsInput = {
@@ -241860,6 +248825,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -241900,6 +248866,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutCommsThreadsInput = {
@@ -242061,6 +249028,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -242104,6 +249072,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutCommsThreadsInput = {
@@ -242159,6 +249128,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -242199,6 +249169,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutCommsThreadsAuthoredInput = {
@@ -242638,6 +249609,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -242681,6 +249653,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutDocLocationsInput = {
@@ -242736,6 +249709,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -242776,6 +249750,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutDocLocationsInput = {
@@ -242957,6 +249932,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -243000,6 +249976,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutDocLocationsInput = {
@@ -243055,6 +250032,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -243095,6 +250073,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type DocLocationUpsertWithoutChildrenInput = {
@@ -243210,6 +250189,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -243253,6 +250233,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutDocRouteTemplatesInput = {
@@ -243308,6 +250289,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -243348,6 +250330,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutDocRouteTemplatesInput = {
@@ -243578,6 +250561,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -243621,6 +250605,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutDocRouteTemplatesInput = {
@@ -243676,6 +250661,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -243716,6 +250702,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type DocRouteStepUpsertWithWhereUniqueWithoutTemplateInput = {
@@ -244007,6 +250994,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -244050,6 +251038,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutDocCasesInput = {
@@ -244105,6 +251094,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -244145,6 +251135,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutDocCasesInput = {
@@ -244435,6 +251426,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -244478,6 +251470,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutDocCasesInput = {
@@ -244533,6 +251526,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -244573,6 +251567,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type DocLocationUpsertWithoutCasesInput = {
@@ -245445,6 +252440,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -245488,6 +252484,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutHoldingInput = {
@@ -245542,6 +252539,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -245583,6 +252581,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutHoldingInput = {
@@ -245887,6 +252886,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -245931,6 +252931,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOrganizationRolesInput = {
@@ -245985,6 +252986,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -246026,6 +253028,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOrganizationRolesInput = {
@@ -246125,6 +253128,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -246169,6 +253173,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOrganizationRolesInput = {
@@ -246223,6 +253228,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -246264,6 +253270,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationMembershipUpsertWithWhereUniqueWithoutOrganizationRoleInput = {
@@ -246376,6 +253383,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -246420,6 +253428,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutMembershipsInput = {
@@ -246474,6 +253483,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -246515,6 +253525,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutMembershipsInput = {
@@ -246664,6 +253675,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -246708,6 +253720,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
@@ -246762,6 +253775,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -246803,6 +253817,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationRoleUpsertWithoutMembershipsInput = {
@@ -247204,6 +254219,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -247248,6 +254264,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessEventsInput = {
@@ -247302,6 +254319,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -247343,6 +254361,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessEventsInput = {
@@ -247455,6 +254474,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -247499,6 +254519,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput = {
@@ -247553,6 +254574,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -247594,6 +254616,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessEventsInput = {
@@ -247696,6 +254719,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -247740,6 +254764,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput = {
@@ -247794,6 +254819,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -247835,6 +254861,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessSignupsInput = {
@@ -247947,6 +254974,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -247991,6 +255019,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput = {
@@ -248045,6 +255074,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -248086,6 +255116,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessSignupsInput = {
@@ -248188,6 +255219,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -248232,6 +255264,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
@@ -248286,6 +255319,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -248327,6 +255361,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutAuditLogsInput = {
@@ -248439,6 +255474,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -248483,6 +255519,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
@@ -248537,6 +255574,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -248578,6 +255616,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutAuditLogsInput = {
@@ -248680,6 +255719,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -248724,6 +255764,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationTemplatesInput = {
@@ -248778,6 +255819,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -248819,6 +255861,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationTemplatesInput = {
@@ -248932,6 +255975,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -248976,6 +256020,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationTemplatesInput = {
@@ -249030,6 +256075,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -249071,6 +256117,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput = {
@@ -249138,6 +256185,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -249182,6 +256230,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput = {
@@ -249236,6 +256285,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -249277,6 +256327,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationOutboxEntriesInput = {
@@ -249405,6 +256456,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -249449,6 +256501,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput = {
@@ -249503,6 +256556,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -249544,6 +256598,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type NotificationTemplateUpsertWithoutOutboxEntriesInput = {
@@ -249689,6 +256744,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -249733,6 +256789,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput = {
@@ -249787,6 +256844,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -249828,6 +256886,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationDeliveryLogsInput = {
@@ -249942,6 +257001,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -249986,6 +257046,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput = {
@@ -250040,6 +257101,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -250081,6 +257143,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformPaymentLinksInput = {
@@ -250132,6 +257195,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -250176,6 +257240,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput = {
@@ -250230,6 +257295,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -250271,6 +257337,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPaymentLinksInput = {
@@ -250377,6 +257444,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -250421,6 +257489,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput = {
@@ -250475,6 +257544,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -250516,6 +257586,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type PaymentOrderUpsertWithoutPlatformPaymentLinksInput = {
@@ -250612,6 +257683,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -250656,6 +257728,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPortalLinksInput = {
@@ -250710,6 +257783,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -250751,6 +257825,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPortalLinksInput = {
@@ -250818,6 +257893,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -250862,6 +257938,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput = {
@@ -250916,6 +257993,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -250957,6 +258035,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutBookableResourcesInput = {
@@ -251008,6 +258087,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -251052,6 +258132,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookableResourcesInput = {
@@ -251106,6 +258187,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -251147,6 +258229,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookableResourcesInput = {
@@ -251282,6 +258365,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -251326,6 +258410,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookableResourcesInput = {
@@ -251380,6 +258465,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -251421,6 +258507,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BookingSlotUpsertWithWhereUniqueWithoutResourceInput = {
@@ -251504,6 +258591,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -251548,6 +258636,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingSlotsInput = {
@@ -251602,6 +258691,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -251643,6 +258733,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookingSlotsInput = {
@@ -251771,6 +258862,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -251815,6 +258907,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingSlotsInput = {
@@ -251869,6 +258962,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -251910,6 +259004,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BookableResourceUpsertWithoutSlotsInput = {
@@ -252008,6 +259103,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -252052,6 +259148,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingAppointmentsInput = {
@@ -252106,6 +259203,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -252147,6 +259245,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookingAppointmentsInput = {
@@ -252266,6 +259365,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -252310,6 +259410,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingAppointmentsInput = {
@@ -252364,6 +259465,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -252405,6 +259507,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BookableResourceUpsertWithoutAppointmentsInput = {
@@ -252520,6 +259623,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -252564,6 +259668,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPromotionsInput = {
@@ -252618,6 +259723,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -252659,6 +259765,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPromotionsInput = {
@@ -252726,6 +259833,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -252770,6 +259878,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPromotionsInput = {
@@ -252824,6 +259933,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -252865,6 +259975,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformCustomDomainsInput = {
@@ -252916,6 +260027,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -252960,6 +260072,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput = {
@@ -253014,6 +260127,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -253055,6 +260169,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformCustomDomainsInput = {
@@ -253122,6 +260237,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -253166,6 +260282,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput = {
@@ -253220,6 +260337,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -253261,6 +260379,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformShipmentsInput = {
@@ -253312,6 +260431,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -253356,6 +260476,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformShipmentsInput = {
@@ -253410,6 +260531,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -253451,6 +260573,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformShipmentsInput = {
@@ -253518,6 +260641,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -253562,6 +260686,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformShipmentsInput = {
@@ -253616,6 +260741,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -253657,6 +260783,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformAuditLogsInput = {
@@ -253708,6 +260835,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -253752,6 +260880,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformAuditLogsInput = {
@@ -253806,6 +260935,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -253847,6 +260977,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformAuditLogsInput = {
@@ -253914,6 +261045,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -253958,6 +261090,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformAuditLogsInput = {
@@ -254012,6 +261145,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -254053,6 +261187,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -254104,6 +261239,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -254148,6 +261284,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -254202,6 +261339,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -254243,6 +261381,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformIdempotencyRecordsInput = {
@@ -254310,6 +261449,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -254354,6 +261494,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformIdempotencyRecordsInput = {
@@ -254408,6 +261549,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -254449,6 +261591,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -254500,6 +261643,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -254544,6 +261688,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -254598,6 +261743,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -254639,6 +261785,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformLoyaltyLedgerInput = {
@@ -254706,6 +261853,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -254750,6 +261898,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformLoyaltyLedgerInput = {
@@ -254804,6 +261953,7 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -254845,6 +261995,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type AgencyPropertyGrantCreateWithoutAccountInput = {
@@ -254970,6 +262121,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -255013,6 +262165,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     buyerOrgGrants?: BuyerOrgGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutAgencyPropertyGrantsInput = {
@@ -255068,6 +262221,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -255108,6 +262262,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutAgencyPropertyGrantsInput = {
@@ -255207,6 +262362,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -255250,6 +262406,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutAgencyPropertyGrantsInput = {
@@ -255305,6 +262462,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -255345,6 +262503,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BuyerOrgGrantCreateWithoutAccountInput = {
@@ -255468,6 +262627,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceCreateNestedManyWithoutOrganizationInput
@@ -255511,6 +262671,7 @@ export namespace Prisma {
     holding?: HoldingCreateNestedOneWithoutOrganizationsInput
     agencyPropertyGrants?: AgencyPropertyGrantCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutBuyerOrgGrantsInput = {
@@ -255566,6 +262727,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
     placementJobs?: PlacementJobUncheckedCreateNestedManyWithoutOrganizationInput
+    placementBatches?: PlacementBatchUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
     commercialOutlets?: CommercialOutletUncheckedCreateNestedManyWithoutOrganizationInput
     moduleGraces?: OrganizationModuleGraceUncheckedCreateNestedManyWithoutOrganizationInput
@@ -255606,6 +262768,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedCreateNestedManyWithoutOrganizationInput
     profile?: OrganizationProfileUncheckedCreateNestedOneWithoutOrganizationInput
+    guestApp?: OrganizationGuestAppUncheckedCreateNestedOneWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBuyerOrgGrantsInput = {
@@ -255705,6 +262868,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -255748,6 +262912,7 @@ export namespace Prisma {
     holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBuyerOrgGrantsInput = {
@@ -255803,6 +262968,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -255843,6 +263009,7 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type BillingInvoiceItemCreateManySubscriptionInvoiceInput = {
@@ -256091,6 +263258,156 @@ export namespace Prisma {
     connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isTrial?: BoolFieldUpdateOperationsInput | boolean
     suspendedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type PlacementJobCreateManyBatchInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: string | null
+    targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlacementProcessLogCreateManyBatchInput = {
+    id?: string
+    jobId?: string | null
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlacementJobUpdateWithoutBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlacementJobsNestedInput
+    processLogs?: PlacementProcessLogUpdateManyWithoutJobNestedInput
+  }
+
+  export type PlacementJobUncheckedUpdateWithoutBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processLogs?: PlacementProcessLogUncheckedUpdateManyWithoutJobNestedInput
+  }
+
+  export type PlacementJobUncheckedUpdateManyWithoutBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementProcessLogUpdateWithoutBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    job?: PlacementJobUpdateOneWithoutProcessLogsNestedInput
+  }
+
+  export type PlacementProcessLogUncheckedUpdateWithoutBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementProcessLogUncheckedUpdateManyWithoutBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobId?: NullableStringFieldUpdateOperationsInput | string | null
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementProcessLogCreateManyJobInput = {
+    id?: string
+    batchId?: string | null
+    phase: string
+    level?: string
+    message: string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlacementProcessLogUpdateWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    batch?: PlacementBatchUpdateOneWithoutProcessLogsNestedInput
+  }
+
+  export type PlacementProcessLogUncheckedUpdateWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlacementProcessLogUncheckedUpdateManyWithoutJobInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
+    phase?: StringFieldUpdateOperationsInput | string
+    level?: StringFieldUpdateOperationsInput | string
+    message?: StringFieldUpdateOperationsInput | string
+    detail?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrgUnitCreateManyWorkforceScopeInput = {
@@ -260210,6 +267527,7 @@ export namespace Prisma {
 
   export type PlacementJobCreateManyOrganizationInput = {
     id?: string
+    batchId?: string | null
     satelliteKey: string
     fromTopology: $Enums.DeploymentTopology
     toTopology: $Enums.DeploymentTopology
@@ -260220,6 +267538,20 @@ export namespace Prisma {
     artifactJson?: NullableJsonNullValueInput | InputJsonValue
     applyLog?: string | null
     targetBaseUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlacementBatchCreateManyOrganizationInput = {
+    id?: string
+    satelliteKeys?: PlacementBatchCreatesatelliteKeysInput | string[]
+    fromTopology: $Enums.DeploymentTopology
+    toTopology: $Enums.DeploymentTopology
+    packaging?: $Enums.PlacementPackaging
+    targetHost?: string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.PlacementJobStatus
+    errorMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -261557,10 +268889,31 @@ export namespace Prisma {
     targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    batch?: PlacementBatchUpdateOneWithoutJobsNestedInput
+    processLogs?: PlacementProcessLogUpdateManyWithoutJobNestedInput
   }
 
   export type PlacementJobUncheckedUpdateWithoutOrganizationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
+    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
+    artifactJson?: NullableJsonNullValueInput | InputJsonValue
+    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
+    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processLogs?: PlacementProcessLogUncheckedUpdateManyWithoutJobNestedInput
+  }
+
+  export type PlacementJobUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    batchId?: NullableStringFieldUpdateOperationsInput | string | null
     satelliteKey?: StringFieldUpdateOperationsInput | string
     fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
@@ -261575,18 +268928,48 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type PlacementJobUncheckedUpdateManyWithoutOrganizationInput = {
+  export type PlacementBatchUpdateWithoutOrganizationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    satelliteKey?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
     fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
     toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    sliceMeta?: NullableJsonNullValueInput | InputJsonValue
-    artifactRef?: NullableStringFieldUpdateOperationsInput | string | null
-    artifactJson?: NullableJsonNullValueInput | InputJsonValue
-    applyLog?: NullableStringFieldUpdateOperationsInput | string | null
-    targetBaseUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobs?: PlacementJobUpdateManyWithoutBatchNestedInput
+    processLogs?: PlacementProcessLogUpdateManyWithoutBatchNestedInput
+  }
+
+  export type PlacementBatchUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobs?: PlacementJobUncheckedUpdateManyWithoutBatchNestedInput
+    processLogs?: PlacementProcessLogUncheckedUpdateManyWithoutBatchNestedInput
+  }
+
+  export type PlacementBatchUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKeys?: PlacementBatchUpdatesatelliteKeysInput | string[]
+    fromTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    toTopology?: EnumDeploymentTopologyFieldUpdateOperationsInput | $Enums.DeploymentTopology
+    packaging?: EnumPlacementPackagingFieldUpdateOperationsInput | $Enums.PlacementPackaging
+    targetHost?: NullableStringFieldUpdateOperationsInput | string | null
+    recipeJson?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumPlacementJobStatusFieldUpdateOperationsInput | $Enums.PlacementJobStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -262983,6 +270366,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -263026,6 +270410,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutParentOrgInput = {
@@ -263080,6 +270465,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -263121,6 +270507,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutParentOrgInput = {
@@ -263728,6 +271115,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -263771,6 +271159,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOwnerInput = {
@@ -263825,6 +271214,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -263866,6 +271256,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutOwnerInput = {
@@ -264744,6 +272135,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUpdateManyWithoutOrganizationNestedInput
@@ -264787,6 +272179,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutHoldingInput = {
@@ -264841,6 +272234,7 @@ export namespace Prisma {
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
     placementJobs?: PlacementJobUncheckedUpdateManyWithoutOrganizationNestedInput
+    placementBatches?: PlacementBatchUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
     commercialOutlets?: CommercialOutletUncheckedUpdateManyWithoutOrganizationNestedInput
     moduleGraces?: OrganizationModuleGraceUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -264882,6 +272276,7 @@ export namespace Prisma {
     agencyPropertyGrants?: AgencyPropertyGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     buyerOrgGrants?: BuyerOrgGrantUncheckedUpdateManyWithoutOrganizationNestedInput
     profile?: OrganizationProfileUncheckedUpdateOneWithoutOrganizationNestedInput
+    guestApp?: OrganizationGuestAppUncheckedUpdateOneWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutHoldingInput = {

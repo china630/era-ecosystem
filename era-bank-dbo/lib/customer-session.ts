@@ -93,6 +93,12 @@ export async function createPaymentSignRequest(input: {
   });
 }
 
+export function findPaymentSignRequestByEngineOrder(engineOrderId: string) {
+  return prisma.paymentSignRequest.findUnique({
+    where: { engineOrderId } as never,
+  });
+}
+
 export async function listPendingSignRequests(customerId: string) {
   return prisma.paymentSignRequest.findMany({
     where: {

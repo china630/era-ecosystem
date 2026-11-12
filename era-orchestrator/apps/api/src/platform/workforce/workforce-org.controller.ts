@@ -25,7 +25,6 @@ import {
 } from "./dto/workforce-org.dto";
 import { WorkforceOrgUnitsService } from "./workforce-org-units.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
-import { PrismaService } from "../../prisma/prisma.service";
 
 @ApiTags("platform-workforce-org")
 @ApiBearerAuth("bearer")
@@ -35,7 +34,6 @@ export class WorkforceOrgController {
   constructor(
     private readonly scope: WorkforceScopeService,
     private readonly orgUnits: WorkforceOrgUnitsService,
-    private readonly prisma: PrismaService,
   ) {}
 
   @Get("scope")
@@ -47,10 +45,8 @@ export class WorkforceOrgController {
 
   private async scopeWithOrg(organizationId: string) {
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);
-    const org = await this.prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { operatingMode: true, parentOrgId: true, name: true },
-    });
+    const org =
+      await this.orgUnits.findOrganizationOperatingContext(organizationId);
     return {
       ...link,
       operatingMode: org?.operatingMode ?? "STANDALONE",
@@ -113,10 +109,7 @@ export class WorkforceOrgController {
   @Get("commercial-links/:organizationId")
   @RequirePermissions(CP_PERMISSION.API_WORKFORCE_BOOTSTRAP)
   getCommercialLink(@Param("organizationId") orgId: string) {
-    return this.prisma.orgUnitCommercialLink.findUnique({
-      where: { organizationId: orgId },
-      include: { workforceScope: true, orgUnit: true },
-    });
+    return this.orgUnits.findCommercialLink(orgId);
   }
 
   @Put("commercial-links/:organizationId")
@@ -125,19 +118,6 @@ export class WorkforceOrgController {
     @Param("organizationId") orgId: string,
     @Body() dto: UpsertCommercialLinkDto,
   ) {
-    return this.prisma.orgUnitCommercialLink.upsert({
-      where: { organizationId: orgId },
-      create: {
-        organizationId: orgId,
-        workforceScopeId: dto.workforceScopeId,
-        orgUnitId: dto.orgUnitId ?? null,
-        linkMode: dto.linkMode ?? "SCOPE_ROOT",
-      },
-      update: {
-        workforceScopeId: dto.workforceScopeId,
-        orgUnitId: dto.orgUnitId ?? null,
-        ...(dto.linkMode ? { linkMode: dto.linkMode } : {}),
-      },
-    });
+    return this.orgUnits.upsertCommercialLink(orgId, dto);
   }
 }

@@ -158,4 +158,15 @@ export class OrganizationModuleService {
     }
     return n;
   }
+
+  async listModuleStatesForOrganization(organizationId: string) {
+    return this.prisma.organizationModule.findMany({
+      where: { organizationId },
+      select: {
+        moduleKey: true,
+        activatedAt: true,
+        pendingDeactivation: true,
+      },
+    });
+  }
 }

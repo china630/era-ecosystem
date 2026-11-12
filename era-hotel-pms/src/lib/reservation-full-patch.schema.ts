@@ -79,6 +79,15 @@ export const reservationFullPatchSchema = z.object({
   givenRoomTypeId: z.string().uuid().nullable().optional(),
   contractRef: z.string().nullable().optional(),
   notes: z.record(z.string(), z.string()).optional(),
+  transferDecisions: z
+    .array(
+      z.object({
+        orderId: z.string().uuid(),
+        action: z.enum(['SHIFT', 'KEEP', 'CANCEL', 'LEAVE']),
+        pickupAt: z.string().datetime().optional(),
+      }),
+    )
+    .optional(),
   paxGuests: z
     .array(
       z.object({

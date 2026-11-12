@@ -37,6 +37,33 @@ export class DboAccountsService {
     }
   }
 
+  listActiveAccountsForCustomer(customerId: string) {
+    return this.prisma.account.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        customerId,
+        status: "ACTIVE",
+      },
+    });
+  }
+
+  listActiveAccountIds(customerId: string) {
+    return this.prisma.account.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        customerId,
+        status: "ACTIVE",
+      },
+      select: { id: true },
+    });
+  }
+
+  listOpenBankingConsents(customerId: string) {
+    return this.prisma.openBankingConsent.findMany({
+      where: { bankOrgId: this.bankOrg.bankOrgId, customerId },
+    });
+  }
+
   listAccounts(auth: CustomerJwtPayload) {
     return this.prisma.account.findMany({
       where: {

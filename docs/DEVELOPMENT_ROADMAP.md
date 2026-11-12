@@ -224,7 +224,7 @@ Ranked open architecture debts that must not be “forgotten in chat”. **Not**
 
 | Pri | Debt | Status | ADR / plan |
 |-----|------|--------|------------|
-| **P0** | Industry satellite API stack: Next `app/api` → Nest API + Next UI (hotel first; ~370 routes). Dual Nest/Next is accepted until Implemented. **Do not** piggyback on mutation-audit waves. | Debt recorded 2026-10-28 — **not started** | [industry-satellite-api-nest-migration.md](./adr/industry-satellite-api-nest-migration.md) |
+| **P0** | Industry satellite API stack: Next `app/api` → Nest API + Next UI. | Code cutover 2026-11-12. Not Pilot, not Gate, not sell. | [industry-satellite-api-nest-migration.md](./adr/industry-satellite-api-nest-migration.md) |
 | — | Mutation audit depth (fail-closed Next belt, Layer B, Finance kit-align, journal UI) | Active follow-up after UI/API parity | [mutation-audit-depth.plan.md](../.cursor/plans/mutation-audit-depth.plan.md) · [era-mutation-audit-standard.md](./adr/era-mutation-audit-standard.md) |
 
 ## Standards

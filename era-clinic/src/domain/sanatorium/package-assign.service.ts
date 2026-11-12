@@ -3179,10 +3179,12 @@ async function assignPackageStudies(
           });
         } catch (err) {
           const code = (err as { code?: string }).code;
-          if (code === LAB_ALREADY_OPEN) {
+          if (code === LAB_ALREADY_OPEN || code === "LAB_UNPAID_EXISTS") {
             throw new PackageAssignError(
-              "An open lab order already exists for this study",
-              "LAB_ALREADY_OPEN",
+              code === "LAB_UNPAID_EXISTS"
+                ? "This lab already has an unpaid cheque"
+                : "An open lab order already exists for this study",
+              code === "LAB_UNPAID_EXISTS" ? "LAB_UNPAID_EXISTS" : "LAB_ALREADY_OPEN",
               409,
             );
           }
@@ -3227,4 +3229,15 @@ async function assignPackageStudies(
     });
   }
   return placed;
+}
+
+/** OPEN courses that already have a program — bulk package auto-apply retry. */
+export async function listOpenEpisodesForPackageApplyRetry() {
+  return prisma.clinicalEpisode.findMany({
+    where: {
+      status: "OPEN",
+      programInstance: { isNot: null },
+    },
+    select: { id: true, patientRef: { select: { fullName: true } } },
+  });
 }

@@ -10,6 +10,10 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-10 access denied):** A missing screen grant opens `/access-denied`. Scaffold stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
+**Closeout (2026-11-10 entity grid):** `/admin/access` is an entity × View / Change / Operate / Admin grid. Catalog v2 copies a read key once from the write key; GET uses the read key. RBAC row stays API / SCREEN. Scaffold stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
 **Closeout (2026-08-17 Green Scaffold BE Wave 1):** Scaffold BE ✅ (TENANT excl.). UI / Demo / Pilot / Sell unchanged — do **not** claim GA; edition stays `mvp`.
 
 ---

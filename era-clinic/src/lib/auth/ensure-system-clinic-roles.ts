@@ -8,7 +8,9 @@ import {
 } from "@/lib/clinic-roles";
 import {
   CLINIC_PERMISSION,
+  CLINIC_PERMISSION_CATALOG_VERSION,
   type ClinicPermission,
+  expandClinicCatalog,
   parseRolePermissions,
   permissionsJsonForRole,
   permissionsJsonNeedsTemplate,
@@ -31,6 +33,27 @@ export async function ensureSystemClinicRoles(
 
   for (const code of SYSTEM_CLINIC_ROLES) {
     await upsertSystemRole(db, orgId, code);
+  }
+
+  const findMany = (db.role as { findMany?: (args: object) => Promise<Array<{
+    id: string;
+    code: string;
+    permissionsJson: string;
+    permissionCatalogVersion?: number | null;
+  }>> }).findMany;
+  if (!findMany) return;
+  const rows = await findMany({ where: { organizationId: orgId } });
+  for (const row of rows) {
+    if ((SYSTEM_CLINIC_ROLES as readonly string[]).includes(row.code)) continue;
+    if ((row.permissionCatalogVersion ?? 0) >= CLINIC_PERMISSION_CATALOG_VERSION) continue;
+    const current = parseRolePermissions(row.permissionsJson);
+    const data: { permissionCatalogVersion: number; permissionsJson?: string } = {
+      permissionCatalogVersion: CLINIC_PERMISSION_CATALOG_VERSION,
+    };
+    if (current.length > 0) {
+      data.permissionsJson = serializeRolePermissions(expandClinicCatalog(current));
+    }
+    await db.role.update({ where: { id: row.id }, data });
   }
 }
 
@@ -56,6 +79,7 @@ async function upsertSystemRole(
         isSystem: true,
         staffKind,
         permissionsJson: templateJson,
+        permissionCatalogVersion: CLINIC_PERMISSION_CATALOG_VERSION,
       },
     });
     return;
@@ -65,42 +89,49 @@ async function upsertSystemRole(
     isSystem: boolean;
     staffKind?: string;
     permissionsJson?: string;
+    permissionCatalogVersion?: number;
     name?: string;
   } = { isSystem: true };
 
   if (existing.staffKind == null || existing.staffKind === "") {
     patch.staffKind = staffKind;
   }
+  const catalogVersion =
+    "permissionCatalogVersion" in existing
+      ? Number((existing as { permissionCatalogVersion?: number }).permissionCatalogVersion ?? 0)
+      : 0;
   if (permissionsJsonNeedsTemplate(existing.permissionsJson)) {
     patch.permissionsJson = templateJson;
-  } else if (code === CLINIC_ROLE.CLINIC_ADMIN) {
+    patch.permissionCatalogVersion = CLINIC_PERMISSION_CATALOG_VERSION;
+  } else if (catalogVersion < CLINIC_PERMISSION_CATALOG_VERSION) {
+    patch.permissionCatalogVersion = CLINIC_PERMISSION_CATALOG_VERSION;
     const current = parseRolePermissions(existing.permissionsJson);
-    if (current.length > 0 && !current.includes(CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES)) {
-      patch.permissionsJson = serializeRolePermissions([
-        ...current,
-        CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
-      ]);
-    }
-  } else {
-    const template = parseRolePermissions(templateJson);
-    const current = parseRolePermissions(existing.permissionsJson);
-    const grant: ClinicPermission[] = [];
-    if (
-      template.includes(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE) &&
-      current.includes(CLINIC_PERMISSION.API_LAB_ORDERS) &&
-      !current.includes(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE)
-    ) {
-      grant.push(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE);
-    }
-    if (
-      template.includes(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ) &&
-      current.includes(CLINIC_PERMISSION.API_LAB_ORDERS) &&
-      !current.includes(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ)
-    ) {
-      grant.push(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ);
-    }
-    if (grant.length > 0) {
-      patch.permissionsJson = serializeRolePermissions([...current, ...grant]);
+    if (current.length > 0) {
+      const template = parseRolePermissions(templateJson);
+      const grant: ClinicPermission[] = [...current];
+      if (
+        code !== CLINIC_ROLE.CLINIC_ADMIN &&
+        template.includes(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE) &&
+        current.includes(CLINIC_PERMISSION.API_LAB_ORDERS) &&
+        !current.includes(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE)
+      ) {
+        grant.push(CLINIC_PERMISSION.API_LAB_ORDERS_WRITE);
+      }
+      if (
+        code !== CLINIC_ROLE.CLINIC_ADMIN &&
+        template.includes(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ) &&
+        current.includes(CLINIC_PERMISSION.API_LAB_ORDERS) &&
+        !current.includes(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ)
+      ) {
+        grant.push(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ);
+      }
+      if (
+        code === CLINIC_ROLE.CLINIC_ADMIN &&
+        !current.includes(CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES)
+      ) {
+        grant.push(CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES);
+      }
+      patch.permissionsJson = serializeRolePermissions(expandClinicCatalog(grant));
     }
   }
   // Keep display name if already set; only fill blank.

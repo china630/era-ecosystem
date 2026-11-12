@@ -12,7 +12,7 @@ export const roomViewsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'room-views',
   label: 'Room Views',
   order: 5,
-  permission: PERMISSIONS.MASTER_DATA_MANAGE,
+  permission: PERMISSIONS.ROOMS_ADMIN,
   templateHint: '05-Room-Views.xlsx — EW Room Views',
   headerAliases: {
     View: 'name',

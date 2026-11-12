@@ -57,7 +57,7 @@ export async function signSatelliteSession(
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
-    .setExpirationTime("12h")
+    .setExpirationTime("8h")
     .sign(getSecret());
 }
 

@@ -21,7 +21,7 @@
 | AC-CON-MAT | Material requisitions + plan vs actual | ✅ | [ ] | `__tests__/con-mat-negative.spec.ts` | Negative: module gate; missing project |
 | AC-CON-PLAT | Platform add-ons on progress act / requisition | ✅ | [ ] | `__tests__/con-plat-negative.spec.ts` | Negative: module gate; cron secret unauthorized |
 | AC-CON-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit tenant extension | **Excluded from Scaffold BE rollup.** Schema + filter landed; not Scaffold ✅ (no live SHARED pool / field two-org UAT) |
-| AC-CON-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `construction-rbac` + `construction-rbac-doors` + page/API inventory + role-name grep; ADR construction-domain-permissions-and-rbac; `/admin/access` clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
+| AC-CON-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `construction-rbac` + `construction-rbac-doors` + page/API inventory + role-name grep; ADR construction-domain-permissions-and-rbac; `/admin/access` entity grid, catalog v2, clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs except AC-CON-TENANT) → **✅**.  
 AC-CON-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.  

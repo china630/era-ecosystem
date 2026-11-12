@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -20,15 +20,7 @@ import { useAuth } from "@/lib/auth-context";
 import { orchFetch } from "@/lib/orch-api";
 
 type Topology = "SHARED" | "DEDICATED" | "ONPREM";
-type AdvanceAction =
-  | "freeze"
-  | "exportSlice"
-  | "markProvisioned"
-  | "bindAndConfig"
-  | "cutoverEndpoint"
-  | "smoke"
-  | "complete"
-  | "fail";
+type Packaging = "PER_SATELLITE" | "SINGLE_STACK";
 
 type PlacementJob = {
   id: string;
@@ -37,35 +29,39 @@ type PlacementJob = {
   toTopology: Topology;
   status: string;
   errorMessage: string | null;
+  applyLog?: string | null;
   targetBaseUrl: string | null;
   createdAt: string;
 };
 
-const STATUS_TO_NEXT: Record<string, AdvanceAction | null> = {
-  PENDING: "freeze",
-  FREEZE: "exportSlice",
-  EXPORT: "markProvisioned",
-  PROVISION: "bindAndConfig",
-  BIND: "cutoverEndpoint",
-  CUTOVER: "smoke",
-  SMOKE: "complete",
-  DONE: null,
-  REJECTED: null,
-  FAILED: null,
+type ProcessLog = {
+  id: string;
+  phase: string;
+  level: string;
+  message: string;
+  createdAt: string;
 };
 
-function nextActionForStatus(status: string): AdvanceAction | null {
-  const key = status.toUpperCase();
-  if (Object.prototype.hasOwnProperty.call(STATUS_TO_NEXT, key)) {
-    return STATUS_TO_NEXT[key] ?? null;
-  }
-  return null;
-}
+type PlacementBatch = {
+  id: string;
+  satelliteKeys: string[];
+  fromTopology: Topology;
+  toTopology: Topology;
+  packaging: Packaging;
+  targetHost: string | null;
+  status: string;
+  errorMessage: string | null;
+  createdAt: string;
+  jobs?: PlacementJob[];
+  processLogs?: ProcessLog[];
+};
+
+const TERMINAL = new Set(["DONE", "FAILED", "REJECTED", "ROLLBACK"]);
 
 const SATELLITE_OPTIONS = [
   "industry_hotel_pms",
-  "industry_fnb_pos",
   "industry_clinic",
+  "industry_fnb_pos",
   "industry_retail",
   "industry_logistics",
   "industry_construction",
@@ -82,29 +78,53 @@ const TOPOLOGY_OPTIONS = [
   { value: "ONPREM", label: "ONPREM" },
 ];
 
+const PACKAGING_OPTIONS = [
+  { value: "PER_SATELLITE", label: "PER_SATELLITE" },
+  { value: "SINGLE_STACK", label: "SINGLE_STACK" },
+];
+
+function statusChipClass(status: string): string {
+  if (status === "DONE") return "bg-emerald-100 text-emerald-800";
+  if (status === "FAILED" || status === "REJECTED")
+    return "bg-red-100 text-red-800";
+  if (status === "ROLLBACK") return "bg-amber-100 text-amber-900";
+  if (status === "FREEZE" || status === "EXPORT" || status === "IMPORT")
+    return "bg-sky-100 text-sky-900";
+  return "bg-[#ECF0F1] text-[#2C3E50]";
+}
+
 export default function SuperAdminPlacementPage() {
   const params = useParams();
   const orgId = String(params.orgId ?? "");
   const { token } = useAuth();
   const t = useTranslations("superAdmin.orgPlacement");
-  const [jobs, setJobs] = useState<PlacementJob[]>([]);
+  const [batches, setBatches] = useState<PlacementBatch[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
-  const [satelliteKey, setSatelliteKey] = useState("industry_clinic");
+  const [satelliteKeys, setSatelliteKeys] = useState<string[]>([
+    "industry_hotel_pms",
+  ]);
   const [fromTopology, setFromTopology] = useState<Topology>("SHARED");
   const [toTopology, setToTopology] = useState<Topology>("DEDICATED");
+  const [packaging, setPackaging] = useState<Packaging>("PER_SATELLITE");
+  const [targetHost, setTargetHost] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [busyJobId, setBusyJobId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const res = await orchFetch(`/v1/admin/orgs/${orgId}/placement-jobs`, { token });
+      const res = await orchFetch(`/v1/admin/orgs/${orgId}/placement-batches`, {
+        token,
+      });
       if (res.ok) {
-        const data = (await res.json()) as PlacementJob[] | { items?: PlacementJob[] };
-        setJobs(Array.isArray(data) ? data : (data.items ?? []));
+        const data = (await res.json()) as
+          | PlacementBatch[]
+          | { items?: PlacementBatch[] };
+        setBatches(Array.isArray(data) ? data : (data.items ?? []));
       } else {
         setError(t("listFailed", { status: res.status }));
       }
@@ -113,74 +133,130 @@ export default function SuperAdminPlacementPage() {
     }
   }, [token, orgId, t]);
 
+  const activeBatch = useMemo(
+    () => batches.find((b) => !TERMINAL.has(b.status)),
+    [batches],
+  );
+
   useEffect(() => {
     void reload();
   }, [reload]);
 
-  async function createJob() {
+  useEffect(() => {
+    if (!activeBatch || !token) return;
+    const id = window.setInterval(() => {
+      void reload();
+    }, 4000);
+    return () => window.clearInterval(id);
+  }, [activeBatch, token, reload]);
+
+  async function startBatch() {
     if (!token) return;
-    setError("");
-    setMessage("");
-    const res = await orchFetch(`/v1/admin/orgs/${orgId}/placement-jobs`, {
-      token,
-      method: "POST",
-      body: JSON.stringify({ satelliteKey, fromTopology, toTopology }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(
-        typeof body.message === "string"
-          ? body.message
-          : t("createFailed", { status: res.status }),
-      );
+    if (satelliteKeys.length === 0) {
+      setError(t("needSatellites"));
       return;
     }
-    setMessage(t("created", { id: body.id ?? "", status: body.status ?? "" }));
-    setCreateOpen(false);
-    void reload();
-  }
-
-  async function advance(jobId: string, action: AdvanceAction) {
-    if (!token) return;
-    setBusyId(jobId);
+    if (!targetHost.trim()) {
+      setError(t("needTargetHost"));
+      return;
+    }
     setError("");
     setMessage("");
+    setStarting(true);
     try {
-      const res = await orchFetch(`/v1/admin/placement-jobs/${jobId}/advance`, {
+      const res = await orchFetch(`/v1/admin/orgs/${orgId}/placement-batches`, {
         token,
         method: "POST",
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({
+          satelliteKeys,
+          fromTopology,
+          toTopology,
+          packaging,
+          targetHost: targetHost.trim(),
+        }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(
           typeof body.message === "string"
             ? body.message
-            : t("advanceFailed", { status: res.status }),
+            : t("createFailed", { status: res.status }),
         );
         return;
       }
-      setMessage(t("advanced", { id: jobId, status: body.status ?? action }));
+      setMessage(
+        t("started", {
+          id: body.id ?? "",
+          status: body.status ?? "",
+          count: Array.isArray(body.jobs) ? body.jobs.length : satelliteKeys.length,
+        }),
+      );
+      setCreateOpen(false);
       void reload();
     } finally {
-      setBusyId(null);
+      setStarting(false);
     }
   }
 
-  function actionLabel(action: AdvanceAction): string {
-    return t(`action_${action}` as "action_freeze");
+  async function rollbackJob(jobId: string) {
+    if (!token) return;
+    setBusyJobId(jobId);
+    setError("");
+    try {
+      const res = await orchFetch(`/v1/admin/placement-jobs/${jobId}/advance`, {
+        token,
+        method: "POST",
+        body: JSON.stringify({
+          action: "rollback",
+          errorMessage: "Operator rollback from placement UI",
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          typeof body.message === "string"
+            ? body.message
+            : t("rollbackFailed", { status: res.status }),
+        );
+        return;
+      }
+      setMessage(t("rollbackOk", { id: jobId }));
+      void reload();
+    } finally {
+      setBusyJobId(null);
+    }
   }
 
   return (
     <div className="space-y-4">
+      {activeBatch ? (
+        <div
+          className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+          role="status"
+        >
+          {t("migrateBanner", {
+            status: activeBatch.status,
+            id: activeBatch.id.slice(0, 8),
+          })}
+        </div>
+      ) : null}
+
       <p className="text-sm text-[#7F8C8D]">{t("hint")}</p>
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           className={PRIMARY_BUTTON_CLASS}
           onClick={() => setCreateOpen(true)}
+          disabled={Boolean(activeBatch)}
         >
-          {t("createHop")}
+          {t("startBatch")}
+        </button>
+        <button
+          type="button"
+          className={GHOST_BUTTON_CLASS}
+          onClick={() => void reload()}
+        >
+          {t("refresh")}
         </button>
       </div>
       {loading ? <p className="text-sm text-[#7F8C8D]">{t("loading")}</p> : null}
@@ -192,67 +268,102 @@ export default function SuperAdminPlacementPage() {
           <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colSatellite")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colBatch")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colHop")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPackaging")}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colActions")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colJobs")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colProcessLog")}</th>
               </tr>
             </thead>
             <tbody>
-              {jobs.map((job) => {
-                const next = nextActionForStatus(job.status);
-                const terminal =
-                  job.status === "DONE" ||
-                  job.status === "REJECTED" ||
-                  job.status === "FAILED" ||
-                  job.status === "COMPLETE";
-                return (
-                  <tr key={job.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <div className="font-medium text-[#34495E]">{job.satelliteKey}</div>
-                      <div className="font-mono text-[11px] text-[#95A5A6]">{job.id}</div>
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {job.fromTopology} → {job.toTopology}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <span className="rounded-full bg-[#ECF0F1] px-2 py-0.5 text-xs font-medium">
-                        {job.status}
-                      </span>
-                      {job.errorMessage ? (
-                        <p className="mt-1 text-xs text-[#E74C3C]">{job.errorMessage}</p>
-                      ) : null}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      <div className="flex flex-wrap gap-2">
-                        {next && !terminal ? (
-                          <button
-                            type="button"
-                            className={PRIMARY_BUTTON_CLASS}
-                            disabled={busyId === job.id}
-                            onClick={() => void advance(job.id, next)}
+              {batches.map((batch) => (
+                <tr key={batch.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <div className="font-mono text-[11px] text-[#95A5A6]">
+                      {batch.id}
+                    </div>
+                    <div className="text-xs text-[#7F8C8D]">
+                      {(batch.satelliteKeys ?? []).join(", ")}
+                    </div>
+                    {batch.targetHost ? (
+                      <div className="text-xs text-[#7F8C8D]">{batch.targetHost}</div>
+                    ) : null}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {batch.fromTopology} → {batch.toTopology}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>{batch.packaging}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusChipClass(batch.status)}`}
+                    >
+                      {batch.status}
+                    </span>
+                    {batch.errorMessage ? (
+                      <p className="mt-1 text-xs text-[#E74C3C]">{batch.errorMessage}</p>
+                    ) : null}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <ul className="space-y-2 text-xs">
+                      {(batch.jobs ?? []).map((job) => (
+                        <li key={job.id}>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium">{job.satelliteKey}</span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusChipClass(job.status)}`}
+                            >
+                              {job.status}
+                            </span>
+                            {!TERMINAL.has(job.status) ? (
+                              <button
+                                type="button"
+                                className={GHOST_BUTTON_CLASS}
+                                disabled={busyJobId === job.id}
+                                onClick={() => void rollbackJob(job.id)}
+                              >
+                                {t("rollback")}
+                              </button>
+                            ) : null}
+                          </div>
+                          {job.applyLog ? (
+                            <div className="font-mono text-[10px] text-[#95A5A6] whitespace-pre-wrap">
+                              {job.applyLog.split("\n").slice(0, 4).join("\n")}
+                            </div>
+                          ) : null}
+                          {job.errorMessage ? (
+                            <div className="text-[#E74C3C]">{job.errorMessage}</div>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <ul className="max-h-40 space-y-1 overflow-y-auto font-mono text-[10px] text-[#7F8C8D]">
+                      {(batch.processLogs ?? []).map((log) => (
+                        <li key={log.id}>
+                          <span className="text-[#34495E]">{log.phase}</span>{" "}
+                          <span
+                            className={
+                              log.level === "ERROR"
+                                ? "text-[#E74C3C]"
+                                : log.level === "WARN"
+                                  ? "text-[#E67E22]"
+                                  : ""
+                            }
                           >
-                            {actionLabel(next)}
-                          </button>
-                        ) : null}
-                        {!terminal ? (
-                          <button
-                            type="button"
-                            className={GHOST_BUTTON_CLASS}
-                            disabled={busyId === job.id}
-                            onClick={() => void advance(job.id, "fail")}
-                          >
-                            {t("action_fail")}
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {!loading && jobs.length === 0 ? (
+                            [{log.level}]
+                          </span>{" "}
+                          {log.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                </tr>
+              ))}
+              {!loading && batches.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS} colSpan={4}>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={6}>
                     {t("empty")}
                   </td>
                 </tr>
@@ -265,14 +376,16 @@ export default function SuperAdminPlacementPage() {
       <ModalShell
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        title={t("createHop")}
+        title={t("startBatch")}
       >
         <div className="space-y-3">
           <CatalogField
-            kind="CLOSED_MEDIUM"
-            label={t("satellite")}
-            value={satelliteKey}
-            onChange={(next) => setSatelliteKey(String(next))}
+            kind="MULTI"
+            label={t("satellites")}
+            value={satelliteKeys}
+            onChange={(next) =>
+              setSatelliteKeys(Array.isArray(next) ? next.map(String) : [String(next)])
+            }
             options={SATELLITE_OPTIONS}
           />
           <CatalogField
@@ -289,14 +402,32 @@ export default function SuperAdminPlacementPage() {
             onChange={(next) => setToTopology(next as Topology)}
             options={TOPOLOGY_OPTIONS}
           />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t("packaging")}
+            value={packaging}
+            onChange={(next) => setPackaging(next as Packaging)}
+            options={PACKAGING_OPTIONS}
+          />
+          <CatalogField
+            kind="FREE_TEXT"
+            label={t("targetHost")}
+            value={targetHost}
+            onChange={(next) => setTargetHost(String(next))}
+          />
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
-              disabled={!token}
-              onClick={() => void createJob()}
+              disabled={
+                !token ||
+                starting ||
+                satelliteKeys.length === 0 ||
+                !targetHost.trim()
+              }
+              onClick={() => void startBatch()}
             >
-              {t("createJob")}
+              {t("start")}
             </button>
             <button
               type="button"

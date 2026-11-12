@@ -845,5 +845,54 @@ export class SubscriptionAccessService {
     });
     return { activeModules };
   }
+
+  async findOrganizationForSubscriptionMe(organizationId: string) {
+    return this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        id: true,
+        billingStatus: true,
+        whatsappAlertsUsed: true,
+        publicOrgNumber: true,
+        operatingMode: true,
+        parentOrgId: true,
+        fiscalRouting: true,
+        revenueRouting: true,
+        settings: true,
+      },
+    });
+  }
+
+  async findParentOrganizationForSettlement(parentOrgId: string) {
+    return this.prisma.organization.findUnique({
+      where: { id: parentOrgId },
+      select: {
+        id: true,
+        operatingMode: true,
+        parentOrgId: true,
+        fiscalRouting: true,
+        settings: true,
+      },
+    });
+  }
+
+  async countDepartmentChildrenWithParentFiscal(organizationId: string) {
+    return this.prisma.organization.count({
+      where: {
+        parentOrgId: organizationId,
+        fiscalRouting: "PARENT",
+      },
+    });
+  }
+
+  async findFreePricingModulesBySatelliteKeys(connectedSatelliteKeys: string[]) {
+    return this.prisma.pricingModule.findMany({
+      where: {
+        satelliteKey: { in: connectedSatelliteKeys },
+        pricePerMonth: { lte: 0 },
+      },
+      select: { key: true },
+    });
+  }
 }
 

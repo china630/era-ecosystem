@@ -38,3 +38,25 @@ export async function listAuditLogs(entityType: string, entityId: string, limit 
     take: limit,
   });
 }
+
+export function queryAdminAuditLogs(filters: {
+  entityType: string;
+  entityId?: string;
+  action?: string;
+  userId?: string;
+  createdAt?: { gte?: Date; lte?: Date };
+  limit: number;
+}) {
+  const { entityType, entityId, action, userId, createdAt, limit } = filters;
+  return prisma.satelliteAuditLog.findMany({
+    where: {
+      entityType,
+      ...(entityId ? { entityId } : {}),
+      ...(action ? { action } : {}),
+      ...(userId ? { userId } : {}),
+      ...(createdAt?.gte || createdAt?.lte ? { createdAt } : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+}

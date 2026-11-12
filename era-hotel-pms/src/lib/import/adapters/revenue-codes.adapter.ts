@@ -14,7 +14,7 @@ export const revenueCodesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'revenue-codes',
   label: 'Revenue Code Definitions',
   order: 3,
-  permission: PERMISSIONS.MASTER_DATA_MANAGE,
+  permission: PERMISSIONS.REVENUE_ADMIN,
   templateHint: '03-Revenue-Codes.xlsx — EW Revenue Code Definitions',
   headerAliases: {
     Code: 'code',

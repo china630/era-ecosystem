@@ -186,3 +186,39 @@ export function nextWorkingYmd(days: ClinicDay[], fromYmd: string): string | nul
   }
   return null;
 }
+
+export async function listClinicDayOverrideRows() {
+  return prisma.clinicDayOverride.findMany({ orderBy: { dayYmd: "asc" } });
+}
+
+export async function upsertClinicDayOverride(data: {
+  organizationId: string;
+  dayYmd: string;
+  closed: boolean;
+  dayKind: "WORKING" | "SHORT" | "CLOSED";
+  startHour: number | null;
+  endHour: number | null;
+  note: string | null;
+}) {
+  return prisma.clinicDayOverride.upsert({
+    where: {
+      organizationId_dayYmd: { organizationId: data.organizationId, dayYmd: data.dayYmd },
+    },
+    create: {
+      organizationId: data.organizationId,
+      dayYmd: data.dayYmd,
+      closed: data.closed,
+      dayKind: data.dayKind,
+      startHour: data.startHour,
+      endHour: data.endHour,
+      note: data.note,
+    },
+    update: {
+      closed: data.closed,
+      dayKind: data.dayKind,
+      startHour: data.startHour,
+      endHour: data.endHour,
+      note: data.note,
+    },
+  });
+}

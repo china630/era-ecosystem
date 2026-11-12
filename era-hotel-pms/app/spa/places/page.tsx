@@ -13,7 +13,7 @@ export default function SpaPlacesPage() {
     <SimpleCrudPage
       title={t('title')}
       apiPath="/api/spa/places"
-      canWrite={can(PERMISSIONS.MASTER_DATA_MANAGE)}
+      canWrite={can(PERMISSIONS.SPA_PLACES_WRITE)}
       addLabel={tc('add')}
       addFields={[
         { name: 'code', label: tc('code'), preset: 'code', required: true },

@@ -1,6 +1,13 @@
 import { bakuDayBounds } from "@era/satellite-kit/time";
 import { prisma } from "@/lib/prisma";
 
+export async function findUserIdByLoginAndOrg(login: string, organizationId: string) {
+  return prisma.user.findFirst({
+    where: { login, organizationId },
+    select: { id: true },
+  });
+}
+
 function clientIp(request: Request): string | null {
   const fwd = request.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0]?.trim() || null;

@@ -149,6 +149,39 @@ export class VatDepositService {
     return this.posting.resolveAccountCode(organizationId, "MAIN_BANK", tx);
   }
 
+  routeIncomingVatPortionInTransaction(
+    organizationId: string,
+    params: {
+      paymentAmount: Decimal | number | string;
+      vatPortion: Decimal | number | string;
+      bankAccountId?: string | null;
+      counterpartyId?: string | null;
+      debitAccountCode?: string | null;
+      note?: string | null;
+      paymentDate?: Date;
+      reference?: string | null;
+    },
+  ) {
+    return this.prisma.$transaction((tx) =>
+      this.routeIncomingVatPortion(tx, organizationId, params),
+    );
+  }
+
+  payVatFromDepositInTransaction(
+    organizationId: string,
+    params: {
+      amount: Decimal | number | string;
+      bankAccountId?: string | null;
+      note?: string | null;
+      paymentDate?: Date;
+      reference?: string | null;
+    },
+  ) {
+    return this.prisma.$transaction((tx) =>
+      this.payVatFromDeposit(tx, organizationId, params),
+    );
+  }
+
   async routeIncomingVatPortion(
     tx: Prisma.TransactionClient,
     organizationId: string,

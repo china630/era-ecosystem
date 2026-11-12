@@ -61,6 +61,21 @@ export {
   ORG_SLICE_NOTE_HOTEL_V1,
 } from "../../../packages/satellite-kit/dist/placement/slice-export.js";
 
+/** Full-org OrgFullSliceV2 (product path). */
+export {
+  ORG_FULL_SLICE_FORMAT_VERSION,
+  ORG_FULL_SLICE_NOTE,
+  buildDelegatesFromPrismaClient,
+  checksumFullSlicePayload,
+  exportFullOrgSlice,
+  exportFullOrgSliceLabSummary,
+  fullOrgSliceSummary,
+  importFullOrgSlice,
+  listTenantModelNames,
+  orderTenantModelsByFk,
+  prismaClientKeyForModel,
+} from "../../../packages/satellite-kit/dist/placement/full-org-slice.js";
+
 /** Barrel mock cannot load the kit phone module (Jest compiles that CJS to an empty export). */
 export function normalizePersonPhone(input: { raw: string; nationalityIso?: string | null }) {
   const raw = String(input.raw ?? "").trim();
@@ -90,7 +105,6 @@ export {
   HTTP_MUTATION_ENTITY_TYPE,
   isMutationAuditExemptPath,
   isHttpMutationMethod,
-  scheduleHttpMutationAuditFromHeaders,
   withMutationAudit,
 } from "../../../packages/satellite-kit/dist/audit/mutation-audit-belt.js";
 

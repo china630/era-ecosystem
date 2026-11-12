@@ -10,6 +10,12 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-10 access denied):** A missing screen grant opens `/access-denied`. A PIN session still returns to the floor. AC-FNB-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
+**Closeout (2026-11-10 settings split):** Catalog v7. `admin:master_data` is dropped. Audit, links, and limits are their own screens. Buffet cost and integration writes use the buffet and integration keys. AC-FNB-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
+**Closeout (2026-11-10 entity grid):** `/admin/access` is an entity × View / Change / Operate / Admin grid. Turning kitchen display off hides only the KDS screen and bump, not menu admin. FNB-RBAC-01 stays SCREEN. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
 **Closeout (2026-11-05 staff cədvəl):** FNB-CEDVEL-01 SCREEN/API (not SHOW). AC-FNB-CEDVEL 🟡 out of BE rollup. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index S-CEDVEL [~]; `fnb.yaml` untouched. Second-pass: cedvel API `denyUnlessPermission` + binding `orgUnitOptions` — no Gate/Demo/Pilot/Sell flip.
 
 **Closeout (2026-11-09 hall till):** FNB-HALL-01 SCREEN/API (not SHOW). No Scaffold ✅ (no PRD AC). Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index S-HALL [~]; `fnb.yaml` untouched.

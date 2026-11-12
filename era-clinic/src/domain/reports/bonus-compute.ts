@@ -236,3 +236,18 @@ export async function computeBonusMonth(from: string, to: string): Promise<Bonus
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
+
+export async function loadBonusReportPractitioners(schedule: BonusSchedule) {
+  return prisma.practitioner.findMany({
+    where: {
+      OR: [
+        { active: true, cpEmploymentId: { not: null } },
+        { id: { in: schedule.memberIds } },
+        ...(schedule.labPractitionerId ? [{ id: schedule.labPractitionerId }] : []),
+        ...(schedule.usPractitionerId ? [{ id: schedule.usPractitionerId }] : []),
+      ],
+    },
+    select: { id: true, fullName: true, staffKind: true },
+    orderBy: { fullName: "asc" },
+  });
+}

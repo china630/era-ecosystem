@@ -20,7 +20,7 @@ import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { formatLaundryPieces, laundryTicketAmount, type LaundryLineView } from '@/lib/laundry-pieces';
-import { laundryItemDisplayName, pickLaundryUnitPrices } from '@/lib/services/laundry-catalog';
+import { laundryItemDisplayName, pickLaundryUnitPrices } from '@/lib/laundry-catalog-view';
 
 type Item = {
   id: string;

@@ -26,7 +26,7 @@ function fileToPathname(file: string): string {
     .replace(/\/\[[^\]]+\]/g, "/x");
 }
 
-const PUBLIC = new Set(["/login", "/sso/callback", "/help"]);
+const PUBLIC = new Set(["/login", "/sso/callback", "/help", "/access-denied"]);
 
 describe("bank page route inventory", () => {
   it("every staff page maps via routePermissions (fail-closed)", () => {

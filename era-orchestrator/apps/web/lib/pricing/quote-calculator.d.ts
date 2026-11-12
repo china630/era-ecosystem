@@ -1,0 +1,94 @@
+export declare const OCR_INCLUDED_PAGES = 50;
+export declare const STORAGE_INCLUDED_GB = 20;
+export declare const ERP_LOGINS_INCLUDED = 1;
+export declare const LEGAL_ENTITIES_INCLUDED = 1;
+export declare const LEGAL_ENTITY_MONTHLY_AZN = 19;
+export declare const SMS_PLATFORM_PER_MESSAGE_AZN = 0.01;
+export declare const ACQUIRING_RATE = 0.015;
+export type QuoteModule = {
+    key: string;
+    name: string;
+    pricePerMonth: number;
+};
+export type QuoteBundle = {
+    marketingId: string;
+    name: string;
+    discountPercent: number;
+    moduleKeys: string[];
+};
+export type QuoteCapacityDriver = {
+    satelliteKey: string;
+    includedInGate: number;
+    unitAzn: number;
+    unit: string;
+};
+export type QuoteCatalog = {
+    foundationMonthlyAzn: number;
+    yearlyDiscountPercent: number;
+    modules: QuoteModule[];
+    bundles: QuoteBundle[];
+    capacityDrivers: QuoteCapacityDriver[];
+    meters: {
+        pricePerUserMonthAzn: number;
+        pricePerGbMonthAzn: number;
+        pricePerWhatsappAlertAzn: number;
+        pricePerOcrPageAzn: number;
+        pricePerTradeCreditBuyerAzn: number;
+        pricePerTradeCreditEnrichAzn: number;
+        documentPackSize: number;
+        pricePerDocumentPackAzn: number;
+    };
+};
+export type CalcState = {
+    foundation: boolean;
+    kafeWaiver: boolean;
+    bundleIds: string[];
+    moduleKeys: string[];
+    capacity: Record<string, number>;
+    clinicRooms: number;
+    clinicBeds: number;
+    workforceHeadcount: number;
+    erpLogins: number;
+    legalEntities: number;
+    documentsPerMonth: number;
+    ocrPages: number;
+    storageGb: number;
+    whatsappMessages: number;
+    smsMessages: number;
+    acquiringTurnoverAzn: number;
+    tradeCreditBuyers: number;
+    tradeCreditEnrich: number;
+    yearly: boolean;
+};
+export type QuoteLineKind = "foundation" | "bundle" | "module" | "capacity" | "clinicRooms" | "clinicBeds" | "workforce" | "erpLogins" | "legal" | "documents" | "ocr" | "storage" | "whatsapp" | "sms" | "acquiring" | "tradeBuyers" | "tradeEnrich" | "oneShot";
+export type QuoteLine = {
+    id: string;
+    kind: QuoteLineKind;
+    group: "subscription" | "capacity" | "people" | "usage" | "once";
+    amountAzn: number;
+    name?: string;
+    key?: string;
+    extra?: number;
+    unitAzn?: number;
+    unit?: string;
+    rate?: number;
+    headcount?: number;
+    listAzn?: number;
+};
+export type QuoteWarningId = "banking_sandbox" | "storage_sku" | "whatsapp_sku" | "sms_sku" | "trade_buyers_sku" | "trade_enrich_sku" | "workforce_headcount" | "clinic_rooms_module" | "clinic_beds_module" | "catalog_unavailable";
+export type QuoteResult = {
+    lines: QuoteLine[];
+    warnings: QuoteWarningId[];
+    activeKeys: string[];
+    recurringMonthlyAzn: number;
+    usageMonthlyAzn: number;
+    oneTimeAzn: number;
+    recurringPerMonthAzn: number;
+    monthlyTotalAzn: number;
+    yearlySubscriptionAzn: number;
+    yearlyDiscountPercent: number;
+};
+export declare function roundMoney2(n: number): number;
+export declare function emptyCalcState(): CalcState;
+export declare function normalizeCalcState(raw: Partial<CalcState> | null | undefined): CalcState;
+export declare function quoteMonthly(catalog: QuoteCatalog, raw: Partial<CalcState>): QuoteResult;

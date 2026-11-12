@@ -77,6 +77,15 @@ describe("lab-order-conflict.service", () => {
     ).toThrow(expect.objectContaining({ code: LAB_ALREADY_COMPLETED }));
   });
 
+  it("assertLabOrderCanCreate blocks an unpaid completed order even with confirmRepeat", () => {
+    expect(() =>
+      assertLabOrderCanCreate(
+        { kind: "UNPAID", orderId: "o1", testCode: "LAB-BIOCHEM-INFECT" },
+        true,
+      ),
+    ).toThrow(expect.objectContaining({ code: "LAB_UNPAID_EXISTS" }));
+  });
+
   it("assertLabOrderCanCreate allows COMPLETED when confirmRepeat", () => {
     expect(() =>
       assertLabOrderCanCreate(
