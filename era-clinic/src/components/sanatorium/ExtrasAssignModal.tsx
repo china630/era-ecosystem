@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ModalShell,
@@ -179,13 +179,15 @@ export function ExtrasAssignModal({
     [pending],
   );
 
+  const loadRef = useRef(load);
+  loadRef.current = load;
   useEffect(() => {
     if (!open) return;
     setDraft([]);
     setCode("");
     setFormOpen(false);
-    void load();
-  }, [open, load]);
+    void loadRef.current();
+  }, [open, episodeId]);
 
   const selected = useMemo(
     () => options.find((o) => o.value === code),

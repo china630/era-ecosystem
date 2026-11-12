@@ -2083,6 +2083,12 @@ model ProgramTemplateProcedure {
    */
   assignMode     String          @default("MANUAL") @map("assign_mode")
   /**
+   * CHECKIN | DOCTOR | CLINICAL. Empty on manual blocks (baths, treatment).
+   */
+  autoStep       String?         @map("auto_step")
+  /** False = paid auto block. Auto does not mean included. */
+  includedInPackage Boolean       @default(true) @map("included_in_package")
+  /**
    * PROCEDURE_ORDER | LAB_ORDER | VISIT
    */
   fulfillment    String          @default("PROCEDURE_ORDER")
@@ -2116,6 +2122,8 @@ model ProgramTemplateProcedure {
   dailyUseCap    Int?            @map("daily_use_cap")
   /** Doctor assign list. Independent of kind: any block may be shown. */
   showInProcedures Boolean       @default(false) @map("show_in_procedures")
+  /** Package-assign Əvəz et. Off hides the button; the target list stays the procedure catalog. */
+  allowReplace     Boolean       @default(false) @map("allow_replace")
   /** Order in the procedure assign list among blocks with the checkbox on. */
   procedureOrder   Int           @default(0) @map("procedure_order")
   template       ProgramTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)

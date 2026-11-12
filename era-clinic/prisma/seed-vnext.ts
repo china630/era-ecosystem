@@ -11,6 +11,7 @@ import {
 import { ensureSystemClinicRoles } from "../src/lib/auth/ensure-system-clinic-roles";
 import { CLINIC_ROLE } from "../src/lib/clinic-roles";
 import { ensureDefaultRequirements } from "../src/domain/procedure/procedure-allocation.service";
+import { isReplaceableQuotaLine } from "../src/domain/sanatorium/package-assign-quota";
 
 const requireCjs = createRequire(__filename);
 const prisma = new PrismaClient().$extends(
@@ -479,6 +480,7 @@ async function main() {
           fulfillment: block.fulfillment,
           quotaBasis: block.quotaBasis,
           requiresDoctor: block.requiresDoctor,
+          allowReplace: isReplaceableQuotaLine(block.procedureCode, block.procedureName),
         },
       });
       if (block.knots.length > 0) {
@@ -529,6 +531,7 @@ async function main() {
           procedureCode: "NAFTALAN_BATH",
           procedureName: "Naftalan bath",
           quotaTotal: knots[0]?.qty ?? 1,
+          allowReplace: true,
         },
       });
     }

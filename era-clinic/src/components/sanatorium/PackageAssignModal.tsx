@@ -33,7 +33,6 @@ import {
   toastPackageAssignOutcome,
 } from "@/lib/package-assign-toasts";
 import {
-  isBathQuotaLine,
   isBathTransferQuota,
   isReplaceableQuotaLine,
   bathTransferSku,
@@ -61,6 +60,8 @@ export type PackageBalanceRow = {
   fulfillment?: "PROCEDURE_ORDER" | "LAB_ORDER" | "VISIT";
   procedureOrder?: number;
   isTransfer?: boolean;
+  /** Block checkbox. The replace button is hidden when this is false. */
+  allowReplace?: boolean;
   transfers?: Array<{ createdAt: string; qty: number; reason: string; fromCode: string }>;
 };
 
@@ -437,14 +438,12 @@ export function PackageAssignModal({
     else if (payload.softWarnDay1) setSoftWarn(String(payload.softWarnDay1));
   }, [episodeId, locale, tPhysio]);
 
-  const wasOpen = useRef(false);
+  const loadRef = useRef(load);
+  loadRef.current = load;
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
   useEffect(() => {
-    if (!open) {
-      wasOpen.current = false;
-      return;
-    }
-    const justOpened = !wasOpen.current;
-    wasOpen.current = true;
+    if (!open) return;
     setDraft([]);
     setExtraDraft([]);
     setFormLane(null);
@@ -461,20 +460,18 @@ export function PackageAssignModal({
     setPackagePin(null);
     setReplaceOpen(false);
     void (async () => {
-      if (justOpened) {
-        await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ releaseUnseated: true, lines: [] }),
-        }).catch(() => undefined);
-      }
-      await load();
+      await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ releaseUnseated: true, lines: [] }),
+      }).catch(() => undefined);
+      await loadRef.current();
     })();
     void (async () => {
       try {
         const [catRes, typesRes, extraRes] = await Promise.all([
           fetch("/api/physio-catalog"),
-          fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`),
+          fetch(`/api/procedure-types?locale=${encodeURIComponent(localeRef.current)}`),
           fetch(`/api/sanatorium/episodes/${episodeId}/extras-prescribe`),
         ]);
         if (catRes.ok) {
@@ -565,7 +562,7 @@ export function PackageAssignModal({
         /* optional catalogs */
       }
     })();
-  }, [open, load, locale, episodeId]);
+  }, [open, episodeId]);
 
   const formName = useMemo(() => {
     if (!formCode) {
@@ -706,7 +703,7 @@ export function PackageAssignModal({
           (b) =>
             b.assignable !== false &&
             !b.isTransfer &&
-            isBathQuotaLine(b.procedureCode, b.procedureName),
+            b.allowReplace === true,
         )
         .map((b) => ({
           value: b.procedureCode,
@@ -1508,7 +1505,7 @@ export function PackageAssignModal({
 
   function openReplace(fromCode?: string) {
     const from =
-      fromCode && isReplaceableQuotaLine(fromCode)
+      fromCode && bathFromOptions.some((row) => row.value === fromCode)
         ? fromCode
         : bathFromOptions[0]?.value ?? "";
     setReplaceFrom(from);
@@ -1737,7 +1734,7 @@ export function PackageAssignModal({
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1">
-                      {isReplaceableQuotaLine(b.procedureCode, b.procedureName) ? (
+                      {b.allowReplace ? (
                         <button
                           type="button"
                           className={`${SECONDARY_BUTTON_CLASS} !px-2 !py-0.5 text-[12px]`}

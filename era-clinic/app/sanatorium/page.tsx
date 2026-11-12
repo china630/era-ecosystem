@@ -51,6 +51,7 @@ type EpisodeListFilters = {
   origin: string;
   room: string;
   program: string;
+  arrivalFrom: string;
   course: string;
   sort: string;
   sortDir: "" | "asc" | "desc";
@@ -208,6 +209,7 @@ export default function SanatoriumPage() {
   const [filterRoom, setFilterRoom] = useState("");
   const [filterProgram, setFilterProgram] = useState("");
   const [filterCourse, setFilterCourse] = useState("");
+  const [filterArrivalFrom, setFilterArrivalFrom] = useState("");
   const [hotelRooms, setHotelRooms] = useState<string[]>([]);
   const [programCodes, setProgramCodes] = useState<string[]>([]);
   const [listSort, setListSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
@@ -220,10 +222,11 @@ export default function SanatoriumPage() {
       room: filterRoom,
       program: filterProgram,
       course: filterCourse,
+      arrivalFrom: filterArrivalFrom,
       sort: listSort?.key ?? "",
       sortDir: listSort?.dir ?? "",
     }),
-    [q, filterOrigin, filterRoom, filterProgram, filterCourse, listSort],
+    [q, filterOrigin, filterRoom, filterProgram, filterCourse, filterArrivalFrom, listSort],
   );
 
   const listFetcher = useCallback(
@@ -247,6 +250,7 @@ export default function SanatoriumPage() {
       if (f.room.trim()) params.set("roomNumber", f.room.trim());
       if (f.program.trim()) params.set("programCode", f.program.trim());
       if (f.course) params.set("course", f.course);
+      if (f.arrivalFrom) params.set("arrivalFrom", f.arrivalFrom);
       if (f.sort && f.sortDir) {
         params.set("sort", f.sort);
         params.set("sortDir", f.sortDir);
@@ -680,6 +684,7 @@ export default function SanatoriumPage() {
               setFilterRoom("");
               setFilterProgram("");
               setFilterCourse("");
+              setFilterArrivalFrom("");
             }}
           >
             <CatalogField
@@ -698,6 +703,13 @@ export default function SanatoriumPage() {
               preset="shortText"
               value={q}
               onChange={(e) => setQ(e.target.value)}
+            />
+            <DatePicker
+              label={t("filterArrivalFrom")}
+              value={filterArrivalFrom}
+              onChange={setFilterArrivalFrom}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
             />
             <FieldSelect
               label={t("filterOrigin")}

@@ -115,13 +115,6 @@ function shortName(full?: string) {
   return full.trim().split(/\s+/)[0] || "…";
 }
 
-function staffInitials(full?: string) {
-  if (!full?.trim()) return "";
-  const parts = full.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 function wallMinutes(isoOrDate: Date | string): number {
   const { hour, minute } = bakuHourMinute(isoOrDate);
   const h = hour === 24 ? 0 : hour;
@@ -265,6 +258,14 @@ function halfRanges(slots: MatrixSlot[]): { morning: [number, number] | null; af
   return { morning: [0, split], afternoon: [split, slots.length] };
 }
 
+function slotMinutesOf(slots: MatrixSlot[]): number {
+  if (slots.length < 2) return 5;
+  const minutes = Math.round(
+    (new Date(slots[1].time).getTime() - new Date(slots[0].time).getTime()) / 60_000,
+  );
+  return minutes > 0 ? minutes : 5;
+}
+
 function buildSegments(slots: MatrixSlot[]): Segment[] {
   const out: Segment[] = [];
   let i = 0;
@@ -322,16 +323,31 @@ export function ResourceDayMatrix({
   slotColumnWidth = "1.75rem",
   openLanes = [],
 }: Props) {
-  const patientQuery = patientFilter.trim();
-
   const filtered = resources
-    .filter((r) => {
+    .filter((row) => {
       const q = resourceFilter.trim().toLowerCase();
-      if (!q) return true;
-      return r.name.toLowerCase().includes(q) || r.code.toLowerCase().includes(q);
+      const patient = patientFilter.trim();
+      const sameLookup = q.length > 0 && q === patient.toLowerCase();
+      if (sameLookup) {
+        const cabin =
+          row.name.toLowerCase().includes(q) || row.code.toLowerCase().includes(q);
+        if (cabin) return true;
+        return rowHasPatient(row, patient, roomFilter);
+      }
+      if (q && !(row.name.toLowerCase().includes(q) || row.code.toLowerCase().includes(q))) {
+        return false;
+      }
+      return rowHasPatient(row, patient, roomFilter);
     })
-    .filter((row) => rowHasPatient(row, patientQuery, roomFilter))
-    .map((row) => applyPatientFilter(row, patientFilter, roomFilter));
+    .map((row) => {
+      const q = resourceFilter.trim().toLowerCase();
+      const patient = patientFilter.trim();
+      const sameLookup = q.length > 0 && q === patient.toLowerCase();
+      if (sameLookup && (row.name.toLowerCase().includes(q) || row.code.toLowerCase().includes(q))) {
+        return applyPatientFilter(row, "", roomFilter);
+      }
+      return applyPatientFilter(row, patientFilter, roomFilter);
+    });
 
   const baseSlots = filtered[0]?.slots ?? resources[0]?.slots ?? [];
   const timeSlots = filterSlotsByHorizon(baseSlots, date, timeHorizon, dayStartHour);
@@ -433,6 +449,8 @@ export function ResourceDayMatrix({
               {filtered.map((row) => {
                 const rowSlots = alignRowSlots(row, timeSlots);
                 const segments = buildSegments(rowSlots);
+                const columnMinutes = slotMinutesOf(rowSlots);
+                const rowMinutes = Math.max(1, colCount * columnMinutes);
                 const lanes = openLanes.filter((lane) => lane.resourceCodes.includes(row.code));
                 const halves = halfRanges(rowSlots);
                 const laneText = (which: "morning" | "afternoon", full: boolean) =>
@@ -528,42 +546,60 @@ export function ResourceDayMatrix({
                       }
                       const { slot, span } = seg;
                       const scheduled = slot.status === "SCHEDULED";
-                      const initials = staffInitials(slot.staffName);
+                      const paintedMinutes =
+                        slot.durationMinutes && slot.durationMinutes > 0
+                          ? slot.durationMinutes
+                          : span * columnMinutes;
+                      const origin = new Date(rowSlots[0].time).getTime();
+                      const start = new Date(slot.time).getTime();
+                      const left = ((start - origin) / 60_000 / rowMinutes) * 100;
+                      const width = (paintedMinutes / rowMinutes) * 100;
                       return (
                         <div
                           key={`${row.resourceId}-${slot.procedureOrderId}-${slot.time}`}
-                          draggable={scheduled && Boolean(slot.procedureOrderId)}
-                          onDragStart={() => {
-                            if (slot.procedureOrderId) onDragStart?.(slot.procedureOrderId);
-                          }}
-                          className={`relative z-[1] ${rowMin} cursor-pointer overflow-hidden border-b border-r px-1 py-0.5 text-[10px] leading-tight ${barClass(slot.status)} ${scheduled ? "cursor-grab" : ""}`}
-                          style={{ gridColumn: `span ${span}` }}
-                          title={`${slot.patientName ?? ""} ${slot.procedureCode ?? ""}${
-                            slot.status ? ` · ${labels.statusLabel(slot.status)}` : ""
-                          }`}
-                          onClick={() =>
-                            onSelect?.({
-                              ...slot,
-                              resourceName: row.name,
-                              resourceCode: row.code,
-                            })
-                          }
+                          className="contents"
                         >
-                          <div className="truncate font-semibold">
-                            {shortName(slot.patientName)}
-                            {slot.roomNumber ? ` · ${slot.roomNumber}` : ""}
-                          </div>
-                          <div className={`truncate ${TEXT_MUTED_CLASS}`}>
-                            {slot.procedureName ?? slot.procedureCode ?? ""}
-                            {slot.status
-                              ? ` · ${labels.statusLabel(slot.status)}`
-                              : ""}
-                          </div>
-                          {slot.staffName ? (
-                            <div className="truncate" title={`${labels.staff}: ${slot.staffName}`}>
-                              {initials || slot.staffName}
+                          {Array.from({ length: span }, (_, offset) => (
+                            <div
+                              key={`${row.resourceId}-hold-${slot.time}-${offset}`}
+                              className={`relative z-[1] ${rowMin} border-b border-r border-slate-200 bg-slate-50/80`}
+                              style={{ gridColumn: "span 1" }}
+                            />
+                          ))}
+                          <div
+                            draggable={scheduled && Boolean(slot.procedureOrderId)}
+                            onDragStart={() => {
+                              if (slot.procedureOrderId) onDragStart?.(slot.procedureOrderId);
+                            }}
+                            className={`absolute z-[2] cursor-pointer overflow-hidden border px-1 py-0.5 text-[10px] leading-tight ${barClass(slot.status)} ${scheduled ? "cursor-grab" : ""}`}
+                            style={{
+                              gridColumn: "1 / -1",
+                              left: `${left}%`,
+                              width: `${width}%`,
+                              top: 1,
+                              bottom: 1,
+                            }}
+                            title={`${slot.patientName ?? ""}${
+                              slot.roomNumber ? ` · ${slot.roomNumber}` : ""
+                            }${slot.procedureName ? ` · ${slot.procedureName}` : ""}${
+                              slot.staffName ? ` · ${labels.staff}: ${slot.staffName}` : ""
+                            }${slot.status ? ` · ${labels.statusLabel(slot.status)}` : ""}`}
+                            onClick={() =>
+                              onSelect?.({
+                                ...slot,
+                                resourceName: row.name,
+                                resourceCode: row.code,
+                              })
+                            }
+                          >
+                            <div className="truncate font-semibold">{shortName(slot.patientName)}</div>
+                            {slot.roomNumber ? (
+                              <div className="truncate">{slot.roomNumber}</div>
+                            ) : null}
+                            <div className={`truncate ${TEXT_MUTED_CLASS}`}>
+                              {slot.procedureName ?? slot.procedureCode ?? ""}
                             </div>
-                          ) : null}
+                          </div>
                         </div>
                       );
                     })}

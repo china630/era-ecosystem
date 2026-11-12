@@ -60,25 +60,19 @@ async function ensureEpisodeAndProgram(
   });
   const autoInstantiate = await shouldAutoInstantiateProgramOnCheckin();
   if (p.programCode && !existingProgram && autoInstantiate) {
-    const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
-    const denied = await procedureLaneDenial(episode.id);
-    if (!denied) {
-      await instantiateProgramFromTemplate({
-        episodeId: episode.id,
-        programCode: p.programCode,
-        reservationId: p.reservationId,
-        startsOn: p.checkInDate ? new Date(p.checkInDate) : new Date(),
-      });
-      await prisma.clinicalEpisode.update({
-        where: { id: episode.id },
-        data: { checkupCompletedAt: new Date() },
-      });
-    } else {
-      await prisma.clinicalEpisode.update({
-        where: { id: episode.id },
-        data: { programCode: p.programCode },
-      });
-    }
+    await instantiateProgramFromTemplate({
+      episodeId: episode.id,
+      programCode: p.programCode,
+      reservationId: p.reservationId,
+      startsOn: p.checkInDate ? new Date(p.checkInDate) : new Date(),
+      skipAutoStudies: true,
+    });
+    const { applyPackageAutoBlocks } = await import(
+      "@/domain/sanatorium/package-auto-apply.service"
+    );
+    await applyPackageAutoBlocks(episode.id, { trigger: "CARE_TEAM", step: "CHECKIN" }).catch(
+      (err) => console.error("[check-in] auto step", episode.id, err),
+    );
   }
   return episode;
 }
@@ -433,9 +427,6 @@ export async function handleStayProductChanged(
     const nights = nightsBetween(checkIn, checkOut) || 1;
 
     try {
-      const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
-      if (await procedureLaneDenial(episode.id)) continue;
-
       if (existing) {
         await recalcProgramQuotas(existing.id, {
           nights,
@@ -444,7 +435,6 @@ export async function handleStayProductChanged(
           endsOn: checkOut,
           reservationId: p.reservationId,
         });
-        // CLI-57: no buildProposedPlan — doctor assigns from balance modal
         continue;
       }
       if (!programCode) continue;
@@ -456,7 +446,12 @@ export async function handleStayProductChanged(
         checkInDate: checkIn,
         checkOutDate: checkOut,
         nights,
+        skipAutoStudies: true,
       });
+      const { applyPackageAutoBlocks } = await import(
+        "@/domain/sanatorium/package-auto-apply.service"
+      );
+      await applyPackageAutoBlocks(episode.id, { trigger: "CARE_TEAM", step: "CHECKIN" });
     } catch (e) {
       console.error("stay-product recalc failed", episode.id, e);
     }

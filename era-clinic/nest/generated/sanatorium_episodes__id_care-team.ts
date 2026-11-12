@@ -122,10 +122,22 @@ export function register(http: { get: Function; post: Function; put: Function; p
         practitionerId: body.practitionerId,
         assignedByUserId: session.sub,
       });
+      const { openHotelPackageOnDoctor } = await import(
+        "@/domain/sanatorium/open-program-after-therapist.service"
+      );
+      const openedPackage = await openHotelPackageOnDoctor(id);
       const shouldRetryAuto =
-        before === 0 || instance?.autoApplyState === "PENDING_DOCTOR";
+        before === 0 ||
+        openedPackage ||
+        instance?.autoApplyState === "PENDING_DOCTOR" ||
+        instance?.autoApplyState === "PENDING";
       if (shouldRetryAuto) {
-        await applyPackageAutoBlocks(id, { trigger: "CARE_TEAM" }).catch((err) => {
+        if (openedPackage) {
+          await applyPackageAutoBlocks(id, { trigger: "CARE_TEAM", step: "CHECKIN" }).catch((err) => {
+            console.error("[care-team] check-in auto step failed", id, err);
+          });
+        }
+        await applyPackageAutoBlocks(id, { trigger: "CARE_TEAM", step: "DOCTOR" }).catch((err) => {
           console.error("[care-team] package auto-apply failed", id, err);
         });
       }

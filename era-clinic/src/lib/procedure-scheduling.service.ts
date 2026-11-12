@@ -188,6 +188,7 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
       procedureOrderId?: string;
       patientName?: string;
       procedureName?: string;
+      durationMinutes?: number;
       lunch?: boolean;
       outside?: boolean;
     }> = [];
@@ -217,6 +218,11 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
         );
         const order = held?.procedureOrder ?? proof?.procedureOrder;
         const occupied = Boolean(held || proof);
+        const procedureMinutes = held
+          ? Math.max(1, Math.round((held.endsAt.getTime() - held.startsAt.getTime()) / 60_000))
+          : proof
+            ? Math.max(1, Math.round((proof.endsAt.getTime() - proof.startsAt.getTime()) / 60_000))
+            : undefined;
         slots.push({
           time: slotStart.toISOString(),
           occupied,
@@ -225,6 +231,7 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
           procedureOrderId: order?.id ?? proof?.procedureOrderId ?? undefined,
           patientName: order?.patientRef.fullName,
           procedureName: order?.procedureName,
+          durationMinutes: procedureMinutes,
         });
       }
     }

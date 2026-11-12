@@ -76,8 +76,9 @@ export default function ExtraTicketsPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const [dualRun, setDualRun] = useState(false);
-  const [needsFilter, setNeedsFilter] = useState(true);
+  const [needsFilter, setNeedsFilter] = useState(false);
   const [needsDates, setNeedsDates] = useState(false);
+  const [truncated, setTruncated] = useState(false);
   const [scope, setScope] = useState<ListScope>("due");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -106,6 +107,7 @@ export default function ExtraTicketsPage() {
     setDualRun(!!payload.dualRun);
     setNeedsFilter(!!payload.needsFilter);
     setNeedsDates(!!payload.needsDates);
+    setTruncated(!!payload.truncated);
     setRows((payload.orders ?? []) as ExtraRow[]);
   }, [locale, room, qDebounced, scope, dateFrom, dateTo]);
 
@@ -455,7 +457,11 @@ export default function ExtraTicketsPage() {
           </EraListFilterBar>
         }
         table={
-          <table className={DATA_TABLE_CLASS}>
+          <>
+            {truncated ? (
+              <p className={`px-3 py-2 text-[12px] text-amber-800`}>{t("listTruncated")}</p>
+            ) : null}
+            <table className={DATA_TABLE_CLASS}>
             <thead>
               <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
                 <th className={DATA_TABLE_TH_LEFT_CLASS} />
@@ -543,6 +549,7 @@ export default function ExtraTicketsPage() {
               )}
             </tbody>
           </table>
+          </>
         }
       />
       <ModalShell

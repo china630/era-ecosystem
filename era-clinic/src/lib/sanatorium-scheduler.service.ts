@@ -29,6 +29,8 @@ export async function instantiateProgramFromTemplate(input: {
   checkOutDate?: Date;
   checkInDate?: Date;
   nights?: number;
+  /** Doctor opened the hotel package. Studies wait for the care-team call. */
+  skipAutoStudies?: boolean;
 }) {
   const template = await findCurrentProgramTemplate(input.programCode);
   if (!template) throw new Error(`Program template ${input.programCode} not found`);
@@ -148,16 +150,18 @@ export async function instantiateProgramFromTemplate(input: {
     },
   });
 
-  // Studies (labs, imaging, auto visits) are created once the course exists.
-  // A missing care-team doctor leaves visits in PENDING_DOCTOR; the first
-  // doctor assignment retries. A failure here must not roll back the course.
-  try {
-    const { applyPackageAutoBlocks } = await import(
-      "@/domain/sanatorium/package-auto-apply.service"
-    );
-    await applyPackageAutoBlocks(input.episodeId, { trigger: "CARE_TEAM" });
-  } catch (err) {
-    console.error("[program] auto studies failed", input.episodeId, err);
+  if (!input.skipAutoStudies) {
+    // Studies (labs, imaging, auto visits) are created once the course exists.
+    // A missing care-team doctor leaves visits in PENDING_DOCTOR; the first
+    // doctor assignment retries. A failure here must not roll back the course.
+    try {
+      const { applyPackageAutoBlocks } = await import(
+        "@/domain/sanatorium/package-auto-apply.service"
+      );
+      await applyPackageAutoBlocks(input.episodeId, { trigger: "CARE_TEAM" });
+    } catch (err) {
+      console.error("[program] auto studies failed", input.episodeId, err);
+    }
   }
 
   return instance;
@@ -511,6 +515,15 @@ export async function recalcProgramQuotas(
       ...(opts.endsOn ? { endsOn: opts.endsOn } : {}),
     },
   });
+
+  if (packageCodeChanged) {
+    const { linkExistingAutoOrdersToPackage } = await import(
+      "@/domain/sanatorium/package-auto-apply.service"
+    );
+    await linkExistingAutoOrdersToPackage(instance.episodeId).catch((err) => {
+      console.error("[program] restamp included labs", instance.episodeId, err);
+    });
+  }
 
   if (opts.endsOn) {
     const { cancelFutureScheduledPastEnd } = await import(
