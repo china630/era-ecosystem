@@ -31,7 +31,7 @@ describe("fnb rbac role-name hygiene", () => {
 
   it("pay route does not gate on session.role === FB_WAITER", () => {
     const pay = fs.readFileSync(
-      path.join(ROOT, "app", "api", "tickets", "[id]", "pay", "route.ts"),
+      path.join(ROOT, "nest", "generated", "tickets__id_pay.ts"),
       "utf8",
     );
     expect(pay).not.toMatch(/session\.role\s*===\s*FB_ROLES\.WAITER/);
