@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { AuditModule } from "../audit/audit.module";
 import { NotificationModule } from "../notifications/notification.module";
 import { PrismaModule } from "../prisma/prisma.module";
@@ -25,7 +25,7 @@ import { CouncilQuotaService } from "./council/council-quota.service";
 import { CouncilFacadeService } from "./council/council-facade.service";
 
 @Module({
-  imports: [PrismaModule, NotificationModule, AuditModule],
+  imports: [PrismaModule, NotificationModule, forwardRef(() => AuditModule)],
   controllers: [ComplianceController],
   providers: [
     ComplianceService,

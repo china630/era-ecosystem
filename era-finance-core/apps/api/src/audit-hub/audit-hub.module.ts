@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { AuditModule } from "../audit/audit.module";
 import { AuditBulkExportService } from "./audit-bulk-export.service";
@@ -17,7 +17,7 @@ import { AuditSamplingService } from "./audit-sampling.service";
 import { AuditTimelineService } from "./audit-timeline.service";
 
 @Module({
-  imports: [AuditModule],
+  imports: [forwardRef(() => AuditModule)],
   controllers: [AuditHubController, AuditHubMeController],
   providers: [
     AuditTimelineService,
