@@ -38,7 +38,10 @@ function rewriteInternalLocation(headers, req, upstreamOrigin) {
   if (!pub) return;
   try {
     const url = new URL(current);
-    if (url.host !== new URL(upstreamOrigin).host) return;
+    const internal = new URL(upstreamOrigin);
+    const localName = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1";
+    const sameListen = url.host === internal.host || (localName && url.port === internal.port);
+    if (!sameListen) return;
     headers.location = `${pub}${url.pathname}${url.search}${url.hash}`;
   } catch {
     /* leave a non-URL Location alone */
