@@ -4015,8 +4015,8 @@ export function ReservationCardEditor({
         <TransferStayAmendModal
           open={transferAmendOpen}
           reservationId={reservationId}
-          checkInIso={mergeDateTime(checkIn, checkInTime)}
-          checkOutIso={mergeDateTime(checkOut, checkOutTime)}
+          checkInIso={mergeDateTime(checkIn, checkInTime) ?? ""}
+          checkOutIso={mergeDateTime(checkOut, checkOutTime) ?? ""}
           onClose={() => {
             transferDecisionsRef.current = null;
             setTransferAmendOpen(false);

@@ -7,7 +7,7 @@ Living matrix for **honest readiness** of capabilities (Doc/API/UI × actors). R
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-11-11
+**Last updated:** 2026-11-12
 
 ---
 
@@ -579,6 +579,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 
 | Date | Change |
 |------|--------|
+| 2026-11-12 | Industry satellite HTTP API is served by Nest; Next keeps the UI. Actor rows are unchanged: no new SHIPPED, no Scaffold ✅. Gate, Demo, Pilot, edition, and sell unchanged. `era-readiness-matrix` skipped (no consumer API level or DELIVERY % flip). |
 | 2026-11-11 | Clinic nurse tablet: cached session opens the board when `/api/auth/me` is unreachable; check-in outbox and day snapshot are keyed by staff login. Still not a separate SHIPPED surface. No new Scaffold ✅. Gate/Demo/Pilot/edition untouched. |
 | 2026-11-11 | Clinic nurse tablet `apps/clinic-nurse-app` repeats CLI-26 `mine=1` columns and check-in, with an offline outbox and an Android device-owner kiosk. Web `/nurse` stays SHIPPED. The tablet is not a separate SHIPPED surface until a device UAT. No new Scaffold ✅. Gate/Demo/Pilot/edition untouched. |
 | 2026-11-11 | Hotel HOT-UI-01: reservation list shows a car for a transfer due within two Baku days and a shirt while laundry is IN_PLANT. Cake stays. Same Nest grid. Stays SHIPPED. No new Scaffold ✅. Gate/Pilot/edition untouched. |

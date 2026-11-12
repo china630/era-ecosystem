@@ -135,7 +135,7 @@ Routes added 2026-08-17 (still 🟡 / not sell-ready): org catalog, referrals, l
 
 | Claim | Reality |
 |-------|---------|
-| One HTTP framework for all industry satellite APIs | **Not built** — Finance/Orch Nest; hotel/F&B/clinic Next `app/api`. **P0 debt** [industry-satellite-api-nest-migration](../adr/industry-satellite-api-nest-migration.md). Does **not** move Gate, BE rollup, Demo, Pilot, or Sell until Implemented. Audit Layer A stays fail-closed on Next. |
+| One HTTP framework for all industry satellite APIs | **Code cutover** — industry HTTP is Nest (`nest/main.ts`); Next keeps the UI and proxies. Not a BE/UI/Demo/Pilot/Sell change. Gate and rollup stay as they were. No Scaffold ✅ from the move. [industry-satellite-api-nest-migration](../adr/industry-satellite-api-nest-migration.md). |
 
 ## Topology / tenancy (honesty)
 

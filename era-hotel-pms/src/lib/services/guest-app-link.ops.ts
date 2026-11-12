@@ -1,4 +1,4 @@
-import { runWithSatelliteTenant } from "@era/satellite-kit/tenancy";
+import { runWithSatelliteTenant } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import {
   assertChallengeUsable,

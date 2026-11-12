@@ -24,7 +24,7 @@ import {
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { laundryItemDisplayName } from '@/lib/services/laundry-catalog';
+import { laundryItemDisplayName } from '@/lib/laundry-catalog-view';
 
 type Item = {
   id: string;

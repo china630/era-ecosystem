@@ -1,6 +1,6 @@
 # ADR: Industry satellite API on Nest (platform debt)
 
-**Status:** Accepted (debt recorded — **not started**)  
+**Status:** Implementing — code cutover 2026-11-12 (Nest HTTP, Next UI). Not Pilot, not a sell or Gate change.  
 **Date:** 2026-10-28  
 **Priority:** **P0 platform** (highest open platform-architecture debt)  
 **Owner context:** Solo product + Cursor agent (no separate eng team). Calendar cost competes with Nafta pilot delivery.
@@ -33,15 +33,14 @@ Product ask for “one audit standard” exposed this split. Unifying **audit be
 
 ## Consequences
 
-- Audit “done” on Hotel/F&B/Clinic ≠ Nest everywhere.
-- Claiming “one HTTP framework across ERA” without this ADR being **Implemented** is false.
-- Until migration starts, Nest/Next dual stack is an **accepted platform residual**, ranked P0 for return — not forgotten.
+- Audit “done” on Hotel/F&B/Clinic is not a sell or Pilot claim.
+- The HTTP API process is Nest. Next remains the UI. Calling that Pilot, Gate, or `ga` is still false.
+- Field proof and route-by-route UAT are still open.
 
-## Non-goals (until this ADR moves to Implementing)
+## Non-goals (this cutover)
 
-- Rewriting hotel (or other industry) APIs onto Nest in audit PRs.
-- Blocking Layer A fail-closed work on Next waiting for Nest.
-- Merging Finance Nest process into the hotel Next process.
+- Treating the Nest move as Scaffold ✅, SHIPPED, or a sell/`ga` change.
+- Merging the Finance Nest process into a satellite Next UI process.
 
 ## Related
 

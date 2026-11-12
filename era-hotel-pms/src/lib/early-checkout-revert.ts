@@ -25,9 +25,11 @@ export type EarlyCheckoutSliceSnap = {
   deleted: boolean;
 };
 
+import type { TransferStayAction } from '@/lib/services/stay-mobility-sync.service';
+
 export type EarlyCheckoutTransferOutSnap = {
   orderId: string;
-  action: string;
+  action: TransferStayAction;
   priorPickupAt: string;
   priorVehicleId: string | null;
   priorStatus: string;

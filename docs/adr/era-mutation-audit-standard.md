@@ -10,7 +10,7 @@
 - [workforce-dual-audit.md](./workforce-dual-audit.md) — CP workforce log vs satellite ops log (orthogonal)
 - [era-bank-risk-and-audit.md](./era-bank-risk-and-audit.md) — bank two-tier pattern (same idea, different tables)
 - [era-common-laws.mdc](../../.cursor/rules/era-common-laws.mdc) — mutations require an audit trail where the app supports it
-- [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) — **P0 platform debt**: industry API Nest cutover is **not** part of audit waves; dual Nest/Next stack is accepted until that ADR is Implemented
+- [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) — industry HTTP is Nest as of 2026-11-12; Next remains the UI. Not a sell or Pilot claim.
 
 ## Context
 
@@ -63,7 +63,7 @@ Cross-plane correlation uses existing stamps: `organizationId`, optional `cpEmpl
 
 ### HTTP belt (Layer A) — stack pattern
 
-**One audit contract, two adapters.** Finance Nest interceptor is the fail-closed reference. Industry satellites stay on Next until [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) is scheduled. Audit waves must make the Next adapter **fail-closed** (no silent bypass), not wait for Nest.
+**One audit contract.** Finance Nest interceptor is the fail-closed reference. Industry satellites mount the same Nest belt (`SatelliteMutationAuditInterceptor`) after the 2026-11-12 HTTP cutover ([industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md)).
 
 | Stack | Mechanism |
 |-------|-----------|
@@ -230,7 +230,7 @@ Do not build either store, screen, or sync until that placement is decided. Unti
 | Retail / CRM / Logistics / Wholesale / Construction / Auto / Bank / Bank DBO | same interceptor | Domain journals where they already exist | Bank and Bank DBO gained `satellite_audit_logs` for this belt. Their ops/action logs stay separate |
 | Finance | Nest `AuditMutationInterceptor` (SHIPPED) | `/admin/audit` + `/admin/security-audit` + hash-chain; Wave D filter bar = CatalogField + EraListFilterBar + kit DatePicker | Wave C–D landed; AC-FIN-AUD 🟡 AuthZ/UAT residual; satellite hash-chain stays out of Finance rewrite |
 | Orchestrator | Partial: `WorkforceAuditLog`, `platform_audit_logs`, billing | CP security audit screens | Inventory gaps: org/security-admin mutations not on those tables; no uniform HTTP belt |
-| **Industry API Nest cutover** | N/A (platform) | N/A | **P0** — [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md). Out of audit waves. |
+| **Industry API Nest cutover** | Nest HTTP in tree 2026-11-12 | Next UI unchanged | Not a sell/Pilot claim — [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) |
 | Data Hub | HEADLESS / policy APIs | Orch settings | Document HEADLESS exceptions; no cashier audit UI |
 
 **CI:** `npm run check:mutation-audit-belt` — all eleven industry `nest/main.ts` files must mount `SatelliteMutationAuditInterceptor` through `createSatelliteApiController` and must not register the route table on the raw Express adapter.

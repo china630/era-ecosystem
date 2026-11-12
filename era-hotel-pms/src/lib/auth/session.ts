@@ -52,7 +52,7 @@ export async function enrichHotelStaffSession(
   const permissions =
     isOwner || isPlatformSuperAdmin
       ? [...ALL_PERMISSIONS]
-      : effectiveRolePermissions(user.role.code, user.role.permissionsJson);
+      : effectiveRolePermissions(user.role.code, user.role.permissionsJson ?? "[]");
   return { ...session, permissions, isOwner };
 }
 

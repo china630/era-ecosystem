@@ -418,12 +418,13 @@ export default function ReservationsListPage() {
                     return (
                       <span className="inline-flex flex-wrap items-center gap-1">
                         {transferTitle ? (
-                          <Car
-                            className="h-4 w-4 shrink-0 text-[#2980B9]"
-                            aria-label={transferTitle}
-                            title={transferTitle}
-                            role="img"
-                          />
+                          <span title={transferTitle}>
+                            <Car
+                              className="h-4 w-4 shrink-0 text-[#2980B9]"
+                              aria-label={transferTitle}
+                              role="img"
+                            />
+                          </span>
                         ) : null}
                         {showCake ? (
                           <Cake
@@ -448,12 +449,13 @@ export default function ReservationsListPage() {
                           </span>
                         ))}
                         {r.laundryOpen ? (
-                          <Shirt
-                            className="h-4 w-4 shrink-0 text-[#8E44AD]"
-                            aria-label={t('laundryOpen')}
-                            title={t('laundryOpen')}
-                            role="img"
-                          />
+                          <span title={t('laundryOpen')}>
+                            <Shirt
+                              className="h-4 w-4 shrink-0 text-[#8E44AD]"
+                              aria-label={t('laundryOpen')}
+                              role="img"
+                            />
+                          </span>
                         ) : null}
                       </span>
                     );

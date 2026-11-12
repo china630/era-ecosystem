@@ -149,8 +149,8 @@ export async function swapReservationRooms(
       where: { id: { in: [a.id, b.id] } },
       select: { id: true, roomId: true },
     });
-    const stillA = fresh.find((row) => row.id === a.id)?.roomId;
-    const stillB = fresh.find((row) => row.id === b.id)?.roomId;
+    const stillA = fresh.find((row: { id: string; roomId: string | null }) => row.id === a.id)?.roomId;
+    const stillB = fresh.find((row: { id: string; roomId: string | null }) => row.id === b.id)?.roomId;
     if (stillA !== fromA || stillB !== fromB) reject('Rooms changed before the swap finished');
 
     await tx.roomChangePlan.updateMany({
