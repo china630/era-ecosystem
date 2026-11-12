@@ -84,13 +84,25 @@ COPY --from=builder /opt/nest-runtime /opt/nest-runtime
 COPY --from=builder /workspace/${SATELLITE_DIR}/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /workspace/${SATELLITE_DIR}/package.json ./package.json
 COPY --from=builder /workspace/packages /packages
+# Nest runs from /opt/nest-runtime/app. file: deps become symlinks into a
+# /workspace path that does not exist in this stage. Point them at /packages,
+# where the folder name is not always the npm scope name (era-contracts -> contracts).
 RUN mkdir -p ./node_modules/@era \
   && ln -sfn /packages/satellite-kit ./node_modules/@era/satellite-kit \
-  && if [ -d /opt/nest-runtime/app/node_modules/@era ]; then \
-       for link in /opt/nest-runtime/app/node_modules/@era/*; do \
-         name=$(basename "$link"); \
-         if [ -e "/packages/$name" ]; then ln -sfn "/packages/$name" "$link"; fi; \
-       done; \
+  && if [ -d /opt/nest-runtime/app ]; then \
+       mkdir -p /opt/nest-runtime/app/node_modules/@era; \
+       link_pkg() { \
+         if [ -d "/packages/$2" ]; then \
+           ln -sfn "/packages/$2" "/opt/nest-runtime/app/node_modules/@era/$1"; \
+           ln -sfn "/packages/$2" "./node_modules/@era/$1"; \
+         fi; \
+       }; \
+       link_pkg contracts era-contracts; \
+       link_pkg satellite-kit satellite-kit; \
+       link_pkg i18n-common i18n-common; \
+       link_pkg storage era-storage; \
+       link_pkg fiscal era-fiscal; \
+       link_pkg clinic-domain clinic-domain; \
      fi \
   && sed -i 's/\r$//' /app/docker-entrypoint.sh /app/satellite-serve.sh \
   && chmod +x /app/docker-entrypoint.sh /app/satellite-serve.sh \
