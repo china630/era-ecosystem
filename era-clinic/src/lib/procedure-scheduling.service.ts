@@ -188,6 +188,7 @@ export async function getResourceCalendar(date: Date, opts?: { procedureCode?: s
       procedureOrderId?: string;
       patientName?: string;
       procedureName?: string;
+      durationMinutes?: number;
       lunch?: boolean;
       outside?: boolean;
     }> = [];
