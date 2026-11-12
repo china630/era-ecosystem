@@ -13,7 +13,11 @@ import { SatelliteEventsService } from "../../satellite-events/satellite-events.
 import { WorkforceAuditService } from "./workforce-audit.service";
 import { WorkforceEntitlementService } from "./workforce-entitlement.service";
 import { WorkforceScopeService } from "./workforce-scope.service";
-import type { CreateOrgUnitDto, UpdateOrgUnitDto } from "./dto/workforce-org.dto";
+import type {
+  CreateOrgUnitDto,
+  UpdateOrgUnitDto,
+  UpsertCommercialLinkDto,
+} from "./dto/workforce-org.dto";
 
 @Injectable()
 export class WorkforceOrgUnitsService {
@@ -24,6 +28,37 @@ export class WorkforceOrgUnitsService {
     private readonly audit: WorkforceAuditService,
     private readonly satelliteEvents: SatelliteEventsService,
   ) {}
+
+  findOrganizationOperatingContext(organizationId: string) {
+    return this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { operatingMode: true, parentOrgId: true, name: true },
+    });
+  }
+
+  findCommercialLink(orgId: string) {
+    return this.prisma.orgUnitCommercialLink.findUnique({
+      where: { organizationId: orgId },
+      include: { workforceScope: true, orgUnit: true },
+    });
+  }
+
+  upsertCommercialLink(orgId: string, dto: UpsertCommercialLinkDto) {
+    return this.prisma.orgUnitCommercialLink.upsert({
+      where: { organizationId: orgId },
+      create: {
+        organizationId: orgId,
+        workforceScopeId: dto.workforceScopeId,
+        orgUnitId: dto.orgUnitId ?? null,
+        linkMode: dto.linkMode ?? "SCOPE_ROOT",
+      },
+      update: {
+        workforceScopeId: dto.workforceScopeId,
+        orgUnitId: dto.orgUnitId ?? null,
+        ...(dto.linkMode ? { linkMode: dto.linkMode } : {}),
+      },
+    });
+  }
 
   async list(organizationId: string, flat = true) {
     const link = await this.scope.resolveScopeForCommercialOrg(organizationId);

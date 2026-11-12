@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
-import { Building2, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,7 +11,7 @@ import { formatMoneyAzn } from "../../lib/format-money";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { useAuth } from "../../lib/auth-context";
 import { isRestrictedUserRole } from "../../lib/role-utils";
-import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import { PageHeader } from "../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../components/subscription-paywall";
 import { FixedAssetModal } from "../../components/fixed-assets/fixed-asset-modal";
@@ -237,37 +237,9 @@ function FixedAssetsPageContent() {
       )}
 
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
-      {!loading && rows.length === 0 && !err && (
-        <div className="flex min-h-[320px] w-full flex-col items-center justify-center py-8">
-          <EmptyState
-            className="max-w-lg w-full border-[#D5DADF] bg-white"
-            icon={
-              <Building2
-                className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]"
-                aria-hidden
-              />
-            }
-            title={t("fixedAssets.emptyTitle")}
-            description={t("fixedAssets.emptyHint")}
-            action={
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                onClick={() => {
-                  setFaModalMode("create");
-                  setFaEditId(null);
-                  setFaModalOpen(true);
-                }}
-              >
-                + {t("fixedAssets.newBtn")}
-              </button>
-            }
-          />
-        </div>
-      )}
-
-      {!loading && rows.length > 0 && (
+      {!loading && !err && (
         <>
+          {rows.length > 0 ? (
           <div className="md:hidden space-y-3">
             {rows.map((r) => (
               <div
@@ -317,7 +289,8 @@ function FixedAssetsPageContent() {
               </div>
             ))}
           </div>
-          <div className={`hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}`}>
+          ) : null}
+          <div className={rows.length > 0 ? `hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}` : DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} min-w-full`}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -344,6 +317,12 @@ function FixedAssetsPageContent() {
                 </tr>
               </thead>
               <tbody>
+                {rows.length === 0 ? (
+                  <FinanceEmptyTableRow
+                    colSpan={hasTaxProfile ? 12 : 9}
+                    message={t("fixedAssets.emptyTitle")}
+                  />
+                ) : null}
                 {rows.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>

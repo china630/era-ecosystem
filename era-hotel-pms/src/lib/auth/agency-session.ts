@@ -5,11 +5,21 @@ import {
   type AgencySessionPayload,
 } from '@era/satellite-kit';
 import { cookies, headers } from 'next/headers';
+import { nestHttpFrame } from '@/lib/nest-http-context';
 import { requireHotelModule } from '@/lib/hotel-module-gate';
 
 export async function getAgencySession(): Promise<AgencySessionPayload> {
-  const jar = await cookies();
-  const hdrs = await headers();
+  let jar: { get(name: string): { value: string } | undefined };
+  let hdrs: { get(name: string): string | null };
+  try {
+    jar = await cookies();
+    hdrs = await headers();
+  } catch {
+    const frame = nestHttpFrame();
+    if (!frame) throw Object.assign(new Error('Agency session required'), { status: 401 });
+    jar = frame.cookies;
+    hdrs = frame.headers;
+  }
   const cookieToken = jar.get(agencyAuthCookieName())?.value;
   const auth = hdrs.get('authorization');
   const bearer =

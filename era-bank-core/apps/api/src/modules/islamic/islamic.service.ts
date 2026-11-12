@@ -24,6 +24,13 @@ export class IslamicService {
     });
   }
 
+  listForCustomer(customerId: string) {
+    return this.prisma.islamicContract.findMany({
+      where: { bankOrgId: this.bankOrg.bankOrgId, customerId },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   create(input: {
     customerId: string;
     productTemplateId: string;

@@ -17,7 +17,7 @@ export const agenciesAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
   entity: 'agencies',
   label: 'Travel Agencies',
   order: 9,
-  permission: PERMISSIONS.MASTER_DATA_MANAGE,
+  permission: PERMISSIONS.PARTIES_MANAGE,
   templateHint: '09-Travel-Agencies.xlsx — EW Travel Agencies',
   headerAliases: {
     'Agent Code': 'code',

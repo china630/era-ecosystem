@@ -13,6 +13,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmployeesService } from "./employees.service";
 import { EmasSubmissionAdapterFactory } from "./emas-submission.adapters";
+import { OrgAccessClient } from "../control-plane/org-access.client";
 import type { EmasHireDto } from "./dto/emas-hire.dto";
 import type { EmasTransferDto } from "./dto/emas-transfer.dto";
 import type { EmasTerminateDto } from "./dto/emas-terminate.dto";
@@ -44,6 +45,7 @@ export class EmasContractService {
     private readonly prisma: PrismaService,
     private readonly employees: EmployeesService,
     private readonly adapterFactory: EmasSubmissionAdapterFactory,
+    private readonly orgAccess: OrgAccessClient,
   ) {}
 
   getMode(settings: unknown): EmasMode {
@@ -67,9 +69,13 @@ export class EmasContractService {
       where: { id: organizationId },
       select: { settings: true },
     });
+    const platform = await this.orgAccess.get(organizationId, "GOV_EMAS");
+    const tax = await this.orgAccess.get(organizationId, "GOV_ETAXES");
     return {
       organizationId,
-      asanUserId: this.resolveAsanUserId(org?.settings),
+      asanUserId: tax?.publicFields.asanUserId?.trim() || this.resolveAsanUserId(org?.settings),
+      employerId: platform?.publicFields.employerId?.trim() || null,
+      accessSecret: platform?.secret ?? null,
     };
   }
 

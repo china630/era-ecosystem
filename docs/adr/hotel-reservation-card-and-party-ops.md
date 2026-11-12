@@ -114,7 +114,7 @@ UI: Guests row action **Erkən çıxış / Depart guest** → modal (actual date
 
 Clinic: episode stays the same clinical course (`globalPersonId` / `paxKey`); update `reservationId` / `hotelStayId` / room for folio routing. Do not close the episode. Prefer a person-scoped room/stay move event over stay-level checkout. Meal/package that are **pax-owned** follow the person; stay-level meal on B is not silently the child’s board.
 
-**Swap rooms:** exchange `roomId` (and given-type if needed) between two relocatable stays. Do not rewrite folios or nightly rates. Compose two `relocate` operations with a swap-aware conflict rule (today relocate to an occupied exclusive door fails). Plan DnD already moves **a whole stay**; Swap is the explicit two-stay action.
+**Swap rooms:** exchange `roomId` between two **in-house** stays. They do not need the same booking group and they do not need a vacant door. Folios stay on their reservations. Posted nights stay. A different door class asks who pays; a guest-pays answer reprices remaining nights only. Housekeeping status is not changed. Refuse a shared door, a locked card, and a third stay that still holds the door for the longer checkout. Plan DnD still moves one stay onto a free door; Swap is the two-stay action.
 
 **Out of this ADR:** key encoder; restaurant bracelet room display (follow `globalPersonId` + current stay room once Move exists).
 
@@ -204,6 +204,10 @@ A move is stored in `RoomChangePlan` only when the door actually changes. The ch
 - FO training: four worlds (exclusive / open share / closed pair / booking rooms); verbs (room checkout vs Depart guest vs Break share vs closed-pair stay checkout).
 - Occupancy 2→1 mid-stay is a pricing amend, not unused-nights refund of the whole stay ([hotel-early-checkout-unused-nights.md](./hotel-early-checkout-unused-nights.md) applies when the **stay** checks out early).
 - Group booking wizard already creates N stays; pax still often share one `guestId` on create — Move guest assumes pax rows are real people (MDM / guest cards), not empty slots.
+
+### D7 — Sanatorium admit before room check-in
+
+On a stay that is not yet in house, the guest-row menu (⋮) offers **Admit to sanatorium** as the item above Remove. A confirm dialog accepts or cancels. The stay does not become `IN_HOUSE`, the door is not occupied, and night audit does not post the room. The clinic episode is the ordinary per-person chart. Clinic charges may post to that stay's folio. Hotel check-in keeps the episode and clears the mark. Undo and stay cancel close that person's episode. Remove from the party also asks for confirmation.
 
 ## Out of scope
 

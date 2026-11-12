@@ -3,11 +3,13 @@ import {
   ROLE_TEMPLATES,
   SYSTEM_ROLE_CODES,
   SYSTEM_ROLE_NAMES,
+  expandEntityReads,
   type Permission,
 } from "@/lib/auth/permissions";
 import {
   cutoverTemplateCode,
   isSystemRoleCode,
+  parsePermissions,
   permissionsForRole,
   resolveRoleCode,
   roleNeedsCutoverTemplate,
@@ -84,6 +86,10 @@ export async function ensureSystemRoles(db: unknown, organizationId: string): Pr
     }
     if ((row.permissionCatalogVersion ?? 0) < PERMISSION_CATALOG_VERSION) {
       data.permissionCatalogVersion = PERMISSION_CATALOG_VERSION;
+      if (!data.permissionsJson) {
+        const current = parsePermissions(row.permissionsJson);
+        if (current.length > 0) data.permissionsJson = serializePermissions(expandEntityReads(current));
+      }
     }
     if (Object.keys(data).length > 0) {
       await roleDb.update({ where: { id: row.id }, data });
@@ -98,6 +104,9 @@ export async function ensureSystemRoles(db: unknown, organizationId: string): Pr
       const template = cutoverTemplateCode(row.code);
       data.permissionsJson = serializePermissions(ROLE_TEMPLATES[template]);
       if (!row.cloneFromCode) data.cloneFromCode = template;
+    } else {
+      const current = parsePermissions(row.permissionsJson);
+      if (current.length > 0) data.permissionsJson = serializePermissions(expandEntityReads(current));
     }
     await roleDb.update({ where: { id: row.id }, data });
   }

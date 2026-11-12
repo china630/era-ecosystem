@@ -1,0 +1,11 @@
+{
+  "name": "clinic-nurse-kiosk",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Package } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -9,10 +8,10 @@ import { parsePaginatedList } from "../../../lib/paginated-list";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
-import { CatalogField } from "@era/satellite-kit/ui";
+import { CatalogField, EraListFilterBar } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
 import { bakuDateDisplay, bakuDateTimeDisplay } from "@era/satellite-kit/time";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import {
   DATA_TABLE_CLASS,
@@ -24,7 +23,6 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
   LINK_ACCENT_CLASS,
-  SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 
 type Warehouse = { id: string; name: string };
@@ -143,7 +141,13 @@ export default function InventoryMovementsPage() {
       />
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
-      <div className="flex flex-wrap items-end gap-3">
+      <EraListFilterBar
+        resetLabel={t("common.filterReset", { defaultValue: "Reset" })}
+        onReset={() => {
+          setFilterWh("");
+          setPage(1);
+        }}
+      >
         <div className="min-w-[14rem] max-w-md">
           <CatalogField
             kind="ENTITY_REF"
@@ -159,10 +163,7 @@ export default function InventoryMovementsPage() {
             ]}
           />
         </div>
-        <button type="button" onClick={() => void load()} className={`${SECONDARY_BUTTON_CLASS} px-4`}>
-          {t("inventory.refresh")}
-        </button>
-      </div>
+      </EraListFilterBar>
 
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
       {!loading && (
@@ -184,22 +185,12 @@ export default function InventoryMovementsPage() {
             </thead>
             <tbody>
               {movements.length === 0 ? (
-                <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={9} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
-                    {!error ? (
-                      <EmptyState
-                        icon={
-                          <Package
-                            className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]"
-                            aria-hidden
-                          />
-                        }
-                        title={t("inventory.emptyMovements")}
-                        description={t("inventory.emptyMovementsHint")}
-                      />
-                    ) : null}
-                  </td>
-                </tr>
+                !error ? (
+                  <FinanceEmptyTableRow
+                    colSpan={9}
+                    message={t("inventory.emptyMovements")}
+                  />
+                ) : null
               ) : (
               movements.map((m) => (
                 <tr key={m.id} className={DATA_TABLE_TR_CLASS}>

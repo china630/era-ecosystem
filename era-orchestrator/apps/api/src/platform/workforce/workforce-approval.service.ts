@@ -265,6 +265,29 @@ export class WorkforceApprovalService {
     });
   }
 
+  /** Org-structure seats for one route step. Empty means APPROVAL_STEP_UNASSIGNED. */
+  resolveStepAssignees(
+    organizationId: string,
+    employmentId: string,
+    step: {
+      kind: WorkforceApprovalStepKind;
+      orgUnitId: string | null;
+      positionId: string | null;
+      chainOffset: number | null;
+      minGradeLevel: number | null;
+    },
+  ): Promise<ResolvedAssignee[]> {
+    return this.assignees(organizationId, employmentId, step);
+  }
+
+  actorIsAssignee(
+    organizationId: string,
+    actorUserId: string,
+    assignees: ResolvedAssignee[],
+  ): Promise<boolean> {
+    return this.actorMatches(organizationId, actorUserId, assignees);
+  }
+
   private async positionLeadership(employmentId: string): Promise<boolean> {
     const emp = await this.prisma.workforceEmployment.findFirst({
       where: { id: employmentId },

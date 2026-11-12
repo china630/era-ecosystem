@@ -18,12 +18,6 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { resolveExtraPrescriber } from "@/lib/extra-prescriber";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";
-import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
-import {
-  CARE_TEAM_REQUIRED,
-  episodeCareTeamDenied,
-} from "@/domain/sanatorium/episode-care-team-gates";
-import { countEpisodeCareDoctors } from "@/domain/sanatorium/episode-care-team.service";
 import { parseBakuDateTime } from "@/lib/baku-day";
 
 export type DiagnosticPrescribeLine = {
@@ -51,14 +45,6 @@ async function loadEpisode(episodeId: string) {
   if (!episode) throw new PackageAssignError("Episode not found", "NOT_FOUND", 404);
   if (episode.status !== "OPEN") {
     throw new PackageAssignError("Episode is not OPEN", "NOT_OPEN");
-  }
-  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
-  if (anamnesisDenied) {
-    throw new PackageAssignError(anamnesisDenied, ANAMNESIS_REQUIRED);
-  }
-  const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
-  if (careDenied) {
-    throw new PackageAssignError(careDenied, CARE_TEAM_REQUIRED);
   }
   return episode;
 }
@@ -149,6 +135,8 @@ export async function prescribeDiagnosticsExtras(
   const origin = episode.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE";
   const labOrderIds: string[] = [];
   const visitIds: string[] = [];
+  let labsChecked = false;
+  let visitsChecked = false;
 
   const { resolvePackageStampForEpisode, isOverEntitlementQuota } = await import(
     "@/domain/sanatorium/entitlement-usage.service"
@@ -198,6 +186,12 @@ export async function prescribeDiagnosticsExtras(
     }
 
     if (service.kind === "visit") {
+      if (!visitsChecked) {
+        visitsChecked = true;
+        const { laneDenial } = await import("@/domain/sanatorium/lane-gates");
+        const denied = await laneDenial(episodeId, "visits");
+        if (denied) throw new PackageAssignError(denied.message, denied.code);
+      }
       const doctorId =
         prescribedByPractitionerId ??
         (
@@ -269,6 +263,13 @@ export async function prescribeDiagnosticsExtras(
       continue;
     }
 
+    if (!labsChecked) {
+      labsChecked = true;
+      const { laneDenial } = await import("@/domain/sanatorium/lane-gates");
+      const denied = await laneDenial(episodeId, "labs");
+      if (denied) throw new PackageAssignError(denied.message, denied.code);
+    }
+
     for (let i = 0; i < line.qty; i++) {
       try {
         const order = await createLabOrderWithItems({
@@ -289,10 +290,12 @@ export async function prescribeDiagnosticsExtras(
         labOrderIds.push(order.id);
       } catch (err) {
         const code = (err as { code?: string }).code;
-        if (code === LAB_ALREADY_OPEN) {
+        if (code === LAB_ALREADY_OPEN || code === "LAB_UNPAID_EXISTS") {
           throw new PackageAssignError(
-            "An open lab order already exists for this study",
-            "LAB_ALREADY_OPEN",
+            code === "LAB_UNPAID_EXISTS"
+              ? "This study already has an unpaid cheque — pay that one"
+              : "An open lab order already exists for this study",
+            code === "LAB_UNPAID_EXISTS" ? "LAB_UNPAID_EXISTS" : "LAB_ALREADY_OPEN",
             409,
           );
         }
@@ -313,7 +316,7 @@ export async function prescribeDiagnosticsExtras(
 
 /**
  * Zero mispriced package burns (inPackage + amountNet > 0, not settled).
- * Drops unpaid forcePaid duplicates when a package sibling already covers the code.
+ * Drops an unpaid paid duplicate only while an open package order of the same code still covers it.
  */
 export async function healMispricedPackageDiagnostics(episodeId: string): Promise<{
   healedVisits: number;
@@ -372,6 +375,7 @@ export async function healMispricedPackageDiagnostics(episodeId: string): Promis
     healedLabs += 1;
   }
 
+  const openPackageLabStatuses = ["ORDERED", "COLLECTED", "IN_PROGRESS", "RESULT_READY"] as const;
   const packageLabCodes = new Set(
     (
       await prisma.labOrderItem.findMany({
@@ -379,7 +383,7 @@ export async function healMispricedPackageDiagnostics(episodeId: string): Promis
           inPackage: true,
           labOrder: {
             clinicalEpisodeId: episodeId,
-            status: { not: "CANCELLED" },
+            status: { in: [...openPackageLabStatuses] },
           },
         },
         select: { serviceCode: true },
@@ -393,7 +397,7 @@ export async function healMispricedPackageDiagnostics(episodeId: string): Promis
           inPackage: true,
           visit: {
             clinicalEpisodeId: episodeId,
-            status: { not: "CANCELLED" },
+            status: "IN_PROGRESS",
           },
         },
         select: { serviceCode: true },
@@ -593,6 +597,19 @@ export async function deletePendingDiagnostic(
   await prisma.visit.delete({ where: { id } });
 }
 
+async function inHouseReservationId(row: {
+  reservationId: string | null;
+  clinicalEpisodeId: string | null;
+}): Promise<string | null> {
+  if (row.reservationId) return row.reservationId;
+  if (!row.clinicalEpisodeId) return null;
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: row.clinicalEpisodeId },
+    select: { reservationId: true },
+  });
+  return episode?.reservationId ?? null;
+}
+
 export type DiagnosticPayLine = { id: string; kind: "lab" | "visit" };
 
 export type DiagnosticBatchLine = { id: string; kind: "lab" | "visit"; name: string; reason?: string };
@@ -667,7 +684,8 @@ export async function payDiagnosticsExtras(
       const ticketId = clinicLabTicketRef(order.id);
       try {
         if (order.patientOrigin === "IN_HOUSE") {
-          if (!order.reservationId) {
+          const reservationId = await inHouseReservationId(order);
+          if (!reservationId) {
             rejected.push({
               id: order.id,
               kind: "lab",
@@ -678,7 +696,7 @@ export async function payDiagnosticsExtras(
           }
           await postProcedureFolioCharge({
             hotelOrganizationId: hotelOrganizationId ?? undefined,
-            reservationId: order.reservationId,
+            reservationId,
             amount,
             description: `${name} · çek ${receipt}`,
             externalTicketId: ticketId,
@@ -689,7 +707,10 @@ export async function payDiagnosticsExtras(
             where: { id: order.id },
             data: {
               settledAt: new Date(),
+              paidAt: new Date(),
+              paidByUserId: actorUserId,
               paymentReceiptRef: receipt,
+              reservationId,
             },
           });
           accepted.push({ id: order.id, kind: "lab", name });
@@ -715,6 +736,7 @@ export async function payDiagnosticsExtras(
             data: {
               settlementPendingId: receipt,
               paymentReceiptRef: receipt,
+              paidByUserId: actorUserId,
             },
           });
           rejected.push({
@@ -757,7 +779,8 @@ export async function payDiagnosticsExtras(
     const ticketId = clinicVisitTicketRef(visit.id);
     try {
       if (visit.patientOrigin === "IN_HOUSE") {
-        if (!visit.reservationId) {
+        const reservationId = await inHouseReservationId(visit);
+        if (!reservationId) {
           rejected.push({
             id: visit.id,
             kind: "visit",
@@ -768,7 +791,7 @@ export async function payDiagnosticsExtras(
         }
         await postProcedureFolioCharge({
           hotelOrganizationId: hotelOrganizationId ?? undefined,
-          reservationId: visit.reservationId,
+          reservationId,
           amount,
           description: `${name} · çek ${receipt}`,
           externalTicketId: ticketId,
@@ -779,8 +802,11 @@ export async function payDiagnosticsExtras(
           where: { id: visit.id },
           data: {
             settledAt: new Date(),
+            paidAt: new Date(),
+            paidByUserId: actorUserId,
             paymentReceiptRef: receipt,
             billingTarget: "HOTEL_FOLIO",
+            reservationId,
           },
         });
         accepted.push({ id: visit.id, kind: "visit", name });
@@ -806,6 +832,7 @@ export async function payDiagnosticsExtras(
           data: {
             settlementPendingId: receipt,
             paymentReceiptRef: receipt,
+            paidByUserId: actorUserId,
           },
         });
         rejected.push({
@@ -825,7 +852,6 @@ export async function payDiagnosticsExtras(
     }
   }
 
-  void actorUserId;
   return { paymentReceiptRef: receipt, accepted, rejected };
 }
 
@@ -851,6 +877,8 @@ export async function reverseDiagnosticPayment(input: {
       where: { id: order.id },
       data: {
         settledAt: null,
+        paidAt: null,
+        paidByUserId: null,
         settlementPendingId: null,
         paymentReceiptRef: null,
       },
@@ -863,6 +891,8 @@ export async function reverseDiagnosticPayment(input: {
     where: { id: visit.id },
     data: {
       settledAt: null,
+      paidAt: null,
+      paidByUserId: null,
       settlementPendingId: null,
       paymentReceiptRef: null,
     },

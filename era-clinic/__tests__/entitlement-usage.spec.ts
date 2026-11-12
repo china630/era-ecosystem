@@ -15,6 +15,7 @@ jest.mock("@/lib/prisma", () => ({
       findUnique: jest.fn(),
     },
     programInstance: { findFirst: jest.fn() },
+    tenant: { findFirst: jest.fn().mockResolvedValue({ noShowBurnsQuota: true }) },
     programTemplateBlockMember: { findMany: jest.fn() },
   },
 }));

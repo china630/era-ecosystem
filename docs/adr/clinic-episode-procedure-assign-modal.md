@@ -62,7 +62,7 @@ Single modal; **no nested second modal**.
 ```
 
 1. **Left:** package lines from `ProgramProcedureBalance` (and template names): procedure name, remaining count, `+`. Not an expanded session list.
-2. **Right:** one card per SKU + quota + lock (not per assign batch). Title is `Name ×qty (draft)`; physio params each on their own line. **COMPLETED** (consumed) rows are **grey, locked**, qty = consumed; no delete; quota does not return. Card actions are compact icons (+ / − / replace / delete).
+2. **Right:** one card per SKU + quota + regime (sites, laterality, apply mode, physio fields — not the translated label or the note). The same regime from the package and from paid extras shares that card; the paid count is its own row. A different regime is another card, ordered by the first session of that regime. Title is `Name ×qty (draft)`; that regime's params sit under the title. Finished sessions stay on the same card as a done count. Plus and minus change only sessions that have not started. Card actions are compact icons (+ / − / replace / delete).
 3. **`+` or edit:** form **overlays the right column** (drawer/panel inside the same modal) — type-gated physio fields, sites, note, **quantity**. [Done] on the form only updates **draft** on the right.
 4. **Save (modal):** single commit — create/adjust orders, run placement, refresh balances and card schedule. **Cancel:** discard draft; DB unchanged.
 5. **Reopen:** right side shows last committed state. Doctor may increase qty on an active right row, or use **All** (fill remaining for that line / selection), then Save → planner **incrementally** places only the delta (does not move fixed history).
@@ -71,7 +71,7 @@ Single modal; **no nested second modal**.
 
 - Quantity **≠** one schedule card: `qty = N` means **N sessions**, planner spreads them (see D5).
 - Right column shows **aggregates** (`Ozone ×7`); schedule zone on the card shows **per-slot cards**.
-- Qty edits (+/−) and leftover drafts merge onto the same SKU card. Distinct physio params still appear as stacked lines on that card rather than splitting cards.
+- Qty edits (+/−) stay on that regime card. Minus cancels the latest not-yet-started session of that regime. Plus appends a session of that regime after every card of the code. Saxla then reseats movable OPEN sessions of the code in that order, one per working day, closing a hole by shifting the later cards. Started, completed, paid, and hand-moved sessions stay on their day. A paid plus does not spend package quota. Closed days are skipped. Sessions that do not fit the stay are reported.
 - Placement times are **automatic** (FIFO / incremental engine). Saxla seats **new** modal lines in add order (first row first); already `SCHEDULED` rows stay. A new in-package SKU past **that block's** daily distinct cap is `day_full`, not `no_staff`. Paid extras skip that cap. No slot picker in the doctor form in this slice.
 
 ### D4 — Lazy assign replaces package pre-expand (amends CLI-31 UX)
@@ -92,7 +92,7 @@ For **in-package** treatment lines:
 - `ProgramTemplateProcedure.dailyDistinctCap` (1–12) on every block kind. Empty means **1**. The screen no longer hides the cell for massage or other kinds, and the code no longer substitutes physio 3 / bath 1 / paraffin 1.
 - SatAdmin sets it on `/admin/program-templates`. The entitlement snapshot stores the same field for the open stay.
 - Guest balance on a new course and on recalc (one course, all open courses, and a stay-date change) caps a per-night block at non-Sunday stay nights × that daily number, and never above the package knot. Per-stay blocks (labs, exams) keep the knot.
-- When the stay days are full, Save asks whether leftover cabin rows go on checkout morning until 12:00. Open attendance is not moved onto a cabin for that question.
+- When the stay days are full, Save asks whether leftover package rows go on checkout morning and leaves the modal open. Timed rows must finish by 12:00. Open attendance takes that calendar day and is not moved onto a cabin. Paid extras with the same `no_slot` / `no_day` miss share that checkout-morning answer. A package row that still has no day after that answer is deleted and the quota returns to the remaining balance. The modal keeps a fixed height. The right half is a stay-day grid (one row per regime). Columns are sized for 23 days (max stay plus one day before check-in and one after checkout) and do not stretch when the stay is shorter. The header shows the stay month name centered over its days, then the day number. Dates and dots are centered. Today is a thin rule on both sides of that column. The modal split is 40% assign and 60% grid. Gray cells are days outside the stay, Sundays, and checkout. Past working days of the stay, including a past Saturday, are pale pink. Saturday stays the short working day. Today has a thin mark. A click anywhere on the row focuses that procedure. A dot is the saved plan only: package, paid (amber), or done. Labs and visits are not on that grid.
 - A massage procedure (a type that has an active masseur skill) shows one masseur field on that line. Empty means any free skilled person. A surname keeps the pool to that person and the planner keeps searching later hours. Package sessions and paid sessions of the same procedure share the surname. Changing or clearing it reseats cabin rows in PROPOSED, SCHEDULED, and PENDING_PAY, including rows reception already moved. Open attendance keeps its day and only stores the name. A day where that masseur is absent is skipped. COMPLETED, CHECKED_IN, NO_SHOW, and CANCELLED stay.
 - A paid extra does not spend the block's daily cap. The same procedure code still cannot be seated twice on one Baku day.
 - A bath or paraffin **Əvəz et** writes `XFER-{predecessor}--{sku}` and spends the **predecessor** block's daily cap.
@@ -102,7 +102,7 @@ For **in-package** treatment lines:
 Planner constraint for package (and default for extras unless overridden later):
 
 - **At most one session per procedure code (category) per calendar day** (Asia/Baku) for the episode.
-- **Daily in-package cap:** distinct in-package SKUs **of that block** on a Baku day (`dailyDistinctCap`; empty = 1). Paid extras (`inPackage: false`) do **not** count and may still land today. When the stay days are full, Save asks whether the leftover package rows go on checkout morning until 12:00. Same-code collision jumps the **whole next work day**, not +5 minutes.
+- **Daily in-package cap:** distinct in-package SKUs **of that block** on a Baku day (`dailyDistinctCap`; empty = 1). Paid extras (`inPackage: false`) do **not** count and may still land today. When the stay days are full, Save asks once whether leftover package rows and paid extras go on checkout morning until 12:00. Same-code collision jumps the **whole next work day**, not +5 minutes.
 
 Consequences:
 

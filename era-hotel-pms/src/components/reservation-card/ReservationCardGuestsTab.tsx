@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ArrowRightLeft, Camera, LogOut, Search, Star, Trash2, UserPlus } from 'lucide-react';
+import { ArrowRightLeft, Camera, LogOut, Search, Smartphone, Star, Stethoscope, Trash2, UserPlus } from 'lucide-react';
+import { GuestAppLinkModal } from '@/components/reservation-card/GuestAppLinkModal';
+import { MrzLiveFrame } from '@/components/mrz/MrzLiveFrame';
 import {
   CatalogField,
   DROPDOWN_ITEM_CLASS,
@@ -17,6 +19,7 @@ import {
   type EraDataGridColumn,
 } from '@era/satellite-kit/ui';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { guestListItems } from '@/lib/guest-list-identity';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
 import {
@@ -59,6 +62,7 @@ type PaxGridRow = PaxRow & Record<string, unknown> & { _idx: number };
  * Compact party list (HOT-BOOK-06): role · name link · docs · DOB/age · medical badge · status · ⋮.
  */
 export function ReservationCardGuestsTab({
+  reservationId = null,
   guestOptions,
   pax,
   partyBillingMode,
@@ -81,7 +85,10 @@ export function ReservationCardGuestsTab({
   partyOpsEnabled = false,
   onDepartGuest,
   onMoveGuest,
+  clinicAdmitEnabled = false,
+  onClinicAdmit,
 }: {
+  reservationId?: string | null;
   isCreate?: boolean;
   guestId: string;
   guestOptions: SelectOption[];
@@ -111,16 +118,74 @@ export function ReservationCardGuestsTab({
   partyOpsEnabled?: boolean;
   onDepartGuest?: (paxIndex: number) => void;
   onMoveGuest?: (paxIndex: number) => void;
+  /** Saved stay, not yet in house. */
+  clinicAdmitEnabled?: boolean;
+  onClinicAdmit?: (paxIndex: number) => void;
 }) {
   const t = useTranslations('reservationCard');
+  const [linkPaxId, setLinkPaxId] = useState<string | null>(null);
+  const [mrzIdx, setMrzIdx] = useState<number | null>(null);
+  const [questionnaireHint, setQuestionnaireHint] = useState<string | null>(null);
+  const [familyGrants, setFamilyGrants] = useState<
+    Array<{ id: string; grantorGuestId: string; granteeGuestId: string; deskConfirmed: boolean }>
+  >([]);
+  const [stayOrders, setStayOrders] = useState<
+    Array<{ id: string; kind: string; status: string; note: string | null }>
+  >([]);
+  const [msgPaxId, setMsgPaxId] = useState<string>('');
+  const [msgKind, setMsgKind] = useState<'RECEPTION' | 'CLINIC' | 'MARKETING'>('RECEPTION');
+  const [msgBody, setMsgBody] = useState('');
+  const [msgBusy, setMsgBusy] = useState(false);
+  const [msgHint, setMsgHint] = useState<string | null>(null);
   const { byKind } = useHotelLookupOptions(['VIP_TYPE', 'TRIP_REASON']);
   const [menuOpenIdx, setMenuOpenIdx] = useState<number | null>(null);
+  const [removeIdx, setRemoveIdx] = useState<number | null>(null);
   const [rowEdit, setRowEdit] = useState<number | null>(null);
   const [rowQuery, setRowQuery] = useState('');
   const [rowHits, setRowHits] = useState<SelectOption[]>([]);
   const [starConfirm, setStarConfirm] = useState<null | { index: number; kind: 'make' | 'clear' }>(
     null,
   );
+
+  useEffect(() => {
+    if (!reservationId) {
+      setQuestionnaireHint(null);
+      setFamilyGrants([]);
+      setStayOrders([]);
+      return;
+    }
+    let cancelled = false;
+    void fetch(`/api/guest-app/reservations/${reservationId}/questionnaire`)
+      .then(async (res) => {
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          items: Array<{ complete: boolean; gaps: string[] }>;
+        };
+        const incomplete = data.items.filter((row) => !row.complete).length;
+        setQuestionnaireHint(
+          incomplete === 0 ? t('questionnaireComplete') : t('questionnaireGaps', { count: incomplete }),
+        );
+      })
+      .catch(() => undefined);
+    void fetch(`/api/guest-app/reservations/${reservationId}/family-grants`)
+      .then(async (res) => {
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as { items: typeof familyGrants };
+        setFamilyGrants(data.items);
+      })
+      .catch(() => undefined);
+    void fetch(`/api/guest-app/reservations/${reservationId}/orders`)
+      .then(async (res) => {
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as { items: typeof stayOrders };
+        setStayOrders(data.items);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [reservationId, pax, t]);
+
   const equalMode = partyBillingMode === 'EQUAL';
 
   const hasPartyMembers = pax.some(
@@ -430,6 +495,30 @@ export function ReservationCardGuestsTab({
                 <button
                   type="button"
                   className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
+                  onClick={() => {
+                    setMenuOpenIdx(null);
+                    setMrzIdx(row._idx);
+                  }}
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  {t('mrzLive')}
+                </button>
+                {reservationId && row.id ? (
+                  <button
+                    type="button"
+                    className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
+                    onClick={() => {
+                      setMenuOpenIdx(null);
+                      setLinkPaxId(row.id!);
+                    }}
+                  >
+                    <Smartphone className="h-3.5 w-3.5" />
+                    {t('guestAppLink')}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
                   disabled={!partyOpsEnabled || !onDepartGuest || Boolean(row.departedAt)}
                   onClick={() => {
                     setMenuOpenIdx(null);
@@ -451,12 +540,26 @@ export function ReservationCardGuestsTab({
                   <ArrowRightLeft className="h-3.5 w-3.5" />
                   {t('moveGuest')}
                 </button>
+                {clinicAdmitEnabled && row.medicalPackageCode?.trim() && !row.departedAt ? (
+                  <button
+                    type="button"
+                    className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
+                    disabled={!row.id || !onClinicAdmit}
+                    onClick={() => {
+                      setMenuOpenIdx(null);
+                      onClinicAdmit?.(row._idx);
+                    }}
+                  >
+                    <Stethoscope className="h-3.5 w-3.5" />
+                    {row.clinicAdmittedAt ? t('clinicRevokeGuest') : t('clinicAdmitGuest')}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={`${DROPDOWN_ITEM_CLASS} flex items-center gap-2`}
                   onClick={() => {
                     setMenuOpenIdx(null);
-                    removeAt(row._idx);
+                    setRemoveIdx(row._idx);
                   }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -480,6 +583,8 @@ export function ReservationCardGuestsTab({
       partyOpsEnabled,
       onDepartGuest,
       onMoveGuest,
+      clinicAdmitEnabled,
+      onClinicAdmit,
       onOpenGuestCard,
       onScanId,
       onNewGuest,
@@ -584,6 +689,235 @@ export function ReservationCardGuestsTab({
           </span>
         </div>
       </div>
+      <EraModal
+        open={removeIdx != null}
+        title={t('removeGuestTitle')}
+        onClose={() => setRemoveIdx(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setRemoveIdx(null)}
+            submitLabel={t('removeFromParty')}
+            onSubmit={() => {
+              if (removeIdx != null) removeAt(removeIdx);
+              setRemoveIdx(null);
+            }}
+          />
+        }
+      >
+        <p className="m-0 text-[13px] text-[#34495E]">
+          {t('removeGuestHint', {
+            name:
+              removeIdx != null
+                ? [pax[removeIdx]?.firstName, pax[removeIdx]?.lastName].filter(Boolean).join(' ') ||
+                  t('removeFromParty')
+                : '',
+          })}
+        </p>
+        {removeIdx != null && pax[removeIdx]?.clinicAdmittedAt ? (
+          <p className="m-0 mt-2 text-[13px] text-[#34495E]">{t('clinicRevokeHint')}</p>
+        ) : null}
+      </EraModal>
+      {reservationId && linkPaxId ? (
+        <GuestAppLinkModal
+          open
+          reservationId={reservationId}
+          paxId={linkPaxId}
+          onClose={() => setLinkPaxId(null)}
+        />
+      ) : null}
+      <EraModal
+        open={mrzIdx != null}
+        title={t('mrzLive')}
+        onClose={() => setMrzIdx(null)}
+        footer={<EraModalFooter onCancel={() => setMrzIdx(null)} />}
+      >
+        <MrzLiveFrame
+          captureKey={String(mrzIdx ?? 'x')}
+          onCaptured={(doc) => {
+            if (mrzIdx == null) return;
+            const next = [...pax];
+            const row = next[mrzIdx];
+            if (!row) return;
+            next[mrzIdx] = {
+              ...row,
+              firstName: doc.firstName || row.firstName,
+              lastName: doc.lastName || row.lastName,
+              sex: doc.sex === 'MALE' ? 'M' : doc.sex === 'FEMALE' ? 'F' : row.sex,
+              birthDate: doc.birthDate || row.birthDate,
+              nationality: doc.nationality || row.nationality,
+              passportNo: doc.documentNumber || row.passportNo,
+            };
+            onPax(next);
+            setMrzIdx(null);
+          }}
+        />
+      </EraModal>
+      {questionnaireHint ? (
+        <p className={`mt-2 text-[12px] ${TEXT_MUTED_CLASS}`}>{questionnaireHint}</p>
+      ) : null}
+      {familyGrants.length > 0 ? (
+        <div className={`mt-3 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
+          <p className="m-0 font-medium text-[#2C3E50]">{t('familyGrantsTitle')}</p>
+          {familyGrants.map((g) => (
+            <div key={g.id} className="flex flex-wrap items-center gap-2">
+              <span>
+                {g.grantorGuestId.slice(0, 8)} → {g.granteeGuestId.slice(0, 8)}{' '}
+                {g.deskConfirmed ? t('familyGrantConfirmed') : t('familyGrantPending')}
+              </span>
+              {!g.deskConfirmed ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => {
+                    void fetch(`/api/guest-app/staff/family-grants/${g.id}/confirm`, {
+                      method: 'POST',
+                    }).then((res) => {
+                      if (!res.ok) return;
+                      setFamilyGrants((rows) =>
+                        rows.map((row) =>
+                          row.id === g.id ? { ...row, deskConfirmed: true } : row,
+                        ),
+                      );
+                    });
+                  }}
+                >
+                  {t('familyGrantConfirm')}
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {stayOrders.length > 0 ? (
+        <div className={`mt-3 space-y-1 text-[12px] ${TEXT_MUTED_CLASS}`}>
+          <p className="m-0 font-medium text-[#2C3E50]">{t('stayOrdersTitle')}</p>
+          {stayOrders.map((o) => (
+            <div key={o.id} className="flex flex-wrap items-center gap-2">
+              <span>
+                {o.kind} · {o.status}
+                {o.note ? ` — ${o.note}` : ''}
+              </span>
+              {o.status === 'REQUESTED' || o.status === 'QUEUED' ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => {
+                    void fetch(`/api/guest-app/staff/orders/${o.id}`, {
+                      method: 'PATCH',
+                      headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({ status: 'CONFIRMED' }),
+                    }).then((res) => {
+                      if (!res.ok) return;
+                      setStayOrders((rows) =>
+                        rows.map((row) =>
+                          row.id === o.id ? { ...row, status: 'CONFIRMED' } : row,
+                        ),
+                      );
+                    });
+                  }}
+                >
+                  {t('stayOrderConfirm')}
+                </button>
+              ) : null}
+              {o.status === 'CONFIRMED' ? (
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  onClick={() => {
+                    void fetch(`/api/guest-app/staff/orders/${o.id}`, {
+                      method: 'PATCH',
+                      headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({ status: 'COMPLETED' }),
+                    }).then((res) => {
+                      if (!res.ok) return;
+                      setStayOrders((rows) =>
+                        rows.map((row) =>
+                          row.id === o.id ? { ...row, status: 'COMPLETED' } : row,
+                        ),
+                      );
+                    });
+                  }}
+                >
+                  {t('stayOrderComplete')}
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {reservationId && pax.some((row) => row.id) ? (
+        <div className={`mt-3 space-y-2 text-[12px] ${TEXT_MUTED_CLASS}`}>
+          <p className="m-0 font-medium text-[#2C3E50]">{t('guestMsgTitle')}</p>
+          <p className="m-0">{t('guestMsgHint')}</p>
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('guestMsgPax')}
+            value={msgPaxId || (pax.find((row) => row.id)?.id ?? '')}
+            options={pax
+              .filter((row) => row.id)
+              .map((row) => ({
+                value: String(row.id),
+                label:
+                  [row.firstName, row.lastName].filter(Boolean).join(' ') ||
+                  String(row.id).slice(0, 8),
+              }))}
+            onChange={(next) => setMsgPaxId(String(next))}
+          />
+          <CatalogField
+            kind="CLOSED_SMALL"
+            label={t('guestMsgKind')}
+            value={msgKind}
+            options={[
+              { value: 'RECEPTION', label: t('guestMsgKindReception') },
+              { value: 'CLINIC', label: t('guestMsgKindClinic') },
+              { value: 'MARKETING', label: t('guestMsgKindMarketing') },
+            ]}
+            onChange={(next) =>
+              setMsgKind(String(next) as 'RECEPTION' | 'CLINIC' | 'MARKETING')
+            }
+          />
+          <label className="block">
+            {t('guestMsgBody')}
+            <textarea
+              className={`${MODAL_INPUT_CLASS} mt-1 w-full`}
+              rows={2}
+              value={msgBody}
+              onChange={(e) => setMsgBody(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled={msgBusy || !msgBody.trim()}
+            onClick={() => {
+              const paxId = msgPaxId || pax.find((row) => row.id)?.id;
+              if (!reservationId || !paxId) return;
+              setMsgBusy(true);
+              setMsgHint(null);
+              void fetch(
+                `/api/guest-app/reservations/${reservationId}/pax/${paxId}/messages`,
+                {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ kind: msgKind, body: msgBody.trim() }),
+                },
+              )
+                .then(async (res) => {
+                  if (!res.ok) {
+                    setMsgHint(t('guestMsgFail'));
+                    return;
+                  }
+                  setMsgBody('');
+                  setMsgHint(t('guestMsgSent'));
+                })
+                .finally(() => setMsgBusy(false));
+            }}
+          >
+            {t('guestMsgSend')}
+          </button>
+          {msgHint ? <p className="m-0">{msgHint}</p> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

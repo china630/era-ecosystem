@@ -32,6 +32,7 @@ const PUBLIC = new Set([
   "/sso/callback",
   "/help",
   "/m/x",
+  "/access-denied",
 ]);
 
 describe("fnb page route inventory", () => {

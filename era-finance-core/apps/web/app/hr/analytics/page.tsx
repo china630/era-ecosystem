@@ -4,7 +4,6 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CatalogField } from "@era/satellite-kit/ui";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
 import { apiFetch } from "../../../lib/api-client";
 import { parseHrEmployeesResponse } from "../../../lib/hr-employees-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
@@ -251,12 +250,7 @@ export default function HrAnalyticsPage() {
       ) : null}
       {loading ? <p className="text-[13px] text-[#7F8C8D]">{t("common.loading")}</p> : null}
 
-      {!loading && employees.length === 0 ? (
-        <EmptyState
-          title={t("hrAnalytics.emptyTitle")}
-          description={t("hrAnalytics.emptyHint")}
-        />
-      ) : !loading ? (
+      {!loading ? (
         <section className={`${CARD_CONTAINER_CLASS} overflow-x-auto p-4`}>
           <div
             className="inline-grid gap-px rounded-xl bg-[#D5DADF] p-px"
@@ -286,6 +280,11 @@ export default function HrAnalyticsPage() {
               );
             })}
 
+            {employees.length === 0 ? (
+              <div className="col-span-full bg-white px-3 py-8 text-center text-[13px] text-[#7F8C8D]">
+                {t("hrAnalytics.emptyTitle")}
+              </div>
+            ) : null}
             {employees.map((emp) => (
               <Fragment key={emp.id}>
                 <div

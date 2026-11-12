@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { EraModal } from '@/components/EraModal';
 import {
@@ -11,6 +11,17 @@ import {
 } from '@era/satellite-kit/ui';
 import { guestComposedFullName } from '@/lib/guest-identity.shared';
 import { mapNationalityToIso } from '@/lib/person-documents';
+import {
+  clientPointInBox,
+  cropRectFromPoints,
+  isUsableCrop,
+  MRZ_CROP_ANGLE_MAX,
+  MRZ_CROP_ANGLE_MIN,
+  withCropAngle,
+  type CropRect,
+} from '@/lib/mrz/crop-rect';
+import { isPdfFile, isSupportedScanFile, rasterizePdfFirstPage } from '@/lib/mrz/pdf-page';
+import { orientCropForOcr, sampleRotatedCrop } from '@/lib/mrz/sample-rotated-crop';
 
 type Parsed = {
   lastName: string;
@@ -64,21 +75,82 @@ export function PassportScanModal({
   const t = useTranslations('guestCard');
   const tc = useTranslations('common');
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const cropBoxRef = useRef<HTMLDivElement | null>(null);
+  const srcRef = useRef<string | null>(null);
   const [src, setSrc] = useState<string | null>(null);
-  const [drag, setDrag] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [imageReady, setImageReady] = useState(false);
+  const [drag, setDrag] = useState<CropRect | null>(null);
   const [parsed, setParsed] = useState<Parsed | null>(null);
   const [match, setMatch] = useState<Match | null>(null);
   const [currentSnap, setCurrentSnap] = useState<Hit | null>(null);
   const [busy, setBusy] = useState(false);
   const origin = useRef<{ x: number; y: number } | null>(null);
+  const drawingCleanup = useRef<(() => void) | null>(null);
+
+  function stopCropDraw() {
+    drawingCleanup.current?.();
+    drawingCleanup.current = null;
+    origin.current = null;
+  }
+
+  function revokeSrc() {
+    if (srcRef.current) {
+      URL.revokeObjectURL(srcRef.current);
+      srcRef.current = null;
+    }
+  }
+
+  function replaceSrc(next: string | null) {
+    stopCropDraw();
+    revokeSrc();
+    srcRef.current = next;
+    setSrc(next);
+    setImageReady(false);
+    setDrag(null);
+  }
 
   function reset() {
+    stopCropDraw();
+    revokeSrc();
     setSrc(null);
+    setImageReady(false);
     setDrag(null);
     setParsed(null);
     setMatch(null);
     setCurrentSnap(null);
   }
+
+  function beginCropDraw(start: { x: number; y: number }) {
+    stopCropDraw();
+    origin.current = start;
+    setDrag({ x: start.x, y: start.y, w: 0, h: 0, angleDeg: 0 });
+    function onMove(e: PointerEvent) {
+      if (!origin.current || !cropBoxRef.current) return;
+      const box = cropBoxRef.current.getBoundingClientRect();
+      setDrag(cropRectFromPoints(origin.current, clientPointInBox(e.clientX, e.clientY, box), 0));
+    }
+    function onUp() {
+      stopCropDraw();
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    drawingCleanup.current = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+  }
+
+  useEffect(() => {
+    if (!open) reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when the modal closes
+  }, [open]);
+
+  useEffect(() => () => {
+    stopCropDraw();
+    revokeSrc();
+  }, []);
 
   async function loadCurrentSnap(guestId: string | null | undefined) {
     if (!guestId) {
@@ -126,33 +198,44 @@ export function PassportScanModal({
     onClose();
   }
 
+  async function loadScanFile(file: File) {
+    setParsed(null);
+    setMatch(null);
+    if (!isSupportedScanFile(file)) {
+      showApiError({ error: t('mrzFileFail') });
+      replaceSrc(null);
+      return;
+    }
+    setBusy(true);
+    try {
+      if (isPdfFile(file)) {
+        const blob = await rasterizePdfFirstPage(file);
+        replaceSrc(URL.createObjectURL(blob));
+      } else {
+        replaceSrc(URL.createObjectURL(file));
+      }
+    } catch {
+      showApiError({ error: isPdfFile(file) ? t('mrzPdfFail') : t('mrzFileFail') });
+      replaceSrc(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function readCrop() {
     const image = imgRef.current;
-    if (!image || !drag || drag.w < 8 || drag.h < 8) return;
+    if (!image || !imageReady || !image.naturalWidth || !image.clientWidth || !isUsableCrop(drag)) return;
     setBusy(true);
     try {
       const scaleX = image.naturalWidth / image.clientWidth;
       const scaleY = image.naturalHeight / image.clientHeight;
-      const sx = drag.x * scaleX;
-      const sy = drag.y * scaleY;
-      const sw = drag.w * scaleX;
-      const sh = drag.h * scaleY;
-      const vertical = sh > sw;
-      const angles = vertical ? [90, 270] : [0];
+      const sample = sampleRotatedCrop(image, drag, scaleX, scaleY);
+      const canvases = orientCropForOcr(sample, drag);
       let best: { text: string; parsed: Parsed | null } | null = null;
       const { createWorker } = await import('tesseract.js');
       const worker = await createWorker('eng');
       await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<' });
-      for (const angle of angles) {
-        const canvas = document.createElement('canvas');
-        const sideways = angle !== 0;
-        canvas.width = sideways ? sh : sw;
-        canvas.height = sideways ? sw : sh;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) continue;
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate((angle * Math.PI) / 180);
-        ctx.drawImage(image, sx, sy, sw, sh, -sw / 2, -sh / 2, sw, sh);
+      for (const canvas of canvases) {
         const { data } = await worker.recognize(canvas);
         const res = await fetch('/api/guests/mrz-match', {
           method: 'POST',
@@ -286,53 +369,80 @@ export function PassportScanModal({
         <div className="space-y-3">
           <input
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,application/pdf,.pdf"
+            disabled={busy}
             onChange={(e) => {
               const file = e.target.files?.[0];
+              e.target.value = '';
               if (!file) return;
-              setParsed(null);
-              setSrc(URL.createObjectURL(file));
+              void loadScanFile(file);
             }}
           />
           {src ? (
             <div
-              className="relative inline-block max-w-full"
-              onMouseDown={(e) => {
-                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                origin.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-                setDrag({ x: origin.current.x, y: origin.current.y, w: 0, h: 0 });
-              }}
-              onMouseMove={(e) => {
-                if (!origin.current) return;
-                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                setDrag({
-                  x: Math.min(origin.current.x, x),
-                  y: Math.min(origin.current.y, y),
-                  w: Math.abs(x - origin.current.x),
-                  h: Math.abs(y - origin.current.y),
-                });
-              }}
-              onMouseUp={() => {
-                origin.current = null;
-              }}
-              onMouseLeave={() => {
-                origin.current = null;
+              ref={cropBoxRef}
+              className="relative inline-block max-w-full cursor-crosshair touch-none select-none"
+              onPointerDown={(e) => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                e.preventDefault();
+                const box = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                beginCropDraw(clientPointInBox(e.clientX, e.clientY, box));
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img ref={imgRef} src={src} alt="" className="max-h-[480px] max-w-full" />
+              <img
+                ref={imgRef}
+                src={src}
+                alt=""
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                onLoad={() => setImageReady(true)}
+                onError={() => {
+                  setImageReady(false);
+                  showApiError({ error: t('mrzFileFail') });
+                  replaceSrc(null);
+                }}
+                className="pointer-events-none max-h-[480px] max-w-full select-none"
+              />
               {drag ? (
                 <div
-                  className="pointer-events-none absolute border-2 border-[#2980B9]"
-                  style={{ left: drag.x, top: drag.y, width: drag.w, height: drag.h }}
+                  className="pointer-events-none absolute border-2 border-[#2980B9] bg-[#2980B9]/15"
+                  style={{
+                    left: drag.x,
+                    top: drag.y,
+                    width: drag.w,
+                    height: drag.h,
+                    transform: `rotate(${drag.angleDeg}deg)`,
+                    transformOrigin: 'center center',
+                  }}
                 />
               ) : null}
             </div>
           ) : null}
           <p className="text-[13px] text-[#7F8C8D]">{t('mrzHint')}</p>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy || !drag} onClick={() => void readCrop()}>
+          {isUsableCrop(drag) ? (
+            <label className="flex flex-col gap-1 text-[13px] text-[#2C3E50]">
+              {t('mrzAngle', { deg: drag.angleDeg })}
+              <input
+                type="range"
+                min={MRZ_CROP_ANGLE_MIN}
+                max={MRZ_CROP_ANGLE_MAX}
+                step={1}
+                value={drag.angleDeg}
+                disabled={busy}
+                onChange={(e) => setDrag(withCropAngle(drag, Number(e.target.value)))}
+              />
+            </label>
+          ) : null}
+          {!isUsableCrop(drag) && drag ? (
+            <p className="text-[13px] text-[#B9770E]">{t('mrzCropSmall')}</p>
+          ) : null}
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy || !imageReady || !isUsableCrop(drag)}
+            onClick={() => void readCrop()}
+          >
             {t('mrzRead')}
           </button>
         </div>

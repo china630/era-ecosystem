@@ -19,6 +19,16 @@ async function ensureAgencyBookingSource() {
   });
 }
 
+export async function findAgencyById(id: string) {
+  return prisma.agency.findUnique({ where: { id } });
+}
+
+export async function findAgencyOwnedReservation(agencyId: string, reservationId: string) {
+  return prisma.reservation.findFirst({
+    where: { id: reservationId, agencyId },
+  });
+}
+
 export async function listAgencyContracts(agencyId: string) {
   return prisma.salesContract.findMany({
     where: {

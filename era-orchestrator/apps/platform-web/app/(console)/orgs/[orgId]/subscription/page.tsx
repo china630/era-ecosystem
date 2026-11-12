@@ -10,6 +10,7 @@ import {
   DatePicker,
   GHOST_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
+  PageHeader,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { useAuth } from "@/lib/auth-context";
@@ -96,9 +97,6 @@ export default function OrgSubscriptionAdminPage() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [tier, setTier] = useState<Tier>("TIER_0");
   const [quotaJson, setQuotaJson] = useState("");
-  const [quotasOpen, setQuotasOpen] = useState(false);
-  const [satDates, setSatDates] = useState<Record<string, string>>({});
-  const [modDates, setModDates] = useState<Record<string, string>>({});
 
   const reload = useCallback(async () => {
     if (!token || !orgId) return;
@@ -129,16 +127,6 @@ export default function OrgSubscriptionAdminPage() {
           ? JSON.stringify(next.org.quotaOverrides, null, 2)
           : "",
       );
-      const nextSat: Record<string, string> = {};
-      for (const s of next.satellites) {
-        nextSat[s.satelliteKey] = toDateInput(s.trialExpiresAt);
-      }
-      setSatDates(nextSat);
-      const nextMod: Record<string, string> = {};
-      for (const m of next.modules) {
-        nextMod[m.moduleKey] = toDateInput(m.trialExpiresAt);
-      }
-      setModDates(nextMod);
     } finally {
       setLoading(false);
     }
@@ -283,52 +271,6 @@ export default function OrgSubscriptionAdminPage() {
     }
   }
 
-  async function saveSatelliteTrial(satelliteKey: string) {
-    if (!token) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const raw = satDates[satelliteKey] ?? "";
-      const body = {
-        trialExpiresAt: raw ? fromDateInput(raw) : null,
-      };
-      const res = await orchFetch(
-        `/v1/admin/organizations/${orgId}/satellites/${encodeURIComponent(satelliteKey)}/trial`,
-        { token, method: "PATCH", body: JSON.stringify(body) },
-      );
-      if (!res.ok) {
-        setError(t("satTrialSaveFailed", { status: res.status }));
-        return;
-      }
-      await reload();
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveModuleTrial(moduleKey: string) {
-    if (!token) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const raw = modDates[moduleKey] ?? "";
-      const body = {
-        trialExpiresAt: raw ? fromDateInput(raw) : null,
-      };
-      const res = await orchFetch(
-        `/v1/admin/organizations/${orgId}/modules/${encodeURIComponent(moduleKey)}/trial`,
-        { token, method: "PATCH", body: JSON.stringify(body) },
-      );
-      if (!res.ok) {
-        setError(t("modTrialSaveFailed", { status: res.status }));
-        return;
-      }
-      await reload();
-    } finally {
-      setSaving(false);
-    }
-  }
-
   const expiryIso = tree?.org.trialExpiresAt ?? tree?.org.expiresAt ?? null;
   const untilLabel = neverExpires
     ? t("perpetualLabel")
@@ -338,6 +280,7 @@ export default function OrgSubscriptionAdminPage() {
 
   return (
     <div className="space-y-4">
+      <PageHeader title={t("pageTitle")} subtitle={t("pageHint")} />
       {loading ? <p className="text-sm text-[#7F8C8D]">{t("loading")}</p> : null}
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {tree ? (
@@ -518,37 +461,25 @@ export default function OrgSubscriptionAdminPage() {
             </button>
           </section>
 
-          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+          <details className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
+            <summary className="cursor-pointer text-sm font-semibold text-[#34495E]">
+              {t("advancedTitle")}
+            </summary>
+            <p className="text-xs text-[#95A5A6]">{t("quotasHint")}</p>
+            <textarea
+              className={`${MODAL_INPUT_CLASS} min-h-[8rem] font-mono text-xs`}
+              value={quotaJson}
+              onChange={(e) => setQuotaJson(e.target.value)}
+              placeholder='{"employees": 50}'
+            />
             <button
               type="button"
-              className="text-sm font-semibold text-[#2980B9]"
-              onClick={() => setQuotasOpen((v) => !v)}
+              className={GHOST_BUTTON_CLASS}
+              disabled={saving}
+              onClick={() => void saveQuotas()}
             >
-              {quotasOpen ? t("quotasHide") : t("quotasShow")}
+              {t("saveQuotas")}
             </button>
-            {quotasOpen ? (
-              <>
-                <p className="text-xs text-[#95A5A6]">{t("quotasHint")}</p>
-                <textarea
-                  className={`${MODAL_INPUT_CLASS} min-h-[8rem] font-mono text-xs`}
-                  value={quotaJson}
-                  onChange={(e) => setQuotaJson(e.target.value)}
-                  placeholder='{"employees": 50}'
-                />
-                <button
-                  type="button"
-                  className={PRIMARY_BUTTON_CLASS}
-                  disabled={saving}
-                  onClick={() => void saveQuotas()}
-                >
-                  {t("saveQuotas")}
-                </button>
-              </>
-            ) : null}
-          </section>
-
-          <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-            <h2 className="text-sm font-semibold text-[#34495E]">{t("presetTitle")}</h2>
             <p className="text-xs text-[#95A5A6]">{t("presetHint")}</p>
             <button
               type="button"
@@ -563,112 +494,7 @@ export default function OrgSubscriptionAdminPage() {
             >
               {t("naftaPreset")}
             </button>
-          </section>
-
-          <section className={`${CARD_CONTAINER_CLASS} p-4`}>
-            <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t("satellitesTitle")}</h2>
-            <ul className="space-y-3 text-sm">
-              {tree.satellites.length === 0 ? (
-                <li className="text-[#7F8C8D]">{t("satellitesEmpty")}</li>
-              ) : (
-                tree.satellites.map((s) => (
-                  <li
-                    key={s.satelliteKey}
-                    className="flex flex-wrap items-center gap-2 border-b border-[#ECF0F1] pb-2"
-                  >
-                    <div className="min-w-[12rem]">
-                      <strong>{s.name}</strong>
-                      <div className="text-xs text-[#7F8C8D]">{s.satelliteKey}</div>
-                      {s.trialOverridden ? (
-                        <span className="text-xs text-amber-700">{t("overridden")}</span>
-                      ) : null}
-                    </div>
-                    <DatePicker
-                      label={s.satelliteKey}
-                      value={satDates[s.satelliteKey] ?? ""}
-                      onChange={(iso) =>
-                        setSatDates((prev) => ({
-                          ...prev,
-                          [s.satelliteKey]: iso,
-                        }))
-                      }
-                      placeholder={tCommon("datePlaceholder")}
-                    />
-                    <button
-                      type="button"
-                      className={GHOST_BUTTON_CLASS}
-                      disabled={saving}
-                      onClick={() => void saveSatelliteTrial(s.satelliteKey)}
-                    >
-                      {t("save")}
-                    </button>
-                    <button
-                      type="button"
-                      className={GHOST_BUTTON_CLASS}
-                      disabled={saving}
-                      onClick={() => {
-                        setSatDates((prev) => ({ ...prev, [s.satelliteKey]: "" }));
-                        void (async () => {
-                          setSaving(true);
-                          try {
-                            await orchFetch(
-                              `/v1/admin/organizations/${orgId}/satellites/${encodeURIComponent(s.satelliteKey)}/trial`,
-                              {
-                                token: token!,
-                                method: "PATCH",
-                                body: JSON.stringify({ trialExpiresAt: null }),
-                              },
-                            );
-                            await reload();
-                          } finally {
-                            setSaving(false);
-                          }
-                        })();
-                      }}
-                    >
-                      {t("perpetual")}
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          </section>
-
-          <section className={`${CARD_CONTAINER_CLASS} p-4`}>
-            <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t("modulesTitle")}</h2>
-            <ul className="max-h-80 space-y-2 overflow-y-auto text-xs">
-              {tree.modules.map((m) => (
-                <li
-                  key={m.moduleKey}
-                  className="flex flex-wrap items-center gap-2 border-b border-[#ECF0F1] py-1"
-                >
-                  <span className="min-w-[10rem] font-mono">{m.moduleKey}</span>
-                  {m.trialOverridden ? (
-                    <span className="text-amber-700">{t("overridden")}</span>
-                  ) : null}
-                  <DatePicker
-                    label={m.moduleKey}
-                    value={modDates[m.moduleKey] ?? ""}
-                    onChange={(iso) =>
-                      setModDates((prev) => ({
-                        ...prev,
-                        [m.moduleKey]: iso,
-                      }))
-                    }
-                    placeholder={tCommon("datePlaceholder")}
-                  />
-                  <button
-                    type="button"
-                    className={GHOST_BUTTON_CLASS}
-                    disabled={saving}
-                    onClick={() => void saveModuleTrial(m.moduleKey)}
-                  >
-                    {t("save")}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
+          </details>
         </>
       ) : null}
     </div>

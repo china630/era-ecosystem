@@ -20,6 +20,12 @@
       ],
       "@era/satellite-kit/time": [
         "../../../packages/satellite-kit/dist/time/baku"
+      ],
+      "@era/satellite-kit/phone": [
+        "../../../packages/satellite-kit/dist/phone/normalize-person-phone"
+      ],
+      "@era/satellite-kit/person/name": [
+        "../../../packages/satellite-kit/dist/person/person-name-match"
       ]
     }
   },

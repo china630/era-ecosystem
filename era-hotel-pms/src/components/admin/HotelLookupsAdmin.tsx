@@ -58,12 +58,14 @@ type LookupRow = {
   sortOrder: number;
 };
 
-export function HotelLookupsAdmin() {
+export function HotelLookupsAdmin({ kinds }: { kinds?: readonly Kind[] }) {
+  const list = kinds ?? KINDS;
+  const groupKey = list.join(',');
   const t = useTranslations('masterData');
   const tc = useTranslations('common');
   const locale = useLocale();
   const formId = useId();
-  const [kind, setKind] = useState<Kind>('MARKET');
+  const [kind, setKind] = useState<Kind>(list[0] ?? 'MARKET');
   const [rows, setRows] = useState<LookupRow[]>([]);
   const [edit, setEdit] = useState<LookupRow | null>(null);
   const [open, setOpen] = useState(false);
@@ -83,6 +85,12 @@ export function HotelLookupsAdmin() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    setKind(list[0]);
+    // Reset the open list when the settings menu switches lookup group.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- groupKey is the group identity
+  }, [groupKey]);
+
   return (
     <section className="mb-6 rounded-lg border border-[#D5DADF] bg-white p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -93,7 +101,7 @@ export function HotelLookupsAdmin() {
             label={t('lookupKind')}
             value={kind}
             emptyLabel={null}
-            options={KINDS.map((k) => ({ value: k, label: t(`lookupKinds.${k}`) }))}
+            options={list.map((k) => ({ value: k, label: t(`lookupKinds.${k}`) }))}
             onChange={(value) => {
               const next = Array.isArray(value) ? value[0] : value;
               if (next) setKind(next as Kind);

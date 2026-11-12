@@ -99,10 +99,16 @@ model Tenant {
   doctorBonusPercentInHouse      Float                    @default(0) @map("doctor_bonus_percent_in_house")
   /// Doctor bonus % of COMPLETED extras (WALK_IN) — Wave D; default 0 until FO sets
   doctorBonusPercentWalkIn       Float                    @default(0) @map("doctor_bonus_percent_walk_in")
+  /// Nafta-style bonus schedule JSON. Empty = built-in Nafta defaults.
+  bonusScheduleJson              String?                  @map("bonus_schedule_json") @db.Text
+  /// Which intake facts a lane needs before it opens. Null = Nafta default.
+  laneGateJson                   String?                  @map("lane_gate_json") @db.Text
   /// Hotel RevenueCode.code posted on clinic folio charges (Nafta: 23 AMBULATOR). Empty refuses the charge.
   hotelFolioRevenueCode          String?                  @map("hotel_folio_revenue_code")
   /// Paid no-show keeps the folio charge (default). False lets the hotel void it.
   noShowKeepsCharge              Boolean                  @default(true) @map("no_show_keeps_charge")
+  /// Package no-show burns the quota (default), cabin and open attendance alike.
+  noShowBurnsQuota               Boolean                  @default(true) @map("no_show_burns_quota")
   /// Unpaid extra: seat before pay (default) or hide until pay/folio.
   extraProcedureRoute            ExtraProcedureRoute      @default(PLAN_BEFORE_PAY) @map("extra_procedure_route")
   /// Extra catalog language on the guest procedure sheet. Empty = sheet language only.
@@ -609,6 +615,10 @@ model Visit {
   settledAt           DateTime?
   /// Clinic receipt number once reception Pay / walk-in send stamped this visit.
   paymentReceiptRef   String?              @map("payment_receipt_ref")
+  /// When reception or the hotel confirmation stamped this visit as paid.
+  paidAt              DateTime?            @map("paid_at")
+  /// Clinic user who punched the cheque. Null when the hotel confirmed without a clinic user.
+  paidByUserId        String?              @map("paid_by_user_id")
   reservationId       String?
   roomNumber          String?
   amountNet           Decimal              @default(0) @db.Decimal(12, 2)
@@ -688,9 +698,13 @@ model LabOrder {
   prescribedByPractitionerId String?     @map("prescribed_by_practitioner_id")
   /// Clinic receipt number once reception Pay / walk-in send stamped this order.
   paymentReceiptRef     String?          @map("payment_receipt_ref")
+  /// When reception or the hotel confirmation stamped this order as paid.
+  paidAt                DateTime?        @map("paid_at")
+  /// Clinic user who punched the cheque. Null when the hotel confirmed without a clinic user.
+  paidByUserId          String?          @map("paid_by_user_id")
   /// Lab works before pay; guest blank stays closed until settledAt. Ignored when inPackage.
   releaseAfterPay       Boolean          @default(false) @map("release_after_pay")
-  /// Created by the paid-on-open flag. Day-end and checkout do not cancel it unpaid.
+  /// Created by the paid-on-open flag. Day-end cheque skip stays. Checkout cancels an ORDERED row.
   autoPaidStay          Boolean          @default(false) @map("auto_paid_stay")
   reservationId         String?          @map("reservation_id")
   roomNumber            String?          @map("room_number")
@@ -779,7 +793,7 @@ model DiagnosticService {
   schedulingMode String              @default("FIXED") @map("scheduling_mode")
   /// On episode open, create one paid lab order the lab can see before the cashier.
   autoPaidOnOpen Boolean             @default(false) @map("auto_paid_on_open")
-  /// When set, the episode analyses row can accept the guest's own blank not older than this many days.
+  /// When set on an auto-paid lab, the intake list accepts the guest's own blank not older than this many days.
   broughtInMaxDays Int?              @map("brought_in_max_days")
   sortOrder      Int                 @default(0) @map("sort_order")
   active         Boolean             @default(true)
@@ -2211,6 +2225,10 @@ model ProcedureOrder {
   packageQuotaCode           String?                  @map("package_quota_code")
   /// Clinic reception confirmed guest payment receipt before Pay (walk-in / extras).
   paymentReceiptRef          String?                  @map("payment_receipt_ref")
+  /// When reception Pay or hotel confirmation stamped this extra as paid.
+  paidAt                     DateTime?                @map("paid_at")
+  /// Clinic user who punched the cheque. Null when the hotel confirmed without a clinic user.
+  paidByUserId               String?                  @map("paid_by_user_id")
   quantity                   Int                      @default(1)
   patientOrigin              PatientOrigin            @default(WALK_IN)
   reservationId              String?
@@ -2568,6 +2586,8 @@ model Role {
   staffKind       String? @map("staff_kind")
   /// Custom role created by cloning; Reset copies donor's effective grants.
   cloneFromCode   String? @map("clone_from_code")
+  /// 0 = row from before the entity grid. Empty [] only bumps the version.
+  permissionCatalogVersion Int @default(0) @map("permission_catalog_version")
   users           User[]
 
   @@unique([organizationId, code])

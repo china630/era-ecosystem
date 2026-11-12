@@ -21,6 +21,7 @@ import {
   Gauge,
   GitBranch,
   Inbox,
+  FileStack,
   Layers,
   LayoutGrid,
   MapPin,
@@ -211,6 +212,14 @@ export function OrchSidebar({
             label={t("commsHub")}
             isActive={pathname.startsWith("/workspace/comms-hub")}
             icon={Inbox}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/workspace/documents"
+            label={t("documents")}
+            isActive={pathname.startsWith("/workspace/documents")}
+            icon={FileStack}
             nested
             onNavClick={onNavClick}
           />

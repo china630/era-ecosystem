@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { enterRequestTenant } from "@/lib/request-organization";
 import { openEpisodeFromStay } from "@/lib/services/sanatorium.service";
 import {
+  closedEpisodesToSweep,
   planClinicStayReconcile,
   type StayReconcileGuest,
 } from "@/lib/stay-reconcile-plan";
@@ -65,6 +66,28 @@ export async function applyClinicStaySnapshot(
     openEpisodes,
   });
   const closed = await closeEpisodes(plan.closeEpisodeIds, "hotel_reconcile");
+  const leftover = await prisma.clinicalEpisode.findMany({
+    where: {
+      organizationId,
+      status: "CLOSED",
+      patientOrigin: "IN_HOUSE",
+      reservationId: { not: null },
+      OR: [
+        { roomNumber: { not: null } },
+        { labOrders: { some: { status: "ORDERED" } } },
+        {
+          procedureOrders: {
+            some: { status: { in: ["SCHEDULED", "PROPOSED", "PENDING_PAY"] } },
+          },
+        },
+      ],
+    },
+    select: { id: true, reservationId: true },
+  });
+  await closeEpisodes(
+    closedEpisodesToSweep(leftover, snapshot.checkedOutIds),
+    "hotel_reconcile",
+  );
   let opened = 0;
   let patched = 0;
   for (const planned of plan.sync) {
@@ -100,10 +123,32 @@ export async function reconcileClinicStayOrganization(organizationId: string) {
     where: { status: "OPEN", patientOrigin: "IN_HOUSE", reservationId: { not: null } },
     select: { reservationId: true },
   });
+  const leftover = await prisma.clinicalEpisode.findMany({
+    where: {
+      status: "CLOSED",
+      patientOrigin: "IN_HOUSE",
+      reservationId: { not: null },
+      OR: [
+        { roomNumber: { not: null } },
+        { labOrders: { some: { status: "ORDERED" } } },
+        {
+          procedureOrders: {
+            some: { status: { in: ["SCHEDULED", "PROPOSED", "PENDING_PAY"] } },
+          },
+        },
+      ],
+    },
+    select: { reservationId: true },
+    take: 500,
+  });
   const openReservationIds = [
-    ...new Set(open.map((row) => row.reservationId).filter((id): id is string => Boolean(id))),
+    ...new Set(
+      [...open, ...leftover]
+        .map((row) => row.reservationId)
+        .filter((id): id is string => Boolean(id)),
+    ),
   ];
-  const snapshot = await fetchHotelClinicSyncSnapshot(hotelOrg, openReservationIds.slice(0, 200));
+  const snapshot = await fetchHotelClinicSyncSnapshot(hotelOrg, openReservationIds.slice(0, 500));
   if (!snapshot) return { organizationId, skipped: "hotel-unavailable" as const };
   const result = await applyClinicStaySnapshot(hotelOrg, snapshot);
   return { organizationId, ...result };

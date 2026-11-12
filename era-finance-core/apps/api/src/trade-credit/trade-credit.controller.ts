@@ -29,7 +29,6 @@ import {
   resolveControlPlaneServiceToken,
   resolveOrchestratorInternalUrl,
 } from "../control-plane/control-plane-credentials";
-import { PrismaService } from "../prisma/prisma.service";
 import { InviteBuyerPortalDto } from "./dto/invite-buyer-portal.dto";
 import { IssueTradeCreditGrantDto } from "./dto/issue-trade-credit-grant.dto";
 import { PinTradeCreditPolicyDto } from "./dto/pin-policy.dto";
@@ -51,7 +50,6 @@ export class TradeCreditController {
     private readonly tradeCredit: TradeCreditService,
     private readonly policy: TradeCreditPolicyService,
     private readonly phase2: TradeCreditPhase2Service,
-    private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {}
 
@@ -169,10 +167,10 @@ export class TradeCreditController {
     @Body() dto: InviteBuyerPortalDto,
   ) {
     await this.tradeCredit.assertSku(organizationId);
-    const cp = await this.prisma.counterparty.findFirst({
-      where: { id: counterpartyId, organizationId, deletedAt: null },
-      select: { id: true, taxIdCipher: true },
-    });
+    const cp = await this.tradeCredit.findCounterpartyTaxIdForInvite(
+      organizationId,
+      counterpartyId,
+    );
     if (!cp) {
       throw new BadRequestException("Counterparty not found");
     }

@@ -10,12 +10,20 @@ import {
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateIntangibleAssetDto } from "./dto/create-intangible-asset.dto";
+import {
+  AcquireIntangibleAssetDto,
+  DisposeIntangibleAssetDto,
+} from "./dto/intangible-lifecycle.dto";
+import { IntangibleAmortizationService } from "./intangible-amortization.service";
 
 const Decimal = Prisma.Decimal;
 
 @Injectable()
 export class IntangibleAssetsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly amortization: IntangibleAmortizationService,
+  ) {}
 
   list(organizationId: string) {
     return this.prisma.intangibleAsset.findMany({
@@ -71,5 +79,35 @@ export class IntangibleAssetsService {
       }
       throw e;
     }
+  }
+
+  runAmortizationInTransaction(
+    organizationId: string,
+    year: number,
+    month: number,
+  ) {
+    return this.prisma.$transaction((tx) =>
+      this.amortization.applyForClosedMonth(tx, organizationId, year, month),
+    );
+  }
+
+  acquireInTransaction(
+    organizationId: string,
+    id: string,
+    dto: AcquireIntangibleAssetDto,
+  ) {
+    return this.prisma.$transaction((tx) =>
+      this.amortization.acquireInTransaction(tx, organizationId, id, dto),
+    );
+  }
+
+  disposeInTransaction(
+    organizationId: string,
+    id: string,
+    dto: DisposeIntangibleAssetDto,
+  ) {
+    return this.prisma.$transaction((tx) =>
+      this.amortization.disposeInTransaction(tx, organizationId, id, dto),
+    );
   }
 }

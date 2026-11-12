@@ -20,6 +20,36 @@ function eachNight(from: Date, to: Date): Date[] {
   return nights;
 }
 
+export async function createChannelRateMapping(input: {
+  channelId: string;
+  ratePlanId: string;
+  otaRateCode?: string;
+}) {
+  return prisma.channelRateMapping.create({
+    data: {
+      channelId: input.channelId,
+      ratePlanId: input.ratePlanId,
+      otaRateCode: input.otaRateCode ?? 'RATE',
+    },
+    include: { ratePlan: true, channel: true },
+  });
+}
+
+export async function createChannelRoomMapping(input: {
+  channelId: string;
+  roomTypeId: string;
+  otaRoomCode?: string;
+}) {
+  return prisma.channelRoomMapping.create({
+    data: {
+      channelId: input.channelId,
+      roomTypeId: input.roomTypeId,
+      otaRoomCode: input.otaRoomCode ?? 'ROOM',
+    },
+    include: { roomType: true, channel: true },
+  });
+}
+
 export async function isStopSellForDate(date: Date, roomTypeId: string): Promise<boolean> {
   const d = dateOnly(date);
   const hit = await prisma.channelStopSell.findFirst({

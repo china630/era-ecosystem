@@ -10,7 +10,7 @@ import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useSubcontoFilters } from "../../../lib/use-subconto-filters";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -186,22 +186,22 @@ export default function SubcontoAnalysisPage() {
       {err ? <p className="text-sm text-red-600">{err}</p> : null}
 
       {rows ? (
-        rows.length === 0 ? (
-          <EmptyState title={t("reporting.subconto.empty")} />
-        ) : (
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.subconto.thValue")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thNetDr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thNetCr")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.subconto.thValue")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thNetDr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thNetCr")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={5} message={t("reporting.subconto.empty")} />
+              ) : (
+                rows.map((r) => (
                   <tr
                     key={`${r.valueId ?? ""}-${r.valueRef ?? ""}-${r.valueName}`}
                     className={DATA_TABLE_TR_CLASS}
@@ -212,11 +212,11 @@ export default function SubcontoAnalysisPage() {
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.netDebit)}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.netCredit)}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       ) : null}
     </div>
   );

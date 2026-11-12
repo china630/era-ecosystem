@@ -17,8 +17,8 @@ function walk(dir: string, acc: string[] = []): string[] {
 }
 
 describe("fnb rbac role-name hygiene", () => {
-  it("app/api does not call requireAnyRole", () => {
-    const apiRoot = path.join(ROOT, "app", "api");
+  it("Nest handlers do not call requireAnyRole", () => {
+    const apiRoot = path.join(ROOT, "nest");
     const hits: string[] = [];
     for (const file of walk(apiRoot)) {
       const text = fs.readFileSync(file, "utf8");
@@ -31,7 +31,7 @@ describe("fnb rbac role-name hygiene", () => {
 
   it("pay route does not gate on session.role === FB_WAITER", () => {
     const pay = fs.readFileSync(
-      path.join(ROOT, "app", "api", "tickets", "[id]", "pay", "route.ts"),
+      path.join(ROOT, "nest", "generated", "tickets__id_pay.ts"),
       "utf8",
     );
     expect(pay).not.toMatch(/session\.role\s*===\s*FB_ROLES\.WAITER/);

@@ -9,7 +9,7 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { PsaProjectCreateModal } from "../../../components/psa/psa-project-create-modal";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -128,23 +128,7 @@ export default function PsaProjectsPage() {
               </thead>
               <tbody>
                 {projects.length === 0 ? (
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td colSpan={3} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
-                      <EmptyState
-                        title={t("psa.none")}
-                        action={
-                          <button
-                            type="button"
-                            className={PRIMARY_BUTTON_CLASS}
-                            onClick={() => setCreateOpen(true)}
-                            disabled={cps.length === 0}
-                          >
-                            + {t("psa.createProject")}
-                          </button>
-                        }
-                      />
-                    </td>
-                  </tr>
+                  <FinanceEmptyTableRow colSpan={3} message={t("psa.none")} />
                 ) : (
                   projects.map((p) => (
                     <tr key={p.id} className={DATA_TABLE_TR_CLASS}>

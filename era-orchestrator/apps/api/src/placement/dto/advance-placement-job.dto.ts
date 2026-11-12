@@ -1,13 +1,22 @@
 import { IsEnum, IsOptional, IsString, MinLength } from "class-validator";
 
+/**
+ * Service advance actions.
+ * Wave 1 order: markProvisioned → configure → freeze → exportSlice →
+ * importSlice → cutoverEndpoint → smoke → complete (plus rollback / fail).
+ */
 export enum PlacementAdvanceAction {
+  markProvisioned = "markProvisioned",
+  configure = "configure",
   freeze = "freeze",
   exportSlice = "exportSlice",
-  markProvisioned = "markProvisioned",
+  importSlice = "importSlice",
+  /** Legacy Sync bind; not on the Start wizard path. */
   bindAndConfig = "bindAndConfig",
   cutoverEndpoint = "cutoverEndpoint",
   smoke = "smoke",
   complete = "complete",
+  rollback = "rollback",
   fail = "fail",
 }
 

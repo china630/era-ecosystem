@@ -19,8 +19,11 @@ export const PERMISSIONS = {
   LEADS_FOLLOW_UP: "api:leads.follow_up",
   LEADS_ASSIGN: "api:leads.assign",
   INBOX: "api:inbox",
+  INBOX_READ: "api:inbox.read",
   VISITS: "api:visits",
+  VISITS_READ: "api:visits.read",
   LOOKUPS: "api:lookups",
+  LOOKUPS_READ: "api:lookups.read",
   USERS_LIST: "api:users.list",
 
   ADMIN_IMPORT: "admin:import",
@@ -72,7 +75,30 @@ export const ROLE_ALIASES: Record<string, RoleCode> = {
   REP: ROLE_CODES.FIELD_REP,
 };
 
-export const PERMISSION_CATALOG_VERSION = 1;
+export const PERMISSION_CATALOG_VERSION = 2;
+
+export const READ_OF_WRITE: Readonly<Record<string, Permission>> = {
+  [PERMISSIONS.INBOX]: PERMISSIONS.INBOX_READ,
+  [PERMISSIONS.VISITS]: PERMISSIONS.VISITS_READ,
+  [PERMISSIONS.LOOKUPS]: PERMISSIONS.LOOKUPS_READ,
+};
+
+export function expandEntityReads(keys: readonly string[]): Permission[] {
+  const out: Permission[] = [];
+  const have = new Set<string>();
+  const add = (key: string) => {
+    if (!have.has(key)) {
+      have.add(key);
+      out.push(key as Permission);
+    }
+  };
+  for (const key of keys) add(key);
+  for (const key of keys) {
+    const read = READ_OF_WRITE[key];
+    if (read) add(read);
+  }
+  return out;
+}
 
 export type PermissionGroup = {
   id: string;
@@ -108,7 +134,7 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
   {
     id: "field",
     labelKey: "groups.field",
-    permissions: [PERMISSIONS.INBOX, PERMISSIONS.VISITS, PERMISSIONS.LOOKUPS, PERMISSIONS.USERS_LIST],
+    permissions: [PERMISSIONS.INBOX, PERMISSIONS.INBOX_READ, PERMISSIONS.VISITS, PERMISSIONS.VISITS_READ, PERMISSIONS.LOOKUPS, PERMISSIONS.LOOKUPS_READ, PERMISSIONS.USERS_LIST],
   },
   {
     id: "admin",
@@ -136,10 +162,32 @@ const AGENT_TEMPLATE: readonly Permission[] = [
 
 /** Seed packages. Only the sales lead (and owner bypass) assigns leads, imports, and edits pipeline rules. */
 export const ROLE_TEMPLATES: Record<RoleCode, readonly Permission[]> = {
-  SALES_AGENT: AGENT_TEMPLATE,
+  SALES_AGENT: expandEntityReads(AGENT_TEMPLATE),
   SALES_LEAD: ALL_PERMISSIONS,
-  FIELD_REP: AGENT_TEMPLATE,
+  FIELD_REP: expandEntityReads(AGENT_TEMPLATE),
   BUSINESS_OWNER: ALL_PERMISSIONS,
-  PLATFORM_MEMBER: AGENT_TEMPLATE,
-  SATELLITE_OPERATOR: AGENT_TEMPLATE,
+  PLATFORM_MEMBER: expandEntityReads(AGENT_TEMPLATE),
+  SATELLITE_OPERATOR: expandEntityReads(AGENT_TEMPLATE),
 };
+
+export type AccessColumn = "view" | "change" | "operate" | "admin";
+
+export const ENTITY_ACCESS_MATRIX: {
+  id: string;
+  cells: Partial<Record<AccessColumn, Permission[]>>;
+}[] = [
+  {
+    id: "lead",
+    cells: {
+      view: [PERMISSIONS.LEADS_READ, PERMISSIONS.SCREEN_LEADS, PERMISSIONS.SCREEN_LEADS_DETAIL, PERMISSIONS.SCREEN_HOME],
+      change: [PERMISSIONS.LEADS_WRITE],
+      operate: [PERMISSIONS.LEADS_STAGE, PERMISSIONS.LEADS_CONVERT, PERMISSIONS.LEADS_FOLLOW_UP, PERMISSIONS.LEADS_ASSIGN],
+    },
+  },
+  { id: "inbox", cells: { view: [PERMISSIONS.INBOX_READ, PERMISSIONS.SCREEN_INBOX], change: [PERMISSIONS.INBOX] } },
+  { id: "visit", cells: { view: [PERMISSIONS.VISITS_READ, PERMISSIONS.SCREEN_VISITS], change: [PERMISSIONS.VISITS] } },
+  { id: "lookup", cells: { view: [PERMISSIONS.LOOKUPS_READ], change: [PERMISSIONS.LOOKUPS] } },
+  { id: "users", cells: { view: [PERMISSIONS.USERS_LIST] } },
+  { id: "pipeline", cells: { admin: [PERMISSIONS.ADMIN_PIPELINE, PERMISSIONS.ADMIN_IMPORT] } },
+  { id: "access", cells: { view: [PERMISSIONS.SCREEN_ADMIN_ACCESS], admin: [PERMISSIONS.ACCESS_MANAGE] } },
+];

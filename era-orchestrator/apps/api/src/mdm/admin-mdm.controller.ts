@@ -74,6 +74,19 @@ export class AdminMdmController {
     return this.mdm.resolvePersonIdentity(body);
   }
 
+  @Get("persons/dedup")
+  @ApiOperation({ summary: "Suspected duplicate natural persons (super-admin)" })
+  listDedup(@Query("limit") limitRaw?: string) {
+    const limit = Math.min(100, Math.max(1, Number.parseInt(limitRaw ?? "50", 10) || 50));
+    return this.mdm.listPersonDedupGroups(limit);
+  }
+
+  @Post("persons/dedup/dismiss")
+  @ApiOperation({ summary: "Hide a person pair from the dedup queue" })
+  dismissDedup(@Body() body: { personIdA: string; personIdB: string }) {
+    return this.mdm.dismissPersonDedupPair(body.personIdA, body.personIdB);
+  }
+
   @Post("persons/merge")
   @ApiOperation({ summary: "Merge duplicate persons (super-admin)" })
   mergePersons(

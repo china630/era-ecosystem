@@ -213,5 +213,11 @@ export class BillingPaymentOrdersService {
       doc.end();
     });
   }
+
+  async findPaymentOrderForOrganization(organizationId: string, id: string) {
+    return this.prisma.paymentOrder.findFirst({
+      where: { id, organizationId },
+    });
+  }
 }
 

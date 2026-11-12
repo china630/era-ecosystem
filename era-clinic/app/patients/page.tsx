@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { Eye, Plus } from "lucide-react";
+import { Fragment, useCallback, useMemo, useState } from "react";
+import { ChevronDown, ChevronRight, Eye, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
   DatePicker,
-  EraDataGrid,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
   EraListFilterBar,
   EraListWorkspace,
   Field,
@@ -23,9 +26,9 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   TEXT_MUTED_CLASS,
   showApiError,
-  type EraDataGridColumn,
   usePaginatedList,
 } from "@era/satellite-kit/ui";
+import { bakuDateDisplay } from "@/lib/baku-day";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 
@@ -56,6 +59,20 @@ type Patient = {
   globalPersonId?: string | null;
   hasOpenEpisode?: boolean;
 };
+
+type PatientEpisodeRow = {
+  id: string;
+  status: string;
+  programCode: string | null;
+  roomNumber: string | null;
+  stayStartsOn?: string | null;
+  stayEndsOn?: string | null;
+};
+
+const CLOSED_EPISODE_ROW =
+  "border-b border-[#D5DADF] bg-amber-50 transition-colors hover:bg-amber-100";
+const OPEN_EPISODE_ROW =
+  "border-b border-[#D5DADF] bg-white transition-colors hover:bg-[#F1F5F9]";
 
 type ListFilters = {
   q: string;
@@ -106,6 +123,9 @@ export default function PatientsPage() {
   const [filterState, setFilterState] = useState(emptyListFilters);
   const [open, setOpen] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
+  const [cardEpisodeId, setCardEpisodeId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [episodeCache, setEpisodeCache] = useState<Record<string, PatientEpisodeRow[]>>({});
   const [form, setForm] = useState(emptyForm);
 
   const filters = useMemo(() => filterState, [filterState]);
@@ -154,78 +174,36 @@ export default function PatientsPage() {
     reload: load,
   } = usePaginatedList<Patient, ListFilters>({ fetcher, filters });
 
-  const columns = useMemo<EraDataGridColumn<Patient>[]>(
-    () => [
-      { key: "fullName", header: t("name"), sortable: true },
-      { key: "refCode", header: t("refCode"), sortable: true },
-      {
-        key: "sex",
-        header: t("sex"),
-        sortable: true,
-        render: (p) =>
-          p.sex === "MALE"
-            ? t("sexShortMale")
-            : p.sex === "FEMALE"
-              ? t("sexShortFemale")
-              : "—",
-      },
-      {
-        key: "ageYears",
-        header: t("colAge"),
-        sortable: true,
-        render: (p) => (p.ageYears != null ? t("ageYears", { age: p.ageYears }) : "—"),
-      },
-      {
-        key: "nationality",
-        header: t("nationality"),
-        render: (p) => (p.nationality ? countryLabel(p.nationality, locale) : "—"),
-      },
-      { key: "phone", header: t("phone"), render: (p) => p.phone ?? "—" },
-      {
-        key: "course",
-        header: t("colOpenCourse"),
-        render: (p) =>
-          p.hasOpenEpisode ? (
-            <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900">
-              {t("badgeOpenCourse")}
-            </span>
-          ) : (
-            "—"
-          ),
-      },
-      ...(isSuperAdmin
-        ? [
-            {
-              key: "mdm",
-              header: t("mdmBadge"),
-              render: (p: Patient) =>
-                p.globalPersonId ? (
-                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs">
-                    {p.globalPersonId.slice(0, 4)}…
-                  </span>
-                ) : (
-                  <span className="text-red-600">{t("mdmMissing")}</span>
-                ),
-            } satisfies EraDataGridColumn<Patient>,
-          ]
-        : []),
-      {
-        key: "actions",
-        header: tc("actions"),
-        render: (p) => (
-          <button
-            type="button"
-            className={TABLE_ROW_ICON_BTN_CLASS}
-            aria-label={t("openCard")}
-            onClick={() => setCardId(p.id)}
-          >
-            <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
-          </button>
-        ),
-      },
-    ],
-    [t, tc, isSuperAdmin, locale],
-  );
+  async function toggleCourses(patientId: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(patientId)) next.delete(patientId);
+      else next.add(patientId);
+      return next;
+    });
+    if (episodeCache[patientId]) return;
+    const res = await fetch(`/api/patients/${patientId}/episodes`);
+    if (!res.ok) {
+      setEpisodeCache((prev) => ({ ...prev, [patientId]: [] }));
+      return;
+    }
+    const parsed = await res.json();
+    const items = (parsed.data?.items ?? parsed.items ?? []) as PatientEpisodeRow[];
+    setEpisodeCache((prev) => ({ ...prev, [patientId]: items }));
+  }
+
+  function openCard(patientId: string, episodeId?: string) {
+    setCardEpisodeId(episodeId ?? null);
+    setCardId(patientId);
+  }
+
+  function sortBy(key: string) {
+    setFilterState((prev) => ({
+      ...prev,
+      sort: key,
+      sortDir: prev.sort === key && prev.sortDir === "asc" ? "desc" : "asc",
+    }));
+  }
 
   async function save() {
     const res = await fetch("/api/patients", {
@@ -366,23 +344,141 @@ export default function PatientsPage() {
           </EraListFilterBar>
         }
         table={
-          <EraDataGrid
-            columns={columns}
-            rows={rows}
-            rowKey={(p) => p.id}
-            emptyMessage={loading ? tc("loading") : t("emptyList")}
-            pagination={false}
-            paginationMode="server"
-            embedded
-            sort={
-              filterState.sort && filterState.sortDir
-                ? { key: filterState.sort, dir: filterState.sortDir }
-                : null
-            }
-            onSortChange={(next) =>
-              setFilterState((prev) => ({ ...prev, sort: next.key, sortDir: next.dir }))
-            }
-          />
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS} />
+                {(
+                  [
+                    ["fullName", t("name")],
+                    ["refCode", t("refCode")],
+                    ["sex", t("sex")],
+                    ["ageYears", t("colAge")],
+                  ] as const
+                ).map(([key, header]) => (
+                  <th key={key} className={DATA_TABLE_TH_LEFT_CLASS}>
+                    <button type="button" onClick={() => sortBy(key)}>
+                      {header}
+                    </button>
+                  </th>
+                ))}
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("nationality")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("phone")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOpenCourse")}</th>
+                {isSuperAdmin ? <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("mdmBadge")}</th> : null}
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td className={`${DATA_TABLE_TD_CLASS} py-8 text-center`} colSpan={isSuperAdmin ? 10 : 9}>
+                    {loading ? tc("loading") : t("emptyList")}
+                  </td>
+                </tr>
+              ) : (
+                rows.map((p) => {
+                  const open = expanded.has(p.id);
+                  const courses = episodeCache[p.id] ?? [];
+                  return (
+                    <Fragment key={p.id}>
+                      <tr className={OPEN_EPISODE_ROW}>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={t("expandCourses")}
+                            aria-expanded={open}
+                            onClick={() => void toggleCourses(p.id)}
+                          >
+                            {open ? (
+                              <ChevronDown className="h-4 w-4" aria-hidden />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" aria-hidden />
+                            )}
+                          </button>
+                        </td>
+                        <td className={DATA_TABLE_TD_CLASS}>{p.fullName}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{p.refCode}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          {p.sex === "MALE" ? t("sexShortMale") : p.sex === "FEMALE" ? t("sexShortFemale") : "—"}
+                        </td>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          {p.ageYears != null ? t("ageYears", { age: p.ageYears }) : "—"}
+                        </td>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          {p.nationality ? countryLabel(p.nationality, locale) : "—"}
+                        </td>
+                        <td className={DATA_TABLE_TD_CLASS}>{p.phone ?? "—"}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          {p.hasOpenEpisode ? (
+                            <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900">
+                              {t("badgeOpenCourse")}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        {isSuperAdmin ? (
+                          <td className={DATA_TABLE_TD_CLASS}>
+                            {p.globalPersonId ? `${p.globalPersonId.slice(0, 4)}…` : t("mdmMissing")}
+                          </td>
+                        ) : null}
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={t("openCard")}
+                            onClick={() => openCard(p.id)}
+                          >
+                            <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                          </button>
+                        </td>
+                      </tr>
+                      {open && !(p.id in episodeCache) ? (
+                        <tr key={`${p.id}-loading`} className={OPEN_EPISODE_ROW}>
+                          <td className={DATA_TABLE_TD_CLASS} colSpan={isSuperAdmin ? 10 : 9}>
+                            {tc("loading")}
+                          </td>
+                        </tr>
+                      ) : null}
+                      {open && p.id in episodeCache && courses.length === 0 ? (
+                        <tr key={`${p.id}-empty`} className={OPEN_EPISODE_ROW}>
+                          <td className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`} colSpan={isSuperAdmin ? 10 : 9}>
+                            {t("noCourses")}
+                          </td>
+                        </tr>
+                      ) : null}
+                      {open
+                        ? courses.map((course) => (
+                            <tr
+                              key={course.id}
+                              className={`${course.status === "OPEN" ? OPEN_EPISODE_ROW : CLOSED_EPISODE_ROW} cursor-pointer`}
+                              onClick={() => openCard(p.id, course.id)}
+                            >
+                              <td className={DATA_TABLE_TD_CLASS} />
+                              <td className={DATA_TABLE_TD_CLASS} colSpan={2}>
+                                {course.programCode ?? "—"}
+                              </td>
+                              <td className={DATA_TABLE_TD_CLASS}>{course.roomNumber ?? "—"}</td>
+                              <td className={DATA_TABLE_TD_CLASS} colSpan={2}>
+                                {course.stayStartsOn ? bakuDateDisplay(course.stayStartsOn) : "—"}
+                                {" – "}
+                                {course.stayEndsOn ? bakuDateDisplay(course.stayEndsOn) : "—"}
+                              </td>
+                              <td className={DATA_TABLE_TD_CLASS}>
+                                {course.status === "OPEN" ? t("badgeOpenCourse") : t("courseClosed")}
+                              </td>
+                              <td className={DATA_TABLE_TD_CLASS} colSpan={isSuperAdmin ? 3 : 2} />
+                            </tr>
+                          ))
+                        : null}
+                    </Fragment>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         }
         footer={
           <ListPaginationFooter
@@ -403,8 +499,12 @@ export default function PatientsPage() {
 
       <PatientCardModal
         patientId={cardId}
+        initialEpisodeId={cardEpisodeId}
         open={Boolean(cardId)}
-        onClose={() => setCardId(null)}
+        onClose={() => {
+          setCardId(null);
+          setCardEpisodeId(null);
+        }}
       />
 
       <ModalShell open={open} title={t("createTitle")} onClose={() => setOpen(false)}>

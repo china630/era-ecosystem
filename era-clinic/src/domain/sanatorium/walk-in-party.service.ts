@@ -734,7 +734,10 @@ export async function sendWalkInPartyToCashier(partyId: string, actor: Actor) {
       mark: async () => {
         await prisma.procedureOrder.update({
           where: { id: order.id },
-          data: { paymentReceiptRef: receipt },
+          data: {
+            paymentReceiptRef: receipt,
+            paidByUserId: actor.userId ?? null,
+          },
         });
       },
     });
@@ -752,7 +755,10 @@ export async function sendWalkInPartyToCashier(partyId: string, actor: Actor) {
       mark: async () => {
         await prisma.labOrder.update({
           where: { id: order.id },
-          data: { settlementPendingId: receipt },
+          data: {
+            settlementPendingId: receipt,
+            paidByUserId: actor.userId ?? null,
+          },
         });
       },
     });
@@ -770,7 +776,10 @@ export async function sendWalkInPartyToCashier(partyId: string, actor: Actor) {
       mark: async () => {
         await prisma.visit.update({
           where: { id: visit.id },
-          data: { settlementPendingId: receipt },
+          data: {
+            settlementPendingId: receipt,
+            paidByUserId: actor.userId ?? null,
+          },
         });
       },
     });

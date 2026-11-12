@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../lib/api-client";
 import { parsePaginatedList } from "../../lib/paginated-list";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { useSubscription } from "../../lib/subscription-context";
 import { PageHeader } from "../../components/layout/page-header";
 import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../components/list-pagination-footer";
 import {
   DATA_TABLE_CLASS,
@@ -39,6 +41,7 @@ function hasContractsModule(activeModules: string[], tier: string): boolean {
 }
 
 export default function ContractsPage() {
+  const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const { ready: subReady, effectiveSnapshot: snapshot } = useSubscription();
   const tier = snapshot?.tier ? String(snapshot.tier).toUpperCase() : "";
@@ -126,11 +129,7 @@ export default function ContractsPage() {
                   </thead>
                   <tbody>
                     {rows.length === 0 ? (
-                      <tr className={DATA_TABLE_TR_CLASS}>
-                        <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} py-10 text-center`}>
-                          <EmptyState compact title="No contracts yet" />
-                        </td>
-                      </tr>
+                      <FinanceEmptyTableRow colSpan={5} message={t("common.noRows")} />
                     ) : (
                       rows.map((row) => (
                         <tr key={row.id} className={DATA_TABLE_TR_CLASS}>

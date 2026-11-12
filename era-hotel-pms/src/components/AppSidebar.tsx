@@ -62,6 +62,12 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.SCREEN_FO),
     },
     {
+      href: '/fo/guest-requests',
+      labelKey: 'guestPhoneRequests',
+      icon: ClipboardList,
+      show: can(PERMISSIONS.SCREEN_FO),
+    },
+    {
       href: '/reports/occupancy',
       labelKey: 'occupancy',
       icon: FileBarChart,

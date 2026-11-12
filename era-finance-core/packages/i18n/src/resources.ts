@@ -4945,7 +4945,7 @@ profile: {
         asanUserId: "ASAN ID (для HSM / e-taxes)",
         asanUserIdPlaceholder: "Например: ASAN subscriber id",
         asanUserIdHelp:
-          "Идентификатор ASAN İmza организации. Используется при прямой подаче деклараций через HSM (когда ERA_ETAXES_HSM_ENABLED=1).",
+          "Идентификатор ASAN хранится на платформе, вкладка Доступы. Здесь только просмотр уже сохранённого значения.",
         taxRegime: "Налоговый режим",
         taxRegimeSimplified: "Упрощёнка",
         taxRegimeProfit: "Налог на прибыль без НДС",
@@ -5075,6 +5075,7 @@ profile: {
       },
       common: {
         loading: "Загрузка…",
+        noRows: "Нет записей",
         select: "Выберите…",
         all: "Все",
         cancel: "Отмена",
@@ -10162,7 +10163,7 @@ profile: {
         asanUserId: "ASAN ID (HSM / e-taxes üçün)",
         asanUserIdPlaceholder: "Məsələn: ASAN subscriber id",
         asanUserIdHelp:
-          "Təşkilatın ASAN İmza identifikatoru. HSM vasitəsilə birbaşa bəyannamə göndərişi üçün (ERA_ETAXES_HSM_ENABLED=1).",
+          "ASAN identifikatoru platformanın Giriş açarları bölməsində saxlanılır. Burada yalnız oxunur.",
         taxRegime: "Vergi rejimi",
         taxRegimeSimplified: "Sadələşdirilmiş",
         taxRegimeProfit: "Mənfəət vergisi ƏDV-siz",
@@ -10293,6 +10294,7 @@ profile: {
       },
       common: {
         loading: "Yüklənir…",
+        noRows: "Qeyd yoxdur",
         select: "Seçin…",
         all: "Bütün bölmələr",
         cancel: "Ləğv",
@@ -10477,6 +10479,7 @@ profile: {
       common: {
         cancel: "Cancel",
         loading: "Loading…",
+        noRows: "No records",
         close: "Close",
         all: "All",
         filterReset: "Reset filters",
@@ -11771,6 +11774,10 @@ profile: {
           "Legal address, phone, director, and logo are maintained on the Control Plane organization profile.",
         cpProfileLink: "Open organization profile",
         cpLogoHint: "Logo upload is only in Workspace → Organization profile.",
+        asanUserId: "ASAN ID (HSM / e-taxes)",
+        asanUserIdPlaceholder: "Example: ASAN subscriber id",
+        asanUserIdHelp:
+          "The ASAN ID is stored on the platform, Access keys. This field is read-only.",
       },
       hrMgmtDelta: {
         title: "MGMT labor delta",

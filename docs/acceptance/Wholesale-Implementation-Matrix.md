@@ -22,7 +22,7 @@
 | AC-WS-CREDIT | Credit limit via Finance (live or stub) | ✅ | [ ] | `__tests__/ws-credit-negative.spec.ts` + GET /api/credit-limit | Negative: Finance-down → explicit `env_stub_fallback` / `env_stub` (not silent finance_api); missing counterpartyId 400 |
 | AC-WS-PLAT | Platform add-ons on order confirm | ✅ | [ ] | `__tests__/ws-plat-negative.spec.ts` + portal/pay hooks | Negative: events/dispatch missing/wrong token → 401; notify soft-skip when token unset |
 | AC-WS-TENANT | SHARED pool: `organizationId` on ops rows + composite uniques | 🟡 | [ ] | CP-TENANT-01; kit tenant extension | **Excluded from Scaffold BE rollup.** Schema + filter landed; not Scaffold ✅ (no live SHARED pool / field two-org UAT) |
-| AC-WHS-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `wholesale-rbac` + `wholesale-rbac-doors` + page/API inventory + role-name grep; ADR wholesale-domain-permissions-and-rbac; `/admin/access` clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
+| AC-WHS-RBAC | Configurable role×permission matrix + custom roles (Variant A) | 🟡 | [ ] | `wholesale-rbac` + `wholesale-rbac-doors` + page/API inventory + role-name grep; ADR wholesale-domain-permissions-and-rbac; `/admin/access` entity grid, catalog v2, clone + assign | **Out of BE rollup** until field UAT; do not flip Scaffold ✅ without Pilot evidence |
 
 **Edition / wave rollup (BE, in-scope)** = worst(ORD, PICK, CREDIT, PLAT) → **✅**.  
 AC-WS-TENANT is 🟡 (schema+filter) and stays **out of Scaffold BE rollup** until a live SHARED pool + field isolation UAT.  

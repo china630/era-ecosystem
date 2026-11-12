@@ -1,0 +1,47 @@
+import { z } from "zod";
+import { createEquipmentLog } from "@/lib/equipment-hours.service";
+import { enterConstructionStaff, constructionNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithConstructionTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
+
+const bodySchema = z.object({
+  projectId: z.string(),
+  equipmentCode: z.string(),
+  hours: z.number().min(0),
+  logDate: z.string(),
+});
+
+export function register(http: { get: Function; post: Function; put: Function; patch: Function; delete: Function }) {
+  http.post("/api/equipment/hours", async (httpReq, httpRes) => {
+    if (!(await enterConstructionStaff(httpReq, httpRes))) return;
+    try {
+      const session = await constructionNestSession(httpReq);
+      const web = await runWithConstructionTenant(session, async () => {
+        return runWithNestHttp(httpReq, async () => {
+      const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
+      const req = {
+        url: requestUrl.toString(),
+        method: httpReq.method,
+        nextUrl: requestUrl,
+        headers: { get: (name: string) => nestHeader(httpReq, name) },
+        json: async () => httpReq.body,
+        text: async () => (typeof httpReq.body === "string" ? httpReq.body : JSON.stringify(httpReq.body ?? "")),
+      };
+
+  
+    if (!(session)) return sendJson(httpRes, { error: "Unauthorized" }, 401);
+    const body = bodySchema.parse(httpReq.body);
+    const row = await createEquipmentLog({
+      projectId: body.projectId,
+      equipmentCode: body.equipmentCode,
+      hours: body.hours,
+      logDate: new Date(body.logDate),
+    });
+    return sendJson(httpRes, row, 201);
+  
+        });
+      });
+      if (web instanceof Response) await sendWebResponse(httpRes, web);
+    } catch (err) {
+      await sendRouteError(httpRes, err);
+    }
+  });
+}

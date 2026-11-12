@@ -5,10 +5,82 @@
 **Not the same as** [`Clinic-Implementation-Matrix.md`](./Clinic-Implementation-Matrix.md) (= Scaffold BE / AC only).  
 **Not** [`READINESS_MATRIX.md`](../READINESS_MATRIX.md) (engineering API/DELIVERY %).
 
+**Closeout (2026-11-11 nurse tablet):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-26 web `/nurse` stays SHIPPED. The Android tablet is not Demo, not Pilot, and not a sell claim until a device UAT. Offline session restore and a per-login outbox do not lift Demo or Pilot. `clinic.yaml` untouched.
+
+**Closeout (2026-11-11 guest-care S2S):** AC-CLI-GUEST-CARE 🟡. CLI-GUEST-CARE-01 API. Gate/Sell/`clinic.yaml` unchanged. Not SHOW.
+
+**Closeout (2026-11-11 unpaid cheque copy):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-12 stays SHIPPED. Copy on the three assign surfaces does not lift Demo or Pilot. `clinic.yaml` untouched.
+
+**Closeout (2026-11-11 open lab cheques):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-12 stays SHIPPED. The desk change does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-11 unpaid completed lab):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-12 stays SHIPPED. The duplicate block does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-10 access denied):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. A missing screen grant opens `/access-denied`. Lab action buttons follow the grant. AC-CLI-RBAC stays 🟡. `clinic.yaml` untouched.
+
+**Closeout (2026-11-10 catalog v3):** Links are their own screen. Lab collect, complete, publish, and blank are copied once from `api:lab_orders`. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. AC-CLI-RBAC stays 🟡. `clinic.yaml` untouched.
+
+**Closeout (2026-11-10 entity access grid):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-RBAC-01 stays SCREEN. AC-CLI-RBAC stays 🟡. The grid does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy and migration `20261110180000_role_permission_catalog_version`.
+
+**Closeout (2026-11-10 paid punches):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-63 stays SCREEN. Storno drops the line from the report. The new line report does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy and migration `20261110160000_paid_punch_actor`.
+
+**Closeout (2026-11-10 nurse staff bundle):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-26 stays SHIPPED. The nurse day sheet puts the room in its own column. Print all builds one sheet per masseur plus a sheet for sessions with nobody assigned. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-10 procedure card stepper):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 stays SCREEN. Plus and minus stay on a procedure card after sessions are done. Minus stops at the done count. Lab extras stay off this modal. Bath and paraffin replacement asks for 7 characters and names the source line. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-10 lab journal groups):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-12 stays SHIPPED. Grouping does not lift Demo or Pilot. A patient can still split across pages. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-10 lane gates):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-55 stays SCREEN. Labs and visits follow their own checkboxes. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy and migration `20261110120000_lane_gate_json`.
+
 **Sources:** Sprint-Index · Implementation-Matrix · UAT-SMOKE · COVERAGE · Pilot · [`docs/editions/clinic.yaml`](../editions/clinic.yaml)
+
+**Closeout (2026-11-11 scarce series first):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. A tight cabin series is seated before looser procedures in the same batch. Does not lift Demo or Pilot. `clinic.yaml` untouched.
+
+**Closeout (2026-11-10 package switch drops empty labs):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. An empty lab left behind by a package change is cancelled, and a finished lab of a removed code does not keep its quota line. The next auto-apply reads the lines after that recalc. Does not lift Demo or Pilot. `clinic.yaml` untouched.
+
+**Closeout (2026-11-10 lab correction + one infect):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Lab journal names align left. A published blank can be corrected in place. Does not lift Demo or Pilot. `clinic.yaml` untouched.
+
+**Closeout (2026-11-10 bonus roster):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. The bonus page is the period table; rates and the chosen staff open from Settings. Does not lift Demo or Pilot. `clinic.yaml` untouched.
+
+**Closeout (2026-11-09 bonus schedule):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-53 stays SCREEN. Bonus calculation is `/reports/bonus`. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy and migration `20261109180000_bonus_schedule_json`.
+
+**Closeout (2026-11-09 checkout edge + closed course file):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 and CLI-55 stay SCREEN. Paid cabin extras stop the day before checkout. A closed course shows what was delivered, not the forward plan. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 stay-day past pink):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 stays SCREEN. Past working days on the procedure grid are pale pink. Non-working days stay gray. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 urine plus grades):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-32 stays SHIPPED. Same lab blank. No Demo or Pilot lift. `clinic.yaml` untouched. Droplet overlay applied and the clinic process restarted.
+
+**Closeout (2026-11-09 checkout leaves the lab journal):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Checked-out guests leave the lab journal, nurse sheet, cabin grid, open-attendance queue, and cashier. The night no-show sweep skips them. Completed labs stay on the card. No Demo or Pilot lift. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 in-house reservation on pay):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Cashier pay fills a missing reservation from the episode. Word unpaid copy is translated. No Demo or Pilot lift. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 staff Word blank):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Staff Word upload follows the lab journal gate. Guest print stays closed until payment. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 paid lab repeat):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-12 stays SHIPPED. A paid repeat after a completed package lab stays. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 infect biochem own blank):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. The intake date moves from package blood biochemistry to infection biochemistry. Other package labs that already had a window keep theirs. Saving it still cancels the open in-house order. No Demo or Pilot lift. `clinic.yaml` untouched. Needs image deploy and migration `20261109140000_infect_biochem_own_blank`.
+
+**Closeout (2026-11-09 seating save):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 and CLI-62 stay SCREEN. CLI-26 stays SHIPPED. The procedure modal asks the start hour, holds paid misses for the checkout morning, and cuts only the latest future session. No-show quota is a clinic switch, default on. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy and migration `20261109120000_no_show_burns_quota`.
+
+**Closeout (2026-11-09 urine salts list):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-32 stays SHIPPED. Duzlar gains 12 crystal choices beside Yoxdur. Does not lift Demo or Pilot. `clinic.yaml` untouched. Overlay applied on the Nafta clinic droplet; clinic process restarted.
+
+**Closeout (2026-11-09 bath series second pass):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Elective visits use the clinic week. Recalc continues the seated bath block. CLI-05 stays SHIPPED. CLI-58 stays SCREEN. Does not lift Demo or Pilot. `clinic.yaml` untouched.
+
+**Closeout (2026-11-09 bath series + clinic calendar):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-58 and CLI-59 stay SCREEN. Country holidays do not close a clinic day. A new bath batch continues the seated block. One bath regime stays one package card. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
 
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
+
+**Closeout (2026-11-09 stay-day grid chrome):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 stays SCREEN. The procedure modal keeps a fixed height. The date grid is sized for 23 days. The month name sits over its days. The split is 40% assign / 60% grid. Saturday is not gray. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 episode card chrome):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-55 stays SCREEN. Add sits above the doctor legend boxes. Tab-row icons cover Diaqnostika, Plan, and İcra planı. Seated plan rows show name, time, code, and regime (blank when there is none). An unseated row has no clock. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 stay-day grid):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 stays SCREEN. The procedure modal shows where saved sessions landed. Quota drops only for a session that has a date. Opening the modal again returns a session that still has no day. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 checkout horizon + catalog search):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 and CLI-62 stay SCREEN. Checkout day is consent for every procedure. Catalog search on the two assign modals matches the row name or the group title. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-07 Sollyuks cabin repair):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Droplet orders only. `restore-sollyuks-type.sql` and the twin remap removed. CLI-26 stays SHIPPED. No Demo or Pilot lift. `clinic.yaml` untouched.
+
+**Closeout (2026-11-07 urine color and clarity lists):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-32 stays SHIPPED. Closed lists only; no Demo or Pilot lift. `clinic.yaml` untouched.
 
 **Closeout (2026-11-06 working-hours admin API map, second pass):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-59 stays SCREEN. Schedule chip error banner + page-route exact map; no Demo/Pilot lift. `clinic.yaml` untouched. Needs image deploy.
 
@@ -25,6 +97,10 @@
 **Closeout (2026-11-06 open-attendance matrix bands):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-62 stays SCREEN (UAT §11b open → not SHOW). The resource matrix shows the open-attendance queue as morning and afternoon bands. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
 
 **Closeout (2026-11-06 OPEN-first day sort):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-62 stays SCREEN (UAT §11b open → not SHOW). Plan/print/nurse list OPEN unseated first that day. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
+
+**Closeout (2026-11-09 episode card boxes):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-55 stays SCREEN. One course on the card (Personal + Course legend boxes; edit on the Personal legend). Other courses stay under the patient row. An empty expand stays on that row. Does not lift Demo or Pilot. `clinic.yaml` untouched. Image `dev-c4224ee` deployed.
+
+**Closeout (2026-11-08 regime cards):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 stays SCREEN. Same regime is one card (package count and paid count). A different regime is another card. Done sessions stay as a count. OPEN movable sessions reseat in card order. Minus and a paid draft stay on that regime. Lab and visit rows in the procedure modal keep their own lane. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
 
 **Closeout (2026-11-06 failed Saxla leaves no plan draft):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 stays SCREEN. A failed save deletes unseated package drafts, restores lifted seats, and returns the seat reason (anamnesis included). Checkout-morning seating and a masseur reseat delete rows that stay unseated. Does not lift Demo or Pilot. `clinic.yaml` untouched. Needs image deploy.
 
@@ -123,7 +199,7 @@
 | Пациенты по странам | `/reports/patients-by-country` | 🟡 SCREEN (CLI-56; UAT open) |
 | ICD favorites admin | `/admin/icd-favorites` | 🟡 |
 | SatAdmin catalogs | `/admin/*` | 🟡 |
-| Working hours (CLI-59) | `/admin/working-hours` Schedule / Day calendar / Peaks | 🟡 SCREEN (settings permission loads schedule/calendar/peaks with load-error banners; SA-only bulk recalc/reseat; calendar + peaks do not reseat; UAT open; not SHOW) |
+| Working hours (CLI-59) | `/admin/working-hours` Schedule / Day calendar / Peaks | 🟡 SCREEN (settings permission loads schedule/calendar/peaks with load-error banners; SA-only bulk recalc/reseat; calendar + peaks do not reseat; a clinic day is the week template plus a manual override, not the country calendar; UAT open; not SHOW) |
 | Cashier | `/cashier` | 🟡 |
 | Print | `/print/*` | 🟡 — procedure, episode, and checkup dates render `дд.мм.гггг`. Guest procedure sheet can repeat name and note in `procedurePrintExtraLang` (lighter line; off by default). Lab/USM blanks: modality signer, then result author; one **Tarix** (issue date; draw date is not printed); a dash result has no norm on the blank or the order screen; **lab** blank omits empty/dash/echo rows and renumbers 1…N (not USM). Assigned studies list is `/print/studies`. Plan print and + sit on the day-chip row. Package start, practitioner dates, and same-day-until are `DatePicker` |
 | Procedure TTK BOM (CLI-47) | `/admin/master-data` (procedure types) | 🟡 API (UAT sign-off open) |
@@ -131,13 +207,13 @@
 | Extra tickets (Nafta dual-run) | `/reception/extra-tickets` + `/print/extra-ticket/[ticketId]` | ✅ SHOW (procedures + unpaid labs/visits Pay desk; only `OPEN` episodes — checked-out hidden in every scope; kind badge + title search; scope due by default keeps today's already-paid rows (amber, same as hotel in-house) with Appointment and Payment columns; overdue/noshow/issued/all with a kit `DatePicker` range; HOT-06 extension write still HEADLESS; not SHIPPED) |
 | Local staff password (CLI-WF-PWD-01) | `/account/password` | 🟡 SCREEN (UAT listed; not SHOW / not GA) |
 | Doctor first-day confirm (CLI-52 / Wave C) | `/sanatorium` + card proposed; `/admin/settings` scheduling mode | 🟡 SCREEN (no Confirm all; FIFO kept; UAT open; not SHIPPED) |
-| Doctor bonus extras (CLI-53 / Wave D) | `/reports/procedures` fulfillment + doctor-bonus | 🟡 SCREEN (package/extra assigned vs completed; amount = completed paid extras; prescriber stamped; % stay 0 until FO; UAT open; not SHIPPED) |
+| Doctor bonus extras (CLI-53 / Wave D) | `/reports/procedures` fulfillment + doctor-bonus; `/reports/bonus` | 🟡 SCREEN (period table of HR-picked staff, share of the total before the name; settings modal; UAT open; not SHIPPED) |
 | Paid revenue by code (CLI-63) | `/reports/revenue` | 🟡 SCREEN (paid extras, labs, exams; code resolved at read; UAT open; not SHIPPED) |
 | Patient assignment ledger (CLI-64) | `/reports/patient-assignments` + `/print/patient-assignments/[episodeId]` | 🟡 SCREEN (one episode; procedures/labs/visits; room+kind; amount after acceptance; print; UAT open — not SHOW / not Pilot) |
 | One stay two episodes (CLI-54 / Wave E) | `/sanatorium` multi-row same room | 🟡 SCREEN (same surname stays two rows; 1-click select / 2-click open Guest; nationality code, first doctor, hotel checkout; UAT open; not SHIPPED) |
-| Episode as care course (CLI-55) | `/patients/[id]` episode select + archive blocks | 🟡 SCREEN (built; in-house room change and stay-product room write the door on open episodes; UAT open — not SHOW / not Pilot) |
-| Role access matrix (CLI-RBAC-01) | `/admin/access` | 🟡 SCREEN (Phase A + custom roles/seed; UAT listed; not SHOW / not Pilot) |
-| Package/extras assign (CLI-57) | `/sanatorium` patient card Package + **Diagnostics** tabs + `/reception/extra-tickets` Pay | 🟡 SCREEN (plan-before-pay; failed Saxla, checkout-morning, and masseur reseat delete unseated drafts and name the reason; day-1 toasts for nights-below-min / template missing; extra +/− is draft until Saxla; Saxla drops unpaid extras from the latest day and repacks OPEN leftovers from today; bath Saxla walks the pinned day, then afternoon, then next-day morning; `seatMiss` on a moved pin; later Save uses the remembered hour or the current hour; package_assign audit startOn; auto LAB analyses+diagnostics stamp inPackage + day-1/GET heal within remaining; course create writes those auto labs and visits (episode open does not); procedure menu excludes labs/visits in API and modal; Diagnostics modality folders; package and study fulfillment scales only on the İcra planı chip; Extra tickets hide CLOSED episodes; UAT open — not SHOW). Fizio/special merge is applied on the clinic database; sell does not change |
+| Episode as care course (CLI-55) | `/patients/[id]` one course: Personal + Course boxes; other courses on `/patients` | 🟡 SCREEN (built; in-house room change and stay-product room write the door on open episodes; UAT open — not SHOW / not Pilot) |
+| Role access matrix (CLI-RBAC-01) | `/admin/access` entity grid | 🟡 SCREEN (catalog v2; UAT listed; not SHOW / not Pilot) |
+| Package/extras assign (CLI-57) | `/sanatorium` patient card Package + **Diagnostics** tabs + `/reception/extra-tickets` Pay | 🟡 SCREEN (plan-before-pay; failed Saxla, checkout-morning, and masseur reseat delete unseated drafts and name the reason; day-1 toasts for nights-below-min / template missing; extra +/− is draft until Saxla; cards split by regime (same regime keeps package and paid counts; done count stays on the card; seating fields and the naftalan quota alias do not open a second card); Saxla drops that regime's latest unfinished sessions and reseats movable OPEN rows in card order; bath Saxla walks the pinned day, then afternoon, then next-day morning; `seatMiss` on a moved pin; later Save uses the remembered hour or the current hour; package_assign audit startOn; auto LAB analyses+diagnostics stamp inPackage + day-1/GET heal within remaining; course create writes those auto labs and visits (episode open does not); procedure menu excludes labs/visits in API and modal; Diagnostics modality folders; package and study fulfillment scales only on the İcra planı chip; Extra tickets hide CLOSED episodes; UAT open — not SHOW). Fizio/special merge is applied on the clinic database; sell does not change |
 | Walk-in groups (CLI-61) | `/sanatorium/walk-in-parties` list + ModalShell CRUD | 🟡 SCREEN (empty selects; sticky doctor; physio on procedure; line grid + Eye; no journal in ops modal; hotel pending basket with `revenueCode`; UAT §11a open — not SHOW) |
 | Open attendance (CLI-62) | Admin type checkbox; plan/print/episode (OPEN first that day); `/nurse` seat-on-arrival; `/sanatorium/resources` morning/afternoon queue bands; settings SAME_DAY | 🟡 SCREEN (day-bucket + SAME_DAY; different OPEN codes share a day, same code once; OPEN unseated day-anchor excluded from FIXED restGap / overlap / compatibility; Pay keeps pin; OPEN-first day sort incl. `mergeDays`; matrix bands (full counts on the first cabin); UAT §11b open — not SHOW / not Pilot) |
 | List / filter kit (CLI-37) | `EraListFilterBar` / `EraListWorkspace` + kit `CatalogField` SEARCHABLE | ✅ — 2026-11-02 combobox dismiss (outside pointer/focus / Escape / clear). Cross-satellite kit; does not move Gate, Demo, Pilot, or Sell |

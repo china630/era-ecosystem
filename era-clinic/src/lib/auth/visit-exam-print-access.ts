@@ -11,6 +11,8 @@ export function sessionMayPrintVisitExam(
 ): boolean {
   return (
     sessionHasClinicPermission(session, CLINIC_PERMISSION.API_VISITS) ||
-    sessionHasClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS)
+    sessionHasClinicPermission(session, CLINIC_PERMISSION.API_VISITS_READ) ||
+    sessionHasClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS) ||
+    sessionHasClinicPermission(session, CLINIC_PERMISSION.API_PATIENTS_READ)
   );
 }

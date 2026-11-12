@@ -35,3 +35,20 @@ export async function findActiveOutletByPublicSlug(slug: string) {
   }
   return null;
 }
+
+export function listSoldOutMenuItemIdsForOutlet(organizationId: string, outletId: string) {
+  return prisma.menuItemSoldOut.findMany({
+    where: { organizationId, outletId, soldOut: true },
+    select: { menuItemId: true },
+  });
+}
+
+export function listActiveMenuCategoriesForOutlet(outletId: string) {
+  return prisma.menuCategory.findMany({
+    where: { outletId },
+    include: {
+      items: { where: { active: true }, orderBy: { name: "asc" } },
+    },
+    orderBy: { sortOrder: "asc" },
+  });
+}

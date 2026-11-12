@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -50,13 +51,25 @@ export class DataHubProxyClient {
       if (!res.ok) {
         const detail = await res.text().catch(() => "");
         this.logger.warn(`data-hub GET ${path} failed ${res.status}: ${detail}`);
+        if (res.status === 400) {
+          let message = detail.slice(0, 300);
+          try {
+            const parsed = JSON.parse(detail) as { message?: unknown };
+            if (typeof parsed.message === "string" && parsed.message.trim()) {
+              message = parsed.message.trim();
+            }
+          } catch {
+            /* hub body was not JSON */
+          }
+          throw new BadRequestException(message);
+        }
         throw new ServiceUnavailableException(
           `Reference data hub unavailable (${res.status})`,
         );
       }
       return (await res.json()) as T;
     } catch (err) {
-      if (err instanceof ServiceUnavailableException) throw err;
+      if (err instanceof ServiceUnavailableException || err instanceof BadRequestException) throw err;
       this.logger.warn(
         `data-hub GET ${path} error: ${err instanceof Error ? err.message : String(err)}`,
       );

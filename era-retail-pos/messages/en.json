@@ -249,6 +249,18 @@
     "phaseProgress": "Phase {current} of {total}"
   },
   "settingsAccess": {
+    "entityColumn": "Entity",
+    "col_view": "View",
+    "col_change": "Change",
+    "col_operate": "Operate",
+    "col_admin": "Admin",
+    "entity_receipt": "Receipt",
+    "entity_shift": "Shift",
+    "entity_stock": "Stock",
+    "entity_till": "Till",
+    "entity_hotel": "Hotel",
+    "entity_settings": "Settings",
+    "entity_access": "Access",
     "title": "Roles and access",
     "subtitle": "Role packages and the screens and actions they grant",
     "loading": "Loading…",
@@ -300,6 +312,7 @@
       "api_integrations_stock": "Clinic stock hooks",
       "admin_import": "Import, supplier match, replenishment",
       "admin_settings": "Outlet integrations",
+      "admin_marketplace": "Marketplace",
       "admin_access_manage": "Manage roles and access"
     }
   },

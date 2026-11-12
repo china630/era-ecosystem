@@ -46,3 +46,36 @@ export async function assertMenuItemNotSoldOut(input: {
   }
   if (stop) throw new FnbSoldOutError(input.plu);
 }
+
+export function listMenuItemSoldOutRows(organizationId: string, outletId?: string) {
+  return prisma.menuItemSoldOut.findMany({
+    where: {
+      organizationId,
+      ...(outletId ? { outletId } : {}),
+    },
+  });
+}
+
+export function upsertMenuItemSoldOut(input: {
+  organizationId: string;
+  menuItemId: string;
+  outletId: string;
+  soldOut: boolean;
+}) {
+  return prisma.menuItemSoldOut.upsert({
+    where: {
+      organizationId_menuItemId_outletId: {
+        organizationId: input.organizationId,
+        menuItemId: input.menuItemId,
+        outletId: input.outletId,
+      },
+    },
+    create: {
+      organizationId: input.organizationId,
+      menuItemId: input.menuItemId,
+      outletId: input.outletId,
+      soldOut: input.soldOut,
+    },
+    update: { soldOut: input.soldOut },
+  });
+}

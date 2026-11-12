@@ -1000,4 +1000,97 @@ export async function backfillEntitlementSnapshots(): Promise<{ updated: number 
   return { updated };
 }
 
+export async function listSellableProgramTemplatesForPicker() {
+  return prisma.programTemplate.findMany({
+    where: sellableTemplateWhere(),
+    orderBy: { code: "asc" },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      durationDays: true,
+      version: true,
+    },
+  });
+}
+
+export async function listProgramTemplatesForAdmin(includeRetired: boolean) {
+  const rows = await prisma.programTemplate.findMany({
+    where: includeRetired ? undefined : { isCurrent: true },
+    orderBy: [{ code: "asc" }, { version: "desc" }],
+    include: programTemplateInclude,
+  });
+  const shaped = [];
+  for (const row of rows) {
+    const [openInstanceCount, pinInstanceCount] = await Promise.all([
+      countOpenInstancesForTemplate(row.id),
+      countAnyInstancesForTemplate(row.id),
+    ]);
+    shaped.push(
+      shapeProgramTemplate({
+        ...row,
+        openInstanceCount,
+        pinInstanceCount,
+      }),
+    );
+  }
+  return shaped;
+}
+
+/** Admin create: template row + procedures/knots in one transaction. */
+export async function createProgramTemplateFromAdmin(
+  body: z.infer<typeof programTemplateCreateSchema>,
+) {
+  const effectiveFrom =
+    parseDateOnly(body.effectiveFrom ?? null) ?? parseDateOnly(bakuDateOnly());
+  const effectiveTo = parseDateOnly(body.effectiveTo ?? null);
+  return prisma.$transaction(async (tx) => {
+    const created = await tx.programTemplate.create({
+      data: {
+        code: body.code,
+        name: body.name,
+        durationDays: body.durationDays,
+        quotaMode: body.quotaMode ?? "FIXED",
+        countSunday: body.countSunday ?? false,
+        version: 1,
+        isCurrent: true,
+        effectiveFrom,
+        effectiveTo,
+        ...(body.minNights !== undefined ? { minNights: body.minNights } : {}),
+        ...(body.maxNights !== undefined ? { maxNights: body.maxNights } : {}),
+      },
+    });
+    const quotaMode = body.quotaMode ?? "FIXED";
+    await replaceTemplateProceduresAndKnots(
+      tx,
+      created.id,
+      normalizeProceduresForQuotaMode(body.procedures, quotaMode),
+      quotaMode === "DAILY_RATE" ? [] : body.knots,
+    );
+    return tx.programTemplate.findUniqueOrThrow({
+      where: { id: created.id },
+      include: programTemplateInclude,
+    });
+  });
+}
+
+export async function findCurrentProgramTemplateByCode(code: string) {
+  return prisma.programTemplate.findFirst({
+    where: { code, isCurrent: true },
+  });
+}
+
+export async function deleteProgramTemplateAdmin(id: string): Promise<
+  | { deleted: true; closed: false }
+  | { deleted: false; closed: true; effectiveTo: string; pinnedInstances: number }
+> {
+  const pinned = await prisma.programInstance.count({ where: { templateId: id } });
+  if (pinned > 0) {
+    const { effectiveTo } = await closeProgramTemplateValidity(id);
+    return { deleted: false, closed: true, effectiveTo, pinnedInstances: pinned };
+  }
+  await prisma.programTemplate.delete({ where: { id } });
+  return { deleted: true, closed: false };
+}
+
 export { procedureSchema, knotSchema };

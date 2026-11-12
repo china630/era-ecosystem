@@ -10,6 +10,12 @@ import { PatientCardDiagnoses } from "@/components/patients/PatientCardDiagnoses
 import { PatientCardComplaints } from "@/components/patients/PatientCardComplaints";
 import { PatientCardAnamnesis } from "@/components/patients/PatientCardAnamnesis";
 import { day1ProgramToast } from "@/lib/day1-program-toast";
+import {
+  NAFTA_LANE_GATE,
+  laneDenied,
+  normalizeLaneGate,
+  type LaneGatePolicy,
+} from "@/domain/sanatorium/lane-gate-policy";
 import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
@@ -17,6 +23,10 @@ import { bakuDateDisplay } from "@/lib/baku-day";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  FieldGroupBox,
+  TAB_ITEM_ACTIVE_CLASS,
+  TAB_ITEM_CLASS,
+  TAB_STRIP_CLASS,
   DatePicker,
   Field,
   FieldRow,
@@ -131,16 +141,15 @@ const emptyForm = {
   issuingCountry: "",
 };
 
-export type PatientCardTab = "guest" | "doctor" | "diagnostics" | "plan" | "package";
+export type PatientCardTab = "doctor" | "diagnostics" | "plan" | "package";
 
-const CARD_TABS: PatientCardTab[] = ["guest", "doctor", "diagnostics", "plan", "package"];
+const CARD_TABS: PatientCardTab[] = ["doctor", "diagnostics", "plan", "package"];
 
 export function tabFromCardPanel(panel?: string | null): PatientCardTab {
   if (panel === "plan") return "plan";
   if (panel === "diagnostics" || panel === "intake") return "diagnostics";
   if (panel === "package" || panel === "chart") return "package";
-  if (panel === "doctor" || panel === "clinical") return "doctor";
-  return "guest";
+  return "doctor";
 }
 
 type Props = {
@@ -175,9 +184,9 @@ export function PatientCardBody({
   const [careTeamCount, setCareTeamCount] = useState(0);
   const [complaintCount, setComplaintCount] = useState(0);
   const [diagnosisCount, setDiagnosisCount] = useState(0);
+  const [laneGate, setLaneGate] = useState<LaneGatePolicy>(NAFTA_LANE_GATE);
   const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
   const [cardTab, setCardTab] = useState<PatientCardTab>(() => tabFromCardPanel(panel));
-  const [careDoctorLabel, setCareDoctorLabel] = useState("—");
   const [printOpen, setPrintOpen] = useState(false);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -214,12 +223,16 @@ export function PatientCardBody({
   const episodeReadOnly = selectedEpisode?.status !== "OPEN";
   const anamnesisOk = Boolean(anamnesis.trim());
   const careTeamOk = careTeamCount > 0;
-  const studiesUnlocked = anamnesisOk && complaintCount > 0 && diagnosisCount > 0;
-  const episodeFieldKind = episodes.length <= 12 ? "CLOSED_SMALL" : "SEARCHABLE";
-  const episodeOptions = useMemo(
-    () => episodes.map((e) => ({ value: e.id, label: e.label })),
-    [episodes],
-  );
+  const studiesUnlocked = !laneDenied(laneGate, "procedures", {
+    anamnesisText: anamnesis,
+    complaintCount,
+    diagnosisCount,
+  });
+  const labsUnlocked = !laneDenied(laneGate, "labs", {
+    anamnesisText: anamnesis,
+    complaintCount,
+    diagnosisCount,
+  });
 
   const sexLabel = useCallback(
     (sex: PatientSex | undefined) => {
@@ -242,8 +255,12 @@ export function PatientCardBody({
     const parsed = await res.json();
     const items = (parsed.data?.items ?? parsed.items ?? []) as EpisodeOption[];
     setEpisodes(items);
+    setLaneGate(normalizeLaneGate(parsed.data?.laneGate ?? parsed.laneGate));
     if (items.length > 0) {
-      const preferred = items.find((item) => item.id === initialEpisodeId) ?? items[0];
+      const preferred =
+        items.find((item) => item.id === initialEpisodeId) ??
+        items.find((item) => item.status === "OPEN") ??
+        items[0];
       setSelectedEpisodeId(preferred.id);
       setAnamnesis(preferred.anamnesisText ?? "");
     } else {
@@ -287,20 +304,7 @@ export function PatientCardBody({
     setCardTab(tabFromCardPanel(panel));
   }, [panel]);
 
-  function onEpisodeChange(nextId: string) {
-    setSelectedEpisodeId(nextId);
-    const ep = episodes.find((e) => e.id === nextId);
-    setAnamnesis(ep?.anamnesisText ?? "");
-    setCareTeamCount(0);
-    setCareDoctorLabel("—");
-    setComplaintCount(0);
-    setDiagnosisCount(0);
-  }
-
   const onCareTeamChange = useCallback((items: { id: string; practitioner?: { fullName?: string } }[]) => {
-    setCareDoctorLabel(
-      items.map((row) => row.practitioner?.fullName?.trim()).filter(Boolean).join(", ") || "—",
-    );
     setCareTeamCount((prev) => {
       if (prev === 0 && items.length > 0) {
         setClinicalRefreshKey((n) => n + 1);
@@ -448,7 +452,7 @@ export function PatientCardBody({
     patient.ageYears != null ? t("ageYears", { age: patient.ageYears }) : t("ageUnknown");
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="mb-4 flex flex-wrap gap-2">
         {patient.globalPersonId &&
         patient.identifiersSummary?.some((i) => i.type === "PASSPORT") &&
@@ -465,24 +469,86 @@ export function PatientCardBody({
         ) : null}
       </div>
 
-      <div className="mx-auto flex max-w-3xl flex-col gap-3 px-4 pb-6 sm:px-0">
-        <div className={`sticky top-0 z-10 space-y-3 bg-white pb-1`}>
-          <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-3 text-[13px]`}>
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                {episodes.length > 0 ? (
-                  <CatalogField
-                    kind={episodeFieldKind}
-                    label={t("episodeSelect")}
-                    value={selectedEpisodeId ?? ""}
-                    onChange={(next) => onEpisodeChange(String(next))}
-                    options={episodeOptions}
-                  />
+      <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="min-h-0 space-y-3 overflow-y-auto">
+          <FieldGroupBox
+            title={t("personalBox")}
+            actions={
+              <button
+                type="button"
+                className={TABLE_ROW_ICON_BTN_CLASS}
+                aria-label={tc("edit")}
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
+              </button>
+            }
+          >
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("fullName")}</span>
+                <span className="font-semibold text-[#2C3E50]">{patient.fullName}</span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("refCode")}</span>
+                <span className="font-semibold text-[#2C3E50]">{patient.refCode}</span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("phone")}</span>
+                <span className="font-semibold text-[#2C3E50]">{identityValue(patient.phone)}</span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("nationality")}</span>
+                <span className="font-semibold text-[#2C3E50]">
+                  {patient.nationality ? countryLabel(patient.nationality, locale) : "—"}
+                </span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("sex")}</span>
+                <span className="font-semibold text-[#2C3E50]">{identityValue(sexLabel(patient.sex))}</span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("birthDate")}</span>
+                <span className="font-semibold text-[#2C3E50]">
+                  {birthDateToInputValue(patient.birthDate)
+                    ? `${birthDateToInputValue(patient.birthDate)} (${ageLine})`
+                    : "—"}
+                </span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("bloodGroup")}</span>
+                <span className="font-semibold text-[#2C3E50]">
+                  {patient.bloodGroup && patient.bloodGroup !== "UNKNOWN"
+                    ? BLOOD_LABELS[patient.bloodGroup]
+                    : "—"}
+                </span>
+              </p>
+              <p>
+                <span className="block text-[11px] font-medium text-slate-500">{t("emergencyContact")}</span>
+                <span className="font-semibold text-[#2C3E50]">
+                  {identityValue(
+                    [patient.emergencyContactName, patient.emergencyContactPhone]
+                      .filter(Boolean)
+                      .join(" · "),
+                  )}
+                </span>
+              </p>
+            </div>
+            {isSuperAdmin ? (
+              <p className="mt-2 text-[13px]">
+                <span className="block text-[11px] font-medium text-slate-500">{t("mdmBadge")}</span>
+                {patient.globalPersonId ? (
+                  <span className={`font-semibold ${TEXT_SUCCESS_CLASS}`}>{maskPersonId(patient.globalPersonId)}</span>
                 ) : (
-                  <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("anamnesisCourseMissing")}</p>
+                  <span className={`font-semibold ${TEXT_DANGER_CLASS}`}>{t("mdmMissing")}</span>
                 )}
-              </div>
-              <div className="flex shrink-0 items-center gap-1 pt-5">
+              </p>
+            ) : null}
+          </FieldGroupBox>
+          <FieldGroupBox
+            title={t("episodeBox")}
+            actions={
+              <div className="flex items-center gap-1">
                 {selectedEpisodeId ? (
                   <button
                     type="button"
@@ -505,165 +571,69 @@ export function PatientCardBody({
                     <RefreshCw className="h-4 w-4 text-[#E74C3C]" aria-hidden />
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  className={TABLE_ROW_ICON_BTN_CLASS}
-                  aria-label={tc("edit")}
-                  onClick={() => setEditOpen(true)}
-                >
-                  <Pencil className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                </button>
               </div>
-            </div>
+            }
+          >
             {selectedEpisode ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
                 <p>
-                  <span className="font-medium">{t("packageProgram")}:</span>{" "}
-                  {selectedEpisode.programCode ?? "—"}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("packageProgram")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.programCode ?? "—"}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("packageRoom")}:</span>{" "}
-                  {selectedEpisode.roomNumber ?? "—"}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("packageRoom")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.roomNumber ?? "—"}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("packageOrigin")}:</span>{" "}
-                  {selectedEpisode.patientOrigin}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("stayCheckIn")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{formatStayDate(selectedEpisode.stayStartsOn)}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("stayCheckIn")}:</span>{" "}
-                  {formatStayDate(selectedEpisode.stayStartsOn)}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("stayCheckOut")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{formatStayDate(selectedEpisode.stayEndsOn)}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("stayCheckOut")}:</span>{" "}
-                  {formatStayDate(selectedEpisode.stayEndsOn)}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("stayNights")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.stayNights ?? "—"}</span>
                 </p>
                 <p>
-                  <span className="font-medium">{t("stayNights")}:</span>{" "}
-                  {selectedEpisode.stayNights ?? "—"}
-                </p>
-                <p className="col-span-2 sm:col-span-3">
-                  <span className="font-medium">{t("careTeamTitle")}:</span> {careDoctorLabel}
+                  <span className="block text-[11px] font-medium text-slate-500">{t("packageOrigin")}</span>
+                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.patientOrigin}</span>
                 </p>
               </div>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-1">
+            ) : (
+              <p className={`text-sm ${TEXT_MUTED_CLASS}`}>—</p>
+            )}
+          </FieldGroupBox>
+        </div>
+        <div className="flex min-h-0 min-w-0 flex-col">
+          <div className={`${TAB_STRIP_CLASS} items-center`} role="tablist">
             {CARD_TABS.map((tab) => (
               <button
                 key={tab}
                 type="button"
-                className={cardTab === tab ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+                role="tab"
+                aria-selected={cardTab === tab}
+                className={cardTab === tab ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
                 onClick={() => setCardTab(tab)}
               >
                 {t(
-                  tab === "guest"
-                    ? "cardTabGuest"
-                    : tab === "doctor"
-                      ? "cardTabDoctor"
-                      : tab === "diagnostics"
-                        ? "cardTabDiagnostics"
-                        : tab === "plan"
-                          ? "cardTabPlan"
-                          : "cardTabPackage",
+                  tab === "doctor"
+                    ? "cardTabDoctor"
+                    : tab === "diagnostics"
+                      ? "cardTabDiagnostics"
+                      : tab === "plan"
+                        ? "cardTabPlan"
+                        : "cardTabPackage",
                 )}
               </button>
             ))}
+            <div id="episode-card-tab-actions" className="ml-auto flex items-center gap-2 pb-1" />
           </div>
-        </div>
-
-        {cardTab === "guest" ? (
-          <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-            <div>
-              <p className="text-base font-semibold text-[#2C3E50]">{patient.fullName}</p>
-              <p className="mt-0.5 text-sm font-medium text-[#34495E]">
-                {patient.refCode}
-                {patient.ageYears != null ? ` · ${t("ageYears", { age: patient.ageYears })}` : ""}
-              </p>
-            </div>
-            {isSuperAdmin ? (
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("mdmBadge")}
-                </span>
-                {patient.globalPersonId ? (
-                  <span className={`text-base font-semibold ${TEXT_SUCCESS_CLASS}`}>
-                    {maskPersonId(patient.globalPersonId)}
-                  </span>
-                ) : (
-                  <span className={`text-base font-semibold ${TEXT_DANGER_CLASS}`}>
-                    {t("mdmMissing")}
-                  </span>
-                )}
-              </p>
-            ) : null}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("phone")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {identityValue(patient.phone)}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("nationality")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {patient.nationality ? countryLabel(patient.nationality, locale) : "—"}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("sex")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {identityValue(sexLabel(patient.sex))}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("birthDate")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {birthDateToInputValue(patient.birthDate)
-                    ? `${birthDateToInputValue(patient.birthDate)} (${ageLine})`
-                    : "—"}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("bloodGroup")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {patient.bloodGroup && patient.bloodGroup !== "UNKNOWN"
-                    ? BLOOD_LABELS[patient.bloodGroup]
-                    : "—"}
-                </span>
-              </p>
-              <p>
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  {t("emergencyContact")}
-                </span>
-                <span className="text-base font-semibold text-[#2C3E50]">
-                  {identityValue(
-                    [patient.emergencyContactName, patient.emergencyContactPhone]
-                      .filter(Boolean)
-                      .join(" · "),
-                  )}
-                </span>
-              </p>
-            </div>
-            {isSuperAdmin && patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
-              <p className={TEXT_MUTED_CLASS}>
-                {patient.identifiersSummary.map((i) => i.type).join(", ")}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
+          <div className="min-h-0 flex-1 overflow-y-auto">
 
         {selectedEpisode ? (
-          <div className={cardTab === "guest" ? "space-y-2" : "hidden"}>
+          <div className={cardTab === "doctor" ? "space-y-2" : "hidden"}>
             {selectedEpisode.autoPaidLabMisses ? (
               <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
                 {t("autoPaidLabMiss", { codes: selectedEpisode.autoPaidLabMisses })}
@@ -687,39 +657,29 @@ export function PatientCardBody({
               onSaved={onAnamnesisSaved}
             />
 
-            <section className="space-y-2">
-              <div
-                className={`rounded-lg border-2 border-amber-400 bg-amber-50 shadow-sm ${
-                  ciOpen ? "p-4" : "px-4 py-2"
-                }`}
-              >
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
-                    {t("contraindicationsTitle")}
-                    {ciCount > 0 ? (
-                      <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-950">
-                        {ciCount}
-                      </span>
-                    ) : null}
-                  </h2>
-                  <button
-                    type="button"
-                    className={SECONDARY_BUTTON_CLASS}
-                    aria-expanded={ciOpen}
-                    onClick={() => setCiOpen((open) => !open)}
-                  >
-                    {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
-                  </button>
-                </div>
-                <PatientContraindicationsPanel
-                  patientRefId={patient.id}
-                  episodeId={selectedEpisodeId}
-                  readOnly={episodeReadOnly}
-                  expanded={ciOpen}
-                  onCountChange={setCiCount}
-                />
-              </div>
-            </section>
+            <FieldGroupBox
+              title={t("contraindicationsTitle")}
+              badge={ciCount > 0 ? ciCount : undefined}
+              className="bg-amber-50"
+              actions={
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  aria-expanded={ciOpen}
+                  onClick={() => setCiOpen((open) => !open)}
+                >
+                  {ciOpen ? t("contraindicationsCollapse") : t("contraindicationsExpand")}
+                </button>
+              }
+            >
+              <PatientContraindicationsPanel
+                patientRefId={patient.id}
+                episodeId={selectedEpisodeId}
+                readOnly={episodeReadOnly}
+                expanded={ciOpen}
+                onCountChange={setCiCount}
+              />
+            </FieldGroupBox>
 
             <PatientCardComplaints
               patientRefId={patient.id}
@@ -754,12 +714,15 @@ export function PatientCardBody({
             episodeId={selectedEpisodeId}
             patientOrigin={selectedEpisode.patientOrigin}
             readOnly={episodeReadOnly}
-            anamnesisOk={anamnesisOk}
             studiesUnlocked={studiesUnlocked}
+            labsUnlocked={labsUnlocked}
             refreshKey={clinicalRefreshKey}
             section={cardTab}
+            episodeClosed={selectedEpisode.status === "CLOSED"}
           />
         ) : null}
+          </div>
+        </div>
       </div>
 
       <ModalShell open={editOpen} title={t("editPatient")} onClose={() => setEditOpen(false)}>
@@ -919,7 +882,7 @@ export function PatientCardBody({
             : null
         }
       />
-    </>
+    </div>
   );
 }
 

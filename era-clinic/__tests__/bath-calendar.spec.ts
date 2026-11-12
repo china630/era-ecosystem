@@ -375,7 +375,7 @@ describe("planBathSeries", () => {
     expect(cells.map((cell) => cell.ymd)).toEqual([
       "2026-10-05",
       "2026-10-08",
-      "2026-10-09",
+      "2026-10-10",
     ]);
   });
 
@@ -470,6 +470,37 @@ describe("planBathSeries", () => {
       blockedDays: [{ ymd: "2026-10-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" }],
     });
     expect(cells.map((cell) => cell.ymd)).toEqual(["2026-10-20", "2026-10-21", "2026-10-23"]);
+  });
+
+  it("continues the block from a bath already seated before the new batch", () => {
+    const stay: StayDay[] = [
+      { ymd: "2026-10-19", working: true },
+      { ymd: "2026-10-20", working: true },
+      { ymd: "2026-10-21", working: true },
+      { ymd: "2026-10-22", working: true },
+      { ymd: "2026-10-23", working: true },
+    ];
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+          mark: "Нж",
+          mode: "2",
+          qty: 2,
+          fillsRestDays: false,
+        },
+      ],
+      kept: [],
+      layout: "fresh",
+      notBeforeYmd: "2026-10-21",
+      blockedDays: [
+        { ymd: "2026-10-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+        { ymd: "2026-10-20", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+      ],
+    });
+    expect(cells.map((cell) => cell.ymd)).toEqual(["2026-10-22", "2026-10-23"]);
   });
 });
 

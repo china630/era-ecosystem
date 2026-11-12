@@ -91,10 +91,10 @@ describe("clinic default permissions", () => {
       CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
     );
     expect(routePermission("/admin/users")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
     );
     expect(routePermission("/admin/logins")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
     );
     expect(routePermission("/admin/diagnostic-catalog")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
@@ -149,7 +149,7 @@ describe("clinic default permissions", () => {
       CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
     );
     expect(adminApiRoutePermission("/api/admin/roles/CLINIC_ADMIN/permissions")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
     );
     expect(adminApiRoutePermission("/api/admin/procedure-day-series")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
@@ -161,22 +161,22 @@ describe("clinic default permissions", () => {
 
   it("adminApiRoutePermission maps working-hours clinic-days and peak-rules", () => {
     expect(adminApiRoutePermission("/api/admin/clinic-days")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
     );
     expect(adminApiRoutePermission("/api/admin/clinic-days?from=2026-01-01")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
     );
     expect(adminApiRoutePermission("/api/admin/peak-rules")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
     );
     expect(adminApiRoutePermission("/api/admin/peak-rules/abc")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
     );
     expect(adminApiRoutePermissions("/api/admin/peak-rules")).toEqual([
-      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
     ]);
     expect(routePermission("/admin/working-hours")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+      CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
     );
     // SA-only handlers stay off the permission map (fail-closed if assertClinicAdminRoute used).
     expect(adminApiRoutePermission("/api/admin/schedule-recalc")).toBeNull();
@@ -191,7 +191,7 @@ describe("clinic default permissions", () => {
           login: "admin",
           permissions: [CLINIC_PERMISSION.SCREEN_HOME],
         },
-        CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+        CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
       ),
     ).toBe(false);
   });

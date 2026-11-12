@@ -1,5 +1,8 @@
 import type { SatelliteSessionPayload } from "./session";
 import { sessionHasRole } from "./roles";
+import { roleForbiddenBody } from "./role-forbidden";
+
+export { roleForbiddenBody, ROLE_FORBIDDEN_CODE } from "./role-forbidden";
 
 export class SatelliteForbiddenError extends Error {
   constructor(message = "Forbidden") {
@@ -24,7 +27,7 @@ export function forbidUnlessRole(
   role: string,
 ): Response | null {
   if (!sessionHasRole(session, role)) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
+    return new Response(JSON.stringify(roleForbiddenBody()), {
       status: 403,
       headers: { "Content-Type": "application/json" },
     });

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "../../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../../components/finance-empty-table-row";
 import { apiFetch } from "../../../../lib/api-client";
 import { useAuth } from "../../../../lib/auth-context";
 import { useOrgPermissions } from "../../../../lib/use-org-permissions";
@@ -115,11 +116,7 @@ export default function IntegrationsHealthPage() {
                   </td>
                 </tr>
               ) : ordered.length === 0 ? (
-                <tr className={DATA_TABLE_TR_CLASS}>
-                  <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`} colSpan={6}>
-                    No provider metrics yet.
-                  </td>
-                </tr>
+                <FinanceEmptyTableRow colSpan={6} message={t("common.noRows")} />
               ) : (
                 ordered.map((row) => (
                   <tr key={row.provider} className={DATA_TABLE_TR_CLASS}>

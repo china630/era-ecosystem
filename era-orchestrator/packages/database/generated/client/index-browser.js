@@ -308,9 +308,25 @@ exports.Prisma.SatelliteEndpointScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PlacementBatchScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  satelliteKeys: 'satelliteKeys',
+  fromTopology: 'fromTopology',
+  toTopology: 'toTopology',
+  packaging: 'packaging',
+  targetHost: 'targetHost',
+  recipeJson: 'recipeJson',
+  status: 'status',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.PlacementJobScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
+  batchId: 'batchId',
   satelliteKey: 'satelliteKey',
   fromTopology: 'fromTopology',
   toTopology: 'toTopology',
@@ -323,6 +339,17 @@ exports.Prisma.PlacementJobScalarFieldEnum = {
   targetBaseUrl: 'targetBaseUrl',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PlacementProcessLogScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  jobId: 'jobId',
+  phase: 'phase',
+  level: 'level',
+  message: 'message',
+  detail: 'detail',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.WorkforceAssignmentScalarFieldEnum = {
@@ -1056,6 +1083,16 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.OrganizationAccessCredentialScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  connectorCode: 'connectorCode',
+  publicFields: 'publicFields',
+  secretCipher: 'secretCipher',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.OrganizationProfileScalarFieldEnum = {
   organizationId: 'organizationId',
   tradeName: 'tradeName',
@@ -1068,6 +1105,24 @@ exports.Prisma.OrganizationProfileScalarFieldEnum = {
   stampUrl: 'stampUrl',
   signatureDirectorUrl: 'signatureDirectorUrl',
   bankLine: 'bankLine',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrganizationGuestAppScalarFieldEnum = {
+  organizationId: 'organizationId',
+  enabled: 'enabled',
+  displayName: 'displayName',
+  primaryColor: 'primaryColor',
+  logoUrl: 'logoUrl',
+  locale: 'locale',
+  deskPhone: 'deskPhone',
+  catalogJson: 'catalogJson',
+  postStayMessage: 'postStayMessage',
+  offersJson: 'offersJson',
+  doctorOnDutyPhone: 'doctorOnDutyPhone',
+  leadAlertMinutes: 'leadAlertMinutes',
+  enabledOrderKinds: 'enabledOrderKinds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1196,6 +1251,116 @@ exports.Prisma.CommsParticipantScalarFieldEnum = {
   threadId: 'threadId',
   userId: 'userId',
   readAt: 'readAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.DocLocationScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  parentId: 'parentId',
+  kind: 'kind',
+  name: 'name',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.DocRouteTemplateScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  name: 'name',
+  docKind: 'docKind',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DocRouteStepScalarFieldEnum = {
+  id: 'id',
+  templateId: 'templateId',
+  stepOrder: 'stepOrder',
+  kind: 'kind',
+  action: 'action',
+  appliesTo: 'appliesTo',
+  dueDays: 'dueDays',
+  join: 'join',
+  skipUnlessKind: 'skipUnlessKind',
+  minAmount: 'minAmount',
+  chainOffset: 'chainOffset',
+  minGradeLevel: 'minGradeLevel',
+  orgUnitId: 'orgUnitId',
+  positionId: 'positionId',
+  layoutX: 'layoutX',
+  layoutY: 'layoutY'
+};
+
+exports.Prisma.DocRouteEdgeScalarFieldEnum = {
+  id: 'id',
+  templateId: 'templateId',
+  fromStepOrder: 'fromStepOrder',
+  toStepOrder: 'toStepOrder'
+};
+
+exports.Prisma.DocCaseScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  kind: 'kind',
+  status: 'status',
+  regNumber: 'regNumber',
+  registeredAt: 'registeredAt',
+  title: 'title',
+  correspondent: 'correspondent',
+  summary: 'summary',
+  dueOn: 'dueOn',
+  amount: 'amount',
+  orgUnitId: 'orgUnitId',
+  replyToId: 'replyToId',
+  authorEmploymentId: 'authorEmploymentId',
+  locationId: 'locationId',
+  templateId: 'templateId',
+  createdByUserId: 'createdByUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DocFileScalarFieldEnum = {
+  id: 'id',
+  caseId: 'caseId',
+  fileName: 'fileName',
+  contentType: 'contentType',
+  body: 'body',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.DocRouteInstanceScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  caseId: 'caseId',
+  templateId: 'templateId',
+  status: 'status',
+  currentStep: 'currentStep',
+  awaitingAssignment: 'awaitingAssignment',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DocRouteTaskScalarFieldEnum = {
+  id: 'id',
+  instanceId: 'instanceId',
+  stepOrder: 'stepOrder',
+  action: 'action',
+  status: 'status',
+  assigneeEmploymentId: 'assigneeEmploymentId',
+  assigneeUserId: 'assigneeUserId',
+  dueAt: 'dueAt',
+  overdueNotifiedAt: 'overdueNotifiedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.DocRouteDecisionScalarFieldEnum = {
+  id: 'id',
+  instanceId: 'instanceId',
+  stepOrder: 'stepOrder',
+  outcome: 'outcome',
+  actorUserId: 'actorUserId',
+  reason: 'reason',
   createdAt: 'createdAt'
 };
 
@@ -1694,6 +1859,11 @@ exports.DeploymentTopology = exports.$Enums.DeploymentTopology = {
   ONPREM: 'ONPREM'
 };
 
+exports.PlacementPackaging = exports.$Enums.PlacementPackaging = {
+  PER_SATELLITE: 'PER_SATELLITE',
+  SINGLE_STACK: 'SINGLE_STACK'
+};
+
 exports.PlacementJobStatus = exports.$Enums.PlacementJobStatus = {
   PENDING: 'PENDING',
   FREEZE: 'FREEZE',
@@ -1704,7 +1874,10 @@ exports.PlacementJobStatus = exports.$Enums.PlacementJobStatus = {
   SMOKE: 'SMOKE',
   DONE: 'DONE',
   FAILED: 'FAILED',
-  REJECTED: 'REJECTED'
+  REJECTED: 'REJECTED',
+  CONFIGURE: 'CONFIGURE',
+  IMPORT: 'IMPORT',
+  ROLLBACK: 'ROLLBACK'
 };
 
 exports.WorkforceAssignmentStatus = exports.$Enums.WorkforceAssignmentStatus = {
@@ -1981,6 +2154,60 @@ exports.OrgAddressKind = exports.$Enums.OrgAddressKind = {
   BRANCH: 'BRANCH'
 };
 
+exports.DocLocationKind = exports.$Enums.DocLocationKind = {
+  SITE: 'SITE',
+  ROOM: 'ROOM',
+  RACK: 'RACK',
+  SHELF: 'SHELF',
+  BOX: 'BOX',
+  FOLDER: 'FOLDER'
+};
+
+exports.DocKind = exports.$Enums.DocKind = {
+  INCOMING: 'INCOMING',
+  OUTGOING: 'OUTGOING',
+  INTERNAL: 'INTERNAL'
+};
+
+exports.DocStepAction = exports.$Enums.DocStepAction = {
+  APPROVE: 'APPROVE',
+  SIGN: 'SIGN',
+  EXECUTE: 'EXECUTE',
+  ACKNOWLEDGE: 'ACKNOWLEDGE'
+};
+
+exports.DocStepJoin = exports.$Enums.DocStepJoin = {
+  ANY: 'ANY',
+  ALL: 'ALL'
+};
+
+exports.DocStatus = exports.$Enums.DocStatus = {
+  DRAFT: 'DRAFT',
+  REGISTERED: 'REGISTERED',
+  IN_ROUTE: 'IN_ROUTE',
+  COMPLETED: 'COMPLETED',
+  REJECTED: 'REJECTED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.DocRouteInstanceStatus = exports.$Enums.DocRouteInstanceStatus = {
+  OPEN: 'OPEN',
+  COMPLETED: 'COMPLETED',
+  REJECTED: 'REJECTED'
+};
+
+exports.DocTaskStatus = exports.$Enums.DocTaskStatus = {
+  OPEN: 'OPEN',
+  DONE: 'DONE',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.DocDecisionOutcome = exports.$Enums.DocDecisionOutcome = {
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  ACKNOWLEDGED: 'ACKNOWLEDGED'
+};
+
 exports.HoldingAccessRole = exports.$Enums.HoldingAccessRole = {
   OWNER: 'OWNER',
   ADMIN: 'ADMIN',
@@ -2135,7 +2362,9 @@ exports.Prisma.ModelName = {
   Satellite: 'Satellite',
   OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
   SatelliteEndpoint: 'SatelliteEndpoint',
+  PlacementBatch: 'PlacementBatch',
   PlacementJob: 'PlacementJob',
+  PlacementProcessLog: 'PlacementProcessLog',
   WorkforceAssignment: 'WorkforceAssignment',
   WorkforceScope: 'WorkforceScope',
   WorkforceGrade: 'WorkforceGrade',
@@ -2189,7 +2418,9 @@ exports.Prisma.ModelName = {
   WorkforceApprovalDecision: 'WorkforceApprovalDecision',
   WorkforceVacationPlanRevision: 'WorkforceVacationPlanRevision',
   Organization: 'Organization',
+  OrganizationAccessCredential: 'OrganizationAccessCredential',
   OrganizationProfile: 'OrganizationProfile',
+  OrganizationGuestApp: 'OrganizationGuestApp',
   OrganizationContactChannel: 'OrganizationContactChannel',
   OrganizationAddress: 'OrganizationAddress',
   ElektrawebBridgePolicy: 'ElektrawebBridgePolicy',
@@ -2200,6 +2431,15 @@ exports.Prisma.ModelName = {
   CommsThread: 'CommsThread',
   CommsMessage: 'CommsMessage',
   CommsParticipant: 'CommsParticipant',
+  DocLocation: 'DocLocation',
+  DocRouteTemplate: 'DocRouteTemplate',
+  DocRouteStep: 'DocRouteStep',
+  DocRouteEdge: 'DocRouteEdge',
+  DocCase: 'DocCase',
+  DocFile: 'DocFile',
+  DocRouteInstance: 'DocRouteInstance',
+  DocRouteTask: 'DocRouteTask',
+  DocRouteDecision: 'DocRouteDecision',
   Holding: 'Holding',
   HoldingMembership: 'HoldingMembership',
   OrganizationRole: 'OrganizationRole',

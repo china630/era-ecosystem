@@ -2,16 +2,17 @@
  * CLI-57 — package lazy-assign from ProgramProcedureBalance (ADR clinic-episode-procedure-assign-modal).
  */
 import { randomBytes } from "crypto";
+import { regimeFromOrderSites } from "@/domain/sanatorium/regime-key";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
-import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
+import { placeConfirmedProcedures, type CabinScanBag } from "@/lib/treatment-planner.service";
 import {
   releaseProcedureOccupancy,
   replaceProcedureAllocations,
   type AllocationWrite,
 } from "@/domain/procedure/procedure-allocation.service";
-import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
+import { ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
   episodeCareTeamDenied,
@@ -29,7 +30,7 @@ import {
   isSeedProcedureCode,
   isWoProcedureCode,
 } from "@/lib/import/seed-catalog-match";
-import { addBakuDays, bakuDateKey, bakuDayBounds, bakuHourMinute, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { addBakuDays, bakuDateKey, bakuDayBounds, bakuHourMinute, bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import { saxlaRepeatClock } from "@/domain/planning/clinic-day";
 import {
   dailyCapForQuota,
@@ -421,14 +422,13 @@ export function mergeParamLines(labels: string[]): string[] {
   return out;
 }
 
-/** One right-column card per SKU + quota + lock, not per assign batch / param fingerprint. */
+/** One right-column card per SKU + quota + regime. Done sessions stay on that card. */
 export function assignedAggGroupKey(o: {
   procedureCode: string;
   packageQuotaCode?: string | null;
-  locked: boolean;
-  consumed: boolean;
+  regimeKey: string;
 }): string {
-  return `${quotaCodeOf(o)}:${o.procedureCode}:${o.locked ? "locked" : "active"}:${o.consumed ? "done" : "live"}`;
+  return `${quotaCodeOf(o)}:${o.procedureCode}:${o.regimeKey}`;
 }
 
 /** Baku calendar day key YYYY-MM-DD from a Date (UTC instant interpreted in Asia/Baku). */
@@ -488,6 +488,35 @@ export type PackageAssignedAgg = {
   siteIds?: string[];
   siteApplyMode?: "TURN" | "TOGETHER" | null;
   siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
+  /** Sites + laterality + apply mode + physio fields. Same key shares one card. */
+  regimeKey?: string;
+  /** Sessions already started or finished. Plus/minus cannot cross this count. */
+  doneQty?: number;
+  /** Not-yet-started package sessions, latest day first. Minus cancels these ids. */
+  movableOrderIds?: string[];
+  /** Earliest session of this regime. Cards sort by this. */
+  addedAt?: string;
+};
+
+export type StayPlanMark = {
+  ymd: string;
+  procedureCode: string;
+  regimeKey: string;
+  procedureName: string;
+  paramsLabel: string;
+  done: boolean;
+  paid: boolean;
+  open: boolean;
+  /** Wall time for a cabin row. Empty for open attendance. */
+  time: string;
+  cabin: string;
+};
+
+export type StayPlan = {
+  days: string[];
+  checkoutYmd: string | null;
+  closedDays: string[];
+  marks: StayPlanMark[];
 };
 
 /** In-package LabOrder / Visit rows for the diagnostics assign modal. */
@@ -543,9 +572,10 @@ async function loadEpisodeForAssign(
     throw new PackageAssignError("No program instance", "NO_PROGRAM");
   }
   if (requireClinicalGates) {
-    const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
-    if (anamnesisDenied) {
-      throw new PackageAssignError(anamnesisDenied, ANAMNESIS_REQUIRED);
+    const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+    const denied = await procedureLaneDenial(episodeId);
+    if (denied) {
+      throw new PackageAssignError(denied.message, denied.code);
     }
     const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
     if (careDenied) {
@@ -598,6 +628,7 @@ export async function getPackageAssignSnapshot(
   masseurOptions: Record<string, Array<{ id: string; fullName: string }>>;
   /** Unstarted sessions of this code, when they all name the same person. */
   masseurByCode: Record<string, string | null>;
+  stayPlan: StayPlan;
 }> {
   let episode = await loadEpisodeForAssign(episodeId, {
     requireClinicalGates: false,
@@ -624,6 +655,7 @@ export async function getPackageAssignSnapshot(
         sexBlockedCodes: [],
         masseurOptions: {},
         masseurByCode: {},
+        stayPlan: { days: [], checkoutYmd: null, closedDays: [], marks: [] },
       };
     }
     const { tryOpenProgramAfterTherapistStage } = await import(
@@ -686,6 +718,7 @@ export async function getPackageAssignSnapshot(
         sexBlockedCodes: [],
         masseurOptions: {},
         masseurByCode: {},
+        stayPlan: { days: [], checkoutYmd: null, closedDays: [], marks: [] },
       };
     }
   }
@@ -710,9 +743,10 @@ export async function getPackageAssignSnapshot(
     templateMembers: blockMemberRows,
   });
 
-  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
+  const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+  const laneDeniedRow = await procedureLaneDenial(episodeId);
   const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
-  const softWarnDay1 = careDenied ?? anamnesisDenied;
+  const softWarnDay1 = careDenied ?? laneDeniedRow?.message ?? null;
 
   // Heal auto analyses/diagnostics created without package stamp so the modal
   // right column (assignedStudies) and left studyBalances stay honest.
@@ -796,6 +830,13 @@ export async function getPackageAssignSnapshot(
       packageQuotaCode: true,
       status: true,
       assignBatchId: true,
+      id: true,
+      createdAt: true,
+      scheduledAt: true,
+      manuallyAdjusted: true,
+      checkedInAt: true,
+      schedulingMode: true,
+      resource: { select: { name: true } },
       note: true,
       bodyPart: true,
       siteApplyMode: true,
@@ -964,35 +1005,38 @@ export async function getPackageAssignSnapshot(
     for (const item of items) listTitles.set(item.id, item);
   }
 
-  const batchMap = new Map<string, PackageAssignedAgg>();
+  const batchMap = new Map<string, PackageAssignedAgg & { _movable: Array<{ id: string; at: number }> }>();
   for (const o of orders) {
     const consumed = (CONSUMED as readonly string[]).includes(o.status);
-    const locked = consumed || o.status === "CHECKED_IN";
+    const started = consumed || o.status === "CHECKED_IN" || o.checkedInAt != null;
+    const regimeKey = regimeFromOrderSites(o);
+    const stampedQuota = quotaCodeOf(o);
     const key = assignedAggGroupKey({
       procedureCode: o.procedureCode,
-      packageQuotaCode: quotaCodeOf(o),
-      locked,
-      consumed,
+      packageQuotaCode: isPackageQuotaAlias(stampedQuota) ? o.procedureCode : stampedQuota,
+      regimeKey,
     });
+    const lines = paramsLinesFromOrder(o, { locale, listTitles });
+    const movable =
+      !started &&
+      bakuDateKey(o.scheduledAt) >= todayBakuYmd() &&
+      (o.status === "PROPOSED" || o.status === "SCHEDULED");
     const prev = batchMap.get(key);
-    const nextLines = mergeParamLines([
-      prev?.paramsLabel ?? "",
-      paramsLabelFromOrder(o, { locale, listTitles }),
-    ]);
     if (prev) {
       prev.qty += 1;
-      prev.paramsLabel = nextLines.join(" · ");
-      prev.paramsLines = nextLines;
+      if (started) prev.doneQty = (prev.doneQty ?? 0) + 1;
+      if (o.createdAt.toISOString() < (prev.addedAt ?? "")) prev.addedAt = o.createdAt.toISOString();
+      if (movable) prev._movable.push({ id: o.id, at: o.scheduledAt.getTime() });
     } else {
       batchMap.set(key, {
         assignBatchId: o.assignBatchId,
         procedureCode: o.procedureCode,
         procedureName: catalogNames.get(o.procedureCode) || o.procedureName,
         qty: 1,
-        statusKind: consumed ? "consumed" : "active",
-        locked,
-        paramsLabel: nextLines.join(" · "),
-        paramsLines: nextLines,
+        statusKind: "active",
+        locked: false,
+        paramsLabel: lines.join(" · "),
+        paramsLines: lines,
         packageQuotaCode: quotaCodeOf(o),
         note: o.note ?? "",
         physioFields:
@@ -1010,8 +1054,18 @@ export async function getPackageAssignSnapshot(
               : null,
           ]),
         ),
+        regimeKey,
+        doneQty: started ? 1 : 0,
+        addedAt: o.createdAt.toISOString(),
+        _movable: movable ? [{ id: o.id, at: o.scheduledAt.getTime() }] : [],
       });
     }
+  }
+  for (const row of batchMap.values()) {
+    row.movableOrderIds = row._movable.sort((a, b) => b.at - a.at).map((item) => item.id);
+    row.locked = row.movableOrderIds.length === 0;
+    row.statusKind = row.locked ? "consumed" : "active";
+    delete (row as { _movable?: unknown })._movable;
   }
 
   const menuBalances = balances
@@ -1125,11 +1179,12 @@ export async function getPackageAssignSnapshot(
   }
 
   const sexBlocked = await blockedProcedureCodesForGuest(episode.patientRef?.sex);
+  const stayPlan = await buildStayPlan(episodeId, instance.startsOn, instance.endsOn, orders, locale, listTitles);
 
   return {
     balances: menuBalances,
     studyBalances,
-    assigned: [...batchMap.values()],
+    assigned: [...batchMap.values()].sort((a, b) => (a.addedAt ?? "").localeCompare(b.addedAt ?? "")),
     assignedStudies,
     softWarnDay1,
     blockReason: null,
@@ -1146,7 +1201,101 @@ export async function getPackageAssignSnapshot(
     sexBlockedCodes: [...sexBlocked],
     masseurOptions: await loadMasseurOptions(),
     masseurByCode: await loadMasseurByCode(episodeId),
+    stayPlan,
   };
+}
+
+async function buildStayPlan(
+  episodeId: string,
+  startsOn: Date,
+  endsOn: Date,
+  packageOrders: Array<{
+    procedureCode: string;
+    procedureName: string;
+    status: string;
+    scheduledAt: Date;
+    checkedInAt: Date | null;
+    schedulingMode: string;
+    resource: { name: string } | null;
+    note: string | null;
+    bodyPart: string | null;
+    siteApplyMode: string | null;
+    physioFields: unknown;
+    sites: Array<{
+      siteId: string;
+      laterality: string | null;
+      site: { titleEn: string; titleRu: string; titleAz: string };
+    }>;
+  }>,
+  locale: string,
+  listTitles: Map<string, { titleEn: string; titleRu: string; titleAz: string }>,
+): Promise<StayPlan> {
+  const checkoutYmd = bakuDateKey(endsOn);
+  const startYmd = bakuDateKey(startsOn);
+  const days: string[] = [];
+  for (let ymd = startYmd; ymd <= checkoutYmd && days.length < 62; ymd = addBakuDays(ymd, 1)) {
+    days.push(ymd);
+  }
+  const { listClinicDays } = await import("@/domain/planning/clinic-day");
+  const clinicDays = days.length > 0 ? await listClinicDays(days[0]!, days[days.length - 1]!) : [];
+  const closedDays = clinicDays.filter((day) => !day.working).map((day) => day.ymd);
+  const marks: StayPlanMark[] = [];
+  const push = (
+    order: (typeof packageOrders)[number],
+    paid: boolean,
+  ) => {
+    if (order.status === "PROPOSED" || order.status === "CANCELLED" || order.status === "UNPAID_MISSED") return;
+    const ymd = bakuDateKey(order.scheduledAt);
+    if (ymd < startYmd || ymd > checkoutYmd) return;
+    const started =
+      order.checkedInAt != null ||
+      order.status === "CHECKED_IN" ||
+      order.status === "COMPLETED" ||
+      order.status === "NO_SHOW";
+    const open = order.schedulingMode === "OPEN";
+    marks.push({
+      ymd,
+      procedureCode: order.procedureCode,
+      regimeKey: regimeFromOrderSites(order),
+      procedureName: order.procedureName,
+      paramsLabel: paramsLinesFromOrder(order, { locale, listTitles }).join(" · "),
+      done: started,
+      paid,
+      open,
+      time: open ? "" : bakuTimeLabel(order.scheduledAt),
+      cabin: order.resource?.name ?? "",
+    });
+  };
+  for (const order of packageOrders) push(order, false);
+  const paid = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      inPackage: false,
+      status: { in: ["PENDING_PAY", "SCHEDULED", "CHECKED_IN", "COMPLETED"] },
+    },
+    select: {
+      procedureCode: true,
+      procedureName: true,
+      status: true,
+      scheduledAt: true,
+      checkedInAt: true,
+      schedulingMode: true,
+      note: true,
+      bodyPart: true,
+      siteApplyMode: true,
+      physioFields: true,
+      resource: { select: { name: true } },
+      sites: {
+        select: {
+          siteId: true,
+          laterality: true,
+          site: { select: { titleEn: true, titleRu: true, titleAz: true } },
+        },
+      },
+    },
+  });
+  for (const order of paid) push(order, true);
+  return { days, checkoutYmd, closedDays, marks };
 }
 
 async function loadMasseurOptions(): Promise<Record<string, Array<{ id: string; fullName: string }>>> {
@@ -1245,6 +1394,33 @@ async function abandonCreatedPackageOrders(ids: string[]) {
  * Leaving them PROPOSED keeps the old clock on the plan and does not block
  * a second seat of the same code that day.
  */
+/** Package rows that never received a day. They go back to the remaining quota. */
+export async function releaseUnseatedPackageOrders(episodeId: string): Promise<number> {
+  const still = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      inPackage: true,
+      status: "PROPOSED",
+      resourceId: null,
+      checkedInAt: null,
+      manuallyAdjusted: false,
+    },
+    select: { id: true, packageQuotaCode: true, procedureCode: true },
+  });
+  if (still.length === 0) return 0;
+  await abandonCreatedPackageOrders(still.map((row) => row.id));
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { programInstance: { select: { id: true } } },
+  });
+  const instanceId = episode?.programInstance?.id;
+  if (instanceId) {
+    const codes = new Set(still.map((row) => row.packageQuotaCode || row.procedureCode));
+    for (const code of codes) await syncQuotaUsed(instanceId, episodeId, code);
+  }
+  return still.length;
+}
+
 export async function dropUnseatedInPackageOrders(ids: string[]) {
   if (ids.length === 0) return;
   const still = await prisma.procedureOrder.findMany({
@@ -1418,8 +1594,8 @@ function assignFailure(err: unknown): PackageAssignError {
       ? (err as { code: string }).code
       : "";
   const message = err instanceof Error ? err.message : "Package seating failed";
-  if (code === ANAMNESIS_REQUIRED) {
-    return new PackageAssignError(message, ANAMNESIS_REQUIRED, 409, [
+  if (code === ANAMNESIS_REQUIRED || code === "COMPLAINT_REQUIRED" || code === "DIAGNOSIS_REQUIRED") {
+    return new PackageAssignError(message, code, 409, [
       { ymd: "", procedureCode: "", procedureName: "", reason: "anamnesis" },
     ]);
   }
@@ -1466,7 +1642,13 @@ async function resolvePackageStart(episodeId: string, explicit: Date | null | un
 export async function assignPackageProcedures(
   episodeId: string,
   lines: AssignLineInput[],
-  opts?: { confirmedByUserId?: string; softWarnOnly?: boolean; startAt?: Date | null },
+  opts?: {
+    confirmedByUserId?: string;
+    softWarnOnly?: boolean;
+    startAt?: Date | null;
+    /** Lift the unfinished quota tail and seat it again with the new rows. */
+    reseatQuotaTail?: boolean;
+  },
 ): Promise<{
   placed: number;
   softWarn: string | null;
@@ -1785,14 +1967,22 @@ export async function assignPackageProcedures(
   );
   const bathCodes = await bathSeriesProcedureCodes();
   const episodeCaps = await loadEpisodeDailyCaps(episodeId);
-  const redispatched = await unseatUnfinishedBlockTail(
-    episodeId,
-    resolved.map((line) => line.quotaCode),
-    { excludeIds: new Set(createdIds), bathCodes },
-  );
+  // Adding sessions does not lift the seated quota tail. A new start hour,
+  // masseur, or procedure replacement reseats through its own path.
+  const redispatched = opts?.reseatQuotaTail
+    ? await unseatUnfinishedBlockTail(
+        episodeId,
+        resolved.map((line) => line.quotaCode),
+        { excludeIds: new Set(createdIds), bathCodes },
+      )
+    : { byKey: new Map<string, { openIds: string[]; fixedIds: string[] }>(), suspended: [] as SuspendedPackageSeat[] };
   suspended = redispatched.suspended;
   const redispatchedOpenUsed = new Set<string>();
   const redispatchedFixedUsed = new Set<string>();
+  const keepDespiteMiss = new Set<string>();
+  const holdStayMiss = (orderId: string, reason: string) => {
+    if (reason === "no_slot" || reason === "no_day") keepDespiteMiss.add(orderId);
+  };
   const misses: Array<{
     ymd: string;
     procedureCode: string;
@@ -1819,6 +2009,7 @@ export async function assignPackageProcedures(
   const { pinOpenAttendanceOrders } = await import(
     "@/domain/procedure/open-attendance"
   );
+  const cabinBag: CabinScanBag = {};
   const chunks = chunkCreatedIdsByLine(createdIds, resolved);
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i]!;
@@ -1845,6 +2036,7 @@ export async function assignPackageProcedures(
         scheduleBefore: instance.endsOn ?? undefined,
         startAt,
       });
+      for (const row of openSeat.failures) holdStayMiss(row.orderId, row.reason);
       misses.push(
         ...openSeat.failures.map((row) => ({
           ymd: row.ymd ?? "",
@@ -1888,9 +2080,11 @@ export async function assignPackageProcedures(
       confirmedByUserId: opts?.confirmedByUserId,
       scheduleBefore: instance.endsOn,
       startAt,
+      cabinBag,
     });
     missingCabinNames.push(...placement.missingCabinNames);
     if (placement.failures.some((row) => row.reason !== "no_cabin")) genericCabinOnly = false;
+    for (const row of placement.failures) holdStayMiss(row.orderId, row.reason);
     misses.push(
       ...placement.failures.map((row) => ({
         ymd: row.ymd ?? "",
@@ -1912,6 +2106,7 @@ export async function assignPackageProcedures(
         startAt,
       });
       placedIds.push(...openSeat.placedIds);
+      for (const row of openSeat.failures) holdStayMiss(row.orderId, row.reason);
       misses.push(
         ...openSeat.failures.map((row) => ({
           ymd: row.ymd ?? "",
@@ -1928,11 +2123,13 @@ export async function assignPackageProcedures(
         confirmedByUserId: opts?.confirmedByUserId,
         scheduleBefore: instance.endsOn,
         startAt,
+        cabinBag,
       });
       missingCabinNames.push(...placement.missingCabinNames);
       if (placement.failures.some((row) => row.reason !== "no_cabin")) {
         genericCabinOnly = false;
       }
+      for (const row of placement.failures) holdStayMiss(row.orderId, row.reason);
       placedIds.push(...placement.placedIds);
       misses.push(
         ...placement.failures.map((row) => ({
@@ -1948,12 +2145,14 @@ export async function assignPackageProcedures(
     ...tail.openIds,
     ...tail.fixedIds,
   ]);
-  await dropUnseatedInPackageOrders(unseatedIds);
+  await dropUnseatedInPackageOrders(unseatedIds.filter((id) => !keepDespiteMiss.has(id)));
   const kept = new Set(placedIds);
-  const leftover = createdIds.filter((id) => !kept.has(id));
+  const leftover = createdIds.filter((id) => !kept.has(id) && !keepDespiteMiss.has(id));
   if (leftover.length > 0) await abandonCreatedPackageOrders(leftover);
   const placed = kept.size;
-  if (placed < 1 && (misses.length > 0 || leftover.length > 0)) {
+  const stayFull =
+    misses.length > 0 && misses.every((row) => row.reason === "no_slot" || row.reason === "no_day");
+  if (placed < 1 && !stayFull && (misses.length > 0 || leftover.length > 0)) {
     const onlyMissingCabin = genericTried && genericCabinOnly && misses.every((row) => row.reason === "no_cabin");
     if (onlyMissingCabin) {
       throw new PackageAssignError([...new Set(missingCabinNames)].join(", "), "NO_CABIN", 409);
@@ -1977,6 +2176,20 @@ export async function assignPackageProcedures(
   for (const code of codes) {
     await syncQuotaUsed(instance.id, episodeId, code);
   }
+  const { compactOpenRegimeQueues } = await import("@/domain/procedure/open-attendance");
+  const compactMisses = await compactOpenRegimeQueues(
+    episodeId,
+    resolved.map((line) => line.procedureCode),
+    { appendIds: createdIds.filter((id) => kept.has(id)) },
+  );
+  misses.push(
+    ...compactMisses.map((row) => ({
+      ymd: row.ymd ?? "",
+      procedureCode: row.procedureCode,
+      procedureName: row.procedureName,
+      reason: row.reason,
+    })),
+  );
   const yesterday = addBakuDays(todayBakuYmd(), -1);
   if (allowYesterday && placedIds.length > 0) {
     const { start, end } = bakuDayBounds(yesterday);
@@ -2215,7 +2428,7 @@ export async function replacePackageProcedures(
           burnPoolCode,
         },
       ],
-      opts,
+      { ...opts, reseatQuotaTail: true },
     );
     return {
       cancelled: active.length,
@@ -2258,8 +2471,12 @@ export async function transferBathQuota(
   if (qty < 1) {
     throw new PackageAssignError("qty must be >= 1", "INVALID", 400);
   }
-  if (reason.length < 2) {
-    throw new PackageAssignError("Contraindication reason is required", "REASON_REQUIRED", 400);
+  if (reason.length < 7) {
+    throw new PackageAssignError(
+      "Replacement reason must be at least 7 characters",
+      "REASON_REQUIRED",
+      400,
+    );
   }
   if (isPackagePoolCode(input.toCode) || isBathTransferQuota(input.toCode)) {
     throw new PackageAssignError(
@@ -2436,16 +2653,49 @@ export async function adjustPackageAssign(
     targetActiveQty?: number;
     /** If true, cancel all PROPOSED/SCHEDULED for code/batch. */
     cancelAllActive?: boolean;
+    /** Last unfinished sessions of one regime. Done and hand-moved rows are ignored. */
+    cancelOrderIds?: string[];
   },
 ): Promise<{ cancelled: number }> {
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
+
+  if (input.cancelOrderIds && input.cancelOrderIds.length > 0) {
+    const picked = await prisma.procedureOrder.findMany({
+      where: {
+        id: { in: input.cancelOrderIds },
+        clinicalEpisodeId: episodeId,
+        procedureCode: input.procedureCode,
+        inPackage: true,
+        status: { in: [...ADJUSTABLE] },
+        checkedInAt: null,
+        scheduledAt: { gte: bakuDayBounds(todayBakuYmd()).start },
+      },
+      select: { id: true, packageQuotaCode: true, procedureCode: true },
+    });
+    if (picked.length === 0) return { cancelled: 0 };
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: picked.map((row) => row.id) } },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelReason: "package_assign_adjust",
+      },
+    });
+    await releaseProcedureOccupancy(picked.map((row) => row.id));
+    const syncCodes = [...new Set(picked.map((row) => quotaCodeOf(row)))];
+    for (const code of syncCodes) {
+      await syncQuotaUsed(instance.id, episodeId, code);
+    }
+    return { cancelled: picked.length };
+  }
 
   const where: Prisma.ProcedureOrderWhereInput = {
     clinicalEpisodeId: episodeId,
     procedureCode: input.procedureCode,
     status: { in: ["PROPOSED", ...IN_CIRCULATION] },
     inPackage: true,
+    scheduledAt: { gte: bakuDayBounds(todayBakuYmd()).start },
     ...(input.assignBatchId ? { assignBatchId: input.assignBatchId } : {}),
   };
 
@@ -2587,23 +2837,51 @@ export async function placeProposedOnCheckoutMorning(
   if (!endsOn) return { placed: 0, misses: [] };
   const orders = await prisma.procedureOrder.findMany({
     where: { clinicalEpisodeId: episodeId, status: "PROPOSED", inPackage: true },
-    select: { id: true, procedureType: { select: { openAttendance: true } } },
+    select: {
+      id: true,
+      procedureCode: true,
+      procedureType: { select: { openAttendance: true } },
+    },
   });
+  const openOrders = orders.filter((row) => row.procedureType?.openAttendance === true);
   const cabinIds = orders.filter((row) => row.procedureType?.openAttendance !== true).map((row) => row.id);
-  if (cabinIds.length === 0) return { placed: 0, misses: [] };
+  const { compactOpenRegimeQueues } = await import("@/domain/procedure/open-attendance");
   const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
-  try {
-    const placement = await placeConfirmedProcedures(cabinIds, { confirmedByUserId, scheduleBefore: endsOn, checkoutMorning: true },
+  let placed = 0;
+  const misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }> = [];
+  if (openOrders.length > 0) {
+    const openMisses = await compactOpenRegimeQueues(
+      episodeId,
+      openOrders.map((row) => row.procedureCode),
+      { checkoutMorning: true },
     );
-    return {
-      placed: placement.placed,
-      misses: placement.failures.map((row) => ({
+    placed += Math.max(0, openOrders.length - openMisses.length);
+    misses.push(
+      ...openMisses.map((row) => ({
         ymd: row.ymd ?? "",
         procedureCode: row.procedureCode,
         procedureName: row.procedureName,
         reason: row.reason,
       })),
-    };
+    );
+  }
+  if (cabinIds.length === 0) return { placed, misses };
+  try {
+    const placement = await placeConfirmedProcedures(cabinIds, {
+      confirmedByUserId,
+      scheduleBefore: endsOn,
+      checkoutMorning: true,
+    });
+    placed += placement.placed;
+    misses.push(
+      ...placement.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+      })),
+    );
+    return { placed, misses };
   } finally {
     await dropUnseatedInPackageOrders(cabinIds);
   }
@@ -2793,7 +3071,10 @@ export async function assignPackageMenuLines(
   let searchHour: number | null | undefined;
   const seatMisses: NonNullable<Awaited<ReturnType<typeof assignPackageProcedures>>["seatMisses"]> = [];
   if (procedures.length > 0) {
-    const result = await assignPackageProcedures(episodeId, procedures, opts);
+    const result = await assignPackageProcedures(episodeId, procedures, {
+      ...opts,
+      reseatQuotaTail: Boolean(opts?.startAt),
+    });
     placed += result.placed;
     softWarn = result.softWarn;
     orderIds.push(...result.orderIds);
@@ -2898,10 +3179,12 @@ async function assignPackageStudies(
           });
         } catch (err) {
           const code = (err as { code?: string }).code;
-          if (code === LAB_ALREADY_OPEN) {
+          if (code === LAB_ALREADY_OPEN || code === "LAB_UNPAID_EXISTS") {
             throw new PackageAssignError(
-              "An open lab order already exists for this study",
-              "LAB_ALREADY_OPEN",
+              code === "LAB_UNPAID_EXISTS"
+                ? "This lab already has an unpaid cheque"
+                : "An open lab order already exists for this study",
+              code === "LAB_UNPAID_EXISTS" ? "LAB_UNPAID_EXISTS" : "LAB_ALREADY_OPEN",
               409,
             );
           }
@@ -2946,4 +3229,15 @@ async function assignPackageStudies(
     });
   }
   return placed;
+}
+
+/** OPEN courses that already have a program — bulk package auto-apply retry. */
+export async function listOpenEpisodesForPackageApplyRetry() {
+  return prisma.clinicalEpisode.findMany({
+    where: {
+      status: "OPEN",
+      programInstance: { isNot: null },
+    },
+    select: { id: true, patientRef: { select: { fullName: true } } },
+  });
 }

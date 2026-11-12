@@ -13,11 +13,14 @@ export const PERMISSIONS = {
   SCREEN_ADMIN_ACCESS: "screen:admin.access",
 
   ORDERS: "api:orders",
+  ORDERS_READ: "api:orders.read",
   ORDERS_CONFIRM: "api:orders.confirm",
   ORDERS_PAY: "api:orders.pay",
   ORDERS_TTN: "api:orders.ttn",
   PICK: "api:pick",
+  PICK_READ: "api:pick.read",
   PICK_WAVES: "api:pick_waves",
+  PICK_WAVES_READ: "api:pick_waves.read",
   CREDIT_LIMIT: "api:credit_limit",
   EDI_EXPORT: "api:edi.export",
   FX_PREVIEW: "api:fx_preview",
@@ -70,7 +73,31 @@ export const ROLE_ALIASES: Record<string, RoleCode> = {
   STOREKEEPER: ROLE_CODES.WAREHOUSE_PICKER,
 };
 
-export const PERMISSION_CATALOG_VERSION = 1;
+export const PERMISSION_CATALOG_VERSION = 2;
+
+/** GET uses the read key. The original key stays on writes. Copied once from the write key. */
+export const READ_OF_WRITE: Readonly<Record<string, Permission>> = {
+  [PERMISSIONS.ORDERS]: PERMISSIONS.ORDERS_READ,
+  [PERMISSIONS.PICK]: PERMISSIONS.PICK_READ,
+  [PERMISSIONS.PICK_WAVES]: PERMISSIONS.PICK_WAVES_READ,
+};
+
+export function expandEntityReads(keys: readonly string[]): Permission[] {
+  const out: Permission[] = [];
+  const have = new Set<string>();
+  const add = (key: string) => {
+    if (!have.has(key)) {
+      have.add(key);
+      out.push(key as Permission);
+    }
+  };
+  for (const key of keys) add(key);
+  for (const key of keys) {
+    const read = READ_OF_WRITE[key];
+    if (read) add(read);
+  }
+  return out;
+}
 
 export type PermissionGroup = {
   id: string;
@@ -96,6 +123,7 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     labelKey: "groups.orders",
     permissions: [
       PERMISSIONS.ORDERS,
+      PERMISSIONS.ORDERS_READ,
       PERMISSIONS.ORDERS_CONFIRM,
       PERMISSIONS.ORDERS_PAY,
       PERMISSIONS.ORDERS_TTN,
@@ -107,7 +135,12 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
   {
     id: "warehouse",
     labelKey: "groups.warehouse",
-    permissions: [PERMISSIONS.PICK, PERMISSIONS.PICK_WAVES],
+    permissions: [
+      PERMISSIONS.PICK,
+      PERMISSIONS.PICK_READ,
+      PERMISSIONS.PICK_WAVES,
+      PERMISSIONS.PICK_WAVES_READ,
+    ],
   },
   {
     id: "admin",
@@ -133,10 +166,57 @@ const OPS_TEMPLATE: readonly Permission[] = [
 
 /** Seed packages. Every ops role keeps the full order and pick flow; import orders and settings go to the manager. */
 export const ROLE_TEMPLATES: Record<RoleCode, readonly Permission[]> = {
-  SALES_REP: OPS_TEMPLATE,
-  WAREHOUSE_PICKER: OPS_TEMPLATE,
+  SALES_REP: expandEntityReads(OPS_TEMPLATE),
+  WAREHOUSE_PICKER: expandEntityReads(OPS_TEMPLATE),
   WHOLESALE_MANAGER: ALL_PERMISSIONS,
   BUSINESS_OWNER: ALL_PERMISSIONS,
-  PLATFORM_MEMBER: OPS_TEMPLATE,
-  SATELLITE_OPERATOR: OPS_TEMPLATE,
+  PLATFORM_MEMBER: expandEntityReads(OPS_TEMPLATE),
+  SATELLITE_OPERATOR: expandEntityReads(OPS_TEMPLATE),
 };
+
+export type AccessColumn = "view" | "change" | "operate" | "admin";
+
+/** One row per entity. Each catalog key appears in exactly one cell. */
+export const ENTITY_ACCESS_MATRIX: {
+  id: string;
+  cells: Partial<Record<AccessColumn, Permission[]>>;
+}[] = [
+  {
+    id: "order",
+    cells: {
+      view: [PERMISSIONS.ORDERS_READ, PERMISSIONS.SCREEN_ORDERS, PERMISSIONS.SCREEN_HOME],
+      change: [PERMISSIONS.ORDERS],
+      operate: [PERMISSIONS.ORDERS_CONFIRM, PERMISSIONS.ORDERS_PAY, PERMISSIONS.ORDERS_TTN],
+    },
+  },
+  {
+    id: "pick",
+    cells: {
+      view: [PERMISSIONS.PICK_READ, PERMISSIONS.SCREEN_PICK_LISTS],
+      change: [PERMISSIONS.PICK],
+    },
+  },
+  {
+    id: "wave",
+    cells: {
+      view: [PERMISSIONS.PICK_WAVES_READ],
+      change: [PERMISSIONS.PICK_WAVES],
+    },
+  },
+  { id: "credit", cells: { view: [PERMISSIONS.CREDIT_LIMIT] } },
+  {
+    id: "edi",
+    cells: {
+      view: [PERMISSIONS.FX_PREVIEW],
+      operate: [PERMISSIONS.EDI_EXPORT],
+      admin: [PERMISSIONS.ADMIN_IMPORT_ORDERS, PERMISSIONS.SCREEN_ADMIN_IMPORT_ORDERS],
+    },
+  },
+  {
+    id: "access",
+    cells: {
+      view: [PERMISSIONS.SCREEN_ADMIN_ACCESS, PERMISSIONS.SCREEN_ADMIN_SETTINGS],
+      admin: [PERMISSIONS.ACCESS_MANAGE],
+    },
+  },
+];

@@ -1178,6 +1178,27 @@ export async function voidCharge(
   return { reservationId: charge.folio.reservationId };
 }
 
+export async function getFolioCityLedgerRetryMeta(folioId: string) {
+  return prisma.folio.findUnique({
+    where: { id: folioId },
+    select: { id: true, status: true, type: true, reservationId: true },
+  });
+}
+
+export async function markFolioChargeServiceReceived(externalRefs: string[]) {
+  const charge = await prisma.folioCharge.findFirst({
+    where: { externalRef: { in: externalRefs } },
+  });
+  if (!charge) return null;
+  if (!charge.serviceReceivedAt) {
+    await prisma.folioCharge.update({
+      where: { id: charge.id },
+      data: { serviceReceivedAt: new Date() },
+    });
+  }
+  return charge;
+}
+
 export async function listFolios(reservationId?: string) {
   if (reservationId) {
     const { foldLooseGuestFolioOntoPrimary } = await import('@/lib/services/booking-folio.service');

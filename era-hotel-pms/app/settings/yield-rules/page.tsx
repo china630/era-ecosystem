@@ -186,7 +186,7 @@ export default function YieldRulesPage() {
     }
   }
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.YIELD_ADMIN)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionMasterData')}</p>;
   }
 

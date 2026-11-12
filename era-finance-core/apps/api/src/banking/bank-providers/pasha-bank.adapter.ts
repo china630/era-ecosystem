@@ -18,6 +18,7 @@ import type {
   BankStatementItem,
   PaymentDraftRequest,
   PaymentDraftResult,
+  OrgBankCall,
 } from "./banking-provider.interface";
 
 type PashaTokenResponse = {
@@ -84,31 +85,34 @@ export class PashaBankAdapter implements BankingProviderInterface, OnModuleDestr
    * - https://developer.pashabank.digital/
    * - B2B portal: https://b2bpayments.pashabank.digital/en
    */
-  async getBalances(): Promise<BankBalanceItem[]> {
-    if (this.devMockEnabled) {
+  async getBalances(creds?: OrgBankCall): Promise<BankBalanceItem[]> {
+    if (this.devMockEnabled && !creds) {
       return this.mockBalances();
     }
-    const response = await this.authorizedRequest<unknown>({
-      method: "GET",
-      url: this.accountsPath,
-    });
+    const response = await this.authorizedRequest<unknown>(
+      { method: "GET", url: this.accountsPath },
+      true,
+      undefined,
+      creds,
+    );
     return this.mapBalances(response.data);
   }
 
-  async getStatements(from: string, to: string): Promise<BankStatementItem[]> {
-    if (this.devMockEnabled) {
+  async getStatements(from: string, to: string, creds?: OrgBankCall): Promise<BankStatementItem[]> {
+    if (this.devMockEnabled && !creds) {
       return this.mockStatements(from, to);
     }
-    const response = await this.authorizedRequest<unknown>({
-      method: "GET",
-      url: this.transactionsPath,
-      params: { from, to },
-    });
+    const response = await this.authorizedRequest<unknown>(
+      { method: "GET", url: this.transactionsPath, params: { from, to } },
+      true,
+      undefined,
+      creds,
+    );
     return this.mapStatements(response.data);
   }
 
-  async sendPaymentDraft(payload: PaymentDraftRequest): Promise<PaymentDraftResult> {
-    if (this.devMockEnabled) {
+  async sendPaymentDraft(payload: PaymentDraftRequest, creds?: OrgBankCall): Promise<PaymentDraftResult> {
+    if (this.devMockEnabled && !creds) {
       return {
         draftId: `PASHA-MOCK-${Date.now()}`,
         status: "CREATED",
@@ -127,6 +131,7 @@ export class PashaBankAdapter implements BankingProviderInterface, OnModuleDestr
       },
       true,
       createHash("sha256").update(JSON.stringify(payload)).digest("hex").slice(0, 32),
+      creds,
     );
     return {
       draftId: String(response.data?.draftId ?? response.data?.id ?? ""),
@@ -143,8 +148,9 @@ export class PashaBankAdapter implements BankingProviderInterface, OnModuleDestr
     config: AxiosRequestConfig,
     retryOnTokenError = true,
     writeIdempotencyKey?: string,
+    creds?: OrgBankCall,
   ): Promise<AxiosResponse<T>> {
-    const token = await this.getAccessToken();
+    const token = await this.getAccessToken(creds);
     try {
       return await this.reliability.executeWithPolicies({
         provider: "pasha",
@@ -162,8 +168,8 @@ export class PashaBankAdapter implements BankingProviderInterface, OnModuleDestr
     } catch (error) {
       const shouldRetry = retryOnTokenError && this.isInvalidTokenError(error);
       if (shouldRetry) {
-        await this.redis.del(this.redisKey);
-        const freshToken = await this.getAccessToken();
+        await this.redis.del(this.tokenCacheKey(creds));
+        const freshToken = await this.getAccessToken(creds);
         return this.http.request<T>({
           ...config,
           headers: {
@@ -177,18 +183,29 @@ export class PashaBankAdapter implements BankingProviderInterface, OnModuleDestr
     }
   }
 
-  private async getAccessToken(): Promise<string> {
-    const cached = await this.redis.get(this.redisKey);
+  private tokenCacheKey(creds?: OrgBankCall): string {
+    if (!creds?.clientId) return this.redisKey;
+    const suffix = createHash("sha256").update(creds.clientId).digest("hex").slice(0, 12);
+    return `${this.redisKey}:${suffix}`;
+  }
+
+  private async getAccessToken(creds?: OrgBankCall): Promise<string> {
+    const cacheKey = this.tokenCacheKey(creds);
+    const cached = await this.redis.get(cacheKey);
     if (cached) return cached;
-    if (!this.clientId || !this.clientSecret) {
+    const clientId = creds?.clientId ?? (creds ? "" : this.clientId);
+    const clientSecret = creds?.secret ?? (creds ? "" : this.clientSecret);
+    if (!clientId || !clientSecret) {
       throw new UnauthorizedException(
-        "Pasha OAuth credentials are missing (PASHA_CLIENT_ID / PASHA_CLIENT_SECRET)",
+        creds
+          ? "Pasha credentials for this organization are missing on the platform"
+          : "Pasha OAuth credentials are missing (PASHA_CLIENT_ID / PASHA_CLIENT_SECRET)",
       );
     }
     const body = new URLSearchParams();
     body.set("grant_type", "client_credentials");
-    body.set("client_id", this.clientId);
-    body.set("client_secret", this.clientSecret);
+    body.set("client_id", clientId);
+    body.set("client_secret", clientSecret);
     if (this.scope) body.set("scope", this.scope);
     try {
       const response = await this.reliability.executeWithPolicies({
@@ -206,7 +223,7 @@ export class PashaBankAdapter implements BankingProviderInterface, OnModuleDestr
         throw new UnauthorizedException("Pasha OAuth token is missing in response");
       }
       const ttl = Math.max(30, (response.data?.expires_in ?? 300) - 30);
-      await this.redis.set(this.redisKey, token, "EX", ttl);
+      await this.redis.set(cacheKey, token, "EX", ttl);
       return token;
     } catch (error) {
       this.handleApiError(error);

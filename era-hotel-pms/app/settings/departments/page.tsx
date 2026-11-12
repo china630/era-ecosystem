@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
@@ -12,6 +13,7 @@ import {
   DATA_TABLE_TR_CLASS,
   Field,
   FORM_STACK_CLASS,
+  GHOST_BUTTON_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   showApiError,
@@ -56,7 +58,7 @@ export default function DepartmentsPage() {
     void load();
   }, [load]);
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.DEPARTMENTS_ADMIN)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 
@@ -98,14 +100,16 @@ export default function DepartmentsPage() {
                 <td className={DATA_TABLE_TD_CLASS}>
                   <button
                     type="button"
-                    className="text-[#2980B9] hover:underline"
+                    className={`${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`}
+                    aria-label={tc('edit')}
+                    title={tc('edit')}
                     onClick={() => {
                       setEdit(row);
                       setCashPoint(row.cashPoint ?? '');
                       setOpen(true);
                     }}
                   >
-                    {tc('edit')}
+                    <Pencil className="h-4 w-4" aria-hidden />
                   </button>
                 </td>
               </tr>

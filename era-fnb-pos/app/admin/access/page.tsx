@@ -13,8 +13,9 @@ import {
   showSuccess,
 } from "@era/satellite-kit/ui";
 import {
-  PERMISSION_GROUPS,
+  ENTITY_ACCESS_MATRIX,
   PERMISSIONS,
+  type AccessColumn,
   type Permission,
 } from "@/lib/auth/permissions";
 
@@ -73,29 +74,6 @@ export default function FnbAccessPage() {
       })
       .catch(() => undefined);
   }, []);
-
-  const visibleGroups = useMemo(() => {
-    const hotelScreens = new Set<Permission>([
-      PERMISSIONS.SCREEN_CALENDAR,
-      PERMISSIONS.SCREEN_EXECUTIVE,
-      PERMISSIONS.SCREEN_ADMIN_IMPORT,
-      PERMISSIONS.SCREEN_ADMIN_INTEGRATION,
-      PERMISSIONS.SCREEN_ADMIN_DAILY_MENU,
-    ]);
-    if (!hasKds) hotelScreens.add(PERMISSIONS.SCREEN_KDS);
-    return PERMISSION_GROUPS.filter((group) => {
-      if (!hotelOff) return true;
-      if (group.id === "hotel") return false;
-      if (group.id === "kds" && !hasKds) return false;
-      return true;
-    }).map((group) => {
-      if (!hotelOff || group.id !== "screens") return group;
-      return {
-        ...group,
-        permissions: group.permissions.filter((p) => !hotelScreens.has(p)),
-      };
-    });
-  }, [hotelOff, hasKds]);
 
   const loadRoles = useCallback(async () => {
     setLoading(true);
@@ -380,33 +358,53 @@ export default function FnbAccessPage() {
               </div>
             ) : null}
 
-            <div className="space-y-4">
-              {visibleGroups.map((group) => (
-                <div key={group.id}>
-                  <h3 className="mb-2 text-sm font-semibold">
-                    {t(group.labelKey)}
-                  </h3>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {group.permissions.map((p) => (
-                      <label
-                        key={p}
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={draft.has(p)}
-                          onChange={() => togglePermission(p)}
-                        />
-                        <span>
-                          {t.has(`perms.${p.replace(/[:.]/g, "_")}` as "role")
-                            ? t(`perms.${p.replace(/[:.]/g, "_")}` as "role")
-                            : p}
-                        </span>
-                      </label>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="py-2 pr-3">{t("entityColumn")}</th>
+                    {(["view", "change", "operate", "admin"] as AccessColumn[]).map((col) => (
+                      <th key={col} className="py-2 pr-3">{t(`col_${col}`)}</th>
                     ))}
-                  </div>
-                </div>
-              ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ENTITY_ACCESS_MATRIX.map((row) => {
+                    if (hotelOff && row.id === "hotel") return null;
+                    const hide = new Set<Permission>();
+                    if (!hasKds) {
+                      hide.add(PERMISSIONS.SCREEN_KDS);
+                      hide.add(PERMISSIONS.KDS_BUMP);
+                    }
+                    if (hotelOff) {
+                      hide.add(PERMISSIONS.SCREEN_CALENDAR);
+                      hide.add(PERMISSIONS.SCREEN_EXECUTIVE);
+                      hide.add(PERMISSIONS.SCREEN_ADMIN_IMPORT);
+                      hide.add(PERMISSIONS.SCREEN_ADMIN_INTEGRATION);
+                      hide.add(PERMISSIONS.SCREEN_ADMIN_DAILY_MENU);
+                    }
+                    return (
+                      <tr key={row.id} className="border-b align-top">
+                        <td className="py-2 pr-3 font-medium">{t.has(`entity_${row.id}` as "role") ? t(`entity_${row.id}` as "role") : row.id}</td>
+                        {(["view", "change", "operate", "admin"] as AccessColumn[]).map((col) => (
+                          <td key={col} className="py-2 pr-3">
+                            {(row.cells[col] ?? []).filter((perm) => !hide.has(perm)).map((perm) => (
+                              <label key={perm} className="mb-1 flex items-start gap-2">
+                                <input type="checkbox" checked={draft.has(perm)} onChange={() => togglePermission(perm)} />
+                                <span>
+                                  {t.has(`perms.${perm.replace(/[:.]/g, "_")}` as "role")
+                                    ? t(`perms.${perm.replace(/[:.]/g, "_")}` as "role")
+                                    : perm}
+                                </span>
+                              </label>
+                            ))}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

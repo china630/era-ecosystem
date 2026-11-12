@@ -4,6 +4,7 @@ import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { AdminCatalogService } from "../admin/admin-catalog.service";
 import { BankDirectoryService } from "../banking/bank-directory.service";
 import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import {
@@ -11,7 +12,6 @@ import {
   StockMovementType,
   UserRole,
 } from "@erafinance/database";
-import { PrismaService } from "../prisma/prisma.service";
 import { AZ_TAX_SCHEME_CODE, parseSchemeParams } from "../reporting/simplified-tax-watch.calc";
 import { AZ_STATUTORY_SCHEME_PACKAGE } from "../reporting/tax-scheme-package";
 
@@ -28,7 +28,7 @@ const TEAM_INVITE_ROLES: UserRole[] = [
 @UseGuards(PermissionsGuard)
 export class SystemCatalogController {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly catalog: AdminCatalogService,
     private readonly dataHub: DataHubClientService,
     private readonly bankDirectory: BankDirectoryService,
   ) {}
@@ -42,16 +42,7 @@ export class SystemCatalogController {
         return remote.units;
       }
     }
-    return this.prisma.unitOfMeasure.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
-      select: {
-        code: true,
-        nameAz: true,
-        nameRu: true,
-        nameEn: true,
-      },
-    });
+    return this.catalog.listActiveUnitsOfMeasureSystem();
   }
 
   @Get("currencies")
@@ -70,18 +61,7 @@ export class SystemCatalogController {
         }));
       }
     }
-    return this.prisma.currency.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
-      select: {
-        code: true,
-        symbol: true,
-        decimals: true,
-        nameAz: true,
-        nameRu: true,
-        nameEn: true,
-      },
-    });
+    return this.catalog.listActiveCurrenciesSystem();
   }
 
   @Get("invoice-vat-rates")
@@ -94,14 +74,10 @@ export class SystemCatalogController {
     const fallback = Number(AZ_STATUTORY_SCHEME_PACKAGE.parameters.vatPercent);
     const day = date?.trim().slice(0, 10) || todayBakuYmd();
     const on = new Date(`${day}T00:00:00.000Z`);
-    const row = await this.prisma.taxSchemeVersion.findFirst({
-      where: {
-        code: AZ_TAX_SCHEME_CODE,
-        effectiveFrom: { lte: on },
-        OR: [{ effectiveTo: null }, { effectiveTo: { gte: on } }],
-      },
-      orderBy: { effectiveFrom: "desc" },
-    });
+    const row = await this.catalog.findEffectiveTaxSchemeVersion(
+      AZ_TAX_SCHEME_CODE,
+      on,
+    );
     if (!row) return { rates: [fallback] };
     try {
       const percent = Number(parseSchemeParams(row.parameters).vatPercent);
@@ -144,10 +120,7 @@ export class SystemCatalogController {
         return remote.countries;
       }
     }
-    return this.prisma.country.findMany({
-      orderBy: [{ sortOrder: "asc" }, { iso2: "asc" }],
-      select: { iso2: true, nameAz: true, nameRu: true, nameEn: true },
-    });
+    return this.catalog.listCountriesSystem();
   }
 
   inventoryMovementEnums(): {

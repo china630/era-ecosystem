@@ -34,3 +34,13 @@ export async function loadDiagnosticLaneCodes(): Promise<string[]> {
     .flatMap((row) => [row.code, row.serviceCode].filter(Boolean));
   return [...new Set(codes)];
 }
+
+export async function findDiagnosticServiceIdsByModality(
+  modalityCode: string,
+): Promise<string[]> {
+  const rows = await prisma.diagnosticService.findMany({
+    where: { modality: { code: modalityCode } },
+    select: { id: true },
+  });
+  return rows.map((row) => row.id);
+}

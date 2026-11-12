@@ -67,6 +67,18 @@ async function resolveRoomTypeId(
 /**
  * Facade: quoteStay (BAR calendar) with optional legacy fallback for Nafta cutover.
  */
+export async function resolveQuoteRoomTypeId(ratePlanId: string, roomTypeId?: string) {
+  if (roomTypeId) return roomTypeId;
+  const plan = await prisma.ratePlan.findUnique({
+    where: { id: ratePlanId },
+    select: { roomTypeId: true },
+  });
+  if (plan?.roomTypeId) return plan.roomTypeId;
+  const rt = await prisma.roomType.findFirst({ where: { active: true }, select: { id: true } });
+  if (!rt?.id) throw new Error('roomTypeId required');
+  return rt.id;
+}
+
 export async function quoteReservationStay(
   input: QuoteReservationStayInput,
 ): Promise<ReservationStayQuote> {

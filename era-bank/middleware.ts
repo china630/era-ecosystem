@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import {
   createSatelliteStaffMiddleware,
   redirectNoStore,
+  staffAccessDeniedRedirect,
 } from "@era/satellite-kit/auth/middleware-edge";
 import {
   isPublicStaffPage,
@@ -29,9 +30,7 @@ export const middleware = createSatelliteStaffMiddleware<NextRequest>({
     if (required && required.some((p) => sessionHasBankPermission(sessionView, p))) {
       return null;
     }
-    const forbiddenUrl = new URL("/login", request.url);
-    forbiddenUrl.searchParams.set("error", "forbidden");
-    return redirectNoStore(forbiddenUrl);
+    return staffAccessDeniedRedirect(request);
   },
 });
 

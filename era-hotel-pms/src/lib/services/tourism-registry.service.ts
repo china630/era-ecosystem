@@ -4,6 +4,14 @@ const REGISTRY_URL = process.env.TOURISM_REGISTRY_URL?.replace(/\/$/, '');
 const REGISTRY_TOKEN = process.env.TOURISM_REGISTRY_TOKEN?.trim();
 const MOCK = process.env.TOURISM_REGISTRY_MOCK !== 'false';
 
+export async function listMigrationRegistrations() {
+  return prisma.migrationRegistration.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+    include: { guest: { select: { id: true, fullName: true } } },
+  });
+}
+
 export type RegistrySubmitResult = {
   mode: 'mock' | 'live';
   externalRef: string;

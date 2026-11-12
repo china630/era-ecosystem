@@ -12,7 +12,7 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { PhysicalAdjustmentModal } from "../../../components/inventory/modals/physical-adjustment-modal";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { Badge } from "../../../components/ui/badge";
 import {
   DATA_TABLE_ACTIONS_TD_CLASS,
@@ -153,23 +153,10 @@ export default function InventoryPhysicalPage() {
               </thead>
               <tbody>
                 {rows.length === 0 ? (
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td colSpan={6} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
-                      <EmptyState
-                        title={t("inventory.physicalTitle")}
-                        description={t("inventory.physicalHint")}
-                        action={
-                          <button
-                            type="button"
-                            className={PRIMARY_BUTTON_CLASS}
-                            onClick={() => setModalOpen(true)}
-                          >
-                            + {t("inventory.physicalNewBtn")}
-                          </button>
-                        }
-                      />
-                    </td>
-                  </tr>
+                  <FinanceEmptyTableRow
+                    colSpan={6}
+                    message={t("inventory.physicalTitle")}
+                  />
                 ) : (
                   rows.map((r) => (
                     <tr key={r.id} className={DATA_TABLE_TR_CLASS}>

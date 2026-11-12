@@ -1,10 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pencil } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
+  EraListFilterBar,
+  GHOST_BUTTON_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -21,7 +24,7 @@ import {
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { laundryItemDisplayName } from '@/lib/services/laundry-catalog';
+import { laundryItemDisplayName } from '@/lib/laundry-catalog-view';
 
 type Item = {
   id: string;
@@ -88,6 +91,8 @@ export default function LaundryCatalogPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [busy, setBusy] = useState(false);
+  const [q, setQ] = useState('');
+  const [category, setCategory] = useState('');
 
   const load = useCallback(async () => {
     const res = await fetch('/api/housekeeping/laundry/catalog');
@@ -102,6 +107,16 @@ export default function LaundryCatalogPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const visible = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return rows.filter((row) => {
+      if (category && row.category !== category) return false;
+      if (!needle) return true;
+      const name = laundryItemDisplayName(row, locale).toLowerCase();
+      return row.code.toLowerCase().includes(needle) || name.includes(needle);
+    });
+  }, [rows, q, category, locale]);
 
   if (!can(PERMISSIONS.HOUSEKEEPING_MANAGE)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
@@ -175,6 +190,33 @@ export default function LaundryCatalogPage() {
           </button>
         }
       />
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => {
+          setQ('');
+          setCategory('');
+        }}
+      >
+        <Field
+          label={tc('search')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={tc('search')}
+        />
+        <CatalogField
+          kind="CLOSED_SMALL"
+          label={t('laundryCategory')}
+          value={category}
+          onChange={(v) => setCategory(String(v ?? ''))}
+          options={[
+            { value: '', label: tc('all') },
+            { value: 'MEN', label: t('laundryCat_MEN') },
+            { value: 'WOMEN', label: t('laundryCat_WOMEN') },
+            { value: 'CHILD', label: t('laundryCat_CHILD') },
+          ]}
+        />
+      </EraListFilterBar>
       <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <table className={DATA_TABLE_CLASS}>
           <thead>
@@ -189,7 +231,7 @@ export default function LaundryCatalogPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {visible.map((row) => (
               <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                 <td className={DATA_TABLE_TD_CLASS}>{row.code}</td>
                 <td className={DATA_TABLE_TD_CLASS}>
@@ -207,8 +249,14 @@ export default function LaundryCatalogPage() {
                   {money(row.expressWashPrice)} / {money(row.expressIronPrice)}
                 </td>
                 <td className={DATA_TABLE_TD_CLASS}>
-                  <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => openEdit(row)}>
-                    {tc('edit')}
+                  <button
+                    type="button"
+                    className={`${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`}
+                    aria-label={tc('edit')}
+                    title={tc('edit')}
+                    onClick={() => openEdit(row)}
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden />
                   </button>
                 </td>
               </tr>

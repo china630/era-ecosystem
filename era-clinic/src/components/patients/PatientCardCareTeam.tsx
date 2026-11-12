@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
   CatalogField,
+  FieldGroupBox,
   ModalFooter,
   ModalShell,
   PRIMARY_BUTTON_CLASS,
@@ -56,6 +56,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
   const [pickId, setPickId] = useState("");
   const [busy, setBusy] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}/care-team`);
@@ -104,6 +105,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
       return;
     }
     setPickId("");
+    setAddOpen(false);
     await load();
   }
 
@@ -131,70 +133,74 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
   }
 
   return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-        {t("careTeamTitle")}
-      </h2>
-      <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
-        {items.length > 0 ? (
-          <ul className="space-y-1.5">
-            {items.map((row) => (
-              <li
-                key={row.id}
-                className="flex items-center justify-between gap-2 rounded border border-slate-200 px-2.5 py-1.5 text-sm"
-              >
-                <span className="min-w-0 truncate font-medium text-[#2C3E50]">
-                  {formatCareDoctorLabel(
-                    row.practitioner.specialty,
-                    row.practitioner.fullName,
-                  )}
-                </span>
-                {!readOnly ? (
-                  <button
-                    type="button"
-                    className={TABLE_ROW_ICON_BTN_CLASS}
-                    aria-label={t("careTeamRemove")}
-                    disabled={busy}
-                    onClick={() => setRemoveId(row.practitionerId)}
-                  >
-                    <Trash2 className="h-4 w-4 text-[#C0392B]" aria-hidden />
-                  </button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {!readOnly ? (
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="w-full max-w-md">
-              <CatalogField
-                kind="SEARCHABLE"
-                label={t("careTeamPick")}
-                value={pickId}
-                onChange={(v) => setPickId(String(v ?? ""))}
-                options={doctorOptions}
-                emptyLabel={t("careTeamPickEmpty")}
-                widthPreset="select"
-              />
-            </div>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={busy || !pickId}
-              onClick={() => void addDoctor()}
+    <div>
+      {!readOnly ? (
+        <div className="mb-1 flex justify-end">
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy}
+            onClick={() => setAddOpen(true)}
+          >
+            <Plus className="mr-1 inline h-4 w-4" aria-hidden />
+            {t("careTeamAdd")}
+          </button>
+        </div>
+      ) : null}
+    <FieldGroupBox title={t("careTeamTitle")}>
+      {items.length > 0 ? (
+        <ul className="list-none text-sm">
+          {items.map((row) => (
+            <li
+              key={row.id}
+              className="flex items-center justify-between gap-2 border-b border-slate-100 py-2 last:border-0"
             >
-              <Plus className="mr-1 inline h-4 w-4" aria-hidden />
-              {t("careTeamAdd")}
-            </button>
-          </div>
-        ) : null}
-        {items.length === 0 && !readOnly ? (
-          <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("careTeamGateHint")}</p>
-        ) : null}
-        {readOnly ? (
-          <p className={`text-xs ${TEXT_MUTED_CLASS}`}>{t("episodeClosedReadOnly")}</p>
-        ) : null}
-      </div>
+              <span className="min-w-0 truncate font-medium text-[#2C3E50]">
+                {formatCareDoctorLabel(row.practitioner.specialty, row.practitioner.fullName)}
+              </span>
+              {!readOnly ? (
+                <button
+                  type="button"
+                  className={TABLE_ROW_ICON_BTN_CLASS}
+                  aria-label={t("careTeamRemove")}
+                  disabled={busy}
+                  onClick={() => setRemoveId(row.practitionerId)}
+                >
+                  <Trash2 className="h-4 w-4 text-[#C0392B]" aria-hidden />
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className={`text-sm ${TEXT_MUTED_CLASS}`}>—</p>
+      )}
+      <ModalShell
+        open={addOpen}
+        title={t("careTeamAdd")}
+        onClose={() => setAddOpen(false)}
+        closeLabel={tc("close")}
+        footer={
+          <ModalFooter
+            onCancel={() => setAddOpen(false)}
+            onSubmit={() => void addDoctor()}
+            busy={busy}
+            submitDisabled={!pickId}
+            submitLabel={tc("save")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <CatalogField
+          kind="SEARCHABLE"
+          label={t("careTeamPick")}
+          value={pickId}
+          onChange={(v) => setPickId(String(v ?? ""))}
+          options={doctorOptions}
+          emptyLabel={t("careTeamPickEmpty")}
+          widthPreset="select"
+        />
+      </ModalShell>
       <ModalShell
         open={Boolean(removeId)}
         title={t("careTeamRemoveConfirm")}
@@ -214,6 +220,7 @@ export function PatientCardCareTeam({ episodeId, readOnly, onTeamChange }: Props
           cancelLabel={tc("cancel")}
         />
       </ModalShell>
-    </section>
+    </FieldGroupBox>
+    </div>
   );
 }

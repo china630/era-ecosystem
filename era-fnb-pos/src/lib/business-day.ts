@@ -38,6 +38,19 @@ export function isShiftStale(openedAt: Date, now: Date, hhmm: string): boolean {
   return openedAt.getTime() < currentBusinessDayStart(now, hhmm).getTime();
 }
 
+import { prisma } from "@/lib/prisma";
+
+export async function upsertOrganizationBusinessDayStart(
+  organizationId: string,
+  businessDayStart: string,
+): Promise<void> {
+  await prisma.fnbOrgProfile.upsert({
+    where: { organizationId },
+    create: { organizationId, businessDayStart },
+    update: { businessDayStart },
+  });
+}
+
 export function categoryCodeFromName(name: string, fallback: string): string {
   const slug = name
     .normalize("NFD")

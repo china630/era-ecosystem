@@ -7,7 +7,7 @@ import type { Prisma } from "@prisma/client";
 import { DEFAULT_OVER_QUOTA_AZN } from "@/domain/sanatorium/entitlement-charge.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
-import { episodeAnamnesisDenied, ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
+import { ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
   episodeCareTeamDenied,
@@ -58,9 +58,10 @@ async function loadEpisode(episodeId: string) {
   if (episode.status !== "OPEN") {
     throw new PackageAssignError("Episode is not OPEN", "NOT_OPEN");
   }
-  const anamnesisDenied = episodeAnamnesisDenied(episode.anamnesisText);
-  if (anamnesisDenied) {
-    throw new PackageAssignError(anamnesisDenied, ANAMNESIS_REQUIRED);
+  const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+  const lane = await procedureLaneDenial(episodeId);
+  if (lane) {
+    throw new PackageAssignError(lane.message, lane.code);
   }
   const careDenied = episodeCareTeamDenied(await countEpisodeCareDoctors(episodeId));
   if (careDenied) {
@@ -277,9 +278,14 @@ export async function prescribeExtras(
     const openIds = created
       .filter((row) => row.schedulingMode === "OPEN")
       .map((row) => row.id);
-    if (fixedIds.length > 0) await seatUnpaidExtras(fixedIds);
+    if (fixedIds.length > 0) {
+      const held = await seatUnpaidExtras(fixedIds);
+      misses.push(...held);
+    }
     // OPEN = day-bucket across stay (no cabin). Pay keeps the pin; nurse seats on arrival.
-    if (openIds.length > 0) misses = await pinUnpaidOpenExtras(openIds, episodeId);
+    if (openIds.length > 0) {
+      misses.push(...(await pinUnpaidOpenExtras(openIds, episodeId)));
+    }
   }
   const missedIds = new Set(misses.map((row) => row.orderId));
   return {
@@ -290,16 +296,57 @@ export async function prescribeExtras(
   };
 }
 
-/** Place as PROPOSED, then return seated rows to PENDING_PAY. Unseated drafts are deleted. */
-async function seatUnpaidExtras(ids: string[]): Promise<void> {
+const CHECKOUT_HOLD = "await_checkout_morning";
+
+function isCheckoutHoldReason(reason: string): boolean {
+  return reason === "no_slot" || reason === "no_day";
+}
+
+/** Earliest course end among these orders. Cabin extras must not walk past it. */
+async function stayEndForOrders(ids: string[]): Promise<Date | undefined> {
+  const rows = await prisma.procedureOrder.findMany({
+    where: { id: { in: ids } },
+    select: {
+      clinicalEpisode: { select: { programInstance: { select: { endsOn: true } } } },
+    },
+  });
+  const ends = rows
+    .map((row) => row.clinicalEpisode?.programInstance?.endsOn)
+    .filter((value): value is Date => value instanceof Date && !Number.isNaN(value.getTime()));
+  if (ends.length === 0) return undefined;
+  return ends.reduce((earliest, value) => (value < earliest ? value : earliest));
+}
+
+/** Place as PROPOSED, then return seated rows to PENDING_PAY. Every miss is returned. A stay-horizon miss is also held for the checkout question. */
+async function seatUnpaidExtras(
+  ids: string[],
+): Promise<Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>> {
   await prisma.procedureOrder.updateMany({
     where: { id: { in: ids }, status: "PENDING_PAY" },
     data: { status: "PROPOSED" },
   });
   let failedIds: string[] = [];
+  let heldIds: string[] = [];
+  let reported: Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }> = [];
   try {
-    const placement = await placeConfirmedProcedures(ids, {});
-    failedIds = placement.failures.map((row) => row.orderId);
+    const placement = await placeConfirmedProcedures(ids, {
+      scheduleBefore: await stayEndForOrders(ids),
+    });
+    reported = placement.failures.map((row) => ({
+      orderId: row.orderId,
+      procedureCode: row.procedureCode,
+      procedureName: row.procedureName,
+      reason: row.reason,
+      ymd: row.ymd,
+    }));
+    heldIds = reported.filter((row) => isCheckoutHoldReason(row.reason)).map((row) => row.orderId);
+    failedIds = reported.map((row) => row.orderId).filter((id) => !heldIds.includes(id));
+    if (heldIds.length > 0) {
+      await prisma.procedureOrder.updateMany({
+        where: { id: { in: heldIds } },
+        data: { cancelReason: CHECKOUT_HOLD, resourceId: null },
+      });
+    }
   } catch (err) {
     failedIds = ids;
     throw err;
@@ -311,16 +358,20 @@ async function seatUnpaidExtras(ids: string[]): Promise<void> {
       });
     }
     await prisma.procedureOrder.updateMany({
-      where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
+      where: {
+        id: { in: ids.filter((id) => !heldIds.includes(id)) },
+        status: { in: ["PROPOSED", "SCHEDULED"] },
+      },
       data: { status: "PENDING_PAY" },
     });
   }
+  return reported;
 }
 
 /**
  * Pin OPEN unpaid extras onto working days until stay endsOn.
  * Different codes share a day; the same code takes the next working day.
- * Rows that do not fit are deleted so they do not stay on the prescribe clock.
+ * A stay-horizon miss (`no_slot` / `no_day`) is held for the checkout-morning question. Any other miss is deleted.
  */
 async function pinUnpaidOpenExtras(
   ids: string[],
@@ -363,8 +414,18 @@ async function pinUnpaidOpenExtras(
     }));
     throw err;
   } finally {
+    const heldIds = failures.filter((row) => isCheckoutHoldReason(row.reason)).map((row) => row.orderId);
+    if (heldIds.length > 0) {
+      await prisma.procedureOrder.updateMany({
+        where: { id: { in: heldIds } },
+        data: { cancelReason: CHECKOUT_HOLD, resourceId: null, status: "PROPOSED" },
+      });
+    }
     await prisma.procedureOrder.updateMany({
-      where: { id: { in: ids }, status: { in: ["PROPOSED", "SCHEDULED"] } },
+      where: {
+        id: { in: ids.filter((id) => !heldIds.includes(id)) },
+        status: { in: ["PROPOSED", "SCHEDULED"] },
+      },
       data: { status: "PENDING_PAY" },
     });
     if (pinThrew) {
@@ -373,20 +434,125 @@ async function pinUnpaidOpenExtras(
       });
     }
   }
-  const missed = failures.map((row) => row.orderId);
-  if (missed.length > 0) {
-    await releaseProcedureOccupancy(missed);
+  const dropIds = failures
+    .filter((row) => !isCheckoutHoldReason(row.reason))
+    .map((row) => row.orderId);
+  if (dropIds.length > 0) {
+    await releaseProcedureOccupancy(dropIds);
     await prisma.procedureOrder.deleteMany({
-      where: { id: { in: missed }, status: "PENDING_PAY", inPackage: false },
+      where: { id: { in: dropIds }, status: "PENDING_PAY", inPackage: false },
     });
   }
   return failures;
 }
 
+const heldExtraWhere = {
+  inPackage: false,
+  status: "PROPOSED" as const,
+  cancelReason: CHECKOUT_HOLD,
+};
+
+/** Seat paid rows held for the checkout-morning question. */
+export async function placeHeldExtrasOnCheckoutMorning(
+  episodeId: string,
+  confirmedByUserId?: string,
+): Promise<{
+  placed: number;
+  misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }>;
+}> {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { programInstance: { select: { endsOn: true } } },
+  });
+  const endsOn = episode?.programInstance?.endsOn ?? null;
+  const orders = await prisma.procedureOrder.findMany({
+    where: { clinicalEpisodeId: episodeId, ...heldExtraWhere },
+    select: {
+      id: true,
+      procedureCode: true,
+      procedureType: { select: { openAttendance: true } },
+    },
+  });
+  if (!endsOn || orders.length === 0) return { placed: 0, misses: [] };
+  const openIds = orders.filter((row) => row.procedureType?.openAttendance === true).map((row) => row.id);
+  const cabinIds = orders.filter((row) => row.procedureType?.openAttendance !== true).map((row) => row.id);
+  const misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }> = [];
+  let placed = 0;
+  if (openIds.length > 0) {
+    const { pinOpenAttendanceOrders } = await import("@/domain/procedure/open-attendance");
+    const pinned = await pinOpenAttendanceOrders(openIds, {
+      confirmedByUserId,
+      scheduleBefore: endsOn,
+      startAt: new Date(),
+      checkoutMorning: true,
+    });
+    placed += pinned.placed;
+    misses.push(
+      ...pinned.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+      })),
+    );
+  }
+  if (cabinIds.length > 0) {
+    const placement = await placeConfirmedProcedures(cabinIds, {
+      confirmedByUserId,
+      scheduleBefore: endsOn,
+      checkoutMorning: true,
+    });
+    placed += placement.placed;
+    misses.push(
+      ...placement.failures.map((row) => ({
+        ymd: row.ymd ?? "",
+        procedureCode: row.procedureCode,
+        procedureName: row.procedureName,
+        reason: row.reason,
+      })),
+    );
+  }
+  const stillHeld = await prisma.procedureOrder.findMany({
+    where: { id: { in: orders.map((row) => row.id) }, ...heldExtraWhere },
+    select: { id: true },
+  });
+  const stillHeldIds = stillHeld.map((row) => row.id);
+  const seatedIds = orders.map((row) => row.id).filter((id) => !stillHeldIds.includes(id));
+  if (seatedIds.length > 0) {
+    await prisma.procedureOrder.updateMany({
+      where: { id: { in: seatedIds } },
+      data: { status: "PENDING_PAY", cancelReason: null },
+    });
+  }
+  if (stillHeldIds.length > 0) {
+    await releaseProcedureOccupancy(stillHeldIds);
+    await prisma.procedureOrder.deleteMany({ where: { id: { in: stillHeldIds } } });
+  }
+  return { placed, misses };
+}
+
+/** Drop paid rows the guest refused to put on checkout morning. */
+export async function releaseHeldExtras(episodeId: string): Promise<number> {
+  const rows = await prisma.procedureOrder.findMany({
+    where: { clinicalEpisodeId: episodeId, ...heldExtraWhere },
+    select: { id: true },
+  });
+  if (rows.length === 0) return 0;
+  const ids = rows.map((row) => row.id);
+  await releaseProcedureOccupancy(ids);
+  const result = await prisma.procedureOrder.deleteMany({ where: { id: { in: ids } } });
+  return result.count;
+}
+
+const extraRegimeInclude = {
+  sites: { select: { siteId: true, laterality: true } },
+} as const;
+
 export async function listPendingExtras(episodeId: string) {
   return prisma.procedureOrder.findMany({
     where: { clinicalEpisodeId: episodeId, status: "PENDING_PAY" },
     orderBy: { createdAt: "asc" },
+    include: extraRegimeInclude,
   });
 }
 
@@ -417,6 +583,7 @@ export async function listPaidExtras(episodeId: string) {
       status: { in: [...PAID_EXTRA_STATUSES] },
     },
     orderBy: { createdAt: "asc" },
+    include: extraRegimeInclude,
   });
 }
 
@@ -426,6 +593,7 @@ export async function deletePendingExtra(orderId: string): Promise<void> {
   if (order.status !== "PENDING_PAY") {
     throw new PackageAssignError("Only PENDING_PAY can be deleted here", "INVALID_STATUS", 400);
   }
+  await releaseProcedureOccupancy([orderId]);
   await prisma.procedureOrder.delete({ where: { id: orderId } });
 }
 
@@ -646,6 +814,8 @@ export async function payAndScheduleExtras(
       data: {
         status: "SCHEDULED",
         paymentReceiptRef: receiptRef,
+        paidAt: new Date(),
+        paidByUserId: actorUserId,
         inPackage: false,
       },
     });
@@ -656,6 +826,8 @@ export async function payAndScheduleExtras(
       data: {
         status: "PROPOSED",
         paymentReceiptRef: receiptRef,
+        paidAt: new Date(),
+        paidByUserId: actorUserId,
         inPackage: false,
       },
     });
@@ -680,7 +852,10 @@ export async function payAndScheduleExtras(
       }
       if (fixedLoose.length > 0) {
         placed += (
-          await placeConfirmedProcedures(fixedLoose, { confirmedByUserId: actorUserId })
+          await placeConfirmedProcedures(fixedLoose, {
+            confirmedByUserId: actorUserId,
+            scheduleBefore: await stayEndForOrders(fixedLoose),
+          })
         ).placed;
       }
     } catch (err) {
@@ -729,7 +904,7 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
   if (order.resourceId) {
     await prisma.procedureOrder.update({
       where: { id: order.id },
-      data: { status: "SCHEDULED", inPackage: false },
+      data: { status: "SCHEDULED", inPackage: false, paidAt: order.paidAt ?? new Date() },
     });
   } else if (
     order.schedulingMode === "OPEN" &&
@@ -738,14 +913,14 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
     // PLAN_BEFORE_PAY already day-bucketed this OPEN row — keep the pin.
     await prisma.procedureOrder.update({
       where: { id: order.id },
-      data: { status: "SCHEDULED", inPackage: false },
+      data: { status: "SCHEDULED", inPackage: false, paidAt: order.paidAt ?? new Date() },
     });
   } else {
     // Money is confirmed at hotel first. Placement may wait on anamnesis / care team —
     // do not reject settlement-confirmed for those gates (hotel already PAID).
     await prisma.procedureOrder.update({
       where: { id: order.id },
-      data: { status: "PROPOSED", inPackage: false },
+      data: { status: "PROPOSED", inPackage: false, paidAt: order.paidAt ?? new Date() },
     });
     try {
       if (order.schedulingMode === "OPEN") {
@@ -754,11 +929,13 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
         );
         await pinOpenAttendanceOrders([order.id], {});
       } else {
-        await placeConfirmedProcedures([order.id], {});
+        await placeConfirmedProcedures([order.id], {
+          scheduleBefore: await stayEndForOrders([order.id]),
+        });
       }
     } catch (err) {
       const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
-      if (code === ANAMNESIS_REQUIRED || code === CARE_TEAM_REQUIRED) {
+      if (code === ANAMNESIS_REQUIRED || code === "COMPLAINT_REQUIRED" || code === "DIAGNOSIS_REQUIRED" || code === CARE_TEAM_REQUIRED) {
         console.warn("Walk-in settlement: left PROPOSED until clinical gates pass", {
           orderId: order.id,
           code,

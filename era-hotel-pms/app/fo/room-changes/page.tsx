@@ -13,6 +13,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { readSettlement, swapCounterpartRoom } from '@/lib/room-move-settlement';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,12 +21,21 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 
 function roomMoveReason(
   row: { reasonCode?: string | null; notes?: string | null },
-  t: (key: string) => string,
+  t: (key: string, values?: Record<string, string>) => string,
 ): string {
   const raw = (row.reasonCode ?? '').trim();
   const note = (row.notes ?? '').trim();
   if (raw === 'CARD_ASSIGN' || note === 'CARD_ASSIGN') return t('reasonCard');
-  if (raw === 'SWAP') return t('reasonSwap');
+  if (raw === 'SWAP') {
+    const room = swapCounterpartRoom(note);
+    const base = room ? t('reasonSwapWith', { room }) : t('reasonSwap');
+    const settlement = readSettlement(note);
+    if (settlement === 'HOTEL') return `${base} · ${t('settlementHotel')}`;
+    if (settlement === 'GUEST_PAY') return `${base} · ${t('settlementGuest')}`;
+    if (settlement === 'HOTEL_REFUND') return `${base} · ${t('settlementRefund')}`;
+    if (settlement === 'GUEST_CHEAPER') return `${base} · ${t('settlementCheaper')}`;
+    return base;
+  }
   if (raw === 'RELOCATE' || raw === 'RACK_DND') return t('reasonRelocate');
   if (raw === 'GUEST_REFUSED') return t('reasonGuestRefused');
   if (raw === 'DID_NOT_OCCUPY') return t('reasonDidNotOccupy');
@@ -40,6 +50,7 @@ type Row = {
   effectiveAt: string;
   notes?: string | null;
   reasonCode?: string | null;
+  createdByName?: string | null;
   reservation: { id: string; guest: { fullName: string } };
   fromRoom: { roomNumber: string } | null;
   toRoom: { roomNumber: string } | null;
@@ -214,6 +225,13 @@ export default function RoomChangesPage() {
             sortable: true,
             sortValue: (r) => roomMoveReason(r, t),
             render: (r) => roomMoveReason(r, t),
+          },
+          {
+            key: 'actor',
+            header: t('actor'),
+            sortable: true,
+            sortValue: (r) => r.createdByName ?? '',
+            render: (r) => r.createdByName ?? '—',
           },
           { key: 'status', header: t('status'), sortable: true },
         ]}

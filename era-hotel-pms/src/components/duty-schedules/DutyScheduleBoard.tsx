@@ -75,6 +75,7 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
   >([]);
   const [selectedUnit, setSelectedUnit] = useState<string>("");
   const [unavailable, setUnavailable] = useState(false);
+  /** Settings stay collapsed; open only on demand (or empty axes seed fail). */
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editor, setEditor] = useState<{
     axisId: string;
@@ -107,18 +108,19 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
     const qs = selectedUnit
       ? `?orgUnitId=${encodeURIComponent(selectedUnit)}`
       : "";
-    const [weekRes, peopleRes] = await Promise.all([
-      fetch(
-        `/api/duty-schedules/${dept.toLowerCase()}/week?weekStart=${weekStart}`,
-      ),
-      fetch(`/api/duty-schedules/${dept.toLowerCase()}/personnel${qs}`),
-    ]);
+    // Week first so ensureDeptDefaults seeds before personnel (avoids parallel upsert races).
+    const weekRes = await fetch(
+      `/api/duty-schedules/${dept.toLowerCase()}/week?weekStart=${weekStart}`,
+    );
     const weekJson = await weekRes.json();
-    const peopleJson = await peopleRes.json();
     if (!weekRes.ok) {
       showApiError(weekJson, title);
       return;
     }
+    const peopleRes = await fetch(
+      `/api/duty-schedules/${dept.toLowerCase()}/personnel${qs}`,
+    );
+    const peopleJson = await peopleRes.json();
     if (!peopleRes.ok) {
       showApiError(peopleJson, title);
       return;
@@ -144,10 +146,6 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (orgUnitIds.length === 0 && !unavailable) setSettingsOpen(true);
-  }, [orgUnitIds.length, unavailable]);
 
   function cellsFor(axisId: string, day: string) {
     return cells.filter(
@@ -274,10 +272,10 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
   const emptyBinding = orgUnitIds.length === 0 && !unavailable;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <PageHeader
         title={title}
-        subtitle={subtitle}
+        subtitle={`${subtitle} · ${weekLabel}`}
         actions={
           <div className="flex flex-wrap gap-2 items-center">
             <span
@@ -306,43 +304,60 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
                 {t("reopenDraft")}
               </button>
             )}
+            {!readOnly ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => void copyPrev(false)}
+              >
+                {t("copyPrevWeek")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setSettingsOpen((o) => !o)}
+            >
+              {settingsOpen ? t("hideSettings") : t("showSettings")}
+            </button>
           </div>
         }
       />
 
-      <EraListFilterBar>
-        <div className="flex flex-wrap gap-2 items-end">
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => setWeekStart(addHotelDays(weekStart, -7))}
-          >
-            {t("prevWeek")}
-          </button>
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => setWeekStart(mondayOf(today))}
-          >
-            {t("thisWeek")}
-          </button>
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => setWeekStart(addHotelDays(weekStart, 7))}
-          >
-            {t("nextWeek")}
-          </button>
-          <DatePicker
-            label={t("weekStart")}
-            value={weekStart}
-            placeholder={tc("datePlaceholder")}
-            onChange={(v) => setWeekStart(mondayOf(v || today))}
-          />
-          <span className="text-sm font-medium text-slate-700 self-end pb-2">
-            {weekLabel}
-          </span>
-        </div>
+      <EraListFilterBar
+        resetLabel={tc("filterReset")}
+        onReset={() => {
+          setWeekStart(mondayOf(today));
+          setSelectedUnit("");
+        }}
+      >
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          onClick={() => setWeekStart(addHotelDays(weekStart, -7))}
+        >
+          {t("prevWeek")}
+        </button>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          onClick={() => setWeekStart(mondayOf(today))}
+        >
+          {t("thisWeek")}
+        </button>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          onClick={() => setWeekStart(addHotelDays(weekStart, 7))}
+        >
+          {t("nextWeek")}
+        </button>
+        <DatePicker
+          label={t("weekStart")}
+          value={weekStart}
+          placeholder={tc("datePlaceholder")}
+          onChange={(v) => setWeekStart(mondayOf(v || today))}
+        />
         <CatalogField
           kind="CLOSED_SMALL"
           label={t("orgUnitFilter")}
@@ -353,22 +368,6 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
             ...filterUnitOptions,
           ]}
         />
-        {!readOnly ? (
-          <button
-            type="button"
-            className={SECONDARY_BUTTON_CLASS}
-            onClick={() => void copyPrev(false)}
-          >
-            {t("copyPrevWeek")}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className={SECONDARY_BUTTON_CLASS}
-          onClick={() => setSettingsOpen((o) => !o)}
-        >
-          {settingsOpen ? t("hideSettings") : t("showSettings")}
-        </button>
       </EraListFilterBar>
 
       {unavailable ? (
@@ -377,58 +376,61 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
         </p>
       ) : null}
 
-      {emptyBinding ? (
-        <p className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-          {t("emptyBindingHint")}
+      {!settingsOpen && emptyBinding ? (
+        <p className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex flex-wrap gap-2 items-center justify-between">
+          <span>{t("emptyBindingHint")}</span>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => setSettingsOpen(true)}
+          >
+            {t("showSettings")}
+          </button>
         </p>
       ) : null}
 
       {settingsOpen ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-800 mb-2">
-              {t("settingsTitle")}
-            </h3>
-            <p className="text-xs text-slate-500 mb-3">{t("bindingHint")}</p>
-            <div className="flex flex-wrap gap-2 items-end">
-              <CatalogField
-                kind="MULTI"
-                label={t("boundOrgUnits")}
-                value={orgUnitIds}
-                onChange={(v) => {
-                  const next = Array.isArray(v) ? v.map(String) : [];
-                  setOrgUnitIds(next);
-                }}
-                options={
-                  filterUnitOptions.length
-                    ? filterUnitOptions
-                    : orgUnitIds.map((id) => ({ value: id, label: id }))
-                }
-              />
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() => void saveBindingUnits(orgUnitIds)}
-                disabled={unavailable}
-              >
-                {t("saveBinding")}
-              </button>
-            </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 space-y-3">
+          <div className="flex flex-wrap gap-2 items-end">
+            <CatalogField
+              kind="MULTI"
+              label={t("boundOrgUnits")}
+              value={orgUnitIds}
+              onChange={(v) => {
+                const next = Array.isArray(v) ? v.map(String) : [];
+                setOrgUnitIds(next);
+              }}
+              options={
+                filterUnitOptions.length
+                  ? filterUnitOptions
+                  : orgUnitIds.map((id) => ({ value: id, label: id }))
+              }
+            />
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => void saveBindingUnits(orgUnitIds)}
+              disabled={unavailable}
+            >
+              {t("saveBinding")}
+            </button>
           </div>
-          <div>
-            <h4 className="text-sm font-medium text-slate-800 mb-2">
+          <p className="text-xs text-slate-500">{t("bindingHint")}</p>
+          <div className="flex flex-wrap gap-2 items-end">
+            <span className="text-xs font-medium text-slate-700 self-end pb-2">
               {t("axesTitle")}
-            </h4>
-            <ul className="text-sm text-slate-600 mb-2 space-y-1">
-              {axes.map((a) => (
-                <li key={a.id}>
-                  <span className="font-medium text-slate-800">{a.name}</span>{" "}
-                  <span className="text-xs text-slate-400">{a.code}</span>
-                </li>
-              ))}
-            </ul>
+            </span>
+            {axes.map((a) => (
+              <span
+                key={a.id}
+                className="text-xs rounded-md border border-slate-200 bg-slate-50 px-2 py-1"
+              >
+                {a.name}{" "}
+                <span className="text-slate-400">{a.code}</span>
+              </span>
+            ))}
             {!readOnly ? (
-              <div className="flex flex-wrap gap-2 items-end">
+              <>
                 <label className="text-xs text-slate-600">
                   {t("axisCode")}
                   <input
@@ -440,7 +442,7 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
                 <label className="text-xs text-slate-600">
                   {t("axisName")}
                   <input
-                    className="mt-1 block rounded-lg border border-slate-200 px-2 py-1.5 text-sm min-w-[12rem]"
+                    className="mt-1 block rounded-lg border border-slate-200 px-2 py-1.5 text-sm min-w-[10rem]"
                     value={axisDraftName}
                     onChange={(e) => setAxisDraftName(e.target.value)}
                   />
@@ -452,11 +454,11 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
                 >
                   {t("saveAxis")}
                 </button>
-              </div>
+              </>
             ) : null}
           </div>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <span className="text-slate-500 self-center">{t("legend")}:</span>
+          <div className="flex flex-wrap gap-1.5 text-xs items-center">
+            <span className="text-slate-500">{t("legend")}:</span>
             {shiftCodes.map((c) => (
               <span
                 key={c.code}
@@ -547,7 +549,7 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
                     return (
                       <td
                         key={day}
-                        className={`${DATA_TABLE_TD_CLASS} align-top min-w-[9rem] ${dayHeaderClass(day, today)}`}
+                        className={`${DATA_TABLE_TD_CLASS} align-top min-w-[8.5rem] ${dayHeaderClass(day, today)}`}
                       >
                         <ul className="space-y-1 mb-1">
                           {list.map((c) => (
@@ -607,7 +609,16 @@ export function DutyScheduleBoard({ dept, title, subtitle }: Props) {
               {axes.length === 0 ? (
                 <tr className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS} colSpan={8}>
-                    {t("noAxes")}
+                    <div className="flex flex-wrap gap-2 items-center justify-between">
+                      <span>{t("noAxes")}</span>
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        onClick={() => setSettingsOpen(true)}
+                      >
+                        {t("showSettings")}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : null}

@@ -10,9 +10,19 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-10 access denied):** A missing screen grant opens `/access-denied`. A PIN session still returns to the floor. AC-FNB-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
+**Closeout (2026-11-10 settings split):** Catalog v7. `admin:master_data` is dropped. Audit, links, and limits are their own screens. Buffet cost and integration writes use the buffet and integration keys. AC-FNB-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
+**Closeout (2026-11-10 entity grid):** `/admin/access` is an entity × View / Change / Operate / Admin grid. Turning kitchen display off hides only the KDS screen and bump, not menu admin. FNB-RBAC-01 stays SCREEN. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
 **Closeout (2026-11-05 staff cədvəl):** FNB-CEDVEL-01 SCREEN/API (not SHOW). AC-FNB-CEDVEL 🟡 out of BE rollup. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index S-CEDVEL [~]; `fnb.yaml` untouched. Second-pass: cedvel API `denyUnlessPermission` + binding `orgUnitOptions` — no Gate/Demo/Pilot/Sell flip.
 
+**Closeout (2026-11-09 hall till):** FNB-HALL-01 SCREEN/API (not SHOW). No Scaffold ✅ (no PRD AC). Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index S-HALL [~]; `fnb.yaml` untouched.
+
 **Closeout (2026-11-06 cedvel UX deepen):** FNB-CEDVEL-01 stays SCREEN/API (click-cell shift, week chrome, copy week) — **not SHOW**. AC-FNB-CEDVEL 🟡. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `fnb.yaml` untouched. Second-pass: copy replace guard — no Gate/Demo/Pilot/Sell flip.
+
+**Closeout (2026-11-10 cedvel IA):** `/admin/cedvel` last before Settings; settings collapsed; sequential week→personnel; P2002-safe binding/week. Still SCREEN/API — **not SHOW**. AC-FNB-CEDVEL 🟡. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `fnb.yaml` untouched. Second-pass: week create race — no Gate/Demo/Pilot/Sell flip.
 
 ---
 
@@ -39,7 +49,8 @@
 | Buffet cost attribution | `/admin/settings` (Finance web URL) + `/admin/buffet/*` · Finance `/inventory/buffet-food-cost` | 🟡 SCREEN (KPI planks; Hotel/HR via peer/orch not Settings URLs; punchlist open — not SHOW) |
 | Outlets (multi-café) | `/select-outlet` + `/admin/settings` caps/shape/DELETE; Floor till-only; Buffet cap filter; pay `printChrome` | 🟡 SCREEN (FNB-09; staging RESTAURANT→NAFTANI 2026-10-29; UAT FB-OUTLET-01 open — not SHOW) |
 | Mutation audit (FNB-AUD-01) | `/admin/audit` + `GET /api/admin/audit` (CatalogField incl. PosShift) | SCREEN / 🟡 — Layer A + Wave B PAY/DEFER_HUB/PosShift + Wave E compound index (2026-10-29); UAT open — not SHOW; hash-chain deferred. Does not move Gate, Demo, Pilot, or Sell |
-| Staff cədvəl (FNB-CEDVEL-01) | `/admin/cedvel` | SCREEN / 🟡 — WEEK_PERSON click-cell + week chrome; PIN `StaffRoster` separate; UAT open — not SHOW. Does not move Gate, Demo, Pilot, or Sell |
+| Staff cədvəl (FNB-CEDVEL-01) | `/admin/cedvel` (last before Settings) | SCREEN / 🟡 — WEEK_PERSON click-cell + week chrome; settings collapsed; PIN `StaffRoster` separate; UAT open — not SHOW. Does not move Gate, Demo, Pilot, or Sell |
+| Nafta hall (FNB-HALL-01) | `/floor` · `/orders` · `/reports/journal` · `/reports/x` · `/admin/limits` | SCREEN / 🟡 — one till, precheck and paid slip, floor room charge, colored journal, X/handover print. UAT unsigned — not SHOW. Gate/Demo/Pilot/Sell unchanged |
 
 Admin modal CRUD is in place for menu, tables, settings (incl. create outlet), daily-menu board, and buffet planner (submenu + composition/copy/spawn); RBAC matrix is SCREEN engineering — sell/show remains 🟡 until live sign-off.
 

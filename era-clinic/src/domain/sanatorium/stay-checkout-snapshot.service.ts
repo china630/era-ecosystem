@@ -154,3 +154,40 @@ export async function clearStayProceduresAtCheckout(reservationId: string): Prom
 
   return { cancelledOrderIds, keptNoShowOrderIds };
 }
+
+export type HotelLifecycleClaimResult =
+  | { status: "claimed" }
+  | { status: "duplicate" };
+
+/** Idempotent ingest: one correlationId per org. */
+export async function claimHotelLifecycleEvent(input: {
+  correlationId: string;
+  eventType: string;
+}): Promise<HotelLifecycleClaimResult> {
+  try {
+    await prisma.processedEvent.create({
+      data: { correlationId: input.correlationId, eventType: input.eventType },
+    });
+    return { status: "claimed" };
+  } catch (err) {
+    const code =
+      err && typeof err === "object" && "code" in err
+        ? (err as { code: string }).code
+        : "";
+    if (code === "P2002") return { status: "duplicate" };
+    throw err;
+  }
+}
+
+export async function releaseHotelLifecycleEventClaim(
+  organizationId: string,
+  correlationId: string,
+): Promise<void> {
+  await prisma.processedEvent
+    .delete({
+      where: {
+        organizationId_correlationId: { organizationId, correlationId },
+      },
+    })
+    .catch(() => null);
+}

@@ -214,7 +214,10 @@ export async function buildEpisodeSummaryPrint(
     };
   });
 
-  const sortedProcedures = [...procedureOrders].sort((a, b) => {
+  const sortedProcedures = procedureOrders.filter((order) => {
+    if (!stay.departure) return true;
+    return bakuDateKey(order.scheduledAt) <= stay.departure;
+  }).sort((a, b) => {
     const da = bakuDateKey(a.scheduledAt);
     const db = bakuDateKey(b.scheduledAt);
     if (da !== db) return a.scheduledAt.getTime() - b.scheduledAt.getTime();

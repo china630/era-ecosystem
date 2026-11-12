@@ -152,7 +152,7 @@ export function ImportWizard({ entities }: Props) {
                   key={meta.entity}
                   stepNumber={meta.order}
                   entity={meta.entity}
-                  label={meta.label}
+                  label={t.has(`entity.${meta.entity}`) ? t(`entity.${meta.entity}`) : meta.label}
                   templateHint={meta.templateHint}
                   fileless={meta.fileless}
                   allowMultiple={meta.allowMultiple}

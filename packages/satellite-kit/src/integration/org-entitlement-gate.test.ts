@@ -301,6 +301,25 @@ describe("runCronForEachTenant", () => {
     assert.deepEqual(seen, [orgA, orgB]);
   });
 
+  it("SHARED: skips placement-frozen org ids", async () => {
+    await setTopology("SHARED");
+    const { setRuntimeConfigMemory } = await import(
+      "../tenancy/runtime-config-memory"
+    );
+    setRuntimeConfigMemory({ placementFrozenOrgIds: [orgA] });
+    const seen: string[] = [];
+    const gate = await runCronForEachTenant(
+      { fetchPoolOrganizationIds: async () => [orgA, orgB] },
+      async (organizationId) => {
+        seen.push(organizationId);
+        return { organizationId };
+      },
+    );
+    assert.equal(gate.ok, true);
+    if (!gate.ok) return;
+    assert.deepEqual(seen, [orgB]);
+  });
+
   it("SHARED: empty registry → 503, work never starts, process bind ignored", async () => {
     await setTopology("SHARED");
     process.env.ERA_SATELLITE_ORGANIZATION_ID = bound;

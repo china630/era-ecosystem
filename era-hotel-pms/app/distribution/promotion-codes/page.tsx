@@ -14,7 +14,7 @@ export default function PromotionCodesPage() {
     <SimpleCrudPage
       title={t('title')}
       apiPath="/api/admin/promotion-codes"
-      canWrite={can(PERMISSIONS.MASTER_DATA_MANAGE)}
+      canWrite={can(PERMISSIONS.PROMO_ADMIN)}
       addLabel={tc('add')}
       addFields={[
         { name: 'code', label: t('code'), preset: 'code', required: true },

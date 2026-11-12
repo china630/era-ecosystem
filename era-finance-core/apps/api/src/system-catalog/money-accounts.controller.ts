@@ -3,10 +3,9 @@ import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { LedgerType } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
+import { BankSubaccountService } from "../accounting/bank-subaccount.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
-import { PrismaService } from "../prisma/prisma.service";
 
 function matchesMoneyPrefix(code: string, root: string): boolean {
   return code === root || code.startsWith(`${root}.`);
@@ -18,7 +17,7 @@ function matchesMoneyPrefix(code: string, root: string): boolean {
 @UseGuards(PermissionsGuard)
 export class MoneyAccountsController {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly bankSubaccounts: BankSubaccountService,
     private readonly posting: PostingAccountResolver,
   ) {}
 
@@ -43,11 +42,8 @@ export class MoneyAccountsController {
       { root: cashForeign, kind: "CASH" as const, currency: null },
       { root: mainBank, kind: "BANK" as const, currency: null },
     ];
-    const accounts = await this.prisma.account.findMany({
-      where: { organizationId, ledgerType: LedgerType.NAS },
-      orderBy: { code: "asc" },
-      select: { code: true, nameAz: true, nameRu: true, currency: true },
-    });
+    const accounts =
+      await this.bankSubaccounts.listNasAccountsForOrganization(organizationId);
     const options: Array<{
       code: string;
       label: string;

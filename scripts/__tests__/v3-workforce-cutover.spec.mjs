@@ -12,7 +12,7 @@ const ROOT = join(import.meta.dirname, "..", "..");
 
 describe("v3 workforce cutover audit rules", () => {
   it("clinic practitioners POST blocks local create", () => {
-    const routePath = join(ROOT, "era-clinic/app/api/admin/practitioners/route.ts");
+    const routePath = join(ROOT, "era-clinic/nest/generated/admin_practitioners.ts");
     const text = readFileSync(routePath, "utf8");
     assert.ok(text.includes("WORKFORCE_HIRE_VIA_CP"));
     assert.ok(!text.includes("createPractitionerLocalMaster"));
@@ -21,7 +21,7 @@ describe("v3 workforce cutover audit rules", () => {
   it("scanWorkforceDualPath passes for era-clinic", () => {
     const clinicRoot = join(ROOT, "era-clinic");
     const tsFiles = [
-      join(clinicRoot, "app/api/admin/practitioners/route.ts"),
+      join(clinicRoot, "nest/generated/admin_practitioners.ts"),
       join(clinicRoot, "src/lib/workforce-policy.ts"),
     ];
     const allText = tsFiles.map((f) => readFileSync(f, "utf8")).join("\n");

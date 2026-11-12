@@ -34,6 +34,11 @@ export function settlementNote(settlement: ClassSettlement): string {
   return `settlement:${settlement}`;
 }
 
+export function swapCounterpartRoom(notes: string | null | undefined): string | null {
+  const match = notes?.match(/swap-with:(\S+)/);
+  return match?.[1] ?? null;
+}
+
 export function readSettlement(notes: string | null | undefined): ClassSettlement | null {
   const match = notes?.match(/settlement:(HOTEL|GUEST_PAY|HOTEL_REFUND|GUEST_CHEAPER)/);
   return match && isClassSettlement(match[1]) ? match[1] : null;

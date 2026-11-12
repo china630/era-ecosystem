@@ -220,6 +220,18 @@
     "phaseProgress": "Faza {current} / {total}"
   },
   "settingsAccess": {
+    "entityColumn": "Mahiyyət",
+    "col_view": "Baxış",
+    "col_change": "Dəyişiklik",
+    "col_operate": "Əməliyyat",
+    "col_admin": "Admin",
+    "entity_receipt": "Çek",
+    "entity_shift": "Növbə",
+    "entity_stock": "Qalıq",
+    "entity_till": "Kassa",
+    "entity_hotel": "Otel",
+    "entity_settings": "Tənzimləmə",
+    "entity_access": "Giriş",
     "title": "Rollar və giriş",
     "subtitle": "Rol paketləri və onların verdiyi ekranlar və əməliyyatlar",
     "loading": "Yüklənir…",
@@ -271,6 +283,7 @@
       "api_integrations_stock": "Klinika anbar inteqrasiyası",
       "admin_import": "İdxal, təchizatçı uyğunlaşdırması, ehtiyatın bərpası",
       "admin_settings": "Satış nöqtəsi inteqrasiyaları",
+      "admin_marketplace": "Marketplace",
       "admin_access_manage": "Rolları və girişi idarə et"
     }
   },

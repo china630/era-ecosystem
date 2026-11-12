@@ -710,6 +710,73 @@ export async function getPatientHistoryPage(
   };
 }
 
+/** Closed course file: procedures, labs, and visits that were actually delivered. */
+async function executedCoursePage(patientRefId: string, episodeId: string, locale: string) {
+  const [procedures, labs, visits, catalog] = await Promise.all([
+    prisma.procedureOrder.findMany({
+      where: {
+        patientRefId,
+        clinicalEpisodeId: episodeId,
+        status: { in: ["CHECKED_IN", "COMPLETED"] },
+      },
+      include: PROCEDURE_PHYSIO_INCLUDE,
+      orderBy: { scheduledAt: "asc" },
+    }),
+    prisma.labOrder.findMany({
+      where: {
+        patientRefId,
+        clinicalEpisodeId: episodeId,
+        status: { in: ["COLLECTED", "IN_PROGRESS", "RESULT_READY", "PUBLISHED", "COMPLETED"] },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.visit.findMany({
+      where: { patientRefId, clinicalEpisodeId: episodeId, status: "COMPLETED" },
+      select: {
+        id: true,
+        completedAt: true,
+        createdAt: true,
+        serviceLines: { select: { description: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    getDiagnosticCatalog(),
+  ]);
+  const catalogNames = await loadCatalogDisplayNameMap(
+    procedures.map((row) => row.procedureCode),
+    locale,
+  );
+  const events: PatientTimelineEvent[] = [
+    ...procedures.map((row) =>
+      mapProcedureEvent({
+        ...row,
+        procedureName: catalogNames.get(row.procedureCode) || row.procedureName,
+      }),
+    ),
+    ...labs.map((row) => mapLabEvent(row, catalog.items)),
+    ...visits.map((row) => ({
+      id: `visit:${row.id}`,
+      type: "visit" as const,
+      at: (row.completedAt ?? row.createdAt).toISOString(),
+      title: row.serviceLines.map((line) => line.description).filter(Boolean).join(", ") || "Visit",
+      status: "COMPLETED",
+      showClock: true,
+    })),
+  ];
+  return {
+    patientRefId,
+    events: events.map(withTimeSubtitle),
+    unplaced: [],
+    days: groupDays(events, "plan"),
+    offset: 0,
+    limit: events.length,
+    hasMore: false,
+    nextOffset: null,
+    total: events.length,
+    executed: true,
+  };
+}
+
 export async function getPatientPlanPage(
   patientRefId: string,
   opts: {
@@ -722,6 +789,15 @@ export async function getPatientPlanPage(
   },
 ) {
   const settings = await getClinicSettings();
+  if (opts.episodeId) {
+    const episode = await prisma.clinicalEpisode.findUnique({
+      where: { id: opts.episodeId },
+      select: { status: true },
+    });
+    if (episode?.status === "CLOSED") {
+      return executedCoursePage(patientRefId, opts.episodeId, opts.locale ?? "az");
+    }
+  }
   const paged = opts.limit != null;
   const limit = opts.limit ?? settings.patientCardPlanPageSize;
   const offset = opts.offset ?? 0;

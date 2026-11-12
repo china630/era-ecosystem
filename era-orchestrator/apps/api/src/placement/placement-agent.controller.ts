@@ -11,6 +11,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Public } from "../auth/decorators/public.decorator";
 import { PlacementJobService } from "./placement-job.service";
+import { ReportProvisionDto } from "./dto/report-provision.dto";
 
 /**
  * Host-side agent poll. Orchestrator never SSHs to apply placement —
@@ -38,6 +39,22 @@ export class PlacementAgentController {
   ) {
     this.assertHostToken(authorization);
     return this.jobs.reportApplyLog(id, body.applyLog?.trim() || "(empty)");
+  }
+
+  /** Wave 2: report clone apply result → CONFIGURE or FAILED. */
+  @Post("jobs/:id/report-provision")
+  reportProvision(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() body: ReportProvisionDto,
+    @Headers("authorization") authorization?: string,
+  ) {
+    this.assertHostToken(authorization);
+    return this.jobs.reportProvision(id, {
+      ok: body.ok,
+      applyLog: body.applyLog,
+      errorMessage: body.errorMessage,
+      healthSummary: body.healthSummary,
+    });
   }
 
   private assertHostToken(authorization?: string): void {

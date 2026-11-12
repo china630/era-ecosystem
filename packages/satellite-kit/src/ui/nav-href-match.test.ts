@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { bestMatchingNavHref, isBestNavHref } from "./nav-href-match";
+import {
+  bestMatchingNavHref,
+  isBestNavHref,
+  sectionOwnsBestHref,
+} from "./nav-href-match";
+import type { EraOpsNavSection } from "./era-ops-types";
 
 const noQuery = { get: () => null as string | null };
 
@@ -28,5 +33,42 @@ describe("bestMatchingNavHref", () => {
       "/settings/integration?view=journal",
     ]);
     assert.equal(best, "/settings/integration?view=gl");
+  });
+
+  it("lights only the policy hash that is open", () => {
+    const hrefs = [
+      "/settings/policies#letterhead",
+      "/settings/policies#hk",
+      "/settings/policies#laundry",
+    ];
+    const best = bestMatchingNavHref("/settings/policies", noQuery, hrefs, "laundry");
+    assert.equal(best, "/settings/policies#laundry");
+    assert.equal(isBestNavHref("/settings/policies#hk", best), false);
+    assert.equal(isBestNavHref("/settings/policies#laundry", best), true);
+    assert.equal(bestMatchingNavHref("/settings/policies", noQuery, hrefs, ""), null);
+  });
+
+  it("opens Schedules for /hk/roster, not Housekeeping via /hk prefix", () => {
+    const hk: EraOpsNavSection = {
+      id: "hotel_housekeeping",
+      title: "HK",
+      items: [{ href: "/hk", label: "Floor" }, { href: "/hk/maids", label: "Maids" }],
+    };
+    const schedules: EraOpsNavSection = {
+      id: "hotel_schedules",
+      title: "Schedules",
+      items: [
+        { href: "/schedules", label: "Hub" },
+        { href: "/hk/roster", label: "HK roster" },
+      ],
+    };
+    const all = [
+      ...hk.items.map((i) => i.href!),
+      ...schedules.items.map((i) => i.href!),
+    ];
+    const best = bestMatchingNavHref("/hk/roster", noQuery, all);
+    assert.equal(best, "/hk/roster");
+    assert.equal(sectionOwnsBestHref(hk, best), false);
+    assert.equal(sectionOwnsBestHref(schedules, best), true);
   });
 });

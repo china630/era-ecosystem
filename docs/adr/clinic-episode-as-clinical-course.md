@@ -85,7 +85,9 @@ CLOSED course = **read-only** (including anamnesis and contraindications). Write
 
 Demographics PATCH **must not** require anamnesis (supersedes CLI-06 / `patientAnamnesisDenied` on clinical demographics).
 
-While the OPEN episode has empty anamnesis, **block any procedure assignment or confirmation** (`409` `ANAMNESIS_REQUIRED`):
+While the OPEN episode is missing a fact the clinic lane requires, **block procedure assignment or confirmation** (`409` `ANAMNESIS_REQUIRED`, `COMPLAINT_REQUIRED`, or `DIAGNOSIS_REQUIRED`). The facts live on `Tenant.laneGateJson`. An empty column is the Nafta default: procedures need anamnesis, a complaint, and a diagnosis; labs and intake visits need none of them. Care team stays a separate procedure gate and does not apply to labs.
+
+The same procedure lane covers:
 
 - `complete-checkup` / instantiate program
 - `buildProposedPlan` (creating `PROPOSED`)
@@ -93,9 +95,9 @@ While the OPEN episode has empty anamnesis, **block any procedure assignment or 
 - `POST /api/procedures/confirm` (`placeConfirmedProcedures`)
 - `bulk-cancel` replace that creates new orders
 
-Hotel check-in still opens the episode and may instantiate **intake** (visits + ECG/USG). It **must not** build a physio FIFO / proposed plan until anamnesis is filled.
+Cancelling a procedure without a replacement does not require those facts. Hotel check-in still opens the episode and may instantiate **intake** (visits + ECG/USG). It skips the physio FIFO until the procedure lane is open.
 
-Labs, intake visits, and ICD/complaints are **not** blocked by empty anamnesis.
+Labs are not blocked by an empty anamnesis, an empty complaint list, an empty diagnosis list, or a missing care team, unless an admin turns those checkboxes on.
 
 ### D5 — Close rules
 
@@ -137,7 +139,7 @@ Cutover import already attaches history to an episode (OPEN or CLOSED archive). 
 | Anamnesis on `PatientRef`; required to save sex/blood | Anamnesis on episode; required to assign/confirm **procedures** |
 | Contraindications patient-wide; planner uses all years | Per episode; new course starts with no blocked zones |
 | Procedures / most visits / many labs not on episode | Children of the episode |
-| Card ICD = OPEN only; no course switcher | Switcher; default latest; archive read-only |
+| Card ICD = OPEN only; no course switcher | One opened course on the card; other courses expand on the patients list; a closed course is read-only |
 | Print = latest episode by `openedAt` | Print = selected episode |
 
 ## Out of scope

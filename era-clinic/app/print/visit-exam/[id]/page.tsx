@@ -13,7 +13,7 @@ type Props = {
 export default async function PrintVisitExamPage({ params, searchParams }: Props) {
   const access = await assertVisitExamPrintAccess();
   if (access === "unauthenticated") redirect("/login");
-  if (access === "forbidden") redirect("/login?error=forbidden");
+  if (access === "forbidden") redirect("/access-denied");
 
   const { id } = await params;
   const sp = await searchParams;

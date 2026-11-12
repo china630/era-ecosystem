@@ -4,6 +4,7 @@ import {
   guestIdentityGaps,
   isMinorGuest,
   operationalGaps,
+  operationalGapsForPax,
 } from '@/lib/guest-stay-requirements';
 
 const TODAY = '2026-10-07';
@@ -152,6 +153,27 @@ describe('guest stay requirements', () => {
       TODAY,
     );
     expect(gaps).toEqual([{ name: 'Ali Mammadov', gaps: ['phone'] }]);
+  });
+
+  it('lists the same missing fields for one sanatorium guest, including a placeholder name', () => {
+    const gap = operationalGapsForPax(
+      {
+        id: 'p1',
+        guestId: null,
+        firstName: 'ГОСТ',
+        lastName: '1',
+        sex: null,
+        nationality: null,
+        birthDate: null,
+        age: null,
+        idCardNo: null,
+        passportNo: null,
+        departedAt: null,
+        guest: null,
+      },
+      TODAY,
+    );
+    expect(gap).toEqual({ name: 'ГОСТ 1', gaps: ['sex', 'birthDate', 'nationality'] });
   });
 
   it('asks for gender and citizenship only when they are missing at check-in', () => {

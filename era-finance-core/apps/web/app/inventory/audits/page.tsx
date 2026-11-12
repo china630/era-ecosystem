@@ -14,10 +14,10 @@ import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
 import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
-import { ClipboardList, Eye, X } from "lucide-react";
+import { Eye, X } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
 import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import {
@@ -145,29 +145,10 @@ export default function InventoryAuditsHistoryPage() {
               </thead>
               <tbody>
                 {rows.length === 0 ? (
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
-                      <EmptyState
-                        icon={
-                          <ClipboardList
-                            className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]"
-                            aria-hidden
-                          />
-                        }
-                        title={t("inventory.auditHistoryEmpty")}
-                        description={t("inventory.auditHistoryEmptyHint")}
-                        action={
-                          <button
-                            type="button"
-                            onClick={() => openAuditCreate()}
-                            className={PRIMARY_BUTTON_CLASS}
-                          >
-                            {t("inventory.auditNewInventoryBtn")}
-                          </button>
-                        }
-                      />
-                    </td>
-                  </tr>
+                  <FinanceEmptyTableRow
+                    colSpan={5}
+                    message={t("inventory.auditHistoryEmpty")}
+                  />
                 ) : (
                   rows.map((r) => (
                     <tr key={r.id} className={DATA_TABLE_TR_CLASS}>

@@ -80,6 +80,14 @@ export async function listReservations(
   });
 }
 
+export async function setReservationLocked(id: string, locked: boolean) {
+  const updated = await prisma.reservation.update({
+    where: { id },
+    data: { isLocked: locked },
+  });
+  return { id: updated.id, isLocked: updated.isLocked };
+}
+
 export async function getReservation(id: string) {
   const reservation = await prisma.reservation.findUnique({
     where: { id },
@@ -1140,6 +1148,10 @@ export async function checkInReservation(
       data: { status: 'IN_HOUSE' },
       include: { room: true, guest: true, ratePlan: true, roomType: true },
     });
+    await tx.reservationGuest.updateMany({
+      where: { reservationId: id, clinicAdmittedAt: { not: null } },
+      data: { clinicAdmittedAt: null },
+    });
     if (priorStay) {
       await tx.stay.update({
         where: { id: priorStay.id },
@@ -1364,6 +1376,18 @@ export async function cancelReservation(
     return updated;
   });
   const { recordReservationAudit } = await import('@/lib/reservation-audit');
+  const admitted = await prisma.reservationGuest.findMany({
+    where: { reservationId: id, clinicAdmittedAt: { not: null } },
+    select: { id: true, firstName: true, lastName: true, medicalPackageCode: true },
+  });
+  if (admitted.length > 0) {
+    const { revokeGuestClinicAdmit } = await import('@/lib/services/clinic-admit.service');
+    for (const guest of admitted) {
+      await revokeGuestClinicAdmit(id, guest.id).catch((e) =>
+        console.error('Clinic admit revoke on cancel failed', guest.id, e),
+      );
+    }
+  }
   await recordReservationAudit(id, noShow ? 'NO_SHOW' : 'CANCEL', audit, {
     section: 'status',
     source: 'user',
@@ -1372,7 +1396,13 @@ export async function cancelReservation(
       ...(reason?.trim() ? [{ key: 'reason', from: null, to: reason.trim() }] : []),
     ],
   });
-  return cancelled;
+  const mobilityReason = noShow ? 'No-show' : cancelReason || 'Stay cancelled';
+  const { syncMobilityOnStayCancel } = await import('@/lib/services/stay-mobility-sync.service');
+  const mobility = await syncMobilityOnStayCancel(id, mobilityReason).catch((e) => {
+    console.error('Stay mobility sync on cancel failed', e);
+    return null;
+  });
+  return Object.assign(cancelled, { mobility });
 }
 
 /** Put a cancelled stay back on the books. The door and type must still be free, or the desk picks another. */
@@ -1826,6 +1856,37 @@ async function alignScheduleSlices(
   if (!datesChanged && !roomChanged) return;
   const { alignReservationStaySlices } = await import('./stay-slice.service');
   await alignReservationStaySlices(id);
+}
+
+export async function listCheckedOutReservationIds(reservationIds: string[]) {
+  const rows = await prisma.reservation.findMany({
+    where: { id: { in: reservationIds }, status: 'CHECKED_OUT' },
+    select: { id: true },
+  });
+  return rows.map((row) => row.id);
+}
+
+export async function findStayByExternalRef(organizationId: string, externalRef: string) {
+  return prisma.reservation.findFirst({
+    where: {
+      organizationId,
+      OR: [{ externalRef }, { elektrawebResNameId: externalRef }, { id: externalRef }],
+    },
+    select: {
+      id: true,
+      checkInDate: true,
+      checkOutDate: true,
+      guest: { select: { globalPersonId: true } },
+      paxGuests: {
+        select: {
+          sortOrder: true,
+          isPrimary: true,
+          guest: { select: { globalPersonId: true } },
+        },
+        orderBy: { sortOrder: 'asc' },
+      },
+    },
+  });
 }
 
 export async function addQuickCharge(

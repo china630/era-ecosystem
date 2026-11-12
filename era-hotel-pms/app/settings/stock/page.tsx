@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
@@ -18,6 +18,7 @@ import {
   FieldSelect,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
+  GHOST_BUTTON_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -81,7 +82,7 @@ export default function StockAdminPage() {
   }
 
   useEffect(() => {
-    if (can(PERMISSIONS.MASTER_DATA_MANAGE)) void load();
+    if (can(PERMISSIONS.STOCK_MANAGE)) void load();
   }, [can]);
 
   const filteredProducts = useMemo(
@@ -136,7 +137,7 @@ export default function StockAdminPage() {
     }
   }
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.STOCK_MANAGE)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 
@@ -228,13 +229,15 @@ export default function StockAdminPage() {
                   <td className={DATA_TABLE_TD_CLASS}>
                     <button
                       type="button"
-                      className="text-[#2980B9] hover:underline"
+                      className={`${GHOST_BUTTON_CLASS} h-8 w-8 !px-0`}
+                      aria-label={tc('edit')}
+                      title={tc('edit')}
                       onClick={() => {
                         setEditProduct(p);
                         setProductModalOpen(true);
                       }}
                     >
-                      {tc('edit')}
+                      <Pencil className="h-4 w-4" aria-hidden />
                     </button>
                   </td>
                 </tr>

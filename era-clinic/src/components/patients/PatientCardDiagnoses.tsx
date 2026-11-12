@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
-  CARD_CONTAINER_CLASS,
+  FieldGroupBox,
   LINK_ACCENT_CLASS,
   PRIMARY_BUTTON_CLASS,
   TEXT_MUTED_CLASS,
@@ -70,12 +70,9 @@ export function PatientCardDiagnoses({
     : `/api/patients/${patientRefId}/diagnoses`;
 
   return (
-    <section className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-          {t("diagnosesTitle")}
-        </h2>
-        {!readOnly && resolvedEpisodeId ? (
+    <div>
+      {!readOnly && resolvedEpisodeId ? (
+        <div className="mb-1 flex justify-end">
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
@@ -84,9 +81,9 @@ export function PatientCardDiagnoses({
             <Plus className="h-4 w-4" aria-hidden />
             {t("addDiagnosis")}
           </button>
-        ) : null}
-      </div>
-      <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+        </div>
+      ) : null}
+    <FieldGroupBox title={t("diagnosesTitle")}>
         {resolvedEpisodeId ? (
           <DiagnosisPanel
             ref={panelRef}
@@ -109,7 +106,7 @@ export function PatientCardDiagnoses({
             </Link>
           </p>
         )}
-      </div>
-    </section>
+    </FieldGroupBox>
+    </div>
   );
 }

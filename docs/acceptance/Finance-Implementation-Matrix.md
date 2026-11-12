@@ -44,7 +44,8 @@
 
 **Edition / wave rollup (BE only)** = worst(Scaffold of in-scope ACs) → **✅**.  
 **AC-FIN-RBAC, AC-FIN-REF, AC-FIN-DAY, AC-FIN-TAX-SCHEME, AC-FIN-EQAIME-DAY, AC-FIN-FACT-QUEUE, AC-FIN-PROVISIONAL-VAT, AC-FIN-AUD, and AC-FIN-MIG are out of Scaffold BE rollup** (field Pilot open, SCREEN residuals, or API-only watchers) — they do not darken BE ✅ and do not flip AC-FIN-GL or AC-FIN-TAX. AC-FIN-MIG is Scaffold ✅ but still excluded from the W6 BE rollup until Pilot lab.  
-**Direct bank sync (2026-10-31):** default `off`. Not a new AC row and not Scaffold ✅. Does not change the BE rollup.  
+**Direct bank sync (2026-10-31):** default `off`. Not a new AC row and not Scaffold ✅. Does not change the BE rollup.
+**Org access keys (2026-11-10):** PASHA / ABB / Birbank reads take the org secret from the platform (`BANK_*`). Missing key is 503 and does not call the bank. ƏMAS submit uses `GOV_EMAS` when the gateway URL is set. ASAN ID is read from `GOV_ETAXES` (settings value remains a fallback; the settings form no longer writes it). Not Scaffold ✅. Not Pilot. Does not change the BE rollup.  
 **Taxpayer and signature stubs (2026-10-31):** `settings.tax.taxLookupMock` and `signatureGatewayMock` default off. FIN-ASAN-01 stays API/STUB. Not Scaffold ✅. Does not change the BE rollup.  
 **Audit hash writer (2026-10-31):** VAT threshold `THRESHOLD_HIT` uses `AuditService`. AC-FIN-AUD stays 🟡. Not Scaffold ✅. Does not change the BE rollup.  
 **Close prompt (2026-10-31):** earliest unclosed past month. Not a new AC row and not Scaffold ✅. Does not change the BE rollup.  

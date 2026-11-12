@@ -28,13 +28,13 @@ import {
 } from "@nestjs/swagger";
 import { OrganizationId } from "../common/org-id.decorator";
 import { TariffTier } from "@era365/database";
-import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
 import { CheckoutDto } from "./dto/checkout.dto";
 import { ToggleModuleDto } from "./dto/toggle-module.dto";
 import { PaymentProviderService } from "./payment-provider.service";
 import { PricingService } from "../admin/pricing.service";
 import { BillingPaymentOrdersService } from "./billing-payment-orders.service";
+import { OrganizationModuleService } from "./organization-module.service";
 import { BillingPlatformService } from "./billing-platform.service";
 import { BillingToggleService } from "./billing-toggle.service";
 import { BillingBundleToggleService } from "./billing-bundle-toggle.service";
@@ -52,11 +52,11 @@ import { ToggleBundleDto } from "./dto/toggle-bundle.dto";
 export class BillingController {
   constructor(
     private readonly payment: PaymentProviderService,
-    private readonly prisma: PrismaService,
     private readonly systemConfig: SystemConfigService,
     private readonly access: AccessControlService,
     private readonly pricing: PricingService,
     private readonly paymentOrders: BillingPaymentOrdersService,
+    private readonly organizationModules: OrganizationModuleService,
     private readonly billingPlatform: BillingPlatformService,
     private readonly billingToggle: BillingToggleService,
     private readonly billingBundleToggle: BillingBundleToggleService,
@@ -167,14 +167,10 @@ export class BillingController {
     @OrganizationId() organizationId: string,
   ) {
     await this.access.assertOwnerForBilling(user.sub, organizationId);
-    const rows = await this.prisma.organizationModule.findMany({
-      where: { organizationId },
-      select: {
-        moduleKey: true,
-        activatedAt: true,
-        pendingDeactivation: true,
-      },
-    });
+    const rows =
+      await this.organizationModules.listModuleStatesForOrganization(
+        organizationId,
+      );
     return {
       items: rows.map((r) => ({
         moduleKey: r.moduleKey,
@@ -295,9 +291,10 @@ export class BillingController {
     @Param("id", ParseUUIDPipe) id: string,
   ) {
     await this.access.assertOwnerForBilling(user.sub, organizationId);
-    const o = await this.prisma.paymentOrder.findFirst({
-      where: { id, organizationId },
-    });
+    const o = await this.paymentOrders.findPaymentOrderForOrganization(
+      organizationId,
+      id,
+    );
     if (!o) {
       throw new NotFoundException("Payment order not found");
     }

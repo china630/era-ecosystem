@@ -8,6 +8,7 @@ import { filterNasBankLedgerAccounts, NasBankAccountSelect, type NasBankAccountO
 import { toast } from "sonner";
 import { PageHeader } from "../../components/layout/page-header";
 import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../components/list-pagination-footer";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -436,19 +437,18 @@ function CashAccountCards({
         />
       )}
       {!loading && !error && data && accounts.length === 0 && (
-        <EmptyState
-          title={t("banking.accountsEmpty")}
-          icon={<Landmark className="h-10 w-10" aria-hidden />}
-          action={
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              onClick={() => setCreateBankOpen(true)}
-            >
-              {t("banking.newBankAccountBtn")}
-            </button>
-          }
-        />
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={`${DATA_TABLE_CLASS} w-full`}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("banking.accountsTitle")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <FinanceEmptyTableRow colSpan={1} message={t("banking.accountsEmpty")} />
+            </tbody>
+          </table>
+        </div>
       )}
       {!loading && !error && data && accounts.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -639,7 +639,26 @@ function BankingUnifiedRegistry({
         />
       ) : null}
       {!loading && !error && !hasAny ? (
-        <p className="text-[#7F8C8D] text-[13px] m-0">{t("banking.unifiedTableEmpty")}</p>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={`${DATA_TABLE_CLASS} w-full`}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("banking.thDate")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("banking.thSource")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("banking.thCounterparty")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("banking.thDescription")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("banking.thAmountInOut")}</th>
+                <th className={DATA_TABLE_TH_CENTER_CLASS}>{t("banking.thStatus")}</th>
+                <th className={`${DATA_TABLE_TH_RIGHT_CLASS} min-w-[140px] w-[140px]`}>
+                  {t("banking.thActions")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <FinanceEmptyTableRow colSpan={7} message={t("banking.unifiedTableEmpty")} />
+            </tbody>
+          </table>
+        </div>
       ) : null}
       {!loading && !error && hasAny ? (
         <>

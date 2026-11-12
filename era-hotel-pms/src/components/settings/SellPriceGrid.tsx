@@ -66,7 +66,7 @@ export function SellPriceGrid({ mode }: { mode: 'package' | 'daily' }) {
   const { can } = useAuth();
   const t = useTranslations('packagePrices');
   const tc = useTranslations('common');
-  const canWrite = can(PERMISSIONS.MASTER_DATA_MANAGE);
+  const canWrite = can(PERMISSIONS.RATES_ADMIN);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [roomTypes, setRoomTypes] = useState<RoomTypeRow[]>([]);
   const [meals, setMeals] = useState<MealRow[]>([]);

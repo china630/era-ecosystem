@@ -27,6 +27,21 @@ export async function createGuestTask(guestId: string, title: string, dueAt?: Da
   });
 }
 
+export async function getGuestLoyalty(guestId: string) {
+  const guest = await prisma.guest.findUnique({ where: { id: guestId }, select: { loyaltyTier: true } });
+  const cards = await listGuestLoyaltyCards(guestId);
+  return { loyaltyTier: guest?.loyaltyTier ?? null, cards };
+}
+
+export async function setGuestLoyaltyTier(guestId: string, loyaltyTier?: string) {
+  const tier = loyaltyTier ?? 'STANDARD';
+  const guest = await prisma.guest.update({
+    where: { id: guestId },
+    data: { loyaltyTier: tier },
+  });
+  return { guest, loyaltyTier: tier };
+}
+
 export async function listGuestLoyaltyCards(guestId: string) {
   const rows = await prisma.guestLoyaltyCard.findMany({
     where: { guestId },

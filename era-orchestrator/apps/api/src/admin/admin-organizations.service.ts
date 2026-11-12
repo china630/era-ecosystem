@@ -112,4 +112,30 @@ export class AdminOrganizationsService {
       })),
     };
   }
+
+  async listOrganizationsForReferenceSource() {
+    return this.prisma.organization.findMany({
+      where: { deletedAt: null },
+      select: { id: true, name: true, publicOrgNumber: true, settings: true },
+      orderBy: { name: "asc" },
+      take: 200,
+    });
+  }
+
+  async findOrganizationForReferenceSourcePatch(orgId: string) {
+    return this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, settings: true, deletedAt: true },
+    });
+  }
+
+  async updateOrganizationReferenceSourceSettings(
+    orgId: string,
+    settings: Prisma.InputJsonValue,
+  ) {
+    await this.prisma.organization.update({
+      where: { id: orgId },
+      data: { settings },
+    });
+  }
 }

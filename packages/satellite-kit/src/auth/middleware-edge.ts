@@ -6,6 +6,9 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { resolveHostBoundLoginOrganizationId } from "../tenancy/login-hostname-memory";
 import { orchWebUrl } from "../platform/orch-web-url";
+import { STAFF_ACCESS_DENIED_PATH } from "./role-forbidden";
+
+export { STAFF_ACCESS_DENIED_PATH } from "./role-forbidden";
 
 export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/auth/login",
@@ -195,6 +198,25 @@ export function nextWithOptionalHostBoundOrg(
     return NextResponse.next({ request: { headers } });
   }
   return NextResponse.next({ request: { headers: reqHeaders } });
+}
+
+/** Signed-in staff missing a screen grant. Session stays; login is only for a missing token. */
+export function staffAccessDeniedRedirect(request: {
+  nextUrl: { href: string; clone?: () => URL };
+}): NextResponse {
+  const url = request.nextUrl.clone
+    ? request.nextUrl.clone()
+    : new URL(STAFF_ACCESS_DENIED_PATH, request.nextUrl.href);
+  url.pathname = STAFF_ACCESS_DENIED_PATH;
+  url.search = "";
+  return redirectNoStore(url);
+}
+
+function isStaffAccessDeniedPath(pathname: string): boolean {
+  return (
+    pathname === STAFF_ACCESS_DENIED_PATH ||
+    pathname.startsWith(`${STAFF_ACCESS_DENIED_PATH}/`)
+  );
 }
 
 export function redirectNoStore(url: URL | string): NextResponse {
@@ -444,6 +466,9 @@ export function createSatelliteStaffMiddleware<R extends SatelliteStaffRequest>(
     try {
       const session = await verifySatelliteSession(token);
       const pageHeaders = stampSessionHeaders(reqHeaders, session);
+      if (isStaffAccessDeniedPath(pathname)) {
+        return NextResponse.next({ request: { headers: pageHeaders } });
+      }
       const denied = await opts.authorizePage?.({
         request,
         pathname,

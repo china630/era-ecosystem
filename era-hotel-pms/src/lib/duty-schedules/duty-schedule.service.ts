@@ -46,56 +46,81 @@ function dayKey(d: Date | string) {
   return String(d).slice(0, 10);
 }
 
+function isUniqueConflict(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: string }).code === "P2002"
+  );
+}
+
+/**
+ * Seed binding / axes / shift codes. Concurrent page loads (week + personnel)
+ * race on create — treat P2002 as already seeded.
+ */
 export async function ensureDeptDefaults(dept: HotelDutyDept) {
   const organizationId = orgId();
   const typeCode = DEPT_DEFAULT_TYPE[dept] as DutyScheduleTypeCode;
 
-  await prisma.dutyScheduleBinding.upsert({
-    where: { organizationId_dept: { organizationId, dept } },
-    create: {
-      organizationId,
-      dept,
-      typeCode,
-      orgUnitIds: [],
-      positionIds: [],
-    },
-    update: {},
-  });
-
-  for (const [i, axis] of DEPT_DEFAULT_AXES[dept].entries()) {
-    await prisma.dutyScheduleAxis.upsert({
-      where: {
-        organizationId_dept_code: { organizationId, dept, code: axis.code },
-      },
+  try {
+    await prisma.dutyScheduleBinding.upsert({
+      where: { organizationId_dept: { organizationId, dept } },
       create: {
         organizationId,
         dept,
-        code: axis.code,
-        name: axis.name,
-        kind: axis.kind,
-        sortOrder: (i + 1) * 10,
-        active: true,
+        typeCode,
+        orgUnitIds: [],
+        positionIds: [],
       },
       update: {},
     });
+  } catch (err) {
+    if (!isUniqueConflict(err)) throw err;
+  }
+
+  for (const [i, axis] of DEPT_DEFAULT_AXES[dept].entries()) {
+    try {
+      await prisma.dutyScheduleAxis.upsert({
+        where: {
+          organizationId_dept_code: { organizationId, dept, code: axis.code },
+        },
+        create: {
+          organizationId,
+          dept,
+          code: axis.code,
+          name: axis.name,
+          kind: axis.kind,
+          sortOrder: (i + 1) * 10,
+          active: true,
+        },
+        update: {},
+      });
+    } catch (err) {
+      if (!isUniqueConflict(err)) throw err;
+    }
   }
 
   for (const row of DEFAULT_HOTEL_SHIFT_CODES) {
-    await prisma.dutyShiftCode.upsert({
-      where: {
-        organizationId_code: { organizationId, code: row.code },
-      },
-      create: {
-        organizationId,
-        code: row.code,
-        label: row.label,
-        startTime: row.startTime,
-        endTime: row.endTime,
-        sortOrder: row.sortOrder,
-        active: true,
-      },
-      update: {},
-    });
+    try {
+      await prisma.dutyShiftCode.upsert({
+        where: {
+          organizationId_code: { organizationId, code: row.code },
+        },
+        create: {
+          organizationId,
+          code: row.code,
+          label: row.label,
+          startTime: row.startTime,
+          endTime: row.endTime,
+          sortOrder: row.sortOrder,
+          active: true,
+        },
+        update: {},
+      });
+    } catch (err) {
+      if (!isUniqueConflict(err)) throw err;
+    }
   }
 }
 
@@ -216,12 +241,28 @@ export async function getOrCreateWeek(dept: HotelDutyDept, weekStart: string) {
     },
   });
   if (!week) {
-    week = await prisma.dutyScheduleWeek.create({
-      data: { organizationId, dept, weekStart: start, status: "DRAFT" },
-      include: {
-        cells: { include: { axis: true }, orderBy: [{ workDate: "asc" }] },
-      },
-    });
+    try {
+      week = await prisma.dutyScheduleWeek.create({
+        data: { organizationId, dept, weekStart: start, status: "DRAFT" },
+        include: {
+          cells: { include: { axis: true }, orderBy: [{ workDate: "asc" }] },
+        },
+      });
+    } catch (err) {
+      if (!isUniqueConflict(err)) throw err;
+      week = await prisma.dutyScheduleWeek.findUnique({
+        where: {
+          organizationId_dept_weekStart: {
+            organizationId,
+            dept,
+            weekStart: start,
+          },
+        },
+        include: {
+          cells: { include: { axis: true }, orderBy: [{ workDate: "asc" }] },
+        },
+      });
+    }
   }
   if (!week) {
     throw new DutyScheduleError("Could not open week", "WEEK_OPEN_FAILED", 500);

@@ -10,7 +10,7 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { TrendingDown } from "lucide-react";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -128,11 +128,7 @@ export default function ApAgingPage() {
               </thead>
               <tbody>
                 {data.rows.length === 0 ? (
-                  <tr className={DATA_TABLE_TR_CLASS}>
-                    <td colSpan={7} className={`${DATA_TABLE_TD_CLASS} py-10 text-center`}>
-                      <EmptyState compact title={t("apAging.none")} />
-                    </td>
-                  </tr>
+                  <FinanceEmptyTableRow colSpan={7} message={t("apAging.none")} />
                 ) : (
                   data.rows.map((row) => (
                     <tr key={row.counterpartyId} className={DATA_TABLE_TR_CLASS}>

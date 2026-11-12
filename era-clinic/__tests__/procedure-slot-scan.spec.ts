@@ -4,6 +4,8 @@ import {
   pinSearchFrom,
   placementBlockReason,
   restGap,
+  nextCabinGridTime,
+  orderScarceSeriesFirst,
   scanProcedureSlots,
   type ScanOrder,
 } from "@/lib/procedure-slot-scan";
@@ -513,5 +515,89 @@ describe("restGap / OPEN day-bucket", () => {
     expect(result.planned[0]!.slotStart.getTime()).toBeGreaterThanOrEqual(
       parseBakuDateTime("2026-11-02", "09:50").getTime(),
     );
+  });
+
+  it("jumps to the earlier cabin on the 5-minute grid, using that session's gap", () => {
+    const probe = order();
+    probe.durationMin = 10;
+    probe.resources = [
+      { id: "cab-a", capacity: 1, role: "LOCATION" },
+      { id: "cab-b", capacity: 1, role: "LOCATION" },
+    ];
+    const at = nextCabinGridTime(
+      probe,
+      parseBakuDateTime("2026-11-02", "10:00"),
+      [
+        {
+          role: "LOCATION",
+          resourceId: "cab-a",
+          practitionerId: null,
+          startsAt: parseBakuDateTime("2026-11-02", "09:30"),
+          endsAt: parseBakuDateTime("2026-11-02", "10:33"),
+          procedureOrderId: "other-a",
+          resourceGapMinutes: 0,
+        },
+        {
+          role: "LOCATION",
+          resourceId: "cab-b",
+          practitionerId: null,
+          startsAt: parseBakuDateTime("2026-11-02", "09:30"),
+          endsAt: parseBakuDateTime("2026-11-02", "10:33"),
+          procedureOrderId: "other-b",
+          resourceGapMinutes: 5,
+        },
+      ],
+      5,
+    );
+    expect(bakuHourMinute(at!).hour).toBe(10);
+    expect(bakuHourMinute(at!).minute).toBe(35);
+  });
+});
+
+describe("orderScarceSeriesFirst", () => {
+  it("seats the tighter cabin series first and leaves a pinned day in place", () => {
+    const tight = order();
+    tight.id = "tight-1";
+    tight.procedureCode = "PHONO";
+    tight.resources = [{ id: "cab-tight", capacity: 1, role: "LOCATION" }];
+    const tightLater = { ...tight, id: "tight-2" };
+    const loose = order();
+    loose.id = "loose-1";
+    loose.procedureCode = "MUD";
+    loose.resources = [{ id: "cab-loose", capacity: 1, role: "LOCATION" }];
+    const pinned = order();
+    pinned.id = "pinned-1";
+    pinned.procedureCode = "MUD";
+    pinned.pinYmd = "2026-11-12";
+    pinned.resources = [{ id: "cab-loose", capacity: 1, role: "LOCATION" }];
+
+    const ordered = orderScarceSeriesFirst([loose, pinned, tight, tightLater], {
+      now: parseBakuDateTime("2026-11-11", "08:00"),
+      slotMinutes: 30,
+      horizonEndYmd: "2026-11-13",
+      closedYmds: new Set(),
+      allocations: [
+        {
+          role: "LOCATION",
+          resourceId: "cab-tight",
+          practitionerId: null,
+          startsAt: parseBakuDateTime("2026-11-11", "08:00"),
+          endsAt: parseBakuDateTime("2026-11-11", "16:00"),
+          procedureOrderId: "busy",
+          resourceGapMinutes: 0,
+        },
+        {
+          role: "LOCATION",
+          resourceId: "cab-tight",
+          practitionerId: null,
+          startsAt: parseBakuDateTime("2026-11-12", "08:00"),
+          endsAt: parseBakuDateTime("2026-11-12", "16:00"),
+          procedureOrderId: "busy-2",
+          resourceGapMinutes: 0,
+        },
+      ],
+    });
+
+    expect(ordered.map((row) => row.id)).toEqual(["tight-1", "pinned-1", "tight-2", "loose-1"]);
   });
 });

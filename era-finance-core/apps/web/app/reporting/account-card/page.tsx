@@ -9,7 +9,7 @@ import { ledgerQueryParam, useLedger } from "../../../lib/ledger-context";
 import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { SubcontoFilterFields } from "../../../components/reporting/subconto-filter-fields";
 import { useSubcontoFilters } from "../../../lib/use-subconto-filters";
 import {
@@ -277,28 +277,31 @@ export default function AccountCardPage() {
               {t("reporting.thCloseDr")}: {formatMoneyAzn(card.closing.debit)} / {t("reporting.thCloseCr")}: {formatMoneyAzn(card.closing.credit)}
             </span>
           </div>
-          {card.lines.length === 0 ? (
-            <EmptyState title={t("reporting.accountCard.empty")} />
-          ) : (
-            <div className={DATA_TABLE_VIEWPORT_CLASS}>
-              <table className={DATA_TABLE_CLASS}>
-                <thead>
-                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDate")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thRef")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDesc")}</th>
-                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thCp")}</th>
-                    {useSubcontoCard ? (
-                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.subconto.thValue")}</th>
-                    ) : null}
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thBalDr")}</th>
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thBalCr")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {card.lines.map((l, i) => (
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDate")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thRef")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDesc")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thCp")}</th>
+                  {useSubcontoCard ? (
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.subconto.thValue")}</th>
+                  ) : null}
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thBalDr")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thBalCr")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {card.lines.length === 0 ? (
+                  <FinanceEmptyTableRow
+                    colSpan={useSubcontoCard ? 9 : 8}
+                    message={t("reporting.accountCard.empty")}
+                  />
+                ) : (
+                  card.lines.map((l, i) => (
                     <tr key={`${l.date}-${i}`} className={DATA_TABLE_TR_CLASS}>
                       <td className={DATA_TABLE_TD_CLASS}>{l.date}</td>
                       <td className={DATA_TABLE_TD_CLASS}>{l.reference ?? "—"}</td>
@@ -312,31 +315,31 @@ export default function AccountCardPage() {
                       <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(l.balanceDebit)}</td>
                       <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(l.balanceCredit)}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : null}
 
       {tab === "analysis" && analysis ? (
-        analysis.length === 0 ? (
-          <EmptyState title={t("reporting.accountCard.empty")} />
-        ) : (
-          <div className={DATA_TABLE_VIEWPORT_CLASS}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDimension")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thNetDr")}</th>
-                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thNetCr")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analysis.map((r) => (
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.accountCard.thDimension")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerDr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.thPerCr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thNetDr")}</th>
+                <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.accountCard.thNetCr")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {analysis.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={5} message={t("reporting.accountCard.empty")} />
+              ) : (
+                analysis.map((r) => (
                   <tr key={r.dimensionName} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{r.dimensionName}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodDebit)}</td>
@@ -344,11 +347,11 @@ export default function AccountCardPage() {
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.netDebit)}</td>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.netCredit)}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       ) : null}
     </div>
   );

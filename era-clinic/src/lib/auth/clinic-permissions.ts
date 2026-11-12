@@ -33,14 +33,24 @@ export const CLINIC_PERMISSION = {
   SCREEN_ADMIN_IMPORT: "screen:admin.import",
   SCREEN_ADMIN_PROCEDURE_RULES: "screen:admin.procedure_rules",
   SCREEN_ADMIN_LIS_PROFILES: "screen:admin.lis_profiles",
-  SCREEN_ADMIN_MASTER_DATA: "screen:admin.master_data",
+  SCREEN_ADMIN_PRACTITIONERS: "screen:admin.practitioners",
+  SCREEN_ADMIN_ROOMS: "screen:admin.rooms",
+  SCREEN_ADMIN_RESOURCES: "screen:admin.resources",
+  SCREEN_ADMIN_PROCEDURE_TYPES: "screen:admin.procedure_types",
+  SCREEN_ADMIN_CATALOG_FAVORITES: "screen:admin.catalog_favorites",
   SCREEN_ADMIN_LOOKUPS: "screen:admin.lookups",
   SCREEN_ADMIN_PHYSIO_SITES: "screen:admin.physio_sites",
   SCREEN_ADMIN_AUDIT: "screen:admin.audit",
   SCREEN_ADMIN_SETTINGS: "screen:admin.settings",
+  SCREEN_ADMIN_LINKS: "screen:admin.links",
+  SCREEN_ADMIN_WORKING_HOURS: "screen:admin.working_hours",
+  SCREEN_ADMIN_WORKFORCE: "screen:admin.workforce",
+  SCREEN_ADMIN_OPS_WIPE: "screen:admin.ops_wipe",
   SCREEN_ADMIN_ACCESS: "screen:admin.access",
   ADMIN_ACCESS_MANAGE: "admin:access_manage",
   API_CASHIER: "api:cashier",
+  API_FISCAL: "api:fiscal",
+  API_BILLING_READ: "api:billing.read",
   API_SANATORIUM_EPISODES_READ: "api:sanatorium.episodes.read",
   API_SANATORIUM_EPISODES_WRITE: "api:sanatorium.episodes.write",
   API_SANATORIUM_NURSE_ROSTER: "api:sanatorium.nurse_roster",
@@ -58,6 +68,10 @@ export const CLINIC_PERMISSION = {
   API_APPOINTMENTS_READ: "api:appointments.read",
   API_LAB_ORDERS_FILE: "api:lab_orders.file",
   API_LAB_ORDERS: "api:lab_orders",
+  API_LAB_ORDERS_COLLECT: "api:lab_orders.collect",
+  API_LAB_ORDERS_COMPLETE: "api:lab_orders.complete",
+  API_LAB_ORDERS_PUBLISH: "api:lab_orders.publish",
+  API_LAB_ORDERS_BLANK: "api:lab_orders.blank",
   /** Create, cancel, and write lab results. Read stays on API_LAB_ORDERS. */
   API_LAB_ORDERS_WRITE: "api:lab_orders.write",
   API_REPORTS_PROCEDURES: "api:reports.procedures",
@@ -65,15 +79,20 @@ export const CLINIC_PERMISSION = {
   API_NURSE_QR_SCAN: "api:nurse.qr_scan",
   API_NURSE_OVERDUE: "api:nurse.overdue",
   API_PATIENTS: "api:patients",
+  API_PATIENTS_READ: "api:patients.read",
   API_PROCEDURES_CONFIRM: "api:procedures.confirm",
   /** FO desk manager: out-of-package replace / concessions (CLI-57). */
   API_PROCEDURES_FO_MANAGER: "api:procedures.fo_manager",
   API_INPATIENT: "api:inpatient",
+  API_INPATIENT_READ: "api:inpatient.read",
   API_VISITS: "api:visits",
+  API_VISITS_READ: "api:visits.read",
   API_MDM: "api:mdm",
+  API_MDM_READ: "api:mdm.read",
   API_OPS_DAY_SUMMARY: "api:ops.day_summary",
   API_ICD_READ: "api:icd.read",
   API_QUEUE: "api:queue",
+  API_QUEUE_READ: "api:queue.read",
   API_CATALOG_READ: "api:catalog.read",
   API_HOTEL_REVENUE_CODES: HOTEL_REVENUE_CODES_PERMISSION,
   API_IDENTITY_GUEST_QR: "api:identity.guest_qr",
@@ -151,16 +170,25 @@ const ADMIN_SCREENS: ClinicPermission[] = [
   CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
   CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
-  CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA,
+  CLINIC_PERMISSION.SCREEN_ADMIN_PRACTITIONERS,
+  CLINIC_PERMISSION.SCREEN_ADMIN_ROOMS,
+  CLINIC_PERMISSION.SCREEN_ADMIN_RESOURCES,
+  CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_TYPES,
+  CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG_FAVORITES,
   CLINIC_PERMISSION.SCREEN_ADMIN_LOOKUPS,
   CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES,
   CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
   CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+  CLINIC_PERMISSION.SCREEN_ADMIN_LINKS,
+  CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
+  CLINIC_PERMISSION.SCREEN_ADMIN_WORKFORCE,
+  CLINIC_PERMISSION.SCREEN_ADMIN_OPS_WIPE,
   CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+  CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
 ];
 
 /** Default grants per ops role — mirrors hardcoded nav/middleware/API (2026-09). */
-export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]> =
+const RAW_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]> =
   {
     [CLINIC_ROLE.RECEPTION]: [
       ...RECEPTION_SCREENS,
@@ -359,6 +387,274 @@ export function isClinicPermission(value: string): value is ClinicPermission {
   return PERMISSION_SET.has(value);
 }
 
+/** Stored JSON from before the entity split. Expanded once, then dropped. */
+const LEGACY_SCREEN_ADMIN_MASTER_DATA = "screen:admin.master_data";
+
+export const CLINIC_PERMISSION_CATALOG_VERSION = 3;
+
+/** GET/HEAD uses the read key. The original key stays on writes. */
+export const READ_OF_WRITE: Readonly<Partial<Record<ClinicPermission, ClinicPermission>>> = {
+  [CLINIC_PERMISSION.API_PATIENTS]: CLINIC_PERMISSION.API_PATIENTS_READ,
+  [CLINIC_PERMISSION.API_VISITS]: CLINIC_PERMISSION.API_VISITS_READ,
+  [CLINIC_PERMISSION.API_INPATIENT]: CLINIC_PERMISSION.API_INPATIENT_READ,
+  [CLINIC_PERMISSION.API_QUEUE]: CLINIC_PERMISSION.API_QUEUE_READ,
+  [CLINIC_PERMISSION.API_MDM]: CLINIC_PERMISSION.API_MDM_READ,
+  [CLINIC_PERMISSION.API_APPOINTMENTS_WRITE]: CLINIC_PERMISSION.API_APPOINTMENTS_READ,
+};
+
+const MASTER_DATA_SPLIT: ClinicPermission[] = [
+  CLINIC_PERMISSION.SCREEN_ADMIN_PRACTITIONERS,
+  CLINIC_PERMISSION.SCREEN_ADMIN_ROOMS,
+  CLINIC_PERMISSION.SCREEN_ADMIN_RESOURCES,
+  CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_TYPES,
+  CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG_FAVORITES,
+];
+
+/**
+ * Copy read keys from the wide key once.
+ * Settings also opens hours, workforce, and ops wipe.
+ * Access screen also opens user admin.
+ * Cashier also opens fiscal and billing read.
+ * Legacy master-data becomes the five catalog screens.
+ */
+export function expandClinicCatalog(keys: readonly string[]): ClinicPermission[] {
+  const out = new Set<ClinicPermission>();
+  for (const key of keys) {
+    if (key === LEGACY_SCREEN_ADMIN_MASTER_DATA) {
+      for (const next of MASTER_DATA_SPLIT) out.add(next);
+      continue;
+    }
+    if (isClinicPermission(key)) out.add(key);
+  }
+  for (const key of [...out]) {
+    const read = READ_OF_WRITE[key];
+    if (read) out.add(read);
+  }
+  if (out.has(CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS)) {
+    out.add(CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS);
+    out.add(CLINIC_PERMISSION.SCREEN_ADMIN_WORKFORCE);
+    out.add(CLINIC_PERMISSION.SCREEN_ADMIN_OPS_WIPE);
+    out.add(CLINIC_PERMISSION.SCREEN_ADMIN_LINKS);
+  }
+  if (out.has(CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS)) {
+    out.add(CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE);
+  }
+  if (out.has(CLINIC_PERMISSION.API_CASHIER)) {
+    out.add(CLINIC_PERMISSION.API_FISCAL);
+    out.add(CLINIC_PERMISSION.API_BILLING_READ);
+  }
+  if (out.has(CLINIC_PERMISSION.API_LAB_ORDERS)) {
+    out.add(CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT);
+    out.add(CLINIC_PERMISSION.API_LAB_ORDERS_COMPLETE);
+    out.add(CLINIC_PERMISSION.API_LAB_ORDERS_PUBLISH);
+    out.add(CLINIC_PERMISSION.API_LAB_ORDERS_BLANK);
+  }
+  return [...out];
+}
+
+export const DEFAULT_ROLE_PERMISSIONS: Record<ClinicRoleCode, ClinicPermission[]> =
+  Object.fromEntries(
+    (Object.entries(RAW_ROLE_PERMISSIONS) as [ClinicRoleCode, ClinicPermission[]][]).map(
+      ([code, keys]) => [code, expandClinicCatalog(keys)],
+    ),
+  ) as Record<ClinicRoleCode, ClinicPermission[]>;
+
+export type AccessColumn = "view" | "change" | "operate" | "admin";
+
+/** One row per entity. Each catalog key appears in exactly one cell. */
+export const ENTITY_ACCESS_MATRIX: {
+  id: string;
+  cells: Partial<Record<AccessColumn, ClinicPermission[]>>;
+}[] = [
+  {
+    id: "home",
+    cells: { view: [CLINIC_PERMISSION.SCREEN_HOME] },
+  },
+  {
+    id: "patient",
+    cells: {
+      view: [CLINIC_PERMISSION.SCREEN_PATIENTS, CLINIC_PERMISSION.API_PATIENTS_READ],
+      change: [CLINIC_PERMISSION.API_PATIENTS],
+    },
+  },
+  {
+    id: "appointment",
+    cells: {
+      view: [CLINIC_PERMISSION.SCREEN_APPOINTMENTS, CLINIC_PERMISSION.API_APPOINTMENTS_READ],
+      change: [CLINIC_PERMISSION.API_APPOINTMENTS_WRITE],
+    },
+  },
+  {
+    id: "queue",
+    cells: {
+      view: [CLINIC_PERMISSION.SCREEN_RECEPTION_QUEUE, CLINIC_PERMISSION.API_QUEUE_READ],
+      change: [CLINIC_PERMISSION.API_QUEUE],
+    },
+  },
+  {
+    id: "visit",
+    cells: {
+      view: [CLINIC_PERMISSION.API_VISITS_READ],
+      change: [CLINIC_PERMISSION.API_VISITS],
+    },
+  },
+  {
+    id: "doctor",
+    cells: { view: [CLINIC_PERMISSION.SCREEN_DOCTOR] },
+  },
+  {
+    id: "nurse",
+    cells: {
+      view: [CLINIC_PERMISSION.SCREEN_NURSE],
+      operate: [CLINIC_PERMISSION.API_NURSE_QR_SCAN, CLINIC_PERMISSION.API_NURSE_OVERDUE],
+    },
+  },
+  {
+    id: "procedure",
+    cells: {
+      view: [
+        CLINIC_PERMISSION.API_PROCEDURES_READ,
+        CLINIC_PERMISSION.SCREEN_CHECK_IN,
+        CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS,
+        CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_READ,
+      ],
+      operate: [
+        CLINIC_PERMISSION.API_PROCEDURES_CHECK_IN,
+        CLINIC_PERMISSION.API_PROCEDURES_COMPLETE,
+        CLINIC_PERMISSION.API_PROCEDURES_NO_SHOW,
+        CLINIC_PERMISSION.API_PROCEDURES_RECEPTION,
+        CLINIC_PERMISSION.API_PROCEDURES_DOCTOR_RECEPTION,
+        CLINIC_PERMISSION.API_PROCEDURES_CONFIRM,
+        CLINIC_PERMISSION.API_PROCEDURES_ISSUE_TICKET_WRITE,
+        CLINIC_PERMISSION.API_PROCEDURES_FO_MANAGER,
+      ],
+    },
+  },
+  {
+    id: "lab",
+    cells: {
+      view: [CLINIC_PERMISSION.SCREEN_LAB_ORDERS, CLINIC_PERMISSION.API_LAB_ORDERS],
+      change: [CLINIC_PERMISSION.API_LAB_ORDERS_WRITE, CLINIC_PERMISSION.API_LAB_ORDERS_FILE],
+      operate: [
+        CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT,
+        CLINIC_PERMISSION.API_LAB_ORDERS_COMPLETE,
+        CLINIC_PERMISSION.API_LAB_ORDERS_PUBLISH,
+        CLINIC_PERMISSION.API_LAB_ORDERS_BLANK,
+      ],
+    },
+  },
+  {
+    id: "cashier",
+    cells: {
+      view: [CLINIC_PERMISSION.SCREEN_CASHIER, CLINIC_PERMISSION.API_BILLING_READ],
+      operate: [CLINIC_PERMISSION.API_CASHIER],
+      admin: [CLINIC_PERMISSION.API_FISCAL],
+    },
+  },
+  {
+    id: "sanatorium",
+    cells: {
+      view: [
+        CLINIC_PERMISSION.SCREEN_SANATORIUM,
+        CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES,
+        CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
+      ],
+      change: [CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE],
+      operate: [
+        CLINIC_PERMISSION.API_SANATORIUM_RESOURCES,
+        CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES,
+      ],
+      admin: [
+        CLINIC_PERMISSION.SCREEN_SANATORIUM_NURSE_ROSTER,
+        CLINIC_PERMISSION.API_SANATORIUM_NURSE_ROSTER,
+      ],
+    },
+  },
+  {
+    id: "inpatient",
+    cells: {
+      view: [
+        CLINIC_PERMISSION.SCREEN_INPATIENT,
+        CLINIC_PERMISSION.SCREEN_INPATIENT_CENSUS,
+        CLINIC_PERMISSION.API_INPATIENT_READ,
+      ],
+      change: [CLINIC_PERMISSION.API_INPATIENT],
+      admin: [CLINIC_PERMISSION.SCREEN_ADMIN_WARDS],
+    },
+  },
+  {
+    id: "catalog",
+    cells: {
+      view: [CLINIC_PERMISSION.API_ICD_READ, CLINIC_PERMISSION.API_CATALOG_READ],
+      admin: [
+        CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
+        CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
+        CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES,
+        CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+        CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
+        CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
+        CLINIC_PERMISSION.SCREEN_ADMIN_LOOKUPS,
+        CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES,
+        CLINIC_PERMISSION.SCREEN_ADMIN_PRACTITIONERS,
+        CLINIC_PERMISSION.SCREEN_ADMIN_ROOMS,
+        CLINIC_PERMISSION.SCREEN_ADMIN_RESOURCES,
+        CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_TYPES,
+        CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG_FAVORITES,
+      ],
+    },
+  },
+  {
+    id: "reports",
+    cells: {
+      view: [
+        CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
+        CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+        CLINIC_PERMISSION.API_REPORTS_DIAGNOSES,
+        CLINIC_PERMISSION.API_REPORTS_PROCEDURES,
+      ],
+    },
+  },
+  {
+    id: "mdm",
+    cells: {
+      view: [
+        CLINIC_PERMISSION.API_MDM_READ,
+        CLINIC_PERMISSION.API_IDENTITY_GUEST_QR,
+        CLINIC_PERMISSION.API_OPS_DAY_SUMMARY,
+        CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
+      ],
+      change: [CLINIC_PERMISSION.API_MDM],
+    },
+  },
+  {
+    id: "settings",
+    cells: {
+      view: [CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS],
+      admin: [
+        CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
+        CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
+        CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
+        CLINIC_PERMISSION.SCREEN_ADMIN_WORKFORCE,
+        CLINIC_PERMISSION.SCREEN_ADMIN_OPS_WIPE,
+        CLINIC_PERMISSION.SCREEN_ADMIN_LINKS,
+      ],
+    },
+  },
+  {
+    id: "access",
+    cells: {
+      view: [CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS],
+      admin: [CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE],
+    },
+  },
+  {
+    id: "scope",
+    cells: {
+      operate: [CLINIC_PERMISSION.SCOPE_EPISODES_ALL, CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL],
+    },
+  },
+];
+
 /** Map stored JSON (incl. legacy keys) → current ClinicPermission[]. */
 export function migrateStoredPermissions(raw: unknown[]): ClinicPermission[] {
   const out = new Set<ClinicPermission>();
@@ -367,6 +663,10 @@ export function migrateStoredPermissions(raw: unknown[]): ClinicPermission[] {
     if (item === LEGACY_SCREEN_ADMIN_TEMPLATES) {
       out.add(CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG);
       out.add(CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES);
+      continue;
+    }
+    if (item === LEGACY_SCREEN_ADMIN_MASTER_DATA) {
+      for (const next of MASTER_DATA_SPLIT) out.add(next);
       continue;
     }
     if (isClinicPermission(item)) out.add(item);
@@ -446,6 +746,8 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/lab-orders": CLINIC_PERMISSION.SCREEN_LAB_ORDERS,
   "/reports/diagnoses": CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   "/reports/procedures": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+  "/reports/paid-punches": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+  "/reports/bonus": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/revenue": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/patient-assignments": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/patients-by-country": CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
@@ -464,17 +766,16 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/admin/import": CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
   "/admin/procedure-rules": CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   "/admin/lis-profiles": CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
-  "/admin/master-data": CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA,
   "/admin/lookups": CLINIC_PERMISSION.SCREEN_ADMIN_LOOKUPS,
   "/admin/physio-sites": CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES,
-  "/admin/ops-wipe": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+  "/admin/ops-wipe": CLINIC_PERMISSION.SCREEN_ADMIN_OPS_WIPE,
   "/admin/audit": CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT,
-  "/admin/links": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+  "/admin/links": CLINIC_PERMISSION.SCREEN_ADMIN_LINKS,
   "/admin/settings": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
-  "/admin/working-hours": CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
+  "/admin/working-hours": CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS,
   "/admin/access": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
-  "/admin/users": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
-  "/admin/logins": CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+  "/admin/users": CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
+  "/admin/logins": CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
 };
 
 const ROUTE_PREFIX_PERMISSIONS: Array<{ prefix: string; permission: ClinicPermission }> =
@@ -496,7 +797,6 @@ const ROUTE_PREFIX_PERMISSIONS: Array<{ prefix: string; permission: ClinicPermis
     { prefix: "/sanatorium/nurse-roster", permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_NURSE_ROSTER },
     { prefix: "/sanatorium/resources", permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES },
     { prefix: "/sanatorium/", permission: CLINIC_PERMISSION.SCREEN_SANATORIUM },
-    { prefix: "/admin/", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   ];
 
 /**
@@ -539,7 +839,7 @@ const ROUTE_ANY_OF_PREFIXES: Array<{
 ];
 
 /** Auth-only staff pages: logged-in required, no screen permission. */
-export const AUTH_ONLY_STAFF_PAGE_PREFIXES = ["/account/password"] as const;
+export const AUTH_ONLY_STAFF_PAGE_PREFIXES = ["/account/password", "/access-denied"] as const;
 
 export function isAuthOnlyStaffPage(pathname: string): boolean {
   return AUTH_ONLY_STAFF_PAGE_PREFIXES.some(
@@ -585,7 +885,10 @@ export function routePermissions(pathname: string): ClinicPermission[] | null {
     }
   }
   if (pathname === "/admin" || pathname === "/admin/") {
-    return [CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA];
+    return [CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS];
+  }
+  if (pathname === "/admin/master-data" || pathname.startsWith("/admin/master-data/")) {
+    return MASTER_DATA_SPLIT;
   }
   const exact = ROUTE_PERMISSION_EXACT[pathname];
   if (exact) return [exact];
@@ -654,40 +957,39 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   },
   { prefix: "/api/admin/lab-blank-profiles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES },
   { prefix: "/api/admin/lis-profiles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES },
-  { prefix: "/api/admin/practitioners", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
-  { prefix: "/api/admin/rooms", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
-  { prefix: "/api/admin/resources", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
+  { prefix: "/api/admin/practitioners", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PRACTITIONERS },
+  { prefix: "/api/admin/rooms", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ROOMS },
+  { prefix: "/api/admin/resources", permission: CLINIC_PERMISSION.SCREEN_ADMIN_RESOURCES },
   { prefix: "/api/admin/program-templates", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES },
-  { prefix: "/api/admin/catalog-favorites", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
-  { prefix: "/api/admin/procedure-types", permission: CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA },
+  { prefix: "/api/admin/catalog-favorites", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG_FAVORITES },
+  { prefix: "/api/admin/procedure-types", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_TYPES },
   { prefix: "/api/admin/catalog", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
   { prefix: "/api/admin/departments", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
   { prefix: "/api/admin/lookups", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LOOKUPS },
   { prefix: "/api/admin/physio-sites", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES },
   { prefix: "/api/admin/physio-lists", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES },
   { prefix: "/api/admin/physio-nahiye-queue", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PHYSIO_SITES },
-  { prefix: "/api/admin/ops-wipe", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
-  { prefix: "/api/admin/links", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  { prefix: "/api/admin/ops-wipe", permission: CLINIC_PERMISSION.SCREEN_ADMIN_OPS_WIPE },
+  { prefix: "/api/admin/links", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LINKS },
   { prefix: "/api/admin/settings", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
-  // Working-hours calendar / peak journal (page permission = screen:admin.settings).
-  { prefix: "/api/admin/clinic-days", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
-  { prefix: "/api/admin/peak-rules", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  { prefix: "/api/admin/clinic-days", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS },
+  { prefix: "/api/admin/peak-rules", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS },
   // schedule-recalc / schedule-reseat stay off this map — platform SA only in their routes.
-  { prefix: "/api/admin/workforce-policy", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  { prefix: "/api/admin/workforce-policy", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WORKFORCE },
   {
     prefix: "/api/admin/finance-products",
     permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
     anyOf: [
-      CLINIC_PERMISSION.SCREEN_ADMIN_MASTER_DATA,
+      CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_TYPES,
       CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
       CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS,
     ],
   },
   { prefix: "/api/admin/wards", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
   { prefix: "/api/admin/beds", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WARDS },
-  { prefix: "/api/admin/roles", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
-  { prefix: "/api/admin/user-logins", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
-  { prefix: "/api/admin/users", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS },
+  { prefix: "/api/admin/roles", permission: CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE },
+  { prefix: "/api/admin/user-logins", permission: CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE },
+  { prefix: "/api/admin/users", permission: CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE },
   { prefix: "/api/admin/audit", permission: CLINIC_PERMISSION.SCREEN_ADMIN_AUDIT },
   { prefix: "/api/catalog/sync", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
 ];
@@ -743,6 +1045,8 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/reports/diagnoses", permission: CLINIC_PERMISSION.API_REPORTS_DIAGNOSES },
   { prefix: "/api/reports/patients-by-country", permission: CLINIC_PERMISSION.API_REPORTS_DIAGNOSES },
   { prefix: "/api/reports/procedures", permission: CLINIC_PERMISSION.API_REPORTS_PROCEDURES },
+  { prefix: "/api/reports/paid-punches", permission: CLINIC_PERMISSION.API_REPORTS_PROCEDURES },
+  { prefix: "/api/reports/bonus", permission: CLINIC_PERMISSION.API_REPORTS_PROCEDURES },
   { prefix: "/api/reports/revenue", permission: CLINIC_PERMISSION.API_REPORTS_PROCEDURES },
   {
     prefix: "/api/reports/patient-assignments",
@@ -757,11 +1061,11 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/catalog/services", permission: CLINIC_PERMISSION.API_CATALOG_READ },
   { prefix: "/api/imaging-phrases", permission: CLINIC_PERMISSION.API_CATALOG_READ },
   { prefix: "/api/identity/guest-qr", permission: CLINIC_PERMISSION.API_IDENTITY_GUEST_QR },
-  { prefix: "/api/payment-methods", permission: CLINIC_PERMISSION.API_CASHIER },
-  { prefix: "/api/billing/context", permission: CLINIC_PERMISSION.API_CASHIER },
+  { prefix: "/api/payment-methods", permission: CLINIC_PERMISSION.API_BILLING_READ },
+  { prefix: "/api/billing/context", permission: CLINIC_PERMISSION.API_BILLING_READ },
   { prefix: "/api/cashier", permission: CLINIC_PERMISSION.API_CASHIER },
-  { prefix: "/api/fiscal", permission: CLINIC_PERMISSION.API_CASHIER },
-  { prefix: "/api/insurance/check", permission: CLINIC_PERMISSION.API_PATIENTS },
+  { prefix: "/api/fiscal", permission: CLINIC_PERMISSION.API_FISCAL },
+  { prefix: "/api/insurance/check", permission: CLINIC_PERMISSION.API_PATIENTS_READ },
   { prefix: "/api/nurse/qr-scan", permission: CLINIC_PERMISSION.API_NURSE_QR_SCAN },
   { prefix: "/api/nurse/overdue", permission: CLINIC_PERMISSION.API_NURSE_OVERDUE },
   { prefix: "/api/sanatorium/resources", permission: CLINIC_PERMISSION.API_SANATORIUM_RESOURCES },
@@ -783,6 +1087,7 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
 
 export function opsApiRoutePermission(
   pathname: string,
+  method?: string,
 ): ClinicPermission | null {
   const path = pathname.split("?")[0] ?? pathname;
   let best: { prefix: string; permission: ClinicPermission } | null = null;
@@ -791,7 +1096,28 @@ export function opsApiRoutePermission(
       if (!best || row.prefix.length > best.prefix.length) best = row;
     }
   }
-  return best?.permission ?? null;
+  const key = best?.permission ?? null;
+  if (!key) return null;
+  if (key === CLINIC_PERMISSION.API_LAB_ORDERS) {
+    if (path.endsWith("/collect")) return CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT;
+    if (path.endsWith("/complete")) return CLINIC_PERMISSION.API_LAB_ORDERS_COMPLETE;
+    if (path.endsWith("/publish")) return CLINIC_PERMISSION.API_LAB_ORDERS_PUBLISH;
+    if (path.endsWith("/blank")) return CLINIC_PERMISSION.API_LAB_ORDERS_BLANK;
+  }
+  if (!method) return key;
+  const verb = method.toUpperCase();
+  if (verb === "GET" || verb === "HEAD") {
+    return READ_OF_WRITE[key] ?? key;
+  }
+  const lab =
+    path === "/api/lab-orders" ||
+    path.startsWith("/api/lab-orders/") ||
+    path === "/api/lab" ||
+    path.startsWith("/api/lab/");
+  if (lab && key === CLINIC_PERMISSION.API_LAB_ORDERS) {
+    return CLINIC_PERMISSION.API_LAB_ORDERS_WRITE;
+  }
+  return key;
 }
 
 export function navEntryPermission(

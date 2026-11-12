@@ -240,6 +240,23 @@ export function gapsForStay(stay: StayForOperationalGaps, todayYmd: string): Sta
   return found;
 }
 
+/** One guest on the stay, including a placeholder name. Departed rows are not checked. */
+export function operationalGapsForPax(pax: StayPaxSlice, todayYmd: string): StayOperationalGap | null {
+  if (pax.departedAt) return null;
+  const person = blankPerson(displayName(pax));
+  if (pax.firstName?.trim() || pax.lastName?.trim()) person.name = displayName(pax);
+  if (pax.sex) person.sex = pax.sex;
+  if (pax.nationality) person.nationality = pax.nationality;
+  if (pax.birthDate) person.birthDate = pax.birthDate;
+  if (pax.age != null) person.age = pax.age;
+  if (pax.idCardNo) person.idCardNo = pax.idCardNo;
+  if (pax.passportNo) person.passportNo = pax.passportNo;
+  if (pax.guest) mergeGuest(person, pax.guest);
+  const missing = operationalGaps(person, todayYmd);
+  if (missing.length === 0) return null;
+  return { name: person.name, gaps: missing };
+}
+
 export function operationalGapLabelKey(
   gap: string,
 ): 'gapPhone' | 'gapBirthDate' | 'gapDocument' | 'gapSex' | 'gapNationality' {

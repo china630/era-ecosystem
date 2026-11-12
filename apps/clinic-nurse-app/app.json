@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Clinic Nurse",
+    "slug": "clinic-nurse-app",
+    "version": "1.0.0",
+    "orientation": "landscape",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "./plugins/withKiosk",
+      "expo-updates",
+      "expo-localization",
+      "expo-asset"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": false,
+      "checkAutomatically": "NEVER"
+    },
+    "android": {
+      "package": "online.era365.nurse",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "REQUEST_INSTALL_PACKAGES",
+        "INTERNET"
+      ]
+    },
+    "extra": {}
+  }
+}

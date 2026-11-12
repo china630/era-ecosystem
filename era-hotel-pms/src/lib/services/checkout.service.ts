@@ -131,6 +131,12 @@ export async function checkoutReservation(
     targetReservationId?: string;
     newStayCheckIn?: string;
     newStayCheckOut?: string;
+    /** Early-out OUT transfers: SHIFT | CANCEL | LEAVE per open outbound order. */
+    transferOutDecisions?: Array<{
+      orderId: string;
+      action: 'SHIFT' | 'KEEP' | 'CANCEL' | 'LEAVE';
+      pickupAt?: string;
+    }>;
     auditRequest?: Request;
   },
 ): Promise<CheckoutResult> {
@@ -188,7 +194,25 @@ export async function checkoutReservation(
 
   const todayKey = todayBakuYmd();
   let earlyCheckoutRevert: EarlyCheckoutRevert | null = null;
+  let transferOutSnaps: Awaited<
+    ReturnType<
+      typeof import('@/lib/services/stay-mobility-sync.service').applyEarlyOutTransferDecisions
+    >
+  > = [];
+  let toursReleased = 0;
   if (hotelDateKey(existing.checkOutDate) > todayKey) {
+    const {
+      applyEarlyOutTransferDecisions,
+      cancelReservedToursOutsideStay,
+    } = await import('@/lib/services/stay-mobility-sync.service');
+    transferOutSnaps = await applyEarlyOutTransferDecisions(
+      id,
+      todayKey,
+      opts?.transferOutDecisions ?? [],
+    );
+    const tourDrop = await cancelReservedToursOutsideStay(id, todayKey, 'Early checkout');
+    toursReleased = tourDrop.cancelledCount;
+
     const endDay = bakuCivilUtcDate(todayKey);
     const nextOut = stayCheckOut(todayKey);
     const [futureRates, slices] = await Promise.all([
@@ -226,6 +250,7 @@ export async function checkoutReservation(
         manualFlag: rate.manualFlag,
       })),
       slices: sliceSnaps,
+      transferOut: transferOutSnaps,
     };
     const revertSnapshot = earlyCheckoutRevert;
     await prisma.$transaction(async (tx) => {
@@ -395,6 +420,9 @@ export async function checkoutReservation(
   const cityLedgerTransferred: string[] = [];
   const cityLedgerHandoff: CheckoutCityLedgerHandoff[] = [];
   const warnings: string[] = [];
+  if (toursReleased > 0) {
+    warnings.push(`Tours released: ${toursReleased}`);
+  }
 
   const completed = await prisma.$transaction(async (tx) => {
     await closeFolios(id, { onlyTypes: ['GUEST'], targetStatus: 'CLOSED' });

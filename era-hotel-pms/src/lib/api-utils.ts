@@ -12,11 +12,7 @@ import { RoomTypeSettlementRequiredError } from '@/lib/services/room-move-reques
 import { LaundryOpenError } from '@/lib/services/hk-nafta.service';
 import { TourConflictError } from '@/lib/services/tour.service';
 import { BusinessDateLagError } from '@/lib/business-date-lag';
-import { scheduleHotelHttpMutationAudit } from '@/lib/mutation-audit-belt';
-
 export function jsonOk<T>(data: T, status = 200) {
-  // Layer A HTTP belt — ADR era-mutation-audit-standard / HOT-AUD-01
-  scheduleHotelHttpMutationAudit(status);
   return NextResponse.json(data, { status });
 }
 
@@ -42,6 +38,9 @@ export function handleRouteError(err: unknown) {
     return NextResponse.json({ error: err.message, code }, { status: 403 });
   }
   if (err instanceof Error && err.name === 'FiscalError') {
+    return jsonError(err.message, 400);
+  }
+  if (err instanceof Error && err.name === 'FxRateNotFoundError') {
     return jsonError(err.message, 400);
   }
   if (err instanceof GuestMdmRequiredError) {

@@ -412,7 +412,7 @@ export default function AllotmentBlocksPage() {
       <PageHeader
         title={t('title')}
         actions={
-          can(PERMISSIONS.MASTER_DATA_MANAGE) ? (
+          can(PERMISSIONS.ALLOTMENT_ADMIN) ? (
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
               <Plus className="mr-1 inline h-4 w-4" />
               {t('create')}
@@ -486,7 +486,7 @@ export default function AllotmentBlocksPage() {
                   </td>
                   <td className={DATA_TABLE_TD_CLASS}>{b._count.bookings}</td>
                   <td className={DATA_TABLE_TD_CLASS}>
-                    {can(PERMISSIONS.MASTER_DATA_MANAGE) ? (
+                    {can(PERMISSIONS.ALLOTMENT_ADMIN) ? (
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"

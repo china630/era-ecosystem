@@ -1,6 +1,5 @@
 "use client";
 
-import { Inbox } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -8,7 +7,7 @@ import { parsePaginatedList } from "../../../lib/paginated-list";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { subscribeListRefresh } from "../../../lib/list-refresh-bus";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import { CreateReceiptModal } from "../../../components/inventory/create-receipt-modal";
 import { bakuDateDisplay, bakuDateTimeDisplay } from "@era/satellite-kit/time";
@@ -149,22 +148,12 @@ export default function InventoryReceiptsPage() {
             </thead>
             <tbody>
               {rows.length === 0 ? (
-                <tr className={DATA_TABLE_TR_CLASS}>
-                  <td colSpan={6} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
-                    {!error ? (
-                      <EmptyState
-                        icon={
-                          <Inbox
-                            className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]"
-                            aria-hidden
-                          />
-                        }
-                        title={t("inventory.receiptEmptyTitle")}
-                        description={t("inventory.receiptEmptyHint")}
-                      />
-                    ) : null}
-                  </td>
-                </tr>
+                !error ? (
+                  <FinanceEmptyTableRow
+                    colSpan={6}
+                    message={t("inventory.receiptEmptyTitle")}
+                  />
+                ) : null
               ) : (
               rows.map((m) => (
                 <tr key={m.id} className={DATA_TABLE_TR_CLASS}>

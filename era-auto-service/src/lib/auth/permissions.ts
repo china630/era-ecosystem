@@ -12,11 +12,17 @@ export const PERMISSIONS = {
   SCREEN_ADMIN_ACCESS: "screen:admin.access",
 
   WORK_ORDERS: "api:work_orders",
+  WORK_ORDERS_READ: "api:work_orders.read",
   APPOINTMENTS: "api:appointments",
+  APPOINTMENTS_READ: "api:appointments.read",
   VEHICLES: "api:vehicles",
+  VEHICLES_READ: "api:vehicles.read",
   PARTS_CATALOG: "api:parts.catalog",
+  PARTS_CATALOG_READ: "api:parts.catalog.read",
   TOOLS: "api:tools",
+  TOOLS_READ: "api:tools.read",
   CALENDAR: "api:calendar",
+  CALENDAR_READ: "api:calendar.read",
 
   ADMIN_SETTINGS: "admin:settings",
   ACCESS_MANAGE: "admin:access_manage",
@@ -65,7 +71,33 @@ export const ROLE_ALIASES: Record<string, RoleCode> = {
   MECHANIC: ROLE_CODES.TECHNICIAN,
 };
 
-export const PERMISSION_CATALOG_VERSION = 1;
+export const PERMISSION_CATALOG_VERSION = 2;
+
+export const READ_OF_WRITE: Readonly<Record<string, Permission>> = {
+  [PERMISSIONS.WORK_ORDERS]: PERMISSIONS.WORK_ORDERS_READ,
+  [PERMISSIONS.APPOINTMENTS]: PERMISSIONS.APPOINTMENTS_READ,
+  [PERMISSIONS.VEHICLES]: PERMISSIONS.VEHICLES_READ,
+  [PERMISSIONS.PARTS_CATALOG]: PERMISSIONS.PARTS_CATALOG_READ,
+  [PERMISSIONS.TOOLS]: PERMISSIONS.TOOLS_READ,
+  [PERMISSIONS.CALENDAR]: PERMISSIONS.CALENDAR_READ,
+};
+
+export function expandEntityReads(keys: readonly string[]): Permission[] {
+  const out: Permission[] = [];
+  const have = new Set<string>();
+  const add = (key: string) => {
+    if (!have.has(key)) {
+      have.add(key);
+      out.push(key as Permission);
+    }
+  };
+  for (const key of keys) add(key);
+  for (const key of keys) {
+    const read = READ_OF_WRITE[key];
+    if (read) add(read);
+  }
+  return out;
+}
 
 export type PermissionGroup = {
   id: string;
@@ -90,11 +122,17 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     labelKey: "groups.workshop",
     permissions: [
       PERMISSIONS.WORK_ORDERS,
+      PERMISSIONS.WORK_ORDERS_READ,
       PERMISSIONS.APPOINTMENTS,
+      PERMISSIONS.APPOINTMENTS_READ,
       PERMISSIONS.VEHICLES,
+      PERMISSIONS.VEHICLES_READ,
       PERMISSIONS.PARTS_CATALOG,
+      PERMISSIONS.PARTS_CATALOG_READ,
       PERMISSIONS.TOOLS,
+      PERMISSIONS.TOOLS_READ,
       PERMISSIONS.CALENDAR,
+      PERMISSIONS.CALENDAR_READ,
     ],
   },
   {
@@ -118,10 +156,43 @@ const OPS_TEMPLATE: readonly Permission[] = [
 
 /** Seed packages. Advisor and technician keep the full workshop flow; settings and access go to the manager. */
 export const ROLE_TEMPLATES: Record<RoleCode, readonly Permission[]> = {
-  SERVICE_ADVISOR: OPS_TEMPLATE,
-  TECHNICIAN: OPS_TEMPLATE,
+  SERVICE_ADVISOR: expandEntityReads(OPS_TEMPLATE),
+  TECHNICIAN: expandEntityReads(OPS_TEMPLATE),
   STO_MANAGER: ALL_PERMISSIONS,
   BUSINESS_OWNER: ALL_PERMISSIONS,
-  PLATFORM_MEMBER: OPS_TEMPLATE,
-  SATELLITE_OPERATOR: OPS_TEMPLATE,
+  PLATFORM_MEMBER: expandEntityReads(OPS_TEMPLATE),
+  SATELLITE_OPERATOR: expandEntityReads(OPS_TEMPLATE),
 };
+
+export type AccessColumn = "view" | "change" | "operate" | "admin";
+
+export const ENTITY_ACCESS_MATRIX: {
+  id: string;
+  cells: Partial<Record<AccessColumn, Permission[]>>;
+}[] = [
+  {
+    id: "workOrder",
+    cells: {
+      view: [PERMISSIONS.WORK_ORDERS_READ, PERMISSIONS.SCREEN_WORK_ORDERS, PERMISSIONS.SCREEN_HOME],
+      change: [PERMISSIONS.WORK_ORDERS],
+    },
+  },
+  {
+    id: "appointment",
+    cells: {
+      view: [PERMISSIONS.APPOINTMENTS_READ, PERMISSIONS.SCREEN_APPOINTMENTS],
+      change: [PERMISSIONS.APPOINTMENTS],
+    },
+  },
+  { id: "vehicle", cells: { view: [PERMISSIONS.VEHICLES_READ], change: [PERMISSIONS.VEHICLES] } },
+  { id: "parts", cells: { view: [PERMISSIONS.PARTS_CATALOG_READ], change: [PERMISSIONS.PARTS_CATALOG] } },
+  { id: "tool", cells: { view: [PERMISSIONS.TOOLS_READ], change: [PERMISSIONS.TOOLS] } },
+  { id: "calendar", cells: { view: [PERMISSIONS.CALENDAR_READ], change: [PERMISSIONS.CALENDAR] } },
+  {
+    id: "access",
+    cells: {
+      view: [PERMISSIONS.SCREEN_ADMIN_ACCESS, PERMISSIONS.SCREEN_ADMIN_SETTINGS],
+      admin: [PERMISSIONS.ADMIN_SETTINGS, PERMISSIONS.ACCESS_MANAGE],
+    },
+  },
+];

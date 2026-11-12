@@ -62,6 +62,7 @@ describe("manual e-qaimə link", () => {
       { get: () => ({ submit: adapterSubmit }) } as never,
       {} as never,
       { get: () => flag } as never,
+      { resolveAsanUserId: jest.fn().mockResolvedValue(null), get: jest.fn() } as never,
     );
     return { svc, adapterSubmit };
   }

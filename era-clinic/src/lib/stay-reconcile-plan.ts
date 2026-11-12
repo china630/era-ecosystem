@@ -31,6 +31,16 @@ export function episodeMatchesGuest(
   return false;
 }
 
+export function closedEpisodesToSweep(
+  episodes: Array<{ id: string; reservationId: string | null }>,
+  checkedOutIds: string[],
+): string[] {
+  const checkedOut = new Set(checkedOutIds);
+  return episodes
+    .filter((episode) => episode.reservationId != null && checkedOut.has(episode.reservationId))
+    .map((episode) => episode.id);
+}
+
 export function planClinicStayReconcile(input: {
   inHouse: StayReconcileGuest[];
   checkedOutIds: string[];

@@ -1,13 +1,12 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../lib/api-client";
 import { formatMoneyAzn } from "../../lib/format-money";
 import { useRequireAuth } from "../../lib/use-require-auth";
-import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import { PageHeader } from "../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../components/subscription-paywall";
 import { IntangibleAssetModal } from "../../components/intangible-assets/intangible-asset-modal";
@@ -185,23 +184,7 @@ function IntangibleAssetsPageContent() {
       {err ? <p className="text-red-800 text-sm">{err}</p> : null}
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
 
-      {!loading && rows.length === 0 && !err ? (
-        <div className="flex min-h-[320px] w-full flex-col items-center justify-center py-8">
-          <EmptyState
-            className="max-w-lg w-full border-[#D5DADF] bg-white"
-            icon={<Sparkles className="mx-auto h-12 w-12 stroke-[1.5] text-[#7F8C8D]" aria-hidden />}
-            title={t("intangibleAssets.emptyTitle")}
-            description={t("intangibleAssets.emptyHint")}
-            action={
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setModalOpen(true)}>
-                + {t("intangibleAssets.newBtn")}
-              </button>
-            }
-          />
-        </div>
-      ) : null}
-
-      {!loading && rows.length > 0 ? (
+      {!loading && !err ? (
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={`${DATA_TABLE_CLASS} min-w-full`}>
             <thead>
@@ -216,7 +199,10 @@ function IntangibleAssetsPageContent() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {rows.length === 0 ? (
+                <FinanceEmptyTableRow colSpan={7} message={t("intangibleAssets.emptyTitle")} />
+              ) : (
+                rows.map((r) => (
                 <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                   <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{r.name}</td>
                   <td className={DATA_TABLE_TD_RIGHT_CLASS}>{r.inventoryNumber}</td>
@@ -251,7 +237,8 @@ function IntangibleAssetsPageContent() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

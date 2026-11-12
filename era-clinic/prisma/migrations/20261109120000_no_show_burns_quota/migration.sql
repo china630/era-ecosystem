@@ -1,0 +1,1 @@
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "no_show_burns_quota" BOOLEAN NOT NULL DEFAULT true;

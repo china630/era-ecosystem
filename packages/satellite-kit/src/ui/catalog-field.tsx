@@ -20,6 +20,8 @@ export type CatalogOption = {
   value: string;
   label: string;
   disabled?: boolean;
+  /** Extra search text. Not shown in the list. */
+  keywords?: string;
 };
 
 export type CatalogFieldProps = {
@@ -27,7 +29,8 @@ export type CatalogFieldProps = {
   label: string;
   value: string | string[];
   onChange: (next: string | string[]) => void;
-  options: CatalogOption[];
+  /** Required for select, chips, and autocomplete. Free text ignores it. */
+  options?: CatalogOption[];
   required?: boolean;
   hint?: string;
   error?: string;
@@ -97,7 +100,7 @@ export function CatalogField({
   label,
   value,
   onChange,
-  options,
+  options = [],
   required,
   hint,
   error,
@@ -317,7 +320,9 @@ function CatalogCombobox({
     return options
       .filter(
         (o) =>
-          o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q),
+          o.label.toLowerCase().includes(q) ||
+          o.value.toLowerCase().includes(q) ||
+          (o.keywords ?? "").toLowerCase().includes(q),
       )
       .slice(0, 50);
   }, [options, query, serverSearch]);

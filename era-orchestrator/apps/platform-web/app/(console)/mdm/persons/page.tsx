@@ -259,6 +259,9 @@ export default function SuperAdminMdmPersonsPage() {
           <p className="mt-1 text-sm text-[#7F8C8D]">{t("hint")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href="/mdm/persons/dedup" className={SECONDARY_BUTTON_CLASS}>
+            {t("dedupLink")}
+          </Link>
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}

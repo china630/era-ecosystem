@@ -180,7 +180,7 @@ export default function BarCalendarPage() {
     }
   }
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.RATES_ADMIN)) {
     return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 

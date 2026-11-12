@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { useLocale, useTranslations } from 'next-intl';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
@@ -21,9 +22,6 @@ import {
   MODAL_CHECKBOX_CLASS,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
-  TAB_ITEM_ACTIVE_CLASS,
-  TAB_ITEM_CLASS,
-  TAB_STRIP_CLASS,
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
@@ -211,9 +209,8 @@ export default function MasterDataPage() {
   const [bedTypes, setBedTypes] = useState<DictRow[]>([]);
   const [roomViews, setRoomViews] = useState<DictRow[]>([]);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<
-    'revenue' | 'dictionaries' | 'lookups' | 'roomTypes' | 'rooms' | 'ratePlans'
-  >('roomTypes');
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab') ?? 'roomTypes';
 
   const [rcFilter, setRcFilter] = useState('');
   const [bedFilter, setBedFilter] = useState('');
@@ -395,31 +392,32 @@ export default function MasterDataPage() {
     );
   }
 
-  const tabs = [
-    { id: 'roomTypes' as const, label: t('roomTypes') },
-    { id: 'dictionaries' as const, label: t('dictionaries') },
-    { id: 'rooms' as const, label: t('rooms') },
-    { id: 'ratePlans' as const, label: t('ratePlans') },
-    { id: 'revenue' as const, label: t('revenueCodes') },
-    { id: 'lookups' as const, label: t('lookupsTab') },
-  ];
+  const tabTitle =
+    tab === 'beds'
+      ? t('bedTypes')
+      : tab === 'views'
+        ? t('roomViews')
+        : tab === 'rooms'
+          ? t('rooms')
+          : tab === 'ratePlans'
+            ? t('ratePlans')
+            : tab === 'revenue'
+              ? t('revenueCodes')
+              : tab === 'quota'
+                ? t('quotaJournalTitle')
+                : tab === 'lookupCommercial'
+                  ? t('lookupGroupCommercial')
+                  : tab === 'lookupIdentity'
+                    ? t('lookupGroupIdentity')
+                    : tab === 'lookupStay'
+                      ? t('lookupGroupStay')
+                      : tab === 'lookupNotes'
+                        ? t('lookupGroupNotes')
+                        : t('roomTypes');
 
   return (
     <>
-      <PageHeader title={t('title')} subtitle={t('subtitleTabs')} />
-
-      <div className={TAB_STRIP_CLASS}>
-        {tabs.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={tab === item.id ? TAB_ITEM_ACTIVE_CLASS : TAB_ITEM_CLASS}
-            onClick={() => setTab(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <PageHeader title={tabTitle} subtitle={t('subtitleTabs')} />
 
       {tab === 'revenue' ? (
       <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
@@ -464,10 +462,10 @@ export default function MasterDataPage() {
       </section>
       ) : null}
 
-      {tab === 'dictionaries' ? (
+      {tab === 'beds' || tab === 'views' ? (
       <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
-        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('dictionaries')}</h2>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4">
+          {tab === 'beds' ? (
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h3 className="m-0 text-[13px] font-medium text-[#34495E]">{t('bedTypes')}</h3>
@@ -509,6 +507,8 @@ export default function MasterDataPage() {
               (row) => row.systemType,
             )}
           </div>
+          ) : null}
+          {tab === 'views' ? (
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h3 className="m-0 text-[13px] font-medium text-[#34495E]">{t('roomViews')}</h3>
@@ -546,11 +546,69 @@ export default function MasterDataPage() {
               setRoomViewModalOpen(true);
             })}
           </div>
+          ) : null}
         </div>
       </section>
       ) : null}
 
+      {tab === 'lookupCommercial' ? (
+        <HotelLookupsAdmin kinds={['MARKET', 'SEGMENT', 'VIP_TYPE', 'LOYALTY_TIER', 'WALKIN_PROFILE']} />
+      ) : null}
+      {tab === 'lookupIdentity' ? (
+        <HotelLookupsAdmin kinds={['VISA_TYPE', 'TITLE', 'GENDER', 'MARITAL_STATUS', 'NATIONALITY']} />
+      ) : null}
+      {tab === 'lookupStay' ? (
+        <HotelLookupsAdmin
+          kinds={['TRIP_REASON', 'ACCOM_TYPE', 'RECORD_TYPE', 'SPECIAL_STATE', 'RESERVATION_QUEUE']}
+        />
+      ) : null}
+      {tab === 'lookupNotes' ? (
+        <HotelLookupsAdmin kinds={['NOTE_TYPE', 'CONCIERGE_CATEGORY', 'EVENT_LINE_KIND', 'VERIFICATION_STATUS']} />
+      ) : null}
       {tab === 'lookups' ? <HotelLookupsAdmin /> : null}
+
+      {tab === 'quota' ? (
+      <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaWhen')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaScope')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaField')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaFrom')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaTo')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {quotaChanges.length === 0 ? (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td colSpan={5} className={DATA_TABLE_TD_CLASS}>{tc('none')}</td>
+                </tr>
+              ) : quotaChanges.map((row) => (
+                <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(row.createdAt)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {row.scope === 'HOUSE'
+                      ? t('houseOverbook')
+                      : roomTypes.find((rt) => rt.id === row.roomTypeId)?.code ?? row.roomTypeId}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {row.field === 'BASE_QUOTA'
+                      ? t('quotaField_BASE_QUOTA')
+                      : row.field === 'OVERBOOK'
+                        ? t('quotaField_OVERBOOK')
+                        : t('quotaField_HOUSE_OVERBOOK')}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>{row.oldValue}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{row.newValue}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      ) : null}
 
       {tab === 'roomTypes' ? (
       <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
@@ -620,47 +678,11 @@ export default function MasterDataPage() {
           </button>
           <p className="m-0 text-[13px] text-[#7F8C8D]">{t('houseOverbookHint')}</p>
         </form>
-        {quotaChanges.length > 0 ? (
-          <div className={`${DATA_TABLE_VIEWPORT_CLASS} mb-4`}>
-            <table className={DATA_TABLE_CLASS}>
-              <thead>
-                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaWhen')}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaScope')}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaField')}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaFrom')}</th>
-                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('quotaTo')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {quotaChanges.map((row) => (
-                  <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                      <td className={DATA_TABLE_TD_CLASS}>{bakuDateTimeDisplay(row.createdAt)}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {row.scope === 'HOUSE'
-                        ? t('houseOverbook')
-                        : roomTypes.find((rt) => rt.id === row.roomTypeId)?.code ?? row.roomTypeId}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>
-                      {row.field === 'BASE_QUOTA'
-                        ? t('quotaField_BASE_QUOTA')
-                        : row.field === 'OVERBOOK'
-                          ? t('quotaField_OVERBOOK')
-                          : t('quotaField_HOUSE_OVERBOOK')}
-                    </td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.oldValue}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.newValue}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
         <div className={DATA_TABLE_VIEWPORT_CLASS}>
           <table className={DATA_TABLE_CLASS}>
-            <thead>
-              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('code')}</th>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('code')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('name')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('quota')}</th>
                 <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('overbookAllowance')}</th>

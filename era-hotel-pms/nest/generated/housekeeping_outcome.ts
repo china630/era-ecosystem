@@ -1,0 +1,61 @@
+import { todayBakuYmd } from '@era/satellite-kit/time';
+import { z } from 'zod';
+import { serialize } from '@/lib/serialize';
+import { assertPermission } from '@/lib/auth/require';
+import { PERMISSIONS } from '@/lib/auth/permissions';
+import { applyVisitOutcome, applySheetOutcome, clearSheetOutcome } from '@/lib/services/hk-nafta.service';
+import { enterHotelStaff, hotelNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithHotelTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
+
+const schema = z.object({
+  taskId: z.string().uuid().optional(),
+  roomId: z.string().uuid().optional(),
+  date: z.string().optional(),
+  outcome: z.enum(['V', 'VC', 'OK', 'REFUSED', 'DND', 'SO']).optional(),
+  clear: z.boolean().optional(),
+});
+
+function assertSheetDay(date: string) {
+  if (date !== todayBakuYmd()) {
+    throw new Error('Cannot edit a floor sheet that is not the business date');
+  }
+}
+
+export function register(http: { get: Function; post: Function; put: Function; patch: Function; delete: Function }) {
+  http.post("/api/housekeeping/outcome", async (httpReq, httpRes) => {
+    if (!(await enterHotelStaff(httpReq, httpRes))) return;
+    try {
+      const session = await hotelNestSession(httpReq);
+      const web = await runWithHotelTenant(session, async () => {
+        return runWithNestHttp(httpReq, async () => {
+      const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
+      const request = {
+        url: requestUrl.toString(),
+        method: httpReq.method,
+        nextUrl: requestUrl,
+        headers: { get: (name: string) => nestHeader(httpReq, name) },
+        json: async () => httpReq.body,
+        text: async () => (typeof httpReq.body === "string" ? httpReq.body : JSON.stringify(httpReq.body ?? "")),
+      };
+
+  
+    assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
+    const body = schema.parse(httpReq.body);
+    if (body.roomId) {
+      const date = body.date ?? todayBakuYmd();
+      assertSheetDay(date);
+      if (body.clear || !body.outcome) {
+        return sendJson(httpRes, serialize(await clearSheetOutcome(body.roomId, date)));
+      }
+      return sendJson(httpRes, serialize(await applySheetOutcome(body.roomId, date, body.outcome, { userId: session?.sub, request })));
+    }
+    if (!body.taskId || !body.outcome) throw new Error('taskId or roomId required');
+    return sendJson(httpRes, serialize(await applyVisitOutcome(body.taskId, body.outcome, { userId: session?.sub, request })));
+  
+        });
+      });
+      if (web instanceof Response) await sendWebResponse(httpRes, web);
+    } catch (err) {
+      await sendRouteError(httpRes, err);
+    }
+  });
+}

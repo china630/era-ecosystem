@@ -10,16 +10,18 @@ import {
 } from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
 import { assertMatchingServiceToken } from "../common/utils/internal-service-token.util";
-import { PrismaService } from "../prisma/prisma.service";
 import { parsePublicOrgNumberParam } from "./public-org-number";
+import { GuestAppService } from "./guest-app.service";
 import { OrganizationProfileService } from "./organization-profile.service";
+import { OrgAccessCredentialService } from "../admin/org-access-credential.service";
 
 @Public()
 @Controller("internal/v1/organizations")
 export class InternalOrganizationsController {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly profiles: OrganizationProfileService,
+    private readonly access: OrgAccessCredentialService,
+    private readonly guestApp: GuestAppService,
   ) {}
 
   /**
@@ -37,10 +39,7 @@ export class InternalOrganizationsController {
     if (orgNo == null) {
       throw new NotFoundException("Organization not found");
     }
-    const org = await this.prisma.organization.findFirst({
-      where: { publicOrgNumber: orgNo, deletedAt: null },
-      select: { id: true, publicOrgNumber: true, name: true },
-    });
+    const org = await this.profiles.findByPublicNumber(orgNo);
     if (!org) {
       throw new NotFoundException("Organization not found");
     }
@@ -49,6 +48,17 @@ export class InternalOrganizationsController {
       publicOrgNumber: org.publicOrgNumber,
       name: org.name,
     };
+  }
+
+  /** S2S guest-app brand. Same payload as the public phone read. Not letterhead. */
+  @Get(":id/guest-app-snapshot")
+  async guestAppSnapshot(
+    @Param("id", ParseUUIDPipe) organizationId: string,
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    assertMatchingServiceToken(auth, xToken);
+    return this.guestApp.getBrand(organizationId);
   }
 
   /** S2S branding snapshot for satellite print / letterhead (CP-ORG-PROFILE-01). */
@@ -79,5 +89,17 @@ export class InternalOrganizationsController {
         ? null
         : String(body.bankLine);
     return this.profiles.patchBankLineFromService(organizationId, bankLine);
+  }
+
+  /** Finance reads this org's connector key. Bearer service token. Inactive codes are not found. */
+  @Get(":id/access/:code")
+  async accessMaterial(
+    @Param("id", ParseUUIDPipe) organizationId: string,
+    @Param("code") code: string,
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    assertMatchingServiceToken(auth, xToken);
+    return this.access.resolveForService(organizationId, code);
   }
 }

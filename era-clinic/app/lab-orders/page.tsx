@@ -1,13 +1,16 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Eye, Plus, Trash2 } from "lucide-react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Check, ChevronDown, ChevronRight, Eye, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CatalogField,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
   DatePicker,
-  EraDataGrid,
   EraListFilterBar,
   EraListWorkspace,
   Field,
@@ -24,7 +27,6 @@ import {
   TABLE_ROW_ICON_BTN_CLASS,
   showApiError,
   TEXT_MUTED_CLASS,
-  type EraDataGridColumn,
   usePaginatedList,
 } from "@era/satellite-kit/ui";
 import { CatalogMultiAdder } from "@/components/catalog-multi-adder";
@@ -75,9 +77,12 @@ type LabOrder = {
   collectedAt?: string | null;
   resultDate?: string | null;
   visitId?: string | null;
-  patientRef: { refCode: string; fullName: string };
-  episode?: { roomNumber?: string | null } | null;
-  visit?: { roomNumber?: string | null } | null;
+  patientRef: { id: string; refCode: string; fullName: string };
+  episode?: {
+    roomNumber?: string | null;
+    careDoctors?: Array<{ practitioner?: { fullName: string } | null }>;
+  } | null;
+  visit?: { roomNumber?: string | null; practitioner?: { fullName: string } | null } | null;
   items?: LabOrderItem[];
 };
 
@@ -178,6 +183,14 @@ function chargeAmount(order: Pick<LabOrder, "amountNet" | "items">): number {
   const header = Number(order.amountNet);
   if (header > 0) return header;
   return (order.items ?? []).reduce((sum, item) => sum + (Number(item.amountNet) || 0), 0);
+}
+
+const CLOSED_LAB = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
+const CLOSED_ROW = "border-b border-[#D5DADF] bg-amber-50 hover:bg-amber-100";
+const OPEN_ROW = "border-b border-[#D5DADF] bg-white hover:bg-[#F1F5F9]";
+
+function labRowClosed(status: string): boolean {
+  return CLOSED_LAB.has(status);
 }
 
 function amountLabel(order: LabOrder, inPackageLabel: string): string {
@@ -446,8 +459,8 @@ export default function LabOrdersPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      if (res.status === 409 && data.code === "LAB_ALREADY_OPEN") {
-        showApiError(data, t("labAlreadyOpen"));
+      if (res.status === 409 && (data.code === "LAB_ALREADY_OPEN" || data.code === "LAB_UNPAID_EXISTS")) {
+        showApiError(data, data.code === "LAB_UNPAID_EXISTS" ? t("labUnpaidCheque") : t("labAlreadyOpen"));
         setPendingCreatePayload(null);
         return;
       }
@@ -488,131 +501,45 @@ export default function LabOrdersPage() {
     setStatusById((prev) => ({ ...prev, [id]: "COMPLETED" }));
   }
 
-  const columns = useMemo<EraDataGridColumn<LabOrder & Record<string, unknown>>[]>(
-    () => [
-      {
-        key: "assignment",
-        header: t("colStatusMark"),
-        className: "w-10",
-        render: (order) => {
-          const status = orderStatus(order);
-          const label = (LAB_ORDER_STATUSES as readonly string[]).includes(status)
-            ? t(`orderStatus.${status}` as "orderStatus.ORDERED")
-            : status;
-          return <StatusDot status={status} label={label} />;
-        },
-      },
-      {
-        key: "patient",
-        header: t("colPatient"),
-        sortable: true,
-        render: (order) => (
-          <div>
-            <div className="font-medium">{order.patientRef.fullName}</div>
-            <div className={TEXT_MUTED_CLASS}>{order.patientRef.refCode}</div>
-          </div>
-        ),
-      },
-      {
-        key: "room",
-        header: t("colRoom"),
-        render: (order) => order.episode?.roomNumber || order.visit?.roomNumber || "—",
-      },
-      {
-        key: "services",
-        header: t("colServices"),
-        render: (order) => (
-          <button
-            type="button"
-            className="font-medium text-[#2980B9] hover:underline"
-            onClick={(event) => {
-              event.stopPropagation();
-              setWorkflowId(order.id);
-            }}
-          >
-            {servicesLabel(order, locale)}
-          </button>
-        ),
-      },
-      {
-        key: "modality",
-        header: t("colType"),
-        render: (order) =>
-          modalityTitle(order.items?.[0]?.diagnosticService?.modality?.code, modalities, locale),
-      },
-      {
-        key: "status",
-        header: tc("status"),
-        sortable: true,
-        render: (order) => {
-          const status = orderStatus(order);
-          const label = (LAB_ORDER_STATUSES as readonly string[]).includes(status)
-            ? t(`orderStatus.${status}` as "orderStatus.ORDERED")
-            : status;
-          return <span className={`font-medium ${labStatusTone(status).text}`}>{label}</span>;
-        },
-      },
-      {
-        key: "amount",
-        header: t("colAmount"),
-        sortable: true,
-        render: (order) => amountLabel(order, t("inPackage")),
-      },
-      {
-        key: "created",
-        header: t("colCreated"),
-        sortable: true,
-        render: (order) => {
-          const d = labOrderListDate(order);
-          return d ? bakuDateDisplay(d) : "—";
-        },
-      },
-      {
-        key: "actions",
-        header: tc("actions"),
-        render: (order) => (
-          <div
-            className="flex flex-wrap items-center gap-1"
-            onClick={(event) => event.stopPropagation()}
-            onDoubleClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className={TABLE_ROW_ICON_BTN_CLASS}
-              aria-label={t("openOrder")}
-              onClick={(event) => {
-                event.stopPropagation();
-                setWorkflowId(order.id);
-              }}
-            >
-              <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
-            </button>
-            {orderStatus(order) === "ORDERED" ? (
-              <button
-                type="button"
-                className={TABLE_ROW_ICON_BTN_CLASS}
-                aria-label={t("cancelOrder")}
-                onClick={() => void cancelOrder(order.id)}
-              >
-                <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-              </button>
-            ) : null}
-            {orderStatus(order) === "PUBLISHED" ? (
-              <button
-                type="button"
-                className={TABLE_ROW_ICON_BTN_CLASS}
-                aria-label={tc("complete")}
-                onClick={() => void completeOrder(order.id)}
-              >
-                <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
-              </button>
-            ) : null}
-          </div>
-        ),
-      },
-    ],
-    [t, tc, locale, modalities, statusById],
-  );
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const groups = useMemo(() => {
+    const map = new Map<
+      string,
+      { id: string; name: string; refCode: string; room: string; doctor: string; items: LabOrder[] }
+    >();
+    for (const order of orders) {
+      const id = order.patientRef.id;
+      const row = map.get(id) ?? {
+        id,
+        name: order.patientRef.fullName,
+        refCode: order.patientRef.refCode,
+        room: order.episode?.roomNumber || order.visit?.roomNumber || "",
+        doctor:
+          order.episode?.careDoctors?.[0]?.practitioner?.fullName ||
+          order.visit?.practitioner?.fullName ||
+          "",
+        items: [],
+      };
+      if (!row.room) row.room = order.episode?.roomNumber || order.visit?.roomNumber || "";
+      if (!row.doctor) {
+        row.doctor =
+          order.episode?.careDoctors?.[0]?.practitioner?.fullName ||
+          order.visit?.practitioner?.fullName ||
+          "";
+      }
+      row.items.push(order);
+      map.set(id, row);
+    }
+    return [...map.values()];
+  }, [orders]);
+
+  function toggleSort(key: string) {
+    setFilters((prev) => ({
+      ...prev,
+      sort: key,
+      sortDir: prev.sort === key && prev.sortDir === "asc" ? "desc" : "asc",
+    }));
+  }
 
   return (
     <div className={LIST_PAGE_SHELL_CLASS}>
@@ -700,39 +627,163 @@ export default function LabOrdersPage() {
           </EraListFilterBar>
         }
         table={
-          <EraDataGrid
-            columns={columns}
-            rows={orders as (LabOrder & Record<string, unknown>)[]}
-            rowKey={(o) => o.id}
-            emptyMessage={
-              loading
-                ? tc("loading")
-                : filters.lane === "diagnostic"
-                  ? t("emptyDiagnostic")
-                  : t("emptyLab")
-            }
-            pagination={false}
-            paginationMode="server"
-            embedded
-            sort={
-              filters.sort && filters.sortDir
-                ? { key: filters.sort, dir: filters.sortDir }
-                : null
-            }
-            onSortChange={(next) =>
-              setFilters((prev) => ({ ...prev, sort: next.key, sortDir: next.dir }))
-            }
-            onRowClick={(order) => setSelectedId(order.id)}
-            onRowDoubleClick={(order) => {
-              setSelectedId(order.id);
-              setWorkflowId(order.id);
-            }}
-            rowClassName={(order) =>
-              order.id === selectedId
-                ? "bg-white ring-2 ring-inset ring-[#2980B9]"
-                : undefined
-            }
-          />
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                  <button type="button" onClick={() => toggleSort("patient")}>{t("colPatient")}</button>
+                </th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRoom")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colDoctor")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colServices")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                  <button type="button" onClick={() => toggleSort("status")}>{tc("status")}</button>
+                </th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                  <button type="button" onClick={() => toggleSort("amount")}>{t("colAmount")}</button>
+                </th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>
+                  <button type="button" onClick={() => toggleSort("created")}>{t("colCreated")}</button>
+                </th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groups.length === 0 ? (
+                <tr>
+                  <td className={DATA_TABLE_TD_CLASS} colSpan={8}>
+                    {loading
+                      ? tc("loading")
+                      : filters.lane === "diagnostic"
+                        ? t("emptyDiagnostic")
+                        : t("emptyLab")}
+                  </td>
+                </tr>
+              ) : (
+                groups.map((group) => {
+                  const open = !collapsed.has(group.id);
+                  const allClosed =
+                    group.items.length > 0 &&
+                    group.items.every((order) => labRowClosed(orderStatus(order)));
+                  return (
+                    <Fragment key={group.id}>
+                      <tr className={allClosed ? CLOSED_ROW : OPEN_ROW}>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          <button
+                            type="button"
+                            className="flex items-center gap-2 text-left"
+                            aria-expanded={open}
+                            onClick={() =>
+                              setCollapsed((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(group.id)) next.delete(group.id);
+                                else next.add(group.id);
+                                return next;
+                              })
+                            }
+                          >
+                            {open ? (
+                              <ChevronDown className="h-4 w-4 shrink-0 text-[#7F8C8D]" aria-hidden />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 shrink-0 text-[#7F8C8D]" aria-hidden />
+                            )}
+                            <span>
+                              <span className="font-medium">{group.name}</span>
+                              <span className={`ml-2 text-[11px] ${TEXT_MUTED_CLASS}`}>{group.refCode}</span>
+                            </span>
+                          </button>
+                        </td>
+                        <td className={DATA_TABLE_TD_CLASS}>{group.room || "—"}</td>
+                        <td className={DATA_TABLE_TD_CLASS}>{group.doctor || "—"}</td>
+                        <td className={DATA_TABLE_TD_CLASS} colSpan={5} />
+                      </tr>
+                      {open
+                        ? group.items.map((order) => {
+                            const status = orderStatus(order);
+                            const label = (LAB_ORDER_STATUSES as readonly string[]).includes(status)
+                              ? t(`orderStatus.${status}` as "orderStatus.ORDERED")
+                              : status;
+                            const closed = labRowClosed(status);
+                            return (
+                              <tr
+                                key={order.id}
+                                className={
+                                  order.id === selectedId
+                                    ? "border-b border-[#D5DADF] bg-white ring-2 ring-inset ring-[#2980B9]"
+                                    : closed
+                                      ? CLOSED_ROW
+                                      : OPEN_ROW
+                                }
+                                onClick={() => setSelectedId(order.id)}
+                                onDoubleClick={() => {
+                                  setSelectedId(order.id);
+                                  setWorkflowId(order.id);
+                                }}
+                              >
+                                <td className={DATA_TABLE_TD_CLASS} />
+                                <td className={DATA_TABLE_TD_CLASS} />
+                                <td className={DATA_TABLE_TD_CLASS} />
+                                <td className={DATA_TABLE_TD_CLASS}>
+                                  <button
+                                    type="button"
+                                    className="text-left font-medium text-[#2980B9] hover:underline"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setWorkflowId(order.id);
+                                    }}
+                                  >
+                                    {servicesLabel(order, locale)}
+                                  </button>
+                                </td>
+                                <td className={DATA_TABLE_TD_CLASS}>
+                                  <span className={`font-medium ${labStatusTone(status).text}`}>{label}</span>
+                                </td>
+                                <td className={DATA_TABLE_TD_CLASS}>{amountLabel(order, t("inPackage"))}</td>
+                                <td className={DATA_TABLE_TD_CLASS}>
+                                  {labOrderListDate(order) ? bakuDateDisplay(labOrderListDate(order)!) : "—"}
+                                </td>
+                                <td className={DATA_TABLE_TD_CLASS}>
+                                  <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+                                    <button
+                                      type="button"
+                                      className={TABLE_ROW_ICON_BTN_CLASS}
+                                      aria-label={t("openOrder")}
+                                      onClick={() => setWorkflowId(order.id)}
+                                    >
+                                      <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                                    </button>
+                                    {status === "ORDERED" ? (
+                                      <button
+                                        type="button"
+                                        className={TABLE_ROW_ICON_BTN_CLASS}
+                                        aria-label={t("cancelOrder")}
+                                        onClick={() => void cancelOrder(order.id)}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                                      </button>
+                                    ) : null}
+                                    {status === "PUBLISHED" ? (
+                                      <button
+                                        type="button"
+                                        className={TABLE_ROW_ICON_BTN_CLASS}
+                                        aria-label={tc("complete")}
+                                        onClick={() => void completeOrder(order.id)}
+                                      >
+                                        <Check className="h-4 w-4 text-[#27AE60]" aria-hidden />
+                                      </button>
+                                    ) : null}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        : null}
+                    </Fragment>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         }
         footer={
           <ListPaginationFooter

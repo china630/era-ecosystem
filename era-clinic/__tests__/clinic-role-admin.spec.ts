@@ -64,10 +64,10 @@ describe("clinic-role-admin helpers", () => {
 
   it("admin API maps /api/admin/users to access screen", () => {
     expect(adminApiRoutePermission("/api/admin/users")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
     );
     expect(adminApiRoutePermission("/api/admin/users/abc")).toBe(
-      CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE,
     );
   });
 });

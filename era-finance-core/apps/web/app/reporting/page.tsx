@@ -19,7 +19,7 @@ import { CHART_ACCOUNT_NAMES_AZ } from "../../lib/i18n/chart-account-names-az";
 import { uiLangRuAz } from "../../lib/i18n/ui-lang";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { PageHeader } from "../../components/layout/page-header";
-import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -468,10 +468,8 @@ export default function ReportingPage() {
               {exportBusy === "tb-xlsx" ? "…" : t("reporting.exportXlsx", { defaultValue: "Экспорт XLSX" })}
             </button>
           </div>
-          {tb.rows.length === 0 ? (
-            <EmptyState title={t("reporting.tbTitle")} description={t("reporting.emptyTb")} />
-          ) : (
-            <>
+          <>
+          {tb.rows.length > 0 ? (
           <div className="md:hidden space-y-2">
             {tb.rows.map((r) => (
               <div
@@ -492,7 +490,8 @@ export default function ReportingPage() {
               </div>
             ))}
           </div>
-          <div className={`hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}`}>
+          ) : null}
+          <div className={`${tb.rows.length > 0 ? "hidden md:block " : ""}${DATA_TABLE_VIEWPORT_CLASS}`}>
             <table className={`${DATA_TABLE_CLASS} w-full min-w-[880px]`}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -518,34 +517,37 @@ export default function ReportingPage() {
                 </tr>
               </thead>
               <tbody>
-                {tb.rows.map((r) => (
-                  <tr key={r.accountId} className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{r.accountCode}</td>
-                    <td className={`max-w-[200px] truncate ${DATA_TABLE_TD_CLASS}`} title={r.accountName}>
-                      {trialBalanceAccountName(r.accountCode, r.accountName, i18n.language)}
-                    </td>
-                    <td className={`hidden ${DATA_TABLE_TD_CLASS} lg:table-cell`}>{r.accountType}</td>
-                    <td className={`hidden ${DATA_TABLE_TD_RIGHT_CLASS} xl:table-cell`}>
-                      {formatMoneyAzn(r.openingDebit)}
-                    </td>
-                    <td className={`hidden ${DATA_TABLE_TD_RIGHT_CLASS} xl:table-cell`}>
-                      {formatMoneyAzn(r.openingCredit)}
-                    </td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodDebit)}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodCredit)}</td>
-                    <td className={`hidden ${DATA_TABLE_TD_RIGHT_CLASS} xl:table-cell`}>
-                      {formatMoneyAzn(r.closingDebit)}
-                    </td>
-                    <td className={`hidden ${DATA_TABLE_TD_RIGHT_CLASS} xl:table-cell`}>
-                      {formatMoneyAzn(r.closingCredit)}
-                    </td>
-                  </tr>
-                ))}
+                {tb.rows.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={9} message={t("reporting.emptyTb")} />
+                ) : (
+                  tb.rows.map((r) => (
+                    <tr key={r.accountId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{r.accountCode}</td>
+                      <td className={`max-w-[200px] truncate ${DATA_TABLE_TD_CLASS}`} title={r.accountName}>
+                        {trialBalanceAccountName(r.accountCode, r.accountName, i18n.language)}
+                      </td>
+                      <td className={`hidden ${DATA_TABLE_TD_CLASS} lg:table-cell`}>{r.accountType}</td>
+                      <td className={`hidden ${DATA_TABLE_TD_RIGHT_CLASS} xl:table-cell`}>
+                        {formatMoneyAzn(r.openingDebit)}
+                      </td>
+                      <td className={`hidden ${DATA_TABLE_TD_RIGHT_CLASS} xl:table-cell`}>
+                        {formatMoneyAzn(r.openingCredit)}
+                      </td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodDebit)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(r.periodCredit)}</td>
+                      <td className={`hidden ${DATA_TABLE_TD_RIGHT_CLASS} xl:table-cell`}>
+                        {formatMoneyAzn(r.closingDebit)}
+                      </td>
+                      <td className={`hidden ${DATA_TABLE_TD_RIGHT_CLASS} xl:table-cell`}>
+                        {formatMoneyAzn(r.closingCredit)}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-            </>
-          )}
+          </>
         </section>
       )}
 

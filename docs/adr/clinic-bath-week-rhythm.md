@@ -18,7 +18,7 @@ Nafta wants five naftalan sessions in a Monday–Saturday week, rest no later th
 - The package-assign mini calendar is removed. Point edits stay on the course schedule.
 - Cabin search must not pick a time without the guest's other orders. Bath days stay a policy; the slot is the same door as other procedures.
 - Saxla pin miss on a bath day: retry that same pin from lunch end, then shift the leftover to the next free working day and try morning + afternoon once more before abandoning the pin.
-- Closed weekdays and clinic-day overrides come from `listClinicDays`. Physio and baths both refuse a `working: false` day. The resource matrix does not invent its own week.
+- Closed weekdays and clinic-day overrides come from `listClinicDays`. That list does not consult the country calendar. Physio, baths, and new elective visits all refuse a `working: false` day. The resource matrix does not invent its own week. A new bath batch continues the block and rest already seated for that series.
 - One rule kernel (`evaluateCandidateSlot`): auto search (`scanProcedureSlots`) finds the next legal minute; a manual PATCH accepts **that** minute or returns 409. No `nextWorkSlot` snap to Monday 09:00. Cross-day manual moves are refused.
 - Bath rest days live on `physioFields.restYmds` of live series orders. `CANCELLED` / `bath_rest` stubs are not created.
 

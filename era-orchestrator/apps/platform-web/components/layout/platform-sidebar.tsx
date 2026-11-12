@@ -10,7 +10,6 @@ import {
   Database,
   Gauge,
   Library,
-  Network,
   Package,
   PanelLeftClose,
   PanelRightClose,
@@ -156,14 +155,6 @@ export function PlatformSidebar({
           icon={Building2}
           onNavClick={onNavClick}
         />
-        <SideNavItem
-          href="/structure"
-          label={t("platformStructure")}
-          isActive={pathname.startsWith("/structure")}
-          icon={Network}
-          onNavClick={onNavClick}
-        />
-
         <CollapsibleNavSection
           sectionKey="mdm"
           title={t("platformMdm")}
@@ -189,7 +180,15 @@ export function PlatformSidebar({
           <SideNavItem
             href="/mdm/persons"
             label={t("platformMdmPersons")}
-            isActive={pathname.startsWith("/mdm/persons")}
+            isActive={pathname === "/mdm/persons"}
+            icon={Users}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/mdm/persons/dedup"
+            label={t("platformMdmDedup")}
+            isActive={pathname.startsWith("/mdm/persons/dedup")}
             icon={Users}
             nested
             onNavClick={onNavClick}

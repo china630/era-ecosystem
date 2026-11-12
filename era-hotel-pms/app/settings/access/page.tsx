@@ -22,7 +22,9 @@ import {
 } from "@era/satellite-kit/ui";
 import { EraModal, EraModalFooter } from "@/components/EraModal";
 import {
+  ENTITY_ACCESS_MATRIX,
   PERMISSION_PROCESSES,
+  type AccessColumn,
   type Permission,
 } from "@/lib/auth/permissions";
 import { useAuth } from "@/hooks/useAuth";
@@ -478,35 +480,48 @@ export default function HotelAccessPage() {
             ))}
           </div>
         ) : null}
-        <div className="mt-4 space-y-4">
-          {PERMISSION_PROCESSES.filter((group) => group.id !== "party").map((group) => (
-            <div key={group.id} className="space-y-2">
-              <h3 className="text-sm font-semibold text-[#34495E]">{t(group.labelKey)}</h3>
-              <div className="flex flex-wrap gap-2">
-                {group.permissions.map((perm) => {
-                  const labelKey = perm.replace(/[:.]/g, "_");
-                  return (
-                    <label
-                      key={perm}
-                      className="flex items-start gap-2 rounded border border-[#D5DADF] px-3 py-2 text-sm text-[#34495E]"
-                    >
-                      <input
-                        type="checkbox"
-                        className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
-                        checked={draft.has(perm)}
-                        disabled={busy || loading}
-                        onChange={() => togglePermission(perm)}
-                      />
-                      <span className="flex flex-col">
-                        <span className="font-medium">{t(`perm_${labelKey}` as never)}</span>
-                        <span className="font-mono text-[11px] text-[#7F8C8D]">{perm}</span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        <div className="mt-4 overflow-x-auto">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("entityColumn")}</th>
+                {(["view", "change", "operate", "admin"] as AccessColumn[]).map((col) => (
+                  <th key={col} className={DATA_TABLE_TH_LEFT_CLASS}>{t(`col_${col}`)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ENTITY_ACCESS_MATRIX.filter((row) => row.id !== "masterData").map((row) => (
+                <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS + " font-medium"}>{t(`entity_${row.id}`)}</td>
+                  {(["view", "change", "operate", "admin"] as AccessColumn[]).map((col) => (
+                    <td key={col} className={DATA_TABLE_TD_CLASS + " align-top"}>
+                      <div className="flex flex-col gap-1">
+                        {(row.cells[col] ?? []).map((perm) => {
+                          const labelKey = perm.replace(/[:.]/g, "_");
+                          return (
+                            <label key={perm} className="flex items-start gap-2 text-sm text-[#34495E]">
+                              <input
+                                type="checkbox"
+                                className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
+                                checked={draft.has(perm)}
+                                disabled={busy || loading}
+                                onChange={() => togglePermission(perm)}
+                              />
+                              <span className="flex flex-col">
+                                <span>{t(`perm_${labelKey}` as never)}</span>
+                                <span className="font-mono text-[11px] text-[#7F8C8D]">{perm}</span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </EraModal>
     </div>

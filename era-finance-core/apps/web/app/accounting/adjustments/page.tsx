@@ -13,7 +13,7 @@ import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useOrgPermissions } from "../../../lib/use-org-permissions";
 import { useLedger } from "../../../lib/ledger-context";
 import { PageHeader } from "../../../components/layout/page-header";
-import { EmptyState } from "../../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../../components/finance-empty-table-row";
 import { ListPaginationFooter, DEFAULT_LIST_PAGE_SIZE } from "../../../components/list-pagination-footer";
 import {
   ManualAdjustmentModal,
@@ -309,11 +309,6 @@ export default function ManualAdjustmentsPage() {
 
       {loading ? (
         <p className="text-[13px] text-[#7F8C8D]">{t("common.loading")}</p>
-      ) : rows.length === 0 ? (
-        <EmptyState
-          title={t("manualAdjustments.empty")}
-          description={t("manualAdjustments.emptyHint")}
-        />
       ) : (
         <div className={`${CARD_CONTAINER_CLASS} overflow-hidden`}>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
@@ -330,7 +325,10 @@ export default function ManualAdjustmentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {rows.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={7} message={t("manualAdjustments.empty")} />
+                ) : (
+                  rows.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_CLASS}>{r.date}</td>
                     <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{r.reference ?? "—"}</td>
@@ -378,7 +376,8 @@ export default function ManualAdjustmentsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

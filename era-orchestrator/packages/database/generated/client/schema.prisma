@@ -495,6 +495,8 @@ model SatelliteEndpoint {
 
 /// PlacementJob state machine (API scaffold). Real DB dump / live migrate not implemented.
 /// Direct SHARED ↔ ONPREM is REJECTED — two hops via DEDICATED only.
+/// Wave 1 advance order: PENDING → PROVISION → CONFIGURE → FREEZE → EXPORT → IMPORT → CUTOVER → SMOKE → DONE.
+/// Enum member order keeps historical PG values; CONFIGURE/IMPORT/ROLLBACK appended.
 enum PlacementJobStatus {
   PENDING
   FREEZE
@@ -506,33 +508,87 @@ enum PlacementJobStatus {
   DONE
   FAILED
   REJECTED
+  CONFIGURE
+  IMPORT
+  ROLLBACK
 }
 
-model PlacementJob {
-  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId String             @map("organization_id") @db.Uuid
-  satelliteKey   String             @map("satellite_key")
-  fromTopology   DeploymentTopology @map("from_topology")
-  toTopology     DeploymentTopology @map("to_topology")
-  status         PlacementJobStatus @default(PENDING)
-  errorMessage   String?            @map("error_message")
-  /// Metadata from exportSlice (counts + format note).
-  sliceMeta      Json?              @map("slice_meta")
-  /// Durable slice artifact path or opaque ref for host agent download.
-  artifactRef    String?            @map("artifact_ref")
-  /// Curated org-slice JSON body (lab / host restore). Prefer artifactRef for large blobs.
-  artifactJson   Json?              @map("artifact_json")
-  /// Host agent apply log (observable provision step).
-  applyLog       String?            @map("apply_log") @db.Text
-  /// Optional target URL for cutoverEndpoint.
-  targetBaseUrl  String?            @map("target_base_url")
-  createdAt      DateTime           @default(now()) @map("created_at")
-  updatedAt      DateTime           @updatedAt @map("updated_at")
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+enum PlacementPackaging {
+  PER_SATELLITE
+  SINGLE_STACK
+}
+
+/// One platform Start for an org: many satellite PlacementJobs under one recipe.
+model PlacementBatch {
+  id             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                @map("organization_id") @db.Uuid
+  satelliteKeys  String[]              @map("satellite_keys")
+  fromTopology   DeploymentTopology    @map("from_topology")
+  toTopology     DeploymentTopology    @map("to_topology")
+  packaging      PlacementPackaging    @default(PER_SATELLITE)
+  targetHost     String?               @map("target_host")
+  /// Wave 2 clone recipe (services, images, compose plan). Not applied by orch itself.
+  recipeJson     Json?                 @map("recipe_json")
+  status         PlacementJobStatus    @default(PENDING)
+  errorMessage   String?               @map("error_message")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jobs           PlacementJob[]
+  processLogs    PlacementProcessLog[]
 
   @@index([organizationId])
   @@index([status])
+  @@map("placement_batches")
+}
+
+model PlacementJob {
+  id             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                @map("organization_id") @db.Uuid
+  batchId        String?               @map("batch_id") @db.Uuid
+  satelliteKey   String                @map("satellite_key")
+  fromTopology   DeploymentTopology    @map("from_topology")
+  toTopology     DeploymentTopology    @map("to_topology")
+  status         PlacementJobStatus    @default(PENDING)
+  errorMessage   String?               @map("error_message")
+  /// Metadata from exportSlice (counts + format note).
+  sliceMeta      Json?                 @map("slice_meta")
+  /// Durable slice artifact path or opaque ref for host agent download.
+  artifactRef    String?               @map("artifact_ref")
+  /// Curated org-slice JSON body (lab / host restore). Prefer artifactRef for large blobs.
+  artifactJson   Json?                 @map("artifact_json")
+  /// Host agent apply log (observable provision step).
+  applyLog       String?               @map("apply_log") @db.Text
+  /// Optional target URL for cutoverEndpoint.
+  targetBaseUrl  String?               @map("target_base_url")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  batch          PlacementBatch?       @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  processLogs    PlacementProcessLog[]
+
+  @@index([organizationId])
+  @@index([batchId])
+  @@index([status])
   @@map("placement_jobs")
+}
+
+/// Append-only process timeline for placement batches/jobs (Wave 2+).
+model PlacementProcessLog {
+  id        String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  batchId   String?         @map("batch_id") @db.Uuid
+  jobId     String?         @map("job_id") @db.Uuid
+  phase     String
+  level     String          @default("INFO")
+  message   String
+  detail    Json?
+  createdAt DateTime        @default(now()) @map("created_at")
+  batch     PlacementBatch? @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  job       PlacementJob?   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, createdAt])
+  @@index([jobId, createdAt])
+  @@map("placement_process_logs")
 }
 
 enum WorkforceAssignmentStatus {
@@ -1954,12 +2010,16 @@ model Organization {
   platformLoyaltyLedger            PlatformLoyaltyLedger[]
   satelliteEndpoints               SatelliteEndpoint[]
   placementJobs                    PlacementJob[]
+  placementBatches                 PlacementBatch[]
   satelliteEntitlements            OrganizationSatelliteEntitlement[]
   commercialOutlets                CommercialOutlet[]
   moduleGraces                     OrganizationModuleGrace[]
   channelsFrom                     OrganizationSatelliteChannel[]     @relation("ChannelFromOrg")
   channelsTo                       OrganizationSatelliteChannel[]     @relation("ChannelToOrg")
   commsThreads                     CommsThread[]
+  docCases                         DocCase[]
+  docLocations                     DocLocation[]
+  docRouteTemplates                DocRouteTemplate[]
   workforceAssignments             WorkforceAssignment[]
   workforceEmployments             WorkforceEmployment[]
   workforceTimesheets              WorkforceTimesheet[]
@@ -1987,6 +2047,7 @@ model Organization {
   clinicCutoverAsHotel             ClinicCutoverPolicy[]              @relation("ClinicCutoverHotelOrg")
   fiscalHardwareDevices            FiscalHardwareDevice[]
   paymentMethods                   OrgPaymentMethod[]
+  accessCredentials                OrganizationAccessCredential[]
   owner                            User?                              @relation("OrganizationOwner", fields: [ownerId], references: [id])
   parentOrg                        Organization?                      @relation("OrgParent", fields: [parentOrgId], references: [id])
   departments                      Organization[]                     @relation("OrgParent")
@@ -1994,11 +2055,28 @@ model Organization {
   agencyPropertyGrants             AgencyPropertyGrant[]
   buyerOrgGrants                   BuyerOrgGrant[]
   profile                          OrganizationProfile?
+  guestApp                         OrganizationGuestApp?
 
   @@index([ownerId])
   @@index([parentOrgId])
   @@index([holdingId])
   @@map("organizations")
+}
+
+/// Org-owned connector keys. API base URLs stay in the platform catalog, not in this row.
+model OrganizationAccessCredential {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  connectorCode  String       @map("connector_code") @db.VarChar(40)
+  publicFields   Json         @default("{}") @map("public_fields")
+  secretCipher   String?      @map("secret_cipher")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, connectorCode])
+  @@index([organizationId])
+  @@map("organization_access_credentials")
 }
 
 enum OrgContactKind {
@@ -2047,6 +2125,29 @@ model OrganizationProfile {
   addresses            OrganizationAddress[]
 
   @@map("organization_profiles")
+}
+
+/// White-label guest phone brand. Not letterhead (CP-GUEST-APP-01).
+model OrganizationGuestApp {
+  organizationId    String       @id @map("organization_id") @db.Uuid
+  enabled           Boolean      @default(false)
+  displayName       String?      @map("display_name")
+  primaryColor      String?      @map("primary_color") @db.VarChar(7)
+  logoUrl           String?      @map("logo_url")
+  locale            String?      @db.VarChar(2)
+  deskPhone         String?      @map("desk_phone")
+  /// Hotel tab catalog blocks (packages, season, how to get there) — CP-GUEST-APP-02.
+  catalogJson       Json?        @map("catalog_json")
+  postStayMessage   String?      @map("post_stay_message")
+  offersJson        Json?        @map("offers_json")
+  doctorOnDutyPhone String?      @map("doctor_on_duty_phone")
+  leadAlertMinutes  Int?         @map("lead_alert_minutes")
+  enabledOrderKinds Json?        @map("enabled_order_kinds")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_guest_apps")
 }
 
 model OrganizationContactChannel {
@@ -2243,6 +2344,233 @@ model CommsParticipant {
   @@unique([threadId, userId])
   @@index([userId, readAt])
   @@map("comms_participants")
+}
+
+/// Organization document register (CP-DOC-01). Not a satellite and not HR personnel orders.
+enum DocKind {
+  INCOMING
+  OUTGOING
+  INTERNAL
+}
+
+enum DocStatus {
+  DRAFT
+  REGISTERED
+  IN_ROUTE
+  COMPLETED
+  REJECTED
+  ARCHIVED
+}
+
+enum DocLocationKind {
+  SITE
+  ROOM
+  RACK
+  SHELF
+  BOX
+  FOLDER
+}
+
+enum DocStepAction {
+  APPROVE
+  SIGN
+  EXECUTE
+  ACKNOWLEDGE
+}
+
+enum DocRouteInstanceStatus {
+  OPEN
+  COMPLETED
+  REJECTED
+}
+
+enum DocTaskStatus {
+  OPEN
+  DONE
+  CANCELLED
+}
+
+enum DocDecisionOutcome {
+  APPROVED
+  REJECTED
+  ACKNOWLEDGED
+}
+
+/// ANY: first decision closes the step. ALL: every assignee must decide.
+enum DocStepJoin {
+  ANY
+  ALL
+}
+
+model DocLocation {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  parentId       String?         @map("parent_id") @db.Uuid
+  kind           DocLocationKind
+  name           String          @db.VarChar(255)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent         DocLocation?    @relation("DocLocationTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children       DocLocation[]   @relation("DocLocationTree")
+  cases          DocCase[]
+
+  @@index([organizationId, parentId])
+  @@map("doc_locations")
+}
+
+model DocRouteTemplate {
+  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  name           String             @db.VarChar(255)
+  docKind        DocKind            @map("doc_kind")
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  steps          DocRouteStep[]
+  edges          DocRouteEdge[]
+  cases          DocCase[]
+  instances      DocRouteInstance[]
+
+  @@index([organizationId, docKind])
+  @@map("doc_route_templates")
+}
+
+/// Ordered list. Kind resolves through workforce org structure, never a surname.
+model DocRouteStep {
+  id             String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  templateId     String                        @map("template_id") @db.Uuid
+  stepOrder      Int                           @map("step_order")
+  kind           WorkforceApprovalStepKind
+  action         DocStepAction
+  appliesTo      WorkforceApprovalStepAudience @default(ALWAYS) @map("applies_to")
+  dueDays        Int                           @default(3) @map("due_days")
+  join           DocStepJoin                   @default(ANY)
+  /// Run this step only for this document kind. Empty means every kind.
+  skipUnlessKind DocKind?                      @map("skip_unless_kind")
+  /// Skip the step when the card amount is empty or below this AZN threshold.
+  minAmount      Decimal?                      @map("min_amount") @db.Decimal(19, 4)
+  chainOffset    Int?                          @map("chain_offset")
+  minGradeLevel  Int?                          @map("min_grade_level")
+  orgUnitId      String?                       @map("org_unit_id") @db.Uuid
+  positionId     String?                       @map("position_id") @db.Uuid
+  /// Display only. Empty means the canvas stacks the node by step order.
+  layoutX        Int?                          @map("layout_x")
+  layoutY        Int?                          @map("layout_y")
+  template       DocRouteTemplate              @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, stepOrder])
+  @@map("doc_route_steps")
+}
+
+/// One chain. fromStepOrder empty is the start arrow. Not a second route definition.
+model DocRouteEdge {
+  id            String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  templateId    String           @map("template_id") @db.Uuid
+  fromStepOrder Int?             @map("from_step_order")
+  toStepOrder   Int              @map("to_step_order")
+  template      DocRouteTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@map("doc_route_edges")
+}
+
+model DocCase {
+  id                 String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId     String            @map("organization_id") @db.Uuid
+  kind               DocKind
+  status             DocStatus         @default(DRAFT)
+  regNumber          String?           @map("reg_number") @db.VarChar(32)
+  registeredAt       DateTime?         @map("registered_at") @db.Timestamptz(6)
+  title              String            @db.VarChar(500)
+  correspondent      String?           @db.VarChar(500)
+  summary            String?           @db.Text
+  dueOn              DateTime?         @map("due_on") @db.Date
+  /// Contract amount in AZN. Empty means the card has no amount.
+  amount             Decimal?          @db.Decimal(19, 4)
+  orgUnitId          String?           @map("org_unit_id") @db.Uuid
+  replyToId          String?           @map("reply_to_id") @db.Uuid
+  authorEmploymentId String            @map("author_employment_id") @db.Uuid
+  locationId         String?           @map("location_id") @db.Uuid
+  templateId         String?           @map("template_id") @db.Uuid
+  createdByUserId    String            @map("created_by_user_id") @db.Uuid
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  location           DocLocation?      @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  template           DocRouteTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  replyTo            DocCase?          @relation("DocReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies            DocCase[]         @relation("DocReply")
+  files              DocFile[]
+  route              DocRouteInstance?
+
+  @@unique([organizationId, regNumber])
+  @@index([organizationId, status, kind])
+  @@map("doc_cases")
+}
+
+model DocFile {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  caseId      String   @map("case_id") @db.Uuid
+  fileName    String   @map("file_name") @db.VarChar(255)
+  contentType String   @default("text/plain") @map("content_type") @db.VarChar(128)
+  body        String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  case        DocCase  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@map("doc_files")
+}
+
+model DocRouteInstance {
+  id                 String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId     String                 @map("organization_id") @db.Uuid
+  caseId             String                 @unique @map("case_id") @db.Uuid
+  templateId         String                 @map("template_id") @db.Uuid
+  status             DocRouteInstanceStatus @default(OPEN)
+  currentStep        Int                    @map("current_step")
+  /// Current step resolved to nobody. A clerk must assign an employment.
+  awaitingAssignment Boolean                @default(false) @map("awaiting_assignment")
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  case               DocCase                @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  template           DocRouteTemplate       @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  tasks              DocRouteTask[]
+  decisions          DocRouteDecision[]
+
+  @@index([organizationId, status])
+  @@map("doc_route_instances")
+}
+
+model DocRouteTask {
+  id                   String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  instanceId           String           @map("instance_id") @db.Uuid
+  stepOrder            Int              @map("step_order")
+  action               DocStepAction
+  status               DocTaskStatus    @default(OPEN)
+  assigneeEmploymentId String           @map("assignee_employment_id") @db.Uuid
+  assigneeUserId       String?          @map("assignee_user_id") @db.Uuid
+  dueAt                DateTime?        @map("due_at") @db.Timestamptz(6)
+  overdueNotifiedAt    DateTime?        @map("overdue_notified_at") @db.Timestamptz(6)
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  instance             DocRouteInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([assigneeUserId, status])
+  @@index([instanceId, stepOrder])
+  @@map("doc_route_tasks")
+}
+
+model DocRouteDecision {
+  id          String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  instanceId  String             @map("instance_id") @db.Uuid
+  stepOrder   Int                @map("step_order")
+  outcome     DocDecisionOutcome
+  actorUserId String             @map("actor_user_id") @db.Uuid
+  reason      String?            @db.Text
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  instance    DocRouteInstance   @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId, createdAt])
+  @@map("doc_route_decisions")
 }
 
 /// Multi-entity holding group (control-plane SoT). Distinct from DEPARTMENT parentOrgId routing.

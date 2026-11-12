@@ -1,4 +1,3 @@
-import { getCalendarDay } from "@era/satellite-kit";
 import { addBakuDays, bakuDateKey, bakuDayBounds, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 import { prisma } from "@/lib/prisma";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
@@ -64,8 +63,7 @@ function toClinicDay(
 /**
  * Stay days from check-in inclusive through the day before checkout.
  * Layer, highest wins: manual clinic-day override, then the week template
- * (`closedWeekdays`). The country calendar may close an otherwise open day
- * (holiday / mourning / isWorking false) but must not open a closed weekday.
+ * (`closedWeekdays`). The country calendar does not open or close a clinic day.
  * Saturday is a short day (uses shortenedDay* hours). Saturday end column is ignored.
  */
 export async function listClinicDays(fromYmd: string, toYmd: string): Promise<ClinicDay[]> {
@@ -114,15 +112,7 @@ export async function listClinicDays(fromYmd: string, toYmd: string): Promise<Cl
       days.push(toClinicDay(ymd, "closed", 0, 0, false));
       continue;
     }
-    const country = await getCalendarDay(ymd);
-    const countryHoliday = country?.dayType === "holiday" || country?.dayType === "mourning";
-    const saturdayStaysOpen = weekday === 6;
-    const countryClosed = country?.isWorking === false && !saturdayStaysOpen;
-    if (countryHoliday || countryClosed) {
-      days.push(toClinicDay(ymd, "closed", 0, 0, false));
-      continue;
-    }
-    if (country?.dayType === "shortened" || weekday === 6) {
+    if (weekday === 6) {
       days.push(toClinicDay(ymd, "short", shortStart, shortEnd, false));
       continue;
     }
@@ -195,4 +185,40 @@ export function nextWorkingYmd(days: ClinicDay[], fromYmd: string): string | nul
     if (day.ymd >= fromYmd && day.working) return day.ymd;
   }
   return null;
+}
+
+export async function listClinicDayOverrideRows() {
+  return prisma.clinicDayOverride.findMany({ orderBy: { dayYmd: "asc" } });
+}
+
+export async function upsertClinicDayOverride(data: {
+  organizationId: string;
+  dayYmd: string;
+  closed: boolean;
+  dayKind: "WORKING" | "SHORT" | "CLOSED";
+  startHour: number | null;
+  endHour: number | null;
+  note: string | null;
+}) {
+  return prisma.clinicDayOverride.upsert({
+    where: {
+      organizationId_dayYmd: { organizationId: data.organizationId, dayYmd: data.dayYmd },
+    },
+    create: {
+      organizationId: data.organizationId,
+      dayYmd: data.dayYmd,
+      closed: data.closed,
+      dayKind: data.dayKind,
+      startHour: data.startHour,
+      endHour: data.endHour,
+      note: data.note,
+    },
+    update: {
+      closed: data.closed,
+      dayKind: data.dayKind,
+      startHour: data.startHour,
+      endHour: data.endHour,
+      note: data.note,
+    },
+  });
 }

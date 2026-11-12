@@ -6,6 +6,7 @@ import {
   SYSTEM_ROLE_NAMES,
   isSystemFnbRoleCode,
   parsePermissions,
+  expandFnbCatalog,
   permissionsJsonNeedsTemplate,
   rolePermissionsForEdition,
   serializePermissions,
@@ -14,7 +15,7 @@ import {
 } from "@/lib/auth/permissions";
 import { normalizeFnbEdition } from "@/lib/fnb-edition";
 
-export const FNB_PERMISSION_CATALOG_VERSION = 5;
+export const FNB_PERMISSION_CATALOG_VERSION = 7;
 
 type RoleRow = {
   id: string;
@@ -163,6 +164,9 @@ async function upsertSystemRole(
       const current = parsePermissions(existing.permissionsJson);
       const extra = [
         PERMISSIONS.SCREEN_SALES,
+        PERMISSIONS.TICKETS_LIMIT,
+        PERMISSIONS.TICKETS_IKRAM,
+        PERMISSIONS.TICKETS_MOVE,
         PERMISSIONS.HOTEL_REVENUE_CODES,
         PERMISSIONS.SCREEN_ADMIN_BUFFET,
         PERMISSIONS.ADMIN_BUFFET,
@@ -170,6 +174,10 @@ async function upsertSystemRole(
       if (extra.length > 0) {
         patch.permissionsJson = serializePermissions([...current, ...extra]);
       }
+    }
+    const base = parsePermissions(patch.permissionsJson ?? existing.permissionsJson);
+    if (base.length > 0) {
+      patch.permissionsJson = serializePermissions(expandFnbCatalog(base));
     }
   }
 
@@ -193,9 +201,15 @@ async function bumpCatalogVersionIfNeeded(
 ): Promise<void> {
   const ver = row.permissionCatalogVersion ?? 0;
   if (ver >= FNB_PERMISSION_CATALOG_VERSION) return;
+  const current = parsePermissions(row.permissionsJson);
   await db.role.update({
     where: { id: row.id },
-    data: { permissionCatalogVersion: FNB_PERMISSION_CATALOG_VERSION },
+    data: {
+      permissionCatalogVersion: FNB_PERMISSION_CATALOG_VERSION,
+      ...(current.length > 0
+        ? { permissionsJson: serializePermissions(expandFnbCatalog(current)) }
+        : {}),
+    },
   });
 }
 

@@ -14,8 +14,6 @@ import { IsNumber, IsOptional, IsString } from "class-validator";
 import { BankAuthGuard } from "../../auth/bank-auth.guard";
 import { BankingModuleGuard, RequireBankingModule } from "../../auth/banking-module.guard";
 import { LoansDeepService } from "../loans/loans-deep.service";
-import { PrismaService } from "../../prisma/prisma.service";
-import { BankOrgConfig } from "../../common/bank-org.config";
 import { BankCustomerAuthGuard, type BankCustomerRequest } from "./bank-customer-auth.guard";
 
 class CreateLoanApplicationDto {
@@ -38,19 +36,11 @@ class CreateLoanApplicationDto {
 export class DboLoanApplicationsController {
   constructor(
     private readonly deep: LoansDeepService,
-    private readonly prisma: PrismaService,
-    private readonly bankOrg: BankOrgConfig,
   ) {}
 
   @Get()
   list(@Req() req: BankCustomerRequest) {
-    return this.prisma.loanApplication.findMany({
-      where: {
-        bankOrgId: this.bankOrg.bankOrgId,
-        customerId: req.customerAuth.sub,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    return this.deep.listApplicationsForCustomer(req.customerAuth.sub);
   }
 
   @Post()
@@ -66,31 +56,19 @@ export class DboLoanApplicationsController {
 
   @Get(":id")
   async detail(@Req() req: BankCustomerRequest, @Param("id") id: string) {
-    const app = await this.prisma.loanApplication.findFirst({
-      where: {
-        id,
-        bankOrgId: this.bankOrg.bankOrgId,
-        customerId: req.customerAuth.sub,
-      },
-    });
+    const app = await this.deep.findApplicationForCustomer(id, req.customerAuth.sub);
     if (!app) throw new NotFoundException("Loan application not found");
     return app;
   }
 
   @Post(":id/submit")
   async submit(@Req() req: BankCustomerRequest, @Param("id") id: string) {
-    const app = await this.prisma.loanApplication.findFirst({
-      where: {
-        id,
-        bankOrgId: this.bankOrg.bankOrgId,
-        customerId: req.customerAuth.sub,
-      },
-    });
+    const app = await this.deep.findApplicationForCustomer(id, req.customerAuth.sub);
     if (!app) throw new NotFoundException("Loan application not found");
     if (app.customerId !== req.customerAuth.sub) {
       throw new ForbiddenException("Not in customer scope");
     }
     await this.deep.submitApplication(id);
-    return this.prisma.loanApplication.findFirst({ where: { id } });
+    return this.deep.findApplicationById(id);
   }
 }

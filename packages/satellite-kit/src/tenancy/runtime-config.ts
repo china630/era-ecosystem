@@ -80,6 +80,9 @@ const runtimeBodySchema = z.object({
   activeModules: z.array(z.string().min(1).max(120)).max(500).optional(),
   hotelModules: z.record(z.boolean()).optional(),
   deploymentTopology: z.enum(["SHARED", "DEDICATED", "ONPREM"]).optional(),
+  /** Placement hop write-freeze (423 on mutations). */
+  placementFreeze: z.boolean().optional(),
+  placementFrozenOrgIds: z.array(z.string().uuid()).max(500).optional(),
   edition: z.string().min(1).max(120).optional(),
   updatedBy: z.string().max(200).optional(),
   /** Per-org Elektraweb dual-run policy — upserted by satellite handler, not process-wide memory. */
@@ -228,6 +231,20 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       : undefined;
     const selfPublic =
       body.satellitePublicBaseUrl?.trim() || body.publicBaseUrl?.trim() || undefined;
+    const currentMem = satelliteRuntimeConfig();
+    let placementFrozenOrgIds = body.placementFrozenOrgIds;
+    if (
+      placementFrozenOrgIds === undefined &&
+      body.organizationId &&
+      body.placementFreeze !== undefined
+    ) {
+      const prev = Array.isArray(currentMem.placementFrozenOrgIds)
+        ? currentMem.placementFrozenOrgIds
+        : [];
+      placementFrozenOrgIds = body.placementFreeze
+        ? [...new Set([...prev, body.organizationId])]
+        : prev.filter((id) => id !== body.organizationId);
+    }
     const patch: SatelliteRuntimeConfig = {
       // SHARED: do not stamp process-wide blob with last Sync org id.
       organizationId: isShared ? undefined : body.organizationId,
@@ -240,6 +257,8 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       activeModules: body.activeModules,
       hotelModules: body.hotelModules,
       deploymentTopology: body.deploymentTopology,
+      placementFreeze: isShared ? undefined : body.placementFreeze,
+      placementFrozenOrgIds,
       edition: isShared ? undefined : body.edition,
       // DEDICATED/ONPREM: keep on process memory. SHARED uses per-org cache below.
       orgProfile: isShared ? undefined : orgProfile,

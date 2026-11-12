@@ -891,6 +891,28 @@ export class EmployeesService {
     };
   }
 
+  /** S2S: contract salary + vacation balance by CP employment mirror id. */
+  async findContractSnapshotByCpEmployment(
+    organizationId: string,
+    cpEmploymentId: string,
+  ): Promise<{
+    salary: InstanceType<typeof Decimal> | null;
+    vacationDaysBalance: InstanceType<typeof Decimal> | null;
+    employmentStatus: EmployeeEmploymentStatus;
+  } | null> {
+    return this.prisma.employee.findFirst({
+      where: {
+        organizationId,
+        cpEmploymentId: cpEmploymentId.trim(),
+      },
+      select: {
+        salary: true,
+        vacationDaysBalance: true,
+        employmentStatus: true,
+      },
+    });
+  }
+
   /**
    * S2S opening stamp for CP migration (salary + invert vacation so as-of matches the file).
    * Does not change used labor-leave days (those stay Finance-local).

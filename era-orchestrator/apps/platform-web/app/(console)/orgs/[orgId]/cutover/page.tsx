@@ -38,9 +38,7 @@ export default function OrgCutoverPage() {
   const [cutoverNotice, setCutoverNotice] = useState<FieldNotice | null>(null);
   const [savingBridge, setSavingBridge] = useState(false);
   const [savingCutover, setSavingCutover] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
 
   const visible = showCutoverTab(industries);
 
@@ -109,47 +107,6 @@ export default function OrgCutoverPage() {
   useEffect(() => {
     void reload();
   }, [reload]);
-
-  async function syncSatelliteBindings() {
-    if (!token || !orgId) return;
-    setSyncing(true);
-    setMessage("");
-    try {
-      const res = await orchFetch(`/v1/admin/orgs/${orgId}/sync-satellite-bindings`, {
-        token,
-        method: "POST",
-      });
-      if (!res.ok) {
-        setMessage(t("syncFailed", { status: res.status }));
-        return;
-      }
-      const body = (await res.json()) as {
-        results?: Array<{ satelliteKey: string; ok: boolean; error?: string }>;
-      };
-      const results = body.results ?? [];
-      const ok = results.filter((r) => r.ok).length;
-      const fail = results.filter((r) => !r.ok);
-      if (results.length === 0) {
-        setMessage(t("syncEmpty"));
-        return;
-      }
-      if (fail.length === 0) {
-        setMessage(t("syncOk", { count: ok }));
-        return;
-      }
-      setMessage(
-        t("syncPartial", {
-          ok,
-          total: results.length,
-          failed: fail
-            .map((f) => `${f.satelliteKey}${f.error ? ` (${f.error.slice(0, 80)})` : ""}`)
-            .join("; "),
-        }),
-      );
-    } finally {
-      setSyncing(false);
-    }
-  }
 
   async function saveElektrawebBridge() {
     if (!token) return;
@@ -246,7 +203,6 @@ export default function OrgCutoverPage() {
   return (
     <div className="space-y-6">
       {loading ? <p className="text-sm text-[#7F8C8D]">{t("loading")}</p> : null}
-      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
 
       {showHotel ? (
         <section className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
@@ -356,14 +312,9 @@ export default function OrgCutoverPage() {
             >
               {savingBridge ? t("saving") : t("saveBridge")}
             </button>
-            <button
-              type="button"
-              className={GHOST_BUTTON_CLASS}
-              disabled={syncing || !token}
-              onClick={() => void syncSatelliteBindings()}
-            >
+            <Link href={`/orgs/${orgId}/connections`} className={GHOST_BUTTON_CLASS}>
               {t("saveThenSync")}
-            </button>
+            </Link>
           </div>
           {bridgeNotice ? (
             <p
@@ -415,14 +366,9 @@ export default function OrgCutoverPage() {
             >
               {savingCutover ? t("saving") : t("saveCutover")}
             </button>
-            <button
-              type="button"
-              className={GHOST_BUTTON_CLASS}
-              disabled={syncing || !token}
-              onClick={() => void syncSatelliteBindings()}
-            >
+            <Link href={`/orgs/${orgId}/connections`} className={GHOST_BUTTON_CLASS}>
               {t("saveThenSync")}
-            </button>
+            </Link>
           </div>
           {cutoverNotice ? (
             <p

@@ -158,11 +158,18 @@ export async function getFolioSummaryForPos(reservationId: string) {
   const balance = folioBalance(guestFolio.charges, guestFolio.payments);
   const naRunning = await isNightAuditRunning();
   const creditLimit = await resolveCreditLimitAzn(res.id);
+  const clinicEarly =
+    (res.status === 'OPTION' || res.status === 'CONFIRMED') &&
+    (await prisma.reservationGuest.findFirst({
+      where: { reservationId: res.id, departedAt: null, clinicAdmittedAt: { not: null } },
+      select: { id: true },
+    }));
+  const chargeable = res.status === 'IN_HOUSE' || Boolean(clinicEarly);
 
-  let allowRoomCharge = res.status === 'IN_HOUSE' && guestFolio.status === 'OPEN';
+  let allowRoomCharge = chargeable && guestFolio.status === 'OPEN';
   let denyReason: string | null = null;
 
-  if (res.status !== 'IN_HOUSE') {
+  if (!chargeable) {
     allowRoomCharge = false;
     denyReason = 'NOT_IN_HOUSE';
   } else if (guestFolio.status !== 'OPEN') {

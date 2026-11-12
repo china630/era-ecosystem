@@ -12,6 +12,7 @@ import {
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { orchFetch } from "../../../lib/orch-api";
 import { useAuth } from "../../../lib/auth-context";
+import { GuestAppSection } from "../../../components/organization/guest-app-section";
 
 type Contact = {
   id?: string;
@@ -404,6 +405,7 @@ export default function OrganizationProfilePage() {
           {reloadLabel}
         </button>
       </div>
+      {token ? <GuestAppSection token={token} /> : null}
     </div>
   );
 }

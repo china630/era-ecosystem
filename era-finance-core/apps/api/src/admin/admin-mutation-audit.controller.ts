@@ -19,8 +19,8 @@ import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
+import { AdminAuditLogsService } from "./audit.service";
 
 function dateRangeFromQuery(
   dateFrom?: string,
@@ -46,7 +46,7 @@ function dateRangeFromQuery(
 @Permissions(CP_PERMISSION.API_LEDGER_READ)
 export class AdminMutationAuditController {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly adminAuditLogs: AdminAuditLogsService,
     private readonly audit: AuditService,
   ) {}
 
@@ -88,8 +88,8 @@ export class AdminMutationAuditController {
       const pageSize = Math.min(100, Math.max(1, pageSizeParsed));
       const skip = (page - 1) * pageSize;
       const [total, items] = await Promise.all([
-        this.prisma.auditLog.count({ where }),
-        this.prisma.auditLog.findMany({
+        this.adminAuditLogs.countMutationAuditLogs(where),
+        this.adminAuditLogs.findManyMutationAuditLogs({
           where,
           orderBy: { createdAt: "desc" },
           skip,
@@ -104,7 +104,7 @@ export class AdminMutationAuditController {
       100,
       Math.max(1, Number.parseInt(takeRaw ?? "50", 10) || 50),
     );
-    const items = await this.prisma.auditLog.findMany({
+    const items = await this.adminAuditLogs.findManyMutationAuditLogs({
       where,
       orderBy: { createdAt: "desc" },
       take,
@@ -133,19 +133,7 @@ export class AdminMutationAuditController {
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
   ) {
-    const row = await this.prisma.auditLog.findFirst({
-      where: { id, organizationId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstNameCipher: true,
-            lastNameCipher: true,
-          },
-        },
-      },
-    });
+    const row = await this.adminAuditLogs.findMutationAuditLogById(organizationId, id);
     if (!row) throw new NotFoundException("Audit log not found");
     return row;
   }

@@ -15,7 +15,7 @@ import { useAuth } from "../../lib/auth-context";
 import { isRestrictedUserRole } from "../../lib/role-utils";
 import { useRequireAuth } from "../../lib/use-require-auth";
 import { useSubscription } from "../../lib/subscription-context";
-import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import { ListPaginationFooter } from "../../components/list-pagination-footer";
 import { PageHeader } from "../../components/layout/page-header";
 import { parseHrEmployeesResponse } from "../../lib/hr-employees-list";
@@ -484,8 +484,9 @@ export default function EmployeesPage() {
       ) : null}
 
       {loading && <p className="text-gray-600">{t("common.loading")}</p>}
-      {!loading && total > 0 && (
+      {!loading && !error && (
         <>
+          {total > 0 ? (
           <div className="md:hidden space-y-3">
             {visibleRows.map((r) => (
               <div
@@ -536,7 +537,8 @@ export default function EmployeesPage() {
               </div>
             ))}
           </div>
-          <div className={`hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}`}>
+          ) : null}
+          <div className={total > 0 ? `hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}` : DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} min-w-[720px]`}>
               <thead>
                 <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
@@ -566,6 +568,9 @@ export default function EmployeesPage() {
                 </tr>
               </thead>
               <tbody>
+                {rows.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={9} message={t("employees.none")} />
+                ) : null}
                 {visibleRows.map((r) => (
                   <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={DATA_TABLE_TD_RIGHT_CLASS}>
@@ -625,9 +630,6 @@ export default function EmployeesPage() {
             </table>
           </div>
         </>
-      )}
-      {!loading && rows.length === 0 && !error && (
-        <EmptyState title={t("employees.none")} description={t("employees.emptyHint")} />
       )}
 
       {!loading && (

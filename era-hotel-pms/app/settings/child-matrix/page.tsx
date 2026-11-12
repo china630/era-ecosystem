@@ -71,7 +71,7 @@ export default function ChildMatrixPage() {
   const { can } = useAuth();
   const t = useTranslations('childMatrix');
   const tc = useTranslations('common');
-  const canWrite = can(PERMISSIONS.MASTER_DATA_MANAGE);
+  const canWrite = can(PERMISSIONS.CHILD_MATRIX_ADMIN);
   const [rows, setRows] = useState<Row[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

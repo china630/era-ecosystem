@@ -151,7 +151,7 @@ export default function GuestDedupReportPage() {
     return <p className="text-[13px] text-[#7F8C8D]">{t('noAccess')}</p>;
   }
 
-  const canMerge = can(PERMISSIONS.RESERVATIONS_WRITE);
+  const canMerge = can(PERMISSIONS.GUESTS_WRITE);
   const survivor = pending
     ? groups.flatMap((group) => group.guests).find((guest) => guest.id === pending.survivorId)
     : null;

@@ -20,7 +20,7 @@ import { apiFetch } from "../../lib/api-client";
 import { parseHrEmployeesResponse } from "../../lib/hr-employees-list";
 import { formatMoneyAzn } from "../../lib/format-money";
 import { useRequireAuth } from "../../lib/use-require-auth";
-import { EmptyState } from "../../components/empty-state";
+import { FinanceEmptyTableRow } from "../../components/finance-empty-table-row";
 import { DepartmentSelect } from "../../components/payroll/department-select";
 import {
   CARD_CONTAINER_CLASS,
@@ -834,14 +834,9 @@ function PayrollPageInner() {
             </div>
           ) : null}
         </div>
-        {!detailId ? (
-          <EmptyState title={t("payroll.emptyRuns")} description={t("payroll.emptyRunsHint")} />
-        ) : slipsFiltered.length === 0 ? (
-          <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-slate-600`}>
-            {departmentId ? "No employees in this department." : t("payroll.emptyRunsHint")}
-          </div>
-        ) : (
+        {!loading ? (
           <>
+              {slipsFiltered.length > 0 ? (
               <div className="md:hidden space-y-3">
                 {slipsFiltered.map((s) => (
                   <div
@@ -894,7 +889,8 @@ function PayrollPageInner() {
                   </div>
                 ))}
               </div>
-              <div className={`hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}`}>
+              ) : null}
+              <div className={slipsFiltered.length > 0 ? `hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}` : DATA_TABLE_VIEWPORT_CLASS}>
                 <table className={`${DATA_TABLE_CLASS} min-w-full`}>
                   <thead className="sticky top-0 z-10 bg-[#F8FAFC] shadow-[0_1px_0_0_#D5DADF]">
                     <tr className="border-b border-[#D5DADF]">
@@ -988,6 +984,14 @@ function PayrollPageInner() {
                     </tr>
                   </thead>
                   <tbody>
+                    {slipsFiltered.length === 0 ? (
+                      <FinanceEmptyTableRow
+                        colSpan={
+                          (showTimesheetCols ? 4 : 0) + (showContractorCol ? 12 : 11)
+                        }
+                        message={!detailId ? t("payroll.emptyRuns") : t("payroll.emptyRuns")}
+                      />
+                    ) : null}
                     {slipsFiltered.map((s) => (
                       <Fragment key={s.id}>
                       <tr className={DATA_TABLE_TR_CLASS}>
@@ -1097,7 +1101,7 @@ function PayrollPageInner() {
                 </table>
               </div>
           </>
-        )}
+        ) : null}
       </section>
 
       <section className="space-y-3">
@@ -1158,9 +1162,20 @@ function PayrollPageInner() {
         ) : null}
         {error && <p className="text-red-600 text-sm">{error}</p>}
         {loading && <p className="text-gray-600">{t("common.loading")}</p>}
-        {!loading && !error && !currentRun && (
-          <EmptyState title={t("payroll.emptyRuns")} description={t("payroll.emptyRunsHint")} />
-        )}
+        {!loading && !error && !currentRun ? (
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={`${DATA_TABLE_CLASS} min-w-full`}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("payroll.slipsTitle")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <FinanceEmptyTableRow colSpan={1} message={t("payroll.emptyRuns")} />
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </section>
 
       <section className="space-y-3">
@@ -1181,11 +1196,7 @@ function PayrollPageInner() {
         <h2 className="text-base font-semibold text-[#34495E]">{t("payroll.tabAbsences")}</h2>
         {absErr && <p className="text-red-600 text-sm">{absErr}</p>}
         {absLoading && <p className="text-gray-600">{t("common.loading")}</p>}
-        {!absLoading && absencesInMonth.length === 0 ? (
-          <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-slate-600`}>
-            —
-          </div>
-        ) : (
+        {!absLoading ? (
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} min-w-full`}>
               <thead>
@@ -1197,6 +1208,9 @@ function PayrollPageInner() {
                 </tr>
               </thead>
               <tbody>
+                {absencesInMonth.length === 0 ? (
+                  <FinanceEmptyTableRow colSpan={4} message={t("common.noRows")} />
+                ) : null}
                 {absencesInMonth.map((a) => (
                   <tr key={a.id} className={DATA_TABLE_TR_CLASS}>
                     <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>
@@ -1214,7 +1228,7 @@ function PayrollPageInner() {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </section>
 
       <VacationCalcModal

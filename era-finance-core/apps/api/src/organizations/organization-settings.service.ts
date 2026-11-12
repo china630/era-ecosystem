@@ -107,8 +107,12 @@ export class OrganizationSettingsService {
           inventoryValuation: valuation,
         };
       }
+      if (dto.asanUserId !== undefined) {
+        throw new BadRequestException(
+          "ASAN ID is stored on the platform access tab (GOV_ETAXES)",
+        );
+      }
       if (
-        dto.asanUserId !== undefined ||
         dto.taxRegime !== undefined ||
         dto.pricesIncludeTax !== undefined ||
         dto.requireEqaimeForDayClose !== undefined ||
@@ -121,10 +125,8 @@ export class OrganizationSettingsService {
           !Array.isArray(baseSettings.tax)
             ? (baseSettings.tax as Record<string, unknown>)
             : {};
-        const trimmed = dto.asanUserId?.trim() || null;
         mergedSettings.tax = {
           ...prevTax,
-          ...(dto.asanUserId !== undefined ? { asanUserId: trimmed } : {}),
           ...(dto.taxRegime !== undefined ? { regime: dto.taxRegime } : {}),
           ...(dto.pricesIncludeTax !== undefined
             ? { pricesIncludeTax: dto.pricesIncludeTax }

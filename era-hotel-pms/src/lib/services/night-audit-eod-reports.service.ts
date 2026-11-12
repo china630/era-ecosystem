@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { reportCancellationSummary } from '@/lib/services/reports-analytics.service';
+import { readSettlement, swapCounterpartRoom } from '@/lib/room-move-settlement';
 
 function dayStart(iso: string) {
   return new Date(`${iso}T00:00:00.000Z`);
@@ -323,6 +324,17 @@ async function listRoomMoves(dateIso: string) {
     orderBy: { effectiveAt: 'asc' },
     take: 500,
   });
+  const actorIds = [
+    ...new Set(rows.map((row) => row.createdByUserId).filter((id): id is string => Boolean(id))),
+  ];
+  const actors =
+    actorIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: actorIds } },
+          select: { id: true, fullName: true },
+        })
+      : [];
+  const actorName = new Map(actors.map((user) => [user.id, user.fullName]));
   return {
     date: dateIso,
     total: rows.length,
@@ -334,7 +346,11 @@ async function listRoomMoves(dateIso: string) {
       toRoom: r.toRoom?.roomNumber ?? null,
       plannedDate: r.effectiveAt.toISOString().slice(0, 10),
       status: r.status,
-      reason: r.notes,
+      reasonCode: r.reasonCode,
+      swapWith: r.reasonCode === 'SWAP' ? swapCounterpartRoom(r.notes) : null,
+      settlement: readSettlement(r.notes),
+      reason: r.reasonCode === 'SWAP' ? null : r.notes,
+      actorName: r.createdByUserId ? (actorName.get(r.createdByUserId) ?? null) : null,
     })),
   };
 }

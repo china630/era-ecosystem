@@ -104,7 +104,7 @@ export default function CompaniesPage() {
   }, [tc]);
 
   useEffect(() => {
-    if (can(PERMISSIONS.MASTER_DATA_MANAGE)) void load();
+    if (can(PERMISSIONS.PARTIES_MANAGE)) void load();
   }, [can, load]);
 
   const filteredRows = useMemo(
@@ -176,7 +176,7 @@ export default function CompaniesPage() {
     setModalOpen(true);
   }
 
-  if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
+  if (!can(PERMISSIONS.PARTIES_MANAGE)) {
     return <p className="text-sm text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 

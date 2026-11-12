@@ -1,4 +1,4 @@
-import { laundryItemDisplayName, pickLaundryUnitPrices } from '@/lib/services/laundry-catalog';
+import { laundryItemDisplayName, pickLaundryUnitPrices } from '@/lib/laundry-catalog-view';
 
 export type LaundryLineView = {
   washQty: number;

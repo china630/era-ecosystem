@@ -28,6 +28,10 @@ import { parsePackageNight, parseRoomChargeNote } from '@/lib/folio-charge-note'
 import { CatalogField, FieldTextarea } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { FolioCheckoutModal } from '@/components/folio/FolioCheckoutModal';
+import {
+  TransferStayAmendModal,
+  type TransferStayDecision,
+} from '@/components/transfers/TransferStayAmendModal';
 import GuestCardModal from '@/components/GuestCardModal';
 import { PassportScanModal } from '@/components/guest-card/PassportScanModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,6 +47,7 @@ import { DepartGuestModal } from '@/components/reservation-card/DepartGuestModal
 import { MoveGuestModal } from '@/components/reservation-card/MoveGuestModal';
 import { RoomMoveReasonModal } from '@/components/reservation-card/RoomMoveReasonModal';
 import { RoomMoveConfirmModal } from '@/components/reservation-card/RoomMoveConfirmModal';
+import { SwapRoomsModal } from '@/components/reservation-card/SwapRoomsModal';
 import { doorTypeNeedsSettlement, type ClassSettlement } from '@/lib/room-move-settlement';
 import type { RoomMoveReason } from '@/lib/services/room-move-door.service';
 import {
@@ -315,7 +320,7 @@ export function ReservationCardEditor({
   const tc = useTranslations('common');
   const locale = useLocale();
   const tRes = useTranslations('reservationStatus');
-  const { can } = useAuth();
+  const { can, isPlatformSuperAdmin } = useAuth();
 
   const [tab, setTab] = useState<TabId>(initialTab);
   useEffect(() => {
@@ -373,6 +378,14 @@ export function ReservationCardEditor({
   const [roomPayer, setRoomPayer] = useState<'GUEST' | 'AGENCY' | 'COMPANY'>('GUEST');
   const [commissionBasis, setCommissionBasis] = useState<'GROSS' | 'NET'>('GROSS');
   const [commercialAmendOpen, setCommercialAmendOpen] = useState(false);
+  const [transferAmendOpen, setTransferAmendOpen] = useState(false);
+  const transferDecisionsRef = useRef<TransferStayDecision[] | null>(null);
+  const [mobility, setMobility] = useState<{
+    transfers: Array<{ id: string; direction: string; pickupAt: string }>;
+    tours: Array<{ id: string; date: string; agenda: string; status: string }>;
+  }>({ transfers: [], tours: [] });
+  const tt = useTranslations('transfers');
+  const tTours = useTranslations('tours');
   const [commercialAmendReason, setCommercialAmendReason] = useState('');
   const [commercialAmendBusy, setCommercialAmendBusy] = useState(false);
   const [salesContracts, setSalesContracts] = useState<
@@ -395,6 +408,7 @@ export function ReservationCardEditor({
   const [roomStatus, setRoomStatus] = useState('');
   const [roomHkCondition, setRoomHkCondition] = useState('');
   const [departPaxIdx, setDepartPaxIdx] = useState<number | null>(null);
+  const [clinicAdmitIdx, setClinicAdmitIdx] = useState<number | null>(null);
   const [movePaxIdx, setMovePaxIdx] = useState<number | null>(null);
   const [movePromptOpen, setMovePromptOpen] = useState(false);
   const [cardMoveAsk, setCardMoveAsk] = useState<{ askReason: boolean; askSettlement: boolean } | null>(
@@ -485,7 +499,7 @@ export function ReservationCardEditor({
   const [guestCardId, setGuestCardId] = useState<string | null>(null);
   const [guestCardOpenIdReader, setGuestCardOpenIdReader] = useState(false);
   const [passportScanOpen, setPassportScanOpen] = useState(false);
-  const { isPlatformSuperAdmin } = useAuth();
+  const canScanPassport = isPlatformSuperAdmin || can(PERMISSIONS.GUESTS_MRZ);
   const [notesAlertOpen, setNotesAlertOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
@@ -493,6 +507,7 @@ export function ReservationCardEditor({
   const [undoCheckoutOpen, setUndoCheckoutOpen] = useState(false);
   const [undoReason, setUndoReason] = useState('');
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [swapOpen, setSwapOpen] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [restoreTypeId, setRestoreTypeId] = useState('');
   const [restoreRoomId, setRestoreRoomId] = useState('');
@@ -747,6 +762,9 @@ export function ReservationCardEditor({
         departedAt: (g as { departedAt?: string | Date | null }).departedAt
           ? String((g as { departedAt?: string | Date | null }).departedAt)
           : null,
+        clinicAdmittedAt: (g as { clinicAdmittedAt?: string | Date | null }).clinicAdmittedAt
+          ? String((g as { clinicAdmittedAt?: string | Date | null }).clinicAdmittedAt)
+          : null,
       }));
       const nameByGuestId = new Map<string, string>();
       const demoByGuestId = new Map<
@@ -873,6 +891,23 @@ export function ReservationCardEditor({
   }, [historyOpen, reservationId]);
 
   const loadSeq = useRef(0);
+  const loadMobility = useCallback(async (stayId: string) => {
+    try {
+      const res = await fetch(`/api/transfers/stay-open?reservationId=${encodeURIComponent(stayId)}`);
+      if (!res.ok) {
+        setMobility({ transfers: [], tours: [] });
+        return;
+      }
+      const body = await res.json();
+      const payload = body?.data ?? body;
+      setMobility({
+        transfers: Array.isArray(payload?.transfers) ? payload.transfers : [],
+        tours: Array.isArray(payload?.tours) ? payload.tours : [],
+      });
+    } catch {
+      setMobility({ transfers: [], tours: [] });
+    }
+  }, []);
   const load = useCallback(async () => {
     if (!reservationId) return;
     const seq = ++loadSeq.current;
@@ -885,13 +920,14 @@ export function ReservationCardEditor({
       if (!res.ok) throw new Error(json.error ?? tc('loadError'));
       if (requestedId !== reservationId) return;
       applyJson(json);
+      void loadMobility(requestedId);
     } catch (e) {
       if (seq !== loadSeq.current) return;
       reportApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     } finally {
       if (seq === loadSeq.current) setLoading(false);
     }
-  }, [reservationId, tc, applyJson]);
+  }, [reservationId, tc, applyJson, loadMobility]);
 
   useEffect(() => {
     const checkoutAsk =
@@ -1544,6 +1580,7 @@ export function ReservationCardEditor({
       setCancelOpen(false);
       showSuccess(kind === 'noShow' ? t('noShowDone') : t('cancelDone'));
       applyJson(json as Record<string, unknown>);
+      void loadMobility(reservationId);
     } finally {
       setBusy(false);
     }
@@ -2287,6 +2324,7 @@ export function ReservationCardEditor({
     return rows
       .filter((p) => Boolean(p.guestId) || Boolean(p.firstName.trim()) || Boolean(p.lastName.trim()))
       .map((p) => ({
+        id: p.id,
         guestId: p.guestId || null,
         firstName: p.firstName || null,
         lastName: p.lastName || null,
@@ -2299,6 +2337,7 @@ export function ReservationCardEditor({
         passportNo: p.passportNo || null,
         isPrimary: p.isPrimary,
         ownsFolio: p.ownsFolio ?? false,
+        departedAt: p.departedAt || null,
         medicalPackageCode: p.medicalPackageCode?.trim()
           ? p.medicalPackageCode.trim().toUpperCase()
           : null,
@@ -2341,15 +2380,28 @@ export function ReservationCardEditor({
   async function hydratePaxFromSavedGuest(savedId: string) {
     try {
       const res = await fetch(`/api/guests/${savedId}/full`);
-      const json = await res.json().catch(() => ({}));
+      const json = (await res.json().catch(() => ({}))) as {
+        guest?: Record<string, unknown>;
+        firstName?: unknown;
+        lastName?: unknown;
+        middleName?: unknown;
+        fullName?: unknown;
+        birthDate?: unknown;
+        sex?: unknown;
+        nationality?: unknown;
+      };
       if (!res.ok) return;
-      const firstName = String(json.firstName ?? '');
-      const lastName = String(json.lastName ?? '');
-      const fullName = String(json.fullName ?? '').trim();
+      // GET /full is `{ guest, stats }`. A flat body is only a fallback.
+      const guest =
+        json.guest && typeof json.guest === 'object' ? json.guest : (json as Record<string, unknown>);
+      const firstName = String(guest.firstName ?? '');
+      const lastName = String(guest.lastName ?? '');
+      const middleName = String(guest.middleName ?? '');
+      const fullName = String(guest.fullName ?? '').trim();
       const fromFull = fullName ? fullName.split(/\s+/).filter(Boolean) : [];
       const fn = firstName || fromFull[0] || '';
       const ln = lastName || (fromFull.length > 1 ? fromFull.slice(1).join(' ') : '');
-      const birthRaw = json.birthDate ? String(json.birthDate) : '';
+      const birthRaw = guest.birthDate ? String(guest.birthDate) : '';
       const birthDate = birthRaw ? birthRaw.slice(0, 10) : '';
       const prev = paxRef.current;
       let touched = false;
@@ -2360,10 +2412,11 @@ export function ReservationCardEditor({
           ...row,
           firstName: fn || row.firstName,
           lastName: ln || row.lastName,
+          middleName: middleName || row.middleName,
           birthDate: birthDate || row.birthDate,
           age: birthDate ? ageYearsFromBirthDate(birthDate) : row.age,
-          sex: json.sex ? String(json.sex) : row.sex,
-          nationality: json.nationality ? String(json.nationality) : row.nationality,
+          sex: guest.sex ? String(guest.sex) : row.sex,
+          nationality: guest.nationality ? String(guest.nationality) : row.nationality,
         };
       });
       if (!touched) return;
@@ -2530,6 +2583,7 @@ export function ReservationCardEditor({
                   Boolean(p.lastName.trim()),
               )
               .map((p) => ({
+                id: p.id,
                 guestId: p.guestId || null,
                 firstName: p.firstName || null,
                 lastName: p.lastName || null,
@@ -2649,6 +2703,9 @@ export function ReservationCardEditor({
           salesContractId: salesContractId || null,
           roomPayer,
           commissionBasis,
+          ...(transferDecisionsRef.current
+            ? { transferDecisions: transferDecisionsRef.current }
+            : {}),
           creditLimitAzn:
             creditLimitAzn.trim() === '' ? null : Math.round(Number(creditLimitAzn) * 100) / 100,
           useManualRate,
@@ -2711,6 +2768,10 @@ export function ReservationCardEditor({
           setCardMoveAsk({ askReason: data?.status === 'IN_HOUSE', askSettlement: true });
           return;
         }
+        if (json?.code === 'TRANSFER_DATE_PENDING') {
+          setTransferAmendOpen(true);
+          return;
+        }
         const errText = String(json?.error ?? json?.code ?? '');
         if (
           errText === 'COMMERCIAL_AMEND_REQUIRED' ||
@@ -2742,11 +2803,13 @@ export function ReservationCardEditor({
         reportApiError(json, tc('failed'));
         return;
       }
+      transferDecisionsRef.current = null;
       showSuccess(json.movePending ? t('splitStayPlanned') : tc('success'));
       if (isPreArrivalStatus(String(json.status ?? ''))) {
         warnOperationalGaps(json.operationalGaps, t);
       }
       applyJson(json);
+      void loadMobility(reservationId);
     } finally {
       setBusy(false);
     }
@@ -2984,9 +3047,14 @@ export function ReservationCardEditor({
 
   const noteCount = Object.values(notes).filter((v) => v.trim()).length;
 
+  const primaryParty = pax.find((row) => row.isPrimary) ?? pax[0];
+  const primaryPartyName = [primaryParty?.firstName, primaryParty?.middleName, primaryParty?.lastName]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
   const cardTitle = isCreate
     ? tb('reservationCardTitle')
-    : `${guest?.fullName?.trim() || tb('reservationCardTitle')}${vipType ? ` · VIP` : ''}`;
+    : `${primaryPartyName || guest?.fullName?.trim() || tb('reservationCardTitle')}${vipType ? ` · VIP` : ''}`;
 
   const cardSubtitle = isCreate
     ? t('newReservation')
@@ -3086,6 +3154,14 @@ export function ReservationCardEditor({
       (status === 'OPTION' || status === 'CONFIRMED' || status === 'CHECKED_OUT') &&
       can(PERMISSIONS.RESERVATIONS_CANCEL)
         ? () => setDeleteOpen(true)
+        : undefined,
+    onSwapRooms:
+      !isCreate &&
+      status === 'IN_HOUSE' &&
+      Boolean(roomId) &&
+      !isLocked &&
+      can(PERMISSIONS.RESERVATIONS_WRITE)
+        ? () => setSwapOpen(true)
         : undefined,
   };
 
@@ -3269,6 +3345,32 @@ export function ReservationCardEditor({
                     })
                 : undefined
             }
+            mobilityChips={
+              isCreate
+                ? []
+                : [
+                    ...mobility.transfers.map((row) => ({
+                      key: `xfer-${row.id}`,
+                      label: row.direction === 'OUT' ? tt('directionOut') : tt('directionIn'),
+                      value: String(row.pickupAt).slice(0, 16).replace('T', ' '),
+                      onClick: () => {
+                        window.open(`/transfers?reservationId=${reservationId}`, '_blank');
+                      },
+                    })),
+                    ...(mobility.tours.length
+                      ? [
+                          {
+                            key: 'tours',
+                            label: tTours('title'),
+                            value: String(mobility.tours.length),
+                            onClick: () => {
+                              window.open('/tours', '_blank');
+                            },
+                          },
+                        ]
+                      : []),
+                  ]
+            }
           />
           <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <ReservationCardLeftPanel
@@ -3336,6 +3438,7 @@ export function ReservationCardEditor({
                     toRoom?: { roomNumber: string } | null;
                     reasonCode?: string | null;
                     notes?: string | null;
+                    createdByName?: string | null;
                   }>)
                 : []
             }
@@ -3417,6 +3520,7 @@ export function ReservationCardEditor({
             >
               {tab === 'guests' && (
                 <ReservationCardGuestsTab
+                  reservationId={isCreate ? null : reservationId}
                   isCreate={isCreate}
                   guestId={guestId}
                   guestOptions={guestOptions}
@@ -3434,6 +3538,10 @@ export function ReservationCardEditor({
                   onVipType={setVipType}
                   onTripReason={setTripReason}
                   partyOpsEnabled={!isCreate && status === 'IN_HOUSE'}
+                  clinicAdmitEnabled={
+                    !isCreate && isPreArrivalStatus(status) && arrivalReached
+                  }
+                  onClinicAdmit={(idx) => setClinicAdmitIdx(idx)}
                   onDepartGuest={(idx) => setDepartPaxIdx(idx)}
                   onMoveGuest={
                     siblingStays.length > 1 ? (idx) => setMovePaxIdx(idx) : undefined
@@ -3445,7 +3553,7 @@ export function ReservationCardEditor({
                     setGuestCardOpen(true);
                   }}
                   onScanId={
-                    isPlatformSuperAdmin
+                    canScanPassport
                       ? (id, index) => {
                           rememberScanPaxIndex(index ?? null);
                           setGuestCardId(id);
@@ -3568,6 +3676,70 @@ export function ReservationCardEditor({
   const extras = (
     <>
       <ReservationCardSubModals {...subModalProps} />
+      <EraModal
+        open={clinicAdmitIdx != null}
+        title={
+          clinicAdmitIdx != null && pax[clinicAdmitIdx]?.clinicAdmittedAt
+            ? t('clinicRevokeGuest')
+            : t('clinicAdmitGuest')
+        }
+        subtitle={
+          clinicAdmitIdx != null
+            ? [pax[clinicAdmitIdx]?.firstName, pax[clinicAdmitIdx]?.lastName]
+                .filter(Boolean)
+                .join(' ')
+            : ''
+        }
+        onClose={() => setClinicAdmitIdx(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setClinicAdmitIdx(null)}
+            busy={busy}
+            submitLabel={t('clinicAdmitYes')}
+            onSubmit={() => {
+              const row = clinicAdmitIdx != null ? pax[clinicAdmitIdx] : null;
+              if (!reservationId || !row?.id) return;
+              const admit = !row.clinicAdmittedAt;
+              setBusy(true);
+              void fetch(`/api/reservations/${reservationId}/pax/${row.id}/clinic-admit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admit }),
+              })
+                .then(async (res) => {
+                  const json = await res.json();
+                  if (!res.ok) {
+                    reportApiError(
+                      json?.code === 'GUEST_CHECK_IN_INCOMPLETE'
+                        ? {
+                            error: t('clinicAdmitBlocked', {
+                              details: operationalGapDetails(json.people, (gap) =>
+                                t(operationalGapLabelKey(gap)),
+                              ),
+                            }),
+                          }
+                        : json?.code === 'CLINIC_ADMIT_EARLY'
+                          ? { error: t('clinicAdmitEarly') }
+                          : json,
+                      tc('failed'),
+                    );
+                    return;
+                  }
+                  showSuccess(admit ? t('clinicAdmitDone') : t('clinicRevokeDone'));
+                  setClinicAdmitIdx(null);
+                  await load();
+                })
+                .finally(() => setBusy(false));
+            }}
+          />
+        }
+      >
+        <p className="m-0 text-[13px] text-[#34495E]">
+          {clinicAdmitIdx != null && pax[clinicAdmitIdx]?.clinicAdmittedAt
+            ? t('clinicRevokeHint')
+            : t('clinicAdmitHint')}
+        </p>
+      </EraModal>
       <DepartGuestModal
         open={departPaxIdx != null}
         guestLabel={
@@ -3608,6 +3780,38 @@ export function ReservationCardEditor({
               }
               showSuccess(t('departGuestDone'));
               setDepartPaxIdx(null);
+              await load();
+            })
+            .finally(() => setBusy(false));
+        }}
+      />
+      <SwapRoomsModal
+        open={swapOpen}
+        selfId={reservationId ?? ''}
+        selfRoomNumber={rooms.find((r) => r.id === roomId)?.roomNumber ?? ''}
+        selfChargedTypeId={roomTypeId}
+        selfDoorTypeId={rooms.find((r) => r.id === roomId)?.roomTypeId ?? roomTypeId}
+        priceForType={(typeId) =>
+          nightlyForChargedType(ratePlans, ratePlanId, typeId, adults, checkIn)
+        }
+        busy={busy}
+        onClose={() => setSwapOpen(false)}
+        onConfirm={(input) => {
+          if (!reservationId) return;
+          setBusy(true);
+          void fetch(`/api/reservations/${reservationId}/swap-room`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(input),
+          })
+            .then(async (res) => {
+              const json = await res.json();
+              if (!res.ok) {
+                reportApiError(json, tc('failed'));
+                return;
+              }
+              showSuccess(t('swapRoomsDone'));
+              setSwapOpen(false);
               await load();
             })
             .finally(() => setBusy(false));
@@ -3805,6 +4009,23 @@ export function ReservationCardEditor({
           reservationId={reservationId}
           onClose={() => setCheckoutModalOpen(false)}
           onDone={() => void load()}
+        />
+      ) : null}
+      {reservationId ? (
+        <TransferStayAmendModal
+          open={transferAmendOpen}
+          reservationId={reservationId}
+          checkInIso={mergeDateTime(checkIn, checkInTime) ?? ""}
+          checkOutIso={mergeDateTime(checkOut, checkOutTime) ?? ""}
+          onClose={() => {
+            transferDecisionsRef.current = null;
+            setTransferAmendOpen(false);
+          }}
+          onConfirm={(decisions) => {
+            transferDecisionsRef.current = decisions;
+            setTransferAmendOpen(false);
+            void save();
+          }}
         />
       ) : null}
       <EraModal

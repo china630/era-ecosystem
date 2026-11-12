@@ -1678,6 +1678,9 @@ model Reservation {
   folioRoutingOverrides ReservationFolioRoutingOverride[]
   commercialPeriods ReservationCommercialPeriod[]
   commissionLines   AgencyCommissionLine[]
+  guestBookingRequests GuestBookingRequest[]
+  guestStayOrders   GuestStayOrder[]
+  guestFamilyGrants GuestFamilyGrant[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -1772,11 +1775,183 @@ model ReservationGuest {
   medicalPackageCode String?
   /** Person-level early departure while RoomStay stays IN_HOUSE (ADR hotel-reservation-card-and-party-ops D4). */
   departedAt    DateTime?
+  /** Sanatorium chart opened before the stay is IN_HOUSE. Cleared on hotel check-in. */
+  clinicAdmittedAt DateTime? @map("clinic_admitted_at")
   folio         Folio?
   deposits      FolioDeposit[]
+  guestAppChallenges GuestAppLinkChallenge[]
+  guestAppSessions   GuestAppDeviceSession[]
+  familyGrantsGiven  GuestFamilyGrant[] @relation("FamilyGrantor")
+  familyGrantsReceived GuestFamilyGrant[] @relation("FamilyGrantee")
+  stayOrders         GuestStayOrder[]
 
   @@index([reservationId])
   @@index([guestId])
+  @@index([organizationId])
+}
+
+/** Desk QR / 6-digit link for the guest phone (HOT-GUEST-APP-01). */
+model GuestAppLinkChallenge {
+  id                 String   @id @default(uuid())
+  organizationId     String
+  reservationId      String
+  reservationGuestId String
+  reservationGuest   ReservationGuest @relation(fields: [reservationGuestId], references: [id], onDelete: Cascade)
+  codeHash           String
+  expiresAt          DateTime
+  consumedAt         DateTime?
+  createdAt          DateTime @default(now())
+
+  @@index([organizationId, codeHash])
+  @@index([reservationGuestId])
+  @@index([organizationId])
+}
+
+/** One primary phone session per party row. */
+model GuestAppDeviceSession {
+  id                 String    @id @default(uuid())
+  organizationId     String
+  reservationId      String
+  reservationGuestId String
+  reservationGuest   ReservationGuest @relation(fields: [reservationGuestId], references: [id], onDelete: Cascade)
+  tokenHash          String    @unique
+  revokedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  lastSeenAt         DateTime  @default(now())
+
+  @@index([reservationGuestId])
+  @@index([organizationId])
+}
+
+enum GuestBookingRequestStatus {
+  REQUESTED
+  ANSWERED
+  CANCELLED
+}
+
+/** Guest phone “I want to come” request (HOT-GUEST-APP-03). Not a live room sale. */
+model GuestBookingRequest {
+  id             String                   @id @default(uuid())
+  organizationId String
+  checkInDate    DateTime
+  checkOutDate   DateTime
+  adults         Int                      @default(1)
+  children       Int                      @default(0)
+  packageNote    String?
+  contactPhone   String?
+  contactName    String?
+  status         GuestBookingRequestStatus @default(REQUESTED)
+  reservationId  String?
+  reservation    Reservation?             @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  /** Device session that created the request (optional anonymous org-scoped). */
+  createdByTokenHash String?
+  staffNote      String?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  @@index([organizationId, status])
+  @@index([reservationId])
+  @@index([organizationId])
+}
+
+enum GuestStayOrderKind {
+  HOUSEKEEPING
+  DND
+  TOWELS
+  WATER
+  MINIBAR
+  WAKEUP
+  LATE_CHECKOUT
+  ARRIVAL_TIME
+}
+
+enum GuestStayOrderStatus {
+  QUEUED
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+/** In-stay guest service request (HOT-GUEST-APP-04). Not ConciergeOrder. */
+model GuestStayOrder {
+  id                 String              @id @default(uuid())
+  organizationId     String
+  reservationId      String
+  reservation        Reservation         @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  reservationGuestId String
+  reservationGuest   ReservationGuest    @relation(fields: [reservationGuestId], references: [id], onDelete: Cascade)
+  kind               GuestStayOrderKind
+  status             GuestStayOrderStatus @default(REQUESTED)
+  note               String?
+  scheduledAt        DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([organizationId, status])
+  @@index([reservationId])
+  @@index([reservationGuestId])
+  @@index([organizationId])
+}
+
+/** Family Care grant: shared trip + other adult timetable only (HOT-GUEST-APP-07). */
+model GuestFamilyGrant {
+  id                 String    @id @default(uuid())
+  organizationId     String
+  reservationId      String
+  reservation        Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  grantorGuestId     String
+  grantor            ReservationGuest @relation("FamilyGrantor", fields: [grantorGuestId], references: [id], onDelete: Cascade)
+  granteeGuestId     String
+  grantee            ReservationGuest @relation("FamilyGrantee", fields: [granteeGuestId], references: [id], onDelete: Cascade)
+  deskConfirmedAt    DateTime?
+  revokedAt          DateTime?
+  createdAt          DateTime  @default(now())
+
+  @@unique([reservationId, grantorGuestId, granteeGuestId])
+  @@index([organizationId])
+  @@index([reservationId])
+}
+
+enum GuestAppOtpChannel {
+  SMS
+  WHATSAPP
+  EMAIL
+}
+
+/** Phone / email OTP challenge (HOT-GUEST-APP-08). SMS/WA adapters are STUB. */
+model GuestAppOtpChallenge {
+  id             String            @id @default(uuid())
+  organizationId String
+  channel        GuestAppOtpChannel
+  destination    String
+  codeHash       String
+  expiresAt      DateTime
+  consumedAt     DateTime?
+  createdAt      DateTime          @default(now())
+
+  @@index([organizationId, destination, codeHash])
+  @@index([organizationId])
+}
+
+enum GuestAppMessageKind {
+  RECEPTION
+  CLINIC
+  MARKETING
+}
+
+/** Guest phone bell inbox (HOT-GUEST-APP-09). Marketing mute does not hide CLINIC. */
+model GuestAppMessage {
+  id                 String             @id @default(uuid())
+  organizationId     String
+  reservationGuestId String?
+  kind               GuestAppMessageKind
+  body               String
+  readAt             DateTime?
+  createdAt          DateTime           @default(now())
+
+  @@index([organizationId, reservationGuestId, createdAt])
+  @@index([organizationId, kind])
   @@index([organizationId])
 }
 

@@ -60,12 +60,9 @@ async function ensureEpisodeAndProgram(
   });
   const autoInstantiate = await shouldAutoInstantiateProgramOnCheckin();
   if (p.programCode && !existingProgram && autoInstantiate) {
-    const fresh = await prisma.clinicalEpisode.findUnique({
-      where: { id: episode.id },
-      select: { anamnesisText: true },
-    });
-    // CLI-55: open episode + intake always; skip physio FIFO until anamnesis filled.
-    if (fresh?.anamnesisText?.trim()) {
+    const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+    const denied = await procedureLaneDenial(episode.id);
+    if (!denied) {
       await instantiateProgramFromTemplate({
         episodeId: episode.id,
         programCode: p.programCode,
@@ -101,7 +98,7 @@ export async function handleGuestCheckedIn(
 /** Close OPEN episodes for a stay that the hotel has already checked out. */
 export async function closeOpenEpisodesForReservation(reservationId: string) {
   const id = reservationId.trim();
-  if (!id) return { closed: 0, cancelled: 0 };
+  if (!id) return { closed: 0, cancelled: 0, cancelledOrderIds: [] as string[] };
   const episodes = await prisma.clinicalEpisode.findMany({
     where: { reservationId: id, status: "OPEN" },
     select: { id: true },
@@ -116,20 +113,33 @@ export async function closeEpisodes(
 ) {
   const ids = [...new Set(episodeIds.map((id) => id.trim()).filter(Boolean))];
   const stayIds = [...new Set(reservationIds.map((id) => id.trim()).filter(Boolean))];
-  if (ids.length === 0 && stayIds.length === 0) return { closed: 0, cancelled: 0 };
+  if (ids.length === 0 && stayIds.length === 0) return { closed: 0, cancelled: 0, cancelledOrderIds: [] as string[] };
+  const episodeMatch = {
+    OR: [
+      ...(ids.length > 0 ? [{ id: { in: ids } }] : []),
+      ...(stayIds.length > 0 ? [{ reservationId: { in: stayIds }, status: "OPEN" as const }] : []),
+    ],
+  };
+  await prisma.clinicalEpisode.updateMany({
+    where: { ...episodeMatch, status: "OPEN" },
+    data: { status: "CLOSED", closedAt: new Date(), roomNumber: null },
+  });
   if (ids.length > 0) {
     await prisma.clinicalEpisode.updateMany({
-      where: { id: { in: ids }, status: "OPEN" },
-      data: { status: "CLOSED", closedAt: new Date() },
+      where: { id: { in: ids }, status: "CLOSED" },
+      data: { roomNumber: null },
     });
   }
+  const orderMatch = {
+    OR: [
+      ...(ids.length > 0 ? [{ clinicalEpisodeId: { in: ids } }] : []),
+      ...(stayIds.length > 0 ? [{ reservationId: { in: stayIds } }] : []),
+    ],
+  };
   const live = await prisma.procedureOrder.findMany({
     where: {
-      status: { in: ["SCHEDULED", "CHECKED_IN"] },
-      OR: [
-        ...(ids.length > 0 ? [{ clinicalEpisodeId: { in: ids } }] : []),
-        ...(stayIds.length > 0 ? [{ reservationId: { in: stayIds } }] : []),
-      ],
+      status: { in: ["SCHEDULED", "PROPOSED", "PENDING_PAY"] },
+      ...orderMatch,
     },
     select: { id: true },
   });
@@ -151,16 +161,21 @@ export async function closeEpisodes(
     },
     "unpaid_checkout",
   );
-  if (ids.length > 0) {
-    const { closeUnpaidDiagnostics } = await import(
-      "@/domain/sanatorium/diagnostics-extras.service"
-    );
-    await closeUnpaidDiagnostics(
-      { clinicalEpisodeId: { in: ids } },
-      "unpaid_checkout",
-    );
-  }
-  return { closed: ids.length, cancelled: orderIds.length };
+  await prisma.labOrder.updateMany({
+    where: { status: "ORDERED", ...orderMatch },
+    data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: reason },
+  });
+  await prisma.visit.updateMany({
+    where: {
+      status: "IN_PROGRESS",
+      OR: [
+        ...(ids.length > 0 ? [{ clinicalEpisodeId: { in: ids } }] : []),
+        ...(stayIds.length > 0 ? [{ reservationId: { in: stayIds } }] : []),
+      ],
+    },
+    data: { status: "CANCELLED" },
+  });
+  return { closed: ids.length, cancelled: orderIds.length, cancelledOrderIds: orderIds };
 }
 
 export async function handleGuestCheckedOut(
@@ -221,42 +236,7 @@ export async function handleGuestDeparted(event: SatelliteHotelGuestDepartedEven
 
   const targetIds = episodes.map((e) => e.id);
   if (targetIds.length === 0) return;
-
-  await prisma.clinicalEpisode.updateMany({
-    where: { id: { in: targetIds } },
-    data: { status: "CLOSED", closedAt: new Date() },
-  });
-  const departed = await prisma.procedureOrder.findMany({
-    where: {
-      clinicalEpisodeId: { in: targetIds },
-      status: { in: ["SCHEDULED", "CHECKED_IN"] },
-    },
-    select: { id: true },
-  });
-  const departedIds = departed.map((row) => row.id);
-  if (departedIds.length > 0) {
-    await releaseProcedureOccupancy(departedIds);
-    await prisma.procedureOrder.updateMany({
-      where: { id: { in: departedIds } },
-      data: {
-        status: "CANCELLED",
-        cancelledAt: new Date(),
-        cancelReason: "hotel_guest_departed",
-      },
-    });
-  }
-  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
-  await closeUnpaidExtras(
-    { clinicalEpisodeId: { in: targetIds } },
-    "unpaid_checkout",
-  );
-  const { closeUnpaidDiagnostics } = await import(
-    "@/domain/sanatorium/diagnostics-extras.service"
-  );
-  await closeUnpaidDiagnostics(
-    { clinicalEpisodeId: { in: targetIds } },
-    "unpaid_checkout",
-  );
+  await closeEpisodes(targetIds, "hotel_guest_departed");
 }
 
 export async function handleGuestMoved(event: SatelliteHotelGuestMovedEvent) {
@@ -453,12 +433,8 @@ export async function handleStayProductChanged(
     const nights = nightsBetween(checkIn, checkOut) || 1;
 
     try {
-      const fresh = await prisma.clinicalEpisode.findUnique({
-        where: { id: episode.id },
-        select: { anamnesisText: true },
-      });
-      // CLI-55: skip physio FIFO until anamnesis filled for this course.
-      if (!fresh?.anamnesisText?.trim()) continue;
+      const { procedureLaneDenial } = await import("@/domain/sanatorium/lane-gates");
+      if (await procedureLaneDenial(episode.id)) continue;
 
       if (existing) {
         await recalcProgramQuotas(existing.id, {

@@ -78,7 +78,7 @@ export default function AgencyCommissionPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [agencyOptions, setAgencyOptions] = useState<{ value: string; label: string }[]>([]);
 
-  const canManage = can(PERMISSIONS.MASTER_DATA_MANAGE);
+  const canManage = can(PERMISSIONS.AGENCY_COMMISSION_ADMIN);
 
   async function loadSummary() {
     try {

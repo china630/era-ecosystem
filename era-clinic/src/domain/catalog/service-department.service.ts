@@ -77,4 +77,65 @@ export async function resolveDepartmentWrite(
   };
 }
 
+export async function createServiceDepartmentRow(data: {
+  organizationId: string;
+  code: string;
+  nameAz: string | null;
+  nameRu: string | null;
+  nameEn: string | null;
+  hotelRevenueCode: string | null;
+}) {
+  return prisma.serviceDepartment.create({ data });
+}
+
+export async function getServiceDepartmentById(id: string) {
+  return prisma.serviceDepartment.findFirst({ where: { id } });
+}
+
+export async function updateServiceDepartmentRow(
+  id: string,
+  data: {
+    code?: string;
+    nameAz?: string | null;
+    nameRu?: string | null;
+    nameEn?: string | null;
+    active?: boolean;
+    hotelRevenueCode?: string | null;
+  },
+) {
+  return prisma.serviceDepartment.update({
+    where: { id },
+    data: {
+      ...(data.code != null ? { code: data.code } : {}),
+      ...(data.nameAz !== undefined ? { nameAz: data.nameAz } : {}),
+      ...(data.nameRu !== undefined ? { nameRu: data.nameRu } : {}),
+      ...(data.nameEn !== undefined ? { nameEn: data.nameEn } : {}),
+      ...(data.active !== undefined ? { active: data.active } : {}),
+      ...(data.hotelRevenueCode !== undefined
+        ? { hotelRevenueCode: data.hotelRevenueCode }
+        : {}),
+    },
+  });
+}
+
+export async function syncCatalogDepartmentLabels(departmentCode: string, label: string) {
+  await prisma.serviceCatalogCache.updateMany({
+    where: { departmentCode },
+    data: { department: label },
+  });
+}
+
+export async function countServiceCatalogForDepartment(
+  organizationId: string,
+  departmentCode: string,
+) {
+  return prisma.serviceCatalogCache.count({
+    where: { organizationId, departmentCode },
+  });
+}
+
+export async function deleteServiceDepartmentRow(id: string) {
+  await prisma.serviceDepartment.delete({ where: { id } });
+}
+
 export { localizedDepartmentName };

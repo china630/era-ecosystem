@@ -107,9 +107,9 @@ Resolution order (target): memory → DB `_era_runtime_config` → file cache �
 
 Orchestrator sets **desired** placement and config. A **host agent / GitOps** applies it. Orchestrator must not SSH and rewrite compose (Deploy staging already proved this is fragile).
 
-**Host agent (Wave 11):** `scripts/era-placement-agent.mjs` polls `GET /v1/placement-agent/jobs` (Bearer `ERA_PLACEMENT_HOST_TOKEN` or `SATELLITE_EVENT_SERVICE_TOKEN`) for `PENDING` / `PROVISION` jobs and **logs** apply steps. Real compose/migrate/restore stays on the host. Advance state via Super-admin `POST /v1/admin/placement-jobs/:id/advance`. Kit stub: `@era/satellite-kit` `exportOrgSlice` — metadata only (`note: "not implemented full dump"`).
+**Host agent:** `scripts/era-placement-agent.mjs` polls `GET /v1/placement-agent/jobs` (Bearer `ERA_PLACEMENT_HOST_TOKEN` or `SATELLITE_EVENT_SERVICE_TOKEN`) for `PROVISION` jobs, applies recipe (`composeYaml` via `docker compose up` when `ERA_PLACEMENT_CLONE_MODE=compose`, else lab dry-run), then `POST …/report-provision`. Orchestrator runs CONFIGURE (Sync + secret markers) and, unless `ERA_PLACEMENT_AUTOPILOT=0`, autopilots FREEZE→EXPORT→IMPORT→CUTOVER→SMOKE→DONE. Kit: `@era/satellite-kit/placement` (`exportFullOrgSlice` / OrgFullSliceV2, `isOrganizationPlacementFrozen` / 423). Service advance: `POST /v1/admin/placement-jobs/:id/advance`.
 
-**PlacementJob API (Waves 11–15):** model + admin create/list/advance + hop reject for direct SHARED↔ONPREM. State stubs: freeze → exportSlice → markProvisioned → bindAndConfig (existing Sync) → cutoverEndpoint → smoke → complete. **Not** a live migrate product / not sellable. CP-PLACE-01 = **API**; AC-CP-TOPO stays open / 🟡 — not Scaffold ✅.
+**PlacementBatch (engineering A–F + full-org P0–P3):** `POST/GET /v1/admin/orgs/:orgId/placement-batches` — org + satelliteKeys + packaging + **required** targetHost. Start stores `recipeJson` (services + `composeYaml`), child jobs at `PROVISION`, process log. Default `ERA_PLACEMENT_INLINE_LAB≠0` schedules inline lab provision (no separate agent). Freeze writes `Organization.settings.placementFreeze` and Sync pushes `placementFreeze` / `placementFrozenOrgIds` so hotel middleware returns **423** on mutations. Product slice = **OrgFullSliceV2** (`formatVersion: 2`): Prisma DMMF models with scalar `organizationId` + FK order + object-storage manifest stub + checksum; hotel + clinic wired; other satellites **fail-closed** until routes exist (`packages/satellite-kit/src/placement/FULL_ORG_WIRE.md`). Cutover upserts `SatelliteEndpoint`; smoke hits `/api/health` (or lab). Lab envs: `ERA_PLACEMENT_SLICE_LAB`, `ERA_PLACEMENT_SMOKE_LAB`. Hop reject for direct SHARED↔ONPREM. CP-PLACE-01 = **API**; AC-CP-TOPO stays 🟡 — field UAT / live blob copy / remaining sats open. Not sellable.
 
 ### 5. Placement jobs (upgrade and downgrade)
 
@@ -119,7 +119,7 @@ Orchestrator sets **desired** placement and config. A **host agent / GitOps** ap
 - DEDICATED / ONPREM → no trial, perpetual until super-admin sets a date
 - Super-admin can always shrink / extend / clear the clock. ONPREM regulation is honest only while orchestrator is reachable (cloud CP + tunnel). Air-gap = contract / signed lease, not a remote PMS kill switch.
 
-Cutover is a **PlacementJob**. Product UI does **not** offer a single-shot SHARED ↔ ONPREM job. Customer wizard = two hops:
+Cutover is a **PlacementBatch** (many satellite jobs). Product UI does **not** offer a single-shot SHARED ↔ ONPREM job. Customer wizard = two hops:
 
 ```text
 SHARED  ⇄  DEDICATED  ⇄  ONPREM
@@ -133,7 +133,9 @@ SHARED  ⇄  DEDICATED  ⇄  ONPREM
 | DEDICATED → SHARED | Join pool, switch endpoint | Import slice | Automate last (schema + uniques must match) |
 | SHARED ↔ ONPREM direct | — | — | **No** single job |
 
-**Freeze → export → switch `SatelliteEndpoint` → smoke → unfreeze.** Rollback = point the endpoint back. Purpose: no writes during copy; no split-brain after DNS/URL cutover. Honest window 15–60 minutes; no zero-downtime promise in v1.
+**Target order (clone on live pool, one freeze, one copy):** provision empty clone → configure (secrets / runtime-config on clone; endpoint still pool) → freeze pool writes → export → import → cutover `SatelliteEndpoint` → smoke → done. Rollback = point the endpoint back to the pool. Honest window 15–60 minutes; no zero-downtime promise in v1.
+
+**Engineering ladder:** `PENDING → PROVISION → CONFIGURE → FREEZE → PREFLIGHT (migration-hash + disk) → EXPORT → IMPORT → CUTOVER → SMOKE (health+login) → DONE`. Hotel/clinic export **full org** SoR via OrgFullSliceV2 (not curated guest-only lists); freeze skips `runCronForEachTenant` orgs; UI banner + rollback. Still open before Scaffold ✅: **field UAT**, live object-storage copy hook, remaining satellites' full-org routes, SSO login smoke beyond `/login` GET.
 
 Invariants:
 
@@ -175,7 +177,7 @@ Follow `.cursor/skills/era-git-ship`: kit+ADR, then **one satellite** schema PR,
 | CP-BIND-01 | Org UUID bind + Super-admin sync + kit boot hydrate (API; Nafta industry uses kit resolver) |
 | CP-CFG-01 | Runtime-config Sync fan-out to industry + Finance Nest (API — not SHIPPED) |
 | CP-LAUNCH-01 | Owner launcher base URL from SatelliteEndpoint + env fallback (API — not SHIPPED) |
-| CP-PLACE-01 | PlacementJob admin API + host agent poll + slice metadata stub (API — not SHIPPED; no live dump/migrate) |
+| CP-PLACE-01 | PlacementBatch Start→DONE lab + OrgFullSliceV2 hotel/clinic (API — not SHIPPED; field UAT / blob copy / other sats open) |
 | CP-TENANT-01 | `organizationId` on tenant roots + hotel child/line tables + kit Prisma filter (API). Nafta hotel/clinic/retail placement is SHARED. Field two-org UAT still open — not sellable as multi-tenant SaaS |
 
 Product-Readiness: do **not** sell SHARED pool or automated topology migrate. Edition stays `mvp`. Nafta hotel/clinic/retail already run as a SHARED placement; field two-org UAT and sell remain open (Wave 17).

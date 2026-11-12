@@ -182,3 +182,18 @@ export const listPersonIdentifiers = jest.fn().mockResolvedValue({ identifiers: 
 export const fetchControlPlaneOrganizationName = jest
   .fn()
   .mockResolvedValue(null);
+
+/** Full-org OrgFullSliceV2 (product path). */
+export {
+  ORG_FULL_SLICE_FORMAT_VERSION,
+  ORG_FULL_SLICE_NOTE,
+  buildDelegatesFromPrismaClient,
+  checksumFullSlicePayload,
+  exportFullOrgSlice,
+  exportFullOrgSliceLabSummary,
+  fullOrgSliceSummary,
+  importFullOrgSlice,
+  listTenantModelNames,
+  orderTenantModelsByFk,
+  prismaClientKeyForModel,
+} from "../../../packages/satellite-kit/dist/placement/full-org-slice.js";

@@ -50,3 +50,38 @@ export async function estimateOccupancyPctForNight(night: Date): Promise<number>
   if (capacity <= 0) return 0;
   return Math.min(100, Math.round((sold / capacity) * 10000) / 100);
 }
+
+export async function listYieldRules() {
+  return prisma.yieldRule.findMany({
+    orderBy: { minOccupancyPct: 'asc' },
+  });
+}
+
+export async function createYieldRule(data: {
+  propertyCode: string;
+  minOccupancyPct: number;
+  rateAdjustment: number;
+  active: boolean;
+}) {
+  return prisma.yieldRule.create({ data });
+}
+
+export async function findYieldRuleById(id: string) {
+  return prisma.yieldRule.findUnique({ where: { id } });
+}
+
+export async function updateYieldRule(
+  id: string,
+  data: Partial<{
+    propertyCode: string;
+    minOccupancyPct: number;
+    rateAdjustment: number;
+    active: boolean;
+  }>,
+) {
+  return prisma.yieldRule.update({ where: { id }, data });
+}
+
+export async function deleteYieldRule(id: string) {
+  return prisma.yieldRule.delete({ where: { id } });
+}

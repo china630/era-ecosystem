@@ -55,9 +55,13 @@ const LINK_SCREENS: Record<string, Permission> = {
   "/admin/import": PERMISSIONS.SCREEN_ADMIN_IMPORT,
   "/admin/cedvel": PERMISSIONS.SCREEN_ADMIN_ROSTER,
   "/admin/access": PERMISSIONS.SCREEN_ADMIN_ACCESS,
-  "/admin/audit": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
-  "/admin/links": PERMISSIONS.SCREEN_ADMIN_SETTINGS,
+  "/admin/audit": PERMISSIONS.SCREEN_ADMIN_AUDIT,
+  "/admin/links": PERMISSIONS.SCREEN_ADMIN_LINKS,
   "/sales": PERMISSIONS.SCREEN_SALES,
+  "/reports/x": PERMISSIONS.SCREEN_SALES,
+  "/reports/journal": PERMISSIONS.SCREEN_SALES,
+  "/admin/limits": PERMISSIONS.SCREEN_ADMIN_LIMITS,
+  "/floor/hall": PERMISSIONS.SCREEN_FLOOR,
 };
 
 const HALLS = ["cafe", "restaurant"] as const;
@@ -173,14 +177,18 @@ function buildShellLinks(caps: CapFlags): ShellLink[] {
         },
       ],
     },
+    { href: "/floor/hall", key: "hall", icon: LayoutDashboard, preset: HALLS, when: caps.till },
     { href: "/sales", key: "sales", icon: ScrollText, preset: HALLS, when: caps.till },
+    { href: "/reports/journal", key: "journal", icon: ScrollText, preset: HALLS, when: caps.till },
+    { href: "/reports/x", key: "xReport", icon: ScrollText, preset: HALLS, when: caps.till },
+    { href: "/admin/limits", key: "limits", icon: Shield, preset: HALLS, when: caps.till },
+    { href: "/admin/import", key: "import", icon: Upload, preset: HALLS },
     {
       href: "/admin/cedvel",
       key: "cedvel",
       icon: Users,
       preset: HALLS,
     },
-    { href: "/admin/import", key: "import", icon: Upload, preset: HALLS },
     { href: "/admin/settings", key: "settings", icon: Settings, preset: HALLS },
     { href: "/admin/links", key: "adminLinks", icon: Link2, preset: HALLS },
     { href: "/admin/audit", key: "audit", icon: ScrollText, preset: HALLS },
@@ -247,7 +255,8 @@ export default function FnbOpsShell({ children }: { children: React.ReactNode })
         pathname === "/orders" ||
         pathname.startsWith("/orders/") ||
         pathname === "/sales" ||
-        pathname.startsWith("/sales/")) &&
+        pathname.startsWith("/sales/") ||
+        pathname.startsWith("/reports/")) &&
       !caps.till
     ) {
       window.location.replace(caps.buffetPlanner ? "/admin/buffet" : "/");

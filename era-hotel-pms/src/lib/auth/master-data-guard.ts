@@ -1,20 +1,17 @@
 import type { SatelliteSessionPayload } from '@era/satellite-kit';
-import { assertAnyPermission, assertPermission } from './require';
-import { PERMISSIONS } from './permissions';
+import { assertPermission } from './require';
+import { PERMISSIONS, type Permission } from './permissions';
 
 export function assertMasterDataRead<S extends SatelliteSessionPayload>(
   session: S | null,
+  catalog: Permission = PERMISSIONS.MASTER_DATA_MANAGE,
 ): asserts session is S {
-  assertAnyPermission(session, [
-    PERMISSIONS.MASTER_DATA_MANAGE,
-    PERMISSIONS.RESERVATIONS_READ,
-    PERMISSIONS.FOLIO_READ,
-    PERMISSIONS.FOLIO_CHARGE,
-  ]);
+  assertPermission(session, catalog);
 }
 
 export function assertMasterDataWrite<S extends SatelliteSessionPayload>(
   session: S | null,
+  catalog: Permission = PERMISSIONS.MASTER_DATA_MANAGE,
 ): asserts session is S {
-  assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
+  assertPermission(session, catalog);
 }

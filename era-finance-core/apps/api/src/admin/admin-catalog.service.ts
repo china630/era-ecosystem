@@ -362,6 +362,52 @@ export class AdminCatalogService {
     return { total, page, pageSize, items };
   }
 
+  listActiveUnitsOfMeasureSystem() {
+    return this.prisma.unitOfMeasure.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
+      select: {
+        code: true,
+        nameAz: true,
+        nameRu: true,
+        nameEn: true,
+      },
+    });
+  }
+
+  listActiveCurrenciesSystem() {
+    return this.prisma.currency.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
+      select: {
+        code: true,
+        symbol: true,
+        decimals: true,
+        nameAz: true,
+        nameRu: true,
+        nameEn: true,
+      },
+    });
+  }
+
+  findEffectiveTaxSchemeVersion(code: string, on: Date) {
+    return this.prisma.taxSchemeVersion.findFirst({
+      where: {
+        code,
+        effectiveFrom: { lte: on },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: on } }],
+      },
+      orderBy: { effectiveFrom: "desc" },
+    });
+  }
+
+  listCountriesSystem() {
+    return this.prisma.country.findMany({
+      orderBy: [{ sortOrder: "asc" }, { iso2: "asc" }],
+      select: { iso2: true, nameAz: true, nameRu: true, nameEn: true },
+    });
+  }
+
   getReferenceSnapshot() {
     const legalFormMap: Record<string, string> = {};
     for (const f of Object.values(CounterpartyLegalForm)) {

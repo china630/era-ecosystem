@@ -43,6 +43,20 @@ export function addUtcDays(d: Date, n: number): Date {
   return x;
 }
 
+export async function listHousekeeperEgBalances() {
+  return prisma.housekeeper.findMany({
+    select: { id: true, name: true, egBalance: true, department: true },
+    orderBy: { name: 'asc' },
+  });
+}
+
+export async function listHkRotationDay(workDateIso: string) {
+  return prisma.hkRotationDay.findMany({
+    where: { workDate: new Date(`${workDateIso}T00:00:00.000Z`) },
+    include: { housekeeper: true, pair: true },
+  });
+}
+
 export async function ensureFloorPairs() {
   const existing = await prisma.hkFloorPair.findMany({ orderBy: { sortOrder: 'asc' } });
   if (existing.length > 0) return existing;
@@ -83,6 +97,20 @@ export async function proposeRosterWeek(weekStartIso: string) {
   }
   return prisma.hkRosterWeek.findUnique({
     where: { id: saved.id },
+    include: { cells: { include: { housekeeper: true } } },
+  });
+}
+
+export async function listHousekeepersForRoster() {
+  return prisma.housekeeper.findMany({
+    include: { tasks: true },
+    orderBy: { name: 'asc' },
+  });
+}
+
+export async function getRosterWeekByStart(weekStart: string) {
+  return prisma.hkRosterWeek.findFirst({
+    where: { weekStart: new Date(`${weekStart}T00:00:00.000Z`) },
     include: { cells: { include: { housekeeper: true } } },
   });
 }
@@ -851,6 +879,125 @@ export async function recordDiscrepancy(roomId: string, workDateIso: string, kin
       notes: notes ?? null,
     },
   });
+}
+
+export async function listDiscrepanciesWithRooms(date: string) {
+  const rows = await prisma.hkDiscrepancy.findMany({
+    where: { workDate: bakuCivilUtcDate(date) },
+    orderBy: { createdAt: 'desc' },
+  });
+  const rooms =
+    rows.length === 0
+      ? []
+      : await prisma.room.findMany({
+          where: { id: { in: rows.map((r) => r.roomId) } },
+          select: { id: true, roomNumber: true },
+        });
+  const numberById = new Map(rooms.map((r) => [r.id, r.roomNumber]));
+  return rows.map((row) => ({ ...row, roomNumber: numberById.get(row.roomId) ?? '' }));
+}
+
+export async function clearDiscrepancyForRoom(roomId: string, workDateIso: string) {
+  await prisma.hkDiscrepancy.deleteMany({
+    where: { roomId, workDate: bakuCivilUtcDate(workDateIso) },
+  });
+}
+
+export async function postNsrDay(input: {
+  reservationId: string;
+  roomId: string;
+  date: string;
+  clear?: boolean;
+}) {
+  const workDate = new Date(`${input.date}T00:00:00.000Z`);
+  if (input.clear) {
+    await prisma.hkNsrDay.deleteMany({
+      where: { reservationId: input.reservationId, workDate },
+    });
+    await prisma.housekeepingTask.updateMany({
+      where: { roomId: input.roomId, businessDate: workDate, visitOutcome: 'REFUSED' },
+      data: { visitOutcome: null, jobType: 'OTHER' },
+    });
+    return { cleared: true as const };
+  }
+  await prisma.housekeepingTask.updateMany({
+    where: { roomId: input.roomId, businessDate: workDate },
+    data: { visitOutcome: 'REFUSED', jobType: 'NSR' },
+  });
+  const existing = await prisma.hkNsrDay.findFirst({
+    where: { reservationId: input.reservationId, workDate },
+  });
+  if (existing) return existing;
+  return prisma.hkNsrDay.create({
+    data: {
+      reservationId: input.reservationId,
+      roomId: input.roomId,
+      workDate,
+    },
+  });
+}
+
+export async function listLaundryWorkspace(reservationId: string | null) {
+  const items = await prisma.laundryItem.findMany({
+    where: { active: true },
+    orderBy: [{ category: 'asc' }, { code: 'asc' }],
+  });
+  const tickets = await prisma.laundryTicket.findMany({
+    where: reservationId ? { reservationId } : undefined,
+    take: 80,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      lines: {
+        include: {
+          item: {
+            select: {
+              id: true,
+              name: true,
+              nameAz: true,
+              nameRu: true,
+              nameEn: true,
+              code: true,
+              washPrice: true,
+              ironPrice: true,
+              expressWashPrice: true,
+              expressIronPrice: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  const roomIds = [...new Set(tickets.map((tk) => tk.roomId))];
+  const rooms =
+    roomIds.length > 0
+      ? await prisma.room.findMany({
+          where: { id: { in: roomIds } },
+          select: { id: true, roomNumber: true },
+        })
+      : [];
+  const roomNo = new Map(rooms.map((r) => [r.id, r.roomNumber]));
+  const ticketsWithRoom = tickets.map((tk) => ({
+    ...tk,
+    roomNumber: roomNo.get(tk.roomId) ?? null,
+  }));
+  const stays = await prisma.reservation.findMany({
+    where: { status: { in: ['IN_HOUSE', 'CONFIRMED'] } },
+    select: {
+      id: true,
+      roomId: true,
+      status: true,
+      guest: { select: { fullName: true } },
+      room: { select: { id: true, roomNumber: true } },
+    },
+    take: 400,
+  });
+  const policy = await getHkHotelPolicy();
+  return {
+    items,
+    tickets: ticketsWithRoom,
+    stays,
+    laundryExpressEnabled: policy.laundryExpressEnabled,
+  };
 }
 
 export function laundryLineAmount(

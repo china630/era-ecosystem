@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import {
   createSatelliteStaffMiddleware,
   redirectNoStore,
+  staffAccessDeniedRedirect,
 } from "@era/satellite-kit/auth/middleware-edge";
 import {
   isPublicStaffPage,
@@ -61,10 +62,13 @@ const staffGate = createSatelliteStaffMiddleware<NextRequest>({
     if (required && required.some((p) => sessionHasFnbPermission(sessionView, p))) {
       return null;
     }
-    const forbiddenUrl = request.nextUrl.clone();
-    forbiddenUrl.pathname = session.pin ? "/floor" : "/login";
-    if (!session.pin) forbiddenUrl.searchParams.set("error", "forbidden");
-    return redirectNoStore(forbiddenUrl);
+    if (session.pin) {
+      const floor = request.nextUrl.clone();
+      floor.pathname = "/floor";
+      floor.search = "";
+      return redirectNoStore(floor);
+    }
+    return staffAccessDeniedRedirect(request);
   },
 });
 

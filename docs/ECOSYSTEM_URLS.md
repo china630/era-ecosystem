@@ -65,6 +65,8 @@ See [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-
 | `CLINIC_BRIDGE_SECRET` | clinic (alias for staff-provision) + hotel → clinic lifecycle | may match `SATELLITE_BRIDGE_SECRET` |
 | `ELEKTRAWEB_BRIDGE_ENABLED` | hotel-pms | `1` = process kill switch on (HOT-06); per-org hotel ids are Super-Admin `ElektrawebBridgePolicy`, not env |
 | `HOTEL_DATA_DIR` | hotel-pms | optional; letterhead logo storage (default `./data` in the app dir). Mount a volume in compose |
+| `CLINIC_INTERNAL_URL` or `CLINIC_URL` | hotel-pms (guest Care proxy) | Nest origin for clinic guest-care S2S, e.g. local `http://127.0.0.1:13203` or compose `http://clinic:3203`. Prefer `CLINIC_INTERNAL_URL`. |
+| `SATELLITE_EVENT_SERVICE_TOKEN` | hotel-pms + clinic (guest Care) | Same bearer on hotel Nest Care proxy and clinic `/api/internal/v1/guest-care/*`. Missing either → Care `reason: clinic_unconfigured`. |
 
 Public `ERA_CLINIC_ORIGIN` / launcher URLs are **not** the staff fan-out target.
 
@@ -114,6 +116,8 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | 6 | F&B POS | `era-fnb-pos` | `fnb-pos` | `fnb-pos` | 3202 | `https://fnb-pos.era-365.online/` |
 | 7 | Clinic | `era-clinic` | `clinic` | `clinic` | 3203 | `https://clinic.era-365.online/` |
 
+**Clinic nurse tablet:** `apps/clinic-nurse-app`, Android package `online.era365.nurse`. Talks to `https://clinic.era-365.online` (`EXPO_PUBLIC_CLINIC_URL`). Not a separate public host.
+
 **Clinic crons** (Bearer `PLATFORM_CRON_SECRET`): `POST /api/cron/procedure-auto-complete`, `POST /api/cron/procedure-no-show-sweep` (no-show, then after `dayEndHour` unpaid extras → `UNPAID_MISSED`: today seated + overdue `scheduledAt` + unseated created before today), `POST /api/cron/episode-walkin-close`, `POST /api/cron/episode-hotel-checkout` (also started by the clinic process at 06:00 and 18:00 Asia/Baku, and once after boot), plus existing inpatient/catalog crons. Tenant flags: `checkInRequiresQr`, `autoNoShowAfterMin` (see ADR clinic-procedure-day-ops / clinic-extra-procedure-route / hotel-clinic-lifecycle-outbox).
 
 | 8 | Retail & E-commerce | `era-retail-pos` | `retail-pos` | `retail-pos` | 3204 | `https://retail-pos.era-365.online/` |
@@ -124,7 +128,9 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | 13 | Wholesale & Distribution | `era-wholesale` | `wholesale` | `wholesale` | 3209 | `https://wholesale.era-365.online/` |
 | 14 | Bank (operational satellite) | `era-bank` | `bank` | `bank` | 3210 | `https://bank.era-365.online/` |
 
-API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
+API: `https://{subdomain}.era-365.online/api/...` on the same public port as the pages.
+
+Inside a container that has `nest/main.ts`, the public port stays **3201–3211**. Nest listens on **10000 + that port** (hotel **13201**, clinic **13203**, F&B **13202**, retail **13204**, logistics **13205**, construction **13206**, CRM **13207**, auto **13208**, wholesale **13209**, bank **13210**, bank DBO **13211**) and Next on **20000 + that port**. Neither internal port is published. The image entrypoint splits processes only when `nest/main.ts` is present. Local `npm run dev` for F&B, retail, logistics, construction, CRM, auto, wholesale, bank, and bank DBO listens on the Next port (23202–23211). `npm run nest` listens on the Nest port. `npm run front` is the local public origin (default the container port; set `*_FRONT_PORT` when Docker already holds it). Those nine satellites no longer have `app/api/**/route.ts`. `/api` is served by Nest.
 
 **SHARED staff login hosts (ERA ID + white-label):**
 
@@ -144,7 +150,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 |------|---------|
 | 3000 | Orchestrator Web |
 | 3100 | Finance Web |
-| 3201–3210 | Industry satellites (3210 = era-bank; see table above) |
+| 3201–3211 | Industry satellites, public port (3210 = era-bank, 3211 = bank DBO). Nest inside the container is 10000+port, Next is 20000+port, when `nest/main.ts` is present |
 | 4000 | Orchestrator API |
 | 4100 | Finance API |
 | 4200 | ERA Data Hub API |

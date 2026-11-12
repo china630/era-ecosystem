@@ -22,7 +22,8 @@ import {
   showSuccess,
 } from "@era/satellite-kit/ui";
 import {
-  PERMISSION_GROUPS,
+  ENTITY_ACCESS_MATRIX,
+  type AccessColumn,
   type ClinicPermission,
 } from "@/lib/auth/clinic-permissions";
 
@@ -125,8 +126,6 @@ export default function ClinicAdminAccessPage() {
   useEffect(() => {
     if (selectedCode) void loadRoleDraft(selectedCode);
   }, [selectedCode, loadRoleDraft]);
-
-  const grouped = useMemo(() => PERMISSION_GROUPS, []);
 
   async function refreshSessionAndNav() {
     await fetch("/api/auth/session/refresh-permissions", { method: "POST" });
@@ -409,7 +408,7 @@ export default function ClinicAdminAccessPage() {
         open={matrixOpen}
         title={selectedRole ? `${selectedRole.name} (${selectedRole.code})` : t("openMatrix")}
         onClose={() => setMatrixOpen(false)}
-        maxWidthClass="max-w-5xl"
+        maxWidthClass="max-w-6xl"
       >
         {loading ? (
           <p className="text-sm text-muted-foreground">{tc("loading")}</p>
@@ -425,36 +424,48 @@ export default function ClinicAdminAccessPage() {
                 {t("resetDefaults")}
               </button>
             </div>
-            {grouped.map((group) => (
-              <section key={group.id}>
-                <h2 className="mb-2 text-sm font-semibold">{t(`groups.${group.id}`)}</h2>
-                <div className="flex flex-wrap gap-2">
-                  {group.permissions.map((perm) => (
-                    <label
-                      key={perm}
-                      className="flex items-start gap-2 rounded border border-[#D5DADF] px-3 py-2 text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
-                        checked={draft.has(perm)}
-                        onChange={() => togglePermission(perm)}
-                        disabled={busy}
-                      />
-                      <span>
-                        <span className="font-medium">
-                          {(() => {
-                            const key = `permissions.${perm.replace(/\./g, "_")}` as const;
-                            return t.has(key) ? t(key) : perm;
-                          })()}
-                        </span>
-                        <span className="block font-mono text-[11px] text-[#7F8C8D]">{perm}</span>
-                      </span>
-                    </label>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="py-2 pr-3">{t("entityColumn")}</th>
+                    {(["view", "change", "operate", "admin"] as AccessColumn[]).map((col) => (
+                      <th key={col} className="py-2 pr-3">{t(`col_${col}`)}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ENTITY_ACCESS_MATRIX.map((row) => (
+                    <tr key={row.id} className="border-b align-top">
+                      <td className="py-2 pr-3 font-medium">
+                        {t.has(`entity_${row.id}` as "title") ? t(`entity_${row.id}` as "title") : row.id}
+                      </td>
+                      {(["view", "change", "operate", "admin"] as AccessColumn[]).map((col) => (
+                        <td key={col} className="py-2 pr-3">
+                          <div className="flex flex-col gap-1">
+                            {(row.cells[col] ?? []).map((perm) => {
+                              const key = `permissions.${perm.replace(/\./g, "_")}` as const;
+                              return (
+                                <label key={perm} className="flex items-start gap-2">
+                                  <input
+                                    type="checkbox"
+                                    className={`${MODAL_CHECKBOX_CLASS} mt-0.5`}
+                                    checked={draft.has(perm)}
+                                    onChange={() => togglePermission(perm)}
+                                    disabled={busy}
+                                  />
+                                  <span>{t.has(key) ? t(key) : perm}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </div>
-              </section>
-            ))}
+                </tbody>
+              </table>
+            </div>
             <ModalFooter
               onCancel={() => setMatrixOpen(false)}
               onSubmit={() => void save()}

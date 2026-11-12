@@ -13,6 +13,7 @@ import type {
   ProcedureCheckInMode,
 } from "@prisma/client";
 import { parseExtraProcedureRoute } from "@/domain/sanatorium/extra-procedure-route";
+import { normalizeLaneGate, type LaneGatePolicy } from "@/domain/sanatorium/lane-gates";
 
 const DEFAULT_TENANT_CODE = "default";
 
@@ -122,7 +123,9 @@ export async function getClinicSettings() {
     doctorBonusPercentWalkIn: tenant.doctorBonusPercentWalkIn ?? 0,
     hotelFolioRevenueCode: tenant.hotelFolioRevenueCode?.trim() || null,
     noShowKeepsCharge: tenant.noShowKeepsCharge !== false,
+    noShowBurnsQuota: tenant.noShowBurnsQuota !== false,
     extraProcedureRoute: parseExtraProcedureRoute(tenant.extraProcedureRoute),
+    laneGate: normalizeLaneGate(tenant.laneGateJson),
     procedurePrintExtraLang:
       tenant.procedurePrintExtraLang === "az" ||
       tenant.procedurePrintExtraLang === "ru" ||
@@ -203,8 +206,10 @@ export async function updateClinicSettings(input: {
   doctorBonusPercentWalkIn?: number;
   hotelFolioRevenueCode?: string | null;
   noShowKeepsCharge?: boolean;
+  noShowBurnsQuota?: boolean;
   extraProcedureRoute?: string | null;
   procedurePrintExtraLang?: string | null;
+  laneGate?: LaneGatePolicy;
 }) {
   // CP-ORG-PROFILE-01 Track A: ignore header branding writes when orch snapshot is cached.
   const cpLocks = await (async () => {
@@ -424,8 +429,14 @@ export async function updateClinicSettings(input: {
       ...(input.noShowKeepsCharge !== undefined
         ? { noShowKeepsCharge: input.noShowKeepsCharge }
         : {}),
+      ...(input.noShowBurnsQuota !== undefined
+        ? { noShowBurnsQuota: input.noShowBurnsQuota }
+        : {}),
       ...(input.extraProcedureRoute
         ? { extraProcedureRoute: parseExtraProcedureRoute(input.extraProcedureRoute) }
+        : {}),
+      ...(input.laneGate
+        ? { laneGateJson: JSON.stringify(normalizeLaneGate(input.laneGate)) }
         : {}),
       ...(input.procedurePrintExtraLang !== undefined
         ? {

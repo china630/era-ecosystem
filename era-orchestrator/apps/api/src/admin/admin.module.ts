@@ -22,6 +22,8 @@ import { FiscalHardwareDeviceController } from "./fiscal-hardware-device.control
 import { FiscalHardwareDeviceService } from "./fiscal-hardware-device.service";
 import { OrgPaymentMethodController } from "./org-payment-method.controller";
 import { OrgPaymentMethodService } from "./org-payment-method.service";
+import { OrgAccessCredentialController } from "./org-access-credential.controller";
+import { OrgAccessCredentialService } from "./org-access-credential.service";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { AdminReferenceController } from "./admin-reference.controller";
 import { DataHubAdminClient } from "./data-hub-admin.client";
@@ -49,6 +51,7 @@ import { ChannelsModule } from "../channels/channels.module";
     ElektrawebBridgePolicyController,
     FiscalHardwareDeviceController,
     OrgPaymentMethodController,
+    OrgAccessCredentialController,
     AdminReferenceController,
   ],
   providers: [
@@ -61,6 +64,7 @@ import { ChannelsModule } from "../channels/channels.module";
     ElektrawebBridgePolicyService,
     FiscalHardwareDeviceService,
     OrgPaymentMethodService,
+    OrgAccessCredentialService,
     DataHubAdminClient,
     PermissionsGuard,
   ],
@@ -74,6 +78,7 @@ import { ChannelsModule } from "../channels/channels.module";
     ElektrawebBridgePolicyService,
     FiscalHardwareDeviceService,
     OrgPaymentMethodService,
+    OrgAccessCredentialService,
   ],
 })
 export class AdminModule {}

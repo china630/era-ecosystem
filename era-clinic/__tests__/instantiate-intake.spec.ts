@@ -11,6 +11,7 @@ jest.mock("@/lib/prisma", () => ({
     labOrderItem: { count: jest.fn() },
     programProcedureBalance: { updateMany: jest.fn(), findUnique: jest.fn() },
     serviceCatalogCache: { findFirst: jest.fn() },
+    tenant: { findFirst: jest.fn().mockResolvedValue({ noShowBurnsQuota: true }) },
   },
 }));
 
