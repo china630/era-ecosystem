@@ -283,6 +283,12 @@ function headParts(source, found) {
   return { imports: imports.join("\n"), prelude: head.trim() };
 }
 
+/** Drop the route-local session once the Nest wrapper already loaded it. */
+function isShadowedSessionLine(line) {
+  if (/^\s*session\s*=\s*session\s*;?\s*$/.test(line)) return true;
+  return /(?:const|let|var)\s+session\b/.test(line) && /=\s*(?:await\s+)?(?:session|null)\b/.test(line);
+}
+
 function transform(body) {
   let next = body
     .replace(/await getSatelliteSession\(\)/g, "session")
@@ -290,7 +296,7 @@ function transform(body) {
     .replace(/\b_req\b/g, "request")
     .replace(/await\s+[A-Za-z0-9_.]*params\b/g, "httpReq.params")
     .split("\n")
-    .filter((line) => !/const session = (await )?session\b/.test(line))
+    .filter((line) => !isShadowedSessionLine(line))
     .join("\n");
   next = next.replace(/new URL\(\s*(?!request\b|req\b)[A-Za-z_][A-Za-z0-9_]*\.url\s*\)/g, 'new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1")');
   next = next.replace(/await\s+[A-Za-z_][A-Za-z0-9_]*\.json\(\)/g, "httpReq.body");
