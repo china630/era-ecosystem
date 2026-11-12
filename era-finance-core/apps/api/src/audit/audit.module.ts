@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { ActivityStreamModule } from "../activity-stream/activity-stream.module";
@@ -13,7 +13,7 @@ import { AuditService } from "./audit.service";
 import { AuditChainCronService } from "./audit-chain-cron.service";
 
 @Module({
-  imports: [PrismaModule, ConfigModule, ActivityStreamModule, AdminModule],
+  imports: [PrismaModule, ConfigModule, ActivityStreamModule, forwardRef(() => AdminModule)],
   controllers: [AdminMutationAuditController],
   providers: [
     DataMaskingService,
