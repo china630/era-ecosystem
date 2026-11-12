@@ -113,9 +113,7 @@ export function register(http: { get: Function; post: Function; put: Function; p
         text: async () => (typeof httpReq.body === "string" ? httpReq.body : JSON.stringify(httpReq.body ?? "")),
       };
 
-  let session: Awaited<ReturnType<typeof getSatelliteSession>> = null;
   try {
-    session = session;
     if (!session) return sendJson(httpRes, { error: "Unauthorized" }, 401);
     const denied = await requireClinicPermission(
       session,
