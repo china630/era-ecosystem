@@ -1,5 +1,5 @@
 import type { Express, Request as ExpressRequest, Response as ExpressResponse } from "express";
-import { runWithSatelliteTenant } from "@era/satellite-kit/tenancy";
+import { runWithSatelliteTenant } from "@era/satellite-kit";
 import {
   enterHotelStaff,
   hotelNestSession,
