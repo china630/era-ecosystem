@@ -38,9 +38,27 @@ function samplePath(file: string, base: string): string {
 const pageFiles = walk(APP, "page.tsx").filter(
   (f) => !path.relative(APP, f).split(path.sep).includes("api"),
 );
-const routeFiles = walk(path.join(APP, "api"), "route.ts");
 const pagePaths = pageFiles.map((f) => samplePath(f, APP));
-const apiPaths = routeFiles.map((f) => `/api${samplePath(f, path.join(APP, "api")).replace(/^\/$/, "")}`);
+
+/** Nest owns HTTP. Paths come from the generated handlers and kit mounts, not Next `app/api`. */
+function nestHandlerFiles(): string[] {
+  const generated = path.join(ROOT, "nest", "generated");
+  const files = fs
+    .readdirSync(generated)
+    .filter((name) => name.endsWith(".ts") && name !== "register.ts")
+    .map((name) => path.join(generated, name));
+  const kit = path.join(ROOT, "nest", "kit-routes.ts");
+  if (fs.existsSync(kit)) files.push(kit);
+  return files;
+}
+
+function apiPathsIn(file: string): string[] {
+  const src = fs.readFileSync(file, "utf8");
+  return [...src.matchAll(/["'](\/api\/[^"']+)["']/g)].map((m) => m[1]!);
+}
+
+const routeFiles = nestHandlerFiles();
+const apiPaths = [...new Set(routeFiles.flatMap(apiPathsIn))];
 
 describe("page inventory", () => {
   it.each(pagePaths)("%s is public, session-only, or mapped to a grant", (p) => {
@@ -83,12 +101,12 @@ describe("API inventory", () => {
 
   it("every staff route handler goes through getSatelliteSession (or an import helper) unless it is a declared exception", () => {
     const missing = routeFiles
-      .map((file, i) => ({ file, p: apiPaths[i]! }))
+      .flatMap((file) => apiPathsIn(file).map((p) => ({ file, p })))
       .filter(({ p }) => !matchesAnyRoute(PUBLIC_API_ROUTES, p))
       .filter(({ p }) => !matchesAnyRoute(HANDLER_GATE_EXCEPTIONS, p))
       .filter(({ file }) => {
         const src = fs.readFileSync(file, "utf8");
-        return !/getSatelliteSession\(|assert\w*ImportAccess\(/.test(src);
+        return !/getSatelliteSession\(|enterRetailStaff\(|assert\w*ImportAccess\(/.test(src);
       })
       .map(({ p }) => p);
     expect(missing).toEqual([]);

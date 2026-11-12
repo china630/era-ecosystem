@@ -5,7 +5,7 @@ import { firstRouteMatch, matchesAnyRoute, type RouteRule } from "@/lib/auth/rou
 export const PUBLIC_STAFF_PAGES: readonly string[] = ["/login", "/sso/callback", "/help", "/help/**"];
 
 /** Any signed-in session; the page enforces its own owner / platform check. */
-export const AUTH_ONLY_PAGES: readonly string[] = ["/executive", "/platform"];
+export const AUTH_ONLY_PAGES: readonly string[] = ["/executive", "/platform", "/access-denied"];
 
 /** Any-of grants per staff page. Unlisted pages deny. */
 export const PAGE_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
