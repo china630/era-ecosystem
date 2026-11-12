@@ -16,10 +16,40 @@ function originFor(urlPath) {
   return nextOrigin;
 }
 
+function firstHeader(value) {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
+
+function publicOrigin(req) {
+  const host = firstHeader(req.headers["x-forwarded-host"]) || firstHeader(req.headers.host);
+  const proto = (firstHeader(req.headers["x-forwarded-proto"]) || "http").split(",")[0].trim();
+  const name = host.split(",")[0].trim();
+  if (!name) return null;
+  return `${proto}://${name}`;
+}
+
+function rewriteInternalLocation(headers, req, upstreamOrigin) {
+  const current = firstHeader(headers.location);
+  if (!current || current.startsWith("/")) return;
+  const pub = publicOrigin(req);
+  if (!pub) return;
+  try {
+    const url = new URL(current);
+    const internal = new URL(upstreamOrigin);
+    const localName = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1";
+    const sameListen = url.host === internal.host || (localName && url.port === internal.port);
+    if (!sameListen) return;
+    headers.location = `${pub}${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    /* leave a non-URL Location alone */
+  }
+}
+
 function proxy(req, res) {
   const base = originFor(req.url ?? "/");
   const target = new URL(req.url ?? "/", base);
-  const headers = { ...req.headers, host: target.host };
+  const headers = { ...req.headers };
   const upstream = http.request(
     {
       protocol: target.protocol,
@@ -30,7 +60,9 @@ function proxy(req, res) {
       headers,
     },
     (up) => {
-      res.writeHead(up.statusCode ?? 502, up.headers);
+      const out = { ...up.headers };
+      rewriteInternalLocation(out, req, base);
+      res.writeHead(up.statusCode ?? 502, out);
       up.pipe(res);
     },
   );
