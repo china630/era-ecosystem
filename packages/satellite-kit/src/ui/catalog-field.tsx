@@ -29,7 +29,8 @@ export type CatalogFieldProps = {
   label: string;
   value: string | string[];
   onChange: (next: string | string[]) => void;
-  options: CatalogOption[];
+  /** Required for select, chips, and autocomplete. Free text ignores it. */
+  options?: CatalogOption[];
   required?: boolean;
   hint?: string;
   error?: string;
@@ -99,7 +100,7 @@ export function CatalogField({
   label,
   value,
   onChange,
-  options,
+  options = [],
   required,
   hint,
   error,
