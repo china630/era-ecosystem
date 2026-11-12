@@ -58,6 +58,7 @@ RUN mkdir -p /opt/nest-runtime \
        mkdir -p /opt/nest-runtime/app \
        && cp -a nest src tsconfig.json package.json node_modules /opt/nest-runtime/app/ \
        && if [ -d messages ]; then cp -a messages /opt/nest-runtime/app/messages; fi \
+       && if [ -d prisma ]; then cp -a prisma /opt/nest-runtime/app/prisma; fi \
        && touch /opt/nest-runtime/enabled; \
      fi
 
