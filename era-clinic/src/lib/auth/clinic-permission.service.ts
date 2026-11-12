@@ -26,7 +26,7 @@ export async function permissionsForUser(userId: string): Promise<ClinicPermissi
     include: { role: true },
   });
   if (!user) return [];
-  return effectiveRolePermissions(user.role.code, user.role.permissionsJson);
+  return effectiveRolePermissions(user.role.code, user.role.permissionsJson ?? "[]");
 }
 
 export async function permissionsForRoleCode(
@@ -34,7 +34,7 @@ export async function permissionsForRoleCode(
 ): Promise<ClinicPermission[]> {
   const role = await prisma.role.findFirst({ where: { code: roleCode } });
   if (!role) return effectiveRolePermissions(roleCode, "[]");
-  return effectiveRolePermissions(role.code, role.permissionsJson);
+  return effectiveRolePermissions(role.code, role.permissionsJson ?? "[]");
 }
 
 export async function resolveEffectivePermissionsForUser(

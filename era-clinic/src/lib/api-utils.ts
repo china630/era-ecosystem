@@ -184,7 +184,7 @@ export async function enrichClinicStaffSession(
   await assertClinicApiEntitled(pathname, session.organizationId);
   const permissions = hasClinicPermissionBypass(session)
     ? [...ALL_CLINIC_PERMISSIONS]
-    : effectiveRolePermissions(user.role.code, user.role.permissionsJson);
+    : effectiveRolePermissions(user.role.code, user.role.permissionsJson ?? "[]");
   return { ...session, permissions };
 }
 
