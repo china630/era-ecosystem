@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { Prisma } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   brandFromRow,
@@ -41,10 +42,16 @@ export class GuestAppService {
       select: { id: true },
     });
     if (!org) throw new NotFoundException("Organization not found");
+    const stored = {
+      ...dto,
+      catalogJson: dto.catalogJson as Prisma.InputJsonValue,
+      offersJson: dto.offersJson as Prisma.InputJsonValue,
+      enabledOrderKinds: dto.enabledOrderKinds as Prisma.InputJsonValue,
+    };
     await this.prisma.organizationGuestApp.upsert({
       where: { organizationId },
-      create: { organizationId, ...dto },
-      update: dto,
+      create: { organizationId, ...stored },
+      update: stored,
     });
     await this.prisma.auditLog
       .create({
@@ -54,7 +61,7 @@ export class GuestAppService {
           action: "GUEST_APP_BRAND_UPDATE",
           entityType: "ORGANIZATION_GUEST_APP",
           entityId: organizationId,
-          newValues: dto,
+          newValues: stored as Prisma.InputJsonValue,
         },
       })
       .catch(() => undefined);

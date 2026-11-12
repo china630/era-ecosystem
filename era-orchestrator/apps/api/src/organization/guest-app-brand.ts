@@ -57,9 +57,13 @@ export function emptyGuestAppBrand(organizationId: string): GuestAppBrand {
  * A DEPARTMENT does not inherit a parent hotel's guest-app brand.
  * A disabled row is the same empty brand as a missing row.
  */
+function asGuestLocale(value: string | null | undefined): GuestAppLocale | null {
+  return value === "az" || value === "ru" || value === "en" ? value : null;
+}
+
 export function brandFromRow(
   organizationId: string,
-  row: GuestAppPatch | null,
+  row: (Omit<GuestAppPatch, "locale"> & { locale: string | null }) | null,
 ): GuestAppBrand {
   if (!row || !row.enabled) return emptyGuestAppBrand(organizationId);
   return {
@@ -68,7 +72,7 @@ export function brandFromRow(
     displayName: row.displayName,
     primaryColor: row.primaryColor,
     logoUrl: row.logoUrl,
-    locale: row.locale,
+    locale: asGuestLocale(row.locale),
     deskPhone: row.deskPhone,
     catalogJson: row.catalogJson ?? null,
     postStayMessage: row.postStayMessage ?? null,

@@ -17,8 +17,8 @@ function walk(dir: string, acc: string[] = []): string[] {
 }
 
 describe("fnb rbac role-name hygiene", () => {
-  it("app/api does not call requireAnyRole", () => {
-    const apiRoot = path.join(ROOT, "app", "api");
+  it("Nest handlers do not call requireAnyRole", () => {
+    const apiRoot = path.join(ROOT, "nest");
     const hits: string[] = [];
     for (const file of walk(apiRoot)) {
       const text = fs.readFileSync(file, "utf8");
