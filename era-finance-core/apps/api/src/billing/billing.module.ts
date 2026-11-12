@@ -30,7 +30,7 @@ import { DrakarisModule } from "../integrations/payment-providers/drakaris/draka
     SystemConfigModule,
     AccessControlModule,
     AdminModule,
-    AuditModule,
+    forwardRef(() => AuditModule),
     forwardRef(() => DrakarisModule),
   ],
   controllers: [],
