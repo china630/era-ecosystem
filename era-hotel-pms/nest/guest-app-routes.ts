@@ -28,6 +28,11 @@ import {
   guestCareResults,
   guestCareTimetable,
   guestFolioSummary,
+  guestBookTour,
+  guestCreateLaundryTicket,
+  guestLaundryBoard,
+  guestOpenTransfers,
+  guestTourBoard,
   listFamilyGrantsForReservation,
   listGuestAppMessages,
   listGuestBookingRequests,
@@ -305,6 +310,77 @@ export function registerGuestAppRoutes(http: Express) {
       const token = bearerToken(httpReq);
       if (!token) return sendJson(httpRes, { code: "REVOKED" }, 401);
       sendJson(httpRes, await guestBoardSummary(token));
+    } catch (err) {
+      await guestCatch(httpRes, err);
+    }
+  });
+
+  http.get("/api/guest-app/transfers", async (httpReq, httpRes) => {
+    try {
+      const token = bearerToken(httpReq);
+      if (!token) return sendJson(httpRes, { code: "REVOKED" }, 401);
+      sendJson(httpRes, await guestOpenTransfers(token));
+    } catch (err) {
+      await guestCatch(httpRes, err);
+    }
+  });
+
+  http.get("/api/guest-app/laundry", async (httpReq, httpRes) => {
+    try {
+      const token = bearerToken(httpReq);
+      if (!token) return sendJson(httpRes, { code: "REVOKED" }, 401);
+      sendJson(httpRes, await guestLaundryBoard(token));
+    } catch (err) {
+      await guestCatch(httpRes, err);
+    }
+  });
+
+  http.post("/api/guest-app/laundry", async (httpReq, httpRes) => {
+    try {
+      const token = bearerToken(httpReq);
+      if (!token) return sendJson(httpRes, { code: "REVOKED" }, 401);
+      const body = (httpReq.body ?? {}) as {
+        itemId?: string;
+        washQty?: number;
+        ironQty?: number;
+        express?: boolean;
+      };
+      sendJson(
+        httpRes,
+        await guestCreateLaundryTicket({
+          token,
+          itemId: String(body.itemId ?? ""),
+          washQty: Number(body.washQty ?? 0),
+          ironQty: Number(body.ironQty ?? 0),
+          express: Boolean(body.express),
+        }),
+        201,
+      );
+    } catch (err) {
+      await guestCatch(httpRes, err);
+    }
+  });
+
+  http.get("/api/guest-app/tours", async (httpReq, httpRes) => {
+    try {
+      const token = bearerToken(httpReq);
+      if (!token) return sendJson(httpRes, { code: "REVOKED" }, 401);
+      sendJson(httpRes, await guestTourBoard(token));
+    } catch (err) {
+      await guestCatch(httpRes, err);
+    }
+  });
+
+  http.post("/api/guest-app/tours", async (httpReq, httpRes) => {
+    try {
+      const token = bearerToken(httpReq);
+      if (!token) return sendJson(httpRes, { code: "REVOKED" }, 401);
+      const body = (httpReq.body ?? {}) as { departureId?: string };
+      sendJson(
+        httpRes,
+        await guestBookTour({ token, departureId: String(body.departureId ?? "") }),
+        201,
+      );
     } catch (err) {
       await guestCatch(httpRes, err);
     }

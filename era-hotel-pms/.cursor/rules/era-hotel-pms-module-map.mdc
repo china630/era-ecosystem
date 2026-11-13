@@ -122,6 +122,9 @@ Cross-app: fb-pos tickets with `beoId` — extras only on event day; base packag
 | Guest phone OTP | `POST /api/guest-app/auth/phone/start|verify`, `…/auth/confirmation` | GuestNotifyAdapter; SMS/WA STUB; limited confirmation pack. HOT-GUEST-APP-08 |
 | Guest folio / board | `GET /api/guest-app/folio`, `GET /api/guest-app/board` | Own folio lines (open/settled); meal entitlements. HOT-GUEST-APP-04/10 |
 | Guest bell inbox | `GET/PATCH /api/guest-app/messages`, staff `POST …/pax/:paxId/messages` | RECEPTION/CLINIC/MARKETING; mute marketing on phone. HOT-GUEST-APP-09 |
+| Guest transfers | `GET /api/guest-app/transfers` | Open transfers for the stay session |
+| Guest laundry | `GET/POST /api/guest-app/laundry` | Active price list and a ticket on the stay room |
+| Guest tours | `GET/POST /api/guest-app/tours` | Open departures in the stay window and a booking |
 | Guest list | `GET /api/guests?q=&page=&pageSize=` | Paged `{ items, total, page, pageSize }`; UI `EraListWorkspace` |
 
 Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYSTEM_URLS.md`).
@@ -140,7 +143,7 @@ Env: `ERA_HOTEL_GUEST_MDM_STRICT=true` in production templates (see `docs/ECOSYS
 | (checked-out fact) | `POST /api/internal/v1/reservations/checked-out` | Clinic cron asks which reservation ids are already CHECKED_OUT |
 | (clinic stay sync) | `POST /api/internal/v1/reservations/clinic-sync` | In-house medical guests plus which of the clinic's open stays are CHECKED_OUT. Bearer event token. ADR hotel-clinic-lifecycle-outbox |
 | (old held rows) | `POST /api/reservations/[id]/deposits/apply` | Moves existing HELD rows once onto a blue room payment. New money is not written there. The cashier returns a remainder from the blue line |
-| Medical SKU dual-run (HOT-PKG-02) | `medical-package-resolve.service` + `reservation-notes` import + bridge note upsert; stamp `ReservationGuest.medicalPackageCode` | Extra Req `ERA-PKG` / agency → clinic `programCode`; not EW Rate Code. Guest column only on Medical Rates family (four SKUs). Infotur stay tariff does not list medical packages. FO: `doc/nafta/ERA-PKG-FO-CHEATSHEET.md` |
+| Medical SKU dual-run (HOT-PKG-02) | `medical-package-resolve.service` + `GET /api/clinic-program-codes` + `reservation-notes` import + bridge note upsert; stamp `ReservationGuest.medicalPackageCode` | Extra Req `ERA-PKG` / agency → clinic `programCode`; not EW Rate Code. Guest column uses the clinic template list when the clinic answers; the four SKUs are the fallback. A clinic template on an Infotur tariff stamps that code. FO: `doc/nafta/ERA-PKG-FO-CHEATSHEET.md` |
 | Composed package sell (HOT-PKG-03) | `nafta-package-compose.service` + `syncComposedDailyRates`; `STANDART_COMPANION` pricing component (96); night audit on resolved SKU; FO reservation card pricing tab `packageCompose` | Wave D; not SHIPPED |
 | Per-pax lifecycle (HOT-PKG-04) | check-in **N events** per `ReservationGuest` (`programCode` + `paxKey` + `globalPersonId`); each event is a `clinic_lifecycle_outbox` row retried until ack; clinic opens one episode per pax | Wave E; share rooms stay two reservations |
 | (clinic cutover glue) | `GET /api/internal/v1/guests/by-identity` | Clinic `#21` — name + birthDate + optional phone → `Guest.globalPersonId` |

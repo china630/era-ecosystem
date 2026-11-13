@@ -1,8 +1,8 @@
 import type { ImportTx } from "@/lib/import/types";
 import {
-  normalizeMedicalPackageCode,
   overlayFoPackageCodes,
   programCodeForLifecycle,
+  resolveClinicProgramCode,
   resolveMedicalSku,
   stayProductFamily,
   summarizeMedicalSku,
@@ -57,26 +57,62 @@ export async function stampMedicalPackagesForReservation(
   }
 
   if (stayProductFamily(reservation.ratePlan) === "infotur") {
+    const { loadClinicProgramCodes } = await import("@/lib/integration/clinic-program-codes");
+    const { resolveClinicProgramCode } = await import("@/lib/services/medical-package-resolve.service");
+    const codes = await loadClinicProgramCodes();
+    const tariffCode = resolveClinicProgramCode(reservation.ratePlan?.code, codes);
+    if (!tariffCode) {
+      if (!codes) {
+        return {
+          unanimousCode: null,
+          unresolved: true,
+          programCode: undefined,
+          perGuestCodes: reservation.paxGuests.map(() => null),
+          stayKind: "unresolved",
+        };
+      }
+      await tx.reservation.update({
+        where: { id: reservationId },
+        data: { medicalPackageCode: null, medicalPackageUnresolved: true },
+      });
+      if (reservation.paxGuests.length > 0) {
+        await Promise.all(
+          reservation.paxGuests.map((g) =>
+            tx.reservationGuest.update({
+              where: { id: g.id },
+              data: { medicalPackageCode: null },
+            }),
+          ),
+        );
+      }
+      return {
+        unanimousCode: null,
+        unresolved: true,
+        programCode: undefined,
+        perGuestCodes: reservation.paxGuests.map(() => null),
+        stayKind: "unresolved",
+      };
+    }
     await tx.reservation.update({
       where: { id: reservationId },
-      data: { medicalPackageCode: null, medicalPackageUnresolved: true },
+      data: { medicalPackageCode: tariffCode, medicalPackageUnresolved: false },
     });
     if (reservation.paxGuests.length > 0) {
       await Promise.all(
         reservation.paxGuests.map((g) =>
           tx.reservationGuest.update({
             where: { id: g.id },
-            data: { medicalPackageCode: null },
+            data: { medicalPackageCode: tariffCode },
           }),
         ),
       );
     }
     return {
-      unanimousCode: null,
-      unresolved: true,
-      programCode: undefined,
-      perGuestCodes: reservation.paxGuests.map(() => null),
-      stayKind: "unresolved",
+      unanimousCode: tariffCode as MedicalPackageCode,
+      unresolved: false,
+      programCode: tariffCode,
+      perGuestCodes: reservation.paxGuests.map(() => tariffCode as MedicalPackageCode),
+      stayKind: "medical",
     };
   }
 
@@ -109,12 +145,15 @@ export async function stampMedicalPackagesForReservation(
     inheritRatePlanPackage: opts?.inheritRatePlanPackage,
   });
 
+  const { loadClinicProgramCodes } = await import("@/lib/integration/clinic-program-codes");
+  const clinicCodes = await loadClinicProgramCodes();
+
   if (opts?.foPerGuestCodes) {
     const codes =
       reservation.paxGuests.length > 0
         ? reservation.paxGuests.map((_, i) => opts.foPerGuestCodes![i] ?? null)
         : [opts.foPerGuestCodes[0] ?? null];
-    result = overlayFoPackageCodes(result, codes, agencyName);
+    result = overlayFoPackageCodes(result, codes, agencyName, clinicCodes);
   } else if (reservation.paxGuests.length > 0) {
     // Import / check-in without a fresh column: keep a prior stamp only where
     // notes, agency, and the rate plan left that pax empty.
@@ -122,7 +161,10 @@ export async function stampMedicalPackagesForReservation(
       result.perGuestCodes.map(
         (code, i) =>
           code ??
-          normalizeMedicalPackageCode(reservation.paxGuests[i]?.medicalPackageCode ?? null),
+          (resolveClinicProgramCode(
+            reservation.paxGuests[i]?.medicalPackageCode ?? null,
+            clinicCodes,
+          ) as MedicalPackageCode | null),
       ),
       agencyName,
     );

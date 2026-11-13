@@ -474,6 +474,21 @@ export function ReservationCardEditor({
   const [pax, setPax] = useState<PaxRow[]>([]);
   const [ratePlanId, setRatePlanId] = useState('');
   const [ratePlans, setRatePlans] = useState<RatePlanOption[]>([]);
+  const [clinicProgramCodes, setClinicProgramCodes] = useState<string[]>([]);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void fetch('/api/clinic-program-codes')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { codes?: string[] } | null) => {
+        if (cancelled || !body?.codes) return;
+        setClinicProgramCodes(body.codes);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
   const [guestId, setGuestId] = useState('');
   /** Latest party for async guest-card create/save (avoid stale closure). */
   const paxRef = useRef<PaxRow[]>(pax);
@@ -3567,7 +3582,7 @@ export function ReservationCardEditor({
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
                   }}
-                  packageOptions={medicalPackageChoices(ratePlans)}
+                  packageOptions={medicalPackageChoices(ratePlans, clinicProgramCodes)}
                   showMedicalPackages={ratePlanRequiresGuestPackage({
                     code: ratePlans.find((row) => row.id === ratePlanId)?.code,
                     medicalFlag: ratePlans.find((row) => row.id === ratePlanId)?.medicalFlag,

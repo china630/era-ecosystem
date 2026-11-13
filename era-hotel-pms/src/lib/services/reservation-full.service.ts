@@ -734,7 +734,7 @@ export async function patchReservationFull(
     where: { id: chargedPlanId },
     select: { code: true, medicalFlag: true },
   });
-  const { ratePlanRequiresGuestPackage } = await import(
+  const { ratePlanRequiresGuestPackage, stayProductFamily } = await import(
     '@/lib/services/medical-package-resolve.service'
   );
   const guestPackageOnStay = chargedPlan ? ratePlanRequiresGuestPackage(chargedPlan) : false;
@@ -858,7 +858,7 @@ export async function patchReservationFull(
     await ensurePartyGuestFolios(id);
   }
 
-  if (!guestPackageOnStay) {
+  if (!guestPackageOnStay && stayProductFamily(stayPlan ?? { code: null }) !== 'infotur') {
     await prisma.reservationGuest.updateMany({
       where: { reservationId: id, medicalPackageCode: { not: null } },
       data: { medicalPackageCode: null },
@@ -1011,20 +1011,17 @@ export async function patchReservationFull(
     where: { id: stayPlanId },
     select: { code: true, medicalFlag: true },
   });
-  const { normalizeMedicalPackageCode } = await import(
-    '@/lib/services/medical-package-resolve.service'
-  );
+  const { acceptGuestPackageCode } = await import('@/lib/integration/clinic-program-codes');
   if (stayPlan && ratePlanRequiresGuestPackage(stayPlan)) {
     const rows = paxGuests ?? existing.paxGuests;
     const named = rows.filter(
       (p) => p.guestId || ('firstName' in p && p.firstName?.trim()) || ('lastName' in p && p.lastName?.trim()),
     );
-    if (named.some((p) => !normalizeMedicalPackageCode(p.medicalPackageCode))) {
+    const accepted = await Promise.all(named.map((p) => acceptGuestPackageCode(p.medicalPackageCode)));
+    if (named.some((_, i) => !accepted[i])) {
       throw new Error('Select a medical package for each guest');
     }
-    const packageCodes = named
-      .map((p) => normalizeMedicalPackageCode(p.medicalPackageCode))
-      .filter((code): code is NonNullable<typeof code> => Boolean(code));
+    const packageCodes = accepted.filter((code): code is string => Boolean(code));
     const roomTypeId =
       (typeof data.roomTypeId === 'string' ? data.roomTypeId : null) ?? existing.roomTypeId;
     const mealPlanId =

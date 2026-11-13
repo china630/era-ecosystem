@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { normalizeMedicalPackageCode } from "@/lib/services/medical-package-resolve.service";
+import { acceptGuestPackageCode } from "@/lib/integration/clinic-program-codes";
 
 export type ClinicSyncGuest = {
   reservationId: string;
@@ -85,7 +85,7 @@ export async function listClinicSyncSnapshot(input: {
   const inHouse: ClinicSyncGuest[] = [];
   for (const stay of stays) {
     for (const pax of stay.paxGuests) {
-      const programCode = normalizeMedicalPackageCode(pax.medicalPackageCode);
+      const programCode = await acceptGuestPackageCode(pax.medicalPackageCode);
       if (!programCode) continue;
       const guestName =
         [pax.firstName, pax.lastName].filter(Boolean).join(" ").trim() ||
@@ -112,7 +112,7 @@ export async function listClinicSyncSnapshot(input: {
       });
     }
     if (stay.paxGuests.length > 0) continue;
-    const programCode = normalizeMedicalPackageCode(stay.medicalPackageCode);
+    const programCode = await acceptGuestPackageCode(stay.medicalPackageCode);
     if (!programCode || !stay.guest) continue;
     const birth = stay.guest.birthDate;
     inHouse.push({

@@ -2,6 +2,7 @@ import {
   clinicProgramCodeFromTariff,
   medicalPackageChoices,
   normalizeMedicalPackageCode,
+  resolveClinicProgramCode,
   overlayFoPackageCodes,
   programCodeForLifecycle,
   ratePlanRequiresGuestPackage,
@@ -240,6 +241,10 @@ describe("medical-package-resolve", () => {
       }),
     ).toBe(true);
     expect(normalizeMedicalPackageCode("PKG-INFOTUR")).toBeNull();
+    expect(resolveClinicProgramCode("PKG-INFOTUR", new Set(["PKG-INFOTUR", "PKG-STANDART"]))).toBe(
+      "PKG-INFOTUR",
+    );
+    expect(resolveClinicProgramCode("PKG-INFOTUR", null)).toBeNull();
     expect(clinicProgramCodeFromTariff({ code: "PKG-INFOTUR" })).toBeUndefined();
     expect(clinicProgramCodeFromTariff({ code: "PKG-STANDART" })).toBe(
       "PKG-STANDART",

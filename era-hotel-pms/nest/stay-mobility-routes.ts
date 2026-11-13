@@ -11,6 +11,7 @@ import {
 } from '@/lib/services/stay-mobility-sync.service';
 import { prisma } from '@/lib/prisma';
 import { hotelDateKey } from '@/lib/hotel-calendar';
+import { loadClinicProgramCodes } from '@/lib/integration/clinic-program-codes';
 import {
   enterHotelStaff,
   hotelNestSession,
@@ -141,6 +142,23 @@ export function registerStayMobilityRoutes(http: Express) {
           const body = applySchema.parse(httpReq.body ?? {});
           const results = await applyTransferDecisions(body.reservationId, body.decisions);
           return sendJson(httpRes, serialize({ results }));
+        }),
+      );
+      if (web instanceof Response) await sendWebResponse(httpRes, web);
+    } catch (err) {
+      await sendRouteError(httpRes, err);
+    }
+  });
+
+  http.get('/api/clinic-program-codes', async (httpReq, httpRes) => {
+    if (!(await enterHotelStaff(httpReq, httpRes))) return;
+    try {
+      const session = await hotelNestSession(httpReq);
+      const web = await runWithHotelTenant(session, async () =>
+        runWithNestHttp(httpReq, async () => {
+          assertAnyPermission(session, [PERMISSIONS.RESERVATIONS_READ, PERMISSIONS.RESERVATIONS_WRITE]);
+          const codes = await loadClinicProgramCodes();
+          return sendJson(httpRes, { codes: codes ? [...codes] : [] });
         }),
       );
       if (web instanceof Response) await sendWebResponse(httpRes, web);
