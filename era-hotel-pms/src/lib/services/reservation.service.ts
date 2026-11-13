@@ -305,16 +305,20 @@ export async function createReservation(input: {
   const ratePlan = await prisma.ratePlan.findUnique({ where: { id: ratePlanId } });
   let guestPackageOnStay = false;
   if (ratePlan) {
-    const { ratePlanRequiresGuestPackage, normalizeMedicalPackageCode } = await import(
+    const { ratePlanRequiresGuestPackage } = await import(
       '@/lib/services/medical-package-resolve.service'
+    );
+    const { acceptGuestPackageCode } = await import(
+      '@/lib/integration/clinic-program-codes'
     );
     guestPackageOnStay = ratePlanRequiresGuestPackage(ratePlan);
     if (guestPackageOnStay) {
       const named = (input.paxGuests ?? []).filter(
         (p) => p.guestId || p.firstName?.trim() || p.lastName?.trim(),
       );
-      const rows = named.length > 0 ? named : [{ medicalPackageCode: null as string | null }];
-      if (rows.some((p) => !normalizeMedicalPackageCode(p.medicalPackageCode))) {
+      const rows = named.length > 0 ? named : (input.paxGuests ?? []);
+      const accepted = await Promise.all(rows.map((p) => acceptGuestPackageCode(p.medicalPackageCode)));
+      if (rows.length === 0 || accepted.some((code) => !code)) {
         throw new Error('Select a medical package for each guest');
       }
     }
@@ -1009,6 +1013,7 @@ export async function checkInReservation(
       usesMedicalPackageCompose,
     } =
       await import('@/lib/services/medical-package-resolve.service');
+    const { acceptGuestPackageCode } = await import('@/lib/integration/clinic-program-codes');
     const party = await prisma.reservationGuest.findMany({
       where: { reservationId: id },
       orderBy: { sortOrder: 'asc' },
@@ -1027,7 +1032,8 @@ export async function checkInReservation(
             )
           : party;
       const rows = named.length > 0 ? named : party;
-      if (rows.length === 0 || rows.some((p) => !normalizeMedicalPackageCode(p.medicalPackageCode))) {
+      const accepted = await Promise.all(rows.map((p) => acceptGuestPackageCode(p.medicalPackageCode)));
+      if (rows.length === 0 || accepted.some((code) => !code)) {
         throw new Error('Select a medical package for each guest');
       }
     }
@@ -1251,8 +1257,8 @@ export async function checkInReservation(
                 },
               ]
             : [];
-      const { normalizeMedicalPackageCode } = await import(
-        '@/lib/services/medical-package-resolve.service'
+      const { acceptGuestPackageCode } = await import(
+        '@/lib/integration/clinic-program-codes'
       );
       for (const pax of paxList) {
         const name =
@@ -1264,7 +1270,9 @@ export async function checkInReservation(
           'id' in pax && typeof (pax as { id?: string }).id === 'string'
             ? (pax as { id: string }).id
             : pax.guest?.id ?? undefined;
-        const programCode = normalizeMedicalPackageCode(pax.medicalPackageCode);
+        const programCode =
+          (await acceptGuestPackageCode(pax.medicalPackageCode)) ??
+          undefined;
         if (!programCode) continue;
         void dispatchGuestCheckedIn({
           reservationId: id,

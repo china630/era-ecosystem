@@ -20,10 +20,8 @@ import {
 import { assertCanTransferToCityLedger } from '@/lib/services/city-ledger-gate.service';
 import { createFiscalDocumentsOnCheckout } from '@/lib/services/fiscal-document.service';
 import { getReservation } from '@/lib/services/reservation.service';
-import {
-  clinicProgramCodeFromTariff,
-  usesMedicalPackageCompose,
-} from '@/lib/services/medical-package-resolve.service';
+import { clinicProgramCodeForEvent } from '@/lib/integration/clinic-program-codes';
+import { usesMedicalPackageCompose } from '@/lib/services/medical-package-resolve.service';
 import { releaseDoorAfterShareDeparture } from '@/lib/services/share-assignment.service';
 
 export interface CheckoutCityLedgerHandoff {
@@ -484,7 +482,7 @@ export async function checkoutReservation(
   void dispatchGuestCheckedOut({
     reservationId: id,
     roomNumber: completed.room?.roomNumber ?? undefined,
-    programCode: clinicProgramCodeFromTariff(completed.ratePlan),
+    programCode: await clinicProgramCodeForEvent(completed.ratePlan),
   }).catch((e) => console.error('Guest lifecycle check-out failed', e));
   const { notifyFbPosReservationLifecycle } = await import('@/lib/integration/fnb-pos-webhook');
   void notifyFbPosReservationLifecycle({

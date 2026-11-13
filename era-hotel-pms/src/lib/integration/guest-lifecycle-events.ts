@@ -9,7 +9,6 @@ import {
   SATELLITE_HOTEL_STAY_PRODUCT_CHANGED,
 } from "@era/contracts";
 import { publishToOrchestratorGateway } from "@era/satellite-kit/orchestrator-gateway";
-import { normalizeMedicalPackageCode } from "@/lib/services/medical-package-resolve.service";
 import { mapNationalityToIso } from "@/lib/person-documents";
 
 export async function publishLifecycle(
@@ -361,8 +360,18 @@ export async function fanOutClinicMedicalPackages(input: {
   const kind = clinicPackageEventKind(input.status);
   if (kind === "none") return;
 
+  const { loadClinicProgramCodes } = await import("@/lib/integration/clinic-program-codes");
+  const { resolveClinicProgramCode } = await import(
+    "@/lib/services/medical-package-resolve.service"
+  );
+  const codes = await loadClinicProgramCodes();
+
   const rows = input.pax.flatMap((pax) => {
-    const programCode = normalizeMedicalPackageCode(pax.medicalPackageCode ?? null);
+    const programCode = codes
+      ? resolveClinicProgramCode(pax.medicalPackageCode ?? null, codes)
+      : /^PKG-[A-Z0-9-]+$/.test(((pax.medicalPackageCode ?? "").trim().toUpperCase()))
+        ? (pax.medicalPackageCode ?? "").trim().toUpperCase()
+        : null;
     if (!programCode) return [];
     const guestName =
       [pax.firstName, pax.lastName].filter(Boolean).join(" ") ||
