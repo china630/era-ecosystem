@@ -858,7 +858,7 @@ export async function patchReservationFull(
     await ensurePartyGuestFolios(id);
   }
 
-  if (!guestPackageOnStay && stayProductFamily(stayPlan ?? { code: null }) !== 'infotur') {
+  if (!guestPackageOnStay && stayProductFamily(chargedPlan ?? { code: null }) !== 'infotur') {
     await prisma.reservationGuest.updateMany({
       where: { reservationId: id, medicalPackageCode: { not: null } },
       data: { medicalPackageCode: null },
