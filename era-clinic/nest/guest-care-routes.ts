@@ -119,4 +119,24 @@ export function registerGuestCareRoutes(http: Express) {
     });
     res.json(body);
   });
+
+  http.get("/api/internal/v1/program-template-codes", async (req: ExpressRequest, res: ExpressResponse) => {
+    if (!assertGuestCareServiceToken(req)) {
+      res.status(401).json({ error: "unauthorized" });
+      return;
+    }
+    const organizationId = String(req.query.organizationId ?? "").trim();
+    if (!organizationId) {
+      res.status(400).json({ error: "missing_params" });
+      return;
+    }
+    const codes = await runWithSatelliteTenant({ organizationId }, async () => {
+      const rows = await prisma.programTemplate.findMany({
+        where: { organizationId, isCurrent: true },
+        select: { code: true },
+      });
+      return [...new Set(rows.map((row) => row.code.trim().toUpperCase()).filter(Boolean))];
+    });
+    res.json({ codes });
+  });
 }
