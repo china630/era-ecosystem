@@ -696,7 +696,9 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
 
               {order.status === "PUBLISHED" && canComplete ? (
                 <div className="space-y-2">
-                  <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("resultsReadOnly")}</p>
+                  {canWriteResults ? null : (
+                    <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("resultsReadOnly")}</p>
+                  )}
                   <button
                     type="button"
                     className={PRIMARY_BUTTON_CLASS}
@@ -710,7 +712,9 @@ export function LabOrderWorkflowModal({ open, orderId, onClose, onChanged }: Pro
 
               {order.status === "COMPLETED" ? (
                 <div className="space-y-1">
-                  <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("resultsReadOnly")}</p>
+                  {canWriteResults ? null : (
+                    <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("resultsReadOnly")}</p>
+                  )}
                   <p className={`text-[13px] ${TEXT_SUCCESS_CLASS}`}>
                     {t("completed")}
                     {order.publishedAt

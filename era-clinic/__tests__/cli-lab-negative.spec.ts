@@ -72,6 +72,20 @@ describe("Clinic LAB negative paths (AC-CLI-LAB ops — not HL7)", () => {
       expect(labCompleteDenied("PUBLISHED")).toBeNull();
     });
 
+    it("accepts result correction on COMPLETED and PUBLISHED without dropping status", async () => {
+      const { labResultsDenied, labResultsPreservePublication } = await import(
+        "@/lib/lab-order-status-gates"
+      );
+      expect(labResultsDenied("COMPLETED")).toBeNull();
+      expect(labResultsDenied("PUBLISHED")).toBeNull();
+      expect(labResultsDenied("COLLECTED")).toBeNull();
+      expect(labResultsPreservePublication("COMPLETED")).toBe(true);
+      expect(labResultsPreservePublication("PUBLISHED")).toBe(true);
+      expect(labResultsPreservePublication("COLLECTED")).toBe(false);
+      expect(labResultsDenied("CANCELLED")).toMatch(/Cannot enter results from status CANCELLED/);
+      expect(labResultsDenied("ORDERED")).toMatch(/Cannot enter results from status ORDERED/);
+    });
+
     it("foreign order shape — not found message for missing id", () => {
       // Route returns 404 "Lab order not found" for foreign/missing ids (ops path, not HL7).
       expect("Lab order not found").toMatch(/not found/i);
