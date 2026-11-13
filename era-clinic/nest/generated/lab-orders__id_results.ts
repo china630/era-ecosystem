@@ -3,6 +3,7 @@ import { requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { assertLabOrderDataScope } from "@/lib/auth/clinic-data-scope";
 import { findLabOrderById, writeLabResultsForOrder } from "@/domain/lab/lab-order-write.service";
+import { labResultsDenied, labResultsPreservePublication } from "@/lib/lab-order-status-gates";
 import { enterClinicStaff, clinicNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithClinicTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
 const bodySchema = z.object({
@@ -25,9 +26,6 @@ const bodySchema = z.object({
     )
     .min(1),
 });
-
-/** Editable while COLLECTED/IN_PROGRESS/RESULT_READY — re-entry allowed until PUBLISHED. */
-const EDITABLE_STATUSES = ["COLLECTED", "IN_PROGRESS", "RESULT_READY"];
 
 export function register(http: { get: Function; post: Function; put: Function; patch: Function; delete: Function }) {
   http.post("/api/lab-orders/:id/results", async (httpReq, httpRes) => {
@@ -60,11 +58,14 @@ export function register(http: { get: Function; post: Function; put: Function; p
     const { labAwaitingPaymentDenied } = await import("@/domain/lab/lab-order-pay-gate");
     const unpaid = labAwaitingPaymentDenied(order);
     if (unpaid) return sendJson(httpRes, { error: unpaid.message, ...{ code: unpaid.code } }, unpaid.status);
-    if (!EDITABLE_STATUSES.includes(order.status)) {
-      return sendJson(httpRes, { error: `Cannot enter results from status ${order.status}` }, 400);
+    const statusDenied = labResultsDenied(order.status);
+    if (statusDenied) {
+      return sendJson(httpRes, { error: statusDenied }, 400);
     }
 
-    const result = await writeLabResultsForOrder(id, body.lines);
+    const result = await writeLabResultsForOrder(id, body.lines, {
+      preservePublication: labResultsPreservePublication(order.status),
+    });
     if (!result) return sendJson(httpRes, { error: "Lab order not found" }, 404);
 
     return sendJson(httpRes, {
