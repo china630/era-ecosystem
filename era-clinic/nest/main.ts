@@ -23,14 +23,18 @@ const ClinicApiController = createSatelliteApiController(router);
 class ClinicNestModule {}
 
 async function main() {
-  const app = await NestFactory.create(ClinicNestModule, { logger: ["error", "warn"] });
+  const app = await NestFactory.create(ClinicNestModule, {
+    logger: ["error", "warn"],
+    bodyParser: false,
+  });
   app.useGlobalInterceptors(
     new SatelliteMutationAuditInterceptor(async (row) => {
       await prisma.satelliteAuditLog.create({ data: row });
     }, ["/api/auth/session/refresh-permissions"]),
   );
   const http = app.getHttpAdapter().getInstance();
-  http.use(express.json());
+  http.use(express.json({ limit: "8mb" }));
+  http.use(express.urlencoded({ extended: true, limit: "2mb" }));
   const port = Number(process.env.NEST_PORT ?? process.env.CLINIC_NEST_PORT ?? 13203);
   await app.listen(port, "127.0.0.1");
   console.log(`clinic nest http://127.0.0.1:${port}`);
