@@ -1316,6 +1316,9 @@ export async function listReservationsForGrid(
       company: { select: { code: true, name: true } },
       source: { select: { code: true, name: true } },
       notes: { select: { text: true } },
+      stay: {
+        select: { checkInBusinessDate: true, checkOutBusinessDate: true },
+      },
       paxGuests: {
         select: {
           firstName: true,
@@ -1341,9 +1344,9 @@ export async function listReservationsForGrid(
       case 'guest':
         return partyGuestLabel(row.guest.fullName, row.paxGuests);
       case 'arrival':
-        return hotelDateKey(row.checkInDate);
+        return hotelDateKey(row.stay?.checkInBusinessDate ?? row.checkInDate);
       case 'departure':
-        return hotelDateKey(row.checkOutDate);
+        return hotelDateKey(row.stay?.checkOutBusinessDate ?? row.checkOutDate);
       case 'type':
         return row.roomType.code ?? '';
       case 'adult':
@@ -1375,8 +1378,8 @@ export async function listReservationsForGrid(
     const cmp = left.localeCompare(right, undefined, { numeric: true });
     if (cmp !== 0) return cmp * (sortKey ? sortDir : 1);
     if (sortKey) return a.id < b.id ? -1 : 1;
-    const aKey = hotelDateKey(a.checkInDate);
-    const bKey = hotelDateKey(b.checkInDate);
+    const aKey = hotelDateKey(a.stay?.checkInBusinessDate ?? a.checkInDate);
+    const bKey = hotelDateKey(b.stay?.checkInBusinessDate ?? b.checkInDate);
     const aFuture = aKey >= today ? 0 : 1;
     const bFuture = bKey >= today ? 0 : 1;
     if (aFuture !== bFuture) return aFuture - bFuture;
@@ -1398,6 +1401,9 @@ export async function listReservationsForGrid(
             company: true,
             source: true,
             notes: true,
+            stay: {
+              select: { checkInBusinessDate: true, checkOutBusinessDate: true },
+            },
             paxGuests: {
               select: {
                 firstName: true,
@@ -1445,9 +1451,13 @@ export async function listReservationsForGrid(
     const preview = filled[0]?.text?.trim().slice(0, 80) ?? null;
     const children =
       (r.children11_6 ?? 0) + (r.children5_2 ?? 0) + (r.children1_0 ?? 0);
+    const checkInBusinessDate = r.stay?.checkInBusinessDate?.toISOString() ?? null;
+    const checkOutBusinessDate = r.stay?.checkOutBusinessDate?.toISOString() ?? null;
     return {
       ...r,
       children,
+      checkInBusinessDate,
+      checkOutBusinessDate,
       guestLabel: partyGuestLabel(r.guest.fullName, r.paxGuests),
       guestSegments: partyGuestSegments(r.guest.fullName, r.paxGuests),
       hasNotes: filled.length > 0,
