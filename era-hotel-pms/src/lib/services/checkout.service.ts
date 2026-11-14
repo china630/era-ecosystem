@@ -422,6 +422,9 @@ export async function checkoutReservation(
     warnings.push(`Tours released: ${toursReleased}`);
   }
 
+  const { getCurrentBusinessDate } = await import('@/lib/services/business-date.service');
+  const checkOutBusinessDate = await getCurrentBusinessDate();
+
   const completed = await prisma.$transaction(async (tx) => {
     await closeFolios(id, { onlyTypes: ['GUEST'], targetStatus: 'CLOSED' });
 
@@ -456,7 +459,7 @@ export async function checkoutReservation(
 
     await tx.stay.updateMany({
       where: { reservationId: id },
-      data: { actualCheckOut: new Date() },
+      data: { actualCheckOut: new Date(), checkOutBusinessDate },
     });
 
     if (reservation.roomId) {

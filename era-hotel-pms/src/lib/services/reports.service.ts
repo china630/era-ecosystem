@@ -1,4 +1,4 @@
-import { bakuDayBounds, bakuDateKey } from '@era/satellite-kit/time';
+import { addBakuDays, bakuCivilUtcDate, bakuDayBounds, bakuDateKey } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 
@@ -67,18 +67,20 @@ export function exclusiveEndOfDay(d: Date): Date {
   return bakuDayBounds(bakuDateKey(d)).end;
 }
 
-/** Actual CI/CO journal: Stay exists and CI or CO falls in [from, to]. */
+/** Actual CI/CO journal: Stay exists; day filter is business stamps; times stay wall actual*. */
 export function buildReservationTimesWhere(q: ReservationTimesQuery) {
-  const from = bakuDayBounds(bakuDateKey(q.from)).start;
-  const toExcl = exclusiveEndOfDay(q.to);
+  const fromKey = bakuDateKey(q.from);
+  const toKey = bakuDateKey(q.to);
+  const fromBiz = bakuCivilUtcDate(fromKey);
+  const toStampExcl = bakuCivilUtcDate(addBakuDays(toKey, 1));
   const guestQ = q.guestQ?.trim();
   const agencyQ = q.agencyQ?.trim();
   return {
     stay: {
       is: {
         OR: [
-          { actualCheckIn: { gte: from, lt: toExcl } },
-          { actualCheckOut: { gte: from, lt: toExcl } },
+          { checkInBusinessDate: { gte: fromBiz, lt: toStampExcl } },
+          { checkOutBusinessDate: { gte: fromBiz, lt: toStampExcl } },
         ],
       },
     },

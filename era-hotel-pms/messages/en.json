@@ -2421,7 +2421,7 @@
   },
   "reservationTimes": {
     "title": "Reservation times",
-    "actualOnlyHint": "Only stays whose actual check-in or check-out falls in the selected range.",
+    "actualOnlyHint": "Date range filters by hotel business day of check-in/out. Actual times stay wall clock.",
     "guest": "Guest",
     "agency": "Agency",
     "plannedIn": "Planned check-in",

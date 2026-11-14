@@ -53,7 +53,11 @@ export async function undoCheckout(
     orderBy: { createdAt: 'desc' },
   });
   const biz = await getCurrentBusinessDate();
-  const checkoutDay = stay?.actualCheckOut ? hotelDateKey(stay.actualCheckOut) : hotelDateKey(biz);
+  const checkoutDay = stay?.checkOutBusinessDate
+    ? hotelDateKey(stay.checkOutBusinessDate)
+    : stay?.actualCheckOut
+      ? hotelDateKey(stay.actualCheckOut)
+      : hotelDateKey(biz);
   const transferred = await prisma.folio.count({
     where: { reservationId: id, status: { in: ['PENDING_AR', 'TRANSFERRED_AR'] } },
   });
@@ -69,7 +73,7 @@ export async function undoCheckout(
       });
       await tx.stay.updateMany({
         where: { reservationId: id },
-        data: { actualCheckOut: null },
+        data: { actualCheckOut: null, checkOutBusinessDate: null },
       });
       if (reservation.roomId) {
         await tx.room.update({

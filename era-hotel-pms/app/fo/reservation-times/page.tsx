@@ -11,7 +11,7 @@ import {
   useDebouncedValue,
 } from '@era/satellite-kit/ui';
 import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
-import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays } from '@/lib/hotel-calendar';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -25,27 +25,44 @@ type Row = {
   stay: { actualCheckIn: string; actualCheckOut: string | null } | null;
 };
 
-function todayIso() {
-  return hotelDateKey();
-}
-
-function plusDaysIso(n: number) {
-  return addHotelDays(hotelDateKey(), n);
-}
-
 export default function ReservationTimesPage() {
   const { can } = useAuth();
   const t = useTranslations('reservationTimes');
   const tc = useTranslations('common');
-  const [from, setFrom] = useState(() => plusDaysIso(-14));
-  const [to, setTo] = useState(todayIso);
+  const [bizYmd, setBizYmd] = useState<string | null>(null);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [guestQ, setGuestQ] = useState('');
   const [agencyQ, setAgencyQ] = useState('');
   const debouncedGuest = useDebouncedValue(guestQ, 300);
   const debouncedAgency = useDebouncedValue(agencyQ, 300);
   const [rows, setRows] = useState<Row[]>([]);
 
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/business-date');
+        const data = await res.json();
+        if (!res.ok) {
+          showApiError(data, tc('loadError'));
+          return;
+        }
+        const ymd = String(data.currentBusinessDate ?? '').slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+          showApiError({ error: tc('loadError') });
+          return;
+        }
+        setBizYmd(ymd);
+        setTo(ymd);
+        setFrom(addHotelDays(ymd, -14));
+      } catch (e) {
+        showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
+      }
+    })();
+  }, [tc]);
+
   const load = useCallback(async () => {
+    if (!from || !to) return;
     try {
       const params = new URLSearchParams({ from, to });
       if (debouncedGuest.trim()) params.set('guest', debouncedGuest.trim());
@@ -70,6 +87,10 @@ export default function ReservationTimesPage() {
     return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
+  if (!bizYmd || !from || !to) {
+    return <p className="text-sm text-[#7F8C8D]">{tc('loading')}</p>;
+  }
+
   return (
     <>
       <PageHeader title={t('title')} />
@@ -77,8 +98,8 @@ export default function ReservationTimesPage() {
       <EraListFilterBar
         resetLabel={tc('filterReset')}
         onReset={() => {
-          setFrom(plusDaysIso(-14));
-          setTo(todayIso());
+          setFrom(addHotelDays(bizYmd, -14));
+          setTo(bizYmd);
           setGuestQ('');
           setAgencyQ('');
         }}

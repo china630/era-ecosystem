@@ -23,6 +23,10 @@ export type DashStay = {
   roomCount: number;
   inYmd: string;
   outYmd: string;
+  /** Business day stamped at check-in; null when no Stay yet. */
+  checkInBizYmd: string | null;
+  /** Business day stamped at check-out; null when still in-house or no Stay. */
+  checkOutBizYmd: string | null;
   createdYmd: string;
   updatedYmd: string;
   nights: number;
@@ -478,14 +482,20 @@ export function buildFoStatus(input: FoStatusInput): FoStatusSnapshot {
   );
   const expectedDepartures = input.stays.filter((s) => s.status === 'IN_HOUSE' && s.outYmd === day);
   const realizedArrivals = input.stays.filter(
-    (s) => s.inYmd === day && (s.status === 'IN_HOUSE' || s.status === 'CHECKED_OUT'),
-  );
-  const realizedDepartures = input.stays.filter((s) => s.status === 'CHECKED_OUT' && s.outYmd === day);
-  const startStays = input.stays.filter(
     (s) =>
-      (s.status === 'IN_HOUSE' && s.inYmd < day) ||
-      (s.status === 'CHECKED_OUT' && s.outYmd === day && s.inYmd < day),
+      s.checkInBizYmd === day && (s.status === 'IN_HOUSE' || s.status === 'CHECKED_OUT'),
   );
+  const realizedDepartures = input.stays.filter(
+    (s) => s.status === 'CHECKED_OUT' && s.checkOutBizYmd === day,
+  );
+  const startStays = input.stays.filter((s) => {
+    const inBiz = s.checkInBizYmd ?? s.inYmd;
+    const outBiz = s.checkOutBizYmd ?? s.outYmd;
+    return (
+      (s.status === 'IN_HOUSE' && inBiz < day) ||
+      (s.status === 'CHECKED_OUT' && outBiz === day && inBiz < day)
+    );
+  });
   const endStays = nightStays(input.stays, day, includeWaiting);
   const dayUseStays = input.stays.filter(
     (s) =>

@@ -1,10 +1,16 @@
 import { buildFoStatus, stayBucket, type DashStay, type FoStatusInput } from '@/lib/services/fo-status-dashboard.math';
 
 function stay(partial: Partial<DashStay> & Pick<DashStay, 'id' | 'status' | 'inYmd' | 'outYmd'>): DashStay {
+  const checkInBizYmd = partial.checkInBizYmd ?? partial.inYmd;
+  const checkOutBizYmd =
+    partial.checkOutBizYmd ??
+    (partial.status === 'CHECKED_OUT' ? partial.outYmd : null);
   return {
     roomId: null,
     roomNumber: null,
     roomCount: 1,
+    checkInBizYmd,
+    checkOutBizYmd,
     createdYmd: partial.inYmd,
     updatedYmd: partial.inYmd,
     nights: partial.inYmd === partial.outYmd ? 1 : 1,
@@ -29,6 +35,8 @@ function stay(partial: Partial<DashStay> & Pick<DashStay, 'id' | 'status' | 'inY
     paymentMethod: 'CASH',
     totalAmount: 100,
     ...partial,
+    checkInBizYmd: partial.checkInBizYmd ?? checkInBizYmd,
+    checkOutBizYmd: partial.checkOutBizYmd !== undefined ? partial.checkOutBizYmd : checkOutBizYmd,
   };
 }
 
@@ -59,6 +67,35 @@ describe('fo status dashboard', () => {
     expect(stayBucket(stay({ id: 'd', status: 'IN_HOUSE', inYmd: '2026-10-10', outYmd: '2026-10-14', share: true }))).toBe('SHR');
     expect(stayBucket(stay({ id: 'e', status: 'IN_HOUSE', inYmd: '2026-10-10', outYmd: '2026-10-14', walkIn: true }))).toBe('WO');
     expect(stayBucket(stay({ id: 'f', status: 'IN_HOUSE', inYmd: '2026-10-10', outYmd: '2026-10-14' }))).toBe('NR');
+  });
+
+  it('attributes realized movement to business stamps, not planned stay dates', () => {
+    const snap = buildFoStatus(
+      base([
+        stay({
+          id: 'late-in',
+          status: 'IN_HOUSE',
+          inYmd: '2026-10-11',
+          outYmd: '2026-10-20',
+          checkInBizYmd: '2026-10-12',
+          roomId: 'r1',
+        }),
+        stay({
+          id: 'late-out',
+          status: 'CHECKED_OUT',
+          inYmd: '2026-10-01',
+          outYmd: '2026-10-11',
+          checkInBizYmd: '2026-10-01',
+          checkOutBizYmd: '2026-10-12',
+          roomId: 'r2',
+        }),
+      ]),
+    );
+    const row = (key: string) => snap.movement.find((r) => r.key === key)!;
+    expect(row('realizedArrivals').rooms).toBe(1);
+    expect(row('realizedDepartures').rooms).toBe(1);
+    expect(snap.lists.realizedArrivals.map((r) => r.id)).toEqual(['late-in']);
+    expect(snap.lists.realizedDepartures.map((r) => r.id)).toEqual(['late-out']);
   });
 
   it('keeps start + arrivals − departures equal to current in-house rooms', () => {
