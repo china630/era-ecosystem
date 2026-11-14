@@ -380,8 +380,9 @@ function toRow(s: DashStay): StatusListRow {
     roomNumber: s.roomNumber,
     roomType: s.roomTypeCode,
     meal: s.mealCode,
-    inYmd: s.inYmd,
-    outYmd: s.outYmd,
+    // Prefer business stamps when present so realized tabs match FO list Giriş/Çıxış.
+    inYmd: s.checkInBizYmd ?? s.inYmd,
+    outYmd: s.checkOutBizYmd ?? s.outYmd,
     adults: s.adults,
     child1: s.child1,
     child2: s.child2,

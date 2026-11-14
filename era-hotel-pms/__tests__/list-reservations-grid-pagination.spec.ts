@@ -220,4 +220,74 @@ describe('listReservationsForGrid pagination', () => {
       .where;
     expect(where.id).toEqual({ in: ['r1'] });
   });
+
+  it('exposes stay business stamps and sorts departure by stamp when present', async () => {
+    const { prisma } = await import('@/lib/prisma');
+    const ranked = [
+      {
+        id: 'late-out',
+        checkInDate: new Date('2026-11-01T00:00:00.000Z'),
+        checkOutDate: new Date('2026-11-13T00:00:00.000Z'),
+        stay: {
+          checkInBusinessDate: new Date('2026-11-01T00:00:00.000Z'),
+          checkOutBusinessDate: new Date('2026-11-14T00:00:00.000Z'),
+        },
+        room: { roomNumber: '203', status: 'DIRTY', hkCondition: 'DIRTY' },
+        roomType: { code: 'SDBL' },
+        guest: { fullName: 'Late Out' },
+        agency: null,
+        company: null,
+        source: null,
+        notes: [],
+        adults: 1,
+        status: 'CHECKED_OUT',
+        paxGuests: [],
+      },
+      {
+        id: 'on-plan',
+        checkInDate: new Date('2026-11-10T00:00:00.000Z'),
+        checkOutDate: new Date('2026-11-13T00:00:00.000Z'),
+        stay: {
+          checkInBusinessDate: new Date('2026-11-10T00:00:00.000Z'),
+          checkOutBusinessDate: new Date('2026-11-13T00:00:00.000Z'),
+        },
+        room: { roomNumber: '101', status: 'DIRTY', hkCondition: 'DIRTY' },
+        roomType: { code: 'SDBL' },
+        guest: { fullName: 'On Plan' },
+        agency: null,
+        company: null,
+        source: null,
+        notes: [],
+        adults: 1,
+        status: 'CHECKED_OUT',
+        paxGuests: [],
+      },
+    ];
+    (prisma.reservation.findMany as jest.Mock).mockImplementation(
+      (args: { select?: unknown; where?: { id?: { in?: string[] } } }) => {
+        if (args.select) return Promise.resolve(ranked);
+        const ids = args.where?.id?.in ?? [];
+        return Promise.resolve(ranked.filter((row) => ids.includes(row.id)));
+      },
+    );
+
+    const { listReservationsForGrid } = await import(
+      '@/lib/services/reservation-full.service'
+    );
+    const result = await listReservationsForGrid({
+      page: 1,
+      pageSize: 25,
+      sort: 'departure',
+      dir: 'asc',
+      status: 'ALL',
+    });
+
+    expect(result.items.map((row) => row.id)).toEqual(['on-plan', 'late-out']);
+    expect(result.items[0]?.checkOutBusinessDate).toBe('2026-11-13T00:00:00.000Z');
+    expect(result.items[1]?.checkOutBusinessDate).toBe('2026-11-14T00:00:00.000Z');
+    const rankSelect = (prisma.reservation.findMany as jest.Mock).mock.calls[0][0].select;
+    expect(rankSelect.stay).toEqual({
+      select: { checkInBusinessDate: true, checkOutBusinessDate: true },
+    });
+  });
 });

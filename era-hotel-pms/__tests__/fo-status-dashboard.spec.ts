@@ -96,6 +96,8 @@ describe('fo status dashboard', () => {
     expect(row('realizedDepartures').rooms).toBe(1);
     expect(snap.lists.realizedArrivals.map((r) => r.id)).toEqual(['late-in']);
     expect(snap.lists.realizedDepartures.map((r) => r.id)).toEqual(['late-out']);
+    expect(snap.lists.realizedArrivals[0]?.inYmd).toBe('2026-10-12');
+    expect(snap.lists.realizedDepartures[0]?.outYmd).toBe('2026-10-12');
   });
 
   it('keeps start + arrivals − departures equal to current in-house rooms', () => {
