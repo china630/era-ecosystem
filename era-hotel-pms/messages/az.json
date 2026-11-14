@@ -2422,7 +2422,7 @@
   },
   "reservationTimes": {
     "title": "Rezervasiya vaxtları",
-    "actualOnlyHint": "Tarix aralığı biznes günü üzrə filtr edir. Faktiki saat divar saatıdır."
+    "actualOnlyHint": "Tarix aralığı biznes günü üzrə filtr edir. Faktiki saat divar saatıdır.",
     "guest": "Qonaq",
     "agency": "Agentlik",
     "plannedIn": "Planlaşdırılan giriş",
