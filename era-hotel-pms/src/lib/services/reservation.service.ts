@@ -1161,7 +1161,7 @@ export async function checkInReservation(
     if (priorStay) {
       await tx.stay.update({
         where: { id: priorStay.id },
-        data: { actualCheckOut: null },
+        data: { actualCheckOut: null, checkOutBusinessDate: null },
       });
       await tx.folio.updateMany({
         where: { reservationId: id, type: 'GUEST', status: 'CLOSED' },
@@ -1169,7 +1169,11 @@ export async function checkInReservation(
       });
     } else {
       await tx.stay.create({
-        data: { reservationId: id, actualCheckIn: new Date() },
+        data: {
+          reservationId: id,
+          actualCheckIn: new Date(),
+          checkInBusinessDate: biz,
+        },
       });
     }
     if (updated.roomId) {

@@ -2622,14 +2622,21 @@ model IbeHold {
 }
 
 model Stay {
-  id             String      @id @default(uuid())
-  organizationId String
-  reservationId  String      @unique
-  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  actualCheckIn  DateTime
-  actualCheckOut DateTime?
-  createdAt      DateTime    @default(now())
+  id                   String      @id @default(uuid())
+  organizationId       String
+  reservationId        String      @unique
+  reservation          Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  /** Wall-clock instant when FO checked the guest in. Never rewritten to the business day. */
+  actualCheckIn        DateTime
+  actualCheckOut       DateTime?
+  /** Open hotel business day at check-in (civil UTC midnight). FO realized queues / Status use this. */
+  checkInBusinessDate  DateTime
+  /** Open hotel business day at check-out; cleared on same-day undo checkout. */
+  checkOutBusinessDate DateTime?
+  createdAt            DateTime    @default(now())
   @@index([organizationId])
+  @@index([organizationId, checkInBusinessDate])
+  @@index([organizationId, checkOutBusinessDate])
 }
 
 model Folio {

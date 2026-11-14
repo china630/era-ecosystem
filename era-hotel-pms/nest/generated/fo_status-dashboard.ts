@@ -1,7 +1,8 @@
 import { serialize } from '@/lib/serialize';
 import { assertAnyPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { todayBakuYmd } from '@era/satellite-kit/time';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { getFoStatusDashboard } from '@/lib/services/fo-status-dashboard.service';
 import { enterHotelStaff, hotelNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithHotelTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
@@ -28,7 +29,10 @@ export function register(http: { get: Function; post: Function; put: Function; p
     assertAnyPermission(session, [PERMISSIONS.REPORTS_READ, PERMISSIONS.RESERVATIONS_READ]);
     const url = new URL(request.url);
     const dateParam = url.searchParams.get('date');
-    const day = dateParam && YMD.test(dateParam) ? dateParam : todayBakuYmd();
+    const day =
+      dateParam && YMD.test(dateParam)
+        ? dateParam
+        : hotelDateKey(await getCurrentBusinessDate());
     const includeWaiting = url.searchParams.get('waiting') === '1';
     const withRevenue = url.searchParams.get('revenue') === '1';
     return sendJson(httpRes, 

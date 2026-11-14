@@ -1,7 +1,8 @@
-import { todayBakuYmd } from '@era/satellite-kit/time';
 import { serialize } from '@/lib/serialize';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { hotelDateKey } from '@/lib/hotel-calendar';
+import { getCurrentBusinessDate } from '@/lib/services/business-date.service';
 import { listReservationTimes } from '@/lib/services/reports.service';
 import { enterHotelStaff, hotelNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithHotelTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
@@ -27,8 +28,9 @@ export function register(http: { get: Function; post: Function; put: Function; p
   
     assertPermission(session, PERMISSIONS.REPORTS_READ);
     const url = new URL(request.url);
-    const from = new Date(url.searchParams.get('from') ?? todayBakuYmd());
-    const to = new Date(url.searchParams.get('to') ?? todayBakuYmd());
+    const bizYmd = hotelDateKey(await getCurrentBusinessDate());
+    const from = new Date(url.searchParams.get('from') ?? bizYmd);
+    const to = new Date(url.searchParams.get('to') ?? bizYmd);
     const guestQ = url.searchParams.get('guest') ?? undefined;
     const agencyQ = url.searchParams.get('agency') ?? undefined;
     return sendJson(httpRes, serialize(await listReservationTimes({ from, to, guestQ, agencyQ })));
