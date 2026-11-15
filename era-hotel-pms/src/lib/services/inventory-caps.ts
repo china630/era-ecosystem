@@ -28,6 +28,25 @@ export function sellableOnNight(input: {
   return { available: 0, reason: 'HOUSE_CAP' };
 }
 
+/**
+ * True oversell check for adding inventory (assign / assert).
+ * Filling the last slot (used === cap) is OK; only used > cap fails.
+ */
+export function oversellReasonAfterAdd(input: {
+  typeUsedAfter: number;
+  typeCap: number;
+  houseUsedAfter: number;
+  houseCap: number;
+  stopSell: boolean;
+  delta: number;
+}): SellCapReason | null {
+  if (input.delta <= 0) return null;
+  if (input.stopSell) return 'STOP_SELL';
+  if (input.typeUsedAfter > input.typeCap) return 'TYPE_CAP';
+  if (input.houseUsedAfter > input.houseCap) return 'HOUSE_CAP';
+  return null;
+}
+
 const REASON_RANK: Record<SellCapReason, number> = {
   STOP_SELL: 0,
   TYPE_CAP: 1,

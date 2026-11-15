@@ -21,7 +21,15 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import ReservationCardModal from '@/components/ReservationCardModal';
 
-type DayCell = { date: string; quota: number; occupied: number; available: number; stopSell: boolean };
+type DayCell = {
+  date: string;
+  quota: number;
+  occupied: number;
+  occupiedSold: number;
+  occupiedPhysical: number;
+  available: number;
+  stopSell: boolean;
+};
 type TypeRow = { roomTypeId: string; roomTypeCode: string; roomTypeName: string; quota: number; days: DayCell[] };
 type Matrix = { nights: string[]; rows: TypeRow[]; totals: DayCell[] };
 
@@ -99,17 +107,19 @@ export default function RoomTypeAvailabilityPage() {
           <thead>
             <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
               <th className={DATA_TABLE_TH_LEFT_CLASS} rowSpan={2}>{t('date')}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS} colSpan={2}>{t('total')}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS} colSpan={3}>{t('total')}</th>
               {(matrix?.rows ?? []).map((r) => (
-                <th key={r.roomTypeId} className={DATA_TABLE_TH_LEFT_CLASS} colSpan={2}>{r.roomTypeCode}</th>
+                <th key={r.roomTypeId} className={DATA_TABLE_TH_LEFT_CLASS} colSpan={3}>{r.roomTypeCode}</th>
               ))}
             </tr>
             <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
               <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('avl')}</th>
-              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('occ')}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('occSold')}</th>
+              <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('occPhysical')}</th>
               {(matrix?.rows ?? []).flatMap((r) => [
                 <th key={`${r.roomTypeId}-a`} className={DATA_TABLE_TH_LEFT_CLASS}>{t('avl')}</th>,
-                <th key={`${r.roomTypeId}-o`} className={DATA_TABLE_TH_LEFT_CLASS}>{t('occ')}</th>,
+                <th key={`${r.roomTypeId}-s`} className={DATA_TABLE_TH_LEFT_CLASS}>{t('occSold')}</th>,
+                <th key={`${r.roomTypeId}-p`} className={DATA_TABLE_TH_LEFT_CLASS}>{t('occPhysical')}</th>,
               ])}
             </tr>
           </thead>
@@ -120,12 +130,14 @@ export default function RoomTypeAvailabilityPage() {
                 <tr key={night} className={DATA_TABLE_TR_CLASS}>
                   <td className={DATA_TABLE_TD_CLASS}>{night}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} font-mono ${cellClass(tot?.available ?? 0, tot?.stopSell ?? false)}`}>{tot?.available ?? '—'}</td>
-                  <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{tot?.occupied ?? '—'}</td>
+                  <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{tot?.occupiedSold ?? '—'}</td>
+                  <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{tot?.occupiedPhysical ?? '—'}</td>
                   {(matrix?.rows ?? []).flatMap((r) => {
                     const d = r.days[i];
                     return [
                       <td key={`${r.roomTypeId}-${night}-a`} className={`${DATA_TABLE_TD_CLASS} font-mono ${cellClass(d?.available ?? 0, d?.stopSell ?? false)}`}>{d?.available ?? '—'}</td>,
-                      <td key={`${r.roomTypeId}-${night}-o`} className={`${DATA_TABLE_TD_CLASS} font-mono`}>{d?.occupied ?? '—'}</td>,
+                      <td key={`${r.roomTypeId}-${night}-s`} className={`${DATA_TABLE_TD_CLASS} font-mono`}>{d?.occupiedSold ?? '—'}</td>,
+                      <td key={`${r.roomTypeId}-${night}-p`} className={`${DATA_TABLE_TD_CLASS} font-mono`}>{d?.occupiedPhysical ?? '—'}</td>,
                     ];
                   })}
                 </tr>
@@ -133,7 +145,12 @@ export default function RoomTypeAvailabilityPage() {
             })}
             {!matrix?.nights?.length ? (
               <tr className={DATA_TABLE_TR_CLASS}>
-                <td className={DATA_TABLE_TD_CLASS} colSpan={3}>{busy ? tc('loading') : t('empty')}</td>
+                <td
+                  className={DATA_TABLE_TD_CLASS}
+                  colSpan={1 + 3 * (1 + (matrix?.rows?.length ?? 0))}
+                >
+                  {busy ? tc('loading') : t('empty')}
+                </td>
               </tr>
             ) : null}
           </tbody>

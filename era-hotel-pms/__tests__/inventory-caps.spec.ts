@@ -1,4 +1,10 @@
-import { houseSellCap, sellableOnNight, typeSellCap, worstNight } from '../src/lib/services/inventory-caps';
+import {
+  houseSellCap,
+  oversellReasonAfterAdd,
+  sellableOnNight,
+  typeSellCap,
+  worstNight,
+} from '../src/lib/services/inventory-caps';
 
 describe('inventory caps', () => {
   it('keeps today when both allowances are zero', () => {
@@ -37,5 +43,46 @@ describe('inventory caps', () => {
       { available: 0, reason: 'STOP_SELL' as const },
     ]);
     expect(worst?.reason).toBe('STOP_SELL');
+  });
+});
+
+describe('oversellReasonAfterAdd', () => {
+  it('allows filling the last type slot (used === cap)', () => {
+    expect(
+      oversellReasonAfterAdd({
+        typeUsedAfter: 13,
+        typeCap: 13,
+        houseUsedAfter: 41,
+        houseCap: 88,
+        stopSell: false,
+        delta: 1,
+      }),
+    ).toBeNull();
+  });
+
+  it('rejects only when oversold (used > cap)', () => {
+    expect(
+      oversellReasonAfterAdd({
+        typeUsedAfter: 14,
+        typeCap: 13,
+        houseUsedAfter: 42,
+        houseCap: 88,
+        stopSell: false,
+        delta: 1,
+      }),
+    ).toBe('TYPE_CAP');
+  });
+
+  it('rejects house oversell', () => {
+    expect(
+      oversellReasonAfterAdd({
+        typeUsedAfter: 11,
+        typeCap: 13,
+        houseUsedAfter: 89,
+        houseCap: 88,
+        stopSell: false,
+        delta: 1,
+      }),
+    ).toBe('HOUSE_CAP');
   });
 });
