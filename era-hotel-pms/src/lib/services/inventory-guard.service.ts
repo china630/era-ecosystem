@@ -11,6 +11,7 @@ import {
 } from '@/lib/services/share-assignment.service';
 import {
   houseSellCap,
+  oversellReasonAfterAdd,
   sellableOnNight,
   typeSellCap,
   worstNight,
@@ -135,17 +136,22 @@ export async function measureStaySellable(
   };
 }
 
+/**
+ * Reject only when the candidate would *oversell* (used > cap).
+ * Filling the last slot (used === cap) is allowed — a stay that already holds
+ * inventory must still be able to assign a same-type door.
+ */
 export function rejectIfAddedDoor(state: NightSellState, usedWithCandidate: number): void {
   const delta = usedWithCandidate - state.typeUsed;
-  if (delta <= 0) return;
-  const sell = sellableOnNight({
-    typeUsed: usedWithCandidate,
+  const reason = oversellReasonAfterAdd({
+    typeUsedAfter: usedWithCandidate,
     typeCap: state.typeCap,
-    houseUsed: state.houseUsed + delta,
+    houseUsedAfter: state.houseUsed + delta,
     houseCap: state.houseCap,
     stopSell: state.stopSell,
+    delta,
   });
-  if (sell.available < 1 && sell.reason) throw new InventoryCapError(sell.reason);
+  if (reason) throw new InventoryCapError(reason);
 }
 
 export function nightKey(night: Date): string {

@@ -613,9 +613,10 @@ function earlierKey(a: string, b: string): string {
 }
 
 /**
- * Segments that consume `roomTypeId` on this stay.
- * An assigned door consumes that door's physical type, clamped to the header dates.
- * The sold type consumes a door only while the segment has no door.
+ * Segments that consume `roomTypeId` (Opera-style house inventory).
+ * - Assigned door → physical door type (upgrade eats the door's type).
+ * - No door → charged / sold header type only (slice tariff alone must not burn another type).
+ * Dates clamped to the reservation header.
  */
 export function segmentsConsumingType(
   roomTypeId: string,
@@ -648,8 +649,79 @@ export function segmentsConsumingType(
       if (fromKey >= toKey) continue;
       const doorId = slice.roomId ?? stay.roomId;
       const doorType = slice.roomId ? slice.doorTypeId : stay.roomId ? stay.doorTypeId : null;
-      const consumes = doorId ? doorType === roomTypeId : slice.roomTypeId === roomTypeId;
+      // Unassigned: charged type only — ignore mismatched slice.roomTypeId (Opera).
+      const consumes = doorId ? doorType === roomTypeId : stay.roomTypeId === roomTypeId;
       if (!consumes) continue;
+      out.push({
+        id: stay.id,
+        roomId: doorId,
+        shareEligible: stay.shareEligible,
+        shareGender: stay.shareGender,
+        adults: stay.adults,
+        checkInDate: parseHotelNoon(fromKey),
+        checkOutDate: parseHotelNoon(toKey),
+      });
+    }
+  }
+  return out;
+}
+
+/** Sold-as occupancy: charged type matches, one stay per night window (door optional). */
+export function segmentsSoldAsType(
+  roomTypeId: string,
+  stays: InventoryStay[],
+): ShareReservationSlice[] {
+  const out: ShareReservationSlice[] = [];
+  for (const stay of stays) {
+    if (stay.roomTypeId !== roomTypeId) continue;
+    const headerFrom = hotelDateKey(stay.checkInDate);
+    const headerTo = hotelDateKey(stay.checkOutDate);
+    if (headerFrom >= headerTo) continue;
+    out.push({
+      id: stay.id,
+      roomId: stay.roomId,
+      shareEligible: stay.shareEligible,
+      shareGender: stay.shareGender,
+      adults: stay.adults,
+      checkInDate: stay.checkInDate,
+      checkOutDate: stay.checkOutDate,
+    });
+  }
+  return out;
+}
+
+/** Physical-door occupancy: assigned door's type matches. */
+export function segmentsPhysicalOnType(
+  roomTypeId: string,
+  stays: InventoryStay[],
+): ShareReservationSlice[] {
+  const out: ShareReservationSlice[] = [];
+  for (const stay of stays) {
+    const headerFrom = hotelDateKey(stay.checkInDate);
+    const headerTo = hotelDateKey(stay.checkOutDate);
+    if (headerFrom >= headerTo) continue;
+    const slices = stay.slices ?? [];
+    if (slices.length === 0) {
+      if (!stay.roomId || stay.doorTypeId !== roomTypeId) continue;
+      out.push({
+        id: stay.id,
+        roomId: stay.roomId,
+        shareEligible: stay.shareEligible,
+        shareGender: stay.shareGender,
+        adults: stay.adults,
+        checkInDate: stay.checkInDate,
+        checkOutDate: stay.checkOutDate,
+      });
+      continue;
+    }
+    for (const slice of slices) {
+      const fromKey = laterKey(hotelDateKey(slice.fromDate), headerFrom);
+      const toKey = earlierKey(hotelDateKey(slice.toDate), headerTo);
+      if (fromKey >= toKey) continue;
+      const doorId = slice.roomId ?? stay.roomId;
+      if (!doorId) continue;
+      const doorType = slice.roomId ? slice.doorTypeId : stay.doorTypeId;
+      if (doorType !== roomTypeId) continue;
       out.push({
         id: stay.id,
         roomId: doorId,
