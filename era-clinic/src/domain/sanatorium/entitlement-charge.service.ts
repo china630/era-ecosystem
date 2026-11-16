@@ -11,6 +11,11 @@ export type EntitlementChargeInput = {
   patientOrigin: "WALK_IN" | "IN_HOUSE";
   quotaCode?: string | null;
   serviceCode: string;
+  /**
+   * `true` = burn package. `false` = explicit paid / not-in-package (do not re-stamp).
+   * Omit (`undefined`) when unknown so stamp / awaiting_package can still run.
+   * Never pass `Boolean(stamp)` — null stamp becomes false and skips those paths.
+   */
   inPackage?: boolean;
   /**
    * When true, this fulfillment is already in the COUNT SoT (e.g. after COMPLETED sync).
@@ -107,6 +112,13 @@ export async function resolveEntitlementCharge(
   // Walk-in is always commercial — never free from package balance.
   if (input.patientOrigin === "WALK_IN") {
     return paidFromCatalog(listPrice, "walk_in");
+  }
+
+  // Explicit paid / not-in-package (e.g. template includedInPackage=false auto lab).
+  // Do not re-stamp onto an entitlement balance — that yields amountNet 0 ("in_quota")
+  // and then forcePaid create throws NO_PRICE (LAB-BIOCHEM-INFECT / LAB_INFECT).
+  if (input.inPackage === false) {
+    return paidFromCatalog(listPrice, "not_in_package");
   }
 
   let episode: {

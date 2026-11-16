@@ -113,6 +113,56 @@ describe("resolveEntitlementCharge", () => {
     expect(mockedUsage.resolveEntitlementInstance).not.toHaveBeenCalled();
   });
 
+  it("explicit inPackage false → list price (paid auto block; do not re-stamp)", async () => {
+    mockedPrisma.serviceCatalogCache.findFirst.mockResolvedValue({
+      amount: 20,
+      listAmount: 20,
+    });
+    mockedUsage.resolvePackageStampForEpisode.mockResolvedValue({
+      inPackage: true,
+      packageQuotaCode: "LAB_INFECT",
+    });
+    mockedUsage.resolveEntitlementInstance.mockResolvedValue({
+      id: "inst1",
+      entitlementSnapshot: null,
+      procedureLines: [{ procedureCode: "LAB_INFECT" }],
+    });
+    const r = await resolveEntitlementCharge({
+      episodeId: "ep1",
+      patientOrigin: "IN_HOUSE",
+      serviceCode: "LAB-BIOCHEM-INFECT",
+      inPackage: false,
+    });
+    expect(r).toMatchObject({
+      amountNet: 20,
+      overQuota: false,
+      priceMissing: false,
+      reason: "not_in_package",
+    });
+    expect(mockedUsage.resolvePackageStampForEpisode).not.toHaveBeenCalled();
+    expect(mockedUsage.resolveEntitlementInstance).not.toHaveBeenCalled();
+  });
+
+  it("omitted inPackage still reaches awaiting_package (do not pass Boolean(stamp))", async () => {
+    mockedPrisma.clinicalEpisode.findUnique.mockResolvedValue({
+      programCode: null,
+      noPackageConfirmedAt: null,
+    });
+    mockedUsage.resolveEntitlementInstance.mockResolvedValue(null);
+    const r = await resolveEntitlementCharge({
+      episodeId: "ep1",
+      patientOrigin: "IN_HOUSE",
+      serviceCode: "LAB-BIOCHEM-INFECT",
+    });
+    expect(r).toMatchObject({
+      amountNet: 0,
+      overQuota: false,
+      priceMissing: false,
+      reason: "awaiting_package",
+    });
+    expect(mockedUsage.resolveEntitlementInstance).toHaveBeenCalled();
+  });
+
   it("priceMissing when list and amount absent/zero", async () => {
     mockedPrisma.serviceCatalogCache.findFirst.mockResolvedValue({
       amount: 0,

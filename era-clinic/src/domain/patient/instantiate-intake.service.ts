@@ -133,7 +133,8 @@ export async function instantiateIntakePackage(
         patientOrigin,
         quotaCode: stamp?.packageQuotaCode,
         serviceCode: code,
-        inPackage: Boolean(stamp),
+        // Omit when no stamp — false would short-circuit charge past awaiting_package.
+        inPackage: stamp ? true : undefined,
       }),
       { serviceCode: code, where: "intake-visit" },
     );
