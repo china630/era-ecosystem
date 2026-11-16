@@ -391,7 +391,9 @@ export async function createLabOrderWithItems(
             patientOrigin: resolvedOrigin,
             quotaCode: stamp?.packageQuotaCode,
             serviceCode: code,
-            inPackage: Boolean(stamp) && !forcePaid,
+            // false = explicit paid (forcePaid); omit when unknown so charge can
+            // still resolve awaiting_package / package stamp.
+            inPackage: forcePaid ? false : stamp ? true : undefined,
           }),
           { serviceCode: code, where: "lab" },
         );

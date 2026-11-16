@@ -141,10 +141,13 @@ export function PatientCardComplaints({
       `/api/patients/${patientRefId}/complaints?id=${encodeURIComponent(id)}`,
       { method: "DELETE" },
     );
-    if (res.ok) {
-      await load();
-      onChanged?.();
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showApiError(data, tc("failed"));
+      return;
     }
+    await load();
+    onChanged?.();
   }
 
   return (

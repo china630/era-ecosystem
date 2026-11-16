@@ -5,3 +5,5 @@ node_modules/
 *.log
 prisma/seed-data/nafta/*.xlsx
 prisma/seed-data/nafta/_restore-*.tsv
+# Dated ops snapshots, not product source.
+doc/reports/

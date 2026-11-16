@@ -175,10 +175,21 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
     }
 
     async function remove(id: string) {
-      const res = await fetch(`${apiBase}?id=${encodeURIComponent(id)}`, {
+      // apiBase may already carry ?episode=… (patient card) — merge id into the query.
+      const url = new URL(
+        apiBase,
+        typeof window !== "undefined" ? window.location.origin : "http://local",
+      );
+      url.searchParams.set("id", id);
+      const res = await fetch(`${url.pathname}${url.search}`, {
         method: "DELETE",
       });
-      if (res.ok) await load();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showApiError(data, tc("failed"));
+        return;
+      }
+      await load();
     }
 
     const showHeaderRow = !hideTitle || (!readOnly && !hideAddButton);
