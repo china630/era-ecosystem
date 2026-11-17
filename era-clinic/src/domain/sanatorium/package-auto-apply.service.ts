@@ -200,6 +200,82 @@ export async function healUnstampedPackageAutoLabs(input: {
 }
 
 /**
+ * A block marked not in the package must stay a priced cheque line.
+ * Opening the course must not leave it on the quota at 0.
+ */
+export async function releaseExcludedAutoLabs(input: {
+  episodeId: string;
+  instanceId: string;
+  blocks: Array<{ procedureCode: string; serviceCode: string }>;
+}): Promise<{ released: number }> {
+  if (input.blocks.length === 0) return { released: 0 };
+  const { syncEntitlementUsage } = await import(
+    "@/domain/sanatorium/entitlement-usage.service"
+  );
+  const { resolveEntitlementCharge } = await import(
+    "@/domain/sanatorium/entitlement-charge.service"
+  );
+  const touched = new Set<string>();
+  let released = 0;
+  for (const block of input.blocks) {
+    const orders = await prisma.labOrder.findMany({
+      where: {
+        clinicalEpisodeId: input.episodeId,
+        inPackage: true,
+        packageQuotaCode: block.procedureCode,
+        settledAt: null,
+        status: { not: "CANCELLED" },
+        OR: [
+          { testCode: block.serviceCode },
+          { items: { some: { serviceCode: block.serviceCode } } },
+        ],
+      },
+      select: { id: true, patientOrigin: true },
+    });
+    for (const order of orders) {
+      const charge = await resolveEntitlementCharge({
+        episodeId: input.episodeId,
+        patientOrigin: order.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE",
+        serviceCode: block.serviceCode,
+        inPackage: false,
+      });
+      if (!(charge.amountNet > 0)) {
+        console.warn("[package-auto-apply] excluded lab has no price", block.serviceCode);
+        continue;
+      }
+      await prisma.$transaction([
+        prisma.labOrder.update({
+          where: { id: order.id },
+          data: {
+            inPackage: false,
+            packageQuotaCode: null,
+            amountNet: charge.amountNet,
+          },
+        }),
+        prisma.labOrderItem.updateMany({
+          where: { labOrderId: order.id },
+          data: {
+            inPackage: false,
+            packageQuotaCode: null,
+            amountNet: charge.amountNet,
+          },
+        }),
+      ]);
+      released += 1;
+      touched.add(block.procedureCode);
+    }
+  }
+  for (const quotaCode of touched) {
+    await syncEntitlementUsage({
+      instanceId: input.instanceId,
+      episodeId: input.episodeId,
+      quotaCode,
+    });
+  }
+  return { released };
+}
+
+/**
  * Catalog SKUs attached to a quota block. The block code is only the quota key
  * and is never itself a bookable service.
  */
@@ -315,7 +391,7 @@ function autoStepOf(block: {
   return null;
 }
 
-function blockIncluded(block: { includedInPackage?: boolean | null }): boolean {
+export function blockIncluded(block: { includedInPackage?: boolean | null }): boolean {
   return block.includedInPackage !== false;
 }
 
