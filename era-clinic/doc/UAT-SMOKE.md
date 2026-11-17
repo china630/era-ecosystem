@@ -407,7 +407,7 @@ Doctor card (no curl):
 1. After checkup, proposed list sorted with exam/intake first; default checkbox first 2–3.
 2. **Confirm selected** only — **Confirm all** removed on `/sanatorium` and patient card.
 3. Confirming a later ID while earlier PROPOSED exists still 409 (FIFO unchanged).
-4. `/admin/settings` shows Program scheduling mode; Nafta stays **AFTER_CHECKUP** (do not enable ON_CHECKIN for Nafta).
+4. `/admin/settings` shows Program scheduling mode; Nafta stays **AFTER_CHECKUP** (do not enable ON_CHECKIN for Nafta). Blocks whose step is CHECKIN still run when the guest arrives. The rest of the package waits for the doctor. A CHECKIN lab that is not in the package stays on the extra-ticket desk at its list price. Opening the procedure screen does not move it onto the quota. A fresh brought-in blank cancels that open order.
 5. Fourth same-day in-package procedure → list price; does not burn remaining knot.
 6. Soft warn (not hard-block) if confirm batch >3 procedures.
 7. Manual `POST /api/procedures` for in-quota package codes stays PROPOSED / 409 — nurse cannot SCHEDULE without doctor confirm.

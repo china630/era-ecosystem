@@ -20,6 +20,7 @@ import {
 } from "@/domain/settings/scheduling-settings";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { replaceProcedureAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { updateProcedureOrderIfPresent } from "@/domain/procedure/procedure-order-if-present";
 import { orderCountsForWallClockRest } from "@/domain/procedure/open-attendance";
 import { isAbsentOnYmd, resolveDutyCandidates } from "@/domain/staff/staff-kind";
 import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
@@ -786,12 +787,13 @@ export async function placeConfirmedProcedures(
         )?.id ?? null
       : null;
   const orderById = new Map(orders.map((order) => [order.id, order]));
+  const written: string[] = [];
   for (const row of scanned.planned) {
     const order = orderById.get(row.orderId);
     const accessCode = order?.accessCode?.trim() || (await generateUniqueAccessCode(row.organizationId));
-    await prisma.procedureOrder.update({
-      where: { id: row.orderId },
-      data: {
+    const seated = await updateProcedureOrderIfPresent(
+      row.orderId,
+      {
         status: "SCHEDULED",
         scheduledAt: row.slotStart,
         endsAt: row.slotEnd,
@@ -802,7 +804,10 @@ export async function placeConfirmedProcedures(
         accessCode,
         bodyPart: row.bodyPart ?? undefined,
       },
-    });
+      "placeConfirmedProcedures",
+    );
+    if (!seated) continue;
+    written.push(row.orderId);
     await replaceProcedureAllocations(row.orderId, [
       {
         role: row.physicalRole,
@@ -820,8 +825,8 @@ export async function placeConfirmedProcedures(
   }
 
   return {
-    placed: scanned.planned.length,
-    placedIds: scanned.planned.map((row) => row.orderId),
+    placed: written.length,
+    placedIds: written,
     missingCabinNames,
     failures,
   };

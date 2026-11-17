@@ -631,6 +631,8 @@ export async function getPackageAssignSnapshot(
   /** Unstarted sessions of this code, when they all name the same person. */
   masseurByCode: Record<string, string | null>;
   stayPlan: StayPlan;
+  /** A live package or paid procedure is already on the stay. Saxla does not ask the start hour again. */
+  courseStarted: boolean;
 }> {
   let episode = await loadEpisodeForAssign(episodeId, {
     requireClinicalGates: false,
@@ -658,6 +660,7 @@ export async function getPackageAssignSnapshot(
         masseurOptions: {},
         masseurByCode: {},
         stayPlan: { days: [], checkoutYmd: null, closedDays: [], marks: [] },
+        courseStarted: false,
       };
     }
     const { tryOpenProgramAfterTherapistStage } = await import(
@@ -721,6 +724,7 @@ export async function getPackageAssignSnapshot(
         masseurOptions: {},
         masseurByCode: {},
         stayPlan: { days: [], checkoutYmd: null, closedDays: [], marks: [] },
+        courseStarted: false,
       };
     }
   }
@@ -755,8 +759,10 @@ export async function getPackageAssignSnapshot(
   {
     const {
       healUnstampedPackageAutoLabs,
+      releaseExcludedAutoLabs,
       resolveAutoBlockServiceCodes,
       effectiveAutoFulfillment,
+      blockIncluded,
     } = await import("@/domain/sanatorium/package-auto-apply.service");
     const sex = episode.patientRef?.sex ?? null;
     const snapProcs = snapMeta?.procedures ?? instance.template?.procedures ?? [];
@@ -765,6 +771,7 @@ export async function getPackageAssignSnapshot(
       quotaTotal: number;
       serviceCode: string;
     }> = [];
+    const excludedLabs: Array<{ procedureCode: string; serviceCode: string }> = [];
     for (const raw of snapProcs) {
       const block = {
         ...raw,
@@ -781,6 +788,11 @@ export async function getPackageAssignSnapshot(
         ),
       };
       if (block.fulfillment !== "LAB_ORDER") continue;
+      const included = blockIncluded(
+        "includedInPackage" in raw
+          ? { includedInPackage: (raw as { includedInPackage?: boolean | null }).includedInPackage }
+          : {},
+      );
       const serviceCodes = resolveAutoBlockServiceCodes(
         block.procedureCode,
         snapMeta?.members?.length
@@ -795,12 +807,23 @@ export async function getPackageAssignSnapshot(
           serviceCodes.length,
         );
       for (const serviceCode of serviceCodes) {
+        if (!included) {
+          excludedLabs.push({ procedureCode: block.procedureCode, serviceCode });
+          continue;
+        }
         autoLabBlocks.push({
           procedureCode: block.procedureCode,
           quotaTotal,
           serviceCode,
         });
       }
+    }
+    if (excludedLabs.length > 0) {
+      await releaseExcludedAutoLabs({
+        episodeId,
+        instanceId: instance.id,
+        blocks: excludedLabs,
+      });
     }
     if (autoLabBlocks.length > 0) {
       await healUnstampedPackageAutoLabs({
@@ -1186,6 +1209,13 @@ export async function getPackageAssignSnapshot(
 
   const sexBlocked = await blockedProcedureCodesForGuest(episode.patientRef?.sex);
   const stayPlan = await buildStayPlan(episodeId, instance.startsOn, instance.endsOn, orders, locale, listTitles);
+  const paidLive = await prisma.procedureOrder.count({
+    where: {
+      clinicalEpisodeId: episodeId,
+      inPackage: false,
+      status: { notIn: ["CANCELLED", "UNPAID_MISSED"] },
+    },
+  });
 
   return {
     balances: menuBalances,
@@ -1208,6 +1238,7 @@ export async function getPackageAssignSnapshot(
     masseurOptions: await loadMasseurOptions(),
     masseurByCode: await loadMasseurByCode(episodeId),
     stayPlan,
+    courseStarted: orders.length > 0 || paidLive > 0,
   };
 }
 
@@ -1585,10 +1616,15 @@ export async function restoreSuspendedPackageSeats(rows: SuspendedPackageSeat[])
       select: { status: true, resourceId: true },
     });
     if (!current || current.status !== "PROPOSED" || current.resourceId) continue;
-    await prisma.procedureOrder.update({
-      where: { id: row.id },
-      data: { status: "SCHEDULED", resourceId: row.resourceId },
-    });
+    const { updateProcedureOrderIfPresent } = await import(
+      "@/domain/procedure/procedure-order-if-present"
+    );
+    const restored = await updateProcedureOrderIfPresent(
+      row.id,
+      { status: "SCHEDULED", resourceId: row.resourceId },
+      "restoreSuspendedPackageSeats",
+    );
+    if (!restored) continue;
     await replaceProcedureAllocations(row.id, row.allocations);
   }
 }
@@ -1599,7 +1635,10 @@ function assignFailure(err: unknown): PackageAssignError {
     err && typeof err === "object" && "code" in err && typeof (err as { code?: string }).code === "string"
       ? (err as { code: string }).code
       : "";
-  const message = err instanceof Error ? err.message : "Package seating failed";
+  const raw = err instanceof Error ? err.message : "Package seating failed";
+  const message = raw.includes("prisma.procedureOrder.update") || raw.includes("No record was found for an update")
+    ? "Package seating failed"
+    : raw;
   if (code === ANAMNESIS_REQUIRED || code === "COMPLAINT_REQUIRED" || code === "DIAGNOSIS_REQUIRED") {
     return new PackageAssignError(message, code, 409, [
       { ymd: "", procedureCode: "", procedureName: "", reason: "anamnesis" },

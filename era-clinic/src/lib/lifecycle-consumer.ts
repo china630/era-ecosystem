@@ -67,6 +67,10 @@ async function ensureEpisodeAndProgram(
       startsOn: p.checkInDate ? new Date(p.checkInDate) : new Date(),
       skipAutoStudies: true,
     });
+  }
+  // CHECKIN blocks (paid infect biochem) run when the guest arrives.
+  // AFTER_CHECKUP still waits to open the rest of the package.
+  if (p.programCode) {
     const { applyPackageAutoBlocks } = await import(
       "@/domain/sanatorium/package-auto-apply.service"
     );
@@ -435,23 +439,24 @@ export async function handleStayProductChanged(
           endsOn: checkOut,
           reservationId: p.reservationId,
         });
-        continue;
+      } else if (programCode && (await shouldAutoInstantiateProgramOnCheckin())) {
+        await instantiateProgramFromTemplate({
+          episodeId: episode.id,
+          programCode,
+          reservationId: p.reservationId,
+          startsOn: checkIn,
+          checkInDate: checkIn,
+          checkOutDate: checkOut,
+          nights,
+          skipAutoStudies: true,
+        });
       }
-      if (!programCode) continue;
-      await instantiateProgramFromTemplate({
-        episodeId: episode.id,
-        programCode,
-        reservationId: p.reservationId,
-        startsOn: checkIn,
-        checkInDate: checkIn,
-        checkOutDate: checkOut,
-        nights,
-        skipAutoStudies: true,
-      });
-      const { applyPackageAutoBlocks } = await import(
-        "@/domain/sanatorium/package-auto-apply.service"
-      );
-      await applyPackageAutoBlocks(episode.id, { trigger: "CARE_TEAM", step: "CHECKIN" });
+      if (programCode) {
+        const { applyPackageAutoBlocks } = await import(
+          "@/domain/sanatorium/package-auto-apply.service"
+        );
+        await applyPackageAutoBlocks(episode.id, { trigger: "CARE_TEAM", step: "CHECKIN" });
+      }
     } catch (e) {
       console.error("stay-product recalc failed", episode.id, e);
     }

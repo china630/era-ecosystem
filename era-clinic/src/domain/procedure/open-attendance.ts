@@ -392,9 +392,12 @@ export async function pinOpenAttendanceOrders(
     const accessCode =
       order.accessCode?.trim() ||
       (await generateUniqueAccessCode(order.organizationId));
-    await prisma.procedureOrder.update({
-      where: { id: order.id },
-      data: {
+    const { updateProcedureOrderIfPresent } = await import(
+      "@/domain/procedure/procedure-order-if-present"
+    );
+    const pinned = await updateProcedureOrderIfPresent(
+      order.id,
+      {
         status: "SCHEDULED",
         schedulingMode: "OPEN",
         scheduledAt,
@@ -405,7 +408,9 @@ export async function pinOpenAttendanceOrders(
         prescribedByPractitionerId,
         accessCode,
       },
-    });
+      "pinOpenAttendance",
+    );
+    if (!pinned) continue;
     placedIds.push(order.id);
     noteOpenAttendanceDay(
       codesOnDay,
@@ -471,15 +476,20 @@ async function applyOccupancyNow(input: {
   const staffId = input.procedureTypeId
     ? await pickStaffForSeat(input.procedureTypeId)
     : null;
-  await prisma.procedureOrder.update({
-    where: { id: input.orderId },
-    data: {
+  const { updateProcedureOrderIfPresent } = await import(
+    "@/domain/procedure/procedure-order-if-present"
+  );
+  const moved = await updateProcedureOrderIfPresent(
+    input.orderId,
+    {
       ...(input.moveScheduledAt ? { scheduledAt: now } : {}),
       endsAt,
       resourceId: input.resourceId,
       manuallyAdjusted: true,
     },
-  });
+    "applyOccupancyNow",
+  );
+  if (!moved) return;
   await replaceProcedureAllocations(input.orderId, [
     {
       role: input.physicalRole,

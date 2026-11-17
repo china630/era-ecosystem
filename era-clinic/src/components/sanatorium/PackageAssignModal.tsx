@@ -343,6 +343,7 @@ export function PackageAssignModal({
     extras: boolean;
   } | null>(null);
   const [stayPlan, setStayPlan] = useState<StayPlan>({ days: [], checkoutYmd: null, closedDays: [], marks: [] });
+  const [courseStarted, setCourseStarted] = useState(false);
   const [planFocus, setPlanFocus] = useState<string | null>(null);
   const [pendingCancel, setPendingCancel] = useState<Set<string>>(new Set());
   const [pendingCut, setPendingCut] = useState<Record<string, number>>({});
@@ -379,6 +380,7 @@ export function PackageAssignModal({
     setStayPlan(
       payload.stayPlan ?? { days: [], checkoutYmd: null, closedDays: [], marks: [] },
     );
+    setCourseStarted(payload.courseStarted === true);
     const optionRows =
       payload.masseurOptions && typeof payload.masseurOptions === "object"
         ? (payload.masseurOptions as Record<string, Array<{ id: string; fullName: string }>>)
@@ -1112,7 +1114,17 @@ export function PackageAssignModal({
     if (code === "CABIN_SEX") return tPhysio("packageAssignMissCabinSex");
     if (code === "MASSEUR_NOT_SKILLED") return tPhysio("masseurNotSkilled");
     if (code === "NO_CABIN") return tPhysio("packageAssignNoCabin", { names: serverError });
-    if (code === "PLACE_FAILED") return serverError || tPhysio("packageAssignPlaceFailed");
+    if (code === "PLACE_FAILED") {
+      if (
+        !serverError ||
+        serverError === "Package seating failed" ||
+        serverError.includes("prisma.") ||
+        serverError.includes("No record was found")
+      ) {
+        return tPhysio("packageAssignPlaceFailed");
+      }
+      return serverError;
+    }
     if (code === "NOT_IN_PROCEDURES") return tPhysio("packageAssignNotInProcedures");
     if (code === "NO_SERVICE") return tPhysio("packageAssignNoService");
     if (code === "NO_CARE_TEAM") return tPhysio("packageAssignNoCareTeam");
@@ -1221,7 +1233,7 @@ export function PackageAssignModal({
       return;
     }
     const needsSlot = lines.some((line) => !lineIsStudy(line));
-    if (lines.length > 0 && needsSlot && !blockReason && !start && assigned.length === 0) {
+    if (lines.length > 0 && needsSlot && !blockReason && !start && !courseStarted && assigned.length === 0) {
       const point = defaultStartPoint();
       setStartDate(point.date);
       setStartHour(point.hour);
@@ -1301,6 +1313,7 @@ export function PackageAssignModal({
           );
         }
         if (payload.softWarn) setSoftWarn(String(payload.softWarn));
+        setCourseStarted(true);
       }
       if ((extras.length > 0 || extraRemovals.length > 0) && !clinicalLock) {
         const res = await fetch(
@@ -1370,6 +1383,7 @@ export function PackageAssignModal({
           );
           return;
         }
+        setCourseStarted(true);
       }
       setStartOpen(false);
       setDraft([]);

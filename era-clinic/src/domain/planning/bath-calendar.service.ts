@@ -226,12 +226,17 @@ async function seatPinnedOrders(
       next = nextWorkingYmd(clinicDays, addBakuDays(next, 1));
     }
     if (!next) continue;
+    const { updateProcedureOrderIfPresent } = await import(
+      "@/domain/procedure/procedure-order-if-present"
+    );
+    const moved = await updateProcedureOrderIfPresent(
+      fail.orderId,
+      { scheduledAt: dayStartInstant(next, dayHour) },
+      "bath-shift-day",
+    );
+    if (!moved) continue;
     shiftPins[fail.orderId] = next;
     usedYmds.add(next);
-    await prisma.procedureOrder.update({
-      where: { id: fail.orderId },
-      data: { scheduledAt: dayStartInstant(next, dayHour) },
-    });
   }
   const shiftIds = Object.keys(shiftPins);
   if (shiftIds.length > 0) {
@@ -268,14 +273,22 @@ async function persistSeatMisses(misses: BathSeatMiss[]): Promise<void> {
       where: { id: orderId },
       select: { physioFields: true },
     });
+    if (!order) {
+      console.warn("procedure-order-missing", { step: "persistSeatMisses", orderId });
+      continue;
+    }
     const prev =
-      order?.physioFields && typeof order.physioFields === "object" && !Array.isArray(order.physioFields)
+      order.physioFields && typeof order.physioFields === "object" && !Array.isArray(order.physioFields)
         ? (order.physioFields as Record<string, unknown>)
         : {};
-    await prisma.procedureOrder.update({
-      where: { id: orderId },
-      data: { physioFields: { ...prev, seatMiss: miss } },
-    });
+    const { updateProcedureOrderIfPresent } = await import(
+      "@/domain/procedure/procedure-order-if-present"
+    );
+    await updateProcedureOrderIfPresent(
+      orderId,
+      { physioFields: { ...prev, seatMiss: miss } },
+      "persistSeatMisses",
+    );
   }
 }
 
