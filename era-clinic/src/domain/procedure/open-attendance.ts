@@ -395,7 +395,7 @@ export async function pinOpenAttendanceOrders(
     const { updateProcedureOrderIfPresent } = await import(
       "@/domain/procedure/procedure-order-if-present"
     );
-    const pinned = await updateProcedureOrderIfPresent(
+    const written = await updateProcedureOrderIfPresent(
       order.id,
       {
         status: "SCHEDULED",
@@ -410,7 +410,7 @@ export async function pinOpenAttendanceOrders(
       },
       "pinOpenAttendance",
     );
-    if (!pinned) continue;
+    if (!written) continue;
     placedIds.push(order.id);
     noteOpenAttendanceDay(
       codesOnDay,
