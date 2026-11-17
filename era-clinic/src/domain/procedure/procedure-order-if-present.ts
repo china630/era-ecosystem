@@ -16,7 +16,7 @@ export function isMissingProcedureOrder(err: unknown): boolean {
  */
 export async function updateProcedureOrderIfPresent(
   orderId: string,
-  data: Prisma.ProcedureOrderUpdateInput,
+  data: Prisma.ProcedureOrderUncheckedUpdateInput,
   step: string,
 ): Promise<boolean> {
   const existing = await prisma.procedureOrder.findUnique({
