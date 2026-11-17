@@ -1,4 +1,10 @@
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { escapePrintHtml } from '@/lib/print-window';
+
+function printDay(value: string): string {
+  const ymd = String(value ?? '').slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? bakuDateDisplay(ymd) : value || '—';
+}
 
 export type StayPrintKind = 'registration' | 'proforma' | 'confirmation';
 
@@ -131,8 +137,8 @@ function facts(model: StayPrintModel): string {
     ${row(L.resNo, model.resNo)}
     ${row(L.guest, model.guestName)}
     ${row(L.agency, model.agency)}
-    ${row(L.arrival, model.arrival)}
-    ${row(L.departure, model.departure)}
+    ${row(L.arrival, printDay(model.arrival))}
+    ${row(L.departure, printDay(model.departure))}
     ${row(L.room, room)}
     ${row(L.board, model.board)}
     ${row(L.pax, pax)}
@@ -152,7 +158,7 @@ export function buildStayFormHtml(model: StayPrintModel): string {
     const lines = model.nightsGrid
       .map(
         (night) =>
-          `<tr><td>${escapePrintHtml(night.date)}</td><td>${escapePrintHtml(night.roomType)}</td><td>${escapePrintHtml(night.board)}</td><td class="right">${night.adults}</td><td class="right">${night.children}</td><td class="right">${night.infants}</td><td class="right">${night.price.toFixed(2)}</td></tr>`,
+          `<tr><td>${escapePrintHtml(printDay(night.date))}</td><td>${escapePrintHtml(night.roomType)}</td><td>${escapePrintHtml(night.board)}</td><td class="right">${night.adults}</td><td class="right">${night.children}</td><td class="right">${night.infants}</td><td class="right">${night.price.toFixed(2)}</td></tr>`,
       )
       .join('');
     const sum = model.nightsGrid.reduce((acc, night) => acc + night.price, 0);
@@ -198,7 +204,7 @@ export function buildStayFormHtml(model: StayPrintModel): string {
       ${row(L.email, model.email)}
       ${row(L.document, model.documentNo)}
       ${row(L.nationality, model.nationality)}
-      ${row(L.birth, model.birthDate)}
+      ${row(L.birth, printDay(model.birthDate))}
       ${row(L.sex, model.sex)}
     </table>
     <div class="legal">${legal}</div>

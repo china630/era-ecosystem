@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Printer } from 'lucide-react';
-import { bakuTimeLabel } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuTimeLabel } from '@era/satellite-kit/time';
 import { PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
 
 type Row = {
@@ -131,8 +131,8 @@ export default function TourPrintPage() {
 
         <h1 className="text-xl font-bold">{dep.agenda}</h1>
         <p>
-          {dep.date.slice(0, 10)} · {t('pickup')} {bakuTimeLabel(dep.pickupAt)} · {t('return')}{' '}
-          {bakuTimeLabel(dep.returnAt)}
+          {bakuDateDisplay(dep.date.slice(0, 10))} · {t('pickup')} {bakuTimeLabel(dep.pickupAt)} ·{' '}
+          {t('return')} {bakuTimeLabel(dep.returnAt)}
         </p>
         <p>
           {t('meetingPoint')}: {dashOr(dep.meetingPoint, t('notSet'))} · {t('guide')}:{' '}

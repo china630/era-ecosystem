@@ -142,7 +142,8 @@ function stampParts(isoOrDate?: string | null, dateOnly?: string | null): {
   }
   if (dateOnly) {
     const day = dateOnly.slice(0, 10);
-    return { whenDate: day, whenTime: '—', when: day };
+    const label = bakuDateDisplay(day);
+    return { whenDate: label, whenTime: '—', when: label };
   }
   return { whenDate: '—', whenTime: '—', when: '—' };
 }

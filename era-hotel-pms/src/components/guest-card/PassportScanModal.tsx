@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { EraModal } from '@/components/EraModal';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -342,7 +343,10 @@ export function PassportScanModal({
       <ul className="m-0 list-none space-y-1 text-[13px]">
         <li>{parsed.lastName} {parsed.firstName} {parsed.middleName}</li>
         <li>{parsed.nationality} · {parsed.documentNumber}</li>
-        <li>{parsed.birthDate} · {parsed.sex} · {parsed.expiryDate}</li>
+        <li>
+          {parsed.birthDate ? bakuDateDisplay(parsed.birthDate) : '—'} · {parsed.sex} ·{' '}
+          {parsed.expiryDate ? bakuDateDisplay(parsed.expiryDate) : '—'}
+        </li>
       </ul>
     ) : (
       <div className="grid gap-2 text-[13px]">
@@ -456,7 +460,8 @@ export function PassportScanModal({
                   {currentSnap.lastName} {currentSnap.firstName}
                 </p>
                 <p className="m-0">
-                  {currentSnap.passportNo ?? '—'} · {currentSnap.birthDate ?? '—'}
+                  {currentSnap.passportNo ?? '—'} ·{' '}
+                  {currentSnap.birthDate ? bakuDateDisplay(currentSnap.birthDate) : '—'}
                 </p>
               </div>
               <div>

@@ -19,6 +19,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { seasonDateKey } from '@/lib/pricing/price-season';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -282,7 +283,7 @@ export function SellPriceGrid({ mode }: { mode: 'package' | 'daily' }) {
             onChange={(v) => setSeasonId(String(v ?? ''))}
             options={seasons.map((s) => ({
               value: s.id,
-              label: `${s.name} (${seasonDateKey(s.startsOn)} – ${seasonDateKey(s.endsOn)})`,
+              label: `${s.name} (${bakuDateDisplay(seasonDateKey(s.startsOn))} – ${bakuDateDisplay(seasonDateKey(s.endsOn))})`,
             }))}
             emptyLabel={null}
           />

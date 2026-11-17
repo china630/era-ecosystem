@@ -1,5 +1,6 @@
 'use client';
 
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { GuestCrmPromptListPage } from '@/components/guest-crm/GuestCrmPromptListPage';
 
 export default function Page() {
@@ -18,7 +19,7 @@ export default function Page() {
       searchKeys={['dateType', 'eventDate']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
-          {String(r.dateType)} — {String(r.eventDate).slice(0, 10)}
+          {String(r.dateType)} — {bakuDateDisplay(String(r.eventDate).slice(0, 10))}
         </li>
       )}
     />

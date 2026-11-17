@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { EraModal } from "@/components/EraModal";
+import { bakuDateTimeDisplay } from "@era/satellite-kit/time";
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, showApiError } from "@era/satellite-kit/ui";
 
 type LinkPayload = {
@@ -94,7 +95,7 @@ export function GuestAppLinkModal({
           </div>
           <p className="break-all font-mono text-xs text-[#7F8C8D]">{payload.qrPayload}</p>
           <p className="text-xs text-[#7F8C8D]">
-            {t("guestAppLinkExpires")}: {payload.expiresAt}
+            {t("guestAppLinkExpires")}: {bakuDateTimeDisplay(payload.expiresAt)}
           </p>
           {payload.deviceLinked ? <p>{t("guestAppDeviceLinked")}</p> : null}
         </div>
