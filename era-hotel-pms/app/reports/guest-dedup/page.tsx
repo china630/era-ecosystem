@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -278,7 +279,11 @@ export default function GuestDedupReportPage() {
                   ) : null}
                   <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] text-[#34495E]">
                     <dt className="text-[#7F8C8D]">{t('birth')}</dt>
-                    <dd className="m-0">{guest.birthDate || '—'}</dd>
+                    <dd className="m-0">
+                      {guest.birthDate
+                        ? bakuDateDisplay(String(guest.birthDate).slice(0, 10))
+                        : '—'}
+                    </dd>
                     <dt className="text-[#7F8C8D]">{t('sex')}</dt>
                     <dd className="m-0">{guest.sex || '—'}</dd>
                     <dt className="text-[#7F8C8D]">{t('citizenship')}</dt>

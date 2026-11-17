@@ -16,6 +16,7 @@ import {
   DATA_TABLE_VIEWPORT_CLASS,
   showApiError,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
@@ -128,7 +129,7 @@ export default function RoomTypeAvailabilityPage() {
               const tot = matrix?.totals[i];
               return (
                 <tr key={night} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{night}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{bakuDateDisplay(night)}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} font-mono ${cellClass(tot?.available ?? 0, tot?.stopSell ?? false)}`}>{tot?.available ?? '—'}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{tot?.occupiedSold ?? '—'}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} font-mono`}>{tot?.occupiedPhysical ?? '—'}</td>

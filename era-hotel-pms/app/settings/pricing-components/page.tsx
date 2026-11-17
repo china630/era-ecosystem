@@ -20,6 +20,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -210,7 +211,11 @@ export default function PricingComponentsPage() {
                     <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{row.unit}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{money(row.current?.sellAmount)}</td>
                     <td className={DATA_TABLE_TD_CLASS}>{money(row.current?.cogsAmount)}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{row.current?.effectiveFrom ?? '—'}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {row.current?.effectiveFrom
+                        ? bakuDateDisplay(String(row.current.effectiveFrom).slice(0, 10))
+                        : '—'}
+                    </td>
                     <td className={DATA_TABLE_TD_CLASS}>
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -314,8 +319,12 @@ export default function PricingComponentsPage() {
             <tbody>
               {(historyRow?.history ?? []).map((v) => (
                 <tr key={v.id} className={DATA_TABLE_TR_CLASS}>
-                  <td className={DATA_TABLE_TD_CLASS}>{v.effectiveFrom}</td>
-                  <td className={DATA_TABLE_TD_CLASS}>{v.effectiveTo ?? '—'}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {bakuDateDisplay(String(v.effectiveFrom).slice(0, 10))}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {v.effectiveTo ? bakuDateDisplay(String(v.effectiveTo).slice(0, 10)) : '—'}
+                  </td>
                   <td className={DATA_TABLE_TD_CLASS}>{money(v.sellAmount)}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{money(v.cogsAmount)}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{v.note ?? '—'}</td>
