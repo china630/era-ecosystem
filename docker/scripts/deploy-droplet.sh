@@ -191,10 +191,11 @@ if [ -z "$services" ]; then
     dump_critical_logs
     exit 1
   fi
-  docker image prune -f || true
+  chmod +x docker/scripts/prune-unused-images.sh 2>/dev/null || true
+  ./docker/scripts/prune-unused-images.sh || echo "WARN: image prune failed (non-blocking)"
   node scripts/ecosystem-smoke-all.mjs || echo "WARN: full ecosystem-smoke-all failed (non-blocking; critical already passed)"
 else
-  # Do not --remove-orphans or prune — that would stop/delete other satellites.
+  # Do not --remove-orphans — that would stop/delete other satellites.
   # --no-deps: scoped IMAGE_TAG only exists for the rebuilt service; pulling
   # depends_on siblings (e.g. finance-web → finance-core) 404s on GHCR.
   # shellcheck disable=SC2086
@@ -211,4 +212,7 @@ else
     dump_critical_logs
     exit 1
   fi
+  # Unused tags only (running containers keep their image). Prevents disk 99%.
+  chmod +x docker/scripts/prune-unused-images.sh 2>/dev/null || true
+  ./docker/scripts/prune-unused-images.sh || echo "WARN: image prune failed (non-blocking)"
 fi
