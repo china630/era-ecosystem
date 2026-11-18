@@ -18,12 +18,13 @@ import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
 import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 import {
   clampWeeklyNaftalanCap,
+  illegalHardSeriesBathYmds,
   nextLegalSeriesDay,
   planBathSeries,
   parseBathDayModes,
   resolveDefaultBathMode,
-  saxlaBlockedDays,
   saxlaDayTaken,
+  saxlaSameSkuKept,
   saxlaSeatKept,
   strayBathOrderIds,
   type KeptCell,
@@ -337,7 +338,19 @@ async function seatPinnedOrders(
       modes,
       notBeforeYmd: next,
       policy: { ...policy, weeklyNaftalanCap: meta.weeklyCap },
-    }).filter((cell) => !placedYmds.includes(cell.ymd));
+    }).filter((cell) => {
+      if (placedYmds.includes(cell.ymd)) return false;
+      if (meta.fillsRestDays) return true;
+      const illegal = illegalHardSeriesBathYmds({
+        bathYmds: [...placedYmds, cell.ymd],
+        days: clinicDays,
+        mode: meta.mode,
+        modes,
+        policy,
+        fillsRestDays: false,
+      });
+      return !illegal.includes(cell.ymd);
+    });
 
     const shiftPins: Record<string, string> = {};
     for (let i = 0; i < remainingIds.length; i++) {
@@ -572,7 +585,22 @@ export async function saveBathCalendar(input: {
     modes: snapshot.modes,
     notBeforeYmd: today,
     policy: bathPolicyFromSettings(settings),
-  }).filter((cell) => cell.procedureCode === input.procedureCode);
+  }).filter((cell) => {
+    if (cell.procedureCode !== input.procedureCode) return false;
+    if (series.fillsRestDays || cell.locked) return true;
+    const lockedYmds = kept
+      .filter((row) => row.procedureCode === input.procedureCode && row.locked && !row.manualRest)
+      .map((row) => row.ymd);
+    const illegal = illegalHardSeriesBathYmds({
+      bathYmds: [...lockedYmds, cell.ymd],
+      days: snapshot.days,
+      mode: input.mode,
+      modes: snapshot.modes,
+      policy: bathPolicyFromSettings(settings),
+      fillsRestDays: false,
+    });
+    return !illegal.includes(cell.ymd);
+  });
 
   const movable = own.filter((order) => !LOCKED.has(order.status) && order.ymd >= today);
   const used = new Set<string>();
@@ -817,14 +845,20 @@ export async function seatDaySeriesOrders(
   const notBeforeYmd = nextWorkingYmd(snapshot.days, startFloor) ?? startFloor;
   const seatingIds = new Set(handled.map((order) => order.id));
   const seatingCodes = new Set(byCode.keys());
-  const kept: KeptCell[] = saxlaSeatKept(snapshot.orders, seatingIds, seatingCodes);
+  /** Other-series occupy dates; same-SKU live rows are locked kept (count in qty + streak). */
+  const kept: KeptCell[] = [
+    ...saxlaSeatKept(snapshot.orders, seatingIds, seatingCodes),
+    ...saxlaSameSkuKept(snapshot.orders, seatingIds, seatingCodes),
+  ];
   for (const order of snapshot.orders) {
     if (seatingIds.has(order.id) || !seatingCodes.has(order.procedureCode)) continue;
     for (const ymd of restYmdsFromFields(order.physioFields)) {
       kept.push({ ymd, procedureCode: order.procedureCode, locked: false, manualRest: true });
     }
   }
-  const blockedDays = saxlaBlockedDays(snapshot.orders, seatingIds, seatingCodes);
+  const sameSkuKeptCount = (procedureCode: string) =>
+    kept.filter((cell) => cell.procedureCode === procedureCode && cell.locked && !cell.manualRest)
+      .length;
   const resolveMode = (procedureCode: string, fields: unknown) => {
     const meta = memberByCode.get(procedureCode)!;
     return (
@@ -835,33 +869,58 @@ export async function seatDaySeriesOrders(
   };
   const seriesInputs = [...byCode.entries()].map(([procedureCode, group]) => {
     const meta = memberByCode.get(procedureCode)!;
+    const sampleFields =
+      group[0]?.physioFields ??
+      snapshot.orders.find((row) => row.procedureCode === procedureCode)?.physioFields;
     return {
       seriesCode: meta.seriesCode,
       procedureCode,
       mark: meta.mark,
-      qty: group.length,
-      mode: resolveMode(procedureCode, group[0]?.physioFields),
+      qty: sameSkuKeptCount(procedureCode) + group.length,
+      mode: resolveMode(procedureCode, sampleFields),
       fillsRestDays: meta.fillsRestDays,
       weeklyCap: meta.weeklyCap,
     };
   });
-  const planned =
+  /**
+   * continue + same-SKU kept: new qty only after the last kept bath (no hole-fill).
+   * qty includes kept so mode rest/streak continues from the seated block.
+   */
+  const plannedRaw =
     snapshot.days.length === 0
       ? []
       : planBathSeries({
           days: snapshot.days,
           series: seriesInputs,
           kept,
-          layout: "fresh",
+          layout: "continue",
           modes: snapshot.modes,
           notBeforeYmd,
-          blockedDays,
           policy,
-        }).filter(
-          (cell) =>
-            cell.ymd >= notBeforeYmd &&
-            !saxlaDayTaken(snapshot.orders, seatingIds, cell.procedureCode, cell.ymd),
-        );
+        });
+  /** New pins only — locked kept stay on their orders. Drop mode-illegal days. */
+  const planned = plannedRaw.filter((cell) => {
+    if (cell.locked || cell.ymd < notBeforeYmd) return false;
+    if (saxlaDayTaken(snapshot.orders, seatingIds, cell.procedureCode, cell.ymd)) return false;
+    const meta = memberByCode.get(cell.procedureCode);
+    if (!meta || meta.fillsRestDays) return true;
+    const mode =
+      seriesInputs.find((row) => row.procedureCode === cell.procedureCode)?.mode ?? defaultMode;
+    const existing = kept
+      .filter((row) => row.procedureCode === cell.procedureCode && row.locked && !row.manualRest)
+      .map((row) => row.ymd);
+    const illegal = new Set(
+      illegalHardSeriesBathYmds({
+        bathYmds: [...existing, cell.ymd],
+        days: snapshot.days,
+        mode,
+        modes: snapshot.modes,
+        policy,
+        fillsRestDays: false,
+      }),
+    );
+    return !illegal.has(cell.ymd);
+  });
   const queues = new Map<string, typeof handled>();
   for (const [procedureCode, group] of byCode) {
     queues.set(procedureCode, [...group]);

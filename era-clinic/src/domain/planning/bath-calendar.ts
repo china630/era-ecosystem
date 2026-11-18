@@ -293,7 +293,12 @@ export function saxlaDayTaken(
   );
 }
 
-/** Live same-SKU days already on the stay. Occupy the date without spending new qty. */
+/**
+ * Live same-SKU days already on the stay.
+ * Prefer counting them as locked kept (and in qty) via `saxlaSameSkuKept` so mode rest
+ * continues across the full set. Using only this list as `blockedDays` skips streak/rest
+ * updates and lets a +1 land in a hole (Irina-class).
+ */
 export function saxlaBlockedDays(
   orders: Array<{ id: string; ymd: string; procedureCode: string }>,
   seatingIds: ReadonlySet<string>,
@@ -314,6 +319,95 @@ export type KeptCell = {
   /** Doctor cleared this day. It is the rest. The mode does not change. */
   manualRest?: boolean;
 };
+
+/** Same-SKU live days as locked kept cells (count toward qty + mode streak). */
+export function saxlaSameSkuKept(
+  orders: Array<{ id: string; ymd: string; procedureCode: string }>,
+  seatingIds: ReadonlySet<string>,
+  seatingCodes: ReadonlySet<string>,
+): KeptCell[] {
+  return orders
+    .filter((order) => !seatingIds.has(order.id) && seatingCodes.has(order.procedureCode))
+    .map((order) => ({
+      ymd: order.ymd,
+      procedureCode: order.procedureCode,
+      locked: true,
+    }));
+}
+
+/**
+ * Max run of consecutive working days that all have a bath.
+ * Closed days break the streak (same as clinic week template).
+ */
+export function hardSeriesMaxWorkingStreak(bathYmds: string[], days: StayDay[]): number {
+  const set = new Set(bathYmds);
+  if (set.size === 0 || days.length === 0) return 0;
+  let max = 0;
+  let cur = 0;
+  for (const day of days) {
+    if (!day.working) {
+      cur = 0;
+      continue;
+    }
+    if (set.has(day.ymd)) {
+      cur += 1;
+      if (cur > max) max = cur;
+    } else {
+      cur = 0;
+    }
+  }
+  return max;
+}
+
+/**
+ * Bath YMDs that break hard-series mode: sit on a recomputed rest day, or push
+ * working streak above mode.baths. fillsRestDays series are not checked.
+ */
+export function illegalHardSeriesBathYmds(input: {
+  bathYmds: string[];
+  days: StayDay[];
+  mode: string;
+  modes?: BathModeDef[];
+  policy?: Partial<BathPlanPolicy>;
+  fillsRestDays?: boolean;
+}): string[] {
+  if (input.fillsRestDays) return [];
+  const sorted = [...new Set(input.bathYmds)].sort();
+  if (sorted.length === 0) return [];
+  const block = resolveBathBlock(input.mode, input.modes);
+  const illegal = new Set<string>();
+  const anchorYmd = sorted[0]!;
+  const rest = new Set(
+    bathSeriesRestYmds({
+      days: input.days,
+      anchorYmd,
+      mode: input.mode,
+      modes: input.modes,
+      policy: input.policy,
+    }),
+  );
+  for (const ymd of sorted) {
+    if (rest.has(ymd)) illegal.add(ymd);
+  }
+  if (hardSeriesMaxWorkingStreak(sorted, input.days) > block.baths) {
+    let cur: string[] = [];
+    for (const day of input.days) {
+      if (!day.working) {
+        cur = [];
+        continue;
+      }
+      if (sorted.includes(day.ymd)) {
+        cur.push(day.ymd);
+        if (cur.length > block.baths) {
+          for (const y of cur.slice(block.baths)) illegal.add(y);
+        }
+      } else {
+        cur = [];
+      }
+    }
+  }
+  return [...illegal].sort();
+}
 
 export type PlannedBath = {
   ymd: string;
