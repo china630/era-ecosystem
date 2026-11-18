@@ -1,10 +1,13 @@
 import {
   bathSeriesRestYmds,
+  hardSeriesMaxWorkingStreak,
+  illegalHardSeriesBathYmds,
   naftalanWeekIsFull,
   nextLegalSeriesDay,
   planBathSeries,
   saxlaBlockedDays,
   saxlaDayTaken,
+  saxlaSameSkuKept,
   saxlaSeatKept,
   strayBathOrderIds,
   type StayDay,
@@ -636,5 +639,100 @@ describe("nextLegalSeriesDay", () => {
         stayEndYmd: "2026-11-14",
       }),
     ).toBeNull();
+  });
+});
+
+describe("hard-series rhythm invariant (Irina-class)", () => {
+  const stay: StayDay[] = [
+    { ymd: "2026-11-19", working: true },
+    { ymd: "2026-11-20", working: true },
+    { ymd: "2026-11-21", working: true },
+    { ymd: "2026-11-22", working: false },
+    { ymd: "2026-11-23", working: true },
+    { ymd: "2026-11-24", working: true },
+    { ymd: "2026-11-25", working: true },
+    { ymd: "2026-11-26", working: true },
+    { ymd: "2026-11-27", working: true },
+    { ymd: "2026-11-28", working: true },
+  ];
+
+  it("mode-3 first pack does not lay six working baths in a row", () => {
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+          mark: "Nq",
+          mode: "3",
+          qty: 6,
+          fillsRestDays: false,
+          weeklyCap: 5,
+        },
+      ],
+      kept: [],
+      layout: "fresh",
+      notBeforeYmd: "2026-11-19",
+    });
+    const ymds = cells.map((c) => c.ymd);
+    expect(hardSeriesMaxWorkingStreak(ymds, stay)).toBeLessThanOrEqual(3);
+    expect(illegalHardSeriesBathYmds({ bathYmds: ymds, days: stay, mode: "3" })).toEqual([]);
+  });
+
+  it("continue + kept does not hole-fill 20 between 19 and 21", () => {
+    const keptYmds = ["2026-11-19", "2026-11-21", "2026-11-23", "2026-11-24", "2026-11-25", "2026-11-26", "2026-11-27"];
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+          mark: "Nq",
+          mode: "3",
+          qty: keptYmds.length + 1,
+          fillsRestDays: false,
+          weeklyCap: 5,
+        },
+      ],
+      kept: keptYmds.map((ymd) => ({
+        ymd,
+        procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+        locked: true,
+      })),
+      layout: "continue",
+      notBeforeYmd: "2026-11-19",
+    });
+    const newYmds = cells.filter((c) => !c.locked).map((c) => c.ymd);
+    expect(newYmds).not.toContain("2026-11-20");
+  });
+
+  it("flags Irina 23–27 streak as illegal under mode 3", () => {
+    const baths = [
+      "2026-11-19",
+      "2026-11-20",
+      "2026-11-21",
+      "2026-11-23",
+      "2026-11-24",
+      "2026-11-25",
+      "2026-11-26",
+      "2026-11-27",
+    ];
+    expect(hardSeriesMaxWorkingStreak(baths, stay)).toBe(5);
+    expect(
+      illegalHardSeriesBathYmds({ bathYmds: baths, days: stay, mode: "3" }),
+    ).toEqual(expect.arrayContaining(["2026-11-26", "2026-11-27"]));
+  });
+
+  it("saxlaSameSkuKept counts live same-SKU rows", () => {
+    const kept = saxlaSameSkuKept(
+      [
+        { id: "a", ymd: "2026-11-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+        { id: "b", ymd: "2026-11-20", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+        { id: "new", ymd: "2026-11-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+      ],
+      new Set(["new"]),
+      new Set(["SVC-NAFTALAN-VANNASI-QADIN"]),
+    );
+    expect(kept.map((c) => c.ymd).sort()).toEqual(["2026-11-19", "2026-11-20"]);
   });
 });
