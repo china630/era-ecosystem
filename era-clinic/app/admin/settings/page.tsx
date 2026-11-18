@@ -366,11 +366,10 @@ export default function ClinicAdminSettingsPage() {
         ariaLabel={t("settingsChips")}
         value={chip}
         onChange={setChip}
-        alwaysVisibleIds={["clinic", "day", "baths", "procedures", "labs", "money", "card", "print"]}
+        alwaysVisibleIds={["clinic", "day", "procedures", "labs", "money", "card", "print"]}
         items={[
           { id: "clinic", label: t("chipClinic") },
           { id: "day", label: t("chipDay") },
-          { id: "baths", label: t("chipBaths") },
           { id: "procedures", label: t("chipProcedures") },
           { id: "labs", label: t("chipLabs") },
           { id: "money", label: t("chipMoney") },
@@ -425,29 +424,13 @@ export default function ClinicAdminSettingsPage() {
               </Link>
             </td>
           </tr>
-          <tr data-chip="baths" className="border-b">
+          <tr data-chip="procedures" className="border-b">
             <td className="p-3 font-medium">{t("bathModesTitle")}</td>
             <td className="p-3">
-              {workHours.bathDayModes
-                .map((row) => `${row.code}: ${row.baths}+${row.rest}`)
-                .join(", ")}
+              <Link href="/admin/procedure-rules" className={LINK_ACCENT_CLASS}>
+                {t("daySeriesMovedHint")}
+              </Link>
             </td>
-          </tr>
-          <tr data-chip="baths" className="border-b">
-            <td className="p-3 font-medium">{t("defaultBathMode")}</td>
-            <td className="p-3">{workHours.defaultBathMode}</td>
-          </tr>
-          <tr data-chip="baths" className="border-b">
-            <td className="p-3 font-medium">{t("closedDaySpendsOwedRest")}</td>
-            <td className="p-3">{workHours.closedDaySpendsOwedRest ? t("bathFlagOn") : t("bathFlagOff")}</td>
-          </tr>
-          <tr data-chip="baths" className="border-b">
-            <td className="p-3 font-medium">{t("closedDayResetsOpenStreak")}</td>
-            <td className="p-3">{workHours.closedDayResetsOpenStreak ? t("bathFlagOn") : t("bathFlagOff")}</td>
-          </tr>
-          <tr data-chip="baths" className="border-b">
-            <td className="p-3 font-medium">{t("weeklyNaftalanCap")}</td>
-            <td className="p-3">{workHours.weeklyNaftalanCap}</td>
           </tr>
           <tr data-chip="money" className="border-b">
             <td className="p-3 font-medium">{t("hotelFolioRevenueCode")}</td>
@@ -528,142 +511,6 @@ export default function ClinicAdminSettingsPage() {
               {t("openWorkingHours")}
             </Link>
           </div>
-          <fieldset className={`grid gap-3 text-[13px] sm:grid-cols-2 ${chip === "baths" ? "" : "hidden"}`}>
-            <legend className={`${MODAL_FIELD_LABEL_CLASS} sm:col-span-2`}>{t("bathModesTitle")}</legend>
-            <div className={`space-y-2 sm:col-span-2 ${chip === "baths" ? "" : "hidden"}`}>
-              <p className={MODAL_FIELD_LABEL_CLASS}>{t("bathModesTitle")}</p>
-              {draftWork.bathDayModes.map((row, index) => (
-                <div key={`${row.code}-${index}`} className="grid grid-cols-4 items-end gap-2">
-                  <Field
-                    label={t("bathModeCode")}
-                    preset="shortText"
-                    value={row.code}
-                    onChange={(e) =>
-                      setDraftWork((prev) => ({
-                        ...prev,
-                        bathDayModes: prev.bathDayModes.map((item, i) =>
-                          i === index ? { ...item, code: e.target.value.toUpperCase() } : item,
-                        ),
-                      }))
-                    }
-                  />
-                  <Field
-                    label={t("bathModeBaths")}
-                    preset="count"
-                    type="number"
-                    min={1}
-                    max={14}
-                    value={row.baths}
-                    onChange={(e) =>
-                      setDraftWork((prev) => ({
-                        ...prev,
-                        bathDayModes: prev.bathDayModes.map((item, i) =>
-                          i === index ? { ...item, baths: Number(e.target.value) || 1 } : item,
-                        ),
-                      }))
-                    }
-                  />
-                  <Field
-                    label={t("bathModeRest")}
-                    preset="count"
-                    type="number"
-                    min={0}
-                    max={7}
-                    value={row.rest}
-                    onChange={(e) =>
-                      setDraftWork((prev) => ({
-                        ...prev,
-                        bathDayModes: prev.bathDayModes.map((item, i) =>
-                          i === index ? { ...item, rest: Number(e.target.value) || 0 } : item,
-                        ),
-                      }))
-                    }
-                  />
-                  <button
-                    type="button"
-                    className={SECONDARY_BUTTON_CLASS}
-                    onClick={() =>
-                      setDraftWork((prev) => ({
-                        ...prev,
-                        bathDayModes: prev.bathDayModes.filter((_, i) => i !== index),
-                      }))
-                    }
-                  >
-                    {tc("delete")}
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                onClick={() =>
-                  setDraftWork((prev) => ({
-                    ...prev,
-                    bathDayModes: [...prev.bathDayModes, { code: "", baths: 1, rest: 1 }],
-                  }))
-                }
-              >
-                {t("addBathMode")}
-              </button>
-              <CatalogField
-                kind="CLOSED_SMALL"
-                label={t("defaultBathMode")}
-                value={draftWork.defaultBathMode}
-                onChange={(next) =>
-                  setDraftWork((prev) => ({
-                    ...prev,
-                    defaultBathMode: String(Array.isArray(next) ? next[0] ?? "" : next).toUpperCase(),
-                  }))
-                }
-                options={draftWork.bathDayModes.map((row) => ({
-                  value: row.code,
-                  label: `${row.code} (${row.baths}+${row.rest})`,
-                }))}
-              />
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className={MODAL_CHECKBOX_CLASS}
-                  checked={draftWork.closedDaySpendsOwedRest}
-                  onChange={(e) =>
-                    setDraftWork((prev) => ({
-                      ...prev,
-                      closedDaySpendsOwedRest: e.target.checked,
-                    }))
-                  }
-                />
-                {t("closedDaySpendsOwedRest")}
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className={MODAL_CHECKBOX_CLASS}
-                  checked={draftWork.closedDayResetsOpenStreak}
-                  onChange={(e) =>
-                    setDraftWork((prev) => ({
-                      ...prev,
-                      closedDayResetsOpenStreak: e.target.checked,
-                    }))
-                  }
-                />
-                {t("closedDayResetsOpenStreak")}
-              </label>
-              <Field
-                label={t("weeklyNaftalanCap")}
-                preset="count"
-                type="number"
-                min={0}
-                max={14}
-                value={draftWork.weeklyNaftalanCap}
-                onChange={(e) =>
-                  setDraftWork((prev) => ({
-                    ...prev,
-                    weeklyNaftalanCap: Number(e.target.value) || 0,
-                  }))
-                }
-              />
-            </div>
-          </fieldset>
           <div className={chip === "money" ? "contents" : "hidden"}>
           {revenueNotice ? <p className="text-sm text-[#B7950B]">{revenueNotice}</p> : null}
           <CatalogField

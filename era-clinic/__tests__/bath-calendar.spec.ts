@@ -1,6 +1,7 @@
 import {
   bathSeriesRestYmds,
   naftalanWeekIsFull,
+  nextLegalSeriesDay,
   planBathSeries,
   saxlaBlockedDays,
   saxlaDayTaken,
@@ -591,5 +592,49 @@ describe("bath series rest for a manual move", () => {
     const others = ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"];
     expect(naftalanWeekIsFull("2026-10-24", others, 5)).toBe(true);
     expect(naftalanWeekIsFull("2026-10-24", others.slice(0, 4), 5)).toBe(false);
+  });
+});
+
+describe("nextLegalSeriesDay", () => {
+  const days: StayDay[] = [
+    { ymd: "2026-11-09", working: true },
+    { ymd: "2026-11-10", working: true },
+    { ymd: "2026-11-11", working: true },
+    { ymd: "2026-11-12", working: true },
+    { ymd: "2026-11-13", working: true },
+    { ymd: "2026-11-14", working: true },
+    { ymd: "2026-11-15", working: false },
+    { ymd: "2026-11-16", working: true },
+  ];
+
+  it("skips a mode-3 rest day after three baths (Galina-class shift)", () => {
+    const used = new Set(["2026-11-10", "2026-11-11"]);
+    const next = nextLegalSeriesDay({
+      days,
+      fromYmd: "2026-11-10",
+      mode: "3",
+      anchorYmd: "2026-11-09",
+      usedYmds: used,
+      weeklyCap: 5,
+      weekBathYmds: ["2026-11-09", "2026-11-10", "2026-11-11"],
+      fillsRestDays: false,
+    });
+    // Anchor 9 → baths 9,10,11 rest 12 → next free is 13
+    expect(next).toBe("2026-11-13");
+  });
+
+  it("respects stay end", () => {
+    expect(
+      nextLegalSeriesDay({
+        days,
+        fromYmd: "2026-11-14",
+        mode: "3",
+        usedYmds: new Set(),
+        weeklyCap: 0,
+        weekBathYmds: [],
+        fillsRestDays: false,
+        stayEndYmd: "2026-11-14",
+      }),
+    ).toBeNull();
   });
 });

@@ -4,6 +4,7 @@ import {
   naftalanWeekIsFull,
   parseBathDayModes,
   bakuMondayYmd,
+  resolveDefaultBathMode,
 } from "@/domain/planning/bath-calendar";
 import { listClinicDays } from "@/domain/planning/clinic-day";
 import { loadPeakRulesForRange } from "@/domain/planning/peak-rules.service";
@@ -416,7 +417,16 @@ async function assertBathSeriesMove(input: {
 }): Promise<void> {
   const member = await prisma.procedureDaySeriesMember.findFirst({
     where: { procedureCode: input.procedureCode, series: { active: true } },
-    select: { series: { select: { fillsRestDays: true } } },
+    select: {
+      series: {
+        select: {
+          fillsRestDays: true,
+          modeCode: true,
+          weeklyCap: true,
+          code: true,
+        },
+      },
+    },
   });
   if (!member) return;
 
@@ -427,6 +437,15 @@ async function assertBathSeriesMove(input: {
   ]);
   if (stored.has(input.targetYmd)) throw new SlotDecisionError("bath_rest");
 
+  const modes = parseBathDayModes(input.settings.bathDayModesJson);
+  const mode =
+    storedBathMode(input.ownFields) ??
+    storedBathMode(sameSku[0]?.physioFields) ??
+    (member.series.modeCode
+      ? resolveDefaultBathMode(member.series.modeCode, modes)
+      : defaultBathModeFromSettings(input.settings));
+  const policy = bathPolicyFromSettings(input.settings);
+
   const anchorRow = [...sameSku].sort((a, b) => a.ymd.localeCompare(b.ymd))[0];
   if (anchorRow && input.targetYmd >= anchorRow.ymd) {
     const end = input.targetYmd > anchorRow.ymd ? input.targetYmd : anchorRow.ymd;
@@ -434,27 +453,28 @@ async function assertBathSeriesMove(input: {
     const rest = bathSeriesRestYmds({
       days,
       anchorYmd: anchorRow.ymd,
-      mode:
-        storedBathMode(input.ownFields) ??
-        storedBathMode(anchorRow.physioFields) ??
-        defaultBathModeFromSettings(input.settings),
-      modes: parseBathDayModes(input.settings.bathDayModesJson),
-      policy: bathPolicyFromSettings(input.settings),
+      mode,
+      modes,
+      policy,
     });
     if (rest.includes(input.targetYmd)) throw new SlotDecisionError("bath_rest");
   }
 
   if (member.series.fillsRestDays) return;
   if (bakuMondayYmd(input.originYmd) === bakuMondayYmd(input.targetYmd)) return;
-  const naftalan = await prisma.procedureDaySeriesMember.findMany({
-    where: { series: { active: true, fillsRestDays: false } },
+  const sameSeriesMembers = await prisma.procedureDaySeriesMember.findMany({
+    where: { series: { active: true, code: member.series.code } },
     select: { procedureCode: true },
   });
-  const codes = new Set(naftalan.map((row) => row.procedureCode));
+  const codes = new Set(sameSeriesMembers.map((row) => row.procedureCode));
   const weekYmds = input.others
     .filter((row) => codes.has(row.procedureCode))
     .map((row) => row.ymd);
-  if (naftalanWeekIsFull(input.targetYmd, weekYmds, input.settings.weeklyNaftalanCap)) {
+  const weeklyCap =
+    member.series.weeklyCap === null || member.series.weeklyCap === undefined
+      ? input.settings.weeklyNaftalanCap
+      : member.series.weeklyCap;
+  if (naftalanWeekIsFull(input.targetYmd, weekYmds, weeklyCap)) {
     throw new SlotDecisionError("week_full");
   }
 }

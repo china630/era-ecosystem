@@ -8,6 +8,9 @@ const bodySchema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
   fillsRestDays: z.boolean().default(false),
+  modeCode: z.string().max(16).nullable().optional(),
+  weeklyCap: z.number().int().min(0).max(14).nullable().optional(),
+  afternoonPinRetry: z.boolean().optional(),
   members: z.array(z.object({ procedureCode: z.string().min(1), shortMark: z.string().min(1) })).default([]),
 });
 

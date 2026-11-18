@@ -181,6 +181,10 @@ export type PlacementFailure = {
   /** Baku clock the pin search started from, `YYYY-MM-DD HH:00`. */
   searchFrom?: string;
   counts?: PlacementBlockCounts;
+  /** Scan loop iterations before miss. */
+  attempts?: number;
+  /** True when the attempt cap stopped the search (not day exhaustion). */
+  hitAttemptCap?: boolean;
 };
 
 function addMinutes(d: Date, mins: number): Date {
@@ -893,7 +897,16 @@ export function scanProcedureSlots(input: {
       rule: 0,
     };
     const opened = slotStart != null;
-    for (let attempt = 0; attempt < 4000 && slotStart && !placed; attempt++) {
+    const daySpanHours = Math.max(
+      1,
+      order.typeHours.dayEndHour - order.typeHours.dayStartHour,
+    );
+    const pinAttemptCap = order.pinYmd
+      ? Math.max(48, Math.ceil((daySpanHours * 60) / Math.max(1, input.slotMinutes)) * 2)
+      : 4000;
+    let attempt = 0;
+    let hitAttemptCap = false;
+    for (; attempt < pinAttemptCap && slotStart && !placed; attempt++) {
       if (order.pinYmd && bakuDateKey(slotStart) !== order.pinYmd) {
         slotStart = null;
         break;
@@ -1041,6 +1054,7 @@ export function scanProcedureSlots(input: {
 
     if (placed) planned.push(placed);
     else {
+      if (attempt >= pinAttemptCap && !placed) hitAttemptCap = true;
       const searchHm = bakuHourMinute(searchFrom);
       failures.push({
         orderId: order.id,
@@ -1051,6 +1065,8 @@ export function scanProcedureSlots(input: {
         staffName: order.preferredStaffName?.trim() || undefined,
         searchFrom: `${bakuDateKey(searchFrom)} ${String(searchHm.hour).padStart(2, "0")}:${String(searchHm.minute).padStart(2, "0")}`,
         counts: { ...blocks },
+        attempts: attempt,
+        hitAttemptCap,
       });
     }
   }

@@ -17,15 +17,20 @@ import {
 import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
 import { releaseProcedureOccupancy } from "@/domain/procedure/procedure-allocation.service";
 import {
+  clampWeeklyNaftalanCap,
+  nextLegalSeriesDay,
   planBathSeries,
   parseBathDayModes,
+  resolveDefaultBathMode,
   saxlaBlockedDays,
   saxlaDayTaken,
   saxlaSeatKept,
   strayBathOrderIds,
   type KeptCell,
+  type StayDay,
 } from "@/domain/planning/bath-calendar";
 import { syncEntitlementUsage } from "@/domain/sanatorium/entitlement-usage.service";
+import type { CabinScanBag } from "@/lib/treatment-planner.service";
 
 const LOCKED = new Set(["CHECKED_IN", "COMPLETED"]);
 
@@ -44,7 +49,7 @@ export async function getBathCalendar(episodeId: string) {
     }
   }
   if (!episode || !stayFrom || !stayTo || Number.isNaN(stayFrom.getTime()) || Number.isNaN(stayTo.getTime())) {
-    return { days: [], series: [], modes: [], orders: [], restByCode: {} };
+    return { days: [], series: [], modes: [], orders: [], restByCode: {}, stayEndsOn: null as Date | null };
   }
   const { fromYmd, toYmd } = stayYmd(stayFrom, stayTo);
   const days = await listClinicDays(fromYmd, toYmd);
@@ -105,12 +110,34 @@ export async function getBathCalendar(episodeId: string) {
       ymd: bakuDateKey(order.scheduledAt),
     })),
     restByCode,
+    stayEndsOn: stayTo,
   };
 }
 
+type SeatPinnedOpts = {
+  startAt?: Date | null;
+  /** Exclusive stay end (checkout). Caps occupancy and legal-day search. */
+  scheduleBefore?: Date | null;
+  cabinBag?: CabinScanBag;
+  clinicDays?: StayDay[];
+  modes?: ReturnType<typeof parseBathDayModes>;
+  /** orderId → series seating policy */
+  seriesByOrderId?: Map<
+    string,
+    {
+      mode: string;
+      fillsRestDays: boolean;
+      weeklyCap: number;
+      afternoonPinRetry: boolean;
+      seriesCode: string;
+      procedureCode: string;
+    }
+  >;
+};
+
 async function seatPinnedOrders(
   pins: Record<string, string>,
-  startAt?: Date | null,
+  opts?: SeatPinnedOpts | Date | null,
 ): Promise<{
   placedIds: string[];
   failures: Array<{
@@ -125,18 +152,31 @@ async function seatPinnedOrders(
   /** Pin-day refusals kept even after a later day accepts the order. */
   seatMisses: BathSeatMiss[];
 }> {
+  const seatOpts: SeatPinnedOpts =
+    opts && typeof opts === "object" && !(opts instanceof Date)
+      ? opts
+      : { startAt: (opts as Date | null | undefined) ?? null };
   const ids = Object.keys(pins);
   if (ids.length === 0) return { placedIds: [], failures: [], seatMisses: [] };
   const { placeConfirmedProcedures } = await import("@/lib/treatment-planner.service");
   const settings = await getSchedulingSettings();
+  const policy = bathPolicyFromSettings(settings);
+  const modes = seatOpts.modes ?? parseBathDayModes(settings.bathDayModesJson);
   const ymds = Object.values(pins).sort();
   const first = ymds[0]!;
   const last = ymds[ymds.length - 1]!;
-  const horizon = bakuDayBounds(addBakuDays(last, 21)).start;
+  const stayEndYmd = seatOpts.scheduleBefore
+    ? bakuDateKey(seatOpts.scheduleBefore)
+    : null;
   const dayHour = settings.dayStartHour;
-  const clock = saxlaFirstClock(startAt, first, dayHour);
+  const clock = saxlaFirstClock(seatOpts.startAt, first, dayHour);
+  const clinicDays =
+    seatOpts.clinicDays ??
+    (await listClinicDays(first, stayEndYmd ?? addBakuDays(last, 14)));
   const placedIds: string[] = [];
   const placed = new Set<string>();
+  const pinMap = { ...pins };
+  const movedTo: Record<string, string> = {};
   type PinFail = {
     orderId: string;
     reason: string;
@@ -147,10 +187,7 @@ async function seatPinnedOrders(
     counts?: BathSeatMiss["counts"];
   };
   let failures: PinFail[] = [];
-  const mergePlace = (pass: {
-    placedIds: string[];
-    failures: PinFail[];
-  }) => {
+  const mergePlace = (pass: { placedIds: string[]; failures: PinFail[] }) => {
     for (const id of pass.placedIds) {
       placed.add(id);
       placedIds.push(id);
@@ -158,14 +195,19 @@ async function seatPinnedOrders(
     failures = pass.failures.filter((row) => !placed.has(row.orderId));
   };
 
-  /** Same pin day from lunch end — morning cabins are often full at Saxla time. */
-  const tryAfternoon = async (
-    pinMap: Record<string, string>,
-    before: Date,
-  ): Promise<boolean> => {
+  const scheduleBeforeForPins = (pinRecord: Record<string, string>) => {
+    const pinYmds = Object.values(pinRecord).sort();
+    const pinLast = pinYmds[pinYmds.length - 1] ?? first;
+    const end = stayEndYmd && stayEndYmd <= addBakuDays(pinLast, 2) ? stayEndYmd : addBakuDays(pinLast, 2);
+    return bakuDayBounds(end).start;
+  };
+
+  const tryAfternoon = async (pinRecord: Record<string, string>): Promise<boolean> => {
     const afternoonPins: Record<string, string> = {};
     for (const fail of failures) {
-      const ymd = pinMap[fail.orderId];
+      const meta = seatOpts.seriesByOrderId?.get(fail.orderId);
+      if (meta && meta.afternoonPinRetry === false) continue;
+      const ymd = pinRecord[fail.orderId];
       if (ymd) afternoonPins[fail.orderId] = ymd;
     }
     const afternoonIds = Object.keys(afternoonPins);
@@ -180,7 +222,8 @@ async function seatPinnedOrders(
         pinYmdByOrderId: afternoonPins,
         startAt: afternoonClock,
         pinStrict: true,
-        scheduleBefore: before,
+        scheduleBefore: scheduleBeforeForPins(afternoonPins),
+        cabinBag: seatOpts.cabinBag,
       }),
     );
     return failures.length === 0;
@@ -188,15 +231,16 @@ async function seatPinnedOrders(
 
   mergePlace(
     await placeConfirmedProcedures(ids, {
-      pinYmdByOrderId: pins,
+      pinYmdByOrderId: pinMap,
       startAt: clock,
       pinStrict: true,
-      scheduleBefore: horizon,
+      scheduleBefore: scheduleBeforeForPins(pinMap),
+      cabinBag: seatOpts.cabinBag,
     }),
   );
   const seatMisses: BathSeatMiss[] = failures.map((fail) => ({
     orderId: fail.orderId,
-    ymd: pins[fail.orderId] ?? fail.ymd ?? "",
+    ymd: pinMap[fail.orderId] ?? fail.ymd ?? "",
     procedureCode: fail.procedureCode,
     procedureName: fail.procedureName,
     reason: fail.reason,
@@ -204,60 +248,132 @@ async function seatPinnedOrders(
     counts: fail.counts,
   }));
   if (failures.length === 0) return { placedIds, failures: [], seatMisses };
-  if (await tryAfternoon(pins, horizon)) {
+  if (await tryAfternoon(pinMap)) {
     await persistSeatMisses(seatMisses);
     return { placedIds, failures: [], seatMisses };
   }
 
-  // Still miss: shift each leftover to the next free working day, then morning + afternoon.
-  const usedYmds = new Set(
-    Object.entries(pins)
-      .filter(([id]) => placed.has(id))
-      .map(([, ymd]) => ymd),
+  // Fact-based replan: legal day (skip rest/cap), then re-lay unplaced pins of that code from the new anchor.
+  const { updateProcedureOrderIfPresent } = await import(
+    "@/domain/procedure/procedure-order-if-present"
   );
-  const shiftPins: Record<string, string> = {};
-  const clinicDays = await listClinicDays(first, addBakuDays(last, 28));
-  for (const fail of failures) {
-    const fromYmd = pins[fail.orderId] ?? fail.ymd;
-    if (!fromYmd) continue;
-    let cursor = addBakuDays(fromYmd, 1);
-    let next = nextWorkingYmd(clinicDays, cursor);
-    while (next && usedYmds.has(next)) {
-      next = nextWorkingYmd(clinicDays, addBakuDays(next, 1));
-    }
-    if (!next) continue;
-    const { updateProcedureOrderIfPresent } = await import(
-      "@/domain/procedure/procedure-order-if-present"
-    );
-    const moved = await updateProcedureOrderIfPresent(
-      fail.orderId,
-      { scheduledAt: dayStartInstant(next, dayHour) },
-      "bath-shift-day",
-    );
-    if (!moved) continue;
-    shiftPins[fail.orderId] = next;
-    usedYmds.add(next);
+  const failIds = new Set(failures.map((row) => row.orderId));
+  const byCode = new Map<string, string[]>();
+  for (const id of Object.keys(pinMap)) {
+    const code =
+      seatOpts.seriesByOrderId?.get(id)?.procedureCode ??
+      failures.find((row) => row.orderId === id)?.procedureCode;
+    if (!code) continue;
+    const list = byCode.get(code) ?? [];
+    list.push(id);
+    byCode.set(code, list);
   }
-  const shiftIds = Object.keys(shiftPins);
-  if (shiftIds.length > 0) {
-    const shiftYmds = Object.values(shiftPins).sort();
-    const shiftFirst = shiftYmds[0]!;
-    const shiftLast = shiftYmds[shiftYmds.length - 1]!;
-    const shiftBefore = bakuDayBounds(addBakuDays(shiftLast, 1)).start;
+
+  for (const [procedureCode, orderIds] of byCode) {
+    const failedHere = orderIds.filter((id) => failIds.has(id)).sort((a, b) =>
+      (pinMap[a] ?? "").localeCompare(pinMap[b] ?? ""),
+    );
+    if (failedHere.length === 0) continue;
+    const placedHere = orderIds.filter((id) => placed.has(id));
+    const placedYmds = placedHere.map((id) => pinMap[id]!).filter(Boolean).sort();
+    const meta =
+      seatOpts.seriesByOrderId?.get(failedHere[0]!) ??
+      ({
+        mode: defaultBathModeFromSettings(settings),
+        fillsRestDays: false,
+        weeklyCap: clampWeeklyNaftalanCap(settings.weeklyNaftalanCap),
+        afternoonPinRetry: true,
+        seriesCode: procedureCode,
+        procedureCode,
+      } as const);
+
+    const usedYmds = new Set(
+      Object.entries(pinMap)
+        .filter(([id]) => placed.has(id) || !failIds.has(id))
+        .map(([, ymd]) => ymd),
+    );
+    for (const id of placedHere) usedYmds.add(pinMap[id]!);
+
+    const firstFail = failedHere[0]!;
+    const fromYmd = addBakuDays(pinMap[firstFail] ?? first, 1);
+    const anchorYmd = placedYmds[0] ?? null;
+    const weekBathYmds = [...usedYmds];
+    const next = nextLegalSeriesDay({
+      days: clinicDays,
+      fromYmd,
+      mode: meta.mode,
+      modes,
+      policy,
+      anchorYmd,
+      usedYmds,
+      weeklyCap: meta.weeklyCap,
+      weekBathYmds,
+      fillsRestDays: meta.fillsRestDays,
+      stayEndYmd,
+    });
+    if (!next) continue;
+
+    // Replan remaining failed qty from fact: kept = already seated; continue layout.
+    const remainingIds = failedHere;
+    const plannedTail = planBathSeries({
+      days: clinicDays,
+      series: [
+        {
+          seriesCode: meta.seriesCode,
+          procedureCode,
+          mark: "·",
+          mode: meta.mode,
+          qty: placedHere.length + remainingIds.length,
+          fillsRestDays: meta.fillsRestDays,
+          weeklyCap: meta.weeklyCap,
+        },
+      ],
+      kept: placedYmds.map((ymd) => ({
+        ymd,
+        procedureCode,
+        locked: true,
+      })),
+      layout: "continue",
+      modes,
+      notBeforeYmd: next,
+      policy: { ...policy, weeklyNaftalanCap: meta.weeklyCap },
+    }).filter((cell) => !placedYmds.includes(cell.ymd));
+
+    const shiftPins: Record<string, string> = {};
+    for (let i = 0; i < remainingIds.length; i++) {
+      const orderId = remainingIds[i]!;
+      const ymd = plannedTail[i]?.ymd;
+      if (!ymd) continue;
+      const moved = await updateProcedureOrderIfPresent(
+        orderId,
+        { scheduledAt: dayStartInstant(ymd, dayHour) },
+        "bath-shift-day",
+      );
+      if (!moved) continue;
+      shiftPins[orderId] = ymd;
+      pinMap[orderId] = ymd;
+      movedTo[orderId] = ymd;
+      usedYmds.add(ymd);
+    }
+    const shiftIds = Object.keys(shiftPins);
+    if (shiftIds.length === 0) continue;
+    const shiftFirst = Object.values(shiftPins).sort()[0]!;
     mergePlace(
       await placeConfirmedProcedures(shiftIds, {
         pinYmdByOrderId: shiftPins,
         startAt: dayStartInstant(shiftFirst, dayHour),
         pinStrict: true,
-        scheduleBefore: shiftBefore,
+        scheduleBefore: scheduleBeforeForPins(shiftPins),
+        cabinBag: seatOpts.cabinBag,
       }),
     );
-    if (failures.length > 0) await tryAfternoon(shiftPins, shiftBefore);
+    if (failures.length > 0) await tryAfternoon(shiftPins);
   }
 
+  failures = failures.filter((row) => !placed.has(row.orderId));
   for (const miss of seatMisses) {
     if (!miss.orderId) continue;
-    const landing = shiftPins[miss.orderId];
+    const landing = movedTo[miss.orderId];
     if (landing && placed.has(miss.orderId) && landing !== miss.ymd) miss.movedTo = landing;
   }
   await persistSeatMisses(seatMisses);
@@ -433,6 +549,10 @@ export async function saveBathCalendar(input: {
     kept.push({ ymd, procedureCode: input.procedureCode, locked: false, manualRest: true });
   }
   const settings = await getSchedulingSettings();
+  const weeklyCap =
+    series.weeklyCap === null || series.weeklyCap === undefined
+      ? null
+      : clampWeeklyNaftalanCap(series.weeklyCap);
   const planned = planBathSeries({
     days: snapshot.days,
     series: [
@@ -443,6 +563,7 @@ export async function saveBathCalendar(input: {
         mode: input.mode,
         qty: Math.min(input.qty, own.length),
         fillsRestDays: series.fillsRestDays,
+        weeklyCap,
         sitzThenFull: input.bathSequence === "SITZ_THEN_FULL",
       },
     ],
@@ -456,6 +577,19 @@ export async function saveBathCalendar(input: {
   const movable = own.filter((order) => !LOCKED.has(order.status) && order.ymd >= today);
   const used = new Set<string>();
   const pins: Record<string, string> = {};
+  const seriesByOrderId = new Map<
+    string,
+    {
+      mode: string;
+      fillsRestDays: boolean;
+      weeklyCap: number;
+      afternoonPinRetry: boolean;
+      seriesCode: string;
+      procedureCode: string;
+    }
+  >();
+  const pinWeeklyCap =
+    weeklyCap === null ? clampWeeklyNaftalanCap(settings.weeklyNaftalanCap) : weeklyCap;
   let unplaced = 0;
   const unplacedDays: string[] = [];
   for (const cell of planned) {
@@ -491,8 +625,21 @@ export async function saveBathCalendar(input: {
       },
     });
     pins[existing.id] = cell.ymd;
+    seriesByOrderId.set(existing.id, {
+      mode: input.mode,
+      fillsRestDays: series.fillsRestDays,
+      weeklyCap: pinWeeklyCap,
+      afternoonPinRetry: series.afternoonPinRetry !== false,
+      seriesCode: series.code,
+      procedureCode: input.procedureCode,
+    });
   }
-  const seated = await seatPinnedOrders(pins);
+  const seated = await seatPinnedOrders(pins, {
+    scheduleBefore: snapshot.stayEndsOn,
+    clinicDays: snapshot.days,
+    modes: snapshot.modes,
+    seriesByOrderId,
+  });
   const missedPins: string[] = [];
   for (const [orderId, ymd] of Object.entries(pins)) {
     if (seated.placedIds.includes(orderId)) continue;
@@ -554,14 +701,17 @@ export async function saveBathCalendar(input: {
   };
 }
 
-/** Active day-series member codes (naftalan / vanna). Saxla seats these per modal line. */
-export async function bathSeriesProcedureCodes(): Promise<Set<string>> {
+/** Active day-series member codes. Saxla seats these in one joint calendar pass. */
+export async function daySeriesProcedureCodes(): Promise<Set<string>> {
   const series = await prisma.procedureDaySeries.findMany({
     where: { active: true },
     select: { members: { select: { procedureCode: true } } },
   });
   return new Set(series.flatMap((row) => row.members.map((member) => member.procedureCode)));
 }
+
+/** @deprecated Use daySeriesProcedureCodes */
+export const bathSeriesProcedureCodes = daySeriesProcedureCodes;
 
 export type BathSeatMiss = {
   orderId?: string;
@@ -591,14 +741,19 @@ function bathModeOf(fields: unknown): string | null {
   return code;
 }
 
+export type SeatDaySeriesOpts = {
+  startAt?: Date | null;
+  scheduleBefore?: Date | null;
+  cabinBag?: CabinScanBag;
+};
+
 /**
- * Seat new package bath orders from Saxla start: first day = start clock,
- * later days = clinic open, then baths/rest. The PROPOSED rows just created
- * do not occupy days or continue the streak.
+ * Seat package day-series orders jointly: one calendar for all series SKUs,
+ * then cabin pins. PROPOSED rows in this batch do not occupy days / continue streak.
  */
-export async function seatBathSeriesOrders(
+export async function seatDaySeriesOrders(
   orderIds: string[],
-  opts?: { startAt?: Date | null },
+  opts?: SeatDaySeriesOpts,
 ): Promise<{
   handledIds: string[];
   placedIds: string[];
@@ -615,7 +770,14 @@ export async function seatBathSeriesOrders(
   });
   const memberByCode = new Map<
     string,
-    { seriesCode: string; mark: string; fillsRestDays: boolean }
+    {
+      seriesCode: string;
+      mark: string;
+      fillsRestDays: boolean;
+      modeCode: string | null;
+      weeklyCap: number | null;
+      afternoonPinRetry: boolean;
+    }
   >();
   for (const row of series) {
     for (const member of row.members) {
@@ -623,6 +785,9 @@ export async function seatBathSeriesOrders(
         seriesCode: row.code,
         mark: member.shortMark,
         fillsRestDays: row.fillsRestDays,
+        modeCode: row.modeCode ?? null,
+        weeklyCap: row.weeklyCap ?? null,
+        afternoonPinRetry: row.afternoonPinRetry !== false,
       });
     }
   }
@@ -660,6 +825,14 @@ export async function seatBathSeriesOrders(
     }
   }
   const blockedDays = saxlaBlockedDays(snapshot.orders, seatingIds, seatingCodes);
+  const resolveMode = (procedureCode: string, fields: unknown) => {
+    const meta = memberByCode.get(procedureCode)!;
+    return (
+      bathModeOf(fields) ??
+      (meta.modeCode ? resolveDefaultBathMode(meta.modeCode, snapshot.modes) : null) ??
+      defaultMode
+    );
+  };
   const seriesInputs = [...byCode.entries()].map(([procedureCode, group]) => {
     const meta = memberByCode.get(procedureCode)!;
     return {
@@ -667,8 +840,9 @@ export async function seatBathSeriesOrders(
       procedureCode,
       mark: meta.mark,
       qty: group.length,
-      mode: bathModeOf(group[0]?.physioFields) ?? defaultMode,
+      mode: resolveMode(procedureCode, group[0]?.physioFields),
       fillsRestDays: meta.fillsRestDays,
+      weeklyCap: meta.weeklyCap,
     };
   });
   const planned =
@@ -693,6 +867,17 @@ export async function seatBathSeriesOrders(
     queues.set(procedureCode, [...group]);
   }
   const pins: Record<string, string> = {};
+  const seriesByOrderId = new Map<
+    string,
+    {
+      mode: string;
+      fillsRestDays: boolean;
+      weeklyCap: number;
+      afternoonPinRetry: boolean;
+      seriesCode: string;
+      procedureCode: string;
+    }
+  >();
   let firstNew = true;
   for (const cell of planned) {
     const queue = queues.get(cell.procedureCode);
@@ -708,6 +893,13 @@ export async function seatBathSeriesOrders(
       continue;
     }
     queue.shift();
+    const meta = memberByCode.get(cell.procedureCode)!;
+    const mode =
+      seriesInputs.find((row) => row.procedureCode === cell.procedureCode)?.mode ?? defaultMode;
+    const weeklyCap =
+      meta.weeklyCap === null || meta.weeklyCap === undefined
+        ? clampWeeklyNaftalanCap(settings.weeklyNaftalanCap)
+        : clampWeeklyNaftalanCap(meta.weeklyCap);
     const prevFields =
       order.physioFields && typeof order.physioFields === "object" && !Array.isArray(order.physioFields)
         ? (order.physioFields as Record<string, unknown>)
@@ -720,15 +912,29 @@ export async function seatBathSeriesOrders(
           : dayStartInstant(cell.ymd, settings.dayStartHour),
         physioFields: {
           ...prevFields,
-          dayBlock:
-            seriesInputs.find((row) => row.procedureCode === cell.procedureCode)?.mode ?? defaultMode,
+          dayBlock: mode,
         },
       },
     });
     pins[order.id] = cell.ymd;
+    seriesByOrderId.set(order.id, {
+      mode,
+      fillsRestDays: meta.fillsRestDays,
+      weeklyCap,
+      afternoonPinRetry: meta.afternoonPinRetry,
+      seriesCode: meta.seriesCode,
+      procedureCode: cell.procedureCode,
+    });
     firstNew = false;
   }
-  const seated = await seatPinnedOrders(pins, opts?.startAt);
+  const seated = await seatPinnedOrders(pins, {
+    startAt: opts?.startAt,
+    scheduleBefore: opts?.scheduleBefore ?? snapshot.stayEndsOn,
+    cabinBag: opts?.cabinBag,
+    clinicDays: snapshot.days,
+    modes: snapshot.modes,
+    seriesByOrderId,
+  });
   placedIds.push(...seated.placedIds);
   for (const fail of seated.failures) {
     missed.push({
@@ -759,3 +965,6 @@ export async function seatBathSeriesOrders(
 
   return { handledIds: handled.map((order) => order.id), placedIds, missed, seatMisses };
 }
+
+/** @deprecated Use seatDaySeriesOrders */
+export const seatBathSeriesOrders = seatDaySeriesOrders;

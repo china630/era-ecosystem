@@ -209,9 +209,60 @@ export type SeriesPlanInput = {
   /** Sessions still allowed, including ones already kept. */
   qty: number;
   fillsRestDays: boolean;
+  /** Per-series weekly cap; null/undefined = use policy.weeklyNaftalanCap; 0 = off. */
+  weeklyCap?: number | null;
   /** First kept-or-placed session is sitting fill, the rest are full. Same series. */
   sitzThenFull?: boolean;
 };
+
+/**
+ * Next working day at/after `fromYmd` that is not a recomputed rest day, not used,
+ * and under the weekly cap. Rest comes from mode+anchor (not only stored restYmds).
+ */
+export function nextLegalSeriesDay(input: {
+  days: StayDay[];
+  fromYmd: string;
+  mode: string;
+  modes?: BathModeDef[];
+  policy?: Partial<BathPlanPolicy>;
+  /** First seated/planned bath of this streak; omit → no rest until a bath exists. */
+  anchorYmd?: string | null;
+  usedYmds: Set<string>;
+  /** Cap for this series (!fillsRestDays). 0 = off. */
+  weeklyCap: number;
+  /** Other hard-series bath YMDs already counting toward the week. */
+  weekBathYmds: string[];
+  fillsRestDays: boolean;
+  /** Exclusive stay end YMD (checkout). */
+  stayEndYmd?: string | null;
+}): string | null {
+  const rest = new Set(
+    input.anchorYmd
+      ? bathSeriesRestYmds({
+          days: input.days,
+          anchorYmd: input.anchorYmd,
+          mode: input.mode,
+          modes: input.modes,
+          policy: input.policy,
+        })
+      : [],
+  );
+  for (const day of input.days) {
+    if (day.ymd < input.fromYmd) continue;
+    if (input.stayEndYmd && day.ymd >= input.stayEndYmd) break;
+    if (!day.working) continue;
+    if (input.usedYmds.has(day.ymd)) continue;
+    if (rest.has(day.ymd)) continue;
+    if (
+      !input.fillsRestDays &&
+      naftalanWeekIsFull(day.ymd, input.weekBathYmds, input.weeklyCap)
+    ) {
+      continue;
+    }
+    return day.ymd;
+  }
+  return null;
+}
 
 export type BathLayout = "continue" | "fresh";
 
@@ -289,23 +340,41 @@ export function planBathSeries(input: {
   policy?: Partial<BathPlanPolicy>;
 }): PlannedBath[] {
   const policy = resolveBathPlanPolicy(input.policy);
-  const naftalanCodes = new Set(
-    input.series.filter((row) => !row.fillsRestDays).map((row) => row.procedureCode),
+  const hardSeriesByCode = new Map(
+    input.series
+      .filter((row) => !row.fillsRestDays)
+      .map((row) => [row.procedureCode, row] as const),
   );
+  /** Per seriesCode + Baku week → count (weekly cap is per series). */
   const weekCount = new Map<string, number>();
-  const bumpNaftalanWeek = (ymd: string, procedureCode: string) => {
-    if (!naftalanCodes.has(procedureCode)) return;
-    const week = bakuMondayYmd(ymd);
-    weekCount.set(week, (weekCount.get(week) ?? 0) + 1);
+  const capFor = (procedureCode: string) => {
+    const series = hardSeriesByCode.get(procedureCode);
+    if (!series) return 0;
+    if (series.weeklyCap === null || series.weeklyCap === undefined) {
+      return policy.weeklyNaftalanCap;
+    }
+    return clampWeeklyNaftalanCap(series.weeklyCap);
   };
-  const weekAtCap = (ymd: string) =>
-    policy.weeklyNaftalanCap > 0 &&
-    (weekCount.get(bakuMondayYmd(ymd)) ?? 0) >= policy.weeklyNaftalanCap;
+  const bumpNaftalanWeek = (ymd: string, procedureCode: string) => {
+    const series = hardSeriesByCode.get(procedureCode);
+    if (!series) return;
+    const week = bakuMondayYmd(ymd);
+    const key = `${series.seriesCode}|${week}`;
+    weekCount.set(key, (weekCount.get(key) ?? 0) + 1);
+  };
+  const weekAtCap = (ymd: string, procedureCode: string) => {
+    const series = hardSeriesByCode.get(procedureCode);
+    if (!series) return false;
+    const cap = capFor(procedureCode);
+    if (cap <= 0) return false;
+    const key = `${series.seriesCode}|${bakuMondayYmd(ymd)}`;
+    return (weekCount.get(key) ?? 0) >= cap;
+  };
   const placed: PlannedBath[] = [];
   const bathDays = new Set<string>();
   const ownCodes = new Set(input.series.map((row) => row.procedureCode));
   for (const cell of input.kept) {
-    if (cell.locked && !cell.manualRest && naftalanCodes.has(cell.procedureCode)) {
+    if (cell.locked && !cell.manualRest && hardSeriesByCode.has(cell.procedureCode)) {
       bumpNaftalanWeek(cell.ymd, cell.procedureCode);
     }
     if (!ownCodes.has(cell.procedureCode) && cell.locked && !cell.manualRest) {
@@ -440,7 +509,7 @@ export function planBathSeries(input: {
       }
       if (bathDays.has(day.ymd)) continue;
       if (keptByDay.has(day.ymd)) continue;
-      if (!series.fillsRestDays && weekAtCap(day.ymd)) continue;
+      if (!series.fillsRestDays && weekAtCap(day.ymd, series.procedureCode)) continue;
       placed.push({
         ymd: day.ymd,
         seriesCode: series.seriesCode,

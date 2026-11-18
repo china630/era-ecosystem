@@ -2007,10 +2007,11 @@ export async function assignPackageProcedures(
     }
   }
 
-  const { seatBathSeriesOrders, bathSeriesProcedureCodes } = await import(
+  const { seatDaySeriesOrders, daySeriesProcedureCodes } = await import(
     "@/domain/planning/bath-calendar.service"
   );
-  const bathCodes = await bathSeriesProcedureCodes();
+  const daySeriesCodes = await daySeriesProcedureCodes();
+  const bathCodes = daySeriesCodes;
   const episodeCaps = await loadEpisodeDailyCaps(episodeId);
   // Adding sessions does not lift the seated quota tail. A new start hour,
   // masseur, or procedure replacement reseats through its own path.
@@ -2056,6 +2057,15 @@ export async function assignPackageProcedures(
   );
   const cabinBag: CabinScanBag = {};
   const chunks = chunkCreatedIdsByLine(createdIds, resolved);
+  type FixedChunk = {
+    ids: string[];
+    procedureCode: string;
+    quotaKey: string;
+    line: (typeof resolved)[number];
+  };
+  const daySeriesOrderIds: string[] = [];
+  const fixedChunks: FixedChunk[] = [];
+  // OPEN first; gather day-series (joint) and FIXED for later — series before FIXED so fills-rest works.
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i]!;
     const line = resolved[i]!;
@@ -2093,33 +2103,44 @@ export async function assignPackageProcedures(
       placedIds.push(...openSeat.placedIds);
       continue;
     }
-    if (bathCodes.has(chunk.procedureCode)) {
-      const bathSeat = await seatBathSeriesOrders(chunk.ids, { startAt });
-      genericCabinOnly = false;
-      misses.push(
-        ...bathSeat.missed.map((miss) => ({
-          ymd: miss.ymd,
-          procedureCode: miss.procedureCode,
-          procedureName: nameByCode.get(miss.procedureCode) || miss.procedureName || miss.procedureCode,
-          reason: miss.reason,
-          searchFrom: miss.searchFrom,
-          counts: miss.counts,
-          movedTo: miss.movedTo,
-        })),
-      );
-      seatMisses.push(
-        ...bathSeat.seatMisses.map((miss) => ({
-          ...miss,
-          procedureName: miss.procedureName || miss.procedureCode,
-        })),
-      );
-      placedIds.push(...bathSeat.placedIds);
+    if (daySeriesCodes.has(chunk.procedureCode)) {
+      daySeriesOrderIds.push(...chunk.ids);
       continue;
     }
+    fixedChunks.push({ ids: chunk.ids, procedureCode: chunk.procedureCode, quotaKey, line });
+  }
+  if (daySeriesOrderIds.length > 0) {
+    const seriesSeat = await seatDaySeriesOrders(daySeriesOrderIds, {
+      startAt,
+      scheduleBefore: instance.endsOn ?? null,
+      cabinBag,
+    });
+    genericCabinOnly = false;
+    misses.push(
+      ...seriesSeat.missed.map((miss) => ({
+        ymd: miss.ymd,
+        procedureCode: miss.procedureCode,
+        procedureName: nameByCode.get(miss.procedureCode) || miss.procedureName || miss.procedureCode,
+        reason: miss.reason,
+        searchFrom: miss.searchFrom,
+        counts: miss.counts,
+        movedTo: miss.movedTo,
+      })),
+    );
+    seatMisses.push(
+      ...seriesSeat.seatMisses.map((miss) => ({
+        ...miss,
+        procedureName: miss.procedureName || miss.procedureCode,
+      })),
+    );
+    placedIds.push(...seriesSeat.placedIds);
+  }
+  for (const chunk of fixedChunks) {
     genericTried = true;
+    const tail = redispatched.byKey.get(chunk.quotaKey);
     const fixedTail =
-      tail && !redispatchedFixedUsed.has(quotaKey)
-        ? (redispatchedFixedUsed.add(quotaKey), tail.fixedIds)
+      tail && !redispatchedFixedUsed.has(chunk.quotaKey)
+        ? (redispatchedFixedUsed.add(chunk.quotaKey), tail.fixedIds)
         : [];
     const placement = await placeConfirmedProcedures([...fixedTail, ...chunk.ids], {
       confirmedByUserId: opts?.confirmedByUserId,
