@@ -1672,7 +1672,7 @@ model ProcedureRotationRule {
   @@index([organizationId])
 }
 
-/// Bath procedures that share one day-block calendar. Marks are per procedure, not hardcoded in the UI.
+/// Day-series family (any procedure codes). Rhythm policy lives on the series.
 model ProcedureDaySeries {
   id             String                     @id @default(cuid())
   organizationId String
@@ -1681,6 +1681,12 @@ model ProcedureDaySeries {
   active         Boolean                    @default(true)
   /// When true, a rest day of another series may take a procedure from this series.
   fillsRestDays  Boolean                    @default(false) @map("fills_rest_days")
+  /// Mode template code (e.g. "3"); null = tenant defaultBathMode.
+  modeCode       String?                    @map("mode_code")
+  /// Per-series weekly cap for !fillsRestDays members; null = tenant weeklyNaftalanCap; 0 = off.
+  weeklyCap      Int?                       @map("weekly_cap")
+  /// Morning miss retries from lunch end before shifting the pin day.
+  afternoonPinRetry Boolean                 @default(true) @map("afternoon_pin_retry")
   sortOrder      Int                        @default(0) @map("sort_order")
   members        ProcedureDaySeriesMember[]
   createdAt      DateTime                   @default(now()) @map("created_at")

@@ -124,12 +124,15 @@ function needsExtendedHour(code: string, name: string): boolean {
   return EXTENDED_HOUR_PATTERNS.some((re) => re.test(hay));
 }
 
-/** Bath day series. Created only when the org has no series with that code; edits in /admin/procedure-rules stay. */
+/** Day series presets. Created only when the org has no series with that code; edits in /admin/procedure-rules stay. */
 const DAY_SERIES = [
   {
     code: "NAFTALAN",
     name: "Naftalan baths",
     fillsRestDays: false,
+    modeCode: "3",
+    weeklyCap: 5,
+    afternoonPinRetry: true,
     sortOrder: 0,
     members: [
       { procedureCode: "SVC-NAFTALAN-VANNASI-QADIN", shortMark: "Нж" },
@@ -143,6 +146,9 @@ const DAY_SERIES = [
     code: "HYDRO",
     name: "Hydromassage",
     fillsRestDays: true,
+    modeCode: null as string | null,
+    weeklyCap: null as number | null,
+    afternoonPinRetry: true,
     sortOrder: 1,
     members: [{ procedureCode: "SVC-HIDROMASAJ-VANNASI", shortMark: "Г" }],
   },
@@ -150,6 +156,9 @@ const DAY_SERIES = [
     code: "IODINE",
     name: "Iodine-bromine",
     fillsRestDays: true,
+    modeCode: null as string | null,
+    weeklyCap: null as number | null,
+    afternoonPinRetry: true,
     sortOrder: 2,
     members: [{ procedureCode: "SVC-YOD-BROM-VANNASI", shortMark: "Й" }],
   },
@@ -188,6 +197,9 @@ export async function ensurePlanningDefaults(
         code: series.code,
         name: series.name,
         fillsRestDays: series.fillsRestDays,
+        modeCode: series.modeCode,
+        weeklyCap: series.weeklyCap,
+        afternoonPinRetry: series.afternoonPinRetry,
         sortOrder: series.sortOrder,
         active: true,
       },

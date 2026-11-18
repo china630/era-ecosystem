@@ -463,11 +463,12 @@ ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-cli
 
 ## Bath day series, clinic days, Word lab blanks (CLI-58 / 59 / 60) — SCREEN
 
-**Status:** SCREEN. Not SHIPPED until these steps pass on a pilot org. Migration `20261015120000_day_series_calendar_blanks` must be applied first.
+**Status:** SCREEN. Not SHIPPED until these steps pass on a pilot org. Migrations `20261015120000_day_series_calendar_blanks` and `20261118120000_day_series_policy` must be applied first.
 
-1. `/admin/procedure-rules` → **Day series** tab lists NAFTALAN / HYDRO / IODINE (created by the planning import only when missing) → edit members → Save.
-2. `/sanatorium` → patient card → package modal → **Saxla** seats naftalan and paraffin on the same day at **different** minutes (guest overlap is refused). No mini calendar.
-3. `/admin/settings` → **Clinic days** → close one civil day → schedule recalc preview lists moved sessions → Apply (super-admin only). Recalc does not stack two sessions at 09:00 for one guest.
+1. `/admin/procedure-rules` → **Day series** → modal create/edit: multi procedure picker + chips, mode, weekly cap, fills-rest help. Seed may create NAFTALAN / HYDRO / IODINE when missing; live orgs without HYDRO/IODINE must add fills-rest series here. Settings has **no** Baths chip (link under Procedures).
+2. `/sanatorium` → patient card → package modal → **Saxla** joints all day-series SKUs in one calendar (fills-rest on hard-series rest). If the first hard pin misses (`same_day`), afternoon then **fact-replan** (never land on rest). Cabin bag shared with FIXED. No mini calendar. Measure clinic RSS on a full-package morning Saxla (expect under mem_limit).
+3. `/admin/working-hours` (or clinic days) → close one civil day → schedule recalc preview lists moved sessions → Apply (super-admin only). Recalc does not stack two sessions at 09:00 for one guest.
+
 4. Super-admin: paste episode id → **Preview reseat** / **Reseat future plan**. Future `SCHEDULED` retimes; `CHECKED_IN` / `COMPLETED` stay. Do not delete orders.
 4a. Default week template keeps Sunday closed. Saxla / matrix has no Sunday slots unless `/admin/settings` opens that civil day. Super-admin **Preview closed days** / **Move off closed days** shifts leftover Sunday `SCHEDULED` to the next working day (not a full stay recalc).
 4b. Resource-matrix reschedule stays on the same day (409 `CROSS_DAY` when the day changes). The plan card can change the day through the same door: block daily cap, bath rest, weekly naftalan, closed clinic, and a checkout day only when the procedure ends by 12:00. The next day is 409 `PAST_CHECKOUT`. Paid same-day `POST /api/procedures` seats through the same pin-day grid; a closed day is 409 `CLOSED`.

@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { addBakuDays, bakuDateKey } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays } from "@/domain/planning/clinic-day";
-import { parseBathDayModes, planBathSeries, type KeptCell } from "@/domain/planning/bath-calendar";
+import {
+  parseBathDayModes,
+  planBathSeries,
+  resolveDefaultBathMode,
+  type KeptCell,
+} from "@/domain/planning/bath-calendar";
 import {
   bathPolicyFromSettings,
   defaultBathModeFromSettings,
@@ -111,6 +116,7 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
       mode: string;
       qty: number;
       fillsRestDays: boolean;
+      weeklyCap: number | null;
     }> = [];
     const automaticByCode = new Map<string, typeof bathOrders>();
     for (const [procedureCode, rows] of byProcedure) {
@@ -156,13 +162,21 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
         automatic.push(row);
       }
       automaticByCode.set(procedureCode, automatic);
+      const seriesMode = info.series.modeCode
+        ? resolveDefaultBathMode(String(info.series.modeCode), bathModes)
+        : null;
       seriesInputs.push({
         seriesCode: info.series.code,
         procedureCode,
         mark: info.member.shortMark,
-        mode: asMode(fields.dayBlock) ?? defaultBathModeFromSettings(settings),
+        mode:
+          asMode(fields.dayBlock) ?? seriesMode ?? defaultBathModeFromSettings(settings),
         qty: kept.filter((cell) => cell.procedureCode === procedureCode).length + automatic.length,
         fillsRestDays: info.series.fillsRestDays,
+        weeklyCap:
+          info.series.weeklyCap === null || info.series.weeklyCap === undefined
+            ? null
+            : info.series.weeklyCap,
       });
     }
     if (seriesInputs.length > 0) {

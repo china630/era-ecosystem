@@ -427,9 +427,14 @@ export async function placeConfirmedProcedures(
   const bag = opts?.cabinBag;
   const rules = bag?.rules ?? (await prisma.procedureRule.findMany());
   if (bag && !bag.rules) bag.rules = rules;
-  const types = bag?.types ?? (await prisma.procedureType.findMany({
-    include: { requirements: true },
-  }));
+  const orderCodes = [...new Set(orders.map((row) => row.procedureCode))];
+  const types =
+    bag?.types ??
+    (await prisma.procedureType.findMany({
+      // With a shared bag, load the full catalog once for later chunks; otherwise only this batch.
+      where: bag || orderCodes.length === 0 ? undefined : { code: { in: orderCodes } },
+      include: { requirements: true },
+    }));
   if (bag && !bag.types) bag.types = types;
   const typeByCode = new Map(types.map((t) => [t.code, t]));
 
