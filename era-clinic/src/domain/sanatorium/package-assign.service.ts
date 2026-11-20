@@ -2054,6 +2054,7 @@ export async function assignPackageProcedures(
       rule: number;
     };
     movedTo?: string;
+    hitAttemptCap?: boolean;
   }> = [];
   const seatMisses: typeof misses = [];
   const placedIds: string[] = [];

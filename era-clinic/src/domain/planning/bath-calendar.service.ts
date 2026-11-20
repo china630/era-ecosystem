@@ -150,6 +150,7 @@ async function seatPinnedOrders(
     procedureName: string;
     searchFrom?: string;
     counts?: BathSeatMiss["counts"];
+    hitAttemptCap?: boolean;
   }>;
   /** Pin-day refusals kept even after a later day accepts the order. */
   seatMisses: BathSeatMiss[];
