@@ -299,6 +299,13 @@ export async function prescribeDiagnosticsExtras(
             409,
           );
         }
+        if (code === "LAB_BROUGHT_IN_COVERS") {
+          throw new PackageAssignError(
+            "A fresh guest blank already covers this lab",
+            "LAB_BROUGHT_IN_COVERS",
+            409,
+          );
+        }
         if (code === "NO_PRICE") {
           throw new PackageAssignError(
             (err as Error).message,
@@ -564,7 +571,11 @@ export async function closeUnpaidDiagnostics(
 export async function deletePendingDiagnostic(
   kind: "lab" | "visit",
   id: string,
+  auditCtx?: { userId?: string | null; request?: Request },
 ): Promise<void> {
+  const { recordEpisodeAudit } = await import(
+    "@/domain/sanatorium/episode-audit.service"
+  );
   if (kind === "lab") {
     const order = await prisma.labOrder.findUnique({ where: { id } });
     if (!order) throw new PackageAssignError("Not found", "NOT_FOUND", 404);
@@ -583,6 +594,14 @@ export async function deletePendingDiagnostic(
       );
     }
     await prisma.labOrder.delete({ where: { id } });
+    if (order.clinicalEpisodeId) {
+      await recordEpisodeAudit(auditCtx ?? {}, order.clinicalEpisodeId, "unpaid_lab_delete", {
+        summary: order.testCode || id,
+        labOrderId: id,
+        testCode: order.testCode,
+        amountNet: String(order.amountNet),
+      });
+    }
     return;
   }
   const visit = await prisma.visit.findUnique({ where: { id } });
@@ -595,6 +614,13 @@ export async function deletePendingDiagnostic(
     );
   }
   await prisma.visit.delete({ where: { id } });
+  if (visit.clinicalEpisodeId) {
+    await recordEpisodeAudit(auditCtx ?? {}, visit.clinicalEpisodeId, "unpaid_visit_delete", {
+      summary: id,
+      visitId: id,
+      amountNet: String(visit.amountNet),
+    });
+  }
 }
 
 async function inHouseReservationId(row: {

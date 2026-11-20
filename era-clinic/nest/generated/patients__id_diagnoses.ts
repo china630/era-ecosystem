@@ -103,14 +103,18 @@ export function register(http: { get: Function; post: Function; put: Function; p
     if (careDenied) {
       return sendJson(httpRes, { error: careDenied, ...{ code: CARE_TEAM_REQUIRED } }, 409);
     }
-    const row = await addEpisodeDiagnosis(episode.id, {
-      icdCodeId: body.icdCodeId,
-      note: body.note,
-      recordedByUserId: session!.sub,
-      recordedByPractitionerId: await (
-        await import("@/lib/auth/session-practitioner")
-      ).resolveSessionPractitionerId(session!.sub),
-    });
+    const row = await addEpisodeDiagnosis(
+      episode.id,
+      {
+        icdCodeId: body.icdCodeId,
+        note: body.note,
+        recordedByUserId: session!.sub,
+        recordedByPractitionerId: await (
+          await import("@/lib/auth/session-practitioner")
+        ).resolveSessionPractitionerId(session!.sub),
+      },
+      { userId: session!.sub },
+    );
     const { tryOpenProgramAfterTherapistStage } = await import(
       "@/domain/sanatorium/open-program-after-therapist.service"
     );
@@ -152,7 +156,24 @@ export function register(http: { get: Function; post: Function; put: Function; p
         const { id: patientRefId } = httpReq.params;
     const diagnosisId = new URL(req.url).searchParams.get("id");
     if (!diagnosisId) return sendJson(httpRes, { error: "id required" }, 400);
-    await deleteEpisodeDiagnosis(diagnosisId, patientRefId);
+    try {
+      await deleteEpisodeDiagnosis(diagnosisId, patientRefId, {
+        userId: session!.sub,
+      });
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        err.name === "IcdCatalogError" &&
+        (err as Error & { code?: string }).code === "LAST_DIAGNOSIS"
+      ) {
+        return sendJson(
+          httpRes,
+          { error: err.message, code: "LAST_DIAGNOSIS" },
+          409,
+        );
+      }
+      throw err;
+    }
     return sendJson(httpRes, { deleted: true });
   
         });
@@ -184,10 +205,15 @@ export function register(http: { get: Function; post: Function; put: Function; p
 
         const { id: patientRefId } = httpReq.params;
     const body = updateSchema.parse(httpReq.body);
-    const row = await updateEpisodeDiagnosis(body.id, patientRefId, {
-      icdCodeId: body.icdCodeId,
-      note: body.note,
-    });
+    const row = await updateEpisodeDiagnosis(
+      body.id,
+      patientRefId,
+      {
+        icdCodeId: body.icdCodeId,
+        note: body.note,
+      },
+      { userId: session!.sub },
+    );
     return sendJson(httpRes, row);
   
         });

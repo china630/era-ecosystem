@@ -1104,6 +1104,8 @@ model ClinicalEpisode {
   checkupCompletedAt         DateTime?
   /// Paid auto-labs that could not be created (no list price). Shown on the episode.
   autoPaidLabMisses          String?                   @map("auto_paid_lab_misses") @db.Text
+  /// Package auto-apply skips (labs/visits) last run — shown on the episode card.
+  packageApplyMisses         String?                   @map("package_apply_misses") @db.Text
   /// Course-scoped anamnesis (CLI-55); not PatientRef demographics.
   anamnesisText              String?                   @map("anamnesis_text") @db.Text
   anamnesisUpdatedAt         DateTime?                 @map("anamnesis_updated_at")
@@ -2676,6 +2678,25 @@ model SatelliteAuditLog {
   @@index([organizationId])
   @@index([organizationId, createdAt])
   @@map("satellite_audit_logs")
+}
+
+/// Cold copy of SatelliteAuditLog after CLINIC_AUDIT_HOT_MONTHS (default 24).
+model SatelliteAuditLogArchive {
+  id             String   @id
+  organizationId String
+  userId         String?  @map("user_id")
+  entityType     String   @map("entity_type")
+  entityId       String   @map("entity_id")
+  action         String
+  changesJson    String   @default("{}") @map("changes_json")
+  ipAddress      String?  @map("ip_address")
+  integrityHash  String?  @map("integrity_hash")
+  createdAt      DateTime @map("created_at")
+  archivedAt     DateTime @default(now()) @map("archived_at")
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("satellite_audit_log_archives")
 }
 
 model QueueTicket {

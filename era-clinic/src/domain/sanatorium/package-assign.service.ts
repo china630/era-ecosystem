@@ -8,6 +8,10 @@ import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures, type CabinScanBag } from "@/lib/treatment-planner.service";
 import {
+  PLACE_CONFIRMED_BUDGET_MS,
+  SAXLA_SEATING_BUDGET_MS,
+} from "@/lib/procedure-slot-scan";
+import {
   releaseProcedureOccupancy,
   replaceProcedureAllocations,
   type AllocationWrite,
@@ -1705,6 +1709,7 @@ export async function assignPackageProcedures(
     reason: string;
     staffName?: string;
     searchFrom?: string;
+    hitAttemptCap?: boolean;
     counts?: {
       day_full: number;
       same_day: number;
@@ -1728,6 +1733,7 @@ export async function assignPackageProcedures(
     reason: string;
     searchFrom?: string;
     movedTo?: string;
+    hitAttemptCap?: boolean;
     counts?: {
       day_full: number;
       same_day: number;
@@ -2026,7 +2032,9 @@ export async function assignPackageProcedures(
   const redispatchedOpenUsed = new Set<string>();
   const redispatchedFixedUsed = new Set<string>();
   const keepDespiteMiss = new Set<string>();
-  const holdStayMiss = (orderId: string, reason: string) => {
+  const holdStayMiss = (orderId: string, reason: string, hitAttemptCap?: boolean) => {
+    // Budget/cap stop can surface as no_slot with empty blocks — not a stay-horizon miss.
+    if (hitAttemptCap) return;
     if (reason === "no_slot" || reason === "no_day") keepDespiteMiss.add(orderId);
   };
   const misses: Array<{
@@ -2055,7 +2063,8 @@ export async function assignPackageProcedures(
   const { pinOpenAttendanceOrders } = await import(
     "@/domain/procedure/open-attendance"
   );
-  const cabinBag: CabinScanBag = {};
+  const seatingDeadlineMs = Date.now() + SAXLA_SEATING_BUDGET_MS;
+  const cabinBag: CabinScanBag = { deadlineMs: seatingDeadlineMs };
   const chunks = chunkCreatedIdsByLine(createdIds, resolved);
   type FixedChunk = {
     ids: string[];
@@ -2116,6 +2125,9 @@ export async function assignPackageProcedures(
       cabinBag,
     });
     genericCabinOnly = false;
+    for (const miss of seriesSeat.missed) {
+      if (miss.orderId) holdStayMiss(miss.orderId, miss.reason, miss.hitAttemptCap);
+    }
     misses.push(
       ...seriesSeat.missed.map((miss) => ({
         ymd: miss.ymd,
@@ -2125,6 +2137,7 @@ export async function assignPackageProcedures(
         searchFrom: miss.searchFrom,
         counts: miss.counts,
         movedTo: miss.movedTo,
+        ...(miss.hitAttemptCap ? { hitAttemptCap: true } : {}),
       })),
     );
     seatMisses.push(
@@ -2147,10 +2160,11 @@ export async function assignPackageProcedures(
       scheduleBefore: instance.endsOn,
       startAt,
       cabinBag,
+      deadlineMs: seatingDeadlineMs,
     });
     missingCabinNames.push(...placement.missingCabinNames);
     if (placement.failures.some((row) => row.reason !== "no_cabin")) genericCabinOnly = false;
-    for (const row of placement.failures) holdStayMiss(row.orderId, row.reason);
+    for (const row of placement.failures) holdStayMiss(row.orderId, row.reason, row.hitAttemptCap);
     misses.push(
       ...placement.failures.map((row) => ({
         ymd: row.ymd ?? "",
@@ -2158,6 +2172,7 @@ export async function assignPackageProcedures(
         procedureName: row.procedureName,
         reason: row.reason,
         staffName: row.staffName,
+        ...(row.hitAttemptCap ? { hitAttemptCap: true } : {}),
       })),
     );
     placedIds.push(...placement.placedIds);
@@ -2190,12 +2205,13 @@ export async function assignPackageProcedures(
         scheduleBefore: instance.endsOn,
         startAt,
         cabinBag,
+        deadlineMs: seatingDeadlineMs,
       });
       missingCabinNames.push(...placement.missingCabinNames);
       if (placement.failures.some((row) => row.reason !== "no_cabin")) {
         genericCabinOnly = false;
       }
-      for (const row of placement.failures) holdStayMiss(row.orderId, row.reason);
+      for (const row of placement.failures) holdStayMiss(row.orderId, row.reason, row.hitAttemptCap);
       placedIds.push(...placement.placedIds);
       misses.push(
         ...placement.failures.map((row) => ({
@@ -2203,6 +2219,8 @@ export async function assignPackageProcedures(
           procedureCode: row.procedureCode,
           procedureName: row.procedureName,
           reason: row.reason,
+          staffName: row.staffName,
+          ...(row.hitAttemptCap ? { hitAttemptCap: true } : {}),
         })),
       );
     }
@@ -2217,7 +2235,11 @@ export async function assignPackageProcedures(
   if (leftover.length > 0) await abandonCreatedPackageOrders(leftover);
   const placed = kept.size;
   const stayFull =
-    misses.length > 0 && misses.every((row) => row.reason === "no_slot" || row.reason === "no_day");
+    misses.length > 0 &&
+    misses.every(
+      (row) =>
+        !row.hitAttemptCap && (row.reason === "no_slot" || row.reason === "no_day"),
+    );
   if (placed < 1 && !stayFull && (misses.length > 0 || leftover.length > 0)) {
     const onlyMissingCabin = genericTried && genericCabinOnly && misses.every((row) => row.reason === "no_cabin");
     if (onlyMissingCabin) {
@@ -2942,6 +2964,7 @@ export async function placeProposedOnCheckoutMorning(
       confirmedByUserId,
       scheduleBefore: endsOn,
       checkoutMorning: true,
+      deadlineMs: Date.now() + PLACE_CONFIRMED_BUDGET_MS,
     });
     placed += placement.placed;
     misses.push(
@@ -2950,6 +2973,7 @@ export async function placeProposedOnCheckoutMorning(
         procedureCode: row.procedureCode,
         procedureName: row.procedureName,
         reason: row.reason,
+        ...(row.hitAttemptCap ? { hitAttemptCap: true } : {}),
       })),
     );
     return { placed, misses };
@@ -3036,6 +3060,7 @@ export async function applyPreferredMasseurs(
         confirmedByUserId: opts?.confirmedByUserId,
         scheduleBefore: endsOn,
         startAt,
+        deadlineMs: Date.now() + PLACE_CONFIRMED_BUDGET_MS,
       });
       misses.push(
         ...placement.failures.map((row) => ({
@@ -3044,6 +3069,7 @@ export async function applyPreferredMasseurs(
           procedureName: row.procedureName,
           reason: row.reason,
           staffName: row.staffName,
+          ...(row.hitAttemptCap ? { hitAttemptCap: true } : {}),
         })),
       );
     } finally {
@@ -3232,8 +3258,8 @@ async function assignPackageStudies(
         const { freshBroughtInCodes } = await import("@/domain/lab/brought-in-result");
         if ((await freshBroughtInCodes(episodeId)).has(serviceCode)) {
           throw new PackageAssignError(
-            "A fresh brought-in blank already covers this lab",
-            "BROUGHT_IN_ACCEPTED",
+            "A fresh guest blank already covers this lab",
+            "LAB_BROUGHT_IN_COVERS",
             409,
           );
         }
@@ -3256,6 +3282,13 @@ async function assignPackageStudies(
                 ? "This lab already has an unpaid cheque"
                 : "An open lab order already exists for this study",
               code === "LAB_UNPAID_EXISTS" ? "LAB_UNPAID_EXISTS" : "LAB_ALREADY_OPEN",
+              409,
+            );
+          }
+          if (code === "LAB_BROUGHT_IN_COVERS") {
+            throw new PackageAssignError(
+              "A fresh guest blank already covers this lab",
+              "LAB_BROUGHT_IN_COVERS",
               409,
             );
           }

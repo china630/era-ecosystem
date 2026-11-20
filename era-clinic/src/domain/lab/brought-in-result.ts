@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
+import { recordClinicAudit } from "@/lib/satellite-audit";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const BROUGHT_IN_BLANK_REASON = "brought_in_blank";
 
 /** Package blood panels stay in-house. The own-blank date is the infection panel. */
 export const PACKAGE_BLOOD_BIOCHEM_CODES = new Set([
@@ -28,6 +31,27 @@ export function broughtInAgeDays(resultOnYmd: string, todayYmd = todayBakuYmd())
 export function broughtInIsFresh(resultOnYmd: string, maxDays: number, todayYmd = todayBakuYmd()): boolean {
   const age = broughtInAgeDays(resultOnYmd, todayYmd);
   return age != null && age >= 0 && age <= maxDays;
+}
+
+/** Pure clear rule: reopen only when every matching order is a brought_in_blank cancel. */
+export function decideBroughtInClearReopen(
+  orders: Array<{
+    id: string;
+    status: string;
+    cancelReason: string | null;
+    cancelledAt: Date | null;
+  }>,
+): { reopenOrderId: string | null } {
+  const blankCancelled = orders
+    .filter((o) => o.status === "CANCELLED" && o.cancelReason === BROUGHT_IN_BLANK_REASON)
+    .sort((a, b) => (b.cancelledAt?.getTime() ?? 0) - (a.cancelledAt?.getTime() ?? 0));
+  const other = orders.filter(
+    (o) => !(o.status === "CANCELLED" && o.cancelReason === BROUGHT_IN_BLANK_REASON),
+  );
+  if (other.length > 0 || blankCancelled.length === 0) {
+    return { reopenOrderId: null };
+  }
+  return { reopenOrderId: blankCancelled[0]!.id };
 }
 
 export async function freshBroughtInCodes(episodeId: string): Promise<Set<string>> {
@@ -114,18 +138,46 @@ async function resolveBroughtInDiagnosticService(
   return service;
 }
 
+async function resolveBroughtInCodeList(
+  episode: BroughtInEpisodeContext,
+  service: { code: string; serviceCode: string },
+): Promise<string[]> {
+  const codes = new Set<string>([service.code, service.serviceCode].filter(Boolean));
+  if (episode.programInstance) {
+    const blocks = await prisma.programTemplateBlockMember.findMany({
+      where: {
+        organizationId: episode.organizationId,
+        templateId: episode.programInstance.templateId,
+        procedureCode: { in: [...codes] },
+      },
+      select: { blockCode: true },
+    });
+    for (const block of blocks) codes.add(block.blockCode);
+  }
+  return [...codes];
+}
+
 export type ApplyEpisodeBroughtInBlankResult =
-  | { ok: true; serviceCode: string; resultOn: string | null }
+  | {
+      ok: true;
+      serviceCode: string;
+      resultOn: string | null;
+      cancelledOrderIds: string[];
+      restoredOrderId: string | null;
+      edited: boolean;
+    }
   | { ok: false; kind: "EPISODE_NOT_FOUND" | "NOT_ACCEPTED" | "STALE" };
 
 /**
- * Persists or clears a brought-in blank for an episode, cancelling open lab orders when set.
+ * Persists, edits, or clears a brought-in blank for an episode.
+ * Set cancels open ORDERED labs; edit changes date only; clear may reopen.
  */
 export async function applyEpisodeBroughtInBlank(input: {
   episodeId: string;
   serviceCode: string;
   resultOn: string | null;
   cancelOpenOrdersUserId: string;
+  request?: Request;
 }): Promise<ApplyEpisodeBroughtInBlankResult> {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: input.episodeId },
@@ -141,15 +193,65 @@ export async function applyEpisodeBroughtInBlank(input: {
   const maxDays = service ? ownBlankMaxDays(service.code, service.broughtInMaxDays) : null;
   if (!service || maxDays == null) return { ok: false, kind: "NOT_ACCEPTED" };
 
+  const auditCtx = { userId: input.cancelOpenOrdersUserId, request: input.request };
+  const codeList = await resolveBroughtInCodeList(episode, service);
+
   if (!input.resultOn) {
     await prisma.episodeBroughtInResult.deleteMany({
       where: { episodeId: input.episodeId, serviceCode: service.code },
     });
-    return { ok: true, serviceCode: service.code, resultOn: null };
+
+    const matching = await prisma.labOrder.findMany({
+      where: {
+        clinicalEpisodeId: input.episodeId,
+        OR: [
+          { testCode: { in: codeList } },
+          { items: { some: { serviceCode: { in: codeList } } } },
+        ],
+      },
+      select: {
+        id: true,
+        status: true,
+        cancelReason: true,
+        cancelledAt: true,
+      },
+    });
+    const { reopenOrderId } = decideBroughtInClearReopen(matching);
+    let restoredOrderId: string | null = null;
+    if (reopenOrderId) {
+      const { reopenBroughtInCancelledLabOrder } = await import(
+        "@/domain/lab/lab-order-cancel.service"
+      );
+      await reopenBroughtInCancelledLabOrder(reopenOrderId);
+      restoredOrderId = reopenOrderId;
+    }
+
+    await recordClinicAudit(auditCtx, "ClinicalEpisode", input.episodeId, "brought_in_clear", {
+      serviceCode: service.code,
+      restoredOrderId,
+    });
+
+    return {
+      ok: true,
+      serviceCode: service.code,
+      resultOn: null,
+      cancelledOrderIds: [],
+      restoredOrderId,
+      edited: false,
+    };
   }
+
   if (!broughtInIsFresh(input.resultOn, maxDays)) {
     return { ok: false, kind: "STALE" };
   }
+
+  const existing = await prisma.episodeBroughtInResult.findUnique({
+    where: {
+      episodeId_serviceCode: { episodeId: input.episodeId, serviceCode: service.code },
+    },
+    select: { id: true },
+  });
+  const isEdit = Boolean(existing);
 
   const { requestOrganizationId } = await import("@/lib/request-organization");
   const orgId = episode.organizationId || requestOrganizationId();
@@ -166,37 +268,47 @@ export async function applyEpisodeBroughtInBlank(input: {
     update: { resultOn: new Date(`${input.resultOn}T00:00:00.000Z`) },
   });
 
-  const codes = new Set<string>([service.code, service.serviceCode].filter(Boolean));
-  if (episode.programInstance) {
-    const blocks = await prisma.programTemplateBlockMember.findMany({
+  const cancelledOrderIds: string[] = [];
+  if (!isEdit) {
+    const openOrders = await prisma.labOrder.findMany({
       where: {
-        organizationId: episode.organizationId,
-        templateId: episode.programInstance.templateId,
-        procedureCode: { in: [...codes] },
+        clinicalEpisodeId: input.episodeId,
+        status: "ORDERED",
+        OR: [
+          { testCode: { in: codeList } },
+          { items: { some: { serviceCode: { in: codeList } } } },
+        ],
       },
-      select: { blockCode: true },
+      select: { id: true },
     });
-    for (const block of blocks) codes.add(block.blockCode);
-  }
-  const codeList = [...codes];
-  const openOrders = await prisma.labOrder.findMany({
-    where: {
-      clinicalEpisodeId: input.episodeId,
-      status: "ORDERED",
-      OR: [
-        { testCode: { in: codeList } },
-        { items: { some: { serviceCode: { in: codeList } } } },
-      ],
-    },
-    select: { id: true },
-  });
-  const { cancelLabOrder } = await import("@/domain/lab/lab-order-cancel.service");
-  for (const order of openOrders) {
-    await cancelLabOrder(order.id, {
-      userId: input.cancelOpenOrdersUserId,
-      reason: "brought_in_blank",
-    });
+    const { cancelLabOrder } = await import("@/domain/lab/lab-order-cancel.service");
+    for (const order of openOrders) {
+      await cancelLabOrder(order.id, {
+        userId: input.cancelOpenOrdersUserId,
+        reason: BROUGHT_IN_BLANK_REASON,
+      });
+      cancelledOrderIds.push(order.id);
+    }
   }
 
-  return { ok: true, serviceCode: service.code, resultOn: input.resultOn };
+  await recordClinicAudit(
+    auditCtx,
+    "ClinicalEpisode",
+    input.episodeId,
+    isEdit ? "brought_in_edit" : "brought_in_set",
+    {
+      serviceCode: service.code,
+      resultOn: input.resultOn,
+      cancelledOrderIds,
+    },
+  );
+
+  return {
+    ok: true,
+    serviceCode: service.code,
+    resultOn: input.resultOn,
+    cancelledOrderIds,
+    restoredOrderId: null,
+    edited: isEdit,
+  };
 }

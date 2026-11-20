@@ -20,6 +20,7 @@ export type AutoApplyResult =
       skippedLabCodes: string[];
       skippedProcedureCodes: string[];
       pendingDoctor: boolean;
+      packageApplyMisses?: string | null;
     };
 
 type SnapshotProc = EntitlementSnapshot["procedures"][number];
@@ -495,7 +496,12 @@ function axesFromLegacyTemplateProc(p: {
  */
 export async function applyPackageAutoBlocks(
   episodeId: string,
-  opts: { trigger: AutoApplyTrigger; labsOnly?: boolean; step?: "CHECKIN" | "DOCTOR" | "CLINICAL" },
+  opts: {
+    trigger: AutoApplyTrigger;
+    labsOnly?: boolean;
+    step?: "CHECKIN" | "DOCTOR" | "CLINICAL";
+    auditCtx?: { userId?: string | null; request?: Request };
+  },
 ): Promise<AutoApplyResult> {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
@@ -884,6 +890,8 @@ export async function applyPackageAutoBlocks(
     `trigger=${opts.trigger}`,
     createdVisitCodes.length ? `visits+${createdVisitCodes.join(",")}` : null,
     createdLabCodes.length ? `labs+${createdLabCodes.join(",")}` : null,
+    skippedVisitCodes.length ? `visitsSkip=${skippedVisitCodes.join(",")}` : null,
+    skippedLabCodes.length ? `labsSkip=${skippedLabCodes.join(",")}` : null,
     pendingDoctor ? "pending_doctor" : null,
   ].filter(Boolean);
 
@@ -899,6 +907,32 @@ export async function applyPackageAutoBlocks(
     });
   }
 
+  const packageApplyMisses = [...skippedLabCodes, ...skippedVisitCodes]
+    .filter(Boolean)
+    .join(", ");
+  await prisma.clinicalEpisode.update({
+    where: { id: episodeId },
+    data: { packageApplyMisses: packageApplyMisses || null },
+  });
+
+  const { recordEpisodeAudit } = await import(
+    "@/domain/sanatorium/episode-audit.service"
+  );
+  await recordEpisodeAudit(opts.auditCtx ?? { userId: null }, episodeId, "package_apply", {
+    summary: noteParts.join("; ").slice(0, 500),
+    trigger: opts.trigger,
+    step: opts.step ?? null,
+    autoApplyState,
+    createdVisitCodes,
+    createdLabCodes,
+    skippedVisitCodes,
+    skippedLabCodes,
+    skippedProcedureCodes,
+    pendingDoctor,
+  }).catch((err) => {
+    console.error("[package-auto-apply] audit failed", episodeId, err);
+  });
+
   return {
     episodeId,
     autoApplyState,
@@ -908,6 +942,7 @@ export async function applyPackageAutoBlocks(
     skippedLabCodes,
     skippedProcedureCodes,
     pendingDoctor,
+    packageApplyMisses: packageApplyMisses || null,
   };
 }
 

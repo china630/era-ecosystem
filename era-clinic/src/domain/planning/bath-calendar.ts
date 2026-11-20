@@ -1,9 +1,13 @@
 /**
- * Lay bath-series cells across a stay.
- * A block is N working baths, then R rest days. Closed-day and weekly-cap
- * behaviour come from BathPlanPolicy (clinic settings). One bath per day.
- * Series with fillsRestDays may use a day another series left empty.
- * Locked and manual cells stay. Extra quantity continues after the last kept cell.
+ * Lay day-series cells across a stay (universal — not bath-SKU-specific).
+ * A block is N working sessions then R rest days from the series mode
+ * (`resolveBathBlock`: 2+1, 3+1, 5+1, … — same loop, different numbers).
+ * Closed-day and weekly-cap behaviour come from BathPlanPolicy.
+ * One hard-series session per day. fillsRestDays series may use an empty day.
+ *
+ * Contract: rhythm beats qty and stay end. Never skip owed rest to squeeze
+ * more sessions into a short horizon; leftover qty stays unplaced.
+ * Locked / manual cells stay. Extra quantity continues after the last kept cell.
  */
 
 import { addBakuDays } from "@era/satellite-kit/time";

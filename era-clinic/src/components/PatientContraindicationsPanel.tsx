@@ -7,6 +7,7 @@ import {
   ModalFooter,
   ModalShell,
   TEXT_MUTED_CLASS,
+  showApiError,
 } from "@era/satellite-kit/ui";
 import { BodySilhouette } from "./BodySilhouette";
 
@@ -72,7 +73,7 @@ export function PatientContraindicationsPanel({
 
   async function confirmAdd() {
     if (!episodeId) return;
-    await fetch(`/api/patients/${patientRefId}/contraindications`, {
+    const res = await fetch(`/api/patients/${patientRefId}/contraindications`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -81,15 +82,25 @@ export function PatientContraindicationsPanel({
         episodeId,
       }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showApiError(data, tc("failed"));
+      return;
+    }
     setAddOpen(false);
     await load();
   }
 
   async function confirmRemove() {
     if (!removeRow) return;
-    await fetch(`/api/patients/${patientRefId}/contraindications?id=${removeRow.id}`, {
+    const res = await fetch(`/api/patients/${patientRefId}/contraindications?id=${removeRow.id}`, {
       method: "DELETE",
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showApiError(data, tc("failed"));
+      return;
+    }
     setRemoveRow(null);
     await load();
   }

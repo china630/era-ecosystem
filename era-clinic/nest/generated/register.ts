@@ -212,6 +212,7 @@ import { register as register210 } from "./sanatorium_episodes__id_confirm-no-pa
 import { register as register211 } from "./sanatorium_episodes__id_diagnostics-extras";
 import { register as register212 } from "./sanatorium_episodes__id_extras-prescribe";
 import { register as register213 } from "./sanatorium_episodes__id_package-apply";
+import { register as register213b } from "./sanatorium_episodes__id_journal";
 import { register as register214 } from "./sanatorium_episodes__id_package-assign";
 import { register as register215 } from "./sanatorium_episodes__id_package-assign_adjust";
 import { register as register216 } from "./sanatorium_episodes__id_package-assign_replace";
@@ -442,6 +443,7 @@ export function registerClinicRoutes(http: { get: Function; post: Function; put:
   register211(http);
   register212(http);
   register213(http);
+  register213b(http);
   register214(http);
   register215(http);
   register216(http);

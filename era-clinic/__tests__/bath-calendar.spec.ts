@@ -736,3 +736,106 @@ describe("hard-series rhythm invariant (Irina-class)", () => {
     expect(kept.map((c) => c.ymd).sort()).toEqual(["2026-11-19", "2026-11-20"]);
   });
 });
+
+/** All-working stay — no Sunday — so capacity is pure mode N+R vs qty. */
+function allWorkingStay(startYmd: string, days: number): StayDay[] {
+  const out: StayDay[] = [];
+  const start = new Date(`${startYmd}T12:00:00Z`);
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start);
+    d.setUTCDate(start.getUTCDate() + i);
+    out.push({ ymd: d.toISOString().slice(0, 10), working: true });
+  }
+  return out;
+}
+
+function packYmds(mode: string, stayDays: number, qty: number, weeklyCap = 0): string[] {
+  const days = allWorkingStay("2026-03-02", stayDays);
+  return planBathSeries({
+    days,
+    series: [
+      {
+        seriesCode: "HARD",
+        procedureCode: "SVC-HARD",
+        mark: "H",
+        mode,
+        qty,
+        fillsRestDays: false,
+        weeklyCap,
+      },
+    ],
+    kept: [],
+    layout: "fresh",
+    notBeforeYmd: days[0]!.ymd,
+    policy: { weeklyNaftalanCap: weeklyCap },
+  }).map((c) => c.ymd);
+}
+
+describe("stable hard-series rhythm (rhythm > qty / stay end)", () => {
+  it("5-day stay qty 3 mode-3: three baths, no rest owed yet", () => {
+    const ymds = packYmds("3", 5, 3);
+    expect(ymds).toEqual(["2026-03-02", "2026-03-03", "2026-03-04"]);
+    expect(hardSeriesMaxWorkingStreak(ymds, allWorkingStay("2026-03-02", 5))).toBe(3);
+  });
+
+  it("5-day stay qty 5 mode-3: BBB R B — not five dense days", () => {
+    const days = allWorkingStay("2026-03-02", 5);
+    const ymds = packYmds("3", 5, 5);
+    expect(ymds).toEqual(["2026-03-02", "2026-03-03", "2026-03-04", "2026-03-06"]);
+    expect(ymds).not.toContain("2026-03-05");
+    expect(hardSeriesMaxWorkingStreak(ymds, days)).toBeLessThanOrEqual(3);
+    expect(illegalHardSeriesBathYmds({ bathYmds: ymds, days, mode: "3" })).toEqual([]);
+  });
+
+  it("5-day stay qty 8 mode-3: same rhythm as qty 5, not denser — leftover unplaced", () => {
+    const days = allWorkingStay("2026-03-02", 5);
+    const fit = packYmds("3", 5, 5);
+    const over = packYmds("3", 5, 8);
+    expect(over).toEqual(fit);
+    expect(over.length).toBe(4);
+    expect(hardSeriesMaxWorkingStreak(over, days)).toBeLessThanOrEqual(3);
+    expect(illegalHardSeriesBathYmds({ bathYmds: over, days, mode: "3" })).toEqual([]);
+  });
+
+  it("8-day stay qty 8 mode-3: BBB R BBB R — never densifies to skip rest", () => {
+    const days = allWorkingStay("2026-03-02", 8);
+    const ymds = packYmds("3", 8, 8);
+    expect(ymds).toEqual([
+      "2026-03-02",
+      "2026-03-03",
+      "2026-03-04",
+      "2026-03-06",
+      "2026-03-07",
+      "2026-03-08",
+    ]);
+    expect(ymds).not.toContain("2026-03-05");
+    expect(ymds).not.toContain("2026-03-09");
+    expect(hardSeriesMaxWorkingStreak(ymds, days)).toBeLessThanOrEqual(3);
+    expect(illegalHardSeriesBathYmds({ bathYmds: ymds, days, mode: "3" })).toEqual([]);
+  });
+
+  it("mode-5 uses baths=5 from input (not hard-coded 3)", () => {
+    const days = allWorkingStay("2026-03-02", 8);
+    const ymds = packYmds("5", 8, 8);
+    expect(ymds.slice(0, 5)).toEqual([
+      "2026-03-02",
+      "2026-03-03",
+      "2026-03-04",
+      "2026-03-05",
+      "2026-03-06",
+    ]);
+    expect(ymds).not.toContain("2026-03-07");
+    expect(ymds).toContain("2026-03-08");
+    expect(hardSeriesMaxWorkingStreak(ymds, days)).toBeLessThanOrEqual(5);
+    expect(illegalHardSeriesBathYmds({ bathYmds: ymds, days, mode: "5" })).toEqual([]);
+  });
+
+  it("mode-2 rest after two baths on short stay with excess qty", () => {
+    const days = allWorkingStay("2026-03-02", 5);
+    const fit = packYmds("2", 5, 4);
+    const over = packYmds("2", 5, 9);
+    expect(over).toEqual(fit);
+    expect(over).toEqual(["2026-03-02", "2026-03-03", "2026-03-05", "2026-03-06"]);
+    expect(hardSeriesMaxWorkingStreak(over, days)).toBeLessThanOrEqual(2);
+  });
+});

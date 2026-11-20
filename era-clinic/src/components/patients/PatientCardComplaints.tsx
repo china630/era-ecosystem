@@ -56,6 +56,7 @@ export function PatientCardComplaints({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deleteAskId, setDeleteAskId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -196,7 +197,7 @@ export function PatientCardComplaints({
                             type="button"
                             className={TABLE_ROW_ICON_BTN_CLASS}
                             aria-label={tc("delete")}
-                            onClick={() => void remove(c.id)}
+                            onClick={() => setDeleteAskId(c.id)}
                           >
                             <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
                           </button>
@@ -229,6 +230,24 @@ export function PatientCardComplaints({
           onSubmit={() => void save()}
           busy={busy}
           submitLabel={tc("save")}
+          cancelLabel={tc("cancel")}
+        />
+      </ModalShell>
+      <ModalShell
+        open={Boolean(deleteAskId)}
+        title={t("confirmDeleteComplaint")}
+        onClose={() => setDeleteAskId(null)}
+        closeLabel={tc("close")}
+      >
+        <ModalFooter
+          onCancel={() => setDeleteAskId(null)}
+          onSubmit={() => {
+            if (!deleteAskId) return;
+            const id = deleteAskId;
+            setDeleteAskId(null);
+            void remove(id);
+          }}
+          submitLabel={tc("delete")}
           cancelLabel={tc("cancel")}
         />
       </ModalShell>

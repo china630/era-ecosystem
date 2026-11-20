@@ -366,6 +366,8 @@ export type CabinScanBag = {
   staffStamp?: string;
   allocations?: Awaited<ReturnType<typeof loadOccupancyForScan>>;
   allocStamp?: string;
+  /** Shared Saxla wall deadline (Date.now() absolute). */
+  deadlineMs?: number;
 };
 
 export async function placeConfirmedProcedures(
@@ -382,6 +384,8 @@ export async function placeConfirmedProcedures(
     pinStrict?: boolean;
     /** Reused across cabin chunks of one save so rules, staff and occupancy load once. */
     cabinBag?: CabinScanBag;
+    /** Absolute Date.now() deadline for the scan hunt. */
+    deadlineMs?: number;
   },
 ): Promise<PlaceConfirmedResult> {
   if (orderIds.length === 0) return { placed: 0, placedIds: [], missingCabinNames: [], failures: [] };
@@ -748,6 +752,12 @@ export async function placeConfirmedProcedures(
     bag.allocStamp = allocStamp;
   }
 
+  const deadlineMs =
+    opts?.deadlineMs ??
+    (bag?.deadlineMs != null && Number.isFinite(bag.deadlineMs) ? bag.deadlineMs : undefined);
+  if (deadlineMs != null && bag && bag.deadlineMs == null) bag.deadlineMs = deadlineMs;
+
+  const scanStarted = Date.now();
   const scanned = scanProcedureSlots({
     orders: orderScarceSeriesFirst(
       scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),
@@ -773,12 +783,24 @@ export async function placeConfirmedProcedures(
     patientSlots,
     rotationContext,
     allocations,
+    deadlineMs,
   });
 
   const failures = [...untyped, ...sexFailures, ...scanned.failures];
   const missingCabinNames = [
     ...new Set(failures.filter((row) => row.reason === "no_cabin").map((row) => row.procedureName)),
   ];
+  const attemptsSum = scanned.failures.reduce((sum, row) => sum + (row.attempts ?? 0), 0);
+  const capOrBudget = scanned.failures.some((row) => row.hitAttemptCap) || scanned.budgetHit === true;
+  if (capOrBudget || attemptsSum > 200) {
+    console.info("[clinic] placeConfirmedProcedures scan", {
+      placed: scanned.planned.length,
+      failed: scanned.failures.length,
+      attemptsSum,
+      ms: Date.now() - scanStarted,
+      budgetHit: scanned.budgetHit === true,
+    });
+  }
   if (opts?.atomic && failures.length > 0) {
     return { placed: 0, placedIds: [], missingCabinNames, failures };
   }

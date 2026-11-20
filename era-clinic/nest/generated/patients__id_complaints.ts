@@ -95,11 +95,16 @@ export function register(http: { get: Function; post: Function; put: Function; p
     if (careDenied) {
       return sendJson(httpRes, { error: careDenied, ...{ code: CARE_TEAM_REQUIRED } }, 409);
     }
-    const row = await addComplaint(episode.id, body.text, {
-      recordedByPractitionerId: await (
-        await import("@/lib/auth/session-practitioner")
-      ).resolveSessionPractitionerId(session!.sub),
-    });
+    const row = await addComplaint(
+      episode.id,
+      body.text,
+      {
+        recordedByPractitionerId: await (
+          await import("@/lib/auth/session-practitioner")
+        ).resolveSessionPractitionerId(session!.sub),
+      },
+      { userId: session!.sub },
+    );
     let day1Program = null;
     try {
       const { tryOpenProgramAfterTherapistStage } = await import(
@@ -141,7 +146,9 @@ export function register(http: { get: Function; post: Function; put: Function; p
         const { id: patientRefId } = httpReq.params;
     const complaintId = new URL(req.url).searchParams.get("id");
     if (!complaintId) return sendJson(httpRes, { error: "id required" }, 400);
-    await deleteEpisodeComplaint(complaintId, patientRefId);
+    await deleteEpisodeComplaint(complaintId, patientRefId, {
+      userId: session!.sub,
+    });
     return sendJson(httpRes, { deleted: true });
   
         });
@@ -173,7 +180,9 @@ export function register(http: { get: Function; post: Function; put: Function; p
 
         const { id: patientRefId } = httpReq.params;
     const body = updateSchema.parse(httpReq.body);
-    const row = await updateEpisodeComplaint(body.id, patientRefId, body.text);
+    const row = await updateEpisodeComplaint(body.id, patientRefId, body.text, {
+      userId: session!.sub,
+    });
     return sendJson(httpRes, row);
   
         });

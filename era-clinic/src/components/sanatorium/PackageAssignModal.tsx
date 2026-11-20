@@ -162,6 +162,50 @@ type Props = {
   };
 };
 
+type PackageAssignDraftSnapshot = {
+  draft: DraftLine[];
+  extraDraft: ExtraDraftLine[];
+  pendingCut: Record<string, number>;
+  pendingCancel: string[];
+  extraPendingCut: Record<string, number>;
+  masseurByCode: Record<string, string>;
+};
+
+function packageAssignDraftKey(episodeId: string): string {
+  return `era-clinic:package-assign-draft:${episodeId}`;
+}
+
+function readPackageAssignDraft(episodeId: string): PackageAssignDraftSnapshot | null {
+  if (typeof sessionStorage === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(packageAssignDraftKey(episodeId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PackageAssignDraftSnapshot;
+    if (!parsed || !Array.isArray(parsed.draft) || !Array.isArray(parsed.extraDraft)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writePackageAssignDraft(episodeId: string, snap: PackageAssignDraftSnapshot): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.setItem(packageAssignDraftKey(episodeId), JSON.stringify(snap));
+  } catch {
+    /* quota / private mode — ignore */
+  }
+}
+
+function clearPackageAssignDraft(episodeId: string): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.removeItem(packageAssignDraftKey(episodeId));
+  } catch {
+    /* ignore */
+  }
+}
+
 const EMPTY_PHYSIO: PhysioChipsValue = {
   needsSite: false,
   physioOrderFields: [],
@@ -446,12 +490,23 @@ export function PackageAssignModal({
   localeRef.current = locale;
   useEffect(() => {
     if (!open) return;
-    setDraft([]);
-    setExtraDraft([]);
+    const stored = readPackageAssignDraft(episodeId);
+    if (stored) {
+      setDraft(stored.draft);
+      setExtraDraft(stored.extraDraft);
+      setPendingCancel(new Set(stored.pendingCancel ?? []));
+      setPendingCut(stored.pendingCut ?? {});
+      setExtraPendingCut(stored.extraPendingCut ?? {});
+      setMasseurByCode(stored.masseurByCode ?? {});
+    } else {
+      setDraft([]);
+      setExtraDraft([]);
+      setPendingCancel(new Set());
+      setPendingCut({});
+      setExtraPendingCut({});
+      setMasseurByCode({});
+    }
     setFormLane(null);
-    setPendingCancel(new Set());
-    setPendingCut({});
-    setMasseurByCode({});
     setMasseurSaved({});
     setMasseurOptions({});
     setFormCode(null);
@@ -669,12 +724,42 @@ export function PackageAssignModal({
     replaceFrom !== "" ||
     replaceTo !== "" ||
     replaceReason.trim() !== "";
+  function snapshotDraft(): PackageAssignDraftSnapshot {
+    return {
+      draft,
+      extraDraft,
+      pendingCut,
+      pendingCancel: [...pendingCancel],
+      extraPendingCut,
+      masseurByCode,
+    };
+  }
+
+  function persistDraftIfAny(): void {
+    const snap = snapshotDraft();
+    const has =
+      snap.draft.length > 0 ||
+      snap.extraDraft.length > 0 ||
+      snap.pendingCancel.length > 0 ||
+      Object.values(snap.pendingCut).some((n) => n > 0) ||
+      Object.values(snap.extraPendingCut).some((n) => n > 0);
+    if (has) writePackageAssignDraft(episodeId, snap);
+    else clearPackageAssignDraft(episodeId);
+  }
+
+  useEffect(() => {
+    if (!open || !busy) return;
+    writePackageAssignDraft(episodeId, snapshotDraft());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- persist only while save is in flight
+  }, [busy, open, episodeId, draft, extraDraft, pendingCut, pendingCancel, extraPendingCut, masseurByCode]);
+
   function requestClose() {
     if (busy) return;
     if (unsaved) {
       setDiscardOpen(true);
       return;
     }
+    clearPackageAssignDraft(episodeId);
     onClose();
   }
 
@@ -1090,7 +1175,15 @@ export function PackageAssignModal({
   }
 
   function placeMissText(
-    misses: Array<{ ymd?: string; reason?: string; procedureName?: string; procedureCode?: string }> | undefined,
+    misses:
+      | Array<{
+          ymd?: string;
+          reason?: string;
+          procedureName?: string;
+          procedureCode?: string;
+          hitAttemptCap?: boolean;
+        }>
+      | undefined,
   ): string {
     return formatPackageAssignMissLines(misses, tPhysio);
   }
@@ -1105,7 +1198,7 @@ export function PackageAssignModal({
   function assignSaveMessage(payload: {
     code?: unknown;
     error?: unknown;
-    misses?: Array<{ ymd?: string; reason?: string }>;
+    misses?: Array<{ ymd?: string; reason?: string; hitAttemptCap?: boolean }>;
   }): string {
     const code = typeof payload.code === "string" ? payload.code : null;
     const serverError = typeof payload.error === "string" ? payload.error.trim() : "";
@@ -1130,6 +1223,9 @@ export function PackageAssignModal({
     if (code === "NO_CARE_TEAM") return tPhysio("packageAssignNoCareTeam");
     if (code === "LAB_ALREADY_OPEN") return tPhysio("packageAssignLabOpen");
     if (code === "LAB_UNPAID_EXISTS") return tPhysio("labUnpaidCheque");
+    if (code === "LAB_BROUGHT_IN_COVERS" || code === "BROUGHT_IN_ACCEPTED") {
+      return tPhysio("labBroughtInCovers");
+    }
     if (code === "LAB_ONE") return tPhysio("packageAssignLabOne");
     if (code === "REASON_REQUIRED") return replaceReasonToast();
     if (serverError) return code && code !== "PLACE_FAILED" && !serverError.includes(code)
@@ -1242,6 +1338,7 @@ export function PackageAssignModal({
     }
     setBusy(true);
     setError(null);
+    writePackageAssignDraft(episodeId, snapshotDraft());
     let pendingCheckout: { names: string[]; package: boolean; extras: boolean } | null = null;
     try {
       for (const row of assigned) {
@@ -1265,7 +1362,7 @@ export function PackageAssignModal({
           },
         );
         if (!res.ok) {
-          const d = await res.json();
+          const d = await res.json().catch(() => ({}));
           showApiError({ error: assignSaveMessage(d) }, tc("failed"));
           return;
         }
@@ -1291,7 +1388,7 @@ export function PackageAssignModal({
             ...(start ? { startOn: start.date, startHour: Number(start.hour) } : {}),
           }),
         });
-        const d = await res.json();
+        const d = await res.json().catch(() => ({}));
         if (!res.ok) {
           showApiError({ error: assignSaveMessage(d) }, tc("saveFailed"));
           return;
@@ -1391,6 +1488,7 @@ export function PackageAssignModal({
       setExtraPendingCut({});
       setPendingCancel(new Set());
       setPendingCut({});
+      clearPackageAssignDraft(episodeId);
       closeForm();
       onSaved();
       if (pendingCheckout) {
@@ -1398,6 +1496,9 @@ export function PackageAssignModal({
         return;
       }
       await load();
+    } catch {
+      persistDraftIfAny();
+      showApiError({ error: tc("saveFailed") });
     } finally {
       setBusy(false);
     }
@@ -2478,6 +2579,8 @@ export function PackageAssignModal({
         }
         await load();
         onSaved();
+      } catch {
+        showApiError({ error: tc("saveFailed") });
       } finally {
         setBusy(false);
       }
@@ -2497,6 +2600,7 @@ export function PackageAssignModal({
             className={SECONDARY_BUTTON_CLASS}
             onClick={() => {
               setDiscardOpen(false);
+              persistDraftIfAny();
               onClose();
             }}
           >

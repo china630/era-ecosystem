@@ -110,6 +110,7 @@ export function handleRouteError(err: unknown) {
       "CROSS_DAY",
       "DAY_FULL",
       "BATH_REST",
+      "SERIES_RHYTHM",
       "WEEK_FULL",
       "PAST_CHECKOUT",
       "CHECKOUT_NOON",

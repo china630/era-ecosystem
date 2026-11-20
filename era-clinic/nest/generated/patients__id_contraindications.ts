@@ -76,7 +76,9 @@ export function register(http: { get: Function; post: Function; put: Function; p
       const closed = episodeWriteDenied(existing.episode?.status);
       if (closed) return sendJson(httpRes, { error: closed, ...{ code: EPISODE_CLOSED } }, 409);
     }
-    await deletePatientContraindication(patientRefId, rowId);
+    await deletePatientContraindication(patientRefId, rowId, {
+      userId: session!.sub,
+    });
     return sendJson(httpRes, { ok: true });
   
         });
@@ -131,12 +133,15 @@ export function register(http: { get: Function; post: Function; put: Function; p
     if (careDenied) {
       return sendJson(httpRes, { error: careDenied, ...{ code: CARE_TEAM_REQUIRED } }, 409);
     }
-    const row = await createPatientContraindication({
-      patientRefId: id,
-      episodeId: episode.id,
-      bodyPart: body.bodyPart,
-      note: body.note,
-    });
+    const row = await createPatientContraindication(
+      {
+        patientRefId: id,
+        episodeId: episode.id,
+        bodyPart: body.bodyPart,
+        note: body.note,
+      },
+      { userId: session!.sub },
+    );
     return sendJson(httpRes, row, 201);
   
         });

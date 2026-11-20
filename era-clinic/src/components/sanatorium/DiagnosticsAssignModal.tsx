@@ -411,6 +411,12 @@ export function DiagnosticsAssignModal({
                       })
                     : code === "LAB_UNPAID_EXISTS"
                       ? t("labUnpaidCheque")
+                    : code === "LAB_BROUGHT_IN_COVERS" ||
+                        code === "BROUGHT_IN_ACCEPTED"
+                      ? t("labBroughtInCovers", {
+                          defaultValue:
+                            "A fresh guest blank already covers this lab",
+                        })
                     : code === "NO_CARE_TEAM"
                       ? t("careTeamRequired", {
                           defaultValue: "A care-team doctor is required",

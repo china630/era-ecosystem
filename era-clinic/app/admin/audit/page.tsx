@@ -23,6 +23,7 @@ import { bakuDateTimeDisplay } from "@/lib/baku-day";
 
 const ENTITY_TYPES = [
   "HTTP_MUTATION",
+  "ClinicalEpisode",
   "ProcedureOrder",
   "Visit",
   "ClinicReceipt",
