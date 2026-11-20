@@ -209,7 +209,11 @@ export function register(http: { get: Function; post: Function; put: Function; p
     }
 
     try {
-      await removeEpisodeCareDoctor({ episodeId: id, practitionerId });
+      await removeEpisodeCareDoctor({
+        episodeId: id,
+        practitionerId,
+        removedByUserId: session.sub,
+      });
       return sendJson(httpRes, { ok: true });
     } catch (err) {
       const code = (err as Error & { code?: string }).code;

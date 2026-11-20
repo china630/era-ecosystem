@@ -30,15 +30,25 @@ export function register(http: { get: Function; post: Function; put: Function; p
   const { id } = httpReq.params;
   try {
     if (!session) return sendJson(httpRes, { error: "Unauthorized" }, 401);
-    const denied = await requireClinicPermission(
+    // Card "recalculate this course" — procedures.confirm OR patient write.
+    const confirmDenied = await requireClinicPermission(
       session,
       CLINIC_PERMISSION.API_PROCEDURES_CONFIRM,
     );
-    if (denied) return denied;
+    if (confirmDenied) {
+      const patientDenied = await requireClinicPermission(
+        session,
+        CLINIC_PERMISSION.API_PATIENTS,
+      );
+      if (patientDenied) return confirmDenied;
+    }
     const scopeDenied = await assertEpisodeDataScope(session, id);
     if (scopeDenied) return scopeDenied;
 
-    const result = await applyPackageAutoBlocks(id, { trigger: "MANUAL_RETRY" });
+    const result = await applyPackageAutoBlocks(id, {
+      trigger: "MANUAL_RETRY",
+      auditCtx: { userId: session.sub },
+    });
     return sendJson(httpRes, result);
   } catch (err) {
     if (err instanceof Error) {

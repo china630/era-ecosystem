@@ -152,6 +152,17 @@ export function register(http: { get: Function; post: Function; put: Function; p
       }
     }
     const updated = await updateEpisodeAnamnesis(id, data);
+    if (body.anamnesisText !== undefined) {
+      const { recordEpisodeAudit } = await import(
+        "@/domain/sanatorium/episode-audit.service"
+      );
+      await recordEpisodeAudit({ userId: session.sub }, id, "anamnesis_update", {
+        summary: updated.anamnesisText?.trim()
+          ? "anamnesis saved"
+          : "anamnesis cleared",
+        length: updated.anamnesisText?.length ?? 0,
+      });
+    }
 
     let day1Program: Awaited<
       ReturnType<

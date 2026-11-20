@@ -17,6 +17,10 @@ import {
 } from '@/domain/patient/mdm-demographics-cache';
 import { episodeAssignedToPractitionerWhere } from '@/lib/auth/clinic-data-scope';
 import { bakuDateKey, bakuDayBounds, parseBakuDateTime } from '@/lib/baku-day';
+import {
+  recordEpisodeAudit,
+  type EpisodeAuditCtx,
+} from '@/domain/sanatorium/episode-audit.service';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
@@ -963,6 +967,7 @@ export async function addComplaint(
   episodeId: string,
   text: string,
   opts?: { recordedByPractitionerId?: string | null },
+  auditCtx?: EpisodeAuditCtx,
 ) {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
@@ -982,7 +987,7 @@ export async function addComplaint(
     (err as Error & { code?: string }).code = EPISODE_CLOSED;
     throw err;
   }
-  return prisma.clinicalComplaint.create({
+  const row = await prisma.clinicalComplaint.create({
     data: {
       episodeId,
       text,
@@ -992,6 +997,13 @@ export async function addComplaint(
       recordedByPractitioner: { select: { fullName: true, specialty: true } },
     },
   });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, episodeId, 'complaint_create', {
+      complaintId: row.id,
+      text: row.text,
+    });
+  }
+  return row;
 }
 
 export async function listEpisodeComplaints(episodeId: string) {
@@ -1004,30 +1016,10 @@ export async function listEpisodeComplaints(episodeId: string) {
   });
 }
 
-export async function deleteEpisodeComplaint(id: string, patientRefId: string) {
-  const row = await prisma.clinicalComplaint.findUnique({
-    where: { id },
-    include: { episode: { select: { patientRefId: true, status: true } } },
-  });
-  if (!row || row.episode.patientRefId !== patientRefId) {
-    throw new Error("Complaint not found");
-  }
-  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
-    "@/domain/sanatorium/episode-gates"
-  );
-  const closed = episodeWriteDenied(row.episode.status);
-  if (closed) {
-    const err = new Error(closed);
-    (err as Error & { code?: string }).code = EPISODE_CLOSED;
-    throw err;
-  }
-  await prisma.clinicalComplaint.delete({ where: { id } });
-}
-
-export async function updateEpisodeComplaint(
+export async function deleteEpisodeComplaint(
   id: string,
   patientRefId: string,
-  text: string,
+  auditCtx?: EpisodeAuditCtx,
 ) {
   const row = await prisma.clinicalComplaint.findUnique({
     where: { id },
@@ -1045,13 +1037,51 @@ export async function updateEpisodeComplaint(
     (err as Error & { code?: string }).code = EPISODE_CLOSED;
     throw err;
   }
-  return prisma.clinicalComplaint.update({
+  await prisma.clinicalComplaint.delete({ where: { id } });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, row.episodeId, 'complaint_delete', {
+      complaintId: id,
+      text: row.text,
+    });
+  }
+}
+
+export async function updateEpisodeComplaint(
+  id: string,
+  patientRefId: string,
+  text: string,
+  auditCtx?: EpisodeAuditCtx,
+) {
+  const row = await prisma.clinicalComplaint.findUnique({
+    where: { id },
+    include: { episode: { select: { patientRefId: true, status: true } } },
+  });
+  if (!row || row.episode.patientRefId !== patientRefId) {
+    throw new Error("Complaint not found");
+  }
+  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
+    "@/domain/sanatorium/episode-gates"
+  );
+  const closed = episodeWriteDenied(row.episode.status);
+  if (closed) {
+    const err = new Error(closed);
+    (err as Error & { code?: string }).code = EPISODE_CLOSED;
+    throw err;
+  }
+  const updated = await prisma.clinicalComplaint.update({
     where: { id },
     data: { text: text.trim() },
     include: {
       recordedByPractitioner: { select: { fullName: true, specialty: true } },
     },
   });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, row.episodeId, 'complaint_update', {
+      complaintId: id,
+      text: updated.text,
+    });
+  }
+  return updated;
 }
 
 export async function addDiagnosis(

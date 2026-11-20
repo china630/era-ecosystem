@@ -12,17 +12,21 @@ export type AssignToastMiss = {
   ymd?: string;
   reason?: string;
   staffName?: string;
+  hitAttemptCap?: boolean;
 };
 
 export function packageAssignMissReasonText(
   reason: string | undefined,
   t: (key: string) => string,
+  opts?: { hitAttemptCap?: boolean },
 ): string {
+  if (opts?.hitAttemptCap) return t("packageAssignMissBusy");
   if (reason === "no_staff") return t("packageAssignMissNoStaff");
   if (reason === "staff_busy") return t("packageAssignMissStaffBusy");
   if (reason === "cabin_sex") return t("packageAssignMissCabinSex");
   if (reason === "no_cabin" || reason === "cabin_busy") return t("packageAssignMissNoCabin");
   if (reason === "day_full") return t("packageAssignMissDayFull");
+  if (reason === "same_day") return t("packageAssignMissSameDay");
   if (reason === "rule") return t("packageAssignMissRule");
   if (reason === "no_slot") return t("packageAssignMissNoSlot");
   if (reason === "anamnesis") return t("packageAssignMissAnamnesis");
@@ -37,7 +41,9 @@ export function formatPackageAssignMissLines(
   if (!misses?.length) return "";
   return misses
     .map((miss) => {
-      const reasonText = packageAssignMissReasonText(miss.reason, (key) => t(key));
+      const reasonText = packageAssignMissReasonText(miss.reason, (key) => t(key), {
+        hitAttemptCap: miss.hitAttemptCap === true,
+      });
       const reason = miss.staffName?.trim()
         ? t("packageAssignMissNamed", { date: "", reason: reasonText, name: miss.staffName.trim() })
         : reasonText;

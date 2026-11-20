@@ -7,6 +7,10 @@ import type { Prisma } from "@prisma/client";
 import { DEFAULT_OVER_QUOTA_AZN } from "@/domain/sanatorium/entitlement-charge.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
+import {
+  PLACE_CONFIRMED_BUDGET_MS,
+  SAXLA_SEATING_BUDGET_MS,
+} from "@/lib/procedure-slot-scan";
 import { ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
@@ -298,7 +302,9 @@ export async function prescribeExtras(
 
 const CHECKOUT_HOLD = "await_checkout_morning";
 
-function isCheckoutHoldReason(reason: string): boolean {
+function isCheckoutHoldReason(reason: string, hitAttemptCap?: boolean): boolean {
+  // Cap/budget stop can look like no_slot with empty blocks — not a stay-horizon miss.
+  if (hitAttemptCap) return false;
   return reason === "no_slot" || reason === "no_day";
 }
 
@@ -320,17 +326,34 @@ async function stayEndForOrders(ids: string[]): Promise<Date | undefined> {
 /** Place as PROPOSED, then return seated rows to PENDING_PAY. Every miss is returned. A stay-horizon miss is also held for the checkout question. */
 async function seatUnpaidExtras(
   ids: string[],
-): Promise<Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>> {
+): Promise<
+  Array<{
+    orderId: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    ymd?: string;
+    hitAttemptCap?: boolean;
+  }>
+> {
   await prisma.procedureOrder.updateMany({
     where: { id: { in: ids }, status: "PENDING_PAY" },
     data: { status: "PROPOSED" },
   });
   let failedIds: string[] = [];
   let heldIds: string[] = [];
-  let reported: Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }> = [];
+  let reported: Array<{
+    orderId: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    ymd?: string;
+    hitAttemptCap?: boolean;
+  }> = [];
   try {
     const placement = await placeConfirmedProcedures(ids, {
       scheduleBefore: await stayEndForOrders(ids),
+      deadlineMs: Date.now() + SAXLA_SEATING_BUDGET_MS,
     });
     reported = placement.failures.map((row) => ({
       orderId: row.orderId,
@@ -338,8 +361,11 @@ async function seatUnpaidExtras(
       procedureName: row.procedureName,
       reason: row.reason,
       ymd: row.ymd,
+      ...(row.hitAttemptCap ? { hitAttemptCap: true as const } : {}),
     }));
-    heldIds = reported.filter((row) => isCheckoutHoldReason(row.reason)).map((row) => row.orderId);
+    heldIds = reported
+      .filter((row) => isCheckoutHoldReason(row.reason, row.hitAttemptCap))
+      .map((row) => row.orderId);
     failedIds = reported.map((row) => row.orderId).filter((id) => !heldIds.includes(id));
     if (heldIds.length > 0) {
       await prisma.procedureOrder.updateMany({
@@ -476,7 +502,13 @@ export async function placeHeldExtrasOnCheckoutMorning(
   if (!endsOn || orders.length === 0) return { placed: 0, misses: [] };
   const openIds = orders.filter((row) => row.procedureType?.openAttendance === true).map((row) => row.id);
   const cabinIds = orders.filter((row) => row.procedureType?.openAttendance !== true).map((row) => row.id);
-  const misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }> = [];
+  const misses: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    hitAttemptCap?: boolean;
+  }> = [];
   let placed = 0;
   if (openIds.length > 0) {
     const { pinOpenAttendanceOrders } = await import("@/domain/procedure/open-attendance");
@@ -501,6 +533,7 @@ export async function placeHeldExtrasOnCheckoutMorning(
       confirmedByUserId,
       scheduleBefore: endsOn,
       checkoutMorning: true,
+      deadlineMs: Date.now() + PLACE_CONFIRMED_BUDGET_MS,
     });
     placed += placement.placed;
     misses.push(
@@ -509,6 +542,7 @@ export async function placeHeldExtrasOnCheckoutMorning(
         procedureCode: row.procedureCode,
         procedureName: row.procedureName,
         reason: row.reason,
+        ...(row.hitAttemptCap ? { hitAttemptCap: true } : {}),
       })),
     );
   }
@@ -855,6 +889,7 @@ export async function payAndScheduleExtras(
           await placeConfirmedProcedures(fixedLoose, {
             confirmedByUserId: actorUserId,
             scheduleBefore: await stayEndForOrders(fixedLoose),
+            deadlineMs: Date.now() + PLACE_CONFIRMED_BUDGET_MS,
           })
         ).placed;
       }
@@ -931,6 +966,7 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
       } else {
         await placeConfirmedProcedures([order.id], {
           scheduleBefore: await stayEndForOrders([order.id]),
+          deadlineMs: Date.now() + PLACE_CONFIRMED_BUDGET_MS,
         });
       }
     } catch (err) {

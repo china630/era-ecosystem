@@ -270,7 +270,7 @@ export function ExtrasAssignModal({
           }),
         },
       );
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       if (res.ok) {
         const payload = d.data ?? d;
         if (Array.isArray(payload.misses) && payload.misses.length > 0) {
@@ -296,6 +296,8 @@ export function ExtrasAssignModal({
       setDraft([]);
       onSaved();
       onClose();
+    } catch {
+      showApiError({ error: tc("saveFailed") });
     } finally {
       setBusy(false);
     }

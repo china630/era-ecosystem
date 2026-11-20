@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   bathSeriesRestYmds,
+  illegalHardSeriesBathYmds,
   naftalanWeekIsFull,
   parseBathDayModes,
   bakuMondayYmd,
@@ -59,6 +60,7 @@ export const SLOT_REASON_MESSAGE: Record<PlacementFailureReason, string> = {
   lunch: "Procedure cannot be scheduled in the lunch break",
   cross_day: "Manual move must stay on the same day",
   bath_rest: "This day is a rest day for this bath",
+  series_rhythm: "This day breaks the series rhythm (too many sessions in a row)",
   week_full: "The weekly naftalan limit is used up",
   past_checkout: "That day is after checkout",
   checkout_noon: "On checkout day the procedure must finish by 12:00",
@@ -458,6 +460,31 @@ async function assertBathSeriesMove(input: {
       policy,
     });
     if (rest.includes(input.targetYmd)) throw new SlotDecisionError("bath_rest");
+  }
+
+  if (!member.series.fillsRestDays && sameSku.length > 0) {
+    let replaced = false;
+    const bathYmds = sameSku.map((row) => {
+      if (!replaced && row.ymd === input.originYmd) {
+        replaced = true;
+        return input.targetYmd;
+      }
+      return row.ymd;
+    });
+    if (!replaced) bathYmds.push(input.targetYmd);
+    const sorted = [...bathYmds].sort();
+    const from = sorted[0]!;
+    const to = sorted[sorted.length - 1]!;
+    const streakDays = await listClinicDays(from, addBakuDays(to, 1));
+    const illegal = illegalHardSeriesBathYmds({
+      bathYmds,
+      days: streakDays,
+      mode,
+      modes,
+      policy,
+      fillsRestDays: false,
+    });
+    if (illegal.includes(input.targetYmd)) throw new SlotDecisionError("series_rhythm");
   }
 
   if (member.series.fillsRestDays) return;

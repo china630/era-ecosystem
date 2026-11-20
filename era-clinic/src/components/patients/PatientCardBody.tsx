@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Pencil, Printer, RefreshCw } from "lucide-react";
+import { History, Pencil, Printer, RefreshCw } from "lucide-react";
+import { EpisodeJournalPanel } from "@/components/patients/EpisodeJournalPanel";
 import { useLocale, useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
 import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
@@ -90,6 +91,7 @@ type EpisodeOption = {
   status: string;
   anamnesisText: string | null;
   autoPaidLabMisses?: string | null;
+  packageApplyMisses?: string | null;
   anamnesisByPractitioner?: PractitionerAuthorRef;
   programCode: string | null;
   roomNumber: string | null;
@@ -188,6 +190,7 @@ export function PatientCardBody({
   const [clinicalRefreshKey, setClinicalRefreshKey] = useState(0);
   const [cardTab, setCardTab] = useState<PatientCardTab>(() => tabFromCardPanel(panel));
   const [printOpen, setPrintOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const locale = useLocale();
@@ -215,7 +218,29 @@ export function PatientCardBody({
       showApiError(data, tc("saveFailed"));
       return;
     }
-    showSuccess(t("retryPackageDone"));
+    const row = (data.data ?? data) as {
+      skipped?: string;
+      createdVisitCodes?: string[];
+      createdLabCodes?: string[];
+      skippedVisitCodes?: string[];
+      skippedLabCodes?: string[];
+    };
+    const skipped = [
+      ...(row.skippedVisitCodes ?? []),
+      ...(row.skippedLabCodes ?? []),
+    ];
+    const created = [
+      ...(row.createdVisitCodes ?? []),
+      ...(row.createdLabCodes ?? []),
+    ];
+    if (skipped.length > 0) {
+      showApiError({ error: t("packageApplyMiss", { codes: skipped.join(", ") }) });
+    }
+    if (created.length > 0) {
+      showSuccess(skipped.length > 0 ? t("packageApplyPartial") : t("retryPackageDone"));
+    } else if (skipped.length === 0) {
+      showSuccess(t("retryPackageDone"));
+    }
     setClinicalRefreshKey((n) => n + 1);
     await loadEpisodes();
   }
@@ -251,7 +276,11 @@ export function PatientCardBody({
   const loadEpisodes = useCallback(async () => {
     if (!patientId) return;
     const res = await fetch(`/api/patients/${patientId}/episodes`);
-    if (!res.ok) return;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showApiError(data, t("episodeHistoryLoadFailed"));
+      return;
+    }
     const parsed = await res.json();
     const items = (parsed.data?.items ?? parsed.items ?? []) as EpisodeOption[];
     setEpisodes(items);
@@ -267,7 +296,7 @@ export function PatientCardBody({
       setSelectedEpisodeId(null);
       setAnamnesis("");
     }
-  }, [patientId, initialEpisodeId]);
+  }, [patientId, initialEpisodeId, t]);
 
   const load = useCallback(async () => {
     if (!patientId) return;
@@ -553,6 +582,17 @@ export function PatientCardBody({
                   <button
                     type="button"
                     className={TABLE_ROW_ICON_BTN_CLASS}
+                    aria-label={t("episodeHistory")}
+                    title={t("episodeHistory")}
+                    onClick={() => setHistoryOpen(true)}
+                  >
+                    <History className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                  </button>
+                ) : null}
+                {selectedEpisodeId ? (
+                  <button
+                    type="button"
+                    className={TABLE_ROW_ICON_BTN_CLASS}
                     aria-label={t("printEpisodeSummary")}
                     title={t("printEpisodeSummary")}
                     onClick={() => setPrintOpen(true)}
@@ -560,7 +600,7 @@ export function PatientCardBody({
                     <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
                   </button>
                 ) : null}
-                {isSuperAdmin && selectedEpisode?.status === "OPEN" ? (
+                {selectedEpisode?.status === "OPEN" ? (
                   <button
                     type="button"
                     className={TABLE_ROW_ICON_BTN_CLASS}
@@ -568,7 +608,10 @@ export function PatientCardBody({
                     title={t("retryPackageApply")}
                     onClick={() => void retryPackageApply()}
                   >
-                    <RefreshCw className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                    <RefreshCw
+                      className={`h-4 w-4 ${isSuperAdmin ? "text-[#E74C3C]" : "text-[#2980B9]"}`}
+                      aria-hidden
+                    />
                   </button>
                 ) : null}
               </div>
@@ -637,6 +680,11 @@ export function PatientCardBody({
             {selectedEpisode.autoPaidLabMisses ? (
               <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
                 {t("autoPaidLabMiss", { codes: selectedEpisode.autoPaidLabMisses })}
+              </p>
+            ) : null}
+            {selectedEpisode.packageApplyMisses ? (
+              <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+                {t("packageApplyMiss", { codes: selectedEpisode.packageApplyMisses })}
               </p>
             ) : null}
             <PatientCardCareTeam
@@ -882,6 +930,13 @@ export function PatientCardBody({
             : null
         }
       />
+      {selectedEpisodeId ? (
+        <EpisodeJournalPanel
+          episodeId={selectedEpisodeId}
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

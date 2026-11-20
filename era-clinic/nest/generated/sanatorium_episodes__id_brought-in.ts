@@ -43,6 +43,7 @@ export function register(http: { get: Function; post: Function; put: Function; p
       serviceCode: body.serviceCode,
       resultOn: body.resultOn,
       cancelOpenOrdersUserId: session.sub,
+      request: req as unknown as Request,
     });
     if (!result.ok) {
       if (result.kind === "EPISODE_NOT_FOUND") return sendJson(httpRes, { error: "Episode not found" }, 404);
@@ -51,7 +52,13 @@ export function register(http: { get: Function; post: Function; put: Function; p
       }
       return sendJson(httpRes, { error: "Brought-in blank is outside the accepted window" }, 400);
     }
-    return sendJson(httpRes, { serviceCode: result.serviceCode, resultOn: result.resultOn });
+    return sendJson(httpRes, {
+      serviceCode: result.serviceCode,
+      resultOn: result.resultOn,
+      cancelledOrderIds: result.cancelledOrderIds,
+      restoredOrderId: result.restoredOrderId,
+      edited: result.edited,
+    });
   
         });
       });

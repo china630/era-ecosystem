@@ -78,6 +78,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
     ref,
   ) {
     const t = useTranslations("icd");
+    const tp = useTranslations("patientCard");
     const tc = useTranslations("common");
     const locale = useLocale();
     const [items, setItems] = useState<DxRow[]>([]);
@@ -89,6 +90,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
     const [kind, setKind] = useState("ADMISSION");
     const [chapter, setChapter] = useState("");
     const [busy, setBusy] = useState(false);
+    const [deleteAskId, setDeleteAskId] = useState<string | null>(null);
 
     const load = useCallback(async () => {
       const res = await fetch(apiBase);
@@ -185,8 +187,15 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
         method: "DELETE",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        showApiError(data, tc("failed"));
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          code?: string;
+        };
+        if (data.code === "LAST_DIAGNOSIS") {
+          showApiError({ error: tp("lastDiagnosisBlocked") });
+        } else {
+          showApiError(data, tc("failed"));
+        }
         return;
       }
       await load();
@@ -237,7 +246,7 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
                           type="button"
                           className={TABLE_ROW_ICON_BTN_CLASS}
                           aria-label={tc("delete")}
-                          onClick={() => void remove(d.id)}
+                          onClick={() => setDeleteAskId(d.id)}
                         >
                           <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
                         </button>
@@ -306,6 +315,24 @@ export const DiagnosisPanel = forwardRef<DiagnosisPanelHandle, Props>(
               onChange={(e) => setNote(e.target.value)}
             />
           </div>
+        </ModalShell>
+        <ModalShell
+          open={Boolean(deleteAskId)}
+          title={tp("confirmDeleteDiagnosis")}
+          onClose={() => setDeleteAskId(null)}
+          closeLabel={tc("close")}
+        >
+          <ModalFooter
+            onCancel={() => setDeleteAskId(null)}
+            onSubmit={() => {
+              if (!deleteAskId) return;
+              const id = deleteAskId;
+              setDeleteAskId(null);
+              void remove(id);
+            }}
+            submitLabel={tc("delete")}
+            cancelLabel={tc("cancel")}
+          />
         </ModalShell>
       </div>
     );

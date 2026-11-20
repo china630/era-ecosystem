@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { IcdCatalogError } from "@/domain/icd/icd-catalog";
 import { requireSelectableIcd } from "@/domain/icd/icd-search.service";
+import {
+  recordEpisodeAudit,
+  type EpisodeAuditCtx,
+} from "@/domain/sanatorium/episode-audit.service";
 import type { AdmissionDiagnosisKind, DiagnosisRole } from "@prisma/client";
 
 export async function addEpisodeDiagnosis(
@@ -11,11 +15,12 @@ export async function addEpisodeDiagnosis(
     recordedByUserId?: string | null;
     recordedByPractitionerId?: string | null;
   },
+  auditCtx?: EpisodeAuditCtx,
 ) {
   const episode = await prisma.clinicalEpisode.findUnique({ where: { id: episodeId } });
   if (!episode) throw new IcdCatalogError("Episode not found", 404);
   await requireSelectableIcd(input.icdCodeId);
-  return prisma.clinicalDiagnosis.create({
+  const row = await prisma.clinicalDiagnosis.create({
     data: {
       episodeId,
       icdCodeId: input.icdCodeId,
@@ -28,6 +33,15 @@ export async function addEpisodeDiagnosis(
       recordedByPractitioner: { select: { fullName: true, specialty: true } },
     },
   });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, episodeId, "diagnosis_create", {
+      diagnosisId: row.id,
+      icdCodeId: row.icdCodeId,
+      icdCode: row.icdCode.code,
+      note: row.note,
+    });
+  }
+  return row;
 }
 
 export async function listEpisodeDiagnoses(episodeId: string) {
@@ -41,10 +55,17 @@ export async function listEpisodeDiagnoses(episodeId: string) {
   });
 }
 
-export async function deleteEpisodeDiagnosis(id: string, patientRefId: string) {
+export async function deleteEpisodeDiagnosis(
+  id: string,
+  patientRefId: string,
+  auditCtx?: EpisodeAuditCtx,
+) {
   const row = await prisma.clinicalDiagnosis.findUnique({
     where: { id },
-    include: { episode: { select: { patientRefId: true, status: true } } },
+    include: {
+      icdCode: true,
+      episode: { select: { id: true, patientRefId: true, status: true } },
+    },
   });
   if (!row || row.episode.patientRefId !== patientRefId) {
     throw new IcdCatalogError("Diagnosis not found", 404);
@@ -52,17 +73,34 @@ export async function deleteEpisodeDiagnosis(id: string, patientRefId: string) {
   if (row.episode.status !== "OPEN") {
     throw new IcdCatalogError("Closed episode is read-only", 409);
   }
+  const diagnosisCount = await prisma.clinicalDiagnosis.count({
+    where: { episodeId: row.episode.id },
+  });
+  if (diagnosisCount <= 1) {
+    const err = new IcdCatalogError("Last diagnosis cannot be deleted", 409);
+    (err as IcdCatalogError & { code?: string }).code = "LAST_DIAGNOSIS";
+    throw err;
+  }
   await prisma.clinicalDiagnosis.delete({ where: { id } });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, row.episode.id, "diagnosis_delete", {
+      diagnosisId: id,
+      icdCodeId: row.icdCodeId,
+      icdCode: row.icdCode.code,
+      note: row.note,
+    });
+  }
 }
 
 export async function updateEpisodeDiagnosis(
   id: string,
   patientRefId: string,
   input: { icdCodeId?: string; note?: string | null },
+  auditCtx?: EpisodeAuditCtx,
 ) {
   const row = await prisma.clinicalDiagnosis.findUnique({
     where: { id },
-    include: { episode: { select: { patientRefId: true, status: true } } },
+    include: { episode: { select: { id: true, patientRefId: true, status: true } } },
   });
   if (!row || row.episode.patientRefId !== patientRefId) {
     throw new IcdCatalogError("Diagnosis not found", 404);
@@ -71,7 +109,7 @@ export async function updateEpisodeDiagnosis(
     throw new IcdCatalogError("Closed episode is read-only", 409);
   }
   if (input.icdCodeId) await requireSelectableIcd(input.icdCodeId);
-  return prisma.clinicalDiagnosis.update({
+  const updated = await prisma.clinicalDiagnosis.update({
     where: { id },
     data: {
       ...(input.icdCodeId ? { icdCodeId: input.icdCodeId } : {}),
@@ -82,6 +120,15 @@ export async function updateEpisodeDiagnosis(
       recordedByPractitioner: { select: { fullName: true, specialty: true } },
     },
   });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, row.episode.id, "diagnosis_update", {
+      diagnosisId: id,
+      icdCodeId: updated.icdCodeId,
+      icdCode: updated.icdCode.code,
+      note: updated.note,
+    });
+  }
+  return updated;
 }
 
 export async function listVisitDiagnoses(visitId: string) {

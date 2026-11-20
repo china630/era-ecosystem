@@ -32,6 +32,7 @@ import {
 } from "@/domain/planning/bath-calendar";
 import { syncEntitlementUsage } from "@/domain/sanatorium/entitlement-usage.service";
 import type { CabinScanBag } from "@/lib/treatment-planner.service";
+import { PLACE_CONFIRMED_BUDGET_MS } from "@/lib/procedure-slot-scan";
 
 const LOCKED = new Set(["CHECKED_IN", "COMPLETED"]);
 
@@ -149,6 +150,7 @@ async function seatPinnedOrders(
     procedureName: string;
     searchFrom?: string;
     counts?: BathSeatMiss["counts"];
+    hitAttemptCap?: boolean;
   }>;
   /** Pin-day refusals kept even after a later day accepts the order. */
   seatMisses: BathSeatMiss[];
@@ -185,6 +187,7 @@ async function seatPinnedOrders(
     procedureCode: string;
     procedureName: string;
     searchFrom?: string;
+    hitAttemptCap?: boolean;
     counts?: BathSeatMiss["counts"];
   };
   let failures: PinFail[] = [];
@@ -202,6 +205,9 @@ async function seatPinnedOrders(
     const end = stayEndYmd && stayEndYmd <= addBakuDays(pinLast, 2) ? stayEndYmd : addBakuDays(pinLast, 2);
     return bakuDayBounds(end).start;
   };
+
+  const pinDeadlineMs = () =>
+    seatOpts.cabinBag?.deadlineMs ?? Date.now() + PLACE_CONFIRMED_BUDGET_MS;
 
   const tryAfternoon = async (pinRecord: Record<string, string>): Promise<boolean> => {
     const afternoonPins: Record<string, string> = {};
@@ -225,6 +231,7 @@ async function seatPinnedOrders(
         pinStrict: true,
         scheduleBefore: scheduleBeforeForPins(afternoonPins),
         cabinBag: seatOpts.cabinBag,
+        deadlineMs: pinDeadlineMs(),
       }),
     );
     return failures.length === 0;
@@ -237,6 +244,7 @@ async function seatPinnedOrders(
       pinStrict: true,
       scheduleBefore: scheduleBeforeForPins(pinMap),
       cabinBag: seatOpts.cabinBag,
+      deadlineMs: pinDeadlineMs(),
     }),
   );
   const seatMisses: BathSeatMiss[] = failures.map((fail) => ({
@@ -247,6 +255,7 @@ async function seatPinnedOrders(
     reason: fail.reason,
     searchFrom: fail.searchFrom,
     counts: fail.counts,
+    ...(fail.hitAttemptCap ? { hitAttemptCap: true } : {}),
   }));
   if (failures.length === 0) return { placedIds, failures: [], seatMisses };
   if (await tryAfternoon(pinMap)) {
@@ -378,6 +387,7 @@ async function seatPinnedOrders(
         pinStrict: true,
         scheduleBefore: scheduleBeforeForPins(shiftPins),
         cabinBag: seatOpts.cabinBag,
+        deadlineMs: pinDeadlineMs(),
       }),
     );
     if (failures.length > 0) await tryAfternoon(shiftPins);
@@ -748,6 +758,7 @@ export type BathSeatMiss = {
   procedureName?: string;
   reason: string;
   searchFrom?: string;
+  hitAttemptCap?: boolean;
   counts?: {
     day_full: number;
     same_day: number;
@@ -1004,6 +1015,7 @@ export async function seatDaySeriesOrders(
       reason: fail.reason,
       searchFrom: fail.searchFrom,
       counts: fail.counts,
+      ...(fail.hitAttemptCap ? { hitAttemptCap: true } : {}),
     });
   }
   const seatMisses = seated.seatMisses;

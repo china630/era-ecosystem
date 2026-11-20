@@ -163,7 +163,7 @@ export function register(http: { get: Function; post: Function; put: Function; p
     if (!rowId || (kind !== "lab" && kind !== "visit")) {
       return sendJson(httpRes, { error: "id and kind=lab|visit required" }, 400);
     }
-    await deletePendingDiagnostic(kind, rowId);
+    await deletePendingDiagnostic(kind, rowId, { userId: session.sub });
     return sendJson(httpRes, { ok: true });
   } catch (err) {
     const mapped = mapError(err);
