@@ -737,6 +737,87 @@ describe("hard-series rhythm invariant (Irina-class)", () => {
   });
 });
 
+describe("hard-series continue foreign-day break (Eldəniz-class)", () => {
+  const stay: StayDay[] = [
+    { ymd: "2026-11-24", working: true },
+    { ymd: "2026-11-25", working: true },
+    { ymd: "2026-11-26", working: true },
+    { ymd: "2026-11-27", working: true },
+    { ymd: "2026-11-28", working: true },
+  ];
+  const naft = "SVC-NAFTALAN-VANNASI-KISI";
+  const hydro = "SVC-HYDRO";
+
+  it("own baths with a gap are not illegal under mode 3", () => {
+    const baths = ["2026-11-24", "2026-11-25", "2026-11-27"];
+    expect(
+      illegalHardSeriesBathYmds({ bathYmds: baths, days: stay, mode: "3" }),
+    ).toEqual([]);
+  });
+
+  it("foreign hydro day breaks streak so continue can seat the next own bath", () => {
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: naft,
+          mark: "Nk",
+          mode: "3",
+          qty: 3,
+          fillsRestDays: false,
+          weeklyCap: 5,
+        },
+      ],
+      kept: [
+        {
+          ymd: "2026-11-24",
+          procedureCode: naft,
+          locked: true,
+          manualRest: false,
+          anchor: true,
+        },
+        {
+          ymd: "2026-11-25",
+          procedureCode: naft,
+          locked: true,
+          manualRest: false,
+          anchor: false,
+        },
+        {
+          ymd: "2026-11-26",
+          procedureCode: hydro,
+          locked: true,
+          manualRest: false,
+          anchor: false,
+        },
+      ],
+      layout: "continue",
+      notBeforeYmd: "2026-11-24",
+    });
+    const own = cells.filter((c) => c.procedureCode === naft).map((c) => c.ymd);
+    expect(own).toContain("2026-11-27");
+    expect(
+      illegalHardSeriesBathYmds({ bathYmds: own, days: stay, mode: "3" }),
+    ).toEqual([]);
+  });
+
+  it("after two own baths the next working day is not phantom mode-3 rest", () => {
+    const next = nextLegalSeriesDay({
+      days: stay,
+      fromYmd: "2026-11-26",
+      mode: "3",
+      anchorYmd: "2026-11-24",
+      usedYmds: new Set(["2026-11-24", "2026-11-25"]),
+      weeklyCap: 5,
+      weekBathYmds: ["2026-11-24", "2026-11-25"],
+      fillsRestDays: false,
+    });
+    // Legacy calendar rest would mark 27; fact streak of two must not invent rest on 26.
+    expect(next).toBe("2026-11-26");
+  });
+});
+
 /** All-working stay — no Sunday — so capacity is pure mode N+R vs qty. */
 function allWorkingStay(startYmd: string, days: number): StayDay[] {
   const out: StayDay[] = [];

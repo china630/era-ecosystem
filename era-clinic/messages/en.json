@@ -2470,7 +2470,8 @@
     "packageAssignToastMore": "…and {count} more",
     "packageAssignNotPlacedTotal": "Not placed: {count}",
     "packageAssignOnPlan": "On plan",
-    "packageAssignAdding": "To add"
+    "packageAssignAdding": "To add",
+    "packageAssignFactAria": "On plan: {count}"
   },
   "catalogAdmin": {
     "title": "Service catalog",
