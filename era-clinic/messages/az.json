@@ -2457,7 +2457,8 @@
     "packageAssignToastMore": "…və daha {count}",
     "packageAssignNotPlacedTotal": "Yazılmadı: {count}",
     "packageAssignOnPlan": "Planda",
-    "packageAssignAdding": "Əlavə et"
+    "packageAssignAdding": "Əlavə et",
+    "packageAssignFactAria": "Planda: {count}"
   },
   "catalogAdmin": {
     "title": "Xidmət kataloqu",

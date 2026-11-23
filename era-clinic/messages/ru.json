@@ -2457,7 +2457,8 @@
     "packageAssignToastMore": "…и ещё {count}",
     "packageAssignNotPlacedTotal": "Не посажено: {count}",
     "packageAssignOnPlan": "В плане",
-    "packageAssignAdding": "Добавить"
+    "packageAssignAdding": "Добавить",
+    "packageAssignFactAria": "В плане: {count}"
   },
   "catalogAdmin": {
     "title": "Каталог услуг",

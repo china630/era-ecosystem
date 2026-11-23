@@ -133,6 +133,12 @@ export function bakuMondayYmd(ymd: string): string {
  * Rest days of one bath series, counted from its first remaining bath.
  * The anchor day is a bath. Later working days follow the mode. Closed days
  * use the same clinic policy as `planBathSeries`.
+ *
+ * When `countYmds` is set (fact / continue): only those days advance the
+ * hard-series streak. A working day outside the set breaks the streak (foreign
+ * hydro/iodine or a gap) — it is not treated as a virtual bath day and does
+ * not earn calendar rest. Omit `countYmds` for the legacy “every working day
+ * is a bath slot” projection used by older unit fixtures.
  */
 export function bathSeriesRestYmds(input: {
   days: StayDay[];
@@ -140,9 +146,12 @@ export function bathSeriesRestYmds(input: {
   mode: string;
   modes?: BathModeDef[];
   policy?: Partial<BathPlanPolicy>;
+  /** Own hard-series bath YMDs already on the board (fact). */
+  countYmds?: ReadonlySet<string>;
 }): string[] {
   const policy = resolveBathPlanPolicy(input.policy);
   const block = resolveBathBlock(input.mode, input.modes);
+  const countOnly = input.countYmds;
   const rest: string[] = [];
   let streak = 0;
   let restLeft = 0;
@@ -154,11 +163,18 @@ export function bathSeriesRestYmds(input: {
       restLeft = block.rest;
     }
   };
+  const breakStreak = () => {
+    streak = 0;
+    restLeft = 0;
+  };
   for (const day of input.days) {
     if (day.ymd < input.anchorYmd) continue;
     if (!started) {
       started = true;
-      if (day.working) finishBlock();
+      if (day.working) {
+        if (!countOnly || countOnly.has(day.ymd)) finishBlock();
+        else breakStreak();
+      }
       continue;
     }
     if (!day.working) {
@@ -174,6 +190,11 @@ export function bathSeriesRestYmds(input: {
       rest.push(day.ymd);
       restLeft -= 1;
       streak = 0;
+      continue;
+    }
+    if (countOnly) {
+      if (countOnly.has(day.ymd)) finishBlock();
+      else breakStreak();
       continue;
     }
     finishBlock();
@@ -248,6 +269,10 @@ export function nextLegalSeriesDay(input: {
           mode: input.mode,
           modes: input.modes,
           policy: input.policy,
+          // Own hard-series baths only — do not treat foreign occupied days as streak baths.
+          countYmds: new Set(
+            input.weekBathYmds.length > 0 ? input.weekBathYmds : [...input.usedYmds],
+          ),
         })
       : [],
   );
@@ -381,6 +406,7 @@ export function illegalHardSeriesBathYmds(input: {
   const block = resolveBathBlock(input.mode, input.modes);
   const illegal = new Set<string>();
   const anchorYmd = sorted[0]!;
+  const ownSet = new Set(sorted);
   const rest = new Set(
     bathSeriesRestYmds({
       days: input.days,
@@ -388,6 +414,7 @@ export function illegalHardSeriesBathYmds(input: {
       mode: input.mode,
       modes: input.modes,
       policy: input.policy,
+      countYmds: ownSet,
     }),
   );
   for (const ymd of sorted) {
@@ -525,6 +552,10 @@ export function planBathSeries(input: {
         restLeft = block.rest;
       }
     };
+    const breakHardStreak = () => {
+      streak = 0;
+      restLeft = 0;
+    };
     const replaySeatedDay = (day: StayDay) => {
       if (!day.working) {
         if (restLeft > 0 && policy.closedDaySpendsOwedRest) {
@@ -545,7 +576,17 @@ export function planBathSeries(input: {
         streak = 0;
         return;
       }
-      if (blockedOwn.has(day.ymd) || keptByDay.has(day.ymd)) finishBlock();
+      if (blockedOwn.has(day.ymd) || keptByDay.has(day.ymd)) {
+        finishBlock();
+        return;
+      }
+      // Hard series only: foreign cabin-day or gap between own baths breaks streak.
+      // fillsRestDays (hydro/iodine) only skips the occupied day — do not reset its cadence.
+      if (!series.fillsRestDays) {
+        if (bathDays.has(day.ymd) || day.ymd <= lastKept) {
+          breakHardStreak();
+        }
+      }
     };
     for (const day of input.days) {
       if (fresh) {
@@ -605,7 +646,11 @@ export function planBathSeries(input: {
         finishBlock();
         continue;
       }
-      if (bathDays.has(day.ymd)) continue;
+      if (bathDays.has(day.ymd)) {
+        // Foreign bath breaks hard-series streak only; fills-rest just skips the day.
+        if (!series.fillsRestDays) breakHardStreak();
+        continue;
+      }
       if (keptByDay.has(day.ymd)) continue;
       if (!series.fillsRestDays && weekAtCap(day.ymd, series.procedureCode)) continue;
       placed.push({

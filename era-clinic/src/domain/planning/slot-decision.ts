@@ -458,6 +458,7 @@ async function assertBathSeriesMove(input: {
       mode,
       modes,
       policy,
+      countYmds: new Set(sameSku.map((row) => row.ymd)),
     });
     if (rest.includes(input.targetYmd)) throw new SlotDecisionError("bath_rest");
   }
