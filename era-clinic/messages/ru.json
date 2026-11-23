@@ -2451,7 +2451,13 @@
     "visitTimeOptional": "Необязательно",
     "fulfillmentLab": "Лаборатория",
     "fulfillmentVisit": "Приём",
-    "pay": "Оплатить"
+    "pay": "Оплатить",
+    "packageAssignPlacedTotal": "Посажено: {count}",
+    "packageAssignNotPlacedLine": "{count} × {name} — {reason}",
+    "packageAssignToastMore": "…и ещё {count}",
+    "packageAssignNotPlacedTotal": "Не посажено: {count}",
+    "packageAssignOnPlan": "В плане",
+    "packageAssignAdding": "Добавить"
   },
   "catalogAdmin": {
     "title": "Каталог услуг",

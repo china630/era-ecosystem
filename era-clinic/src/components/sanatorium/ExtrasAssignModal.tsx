@@ -273,17 +273,15 @@ export function ExtrasAssignModal({
       const d = await res.json().catch(() => ({}));
       if (res.ok) {
         const payload = d.data ?? d;
-        if (Array.isArray(payload.misses) && payload.misses.length > 0) {
-          toastPackageAssignOutcome(
-            draft.map((row) => ({
-              procedureCode: row.procedureCode,
-              procedureName: row.procedureName,
-              qty: row.qty,
-            })),
-            payload.misses,
-            (key, values) => tPhysio(key, values),
-          );
-        }
+        toastPackageAssignOutcome(
+          draft.map((row) => ({
+            procedureCode: row.procedureCode,
+            procedureName: row.procedureName,
+            qty: row.qty,
+          })),
+          Array.isArray(payload.misses) ? payload.misses : [],
+          (key, values) => tPhysio(key, values),
+        );
       }
       if (!res.ok) {
         const code = typeof d?.code === "string" ? d.code : null;
