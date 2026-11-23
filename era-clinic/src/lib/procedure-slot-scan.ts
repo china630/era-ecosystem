@@ -720,10 +720,10 @@ function emptyBlockCounts(): PlacementBlockCounts {
   };
 }
 
-/** Saxla / extras seating wall budget (whole save). */
-export const SAXLA_SEATING_BUDGET_MS = 12_000;
+/** Saxla / extras seating wall budget (whole save). Large multi-SKU saves need headroom past 12s. */
+export const SAXLA_SEATING_BUDGET_MS = 20_000;
 /** Default per placeConfirmedProcedures when called from package/bath/extras without a parent deadline. */
-export const PLACE_CONFIRMED_BUDGET_MS = 8_000;
+export const PLACE_CONFIRMED_BUDGET_MS = 12_000;
 
 /** Inclusive civil-day span between two YYYY-MM-DD keys (0 when equal). */
 export function bakuYmdSpanDays(fromYmd: string, toYmd: string): number {

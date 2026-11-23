@@ -30,7 +30,10 @@ import { regimeFingerprint } from "@/domain/sanatorium/regime-key";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 import {
   formatPackageAssignMissLines,
+  isPackageAssignNoonHold,
   toastPackageAssignOutcome,
+  type AssignToastLine,
+  type AssignToastMiss,
 } from "@/lib/package-assign-toasts";
 import {
   isBathTransferQuota,
@@ -1166,9 +1169,16 @@ export function PackageAssignModal({
     return { date, hour: String(next) };
   }
 
-  function noonMissNames(rows: Array<{ reason?: string; procedureName?: string; procedureCode?: string }>): string[] {
+  function noonMissNames(
+    rows: Array<{
+      reason?: string;
+      procedureName?: string;
+      procedureCode?: string;
+      hitAttemptCap?: boolean;
+    }>,
+  ): string[] {
     return rows
-      .filter((row) => row.reason === "no_slot" || row.reason === "no_day")
+      .filter((row) => isPackageAssignNoonHold(row))
       .map((row) => row.procedureName || row.procedureCode)
       .filter((name): name is string => Boolean(name))
       .filter((name, index, all) => all.indexOf(name) === index);
@@ -1340,6 +1350,9 @@ export function PackageAssignModal({
     setError(null);
     writePackageAssignDraft(episodeId, snapshotDraft());
     let pendingCheckout: { names: string[]; package: boolean; extras: boolean } | null = null;
+    const outcomeRequested: AssignToastLine[] = [];
+    const outcomeMisses: AssignToastMiss[] = [];
+    let packageOk = false;
     try {
       for (const row of assigned) {
         if (row.locked) continue;
@@ -1393,21 +1406,20 @@ export function PackageAssignModal({
           showApiError({ error: assignSaveMessage(d) }, tc("saveFailed"));
           return;
         }
+        packageOk = true;
         const payload = d.data ?? d;
-        const missRows = Array.isArray(payload.misses) ? payload.misses : [];
+        const missRows: AssignToastMiss[] = Array.isArray(payload.misses) ? payload.misses : [];
+        outcomeRequested.push(
+          ...lines.map((row) => ({
+            procedureCode: row.procedureCode,
+            procedureName: row.procedureName,
+            qty: row.qty,
+          })),
+        );
+        outcomeMisses.push(...missRows);
         const noonNames = noonMissNames(missRows);
         if (noonNames.length > 0) {
           pendingCheckout = { names: noonNames, package: true, extras: false };
-        } else {
-          toastPackageAssignOutcome(
-            lines.map((row) => ({
-              procedureCode: row.procedureCode,
-              procedureName: row.procedureName,
-              qty: row.qty,
-            })),
-            payload.misses,
-            (key, values) => tPhysio(key, values),
-          );
         }
         if (payload.softWarn) setSoftWarn(String(payload.softWarn));
         setCourseStarted(true);
@@ -1435,11 +1447,21 @@ export function PackageAssignModal({
         );
         const extraBody = await res.json().catch(() => ({}));
         const extraPayload = extraBody.data ?? extraBody;
-        if (res.ok && Array.isArray(extraPayload.misses) && extraPayload.misses.length > 0) {
-          const extraNoon = noonMissNames(extraPayload.misses);
-          const otherMisses = extraPayload.misses.filter(
-            (row: { reason?: string }) => row.reason !== "no_slot" && row.reason !== "no_day",
-          );
+        if (res.ok) {
+          const extraMisses: AssignToastMiss[] = Array.isArray(extraPayload.misses)
+            ? extraPayload.misses
+            : [];
+          if (extras.length > 0) {
+            outcomeRequested.push(
+              ...extras.map((row) => ({
+                procedureCode: row.procedureCode,
+                procedureName: row.procedureName,
+                qty: row.qty,
+              })),
+            );
+            outcomeMisses.push(...extraMisses);
+          }
+          const extraNoon = noonMissNames(extraMisses);
           if (extraNoon.length > 0) {
             const names = [...new Set([...(pendingCheckout?.names ?? []), ...extraNoon])];
             pendingCheckout = {
@@ -1448,20 +1470,21 @@ export function PackageAssignModal({
               extras: true,
             };
           }
-          if (otherMisses.length > 0) {
-            toastPackageAssignOutcome(
-              extras.map((row) => ({
-                procedureCode: row.procedureCode,
-                procedureName: row.procedureName,
-                qty: row.qty,
-              })),
-              otherMisses,
-              (key, values) => tPhysio(key, values),
+          setCourseStarted(true);
+        } else {
+          const code = typeof extraBody?.code === "string" ? extraBody.code : null;
+          if (outcomeRequested.length > 0) {
+            toastPackageAssignOutcome(outcomeRequested, outcomeMisses, (key, values) =>
+              tPhysio(key, values),
             );
           }
-        }
-        if (!res.ok) {
-          const code = typeof extraBody?.code === "string" ? extraBody.code : null;
+          setStartOpen(false);
+          if (packageOk) {
+            setDraft([]);
+            clearPackageAssignDraft(episodeId);
+          }
+          await load();
+          onSaved();
           showApiError(
             {
               error:
@@ -1480,7 +1503,11 @@ export function PackageAssignModal({
           );
           return;
         }
-        setCourseStarted(true);
+      }
+      if (outcomeRequested.length > 0) {
+        toastPackageAssignOutcome(outcomeRequested, outcomeMisses, (key, values) =>
+          tPhysio(key, values),
+        );
       }
       setStartOpen(false);
       setDraft([]);
@@ -1491,11 +1518,10 @@ export function PackageAssignModal({
       clearPackageAssignDraft(episodeId);
       closeForm();
       onSaved();
+      await load();
       if (pendingCheckout) {
         setCheckoutAsk(pendingCheckout);
-        return;
       }
-      await load();
     } catch {
       persistDraftIfAny();
       showApiError({ error: tc("saveFailed") });
@@ -1504,7 +1530,7 @@ export function PackageAssignModal({
     }
   }
 
-  function bumpPlusOne(row: PackageAssignedAgg) {
+  function bumpOnPlanPlus(row: PackageAssignedAgg) {
     const key = assignedKey(row);
     if (pendingCancel.has(key)) {
       setPendingCancel((prev) => {
@@ -1515,15 +1541,26 @@ export function PackageAssignModal({
       return;
     }
     const cut = pendingCut[key] ?? 0;
-    if (cut > 0) {
-      setPendingCut((prev) => {
-        const next = { ...prev };
-        if (cut <= 1) delete next[key];
-        else next[key] = cut - 1;
-        return next;
-      });
-      return;
-    }
+    if (cut < 1) return;
+    setPendingCut((prev) => {
+      const next = { ...prev };
+      if (cut <= 1) delete next[key];
+      else next[key] = cut - 1;
+      return next;
+    });
+  }
+
+  function bumpOnPlanMinus(row: PackageAssignedAgg) {
+    if (row.qty < 1) return;
+    const key = assignedKey(row);
+    const kept = Math.max(row.doneQty ?? 0, row.qty - (row.movableOrderIds?.length ?? 0));
+    const cut = pendingCut[key] ?? 0;
+    const live = row.qty - cut;
+    if (live - 1 < kept) return;
+    setPendingCut((prev) => ({ ...prev, [key]: cut + 1 }));
+  }
+
+  function bumpDraftPlusFromAssigned(row: PackageAssignedAgg) {
     const quota = menuQuotaForAssigned(row);
     const rem = draftRemaining.get(quota) ?? 0;
     const detail = {
@@ -1559,27 +1596,6 @@ export function PackageAssignModal({
       }),
     );
     return true;
-  }
-
-  function bumpMinusOne(row: PackageAssignedAgg) {
-    if (row.qty < 1) return;
-    const key = assignedKey(row);
-    const matching = draft.find((d) => draftMatchesAssigned(d, row, menuQuotaForAssigned(row)));
-    if (matching) {
-      setDraft((prev) =>
-        prev.flatMap((d) => {
-          if (d.key !== matching.key) return [d];
-          if (d.qty <= 1) return [];
-          return [{ ...d, qty: d.qty - 1 }];
-        }),
-      );
-      return;
-    }
-    const kept = Math.max(row.doneQty ?? 0, row.qty - (row.movableOrderIds?.length ?? 0));
-    const cut = pendingCut[key] ?? 0;
-    const live = row.qty - cut;
-    if (live - 1 < kept) return;
-    setPendingCut((prev) => ({ ...prev, [key]: cut + 1 }));
   }
 
   function bumpLeftoverPlus(line: DraftLine) {
@@ -1981,7 +1997,10 @@ export function PackageAssignModal({
               paramsLabel: string;
               assigned?: PackageAssignedAgg;
               pkgDraft?: DraftLine;
-              pkgQty: number;
+              /** Already on the stay plan (assigned minus pending cuts). */
+              onPlanQty: number;
+              /** Still in modal draft — not yet Saxla'd. */
+              addingQty: number;
               pkgLocked: boolean;
               extraQty: number;
               extraUnit: number;
@@ -2034,7 +2053,8 @@ export function PackageAssignModal({
               params: string[],
               assigned: PackageAssignedAgg | undefined,
               pkgDraft: DraftLine | undefined,
-              pkgQty: number,
+              onPlanQty: number,
+              addingQty: number,
               pkgLocked: boolean,
               detail?: Pick<
                 ExtraDraftLine,
@@ -2045,7 +2065,7 @@ export function PackageAssignModal({
               const pending = takePending(code, regimeKey);
               const paid = takePaid(code, regimeKey);
               const unpaidQty = (extra?.qty ?? 0) + pending.length;
-              if (pkgQty < 1 && unpaidQty < 1 && paid.length < 1 && !assigned) return;
+              if (onPlanQty < 1 && addingQty < 1 && unpaidQty < 1 && paid.length < 1 && !assigned) return;
               const unit = extra?.amountNet || pending[0]?.amountNet || unitOf(code);
               const source = detail ?? extra ?? pending[0];
               lanes.push({
@@ -2056,7 +2076,8 @@ export function PackageAssignModal({
                 paramsLabel,
                 assigned,
                 pkgDraft,
-                pkgQty,
+                onPlanQty,
+                addingQty,
                 pkgLocked,
                 extraQty: unpaidQty,
                 extraUnit: unit,
@@ -2082,7 +2103,8 @@ export function PackageAssignModal({
                 paramLinesOf(row.paramsLabel, row.paramsLines),
                 row,
                 pkgDraft,
-                Math.max(row.doneQty ?? 0, row.qty - cut) + (pkgDraft?.qty ?? 0),
+                Math.max(row.doneQty ?? 0, row.qty - cut),
+                pkgDraft?.qty ?? 0,
                 row.locked,
                 row,
               );
@@ -2096,6 +2118,7 @@ export function PackageAssignModal({
                 paramLinesOf(line.paramsLabel),
                 undefined,
                 line,
+                0,
                 line.qty,
                 false,
                 line,
@@ -2112,6 +2135,7 @@ export function PackageAssignModal({
                 undefined,
                 undefined,
                 0,
+                0,
                 false,
                 row,
               );
@@ -2120,7 +2144,7 @@ export function PackageAssignModal({
               if (usedPending.has(row.id) || usedPaid.has(row.id)) continue;
               const regimeKey = "regimeKey" in row ? row.regimeKey ?? "" : "";
               if (lanes.some((lane) => lane.code === row.procedureCode && lane.regimeKey === regimeKey)) continue;
-              pushLane(row.procedureCode, row.procedureName, regimeKey, "", [], undefined, undefined, 0, false);
+              pushLane(row.procedureCode, row.procedureName, regimeKey, "", [], undefined, undefined, 0, 0, false);
             }
             if (lanes.length === 0) {
               return <p className={TEXT_MUTED_CLASS}>{labels.emptyRight}</p>;
@@ -2168,7 +2192,9 @@ export function PackageAssignModal({
                   const kept = lane.assigned
                     ? Math.max(lane.assigned.doneQty ?? 0, lane.assigned.qty - movable)
                     : 0;
-                  const packageMinusDisabled = Boolean(lane.assigned) && lane.pkgQty <= kept;
+                  const onPlanMinusDisabled = Boolean(lane.assigned) && lane.onPlanQty <= kept;
+                  const showPackageRows =
+                    lane.onPlanQty > 0 || lane.addingQty > 0 || Boolean(lane.assigned) || Boolean(lane.pkgDraft);
                   return (
                     <li
                       key={lane.key}
@@ -2215,23 +2241,40 @@ export function PackageAssignModal({
                           </div>
                         ) : null}
                       </div>
-                      {lane.pkgQty > 0 || lane.assigned || lane.pkgDraft ? (
-                        <div className="flex items-center justify-between gap-2 py-1">
-                          <span className={TEXT_MUTED_CLASS}>{tPhysio("fromPackage")}</span>
-                          {stepper(
-                            lane.pkgQty,
-                            () => {
-                              if (lane.assigned) bumpMinusOne(lane.assigned);
-                              else if (lane.pkgDraft) bumpLeftoverMinus(lane.pkgDraft);
-                            },
-                            () => {
-                              if (lane.assigned) bumpPlusOne(lane.assigned);
-                              else if (lane.pkgDraft) bumpLeftoverPlus(lane.pkgDraft);
-                            },
-                            false,
-                            packageMinusDisabled,
-                          )}
-                        </div>
+                      {showPackageRows ? (
+                        <>
+                          {lane.assigned || lane.onPlanQty > 0 ? (
+                            <div className="flex items-center justify-between gap-2 py-1">
+                              <span className={TEXT_MUTED_CLASS}>{tPhysio("packageAssignOnPlan")}</span>
+                              {stepper(
+                                lane.onPlanQty,
+                                () => {
+                                  if (lane.assigned) bumpOnPlanMinus(lane.assigned);
+                                },
+                                () => {
+                                  if (lane.assigned) bumpOnPlanPlus(lane.assigned);
+                                },
+                                !lane.assigned || lane.pkgLocked,
+                                onPlanMinusDisabled || !lane.assigned,
+                              )}
+                            </div>
+                          ) : null}
+                          <div className="flex items-center justify-between gap-2 py-1">
+                            <span className={TEXT_MUTED_CLASS}>{tPhysio("packageAssignAdding")}</span>
+                            {stepper(
+                              lane.addingQty,
+                              () => {
+                                if (lane.pkgDraft) bumpLeftoverMinus(lane.pkgDraft);
+                              },
+                              () => {
+                                if (lane.pkgDraft) bumpLeftoverPlus(lane.pkgDraft);
+                                else if (lane.assigned) bumpDraftPlusFromAssigned(lane.assigned);
+                              },
+                              lane.pkgLocked,
+                              lane.addingQty < 1,
+                            )}
+                          </div>
+                        </>
                       ) : null}
                       <div className="flex items-center justify-between gap-2 py-1">
                         <span className={TEXT_MUTED_CLASS}>{tPhysio("extraLine")}</span>
@@ -2557,8 +2600,11 @@ export function PackageAssignModal({
             ),
           ].join(", ");
           if (left.length > 0) {
+            // One checkout leftover toast — not Saxla per-SKU prose via placeMissText.
             showApiError({
-              error: placeMissText(left) || tPhysio("packageAssignCheckoutNoonLeft", { names: leftNames }),
+              error: leftNames
+                ? tPhysio("packageAssignCheckoutNoonLeft", { names: leftNames })
+                : tPhysio("packageAssignNotPlacedTotal", { count: left.length }),
             });
           }
         } else {

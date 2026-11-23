@@ -2464,7 +2464,13 @@
     "visitTimeOptional": "Optional",
     "fulfillmentLab": "Lab",
     "fulfillmentVisit": "Visit",
-    "pay": "Pay"
+    "pay": "Pay",
+    "packageAssignPlacedTotal": "Placed: {count}",
+    "packageAssignNotPlacedLine": "{count} × {name} — {reason}",
+    "packageAssignToastMore": "…and {count} more",
+    "packageAssignNotPlacedTotal": "Not placed: {count}",
+    "packageAssignOnPlan": "On plan",
+    "packageAssignAdding": "To add"
   },
   "catalogAdmin": {
     "title": "Service catalog",

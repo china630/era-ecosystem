@@ -2451,7 +2451,13 @@
     "visitTimeOptional": "İstəyə bağlı",
     "fulfillmentLab": "Laboratoriya",
     "fulfillmentVisit": "Qəbul",
-    "pay": "Ödə"
+    "pay": "Ödə",
+    "packageAssignPlacedTotal": "Yazıldı: {count}",
+    "packageAssignNotPlacedLine": "{count} × {name} — {reason}",
+    "packageAssignToastMore": "…və daha {count}",
+    "packageAssignNotPlacedTotal": "Yazılmadı: {count}",
+    "packageAssignOnPlan": "Planda",
+    "packageAssignAdding": "Əlavə et"
   },
   "catalogAdmin": {
     "title": "Xidmət kataloqu",
