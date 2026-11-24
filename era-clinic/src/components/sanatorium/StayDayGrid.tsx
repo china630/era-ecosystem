@@ -4,8 +4,12 @@ import { useLocale } from "next-intl";
 import { TEXT_MUTED_CLASS } from "@era/satellite-kit/ui";
 import { todayBakuYmd } from "@/lib/baku-day";
 import type { StayPlan, StayPlanMark } from "@/domain/sanatorium/package-assign.service";
-import { procedureLoadLevelColor } from "@/domain/planning/procedure-load-matrix";
 import { stripLatinParamEcho } from "@/components/physio/physio-params-label";
+import {
+  STAY_PLAN_MARK_DOT_CLASS,
+  pickStayPlanMarkForDay,
+  stayPlanMarkTone,
+} from "@/components/sanatorium/stay-plan-mark-tone";
 import {
   STAY_DAY_SLOTS,
   stayMonthSpans,
@@ -45,12 +49,14 @@ export function StayDayGrid({
   openLabel,
   noonLabel,
   legendPackage,
+  legendUnpaidExtra,
   legendPaid,
   legendDone,
-  loadLevelFor,
   dayColumns,
   ownScroll = true,
   showLegend = true,
+  /** When false, skip month/day thead (parent already showed axis above). */
+  showDayHeaders = true,
 }: {
   plan: StayPlan;
   focusKey: string | null;
@@ -59,15 +65,15 @@ export function StayDayGrid({
   openLabel: string;
   noonLabel: string;
   legendPackage: string;
+  legendUnpaidExtra: string;
   legendPaid: string;
   legendDone: string;
-  /** Optional clinic-wide load level 0..9 for this procedure × day. */
-  loadLevelFor?: (procedureCode: string, ymd: string) => number | null;
   /** Shared axis with heat (defaults to stay window). */
   dayColumns?: string[];
   /** False when parent owns horizontal/vertical scroll with the heat strip. */
   ownScroll?: boolean;
   showLegend?: boolean;
+  showDayHeaders?: boolean;
 }) {
   const locale = useLocale();
   const rows = new Map<string, Row>();
@@ -99,37 +105,39 @@ export function StayDayGrid({
     <>
       <div style={{ width: `calc(9rem + (100% - 9rem) * ${days.length} / ${STAY_DAY_SLOTS})` }}>
         <table className="w-full table-fixed border-separate border-spacing-0 text-[12px]">
-          <thead className="sticky top-0 z-30 bg-white">
-            <tr>
-              <th className="sticky left-0 z-20 w-36 bg-white" />
-              {monthSpans.map((group) => (
-                <th
-                  key={group.ymd.slice(0, 7)}
-                  colSpan={group.span}
-                  className="px-0.5 py-1 text-center text-[12px] font-semibold text-[#2C3E50]"
-                >
-                  {stayMonthTitle(group.ymd, locale)}
-                </th>
-              ))}
-            </tr>
-            <tr>
-              <th className="sticky left-0 z-20 w-36 bg-white" />
-              {days.map((ymd) => {
-                const day = ymd.slice(8);
-                const tone = dayTone(ymd, checkIn, checkout, today);
-                return (
+          {showDayHeaders ? (
+            <thead className="sticky top-0 z-30 bg-white">
+              <tr>
+                <th className="sticky left-0 z-20 w-36 bg-white" />
+                {monthSpans.map((group) => (
                   <th
-                    key={ymd}
-                    className={`px-0 py-1 text-center text-[13px] font-semibold tabular-nums ${
-                      tone === "closed" ? TEXT_MUTED_CLASS : "text-[#2C3E50]"
-                    } ${ymd === today ? todayMark : ""}`}
+                    key={group.ymd.slice(0, 7)}
+                    colSpan={group.span}
+                    className="px-0.5 py-1 text-center text-[12px] font-semibold text-[#2C3E50]"
                   >
-                    {day}
+                    {stayMonthTitle(group.ymd, locale)}
                   </th>
-                );
-              })}
-            </tr>
-          </thead>
+                ))}
+              </tr>
+              <tr>
+                <th className="sticky left-0 z-20 w-36 bg-white" />
+                {days.map((ymd) => {
+                  const day = ymd.slice(8);
+                  const tone = dayTone(ymd, checkIn, checkout, today);
+                  return (
+                    <th
+                      key={ymd}
+                      className={`px-0 py-1 text-center text-[13px] font-semibold tabular-nums ${
+                        tone === "closed" ? TEXT_MUTED_CLASS : "text-[#2C3E50]"
+                      } ${ymd === today ? todayMark : ""}`}
+                    >
+                      {day}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+          ) : null}
           <tbody>
             {list.map((row) => (
               <tr
@@ -150,7 +158,7 @@ export function StayDayGrid({
                   ) : null}
                 </th>
                 {days.map((ymd) => {
-                  const mark = row.marks.find((item) => item.ymd === ymd);
+                  const mark = pickStayPlanMarkForDay(row.marks, ymd);
                   const tone = dayTone(ymd, checkIn, checkout, today);
                   const place = mark
                     ? mark.open
@@ -166,34 +174,22 @@ export function StayDayGrid({
                         .filter(Boolean)
                         .join("\n")
                     : "";
-                  const loadLevel = loadLevelFor?.(row.procedureCode, ymd) ?? null;
-                  const loadBg =
-                    loadLevel != null && tone === "open"
-                      ? procedureLoadLevelColor(loadLevel)
-                      : undefined;
                   return (
                     <td
                       key={ymd}
                       title={hint || undefined}
                       className={`px-0 py-0.5 text-center align-middle ${
-                        loadBg
-                          ? ""
-                          : tone === "closed"
-                            ? "bg-slate-100"
-                            : tone === "past"
-                              ? "bg-rose-50"
-                              : ""
+                        tone === "closed"
+                          ? "bg-slate-100"
+                          : tone === "past"
+                            ? "bg-rose-50"
+                            : ""
                       } ${ymd === today ? todayMark : ""}`}
-                      style={loadBg ? { background: loadBg } : undefined}
                     >
                       {mark ? (
                         <span
                           className={`mx-auto block h-2.5 w-2.5 rounded-full ${
-                            mark.done
-                              ? "bg-emerald-700"
-                              : mark.paid
-                                ? "bg-amber-400"
-                                : "bg-[#1F4E79]"
+                            STAY_PLAN_MARK_DOT_CLASS[stayPlanMarkTone(mark)]
                           }`}
                         />
                       ) : null}
@@ -217,15 +213,21 @@ export function StayDayGrid({
       {showLegend ? (
         <p className={`mt-2 flex shrink-0 flex-wrap gap-3 text-[12px] ${TEXT_MUTED_CLASS}`}>
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#1F4E79]" />
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.package}`} />
             {legendPackage}
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <span
+              className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.unpaidExtra}`}
+            />
+            {legendUnpaidExtra}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.paid}`} />
             {legendPaid}
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-700" />
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.done}`} />
             {legendDone}
           </span>
         </p>
