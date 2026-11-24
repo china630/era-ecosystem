@@ -2557,7 +2557,12 @@ export async function replacePackageProcedures(
       "@/domain/sanatorium/stay-seat-cap"
     );
     const toType = await prisma.procedureType.findUnique({
-      where: { code: input.toCode },
+      where: {
+        organizationId_code: {
+          organizationId: episode.organizationId,
+          code: input.toCode,
+        },
+      },
       select: { openAttendance: true },
     });
     const stayMax =
