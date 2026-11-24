@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ModalShell,
-  MODAL_FULL_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
@@ -18,6 +17,10 @@ import {
   showSuccess,
 } from "@era/satellite-kit/ui";
 import { ChevronDown, Info, Minus, Plus, Trash2 } from "lucide-react";
+
+/** Near-viewport package card. Published kit UI barrel does not export this yet. */
+const MODAL_FULL_FILL_CLASS =
+  "max-w-[min(99vw,1680px)] w-full !min-h-[min(92vh,56rem)] h-[min(92vh,56rem)] max-h-[96vh]";
 import { STAY_PLAN_MARK_DOT_CLASS } from "@/components/sanatorium/stay-plan-mark-tone";
 import {
   PhysioSiteChips,
@@ -48,6 +51,12 @@ import { StayDayGrid } from "@/components/sanatorium/StayDayGrid";
 import { stayWindowDays } from "@/domain/sanatorium/stay-day-axis";
 import type { StayPlan } from "@/domain/sanatorium/package-assign.service";
 import { packageAssignGoalLayers } from "@/domain/planning/package-assign-goal";
+import {
+  canTrashAssignLane,
+  clearExtraDraftForLane,
+  cutAllPendingForLane,
+  extraCutKey,
+} from "@/domain/sanatorium/package-assign-lane-trash";
 import { ProcedureLoadMatrixView } from "@/components/sanatorium/ProcedureLoadMatrixView";
 import { procedureLoadLevelColor } from "@/domain/planning/procedure-load-matrix";
 import {
@@ -259,10 +268,6 @@ function gateToPhysio(code: string, name: string, note = ""): PhysioChipsValue {
     physioFields: gate.hideSitePicker ? { naftalanFill: "TAM" } : {},
     note: note || null,
   };
-}
-
-function extraCutKey(code: string, regimeKey: string): string {
-  return `${code}|${regimeKey}`;
 }
 
 function assignedKey(row: PackageAssignedAgg): string {
@@ -1951,6 +1956,35 @@ export function PackageAssignModal({
     setDraft((prev) => prev.filter((d) => !draftMatchesAssigned(d, row, menuQuotaForAssigned(row))));
   }
 
+  /** Trash: clear unpaid draft/pending on the lane; also wipe unlocked package if present. */
+  function markRemoveLane(lane: {
+    code: string;
+    regimeKey: string;
+    assigned?: PackageAssignedAgg;
+    pkgLocked: boolean;
+    extraQty: number;
+  }) {
+    const unpaidQty = lane.extraQty;
+    if (
+      !canTrashAssignLane({
+        hasUnlockedPackage: Boolean(lane.assigned && !lane.pkgLocked),
+        unpaidQty,
+      })
+    ) {
+      return;
+    }
+    if (unpaidQty > 0) {
+      setExtraDraft((prev) => clearExtraDraftForLane(prev, lane.code, lane.regimeKey, regimeOf));
+      const pendingCount = extraPending.filter(
+        (row) => extraCutKey(row.procedureCode, row.regimeKey ?? "") === extraCutKey(lane.code, lane.regimeKey),
+      ).length;
+      setExtraPendingCut((prev) => cutAllPendingForLane(prev, lane.code, lane.regimeKey, pendingCount));
+    }
+    if (lane.assigned && !lane.pkgLocked) {
+      markRemoveAssigned(lane.assigned);
+    }
+  }
+
   function openReplace(fromCode?: string) {
     const from =
       fromCode && bathFromOptions.some((row) => row.value === fromCode)
@@ -2127,7 +2161,7 @@ export function PackageAssignModal({
       open={open}
       title={labels.title}
       onClose={requestClose}
-      maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
+      maxWidthClass={`${MODAL_FULL_FILL_CLASS} overflow-hidden flex flex-col`}
       bodyClassName="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
@@ -2652,12 +2686,15 @@ export function PackageAssignModal({
                           >
                             {lane.factQty}
                           </span>
-                          {lane.assigned && !lane.pkgLocked ? (
+                          {canTrashAssignLane({
+                            hasUnlockedPackage: Boolean(lane.assigned && !lane.pkgLocked),
+                            unpaidQty: lane.extraQty,
+                          }) ? (
                             <button
                               type="button"
                               className={`${TABLE_ROW_ICON_BTN_CLASS} !h-6 !w-6`}
                               disabled={busy}
-                              onClick={() => markRemoveAssigned(lane.assigned!)}
+                              onClick={() => markRemoveLane(lane)}
                               aria-label={labels.delete}
                             >
                               <Trash2 className="h-3.5 w-3.5" aria-hidden />
