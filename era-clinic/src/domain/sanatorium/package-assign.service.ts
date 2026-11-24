@@ -516,7 +516,10 @@ export type StayPlanMark = {
   procedureName: string;
   paramsLabel: string;
   done: boolean;
+  /** Extra with paidAt — not package. */
   paid: boolean;
+  /** Package vs paid-extra lane (unpaid extra = !inPackage && !paid). */
+  inPackage: boolean;
   open: boolean;
   /** Wall time for a cabin row. Empty for open attendance. */
   time: string;
@@ -1302,7 +1305,7 @@ async function buildStayPlan(
   const marks: StayPlanMark[] = [];
   const push = (
     order: (typeof packageOrders)[number],
-    paid: boolean,
+    opts: { inPackage: boolean; paid: boolean },
   ) => {
     if (order.status === "PROPOSED" || order.status === "CANCELLED" || order.status === "UNPAID_MISSED") return;
     const ymd = bakuDateKey(order.scheduledAt);
@@ -1320,13 +1323,14 @@ async function buildStayPlan(
       procedureName: order.procedureName,
       paramsLabel: paramsLinesFromOrder(order, { locale, listTitles, localeOnly: true }).join(" · "),
       done: started,
-      paid,
+      paid: opts.paid,
+      inPackage: opts.inPackage,
       open,
       time: open ? "" : bakuTimeLabel(order.scheduledAt),
       cabin: order.resource?.name ?? "",
     });
   };
-  for (const order of packageOrders) push(order, false);
+  for (const order of packageOrders) push(order, { inPackage: true, paid: false });
   const extras = await prisma.procedureOrder.findMany({
     where: {
       clinicalEpisodeId: episodeId,
@@ -1355,8 +1359,10 @@ async function buildStayPlan(
       },
     },
   });
-  // Yellow = really paid (paidAt). PENDING_PAY / unpaid seated = not paid.
-  for (const order of extras) push(order, order.paidAt != null);
+  // Paid mark needs paidAt. Unpaid extra (!inPackage && !paid) has its own stay-grid color.
+  for (const order of extras) {
+    push(order, { inPackage: false, paid: order.paidAt != null });
+  }
   return { days, checkoutYmd, closedDays, marks };
 }
 

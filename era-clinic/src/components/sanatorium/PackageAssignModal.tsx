@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ModalShell,
+  MODAL_FULL_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
   TABLE_ROW_ICON_BTN_CLASS,
@@ -17,10 +18,7 @@ import {
   showSuccess,
 } from "@era/satellite-kit/ui";
 import { ChevronDown, Info, Minus, Plus, Trash2 } from "lucide-react";
-
-/** Near-viewport package card. Kit export lands with the shell padding prop. */
-const MODAL_FULL_FILL_CLASS =
-  "max-w-[min(99vw,1680px)] w-full !min-h-[min(92vh,56rem)] h-[min(92vh,56rem)] max-h-[96vh]";
+import { STAY_PLAN_MARK_DOT_CLASS } from "@/components/sanatorium/stay-plan-mark-tone";
 import {
   PhysioSiteChips,
   type PhysioCatalogListItem,
@@ -50,7 +48,8 @@ import { StayDayGrid } from "@/components/sanatorium/StayDayGrid";
 import { stayWindowDays } from "@/domain/sanatorium/stay-day-axis";
 import type { StayPlan } from "@/domain/sanatorium/package-assign.service";
 import { packageAssignGoalLayers } from "@/domain/planning/package-assign-goal";
-import { ProcedureLoadMatrixView, loadLevelForCodeDay } from "@/components/sanatorium/ProcedureLoadMatrixView";
+import { ProcedureLoadMatrixView } from "@/components/sanatorium/ProcedureLoadMatrixView";
+import { procedureLoadLevelColor } from "@/domain/planning/procedure-load-matrix";
 import {
   AssignSaveOutcomePanel,
   type AssignSaveOutcomeState,
@@ -2128,8 +2127,8 @@ export function PackageAssignModal({
       open={open}
       title={labels.title}
       onClose={requestClose}
-      maxWidthClass={`${MODAL_FULL_FILL_CLASS} overflow-hidden flex flex-col`}
-      bodyClassName="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden"
+      maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
+      bodyClassName="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
           <button
@@ -2994,19 +2993,33 @@ export function PackageAssignModal({
                 t={(key, values) => tPhysio(key, values)}
               />
             ) : (
-              <>
-                <p className={`mb-2 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
-                  {tPhysio("procedureLoadTitle")}
-                </p>
-                <ProcedureLoadMatrixView
-                  matrix={loadMatrix}
-                  dayColumns={stayDayColumns.length ? stayDayColumns : undefined}
-                  matchStayWidth={stayDayColumns.length > 0}
-                  emptyLabel={tPhysio("procedureLoadEmpty")}
-                  legendLow={tPhysio("procedureLoadLow")}
-                  legendHigh={tPhysio("procedureLoadHigh")}
-                />
-              </>
+              <div className="flex min-h-0 flex-1 flex-col">
+                <div className="min-h-0 flex-1 overflow-auto">
+                  <ProcedureLoadMatrixView
+                    matrix={loadMatrix}
+                    dayColumns={stayDayColumns.length ? stayDayColumns : undefined}
+                    matchStayWidth={stayDayColumns.length > 0}
+                    ownScroll={false}
+                    showLegend={false}
+                    emptyLabel={tPhysio("procedureLoadEmpty")}
+                    legendLow={tPhysio("procedureLoadLow")}
+                    legendHigh={tPhysio("procedureLoadHigh")}
+                  />
+                </div>
+                <div className={`mt-2 flex shrink-0 items-center gap-2 text-[11px] tabular-nums ${TEXT_MUTED_CLASS}`}>
+                  <span>{tPhysio("procedureLoadLow")}</span>
+                  <div className="flex h-2 flex-1 overflow-hidden rounded">
+                    {Array.from({ length: 10 }, (_, i) => (
+                      <div
+                        key={i}
+                        className="flex-1"
+                        style={{ background: procedureLoadLevelColor(i) }}
+                      />
+                    ))}
+                  </div>
+                  <span>{tPhysio("procedureLoadHigh")}</span>
+                </div>
+              </div>
             )}
           </div>
         ) : (
@@ -3027,9 +3040,9 @@ export function PackageAssignModal({
                 openLabel={tPhysio("stayPlanOpen")}
                 noonLabel={tPhysio("stayPlanNoon")}
                 legendPackage={tPhysio("stayPlanPackage")}
+                legendUnpaidExtra={tPhysio("stayPlanUnpaidExtra")}
                 legendPaid={tPhysio("stayPlanPaid")}
                 legendDone={tPhysio("stayPlanDone")}
-                loadLevelFor={(code, ymd) => loadLevelForCodeDay(loadMatrix, code, ymd)}
               />
               {saveOutcome && saveOutcome.misses.length > 0 ? (
                 <AssignSaveOutcomePanel
@@ -3039,37 +3052,61 @@ export function PackageAssignModal({
                   t={(key, values) => tPhysio(key, values)}
                 />
               ) : (
-                <div className="border-t border-[#E8EEF4] pt-1">
-                  <p className={`mb-0.5 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
-                    {tPhysio("procedureLoadTitle")}
-                  </p>
-                  <ProcedureLoadMatrixView
-                    matrix={loadMatrix}
-                    dayColumns={stayDayColumns}
-                    matchStayWidth
-                    ownScroll={false}
-                    excludeCodes={new Set(stayPlan.marks.map((m) => m.procedureCode))}
-                    emptyLabel={tPhysio("procedureLoadAllAssigned")}
-                    legendLow={tPhysio("procedureLoadLow")}
-                    legendHigh={tPhysio("procedureLoadHigh")}
-                  />
-                </div>
+                <ProcedureLoadMatrixView
+                  matrix={loadMatrix}
+                  dayColumns={stayDayColumns}
+                  matchStayWidth
+                  ownScroll={false}
+                  showLegend={false}
+                  hideDayHeaders
+                  excludeCodes={new Set(stayPlan.marks.map((m) => m.procedureCode))}
+                  emptyLabel={tPhysio("procedureLoadAllAssigned")}
+                  legendLow={tPhysio("procedureLoadLow")}
+                  legendHigh={tPhysio("procedureLoadHigh")}
+                />
               )}
             </div>
-            <p className={`mt-2 flex shrink-0 flex-wrap gap-3 text-[12px] ${TEXT_MUTED_CLASS}`}>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#1F4E79]" />
-                {tPhysio("stayPlanPackage")}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />
-                {tPhysio("stayPlanPaid")}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-700" />
-                {tPhysio("stayPlanDone")}
-              </span>
-            </p>
+            <div className={`mt-2 flex shrink-0 flex-col gap-1.5 text-[12px] ${TEXT_MUTED_CLASS}`}>
+              <div className="flex items-center gap-2 text-[11px] tabular-nums">
+                <span>{tPhysio("procedureLoadLow")}</span>
+                <div className="flex h-2 flex-1 overflow-hidden rounded">
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <div
+                      key={i}
+                      className="flex-1"
+                      style={{ background: procedureLoadLevelColor(i) }}
+                    />
+                  ))}
+                </div>
+                <span>{tPhysio("procedureLoadHigh")}</span>
+              </div>
+              <p className="m-0 flex flex-wrap gap-3">
+                <span className="inline-flex items-center gap-1">
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.package}`}
+                  />
+                  {tPhysio("stayPlanPackage")}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.unpaidExtra}`}
+                  />
+                  {tPhysio("stayPlanUnpaidExtra")}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.paid}`}
+                  />
+                  {tPhysio("stayPlanPaid")}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.done}`}
+                  />
+                  {tPhysio("stayPlanDone")}
+                </span>
+              </p>
+            </div>
           </div>
         )}
       </div>

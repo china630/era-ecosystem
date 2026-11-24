@@ -122,6 +122,7 @@ export default function SanatoriumProcedureLoadPage() {
           emptyLabel={t("procedureLoadEmpty")}
           legendLow={t("procedureLoadLow")}
           legendHigh={t("procedureLoadHigh")}
+          legendPlacement="below"
         />
       </div>
     </div>

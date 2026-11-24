@@ -1,6 +1,7 @@
 /**
  * Clinic procedure load heatmap — aggregate live orders by procedureCode × Baku day.
- * Levels prefer used/capacity % when capacity is known; else peak-normalized counts.
+ * Levels prefer fill % when capacity is known; else peak-normalized counts.
+ * UI cell label is %; count/capacity stays on hover title.
  */
 
 import { addBakuDays, todayBakuYmd } from "@era/satellite-kit/time";
