@@ -1220,6 +1220,8 @@ export async function getPackageAssignSnapshot(
       status: { notIn: ["CANCELLED", "UNPAID_MISSED"] },
     },
   });
+  const { daySeriesProcedureCodes } = await import("@/domain/planning/bath-calendar.service");
+  const daySeriesCodes = [...(await daySeriesProcedureCodes())];
 
   return {
     balances: menuBalances,
@@ -1242,6 +1244,7 @@ export async function getPackageAssignSnapshot(
     masseurOptions: await loadMasseurOptions(),
     masseurByCode: await loadMasseurByCode(episodeId),
     stayPlan,
+    daySeriesCodes,
     courseStarted: orders.length > 0 || paidLive > 0,
   };
 }
@@ -1612,6 +1615,68 @@ export async function unseatUnfinishedBlockTail(
   return { byKey, suspended };
 }
 
+/**
+ * Lift unfinished in-package day-series SCHEDULED rows from today onward so Saxla
+ * can replan (bathLayout fresh). CHECKED_IN / COMPLETED and past days stay seated.
+ */
+export async function unseatFreshDaySeriesTail(
+  episodeId: string,
+  procedureCodes: string[],
+  opts?: { excludeIds?: Set<string> },
+): Promise<{ unseatedIds: string[]; suspended: SuspendedPackageSeat[] }> {
+  if (procedureCodes.length === 0) return { unseatedIds: [], suspended: [] };
+  const codeSet = new Set(procedureCodes);
+  const today = todayBakuYmd();
+  const unfinished = await prisma.procedureOrder.findMany({
+    where: {
+      clinicalEpisodeId: episodeId,
+      inPackage: true,
+      status: "SCHEDULED",
+      procedureCode: { in: procedureCodes },
+      ...(opts?.excludeIds?.size ? { id: { notIn: [...opts.excludeIds] } } : {}),
+    },
+    orderBy: [{ sequenceIndex: "asc" }, { scheduledAt: "asc" }],
+    select: { id: true, procedureCode: true, scheduledAt: true },
+  });
+  const toUnseat = unfinished.filter(
+    (row) => codeSet.has(row.procedureCode) && bakuDateKey(row.scheduledAt) >= today,
+  );
+  if (toUnseat.length === 0) return { unseatedIds: [], suspended: [] };
+  const ids = toUnseat.map((row) => row.id);
+  const [seatRows, allocationRows] = await Promise.all([
+    prisma.procedureOrder.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, resourceId: true },
+    }),
+    prisma.procedureAllocation.findMany({
+      where: { procedureOrderId: { in: ids } },
+    }),
+  ]);
+  const allocationsByOrder = new Map<string, AllocationWrite[]>();
+  for (const row of allocationRows) {
+    const list = allocationsByOrder.get(row.procedureOrderId) ?? [];
+    list.push({
+      role: row.role,
+      resourceId: row.resourceId,
+      practitionerId: row.practitionerId,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+    });
+    allocationsByOrder.set(row.procedureOrderId, list);
+  }
+  const suspended: SuspendedPackageSeat[] = seatRows.map((row) => ({
+    id: row.id,
+    resourceId: row.resourceId,
+    allocations: allocationsByOrder.get(row.id) ?? [],
+  }));
+  await releaseProcedureOccupancy(ids);
+  await prisma.procedureOrder.updateMany({
+    where: { id: { in: ids } },
+    data: { status: "PROPOSED", resourceId: null },
+  });
+  return { unseatedIds: ids, suspended };
+}
+
 /** Put seats back that this save lifted and then failed to finish. */
 export async function restoreSuspendedPackageSeats(rows: SuspendedPackageSeat[]): Promise<void> {
   for (const row of rows) {
@@ -1697,6 +1762,8 @@ export async function assignPackageProcedures(
     startAt?: Date | null;
     /** Lift the unfinished quota tail and seat it again with the new rows. */
     reseatQuotaTail?: boolean;
+    /** Day-series calendar: continue after last bath, or fresh replan across holes. */
+    bathLayout?: "continue" | "fresh";
   },
 ): Promise<{
   placed: number;
@@ -2119,11 +2186,35 @@ export async function assignPackageProcedures(
     }
     fixedChunks.push({ ids: chunk.ids, procedureCode: chunk.procedureCode, quotaKey, line });
   }
+  const bathLayout = opts?.bathLayout === "fresh" ? "fresh" : "continue";
+  if (bathLayout === "fresh" && daySeriesOrderIds.length > 0) {
+    const seriesCodesInBatch = [
+      ...new Set(
+        resolved
+          .filter((line) => daySeriesCodes.has(line.procedureCode))
+          .map((line) => line.procedureCode),
+      ),
+    ];
+    if (seriesCodesInBatch.length > 0) {
+      const freshLift = await unseatFreshDaySeriesTail(episodeId, seriesCodesInBatch, {
+        excludeIds: new Set(createdIds),
+      });
+      suspended = [...suspended, ...freshLift.suspended];
+      const merged = new Set(daySeriesOrderIds);
+      for (const id of freshLift.unseatedIds) {
+        if (!merged.has(id)) {
+          daySeriesOrderIds.unshift(id);
+          merged.add(id);
+        }
+      }
+    }
+  }
   if (daySeriesOrderIds.length > 0) {
     const seriesSeat = await seatDaySeriesOrders(daySeriesOrderIds, {
       startAt,
       scheduleBefore: instance.endsOn ?? null,
       cabinBag,
+      layout: bathLayout,
     });
     genericCabinOnly = false;
     for (const miss of seriesSeat.missed) {
@@ -2260,6 +2351,14 @@ export async function assignPackageProcedures(
       409,
       misses,
     );
+  }
+  try {
+    const { invalidateProcedureLoadCache } = await import(
+      "@/domain/planning/procedure-load.service"
+    );
+    invalidateProcedureLoadCache();
+  } catch {
+    /* optional cache */
   }
   const codes = [...new Set(resolved.map((l) => l.quotaCode))];
   for (const code of codes) {
@@ -3090,7 +3189,12 @@ export async function applyPreferredMasseurs(
 export async function assignPackageMenuLines(
   episodeId: string,
   lines: AssignLineInput[],
-  opts?: { confirmedByUserId?: string; softWarnOnly?: boolean; startAt?: Date | null },
+  opts?: {
+    confirmedByUserId?: string;
+    softWarnOnly?: boolean;
+    startAt?: Date | null;
+    bathLayout?: "continue" | "fresh";
+  },
 ): Promise<{
   placed: number;
   softWarn: string | null;

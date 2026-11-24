@@ -4,6 +4,7 @@ import { useLocale } from "next-intl";
 import { TEXT_MUTED_CLASS } from "@era/satellite-kit/ui";
 import { addBakuDays, todayBakuYmd } from "@/lib/baku-day";
 import type { StayPlan, StayPlanMark } from "@/domain/sanatorium/package-assign.service";
+import { procedureLoadLevelColor } from "@/domain/planning/procedure-load-matrix";
 
 /** Max stay plus one day before check-in and one after checkout. */
 const DAY_SLOTS = 23;
@@ -63,6 +64,7 @@ export function StayDayGrid({
   legendPackage,
   legendPaid,
   legendDone,
+  loadLevelFor,
 }: {
   plan: StayPlan;
   focusKey: string | null;
@@ -73,6 +75,8 @@ export function StayDayGrid({
   legendPackage: string;
   legendPaid: string;
   legendDone: string;
+  /** Optional clinic-wide load level 0..9 for this procedure × day. */
+  loadLevelFor?: (procedureCode: string, ymd: string) => number | null;
 }) {
   const locale = useLocale();
   const rows = new Map<string, Row>();
@@ -175,15 +179,27 @@ export function StayDayGrid({
                         .filter(Boolean)
                         .join("\n")
                     : "";
+                  const loadLevel = loadLevelFor?.(row.procedureCode, ymd) ?? null;
+                  const loadBg =
+                    loadLevel != null && tone === "open"
+                      ? procedureLoadLevelColor(loadLevel)
+                      : undefined;
                   return (
                     <td
                       key={ymd}
                       title={hint || undefined}
                       className={`px-0 py-0.5 text-center align-middle ${
-                        tone === "closed" ? "bg-slate-100" : tone === "past" ? "bg-rose-50" : ""
+                        loadBg
+                          ? ""
+                          : tone === "closed"
+                            ? "bg-slate-100"
+                            : tone === "past"
+                              ? "bg-rose-50"
+                              : ""
                       } ${
                         ymd === today ? todayMark : ""
                       }`}
+                      style={loadBg ? { background: loadBg } : undefined}
                     >
                       {mark ? (
                         <span

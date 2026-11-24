@@ -51,6 +51,8 @@ import { register as register49 } from "./auth_sso_exchange";
 import { register as register50 } from "./billing_context";
 import { register as register51 } from "./booking_appointments";
 import { register as register52 } from "./capacity_summary";
+import { register as registerProcedureLoad } from "./sanatorium_procedure-load";
+
 import { register as register53 } from "./cashier_over-quota";
 import { register as register54 } from "./cashier_queue";
 import { register as register55 } from "./cashier_receipts";
@@ -282,6 +284,7 @@ export function registerClinicRoutes(http: { get: Function; post: Function; put:
   register50(http);
   register51(http);
   register52(http);
+  registerProcedureLoad(http);
   register53(http);
   register54(http);
   register55(http);

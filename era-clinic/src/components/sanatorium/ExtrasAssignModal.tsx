@@ -285,10 +285,13 @@ export function ExtrasAssignModal({
       }
       if (!res.ok) {
         const code = typeof d?.code === "string" ? d.code : null;
-        showApiError(
-          code === "CABIN_SEX" ? { ...d, error: tPhysio("packageAssignMissCabinSex") } : d,
-          tc("saveFailed"),
-        );
+        const mapped =
+          code === "CABIN_SEX"
+            ? { ...d, error: tPhysio("packageAssignMissCabinSex") }
+            : code === "QUOTA_REMAINING"
+              ? { ...d, error: tPhysio("packageAssignQuotaRemaining") }
+              : d;
+        showApiError(mapped, tc("saveFailed"));
         return;
       }
       setDraft([]);

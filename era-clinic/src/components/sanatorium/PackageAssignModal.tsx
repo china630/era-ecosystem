@@ -44,6 +44,8 @@ import {
 import { StayDayGrid } from "@/components/sanatorium/StayDayGrid";
 import type { StayPlan } from "@/domain/sanatorium/package-assign.service";
 import { packageAssignGoalLayers } from "@/domain/planning/package-assign-goal";
+import { ProcedureLoadMatrixView, loadLevelForCodeDay } from "@/components/sanatorium/ProcedureLoadMatrixView";
+import type { ProcedureLoadMatrix } from "@/domain/planning/procedure-load-matrix";
 import { addBakuDays, bakuDateKey, bakuDateDisplay, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 
 export type PackageBalanceRow = {
@@ -390,6 +392,12 @@ export function PackageAssignModal({
     package: boolean;
     extras: boolean;
   } | null>(null);
+  const [holesAskOpen, setHolesAskOpen] = useState(false);
+  const [pendingSaveStart, setPendingSaveStart] = useState<{ date: string; hour: string } | null | undefined>(undefined);
+  /** Kept across start-hour dialog so holes → fresh is not lost. */
+  const [pendingBathLayout, setPendingBathLayout] = useState<"continue" | "fresh" | null>(null);
+  const [daySeriesCodes, setDaySeriesCodes] = useState<string[]>([]);
+  const [loadMatrix, setLoadMatrix] = useState<ProcedureLoadMatrix | null>(null);
   const [stayPlan, setStayPlan] = useState<StayPlan>({ days: [], checkoutYmd: null, closedDays: [], marks: [] });
   const [courseStarted, setCourseStarted] = useState(false);
   const [planFocus, setPlanFocus] = useState<string | null>(null);
@@ -432,6 +440,16 @@ export function PackageAssignModal({
       payload.stayPlan ?? { days: [], checkoutYmd: null, closedDays: [], marks: [] },
     );
     setCourseStarted(payload.courseStarted === true);
+    if (Array.isArray(payload.daySeriesCodes)) {
+      setDaySeriesCodes(payload.daySeriesCodes.map((row: unknown) => String(row)));
+    }
+    void fetch("/api/sanatorium/procedure-load")
+      .then((r) => r.json())
+      .then((body) => {
+        const data = body?.data ?? body;
+        if (data?.rows && data?.days) setLoadMatrix(data as ProcedureLoadMatrix);
+      })
+      .catch(() => {});
     const optionRows =
       payload.masseurOptions && typeof payload.masseurOptions === "object"
         ? (payload.masseurOptions as Record<string, Array<{ id: string; fullName: string }>>)
@@ -1269,7 +1287,47 @@ export function PackageAssignModal({
     return masseurByCode[code] || null;
   }
 
-  async function save(start?: { date: string; hour: string }) {
+  function hardSeriesHasHoles(procedureCode: string): boolean {
+    if (!daySeriesCodes.includes(procedureCode)) return false;
+    const own = stayPlan.marks
+      .filter((m) => m.procedureCode === procedureCode && !m.paid)
+      .map((m) => m.ymd)
+      .sort();
+    if (own.length === 0) return false;
+    const last = own[own.length - 1]!;
+    const closed = new Set(stayPlan.closedDays);
+    for (const d of stayPlan.days) {
+      if (d >= last) break;
+      if (closed.has(d)) continue;
+      if (!own.includes(d)) return true;
+    }
+    return false;
+  }
+
+  function daySeriesNeedsHolesAsk(): boolean {
+    return draft
+      .filter((d) => d.qty > 0)
+      .some((d) => daySeriesCodes.includes(d.procedureCode) && hardSeriesHasHoles(d.procedureCode));
+  }
+
+  /** Saxla entry: may still need start-hour then holes ask (ADR order). */
+  async function save(start?: { date: string; hour: string }, bathLayout: "continue" | "fresh" = "continue") {
+    await runPackageSave(start, bathLayout, false);
+  }
+
+  /** After holes continue/fresh — do not re-ask holes. */
+  async function saveWithLayout(
+    start: { date: string; hour: string } | undefined,
+    bathLayout: "continue" | "fresh",
+  ) {
+    await runPackageSave(start, bathLayout, true);
+  }
+
+  async function runPackageSave(
+    start: { date: string; hour: string } | undefined,
+    bathLayout: "continue" | "fresh",
+    holesResolved: boolean,
+  ) {
     let extras = extraDraft;
     let lines = draft;
     if (formLane === "extra" && formCode) {
@@ -1346,11 +1404,21 @@ export function PackageAssignModal({
       return;
     }
     const needsSlot = lines.some((line) => !lineIsStudy(line));
+    // ADR: start-course → holes ask → Saxla → checkout-morning.
     if (lines.length > 0 && needsSlot && !blockReason && !start && !courseStarted && assigned.length === 0) {
       const point = defaultStartPoint();
       setStartDate(point.date);
       setStartHour(point.hour);
+      setPendingBathLayout(bathLayout);
+      setHolesAskOpen(false);
       setStartOpen(true);
+      return;
+    }
+    if (!holesResolved && bathLayout === "continue" && daySeriesNeedsHolesAsk()) {
+      setPendingSaveStart(start === undefined ? undefined : start);
+      setPendingBathLayout(null);
+      setStartOpen(false);
+      setHolesAskOpen(true);
       return;
     }
     setBusy(true);
@@ -1406,6 +1474,7 @@ export function PackageAssignModal({
             })),
             ...(prefs.length > 0 ? { staffPrefs: prefs } : {}),
             ...(start ? { startOn: start.date, startHour: Number(start.hour) } : {}),
+            ...(bathLayout === "fresh" ? { bathLayout: "fresh" } : {}),
           }),
         });
         const d = await res.json().catch(() => ({}));
@@ -2180,7 +2249,7 @@ export function PackageAssignModal({
             for (const row of assigned) {
               const key = assignedKey(row);
               const wiped = pendingCancel.has(key);
-              if (wiped && (row.doneQty ?? 0) < 1) continue;
+              if (wiped && keptOfAssigned(row) < 1) continue;
               const pkgDraft = draft.find((d) => draftMatchesAssigned(d, row, menuQuotaForAssigned(row)));
               const cut = wiped ? row.qty : pendingCut[key] ?? 0;
               const factQty = row.qty;
@@ -2282,6 +2351,14 @@ export function PackageAssignModal({
                 </button>
               </div>
             );
+            lanes.sort((a, b) => {
+              const ya =
+                stayPlan.marks.find((m) => m.procedureCode === a.code)?.ymd ?? "9999";
+              const yb =
+                stayPlan.marks.find((m) => m.procedureCode === b.code)?.ymd ?? "9999";
+              if (ya !== yb) return ya.localeCompare(yb);
+              return a.name.localeCompare(b.name) || a.regimeKey.localeCompare(b.regimeKey);
+            });
             return (
               <>
               <ul className="space-y-2">
@@ -2299,9 +2376,15 @@ export function PackageAssignModal({
                   const cutPending = lane.assigned
                     ? pendingCut[assignedKey(lane.assigned)] ?? 0
                     : 0;
+                  const cancelPending = lane.assigned
+                    ? pendingCancel.has(assignedKey(lane.assigned))
+                    : false;
                   const targetPlusDisabled =
                     lane.pkgLocked ||
-                    (cutPending < 1 && packageRem < 1 && lane.targetQty >= lane.factQty);
+                    (packageRem < 1 &&
+                      cutPending < 1 &&
+                      !cancelPending &&
+                      lane.targetQty >= lane.factQty);
                   const showPackageRows =
                     lane.factQty > 0 ||
                     lane.targetQty > 0 ||
@@ -2378,6 +2461,15 @@ export function PackageAssignModal({
                           )}
                         </div>
                       ) : null}
+                      <div className={`flex items-center justify-between gap-2 py-0.5 text-[12px] ${TEXT_MUTED_CLASS}`}>
+                        <span>{tPhysio("fromPackage")}</span>
+                        <span
+                          className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#E8EEF4] px-1.5 text-[11px] font-semibold tabular-nums"
+                          title={tPhysio("fromPackage")}
+                        >
+                          {lane.factQty}
+                        </span>
+                      </div>
                       <div className="flex items-center justify-between gap-2 py-1">
                         <span className={TEXT_MUTED_CLASS}>{tPhysio("extraLine")}</span>
                         <div className="flex items-center gap-3">
@@ -2387,18 +2479,34 @@ export function PackageAssignModal({
                               {(lane.extraUnit * lane.extraQty).toFixed(2)}
                             </span>
                           </span>
+                          <span className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#F5E6D3] px-1.5 text-[11px] font-semibold tabular-nums text-[#8B5A2B]">
+                            {lane.extraQty}
+                          </span>
                           {stepper(
                             lane.extraQty,
                             () => extraMinus(lane.code, lane.regimeKey),
-                            () =>
+                            () => {
+                              const quota = lane.assigned
+                                ? menuQuotaForAssigned(lane.assigned)
+                                : lane.pkgDraft?.burnPoolCode || lane.code;
+                              const rem = draftRemaining.get(quota) ?? 0;
+                              if (rem > 0) {
+                                showApiError({ error: tPhysio("packageAssignQuotaRemaining") });
+                                return;
+                              }
                               extraPlus(lane.code, lane.name, lane.paramsLabel, lane.regimeKey, {
                                 note: "",
                                 physioFields: lane.physioFields,
                                 siteIds: lane.siteIds,
                                 siteApplyMode: lane.siteApplyMode,
                                 siteLaterality: lane.siteLaterality,
-                              }),
-                            false,
+                              });
+                            },
+                            (draftRemaining.get(
+                              lane.assigned
+                                ? menuQuotaForAssigned(lane.assigned)
+                                : lane.pkgDraft?.burnPoolCode || lane.code,
+                            ) ?? 0) > 0,
                           )}
                         </div>
                       </div>
@@ -2645,21 +2753,50 @@ export function PackageAssignModal({
           ) : null}
         </div>
         </div>
-        <StayDayGrid
-          plan={stayPlan}
-          focusKey={planFocus}
-          onFocus={(procedureCode, regimeKey) => {
-            const key = `${procedureCode}:${regimeKey}`;
-            setPlanFocus(key);
-            document.getElementById(`assign-lane-${key}`)?.scrollIntoView({ block: "nearest" });
-          }}
-          emptyLabel={tPhysio("stayPlanEmpty")}
-          openLabel={tPhysio("stayPlanOpen")}
-          noonLabel={tPhysio("stayPlanNoon")}
-          legendPackage={tPhysio("stayPlanPackage")}
-          legendPaid={tPhysio("stayPlanPaid")}
-          legendDone={tPhysio("stayPlanDone")}
-        />
+        {stayPlan.marks.length === 0 ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <p className={`mb-2 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
+              {tPhysio("procedureLoadTitle")}
+            </p>
+            <ProcedureLoadMatrixView
+              matrix={loadMatrix}
+              emptyLabel={tPhysio("procedureLoadEmpty")}
+              legendLow={tPhysio("procedureLoadLow")}
+              legendHigh={tPhysio("procedureLoadHigh")}
+            />
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <StayDayGrid
+              plan={stayPlan}
+              focusKey={planFocus}
+              onFocus={(procedureCode, regimeKey) => {
+                const key = `${procedureCode}:${regimeKey}`;
+                setPlanFocus(key);
+                document.getElementById(`assign-lane-${key}`)?.scrollIntoView({ block: "nearest" });
+              }}
+              emptyLabel={tPhysio("stayPlanEmpty")}
+              openLabel={tPhysio("stayPlanOpen")}
+              noonLabel={tPhysio("stayPlanNoon")}
+              legendPackage={tPhysio("stayPlanPackage")}
+              legendPaid={tPhysio("stayPlanPaid")}
+              legendDone={tPhysio("stayPlanDone")}
+              loadLevelFor={(code, ymd) => loadLevelForCodeDay(loadMatrix, code, ymd)}
+            />
+            <div className="mt-3 min-h-0 border-t border-[#E8EEF4] pt-2">
+              <p className={`mb-1 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
+                {tPhysio("procedureLoadTitle")}
+              </p>
+              <ProcedureLoadMatrixView
+                matrix={loadMatrix}
+                excludeCodes={new Set(stayPlan.marks.map((m) => m.procedureCode))}
+                emptyLabel={tPhysio("procedureLoadAllAssigned")}
+                legendLow={tPhysio("procedureLoadLow")}
+                legendHigh={tPhysio("procedureLoadHigh")}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </ModalShell>
   );
@@ -2775,19 +2912,34 @@ export function PackageAssignModal({
     <ModalShell
       open={startOpen}
       title={tPhysio("packageAssignStartTitle")}
-      onClose={() => setStartOpen(false)}
+      onClose={() => {
+        setStartOpen(false);
+        setPendingBathLayout(null);
+      }}
       overlayZClass="z-[400]"
       maxWidthClass="max-w-md"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
-          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setStartOpen(false)}>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => {
+              setStartOpen(false);
+              setPendingBathLayout(null);
+            }}
+          >
             {cancelLabel}
           </button>
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
             disabled={busy || !startDate || !startHour}
-            onClick={() => void save({ date: startDate, hour: startHour })}
+            onClick={() => {
+              const layout = pendingBathLayout ?? "continue";
+              setPendingBathLayout(null);
+              setStartOpen(false);
+              void save({ date: startDate, hour: startHour }, layout);
+            }}
           >
             {labels.save}
           </button>
@@ -2825,6 +2977,61 @@ export function PackageAssignModal({
       </div>
     </ModalShell>
   );
+  const holesAsk = (
+    <ModalShell
+      open={holesAskOpen}
+      title={tPhysio("packageAssignHolesAskTitle")}
+      onClose={() => {
+        setHolesAskOpen(false);
+        setPendingSaveStart(undefined);
+      }}
+      overlayZClass="z-[400]"
+      maxWidthClass="max-w-md"
+      footer={
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={() => {
+              setHolesAskOpen(false);
+              setPendingSaveStart(undefined);
+            }}
+          >
+            {tc("cancel")}
+          </button>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled={busy}
+            onClick={() => {
+              setHolesAskOpen(false);
+              const start = pendingSaveStart === undefined ? undefined : pendingSaveStart ?? undefined;
+              setPendingSaveStart(undefined);
+              void saveWithLayout(start ?? undefined, "continue");
+            }}
+          >
+            {tPhysio("packageAssignHolesContinue")}
+          </button>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={busy}
+            onClick={() => {
+              setHolesAskOpen(false);
+              const start = pendingSaveStart === undefined ? undefined : pendingSaveStart ?? undefined;
+              setPendingSaveStart(undefined);
+              void saveWithLayout(start ?? undefined, "fresh");
+            }}
+          >
+            {tPhysio("packageAssignHolesFresh")}
+          </button>
+        </div>
+      }
+    >
+      <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{tPhysio("packageAssignHolesAskBody")}</p>
+    </ModalShell>
+  );
+
   const checkout = (
     <ModalShell
       open={checkoutAsk != null}
@@ -2859,6 +3066,7 @@ export function PackageAssignModal({
     <>
       {shell}
       {discard}
+      {holesAsk}
       {startAsk}
       {checkout}
     </>

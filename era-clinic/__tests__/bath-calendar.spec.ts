@@ -8,6 +8,7 @@ import {
   saxlaBlockedDays,
   saxlaDayTaken,
   saxlaSameSkuKept,
+  saxlaSameSkuKeptForSaxla,
   saxlaSeatKept,
   strayBathOrderIds,
   type StayDay,
@@ -734,6 +735,22 @@ describe("hard-series rhythm invariant (Irina-class)", () => {
       new Set(["SVC-NAFTALAN-VANNASI-QADIN"]),
     );
     expect(kept.map((c) => c.ymd).sort()).toEqual(["2026-11-19", "2026-11-20"]);
+  });
+
+  it("saxlaSameSkuKeptForSaxla fresh keeps past and checked-in only", () => {
+    const orders = [
+      { id: "past", ymd: "2026-11-18", procedureCode: "SVC-NAFT", status: "SCHEDULED" },
+      { id: "fut", ymd: "2026-11-25", procedureCode: "SVC-NAFT", status: "SCHEDULED" },
+      { id: "ci", ymd: "2026-11-26", procedureCode: "SVC-NAFT", status: "CHECKED_IN" },
+    ];
+    const kept = saxlaSameSkuKeptForSaxla(
+      orders,
+      new Set(["new"]),
+      new Set(["SVC-NAFT"]),
+      "fresh",
+      "2026-11-20",
+    );
+    expect(kept.map((c) => c.ymd).sort()).toEqual(["2026-11-18", "2026-11-26"]);
   });
 });
 

@@ -24,8 +24,9 @@ import {
   parseBathDayModes,
   resolveDefaultBathMode,
   saxlaDayTaken,
-  saxlaSameSkuKept,
+  saxlaSameSkuKeptForSaxla,
   saxlaSeatKept,
+  type BathLayout,
   strayBathOrderIds,
   type KeptCell,
   type StayDay,
@@ -784,6 +785,8 @@ export type SeatDaySeriesOpts = {
   startAt?: Date | null;
   scheduleBefore?: Date | null;
   cabinBag?: CabinScanBag;
+  /** continue pins after last bath; fresh replans future movable same-SKU days. */
+  layout?: BathLayout;
 };
 
 /**
@@ -856,10 +859,11 @@ export async function seatDaySeriesOrders(
   const notBeforeYmd = nextWorkingYmd(snapshot.days, startFloor) ?? startFloor;
   const seatingIds = new Set(handled.map((order) => order.id));
   const seatingCodes = new Set(byCode.keys());
+  const layout: BathLayout = opts?.layout === "fresh" ? "fresh" : "continue";
   /** Other-series occupy dates; same-SKU live rows are locked kept (count in qty + streak). */
   const kept: KeptCell[] = [
     ...saxlaSeatKept(snapshot.orders, seatingIds, seatingCodes),
-    ...saxlaSameSkuKept(snapshot.orders, seatingIds, seatingCodes),
+    ...saxlaSameSkuKeptForSaxla(snapshot.orders, seatingIds, seatingCodes, layout, notBeforeYmd),
   ];
   for (const order of snapshot.orders) {
     if (seatingIds.has(order.id) || !seatingCodes.has(order.procedureCode)) continue;
@@ -904,7 +908,7 @@ export async function seatDaySeriesOrders(
           days: snapshot.days,
           series: seriesInputs,
           kept,
-          layout: "continue",
+          layout,
           modes: snapshot.modes,
           notBeforeYmd,
           policy,

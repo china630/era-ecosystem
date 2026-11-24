@@ -37,6 +37,7 @@ const assignSchema = z
     releaseUnseated: z.boolean().optional(),
     startOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     startHour: z.number().int().min(0).max(23).optional(),
+    bathLayout: z.enum(["continue", "fresh"]).optional(),
   })
   .refine(
     (body) =>
@@ -142,6 +143,7 @@ export function register(http: { get: Function; post: Function; put: Function; p
         ? await assignPackageMenuLines(id, body.lines, {
             confirmedByUserId: session.sub,
             startAt,
+            bathLayout: body.bathLayout,
           })
         : { placed: 0, softWarn: null, orderIds: [] as string[], misses: [] as Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string; staffName?: string }> };
     if (body.staffPrefs && body.staffPrefs.length > 0) {
