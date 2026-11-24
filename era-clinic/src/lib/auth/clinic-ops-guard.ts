@@ -4,9 +4,10 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import {
-  opsApiRoutePermission,
+  opsApiRoutePermissions,
   type ClinicPermission,
 } from "@/lib/auth/clinic-permissions";
+import { sessionHasAnyClinicPermission } from "@/lib/auth/clinic-permission-check";
 import type { NextResponse } from "next/server";
 import type { SatelliteStaffSessionPayload } from "@era/satellite-kit";
 
@@ -20,11 +21,23 @@ export async function assertOpsApiPermission(
 ): Promise<GuardOk | GuardFail> {
   const session = await getSatelliteSession();
   if (!session) return { error: jsonError("Unauthorized", 401) };
-  const permission =
-    permissionOverride ??
-    opsApiRoutePermission(new URL(req.url).pathname, req.method);
-  if (!permission) return { error: jsonError("Forbidden", 403, { code: "FORBIDDEN" }) };
-  const denied = await requireClinicPermission(session, permission);
-  if (denied) return { error: denied };
+  if (permissionOverride) {
+    const denied = await requireClinicPermission(session, permissionOverride);
+    if (denied) return { error: denied };
+    return { session };
+  }
+  const path = new URL(req.url).pathname;
+  const allowed = opsApiRoutePermissions(path, req.method);
+  if (!allowed.length) {
+    return { error: jsonError("Forbidden", 403, { code: "FORBIDDEN" }) };
+  }
+  if (allowed.length === 1) {
+    const denied = await requireClinicPermission(session, allowed[0]!);
+    if (denied) return { error: denied };
+    return { session };
+  }
+  if (!sessionHasAnyClinicPermission(session, allowed)) {
+    return { error: jsonError("Forbidden", 403, { code: "FORBIDDEN" }) };
+  }
   return { session };
 }

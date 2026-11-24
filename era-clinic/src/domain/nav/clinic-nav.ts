@@ -302,6 +302,14 @@ export const CLINIC_NAV: ClinicNavEntry[] = [
     preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
   },
   {
+    href: "/sanatorium/resources/load",
+    labelKey: "procedureLoad",
+    icon: Activity,
+    group: "mod:sanatorium",
+    permission: CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES,
+    preset: [CLINIC_PRESET.SANATORIUM_CLINICAL],
+  },
+  {
     href: "/sanatorium/nurse-roster",
     labelKey: "nurseRoster",
     icon: CalendarRange,

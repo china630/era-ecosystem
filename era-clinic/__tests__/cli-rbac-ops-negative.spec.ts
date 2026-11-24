@@ -21,6 +21,7 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   navEntryPermission,
   opsApiRoutePermission,
+  opsApiRoutePermissions,
 } from "@/lib/auth/clinic-permissions";
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
 import { assertClinicPermission } from "@/lib/auth/clinic-permission.service";
@@ -146,6 +147,15 @@ describe("Clinic RBAC ops API catalog (Wave 3)", () => {
     );
     expect(opsApiRoutePermission("/api/procedures/x/complete")).toBe(
       CLINIC_PERMISSION.API_PROCEDURES_READ,
+    );
+    expect(opsApiRoutePermission("/api/sanatorium/procedure-load")).toBe(
+      CLINIC_PERMISSION.API_SANATORIUM_RESOURCES,
+    );
+    expect(opsApiRoutePermissions("/api/sanatorium/procedure-load")).toEqual(
+      expect.arrayContaining([
+        CLINIC_PERMISSION.API_SANATORIUM_RESOURCES,
+        CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
+      ]),
     );
   });
 

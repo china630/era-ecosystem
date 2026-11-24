@@ -204,7 +204,11 @@ export function StayDayGrid({
                       {mark ? (
                         <span
                           className={`mx-auto block h-2.5 w-2.5 rounded-full ${
-                            mark.done ? "bg-slate-700" : mark.paid ? "bg-amber-400" : "bg-[#1F4E79]"
+                            mark.done
+                              ? "bg-emerald-700"
+                              : mark.paid
+                                ? "bg-amber-400"
+                                : "bg-[#1F4E79]"
                           }`}
                         />
                       ) : null}
@@ -230,7 +234,7 @@ export function StayDayGrid({
           {legendPaid}
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-700" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-700" />
           {legendDone}
         </span>
       </p>

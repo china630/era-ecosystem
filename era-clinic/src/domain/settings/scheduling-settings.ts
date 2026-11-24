@@ -35,6 +35,8 @@ export type SchedulingSettings = {
   closedDaySpendsOwedRest: boolean;
   closedDayResetsOpenStreak: boolean;
   weeklyNaftalanCap: number;
+  /** Procedure-load matrix horizon (default 21). */
+  procedureLoadHorizonDays: number;
 };
 
 export type TenantWorkHours = Pick<
@@ -72,6 +74,7 @@ export const SANATORIUM_DEFAULT_SETTINGS: SchedulingSettings = {
   closedDaySpendsOwedRest: true,
   closedDayResetsOpenStreak: true,
   weeklyNaftalanCap: 5,
+  procedureLoadHorizonDays: 21,
 };
 
 export const DEFAULT_WORK_HOURS: TenantWorkHours = {
@@ -116,6 +119,11 @@ export async function getSchedulingSettings(): Promise<SchedulingSettings> {
     closedDayResetsOpenStreak: tenant.closedDayResetsOpenStreak !== false,
     weeklyNaftalanCap:
       tenant.weeklyNaftalanCap == null ? 5 : Math.min(14, Math.max(0, tenant.weeklyNaftalanCap)),
+    procedureLoadHorizonDays: (() => {
+      const raw = tenant.procedureLoadHorizonDays;
+      if (raw == null || !Number.isFinite(raw)) return 21;
+      return Math.min(31, Math.max(3, Math.trunc(raw)));
+    })(),
     ...workHoursFromTenant(tenant),
   };
 }
