@@ -635,6 +635,8 @@ export async function getPackageAssignSnapshot(
   /** Unstarted sessions of this code, when they all name the same person. */
   masseurByCode: Record<string, string | null>;
   stayPlan: StayPlan;
+  /** Active day-series member codes. The modal asks continue vs fresh for these. */
+  daySeriesCodes: string[];
   /** A live package or paid procedure is already on the stay. Saxla does not ask the start hour again. */
   courseStarted: boolean;
 }> {
@@ -664,6 +666,7 @@ export async function getPackageAssignSnapshot(
         masseurOptions: {},
         masseurByCode: {},
         stayPlan: { days: [], checkoutYmd: null, closedDays: [], marks: [] },
+        daySeriesCodes: [],
         courseStarted: false,
       };
     }
@@ -728,6 +731,7 @@ export async function getPackageAssignSnapshot(
         masseurOptions: {},
         masseurByCode: {},
         stayPlan: { days: [], checkoutYmd: null, closedDays: [], marks: [] },
+        daySeriesCodes: [],
         courseStarted: false,
       };
     }
