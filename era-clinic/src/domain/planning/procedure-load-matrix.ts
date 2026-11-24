@@ -1,6 +1,6 @@
 /**
  * Clinic procedure load heatmap — aggregate live orders by procedureCode × Baku day.
- * Cheap GROUP-BY style counts; no cabin slot-scan.
+ * Levels prefer used/capacity % when capacity is known; else peak-normalized counts.
  */
 
 import { addBakuDays, todayBakuYmd } from "@era/satellite-kit/time";
@@ -10,6 +10,10 @@ export const PROCEDURE_LOAD_LEVELS = 10;
 export type ProcedureLoadCell = {
   ymd: string;
   count: number;
+  /** Estimated daily seat capacity for this SKU (null = unknown). */
+  capacity: number | null;
+  /** 0..1 when capacity known. */
+  pct: number | null;
   /** 0 = calm (blue) … 9 = hot (red). */
   level: number;
 };
@@ -18,6 +22,8 @@ export type ProcedureLoadRow = {
   procedureCode: string;
   procedureName: string;
   total: number;
+  /** Typical daily capacity for this SKU (null = unknown). */
+  dayCapacity: number | null;
   cells: ProcedureLoadCell[];
 };
 
@@ -26,6 +32,8 @@ export type ProcedureLoadMatrix = {
   toYmd: string;
   generatedAt: string;
   days: string[];
+  /** true when at least one row has capacity. */
+  capacityBased: boolean;
   rows: ProcedureLoadRow[];
 };
 
@@ -49,6 +57,34 @@ export function countToLevel(count: number, peak: number, levels = PROCEDURE_LOA
   if (count <= 0 || peak <= 0) return 0;
   if (count >= peak) return levels - 1;
   return Math.min(levels - 1, Math.floor((count / peak) * levels));
+}
+
+/** Map fill ratio 0..1+ to 0..9 (70% ≈ mid-warm, 90%+ hot). */
+export function pctToLevel(pct: number, levels = PROCEDURE_LOAD_LEVELS): number {
+  if (pct <= 0) return 0;
+  if (pct >= 1) return levels - 1;
+  return Math.min(levels - 1, Math.floor(pct * levels));
+}
+
+/**
+ * Working-day seat capacity for one SKU:
+ * floor(workMinutes / duration) × sum(resource.capacity).
+ */
+export function estimateDayCapacity(input: {
+  dayStartHour: number;
+  dayEndHour: number;
+  lunchStartHour: number;
+  lunchEndHour: number;
+  durationMin: number;
+  resourceCapacitySum: number;
+}): number {
+  const open = Math.max(0, input.dayEndHour - input.dayStartHour);
+  const lunch = Math.max(0, input.lunchEndHour - input.lunchStartHour);
+  const workMin = Math.max(0, (open - lunch) * 60);
+  const dur = Math.max(5, Math.floor(input.durationMin) || 30);
+  const slots = Math.max(1, Math.floor(workMin / dur));
+  const seats = Math.max(1, Math.floor(input.resourceCapacitySum) || 1);
+  return slots * seats;
 }
 
 /** 10-step blue → red (CSS background). */
@@ -76,6 +112,8 @@ export function buildProcedureLoadMatrix(input: {
   /** Raw counts: code → ymd → n */
   counts: Map<string, Map<string, number>>;
   names: Map<string, string>;
+  /** Optional daily capacity per procedure code. */
+  dayCapacityByCode?: Map<string, number>;
   topN?: number;
   nowYmd?: string;
 }): ProcedureLoadMatrix {
@@ -85,6 +123,7 @@ export function buildProcedureLoadMatrix(input: {
   const toYmd = input.toYmd ?? addBakuDays(fromYmd, horizon - 1);
   const days = ymdRangeInclusive(fromYmd, toYmd);
   const topN = input.topN ?? 10;
+  const caps = input.dayCapacityByCode ?? new Map<string, number>();
 
   const totals: Array<{ code: string; total: number }> = [];
   for (const [code, byDay] of input.counts) {
@@ -102,15 +141,37 @@ export function buildProcedureLoadMatrix(input: {
     for (const d of days) peak = Math.max(peak, byDay.get(d) ?? 0);
   }
 
+  let capacityBased = false;
   const rows: ProcedureLoadRow[] = picked.map(({ code, total }) => {
     const byDay = input.counts.get(code) ?? new Map();
+    const rawCap = caps.get(code);
+    const dayCapacity =
+      rawCap != null && Number.isFinite(rawCap) && rawCap > 0 ? Math.floor(rawCap) : null;
+    if (dayCapacity != null) capacityBased = true;
     return {
       procedureCode: code,
       procedureName: input.names.get(code) || code,
       total,
+      dayCapacity,
       cells: days.map((ymd) => {
         const count = byDay.get(ymd) ?? 0;
-        return { ymd, count, level: countToLevel(count, peak) };
+        if (dayCapacity != null) {
+          const pct = count / dayCapacity;
+          return {
+            ymd,
+            count,
+            capacity: dayCapacity,
+            pct,
+            level: pctToLevel(pct),
+          };
+        }
+        return {
+          ymd,
+          count,
+          capacity: null,
+          pct: null,
+          level: countToLevel(count, peak),
+        };
       }),
     };
   });
@@ -120,6 +181,7 @@ export function buildProcedureLoadMatrix(input: {
     toYmd,
     generatedAt: new Date().toISOString(),
     days,
+    capacityBased,
     rows,
   };
 }

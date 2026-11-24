@@ -134,4 +134,13 @@ describe("isPackageAssignNoonHold", () => {
     expect(isPackageAssignNoonHold({ reason: "cabin_busy" })).toBe(false);
     expect(isPackageAssignNoonHold({ reason: "day_full" })).toBe(false);
   });
+
+  it("never treats OPEN drops as noon hold", () => {
+    expect(
+      isPackageAssignNoonHold({ reason: "no_slot", schedulingMode: "OPEN" }),
+    ).toBe(false);
+    expect(
+      isPackageAssignNoonHold({ reason: "no_day", schedulingMode: "OPEN" }),
+    ).toBe(false);
+  });
 });

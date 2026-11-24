@@ -11,10 +11,11 @@ import {
   TEXT_MUTED_CLASS,
   MODAL_INPUT_CLASS,
   CARD_CONTAINER_CLASS,
-  MODAL_FULL_CLASS,
+  MODAL_FULL_FILL_CLASS,
   CatalogField,
   DatePicker,
   showApiError,
+  showSuccess,
 } from "@era/satellite-kit/ui";
 import { ChevronDown, Info, Minus, Plus, Trash2 } from "lucide-react";
 import {
@@ -25,10 +26,11 @@ import {
 } from "@/components/physio/PhysioSiteChips";
 import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels";
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
-import { paramsLabelFromPhysio } from "@/components/physio/physio-params-label";
+import { paramsLabelFromPhysio, stripLatinParamEcho } from "@/components/physio/physio-params-label";
 import { regimeFingerprint } from "@/domain/sanatorium/regime-key";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 import {
+  buildPackageAssignPlacedLines,
   formatPackageAssignMissLines,
   isPackageAssignNoonHold,
   toastPackageAssignOutcome,
@@ -42,9 +44,14 @@ import {
   parseTransferQuota,
 } from "@/domain/sanatorium/package-assign-quota";
 import { StayDayGrid } from "@/components/sanatorium/StayDayGrid";
+import { stayWindowDays } from "@/domain/sanatorium/stay-day-axis";
 import type { StayPlan } from "@/domain/sanatorium/package-assign.service";
 import { packageAssignGoalLayers } from "@/domain/planning/package-assign-goal";
 import { ProcedureLoadMatrixView, loadLevelForCodeDay } from "@/components/sanatorium/ProcedureLoadMatrixView";
+import {
+  AssignSaveOutcomePanel,
+  type AssignSaveOutcomeState,
+} from "@/components/sanatorium/AssignSaveOutcomePanel";
 import type { ProcedureLoadMatrix } from "@/domain/planning/procedure-load-matrix";
 import { addBakuDays, bakuDateKey, bakuDateDisplay, bakuHourMinute, todayBakuYmd } from "@/lib/baku-day";
 
@@ -271,9 +278,12 @@ function regimeOf(row: {
 }
 
 function paramLinesOf(label?: string, lines?: string[]): string[] {
-  if (lines && lines.length) return lines;
-  if (!label?.trim()) return [];
-  return label.split(" · ").map((s) => s.trim()).filter(Boolean);
+  const raw = lines && lines.length
+    ? lines
+    : label?.trim()
+      ? label.split(" · ").map((s) => s.trim()).filter(Boolean)
+      : [];
+  return raw.map((line) => stripLatinParamEcho(line)).filter(Boolean);
 }
 
 function draftMatchesAssigned(
@@ -399,7 +409,11 @@ export function PackageAssignModal({
   const [pendingBathLayout, setPendingBathLayout] = useState<"continue" | "fresh" | null>(null);
   const [daySeriesCodes, setDaySeriesCodes] = useState<string[]>([]);
   const [loadMatrix, setLoadMatrix] = useState<ProcedureLoadMatrix | null>(null);
+  /** After Saxla with misses: replaces heat until dismissed. Quota already returned. */
+  const [saveOutcome, setSaveOutcome] = useState<AssignSaveOutcomeState | null>(null);
   const [stayPlan, setStayPlan] = useState<StayPlan>({ days: [], checkoutYmd: null, closedDays: [], marks: [] });
+  /** Working days left today…checkout−1 — caps Miqdar / Say / extra +. */
+  const [staySeatMax, setStaySeatMax] = useState(40);
   const [courseStarted, setCourseStarted] = useState(false);
   const [planFocus, setPlanFocus] = useState<string | null>(null);
   const [pendingCancel, setPendingCancel] = useState<Set<string>>(new Set());
@@ -440,11 +454,16 @@ export function PackageAssignModal({
     setStayPlan(
       payload.stayPlan ?? { days: [], checkoutYmd: null, closedDays: [], marks: [] },
     );
+    setStaySeatMax(
+      typeof payload.staySeatMax === "number" && payload.staySeatMax >= 0
+        ? Math.max(0, Math.floor(payload.staySeatMax))
+        : 40,
+    );
     setCourseStarted(payload.courseStarted === true);
     if (Array.isArray(payload.daySeriesCodes)) {
       setDaySeriesCodes(payload.daySeriesCodes.map((row: unknown) => String(row)));
     }
-    void fetch("/api/sanatorium/procedure-load")
+    void fetch(`/api/sanatorium/procedure-load?bust=${Date.now()}`)
       .then((r) => r.json())
       .then((body) => {
         const data = body?.data ?? body;
@@ -535,6 +554,7 @@ export function PackageAssignModal({
       setMasseurByCode({});
       setLaneTarget({});
     }
+    setSaveOutcome(null);
     setFormLane(null);
     setMasseurSaved({});
     setMasseurOptions({});
@@ -545,6 +565,12 @@ export function PackageAssignModal({
     setBlockReason(null);
     setPackagePin(null);
     setReplaceOpen(false);
+    setReplaceFrom("");
+    setReplaceTo("");
+    setReplaceQty(1);
+    setReplaceReason("");
+    setReplacePhysio(EMPTY_PHYSIO);
+    setReplaceBatchId(null);
     void (async () => {
       await fetch(`/api/sanatorium/episodes/${episodeId}/package-assign`, {
         method: "POST",
@@ -737,22 +763,31 @@ export function PackageAssignModal({
     if (!masseurOptions[code]?.length) return false;
     return (masseurByCode[code] ?? "") !== (masseurSaved[code] ?? "");
   });
+  const extraCutCount = Object.values(extraPendingCut).reduce((sum, n) => sum + (n > 0 ? n : 0), 0);
+  /** Real Saxla-bound edits only — open form / replace panel do not count. */
+  const hasDirtyWork =
+    draft.length > 0 ||
+    extraDraft.length > 0 ||
+    hasPendingAdjust ||
+    extraCutCount > 0 ||
+    masseurDirty;
   const canSavePackage =
     !blockReason &&
-    (draft.length > 0 ||
-      hasPendingAdjust ||
-      masseurDirty ||
-      (formLane === "package" && Boolean(formCode)));
-  const extraCutCount = Object.values(extraPendingCut).reduce((sum, n) => sum + (n > 0 ? n : 0), 0);
+    (draft.length > 0 || hasPendingAdjust || masseurDirty);
   const canSaveExtras =
-    !clinicalLock && (extraDraft.length > 0 || extraCutCount > 0 || formLane === "extra");
+    !clinicalLock && (extraDraft.length > 0 || extraCutCount > 0);
   const canSave = !busy && (canSavePackage || canSaveExtras);
-  const unsaved =
-    canSavePackage ||
-    canSaveExtras ||
-    replaceFrom !== "" ||
-    replaceTo !== "" ||
-    replaceReason.trim() !== "";
+  const unsaved = hasDirtyWork;
+
+  function clearReplaceState() {
+    setReplaceOpen(false);
+    setReplaceFrom("");
+    setReplaceTo("");
+    setReplaceQty(1);
+    setReplaceReason("");
+    setReplacePhysio(EMPTY_PHYSIO);
+    setReplaceBatchId(null);
+  }
   function snapshotDraft(): PackageAssignDraftSnapshot {
     return {
       draft,
@@ -784,11 +819,13 @@ export function PackageAssignModal({
 
   function requestClose() {
     if (busy) return;
+    if (replaceOpen) clearReplaceState();
     if (unsaved) {
       setDiscardOpen(true);
       return;
     }
     clearPackageAssignDraft(episodeId);
+    setSaveOutcome(null);
     onClose();
   }
 
@@ -804,6 +841,34 @@ export function PackageAssignModal({
     }
     return draft.filter((d) => !used.has(d.key));
   }, [assigned, draft, pendingCancel, balances, poolEligible]);
+
+  /** Focus assign lane for a miss (DOM id is `code:regimeKey`). */
+  function focusMissProcedure(procedureCode: string) {
+    if (!procedureCode) return;
+    const row = assigned.find((lane) => lane.procedureCode === procedureCode);
+    if (row) {
+      const key = `${row.procedureCode}:${regimeOf(row)}`;
+      setPlanFocus(key);
+      document.getElementById(`assign-lane-${key}`)?.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    const draftRow = leftoverDraft.find((lane) => lane.procedureCode === procedureCode);
+    if (draftRow) {
+      const key = `${draftRow.procedureCode}:${draftRow.fingerprint || ""}`;
+      setPlanFocus(key);
+      document
+        .getElementById(`assign-lane-${key}`)
+        ?.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    const el = document.querySelector<HTMLElement>(
+      `[id^="assign-lane-${CSS.escape(procedureCode)}:"]`,
+    );
+    if (el?.id.startsWith("assign-lane-")) {
+      setPlanFocus(el.id.slice("assign-lane-".length));
+      el.scrollIntoView({ block: "nearest" });
+    }
+  }
 
   /** Modal add order → Saxla seats №1 first within a daily-cap block. */
   const saxlaOrderByDraftKey = useMemo(() => {
@@ -891,12 +956,15 @@ export function PackageAssignModal({
     setFormLane("package");
     const bal = balances.find((b) => b.procedureCode === code);
     const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
+    const qtyCap = Math.max(0, staySeatMax);
+    const fillQty = Math.min(rem, qtyCap);
+    const defaultQty = Math.min(1, Math.max(1, fillQty)) || 1;
     if (bal?.isTransfer || isBathTransferQuota(code)) {
       const sku = bathTransferSku(code);
       if (refuseWrongSex(sku)) return;
       setFormBurnPool(code);
       setFormCode(sku);
-      setFormQty(fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1);
+      setFormQty(fillAllQty ? Math.max(1, fillQty) : defaultQty);
       setFormPhysio(gateToPhysio(sku, bal?.procedureName ?? sku));
       return;
     }
@@ -907,7 +975,7 @@ export function PackageAssignModal({
       const eligible = poolEligible[code] ?? [];
       const auto = eligible.length === 1 ? eligible[0].code : null;
       setFormCode(auto);
-      setFormQty(fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1);
+      setFormQty(fillAllQty ? Math.max(1, fillQty) : defaultQty);
       setFormPhysio(auto ? gateToPhysio(auto, eligible[0]?.name ?? auto) : EMPTY_PHYSIO);
       return;
     }
@@ -918,7 +986,7 @@ export function PackageAssignModal({
       if (sku) {
         setFormBurnPool(code);
         setFormCode(sku.code);
-        setFormQty(fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1);
+        setFormQty(fillAllQty ? Math.max(1, fillQty) : defaultQty);
         setFormPhysio(gateToPhysio(sku.code, sku.name));
         return;
       }
@@ -926,9 +994,7 @@ export function PackageAssignModal({
     const name = bal?.procedureName ?? code;
     setFormBurnPool(null);
     setFormCode(code);
-    setFormQty(
-      fillAllQty ? Math.max(1, rem) : Math.min(1, Math.max(1, rem)) || 1,
-    );
+    setFormQty(fillAllQty ? Math.max(1, fillQty) : defaultQty);
     setFormPhysio(gateToPhysio(code, name));
   }
 
@@ -1131,6 +1197,11 @@ export function PackageAssignModal({
     const bal = balances.find((b) => b.procedureCode === code);
     const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
     if (rem < 1) return;
+    if (staySeatMax < 1) {
+      showApiError({ error: tPhysio("staySeatMaxExceeded", { max: staySeatMax }) });
+      return;
+    }
+    const qty = Math.min(rem, staySeatMax);
     // Transfer remainder: burn XFER key, assign real SKU — never send XFER as procedureCode.
     if (bal?.isTransfer || isBathTransferQuota(code)) {
       const sku = bathTransferSku(code);
@@ -1156,7 +1227,7 @@ export function PackageAssignModal({
       pushDraft({
         procedureCode: sku.code,
         procedureName: sku.name,
-        qty: rem,
+        qty,
         note: "",
         physioFields: {},
         siteIds: [],
@@ -1172,7 +1243,7 @@ export function PackageAssignModal({
     pushDraft({
       procedureCode: code,
       procedureName: name,
-      qty: rem,
+      qty,
       note: "",
       physioFields: {},
       siteIds: [],
@@ -1208,6 +1279,7 @@ export function PackageAssignModal({
       procedureName?: string;
       procedureCode?: string;
       hitAttemptCap?: boolean;
+      schedulingMode?: string;
     }>,
   ): string[] {
     return rows
@@ -1231,6 +1303,22 @@ export function PackageAssignModal({
     return formatPackageAssignMissLines(misses, tPhysio);
   }
 
+  /** Misses → outcome panel (swap heat); full toast only when everything placed. */
+  function publishAssignOutcome(requested: AssignToastLine[], misses: AssignToastMiss[]) {
+    if (misses.length > 0) {
+      setSaveOutcome({ requested, misses });
+      const placedLines = buildPackageAssignPlacedLines(requested, misses, (key, values) =>
+        tPhysio(key, values),
+      );
+      if (placedLines.length > 0) {
+        showSuccess(placedLines.slice(0, 8).join("\n"));
+      }
+      return;
+    }
+    setSaveOutcome(null);
+    toastPackageAssignOutcome(requested, misses, (key, values) => tPhysio(key, values));
+  }
+
   function replaceReasonToast(): string {
     const name =
       balances.find((row) => row.procedureCode === replaceFrom)?.procedureName ??
@@ -1248,6 +1336,9 @@ export function PackageAssignModal({
     const misses = placeMissText(payload.misses);
     if (misses) return misses;
     if (code === "CABIN_SEX") return tPhysio("packageAssignMissCabinSex");
+    if (code === "STAY_QTY_EXCEEDED") {
+      return tPhysio("staySeatMaxExceeded", { max: staySeatMax });
+    }
     if (code === "MASSEUR_NOT_SKILLED") return tPhysio("masseurNotSkilled");
     if (code === "NO_CABIN") return tPhysio("packageAssignNoCabin", { names: serverError });
     if (code === "PLACE_FAILED") {
@@ -1561,9 +1652,7 @@ export function PackageAssignModal({
         } else {
           const code = typeof extraBody?.code === "string" ? extraBody.code : null;
           if (outcomeRequested.length > 0) {
-            toastPackageAssignOutcome(outcomeRequested, outcomeMisses, (key, values) =>
-              tPhysio(key, values),
-            );
+            publishAssignOutcome(outcomeRequested, outcomeMisses);
           }
           setStartOpen(false);
           if (packageOk) {
@@ -1578,6 +1667,8 @@ export function PackageAssignModal({
               error:
                 code === "QUOTA_REMAINING"
                   ? tPhysio("packageAssignQuotaRemaining")
+                  : code === "STAY_QTY_EXCEEDED"
+                    ? tPhysio("staySeatMaxExceeded", { max: staySeatMax })
                   : code === "NO_PRICE"
                     ? tPhysio("labExtraNoPrice")
                   : code === "CABIN_SEX"
@@ -1593,9 +1684,7 @@ export function PackageAssignModal({
         }
       }
       if (outcomeRequested.length > 0) {
-        toastPackageAssignOutcome(outcomeRequested, outcomeMisses, (key, values) =>
-          tPhysio(key, values),
-        );
+        publishAssignOutcome(outcomeRequested, outcomeMisses);
       }
       const missQtyByCode = new Map<string, number>();
       for (const miss of outcomeMisses) {
@@ -1751,6 +1840,10 @@ export function PackageAssignModal({
     const rem = draftRemaining.get(quota) ?? 0;
     if (rem < 1) return false;
     const nextQty = line.qty + 1;
+    if (nextQty > staySeatMax) {
+      showApiError({ error: tPhysio("staySeatMaxExceeded", { max: staySeatMax }) });
+      return true;
+    }
     setLaneTarget((prev) => ({ ...prev, [line.key]: nextQty }));
     setDraft((prev) =>
       prev.map((d) => (d.key === line.key ? { ...d, qty: nextQty } : d)),
@@ -1794,6 +1887,10 @@ export function PackageAssignModal({
       const rem = packageRemForAssigned(lane.assigned);
       const goal = currentGoalForAssigned(lane.assigned);
       if (goal < lane.assigned.qty + rem) {
+        if (goal + 1 > staySeatMax) {
+          showApiError({ error: tPhysio("staySeatMaxExceeded", { max: staySeatMax }) });
+          return;
+        }
         applyAssignedGoal(lane.assigned, goal + 1);
         return;
       }
@@ -2000,6 +2097,15 @@ export function PackageAssignModal({
       return;
     }
     if (refuseWrongSex(code)) return;
+    const pendingLive = extraPending.filter((row) => row.procedureCode === code).length;
+    const draftLive = extraDraft
+      .filter((row) => row.procedureCode === code)
+      .reduce((sum, row) => sum + row.qty, 0);
+    const paidLive = paidExtras.filter((row) => row.procedureCode === code).length;
+    if (pendingLive + draftLive + paidLive >= staySeatMax) {
+      showApiError({ error: tPhysio("staySeatMaxExceeded", { max: staySeatMax }) });
+      return;
+    }
     const hit = extraDraft.find(
       (row) => row.procedureCode === code && regimeOf(row) === regimeKey,
     );
@@ -2012,13 +2118,16 @@ export function PackageAssignModal({
     pushPaid(code, name, 1, { paramsLabel, ...detail });
   }
 
+  const stayDayColumns = useMemo(() => stayWindowDays(stayPlan), [stayPlan]);
+
   const shell = (
     <ModalShell
       open={open}
       title={labels.title}
       onClose={requestClose}
-      maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
-      bodyClassName="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
+      maxWidthClass={`${MODAL_FULL_FILL_CLASS} overflow-hidden flex flex-col`}
+      overlayPaddingClass="p-2"
+      bodyClassName="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
           <button
@@ -2643,11 +2752,12 @@ export function PackageAssignModal({
                       className={`${MODAL_INPUT_CLASS} w-[5ch]`}
                       type="number"
                       min={1}
-                      max={40}
+                      max={Math.max(1, staySeatMax)}
+                      title={tPhysio("staySeatMaxHint", { max: staySeatMax })}
                       value={formQty}
                       onChange={(e) => {
                         const raw = Number(e.target.value) || 1;
-                        const cap = 40;
+                        const cap = Math.max(1, staySeatMax);
                         const n = Math.min(cap, Math.max(1, raw));
                         setFormQty(n);
                         if (n <= 1) {
@@ -2795,8 +2905,13 @@ export function PackageAssignModal({
                   className={`${MODAL_INPUT_CLASS} mt-1 w-[6ch]`}
                   type="number"
                   min={1}
+                  max={Math.max(1, staySeatMax)}
+                  title={tPhysio("staySeatMaxHint", { max: staySeatMax })}
                   value={replaceQty}
-                  onChange={(e) => setReplaceQty(Number(e.target.value) || 1)}
+                  onChange={(e) => {
+                    const raw = Number(e.target.value) || 1;
+                    setReplaceQty(Math.min(Math.max(1, staySeatMax), Math.max(1, raw)));
+                  }}
                 />
               </label>
               {replaceTo ? (
@@ -2850,7 +2965,7 @@ export function PackageAssignModal({
                   type="button"
                   className={SECONDARY_BUTTON_CLASS}
                   disabled={busy}
-                  onClick={() => setReplaceOpen(false)}
+                  onClick={() => clearReplaceState()}
                 >
                   {cancelLabel}
                 </button>
@@ -2869,48 +2984,90 @@ export function PackageAssignModal({
         </div>
         {stayPlan.marks.length === 0 ? (
           <div className="flex min-h-0 flex-1 flex-col">
-            <p className={`mb-2 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
-              {tPhysio("procedureLoadTitle")}
-            </p>
-            <ProcedureLoadMatrixView
-              matrix={loadMatrix}
-              dayColumns={stayPlan.days.length ? stayPlan.days : undefined}
-              emptyLabel={tPhysio("procedureLoadEmpty")}
-              legendLow={tPhysio("procedureLoadLow")}
-              legendHigh={tPhysio("procedureLoadHigh")}
-            />
+            {saveOutcome && saveOutcome.misses.length > 0 ? (
+              <AssignSaveOutcomePanel
+                outcome={saveOutcome}
+                onShowLoad={() => setSaveOutcome(null)}
+                onFocusMiss={(procedureCode) => focusMissProcedure(procedureCode)}
+                t={(key, values) => tPhysio(key, values)}
+              />
+            ) : (
+              <>
+                <p className={`mb-2 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
+                  {tPhysio("procedureLoadTitle")}
+                </p>
+                <ProcedureLoadMatrixView
+                  matrix={loadMatrix}
+                  dayColumns={stayDayColumns.length ? stayDayColumns : undefined}
+                  matchStayWidth={stayDayColumns.length > 0}
+                  emptyLabel={tPhysio("procedureLoadEmpty")}
+                  legendLow={tPhysio("procedureLoadLow")}
+                  legendHigh={tPhysio("procedureLoadHigh")}
+                />
+              </>
+            )}
           </div>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
-            <StayDayGrid
-              plan={stayPlan}
-              focusKey={planFocus}
-              onFocus={(procedureCode, regimeKey) => {
-                const key = `${procedureCode}:${regimeKey}`;
-                setPlanFocus(key);
-                document.getElementById(`assign-lane-${key}`)?.scrollIntoView({ block: "nearest" });
-              }}
-              emptyLabel={tPhysio("stayPlanEmpty")}
-              openLabel={tPhysio("stayPlanOpen")}
-              noonLabel={tPhysio("stayPlanNoon")}
-              legendPackage={tPhysio("stayPlanPackage")}
-              legendPaid={tPhysio("stayPlanPaid")}
-              legendDone={tPhysio("stayPlanDone")}
-              loadLevelFor={(code, ymd) => loadLevelForCodeDay(loadMatrix, code, ymd)}
-            />
-            <div className="min-h-0 border-t border-[#E8EEF4] pt-1">
-              <p className={`mb-0.5 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
-                {tPhysio("procedureLoadTitle")}
-              </p>
-              <ProcedureLoadMatrixView
-                matrix={loadMatrix}
-                dayColumns={stayPlan.days}
-                excludeCodes={new Set(stayPlan.marks.map((m) => m.procedureCode))}
-                emptyLabel={tPhysio("procedureLoadAllAssigned")}
-                legendLow={tPhysio("procedureLoadLow")}
-                legendHigh={tPhysio("procedureLoadHigh")}
+            <div className="min-h-0 flex-1 overflow-auto">
+              <StayDayGrid
+                plan={stayPlan}
+                dayColumns={stayDayColumns}
+                ownScroll={false}
+                showLegend={false}
+                focusKey={planFocus}
+                onFocus={(procedureCode, regimeKey) => {
+                  const key = `${procedureCode}:${regimeKey}`;
+                  setPlanFocus(key);
+                  document.getElementById(`assign-lane-${key}`)?.scrollIntoView({ block: "nearest" });
+                }}
+                emptyLabel={tPhysio("stayPlanEmpty")}
+                openLabel={tPhysio("stayPlanOpen")}
+                noonLabel={tPhysio("stayPlanNoon")}
+                legendPackage={tPhysio("stayPlanPackage")}
+                legendPaid={tPhysio("stayPlanPaid")}
+                legendDone={tPhysio("stayPlanDone")}
+                loadLevelFor={(code, ymd) => loadLevelForCodeDay(loadMatrix, code, ymd)}
               />
+              {saveOutcome && saveOutcome.misses.length > 0 ? (
+                <AssignSaveOutcomePanel
+                  outcome={saveOutcome}
+                  onShowLoad={() => setSaveOutcome(null)}
+                  onFocusMiss={(procedureCode) => focusMissProcedure(procedureCode)}
+                  t={(key, values) => tPhysio(key, values)}
+                />
+              ) : (
+                <div className="border-t border-[#E8EEF4] pt-1">
+                  <p className={`mb-0.5 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
+                    {tPhysio("procedureLoadTitle")}
+                  </p>
+                  <ProcedureLoadMatrixView
+                    matrix={loadMatrix}
+                    dayColumns={stayDayColumns}
+                    matchStayWidth
+                    ownScroll={false}
+                    excludeCodes={new Set(stayPlan.marks.map((m) => m.procedureCode))}
+                    emptyLabel={tPhysio("procedureLoadAllAssigned")}
+                    legendLow={tPhysio("procedureLoadLow")}
+                    legendHigh={tPhysio("procedureLoadHigh")}
+                  />
+                </div>
+              )}
             </div>
+            <p className={`mt-2 flex shrink-0 flex-wrap gap-3 text-[12px] ${TEXT_MUTED_CLASS}`}>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#1F4E79]" />
+                {tPhysio("stayPlanPackage")}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />
+                {tPhysio("stayPlanPaid")}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-700" />
+                {tPhysio("stayPlanDone")}
+              </span>
+            </p>
           </div>
         )}
       </div>
@@ -3002,6 +3159,7 @@ export function PackageAssignModal({
             onClick={() => {
               setDiscardOpen(false);
               persistDraftIfAny();
+              setSaveOutcome(null);
               onClose();
             }}
           >

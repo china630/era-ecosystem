@@ -335,6 +335,7 @@ function uiLang(locale: string | undefined): "en" | "az" | "ru" {
 function bilingualTitle(
   lang: "en" | "az" | "ru",
   row: { titleEn?: string | null; titleRu?: string | null; titleAz?: string | null; code?: string | null },
+  opts?: { localeOnly?: boolean },
 ): string {
   const en = row.titleEn?.trim() ?? "";
   const local =
@@ -342,7 +343,7 @@ function bilingualTitle(
     en ||
     row.code?.trim() ||
     "";
-  if (local && en && local !== en) return `${local} (${en})`;
+  if (!opts?.localeOnly && local && en && local !== en) return `${local} (${en})`;
   return local;
 }
 
@@ -368,13 +369,16 @@ export function paramsLinesFromOrder(
     locale?: string;
     /** PhysioListItem id → titles, for deviceProgramId / substanceId. */
     listTitles?: Map<string, { titleEn?: string | null; titleRu?: string | null; titleAz?: string | null }>;
+    /** Assign modal cards: UI language only (no `az (en)` echo). */
+    localeOnly?: boolean;
   },
 ): string[] {
   const lang = uiLang(opts?.locale);
+  const titleOpts = opts?.localeOnly ? { localeOnly: true } : undefined;
   const parts: string[] = [];
   const siteNames = (o.sites ?? [])
     .map((s) => {
-      const title = s.site ? bilingualTitle(lang, s.site) : "";
+      const title = s.site ? bilingualTitle(lang, s.site, titleOpts) : "";
       const lat = (s as { laterality?: string | null }).laterality;
       if (!title) return null;
       const side = lat ? formatLateralityLabel(lang, lat === "LEFT" || lat === "RIGHT" || lat === "BOTH" ? lat : null) : "";
@@ -395,8 +399,8 @@ export function paramsLinesFromOrder(
     const substance = substanceId ? opts?.listTitles?.get(substanceId) : undefined;
     parts.push(
       ...formatPhysioFieldsPrint(lang, pf as PhysioOrderFields, {
-        program: program ? bilingualTitle(lang, program) : null,
-        substance: substance ? bilingualTitle(lang, substance) : null,
+        program: program ? bilingualTitle(lang, program, titleOpts) : null,
+        substance: substance ? bilingualTitle(lang, substance, titleOpts) : null,
       }),
     );
   }
@@ -640,6 +644,8 @@ export async function getPackageAssignSnapshot(
   daySeriesCodes: string[];
   /** A live package or paid procedure is already on the stay. Saxla does not ask the start hour again. */
   courseStarted: boolean;
+  /** Working days left for OPEN pin (today…checkout−1). Caps Miqdar / Say / stepper. */
+  staySeatMax: number;
 }> {
   let episode = await loadEpisodeForAssign(episodeId, {
     requireClinicalGates: false,
@@ -669,6 +675,7 @@ export async function getPackageAssignSnapshot(
         stayPlan: { days: [], checkoutYmd: null, closedDays: [], marks: [] },
         daySeriesCodes: [],
         courseStarted: false,
+        staySeatMax: 0,
       };
     }
     const { tryOpenProgramAfterTherapistStage } = await import(
@@ -734,6 +741,7 @@ export async function getPackageAssignSnapshot(
         stayPlan: { days: [], checkoutYmd: null, closedDays: [], marks: [] },
         daySeriesCodes: [],
         courseStarted: false,
+        staySeatMax: 0,
       };
     }
   }
@@ -1054,7 +1062,7 @@ export async function getPackageAssignSnapshot(
       packageQuotaCode: isPackageQuotaAlias(stampedQuota) ? o.procedureCode : stampedQuota,
       regimeKey,
     });
-    const lines = paramsLinesFromOrder(o, { locale, listTitles });
+    const lines = paramsLinesFromOrder(o, { locale, listTitles, localeOnly: true });
     const movable =
       !started &&
       bakuDateKey(o.scheduledAt) >= todayBakuYmd() &&
@@ -1227,6 +1235,8 @@ export async function getPackageAssignSnapshot(
   });
   const { daySeriesProcedureCodes } = await import("@/domain/planning/bath-calendar.service");
   const daySeriesCodes = [...(await daySeriesProcedureCodes())];
+  const { countRemainingStayWorkingDays } = await import("@/domain/sanatorium/stay-seat-cap");
+  const staySeatMax = await countRemainingStayWorkingDays(episodeId);
 
   return {
     balances: menuBalances,
@@ -1251,6 +1261,7 @@ export async function getPackageAssignSnapshot(
     stayPlan,
     daySeriesCodes,
     courseStarted: orders.length > 0 || paidLive > 0,
+    staySeatMax,
   };
 }
 
@@ -1307,7 +1318,7 @@ async function buildStayPlan(
       procedureCode: order.procedureCode,
       regimeKey: regimeFromOrderSites(order),
       procedureName: order.procedureName,
-      paramsLabel: paramsLinesFromOrder(order, { locale, listTitles }).join(" · "),
+      paramsLabel: paramsLinesFromOrder(order, { locale, listTitles, localeOnly: true }).join(" · "),
       done: started,
       paid,
       open,
@@ -1316,7 +1327,7 @@ async function buildStayPlan(
     });
   };
   for (const order of packageOrders) push(order, false);
-  const paid = await prisma.procedureOrder.findMany({
+  const extras = await prisma.procedureOrder.findMany({
     where: {
       clinicalEpisodeId: episodeId,
       inPackage: false,
@@ -1329,6 +1340,7 @@ async function buildStayPlan(
       scheduledAt: true,
       checkedInAt: true,
       schedulingMode: true,
+      paidAt: true,
       note: true,
       bodyPart: true,
       siteApplyMode: true,
@@ -1343,7 +1355,8 @@ async function buildStayPlan(
       },
     },
   });
-  for (const order of paid) push(order, true);
+  // Yellow = really paid (paidAt). PENDING_PAY / unpaid seated = not paid.
+  for (const order of extras) push(order, order.paidAt != null);
   return { days, checkoutYmd, closedDays, marks };
 }
 
@@ -1981,6 +1994,40 @@ export async function assignPackageProcedures(
     resolved.push({ ...line, procedureCode: skuCode, quotaCode });
   }
 
+  {
+    const { countRemainingOpenSeatDays, countRemainingStayWorkingDays } = await import(
+      "@/domain/sanatorium/stay-seat-cap"
+    );
+    const openUsed = new Map<string, number>();
+    const softMax = await countRemainingStayWorkingDays(episodeId);
+    for (const line of resolved) {
+      const pt = typeByCode.get(line.procedureCode);
+      if (!pt) continue;
+      if (pt.openAttendance === true) {
+        const used = openUsed.get(line.procedureCode) ?? 0;
+        const remaining = Math.max(
+          0,
+          (await countRemainingOpenSeatDays(episodeId, line.procedureCode)).remainingSeatDays -
+            used,
+        );
+        if (line.qty > remaining) {
+          throw new PackageAssignError(
+            `Quantity exceeds remaining stay days (${remaining})`,
+            "STAY_QTY_EXCEEDED",
+            409,
+          );
+        }
+        openUsed.set(line.procedureCode, used + line.qty);
+      } else if (line.qty > softMax) {
+        throw new PackageAssignError(
+          `Quantity exceeds remaining stay days (${softMax})`,
+          "STAY_QTY_EXCEEDED",
+          409,
+        );
+      }
+    }
+  }
+
   const settings = await getSchedulingSettings();
   const defaultBathMode = defaultBathModeFromSettings(settings);
   const softWarn: string | null = null;
@@ -2144,6 +2191,7 @@ export async function assignPackageProcedures(
     };
     movedTo?: string;
     hitAttemptCap?: boolean;
+    schedulingMode?: "OPEN" | "FIXED";
   }> = [];
   const seatMisses: typeof misses = [];
   const placedIds: string[] = [];
@@ -2190,13 +2238,14 @@ export async function assignPackageProcedures(
         scheduleBefore: instance.endsOn ?? undefined,
         startAt,
       });
-      for (const row of openSeat.failures) holdStayMiss(row.orderId, row.reason);
+      // OPEN miss drops like unseated FIXED — no checkout-morning hold.
       misses.push(
         ...openSeat.failures.map((row) => ({
           ymd: row.ymd ?? "",
           procedureCode: row.procedureCode,
           procedureName: row.procedureName,
           reason: row.reason,
+          schedulingMode: "OPEN" as const,
         })),
       );
       placedIds.push(...openSeat.placedIds);
@@ -2301,13 +2350,14 @@ export async function assignPackageProcedures(
         startAt,
       });
       placedIds.push(...openSeat.placedIds);
-      for (const row of openSeat.failures) holdStayMiss(row.orderId, row.reason);
+      // OPEN redispatched miss drops too — never keepDespiteMiss / checkout hold.
       misses.push(
         ...openSeat.failures.map((row) => ({
           ymd: row.ymd ?? "",
           procedureCode: row.procedureCode,
           procedureName: row.procedureName,
           reason: row.reason,
+          schedulingMode: "OPEN" as const,
         })),
       );
     }
@@ -2502,6 +2552,26 @@ export async function replacePackageProcedures(
   }
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
+  {
+    const { countRemainingOpenSeatDays, countRemainingStayWorkingDays } = await import(
+      "@/domain/sanatorium/stay-seat-cap"
+    );
+    const toType = await prisma.procedureType.findUnique({
+      where: { code: input.toCode },
+      select: { openAttendance: true },
+    });
+    const stayMax =
+      toType?.openAttendance === true
+        ? (await countRemainingOpenSeatDays(episodeId, input.toCode)).remainingSeatDays
+        : await countRemainingStayWorkingDays(episodeId);
+    if (stayMax < 1 || input.qty > stayMax) {
+      throw new PackageAssignError(
+        `Quantity exceeds remaining stay days (${stayMax})`,
+        "STAY_QTY_EXCEEDED",
+        409,
+      );
+    }
+  }
   const balanceCodes = instance.procedureLines.map((l) => l.procedureCode);
 
   if (isPackagePoolCode(input.toCode)) {

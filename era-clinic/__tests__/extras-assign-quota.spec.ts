@@ -57,6 +57,16 @@ jest.mock("@/domain/procedure/procedure-sex-gate", () => ({
   procedureFitsGuestSex: jest.fn().mockResolvedValue(true),
 }));
 
+jest.mock("@/domain/sanatorium/stay-seat-cap", () => ({
+  countRemainingOpenSeatDays: jest.fn().mockResolvedValue({
+    remainingSeatDays: 14,
+    horizonStartYmd: "2026-11-24",
+    horizonEndYmd: "2026-12-05",
+    checkoutYmd: "2026-12-06",
+  }),
+  countRemainingStayWorkingDays: jest.fn().mockResolvedValue(14),
+}));
+
 import { prisma } from "@/lib/prisma";
 
 const mocked = prisma as unknown as {
