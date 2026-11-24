@@ -11,13 +11,16 @@ import {
   TEXT_MUTED_CLASS,
   MODAL_INPUT_CLASS,
   CARD_CONTAINER_CLASS,
-  MODAL_FULL_FILL_CLASS,
   CatalogField,
   DatePicker,
   showApiError,
   showSuccess,
 } from "@era/satellite-kit/ui";
 import { ChevronDown, Info, Minus, Plus, Trash2 } from "lucide-react";
+
+/** Near-viewport package card. Kit export lands with the shell padding prop. */
+const MODAL_FULL_FILL_CLASS =
+  "max-w-[min(99vw,1680px)] w-full !min-h-[min(92vh,56rem)] h-[min(92vh,56rem)] max-h-[96vh]";
 import {
   PhysioSiteChips,
   type PhysioCatalogListItem,
@@ -2126,7 +2129,6 @@ export function PackageAssignModal({
       title={labels.title}
       onClose={requestClose}
       maxWidthClass={`${MODAL_FULL_FILL_CLASS} overflow-hidden flex flex-col`}
-      overlayPaddingClass="p-2"
       bodyClassName="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
