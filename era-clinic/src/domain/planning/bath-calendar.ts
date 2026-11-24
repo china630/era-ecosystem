@@ -349,6 +349,8 @@ export type KeptCell = {
   manualRest?: boolean;
 };
 
+const SAXLA_PINNED_STATUSES = new Set(["CHECKED_IN", "COMPLETED"]);
+
 /** Same-SKU live days as locked kept cells (count toward qty + mode streak). */
 export function saxlaSameSkuKept(
   orders: Array<{ id: string; ymd: string; procedureCode: string }>,
@@ -357,6 +359,34 @@ export function saxlaSameSkuKept(
 ): KeptCell[] {
   return orders
     .filter((order) => !seatingIds.has(order.id) && seatingCodes.has(order.procedureCode))
+    .map((order) => ({
+      ymd: order.ymd,
+      procedureCode: order.procedureCode,
+      locked: true,
+    }));
+}
+
+/**
+ * Same-SKU kept for Saxla day-series seating.
+ * continue = every live same-SKU day is locked.
+ * fresh = only past days and checked-in/completed (future SCHEDULED may replan).
+ */
+export function saxlaSameSkuKeptForSaxla(
+  orders: Array<{ id: string; ymd: string; procedureCode: string; status?: string }>,
+  seatingIds: ReadonlySet<string>,
+  seatingCodes: ReadonlySet<string>,
+  layout: BathLayout,
+  notBeforeYmd: string,
+): KeptCell[] {
+  if (layout === "continue") {
+    return saxlaSameSkuKept(orders, seatingIds, seatingCodes);
+  }
+  return orders
+    .filter((order) => {
+      if (seatingIds.has(order.id) || !seatingCodes.has(order.procedureCode)) return false;
+      if (order.status && SAXLA_PINNED_STATUSES.has(order.status)) return true;
+      return order.ymd < notBeforeYmd;
+    })
     .map((order) => ({
       ymd: order.ymd,
       procedureCode: order.procedureCode,

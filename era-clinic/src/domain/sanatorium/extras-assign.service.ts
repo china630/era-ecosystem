@@ -196,9 +196,9 @@ export async function prescribeExtras(
   for (const line of lines) {
     if (line.qty < 1) continue;
     const openQuota = await remainingPackageQuotaCode(episodeId, line.procedureCode);
-    if (openQuota?.toUpperCase().startsWith("XFER-")) {
+    if (openQuota) {
       throw new PackageAssignError(
-        "Use transferred package remaining before a paid extra",
+        "Use package remaining before a paid extra",
         "QUOTA_REMAINING",
         409,
       );

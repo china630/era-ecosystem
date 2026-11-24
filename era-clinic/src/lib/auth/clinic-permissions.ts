@@ -1071,6 +1071,10 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/nurse/qr-scan", permission: CLINIC_PERMISSION.API_NURSE_QR_SCAN },
   { prefix: "/api/nurse/overdue", permission: CLINIC_PERMISSION.API_NURSE_OVERDUE },
   { prefix: "/api/sanatorium/resources", permission: CLINIC_PERMISSION.API_SANATORIUM_RESOURCES },
+  {
+    prefix: "/api/sanatorium/procedure-load",
+    permission: CLINIC_PERMISSION.API_SANATORIUM_RESOURCES,
+  },
   { prefix: "/api/sanatorium/nurse-roster", permission: CLINIC_PERMISSION.API_SANATORIUM_NURSE_ROSTER },
   { prefix: "/api/sanatorium/staff-absences", permission: CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES },
   {
