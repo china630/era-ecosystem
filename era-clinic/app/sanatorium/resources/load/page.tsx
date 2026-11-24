@@ -98,6 +98,7 @@ export default function SanatoriumProcedureLoadPage() {
         />
         <Field
           label={t("procedureLoadFilter")}
+          preset="shortText"
           value={procedureFilter}
           onChange={(e) => setProcedureFilter(e.target.value)}
           placeholder={t("procedureLoadFilterPlaceholder")}
