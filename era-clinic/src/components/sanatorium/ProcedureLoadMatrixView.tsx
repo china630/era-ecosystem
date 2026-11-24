@@ -1,10 +1,24 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import { TEXT_MUTED_CLASS } from "@era/satellite-kit/ui";
 import {
   procedureLoadLevelColor,
   type ProcedureLoadMatrix,
 } from "@/domain/planning/procedure-load-matrix";
+
+function bakuNoon(ymd: string): Date {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 8));
+}
+
+function monthTitle(ymd: string, locale: string): string {
+  const label = new Intl.DateTimeFormat(locale, {
+    month: "long",
+    timeZone: "Asia/Baku",
+  }).format(bakuNoon(ymd));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
 export function ProcedureLoadMatrixView({
   matrix,
@@ -13,6 +27,8 @@ export function ProcedureLoadMatrixView({
   legendLow,
   legendHigh,
   onRowClick,
+  /** When set, render only these days (align with patient stay grid). */
+  dayColumns,
 }: {
   matrix: ProcedureLoadMatrix | null;
   /** Hide rows already on the patient plan. */
@@ -21,7 +37,9 @@ export function ProcedureLoadMatrixView({
   legendLow: string;
   legendHigh: string;
   onRowClick?: (procedureCode: string) => void;
+  dayColumns?: string[];
 }) {
+  const locale = useLocale();
   if (!matrix || matrix.rows.length === 0) {
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{emptyLabel}</p>;
   }
@@ -31,8 +49,18 @@ export function ProcedureLoadMatrixView({
   if (rows.length === 0) {
     return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{emptyLabel}</p>;
   }
+  const days = dayColumns?.length ? dayColumns : matrix.days;
+  const monthSpans: Array<{ ymd: string; span: number }> = [];
+  for (const ymd of days) {
+    const prev = monthSpans[monthSpans.length - 1];
+    if (prev && prev.ymd.slice(0, 7) === ymd.slice(0, 7)) prev.span += 1;
+    else monthSpans.push({ ymd, span: 1 });
+  }
+  const cellFor = (row: (typeof rows)[0], ymd: string) =>
+    row.cells.find((c) => c.ymd === ymd) ?? { ymd, count: 0, level: 0 };
+
   return (
-    <div className="flex min-h-0 flex-col gap-2">
+    <div className="flex min-h-0 flex-col gap-1">
       <div className="flex items-center gap-2 text-[11px] tabular-nums">
         <span className={TEXT_MUTED_CLASS}>{legendLow}</span>
         <div className="flex h-2 flex-1 overflow-hidden rounded">
@@ -47,7 +75,19 @@ export function ProcedureLoadMatrixView({
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-white px-1 py-1 text-left font-medium"> </th>
-              {matrix.days.map((ymd) => (
+              {monthSpans.map((group) => (
+                <th
+                  key={group.ymd.slice(0, 7)}
+                  colSpan={group.span}
+                  className="px-0.5 py-0.5 text-center text-[11px] font-semibold text-[#2C3E50]"
+                >
+                  {monthTitle(group.ymd, locale)}
+                </th>
+              ))}
+            </tr>
+            <tr>
+              <th className="sticky left-0 z-10 bg-white px-1 py-1 text-left font-medium"> </th>
+              {days.map((ymd) => (
                 <th key={ymd} className="px-0.5 py-1 text-center font-normal tabular-nums">
                   {ymd.slice(8)}
                 </th>
@@ -70,16 +110,19 @@ export function ProcedureLoadMatrixView({
                     row.procedureName
                   )}
                 </td>
-                {row.cells.map((cell) => (
-                  <td
-                    key={cell.ymd}
-                    title={`${cell.count}`}
-                    className="h-7 min-w-[1.5rem] border border-white/60 text-center tabular-nums"
-                    style={{ background: procedureLoadLevelColor(cell.level) }}
-                  >
-                    {cell.count > 0 ? cell.count : ""}
-                  </td>
-                ))}
+                {days.map((ymd) => {
+                  const cell = cellFor(row, ymd);
+                  return (
+                    <td
+                      key={ymd}
+                      title={`${cell.count}`}
+                      className="h-7 min-w-[1.5rem] border border-white/60 text-center tabular-nums"
+                      style={{ background: procedureLoadLevelColor(cell.level) }}
+                    >
+                      {cell.count > 0 ? cell.count : ""}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

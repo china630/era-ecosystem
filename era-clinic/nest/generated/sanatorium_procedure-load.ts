@@ -34,10 +34,12 @@ export function register(http: { get: Function; post: Function; put: Function; p
           const toYmd = requestUrl.searchParams.get("to") ?? undefined;
           const topRaw = requestUrl.searchParams.get("top");
           const topN = topRaw ? Number(topRaw) : 10;
+          const bypassCache = requestUrl.searchParams.has("bust");
           const matrix = await getProcedureLoadMatrix({
             fromYmd: fromYmd || undefined,
             toYmd: toYmd || undefined,
             topN: Number.isFinite(topN) ? topN : 10,
+            bypassCache,
           });
           return sendJson(httpRes, { data: matrix });
         });

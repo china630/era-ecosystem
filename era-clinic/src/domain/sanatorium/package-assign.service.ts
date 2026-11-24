@@ -57,6 +57,7 @@ import {
   isBathQuotaLine,
   isBathTransferQuota,
   isReplaceableQuotaLine,
+  parseTransferQuota,
   transferQuotaCode,
 } from "@/domain/sanatorium/package-assign-quota";
 
@@ -1836,8 +1837,25 @@ export async function assignPackageProcedures(
 
   const resolved: Array<AssignLineInput & { quotaCode: string }> = [];
 
-  for (const line of lines) {
-    if (line.qty < 1) continue;
+  for (const rawLine of lines) {
+    if (rawLine.qty < 1) continue;
+    // XFER-* is a quota key only — never a ProcedureType code.
+    let line = rawLine;
+    if (isBathTransferQuota(line.procedureCode)) {
+      const parsed = parseTransferQuota(line.procedureCode);
+      if (!parsed?.sku) {
+        throw new PackageAssignError(
+          `Transfer quota ${line.procedureCode} is not a procedure — pick the target SKU`,
+          "TRANSFER_NOT_SKU",
+          400,
+        );
+      }
+      line = {
+        ...line,
+        procedureCode: parsed.sku,
+        burnPoolCode: line.burnPoolCode?.trim() || line.procedureCode,
+      };
+    }
     if (isPackagePoolCode(line.procedureCode)) {
       throw new PackageAssignError(
         `Pool code ${line.procedureCode} is not assignable — pick a real procedure`,

@@ -69,6 +69,8 @@ model Tenant {
   closedDayResetsOpenStreak      Boolean                  @default(true) @map("closed_day_resets_open_streak")
   /// Max naftalan-family sessions per Monday–Sunday week. 0 = off.
   weeklyNaftalanCap              Int                      @default(5) @map("weekly_naftalan_cap")
+  /// Procedure-load heat horizon (Asia/Baku civil days). Clamped 3–31 in service.
+  procedureLoadHorizonDays       Int                      @default(21) @map("procedure_load_horizon_days")
   /// Default resourceGapMinutes copied onto new ProcedureType rows (cabin idle after occupancy)
   defaultProcedureGapMinutes     Int                      @default(5) @map("default_procedure_gap_minutes")
   /// When true, procedures/resources with extendedEndHour may run past dayEndHour

@@ -26,8 +26,6 @@ import {
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
-import { ProcedureLoadMatrixView } from "@/components/sanatorium/ProcedureLoadMatrixView";
-import type { ProcedureLoadMatrix } from "@/domain/planning/procedure-load-matrix";
 import {
   ResourceDayMatrix,
   cabinLabel,
@@ -82,7 +80,6 @@ function slotMoveError(
 export default function SanatoriumResourcesPage() {
   const { auth } = useClinicAuth();
   const t = useTranslations("sanatoriumResources");
-  const tPhysio = useTranslations("physio");
   const tSettings = useTranslations("adminSettings");
   const tc = useTranslations("common");
   const locale = useLocale();
@@ -105,8 +102,6 @@ export default function SanatoriumResourcesPage() {
   const [dayClosed, setDayClosed] = useState(false);
   const [openLanes, setOpenLanes] = useState<OpenAttendanceLane[]>([]);
   const [checkInBusy, setCheckInBusy] = useState(false);
-  const [viewMode, setViewMode] = useState<"cabins" | "load">("cabins");
-  const [loadMatrix, setLoadMatrix] = useState<ProcedureLoadMatrix | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(
@@ -123,24 +118,6 @@ export default function SanatoriumResourcesPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (viewMode !== "load") return;
-    let cancelled = false;
-    void fetch("/api/sanatorium/procedure-load")
-      .then((r) => r.json())
-      .then((body) => {
-        if (cancelled) return;
-        const data = body?.data ?? body;
-        if (data?.rows && data?.days) setLoadMatrix(data as ProcedureLoadMatrix);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadMatrix(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [viewMode]);
 
   useEffect(() => {
     if (!detailSlot?.procedureOrderId) {
@@ -466,39 +443,10 @@ export default function SanatoriumResourcesPage() {
               </button> : null
             }
           />
-      <div className="mb-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          className={viewMode === "cabins" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-          onClick={() => setViewMode("cabins")}
-        >
-          {tPhysio("procedureLoadCabinsTab")}
-        </button>
-        <button
-          type="button"
-          className={viewMode === "load" ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-          onClick={() => setViewMode("load")}
-        >
-          {tPhysio("procedureLoadHeatTab")}
-        </button>
-      </div>
           {closedHint}
           {placingBar}
-          {viewMode === "load" ? (
-            <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>
-              <ProcedureLoadMatrixView
-                matrix={loadMatrix}
-                emptyLabel={tPhysio("procedureLoadEmpty")}
-                legendLow={tPhysio("procedureLoadLow")}
-                legendHigh={tPhysio("procedureLoadHigh")}
-              />
-            </div>
-          ) : (
-            <>
-              {filters}
-              <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{matrix}</div>
-            </>
-          )}
+          {filters}
+          <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>{matrix}</div>
         </>
       ) : (
         <ViewportOverlay

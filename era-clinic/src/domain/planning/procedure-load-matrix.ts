@@ -29,7 +29,7 @@ export type ProcedureLoadMatrix = {
   rows: ProcedureLoadRow[];
 };
 
-export function clampLoadHorizonDays(raw: unknown, fallback = 14): number {
+export function clampLoadHorizonDays(raw: unknown, fallback = 21): number {
   const n = Number(raw);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(31, Math.max(3, Math.floor(n)));
@@ -80,7 +80,7 @@ export function buildProcedureLoadMatrix(input: {
   nowYmd?: string;
 }): ProcedureLoadMatrix {
   const today = input.nowYmd ?? todayBakuYmd();
-  const horizon = clampLoadHorizonDays(input.horizonDays, 14);
+  const horizon = clampLoadHorizonDays(input.horizonDays, 21);
   const fromYmd = input.fromYmd ?? today;
   const toYmd = input.toYmd ?? addBakuDays(fromYmd, horizon - 1);
   const days = ymdRangeInclusive(fromYmd, toYmd);

@@ -24,10 +24,7 @@ export async function getProcedureLoadMatrix(opts?: {
   bypassCache?: boolean;
 }): Promise<ProcedureLoadMatrix> {
   const settings = await getSchedulingSettings();
-  const horizon = clampLoadHorizonDays(
-    (settings as { procedureLoadHorizonDays?: number }).procedureLoadHorizonDays ?? 14,
-    14,
-  );
+  const horizon = clampLoadHorizonDays(settings.procedureLoadHorizonDays ?? 21, 21);
   const today = todayBakuYmd();
   const fromYmd = opts?.fromYmd ?? today;
   const toYmd = opts?.toYmd ?? addBakuDays(fromYmd, horizon - 1);

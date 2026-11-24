@@ -385,6 +385,7 @@ export function PackageAssignModal({
   const [replaceQty, setReplaceQty] = useState(1);
   const [replaceBatchId, setReplaceBatchId] = useState<string | null>(null);
   const [replaceReason, setReplaceReason] = useState("");
+  const [replacePhysio, setReplacePhysio] = useState<PhysioChipsValue>(EMPTY_PHYSIO);
   const [packagePin, setPackagePin] = useState<string | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [checkoutAsk, setCheckoutAsk] = useState<{
@@ -1127,14 +1128,21 @@ export function PackageAssignModal({
   }
 
   function fillAll(code: string) {
-    if (refuseWrongSex(code)) return;
     const bal = balances.find((b) => b.procedureCode === code);
+    const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
+    if (rem < 1) return;
+    // Transfer remainder: burn XFER key, assign real SKU — never send XFER as procedureCode.
+    if (bal?.isTransfer || isBathTransferQuota(code)) {
+      const sku = bathTransferSku(code);
+      if (refuseWrongSex(sku)) return;
+      openForm(code, true);
+      return;
+    }
+    if (refuseWrongSex(code)) return;
     if (needsPicker(bal)) {
       openForm(code, true);
       return;
     }
-    const rem = draftRemaining.get(code) ?? bal?.remaining ?? 0;
-    if (rem < 1) return;
     // Resolved quota alias (known sex): burn pool code + concrete SKU.
     if (bal?.isQuotaAlias) {
       const eligible = poolEligible[code] ?? [];
@@ -1263,6 +1271,9 @@ export function PackageAssignModal({
     }
     if (code === "LAB_ONE") return tPhysio("packageAssignLabOne");
     if (code === "REASON_REQUIRED") return replaceReasonToast();
+    if (code === "TRANSFER_NOT_SKU" || code === "TRANSFER_SKU_MISMATCH" || code === "UNKNOWN_TYPE") {
+      return tPhysio("packageAssignTransferNotSku");
+    }
     if (serverError) return code && code !== "PLACE_FAILED" && !serverError.includes(code)
       ? `${serverError} (${code})`
       : serverError;
@@ -1687,7 +1698,7 @@ export function PackageAssignModal({
     const existing = draft.find((d) => draftMatchesAssigned(d, row, quota));
     const currentDraft = existing?.qty ?? 0;
     const rem = (draftRemaining.get(quota) ?? 0) + currentDraft;
-    // Package goal never overflows into paid extras — that stepper stays separate.
+    // Cap package goal at fact+rem; overflow is handled by unified stepper → extras.
     const capped =
       target > fact ? Math.min(target, fact + Math.max(0, rem)) : target;
     const { goal, draft: need, cut } = packageAssignGoalLayers({
@@ -1729,24 +1740,22 @@ export function PackageAssignModal({
     });
   }
 
-  function bumpTargetPlus(row: PackageAssignedAgg) {
-    applyAssignedGoal(row, currentGoalForAssigned(row) + 1);
-  }
-
-  function bumpTargetMinus(row: PackageAssignedAgg) {
-    applyAssignedGoal(row, currentGoalForAssigned(row) - 1);
+  function packageRemForAssigned(row: PackageAssignedAgg): number {
+    const quota = menuQuotaForAssigned(row);
+    const existing = draft.find((d) => draftMatchesAssigned(d, row, quota));
+    return (draftRemaining.get(quota) ?? 0) + (existing?.qty ?? 0);
   }
 
   function bumpLeftoverGoalPlus(line: DraftLine) {
     const quota = line.burnPoolCode || line.procedureCode;
     const rem = draftRemaining.get(quota) ?? 0;
-    // Package leftover goal stays on quota; paid extras use the separate stepper.
-    if (rem < 1) return;
+    if (rem < 1) return false;
     const nextQty = line.qty + 1;
     setLaneTarget((prev) => ({ ...prev, [line.key]: nextQty }));
     setDraft((prev) =>
       prev.map((d) => (d.key === line.key ? { ...d, qty: nextQty } : d)),
     );
+    return true;
   }
 
   function bumpLeftoverGoalMinus(line: DraftLine) {
@@ -1764,6 +1773,58 @@ export function PackageAssignModal({
     setDraft((prev) =>
       prev.map((d) => (d.key === line.key ? { ...d, qty: nextQty } : d)),
     );
+  }
+
+  /** One stepper: package while rem>0, then paid extras. */
+  function bumpLanePlus(lane: {
+    code: string;
+    name: string;
+    paramsLabel: string;
+    regimeKey: string;
+    assigned?: PackageAssignedAgg;
+    pkgDraft?: DraftLine;
+    targetQty: number;
+    factQty: number;
+    physioFields?: Record<string, unknown> | null;
+    siteIds?: string[];
+    siteApplyMode?: "TURN" | "TOGETHER" | null;
+    siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
+  }) {
+    if (lane.assigned) {
+      const rem = packageRemForAssigned(lane.assigned);
+      const goal = currentGoalForAssigned(lane.assigned);
+      if (goal < lane.assigned.qty + rem) {
+        applyAssignedGoal(lane.assigned, goal + 1);
+        return;
+      }
+    } else if (lane.pkgDraft) {
+      if (bumpLeftoverGoalPlus(lane.pkgDraft)) return;
+    }
+    extraPlus(lane.code, lane.name, lane.paramsLabel, lane.regimeKey, {
+      note: "",
+      physioFields: lane.physioFields,
+      siteIds: lane.siteIds,
+      siteApplyMode: lane.siteApplyMode,
+      siteLaterality: lane.siteLaterality,
+    });
+  }
+
+  function bumpLaneMinus(lane: {
+    code: string;
+    regimeKey: string;
+    assigned?: PackageAssignedAgg;
+    pkgDraft?: DraftLine;
+    extraQty: number;
+  }) {
+    if (lane.extraQty > 0) {
+      extraMinus(lane.code, lane.regimeKey);
+      return;
+    }
+    if (lane.assigned) {
+      applyAssignedGoal(lane.assigned, currentGoalForAssigned(lane.assigned) - 1);
+      return;
+    }
+    if (lane.pkgDraft) bumpLeftoverGoalMinus(lane.pkgDraft);
   }
 
   function peelPaid(code: string, regimeKey: string): boolean {
@@ -1800,8 +1861,21 @@ export function PackageAssignModal({
     setReplaceBatchId(null);
     setReplaceQty(1);
     setReplaceTo("");
+    setReplacePhysio(EMPTY_PHYSIO);
     setReplaceReason("");
     setReplaceOpen(true);
+  }
+
+  function selectReplaceTo(code: string) {
+    const next = String(code ?? "");
+    setReplaceTo(next);
+    if (!next) {
+      setReplacePhysio(EMPTY_PHYSIO);
+      return;
+    }
+    const name =
+      replaceToOptions.find((row) => row.value === next)?.label ?? next;
+    setReplacePhysio(gateToPhysio(next, name));
   }
 
   async function submitReplace() {
@@ -1811,6 +1885,7 @@ export function PackageAssignModal({
       showApiError({ error: replaceReasonToast() });
       return;
     }
+    if (refuseWrongSex(replaceTo)) return;
     setBusy(true);
     setError(null);
     try {
@@ -1832,8 +1907,57 @@ export function PackageAssignModal({
         showApiError({ error: assignSaveMessage(d) }, tc("failed"));
         return;
       }
+      const payload = d.data ?? d;
+      const quotaCode =
+        typeof payload.quotaCode === "string" && payload.quotaCode
+          ? payload.quotaCode
+          : null;
+      const fill = replacePhysio.physioFields?.naftalanFill;
+      const fillCode =
+        fill === "OTURAQ" || fill === "QURSAQ" || fill === "TAM" ? fill : "TAM";
+      const occupancy =
+        replacePhysio.hideSitePicker && replacePhysio.siteIds.length === 0
+          ? (() => {
+              const row = catalog.find((s) => s.code === siteCodeForNaftalanFill(fillCode));
+              return row ? [row.id] : [];
+            })()
+          : replacePhysio.siteIds;
+      const assignRes = await fetch(
+        `/api/sanatorium/episodes/${episodeId}/package-assign`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lines: [
+              {
+                procedureCode: replaceTo,
+                qty: replaceQty,
+                note: replacePhysio.note || reason,
+                physioFields: {
+                  ...replacePhysio.physioFields,
+                  ...(replaceQty <= 1 ? { bathSequence: null } : {}),
+                },
+                siteIds: occupancy,
+                siteApplyMode: replacePhysio.hideSitePicker
+                  ? "TOGETHER"
+                  : replacePhysio.siteApplyMode,
+                siteLaterality: replacePhysio.siteLaterality,
+                burnPoolCode: quotaCode,
+              },
+            ],
+          }),
+        },
+      );
+      const assignBody = await assignRes.json().catch(() => ({}));
+      if (!assignRes.ok) {
+        showApiError({ error: assignSaveMessage(assignBody) }, tc("failed"));
+        await load();
+        onSaved();
+        return;
+      }
       setReplaceOpen(false);
       setReplaceReason("");
+      setReplacePhysio(EMPTY_PHYSIO);
       await load();
       onSaved();
     } finally {
@@ -2367,27 +2491,15 @@ export function PackageAssignModal({
                     ? saxlaOrderByDraftKey.get(lane.pkgDraft.key)
                     : undefined;
                   const kept = lane.assigned ? keptOfAssigned(lane.assigned) : 0;
+                  const totalGoal = lane.targetQty + lane.extraQty;
+                  const minusFloor = lane.assigned ? kept : 0;
                   const targetMinusDisabled =
-                    Boolean(lane.assigned) && lane.targetQty <= kept;
-                  const packageQuota = lane.assigned
-                    ? menuQuotaForAssigned(lane.assigned)
-                    : lane.pkgDraft?.burnPoolCode || lane.pkgDraft?.procedureCode || lane.code;
-                  const packageRem = draftRemaining.get(packageQuota) ?? 0;
-                  const cutPending = lane.assigned
-                    ? pendingCut[assignedKey(lane.assigned)] ?? 0
-                    : 0;
-                  const cancelPending = lane.assigned
-                    ? pendingCancel.has(assignedKey(lane.assigned))
-                    : false;
-                  const targetPlusDisabled =
-                    lane.pkgLocked ||
-                    (packageRem < 1 &&
-                      cutPending < 1 &&
-                      !cancelPending &&
-                      lane.targetQty >= lane.factQty);
+                    lane.pkgLocked || totalGoal <= minusFloor;
+                  const targetPlusDisabled = lane.pkgLocked;
                   const showPackageRows =
                     lane.factQty > 0 ||
                     lane.targetQty > 0 ||
+                    lane.extraQty > 0 ||
                     Boolean(lane.assigned) ||
                     Boolean(lane.pkgDraft);
                   return (
@@ -2446,18 +2558,11 @@ export function PackageAssignModal({
                       {showPackageRows ? (
                         <div className="flex items-center justify-end gap-2 py-1">
                           {stepper(
-                            lane.targetQty,
-                            () => {
-                              if (lane.assigned) bumpTargetMinus(lane.assigned);
-                              else if (lane.pkgDraft) bumpLeftoverGoalMinus(lane.pkgDraft);
-                            },
-                            () => {
-                              if (lane.assigned) bumpTargetPlus(lane.assigned);
-                              else if (lane.pkgDraft) bumpLeftoverGoalPlus(lane.pkgDraft);
-                            },
+                            totalGoal,
+                            () => bumpLaneMinus(lane),
+                            () => bumpLanePlus(lane),
                             targetPlusDisabled,
-                            targetMinusDisabled ||
-                              (!lane.assigned && (lane.pkgDraft?.qty ?? 0) < 1),
+                            targetMinusDisabled,
                           )}
                         </div>
                       ) : null}
@@ -2467,47 +2572,20 @@ export function PackageAssignModal({
                           className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#E8EEF4] px-1.5 text-[11px] font-semibold tabular-nums"
                           title={tPhysio("fromPackage")}
                         >
-                          {lane.factQty}
+                          {lane.targetQty}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2 py-1">
                         <span className={TEXT_MUTED_CLASS}>{tPhysio("extraLine")}</span>
                         <div className="flex items-center gap-3">
-                          <span className="text-right text-[12px] tabular-nums">
+                          <span className="text-right text-[12px] tabular-nums whitespace-nowrap">
                             {lane.extraUnit.toFixed(2)}
-                            <span className={`block ${TEXT_MUTED_CLASS}`}>
-                              {(lane.extraUnit * lane.extraQty).toFixed(2)}
-                            </span>
+                            <span className={TEXT_MUTED_CLASS}> · </span>
+                            {(lane.extraUnit * lane.extraQty).toFixed(2)}
                           </span>
                           <span className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#F5E6D3] px-1.5 text-[11px] font-semibold tabular-nums text-[#8B5A2B]">
                             {lane.extraQty}
                           </span>
-                          {stepper(
-                            lane.extraQty,
-                            () => extraMinus(lane.code, lane.regimeKey),
-                            () => {
-                              const quota = lane.assigned
-                                ? menuQuotaForAssigned(lane.assigned)
-                                : lane.pkgDraft?.burnPoolCode || lane.code;
-                              const rem = draftRemaining.get(quota) ?? 0;
-                              if (rem > 0) {
-                                showApiError({ error: tPhysio("packageAssignQuotaRemaining") });
-                                return;
-                              }
-                              extraPlus(lane.code, lane.name, lane.paramsLabel, lane.regimeKey, {
-                                note: "",
-                                physioFields: lane.physioFields,
-                                siteIds: lane.siteIds,
-                                siteApplyMode: lane.siteApplyMode,
-                                siteLaterality: lane.siteLaterality,
-                              });
-                            },
-                            (draftRemaining.get(
-                              lane.assigned
-                                ? menuQuotaForAssigned(lane.assigned)
-                                : lane.pkgDraft?.burnPoolCode || lane.code,
-                            ) ?? 0) > 0,
-                          )}
                         </div>
                       </div>
                       {masseurOptions[lane.code]?.length && !lane.pkgLocked ? (
@@ -2706,7 +2784,7 @@ export function PackageAssignModal({
                   kind="SEARCHABLE"
                   label={tPhysio("replaceBathsTo")}
                   value={replaceTo}
-                  onChange={(v) => setReplaceTo(String(v ?? ""))}
+                  onChange={(v) => selectReplaceTo(String(v ?? ""))}
                   options={replaceToOptions}
                   widthPreset="select"
                 />
@@ -2721,6 +2799,42 @@ export function PackageAssignModal({
                   onChange={(e) => setReplaceQty(Number(e.target.value) || 1)}
                 />
               </label>
+              {replaceTo ? (
+                <div className="mb-3">
+                  <PhysioSiteChips
+                    value={replacePhysio}
+                    catalog={catalog}
+                    programs={programs}
+                    substances={substances}
+                    locale={locale}
+                    editable
+                    compact
+                    sessionQty={replaceQty}
+                    labels={physioLabels}
+                    onSitesChange={(siteIds) =>
+                      setReplacePhysio((prev) => ({ ...prev, siteIds }))
+                    }
+                    onModeChange={(siteApplyMode) =>
+                      setReplacePhysio((prev) => ({ ...prev, siteApplyMode }))
+                    }
+                    onNoteBlur={(note) => setReplacePhysio((prev) => ({ ...prev, note }))}
+                    onLateralityChange={(siteId, laterality) =>
+                      setReplacePhysio((prev) => ({
+                        ...prev,
+                        siteLaterality: { ...prev.siteLaterality, [siteId]: laterality },
+                      }))
+                    }
+                    onFieldsChange={(physioFields) =>
+                      setReplacePhysio((prev) => ({ ...prev, physioFields }))
+                    }
+                    hideFields={
+                      /NAFTALAN|VANN|BATH/i.test(replaceTo)
+                        ? ["DAY_BLOCK", "BATH_SEQUENCE"]
+                        : []
+                    }
+                  />
+                </div>
+              ) : null}
               <p className={`mb-2 text-[12px] ${TEXT_MUTED_CLASS}`}>{todayBakuYmd()}</p>
               <div className="mb-3 max-w-xs">
                 <CatalogField
@@ -2760,6 +2874,7 @@ export function PackageAssignModal({
             </p>
             <ProcedureLoadMatrixView
               matrix={loadMatrix}
+              dayColumns={stayPlan.days.length ? stayPlan.days : undefined}
               emptyLabel={tPhysio("procedureLoadEmpty")}
               legendLow={tPhysio("procedureLoadLow")}
               legendHigh={tPhysio("procedureLoadHigh")}
@@ -2783,12 +2898,13 @@ export function PackageAssignModal({
               legendDone={tPhysio("stayPlanDone")}
               loadLevelFor={(code, ymd) => loadLevelForCodeDay(loadMatrix, code, ymd)}
             />
-            <div className="mt-3 min-h-0 border-t border-[#E8EEF4] pt-2">
-              <p className={`mb-1 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
+            <div className="min-h-0 border-t border-[#E8EEF4] pt-1">
+              <p className={`mb-0.5 text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
                 {tPhysio("procedureLoadTitle")}
               </p>
               <ProcedureLoadMatrixView
                 matrix={loadMatrix}
+                dayColumns={stayPlan.days}
                 excludeCodes={new Set(stayPlan.marks.map((m) => m.procedureCode))}
                 emptyLabel={tPhysio("procedureLoadAllAssigned")}
                 legendLow={tPhysio("procedureLoadLow")}

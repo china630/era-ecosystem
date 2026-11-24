@@ -756,6 +756,7 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/reports/walk-in-by-country": CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   "/sanatorium": CLINIC_PERMISSION.SCREEN_SANATORIUM,
   "/sanatorium/resources": CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES,
+  "/sanatorium/resources/load": CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES,
   "/sanatorium/nurse-roster": CLINIC_PERMISSION.SCREEN_SANATORIUM_NURSE_ROSTER,
   "/inpatient": CLINIC_PERMISSION.SCREEN_INPATIENT,
   "/inpatient/census": CLINIC_PERMISSION.SCREEN_INPATIENT_CENSUS,
@@ -1033,6 +1034,8 @@ export function adminApiRoutePermissions(pathname: string): ClinicPermission[] |
 const OPS_API_PREFIX_PERMISSIONS: Array<{
   prefix: string;
   permission: ClinicPermission;
+  /** When set, any one of these grants access (same idea as admin anyOf). */
+  anyOf?: ClinicPermission[];
 }> = [
   { prefix: "/api/procedures/confirm", permission: CLINIC_PERMISSION.API_PROCEDURES_CONFIRM },
   { prefix: "/api/procedures/bulk-cancel", permission: CLINIC_PERMISSION.API_PROCEDURES_RECEPTION },
@@ -1074,6 +1077,10 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   {
     prefix: "/api/sanatorium/procedure-load",
     permission: CLINIC_PERMISSION.API_SANATORIUM_RESOURCES,
+    anyOf: [
+      CLINIC_PERMISSION.API_SANATORIUM_RESOURCES,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
+    ],
   },
   { prefix: "/api/sanatorium/nurse-roster", permission: CLINIC_PERMISSION.API_SANATORIUM_NURSE_ROSTER },
   { prefix: "/api/sanatorium/staff-absences", permission: CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES },
@@ -1091,30 +1098,32 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   },
 ];
 
-export function opsApiRoutePermission(
-  pathname: string,
-  method?: string,
-): ClinicPermission | null {
+function resolveOpsApiPrefix(pathname: string): (typeof OPS_API_PREFIX_PERMISSIONS)[number] | null {
   const path = pathname.split("?")[0] ?? pathname;
-  let best: { prefix: string; permission: ClinicPermission } | null = null;
+  let best: (typeof OPS_API_PREFIX_PERMISSIONS)[number] | null = null;
   for (const row of OPS_API_PREFIX_PERMISSIONS) {
     if (path === row.prefix || path.startsWith(`${row.prefix}/`)) {
       if (!best || row.prefix.length > best.prefix.length) best = row;
     }
   }
-  const key = best?.permission ?? null;
-  if (!key) return null;
+  return best;
+}
+
+function resolveOpsPermissionKey(
+  path: string,
+  method: string | undefined,
+  base: ClinicPermission,
+): ClinicPermission {
+  let key = base;
   if (key === CLINIC_PERMISSION.API_LAB_ORDERS) {
-    if (path.endsWith("/collect")) return CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT;
-    if (path.endsWith("/complete")) return CLINIC_PERMISSION.API_LAB_ORDERS_COMPLETE;
-    if (path.endsWith("/publish")) return CLINIC_PERMISSION.API_LAB_ORDERS_PUBLISH;
-    if (path.endsWith("/blank")) return CLINIC_PERMISSION.API_LAB_ORDERS_BLANK;
+    if (path.endsWith("/collect")) key = CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT;
+    else if (path.endsWith("/complete")) key = CLINIC_PERMISSION.API_LAB_ORDERS_COMPLETE;
+    else if (path.endsWith("/publish")) key = CLINIC_PERMISSION.API_LAB_ORDERS_PUBLISH;
+    else if (path.endsWith("/blank")) key = CLINIC_PERMISSION.API_LAB_ORDERS_BLANK;
   }
   if (!method) return key;
   const verb = method.toUpperCase();
-  if (verb === "GET" || verb === "HEAD") {
-    return READ_OF_WRITE[key] ?? key;
-  }
+  if (verb === "GET" || verb === "HEAD") return READ_OF_WRITE[key] ?? key;
   const lab =
     path === "/api/lab-orders" ||
     path.startsWith("/api/lab-orders/") ||
@@ -1124,6 +1133,30 @@ export function opsApiRoutePermission(
     return CLINIC_PERMISSION.API_LAB_ORDERS_WRITE;
   }
   return key;
+}
+
+/** All permissions that grant a staff API path (anyOf when configured). */
+export function opsApiRoutePermissions(
+  pathname: string,
+  method?: string,
+): ClinicPermission[] {
+  const path = pathname.split("?")[0] ?? pathname;
+  const best = resolveOpsApiPrefix(path);
+  if (!best) return [];
+  const primary = resolveOpsPermissionKey(path, method, best.permission);
+  if (best.anyOf?.length) {
+    const mapped = best.anyOf.map((p) => resolveOpsPermissionKey(path, method, p));
+    return [...new Set([primary, ...mapped])];
+  }
+  return [primary];
+}
+
+export function opsApiRoutePermission(
+  pathname: string,
+  method?: string,
+): ClinicPermission | null {
+  const keys = opsApiRoutePermissions(pathname, method);
+  return keys[0] ?? null;
 }
 
 export function navEntryPermission(
