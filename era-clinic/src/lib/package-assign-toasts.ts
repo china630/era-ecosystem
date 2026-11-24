@@ -13,14 +13,17 @@ export type AssignToastMiss = {
   reason?: string;
   staffName?: string;
   hitAttemptCap?: boolean;
+  /** OPEN drops — never checkout-morning hold (cabin FIXED only). */
+  schedulingMode?: "OPEN" | "FIXED" | string;
 };
 
 /** Max lines shown in each outcome toast before “and N more”. */
 export const PACKAGE_ASSIGN_TOAST_LINE_CAP = 8;
 
-/** Stay-horizon hold for checkout-morning ask — never budget/attempt-cap stops. */
+/** Stay-horizon hold for checkout-morning ask — never budget/attempt-cap stops or OPEN drops. */
 export function isPackageAssignNoonHold(miss: AssignToastMiss): boolean {
   if (miss.hitAttemptCap === true) return false;
+  if (miss.schedulingMode === "OPEN") return false;
   return miss.reason === "no_slot" || miss.reason === "no_day";
 }
 
@@ -40,6 +43,13 @@ export function packageAssignMissReasonText(
   if (reason === "no_slot") return t("packageAssignMissNoSlot");
   if (reason === "anamnesis") return t("packageAssignMissAnamnesis");
   if (reason === "no_mode") return t("packageAssignMissNoBathMode");
+  if (reason === "bath_rest") return t("packageAssignMissBathRest");
+  if (reason === "series_rhythm") return t("packageAssignMissSeriesRhythm");
+  if (reason === "week_full") return t("packageAssignMissWeekFull");
+  if (reason === "closed") return t("packageAssignMissClosed");
+  if (reason === "lunch") return t("packageAssignMissLunch");
+  if (reason === "past_checkout") return t("packageAssignMissPastCheckout");
+  if (reason === "checkout_noon") return t("packageAssignMissCheckoutNoon");
   return t("packageAssignMissNoDay");
 }
 

@@ -4,6 +4,7 @@ import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import {
   buildProcedureLoadMatrix,
   clampLoadHorizonDays,
+  estimateDayCapacity,
   type ProcedureLoadMatrix,
 } from "@/domain/planning/procedure-load-matrix";
 
@@ -15,6 +16,69 @@ const TTL_MS = 90_000;
 
 export function invalidateProcedureLoadCache(): void {
   memoryCache = null;
+}
+
+async function dayCapacityByProcedureCodes(
+  codes: string[],
+  settings: Awaited<ReturnType<typeof getSchedulingSettings>>,
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (codes.length === 0) return out;
+
+  const types = await prisma.procedureType.findMany({
+    where: { code: { in: codes } },
+    select: {
+      code: true,
+      durationMin: true,
+      resourceCode: true,
+      requirements: {
+        where: { role: { in: ["LOCATION", "EQUIPMENT"] } },
+        select: { resourceCode: true },
+      },
+    },
+  });
+
+  const resourceCodes = new Set<string>();
+  const codesByType = new Map<string, string[]>();
+  for (const pt of types) {
+    const list = new Set<string>();
+    for (const req of pt.requirements) {
+      const c = req.resourceCode?.trim();
+      if (c) list.add(c);
+    }
+    if (list.size === 0 && pt.resourceCode?.trim()) list.add(pt.resourceCode.trim());
+    const arr = [...list];
+    codesByType.set(pt.code, arr);
+    for (const c of arr) resourceCodes.add(c);
+  }
+
+  const resources =
+    resourceCodes.size > 0
+      ? await prisma.resource.findMany({
+          where: { code: { in: [...resourceCodes] } },
+          select: { code: true, capacity: true },
+        })
+      : [];
+  const capByCode = new Map(resources.map((r) => [r.code, Math.max(1, r.capacity || 1)]));
+
+  for (const pt of types) {
+    const listed = codesByType.get(pt.code) ?? [];
+    let resourceCapacitySum = 0;
+    for (const code of listed) resourceCapacitySum += capByCode.get(code) ?? 0;
+    if (resourceCapacitySum < 1) resourceCapacitySum = 1;
+    out.set(
+      pt.code,
+      estimateDayCapacity({
+        dayStartHour: settings.dayStartHour,
+        dayEndHour: settings.dayEndHour,
+        lunchStartHour: settings.lunchStartHour,
+        lunchEndHour: settings.lunchEndHour,
+        durationMin: pt.durationMin,
+        resourceCapacitySum,
+      }),
+    );
+  }
+  return out;
 }
 
 export async function getProcedureLoadMatrix(opts?: {
@@ -65,12 +129,15 @@ export async function getProcedureLoadMatrix(opts?: {
     byDay.set(ymd, (byDay.get(ymd) ?? 0) + 1);
   }
 
+  const dayCapacityByCode = await dayCapacityByProcedureCodes([...counts.keys()], settings);
+
   const matrix = buildProcedureLoadMatrix({
     fromYmd,
     toYmd,
     horizonDays: horizon,
     counts,
     names,
+    dayCapacityByCode,
     topN,
     nowYmd: today,
   });

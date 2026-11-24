@@ -285,12 +285,23 @@ export function ExtrasAssignModal({
       }
       if (!res.ok) {
         const code = typeof d?.code === "string" ? d.code : null;
+        const stayMaxMatch =
+          typeof d?.error === "string"
+            ? /remaining stay days \((\d+)\)/i.exec(d.error)
+            : null;
         const mapped =
           code === "CABIN_SEX"
             ? { ...d, error: tPhysio("packageAssignMissCabinSex") }
             : code === "QUOTA_REMAINING"
               ? { ...d, error: tPhysio("packageAssignQuotaRemaining") }
-              : d;
+              : code === "STAY_QTY_EXCEEDED"
+                ? {
+                    ...d,
+                    error: tPhysio("staySeatMaxExceeded", {
+                      max: stayMaxMatch?.[1] ?? "0",
+                    }),
+                  }
+                : d;
         showApiError(mapped, tc("saveFailed"));
         return;
       }
