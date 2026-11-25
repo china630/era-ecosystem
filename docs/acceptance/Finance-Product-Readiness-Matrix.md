@@ -10,6 +10,8 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-26 Sync DTO on dev):** `placementFreeze` is allowed in the finance DTO on `dev` `f51cf7c`. The droplet still returns 400 until that image is deployed. AC-FIN-CFG stays Scaffold ✅. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot [ ] / Edition `mvp` / Sell unchanged. Rollup unchanged. `finance.yaml` untouched. `era-readiness-matrix` N/A.
+
 **Closeout (2026-11-25 finance Sync body):** The droplet still returns 400 on `placementFreeze`. AC-FIN-CFG stays Scaffold ✅ on the 401 and short-SSO negatives. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot [ ] / Edition `mvp` / Sell unchanged. Rollup stays the existing worst layer. `finance.yaml` untouched. `era-readiness-matrix` N/A. Not SHIPPED.
 
 **Closeout (2026-11-10):** Bank, ƏMAS, and e-taxes reads can take the organization key from the platform access tab. Missing bank key does not call the bank. ASAN ID is no longer edited in finance settings. Gate / BE / UI / Demo / Pilot / edition `mvp` / Sell unchanged. Not SHIPPED.

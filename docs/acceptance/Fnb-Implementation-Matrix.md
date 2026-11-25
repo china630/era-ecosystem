@@ -9,6 +9,8 @@
 
 **BE deepen (2026-08-17):** Negative-path suites landed — `__tests__/fnb-pos-negative.spec.ts`, `fnb-inv-negative.spec.ts`, `fnb-labor-negative.spec.ts`.
 
+**Closeout (2026-11-26 native handlers):** Public Nest handlers invoke the async wrapper. Health proof is `HealthController` in `__tests__/api-health.spec.ts`. Generated health route stays deleted. No new Scaffold ✅. Pilot field stays [ ]. Gate/edition unchanged. `fnb.yaml` untouched.
+
 **Civil date labels (2026-10-30, controls 2026-10-31):** Buffet plan and forecast dates render `дд.мм.гггг` via `bakuDateDisplay`. Forecast, admin, page chrome, daily menu, and the calendar use kit `DatePicker`. Request bodies stay `YYYY-MM-DD`. No Scaffold ✅ / Pilot change.
 
 ---

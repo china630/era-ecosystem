@@ -5,7 +5,8 @@
 **AC Matrix:** [`Fnb-Implementation-Matrix.md`](./Fnb-Implementation-Matrix.md)
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
-Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not claim GA — pilot open
+Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not claim GA — pilot open  
+**Native handlers (2026-11-26):** public Nest wrappers are invoked. No Gate / Pilot / Sell / `fnb.yaml` change.
 
 ---
 

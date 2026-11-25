@@ -81,6 +81,7 @@ function isForceAll(file) {
   if (file === "docker/Dockerfile.satellite") return true;
   // Copied into every satellite image — must rebuild all GHCR satellites.
   if (file === "docker/scripts/satellite-entrypoint.sh") return true;
+  if (file === "docker/scripts/satellite-serve.sh") return true;
   if (file === ".github/workflows/build-images.yml") return true;
   if (file === "scripts/ci-changed-ghcr-services.mjs") return true;
   return false;

@@ -9,6 +9,8 @@
 
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.  
+**Closeout (2026-11-26 Sync code on dev):** `writeFrom` and the finance `placementFreeze` allow-list are in `dev` `f51cf7c`. The running images are still the previous ones until that SHA is deployed. CP-CFG-01 stays API. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Rollup stays 🟡. `platform.yaml` untouched. `era-readiness-matrix` N/A.
+
 **Closeout (2026-11-25 clinic Sync headers):** CP-CFG-01 stays API. AC-CP-CFG stays Scaffold ✅. Clinic image `dev-c32960d` accepts the Sync POST. Finance image still 400 on `placementFreeze`. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell **unchanged**. Rollup stays 🟡. `platform.yaml` untouched. `era-readiness-matrix` N/A. Not SHIPPED. Not a SHARED pool.
 
 **Closeout (2026-11-25 Nafta cadre rules ops seed):** staging IR + kadrlar-suallar → position regime/hours, dual-stavka siblings, unit managers (SPA→Baş həkim), shift types/cycles. CP-WF-ORG/JOB/POS stay **API**; AC-CP-WF-JOB 🟡. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell **unchanged**. `platform.yaml` untouched. `era-readiness-matrix` N/A (no DELIVERY % / consumer API level).
