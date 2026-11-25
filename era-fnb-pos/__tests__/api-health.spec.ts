@@ -22,14 +22,36 @@ jest.mock("../nest/bridge", () => ({
   },
 }));
 
-import { invokeNest } from "./nest-invoke";
-import { register } from "../nest/generated/health";
+import { HealthController } from "../nest/native/controllers/health";
 
 describe("GET /api/health", () => {
   it("returns ok payload", async () => {
-    const res = await invokeNest(register, "get", "/api/health");
-    expect(res.status).toBe(200);
-    const body = await res.json();
+    const controller = new HealthController();
+    let statusCode = 200;
+    let payload: unknown;
+    const httpRes = {
+      status(code: number) {
+        statusCode = code;
+        return this;
+      },
+      json(data: unknown) {
+        payload = data;
+        return this;
+      },
+      send(data: unknown) {
+        payload = data;
+        return this;
+      },
+      setHeader() {
+        return this;
+      },
+    };
+    await controller.get_0(
+      { headers: {}, get: () => undefined } as never,
+      httpRes as never,
+    );
+    expect(statusCode).toBe(200);
+    const body = payload as { ok?: boolean; service?: unknown };
     expect(body.ok).toBe(true);
     expect(typeof body.service).toBe("string");
   });

@@ -52,7 +52,7 @@ export class AuthTerminalController {
     });
   
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }
@@ -123,7 +123,7 @@ export class AuthTerminalController {
     });
   
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

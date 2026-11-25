@@ -52,7 +52,7 @@ export class AuthLogoutController {
     return sendJson(httpRes, { ok: true, pin: pin === true });
   
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

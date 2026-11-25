@@ -85,7 +85,7 @@ export class IntegrationSettlementConfirmedController {
     return sendJson(httpRes, { ok: true, ticketId: ticket.id, status: "CLOSED" });
   
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

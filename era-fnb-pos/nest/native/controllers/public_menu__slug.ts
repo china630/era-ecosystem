@@ -63,7 +63,7 @@ export class PublicMenuSlugController {
     });
   
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }
@@ -81,7 +81,7 @@ export class PublicMenuSlugController {
     { error: "Guest ordering is not enabled on QR menu", code: "QR_READ_ONLY" }, 405);
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

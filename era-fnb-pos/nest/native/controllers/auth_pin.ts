@@ -118,7 +118,7 @@ export class AuthPinController {
     });
   
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

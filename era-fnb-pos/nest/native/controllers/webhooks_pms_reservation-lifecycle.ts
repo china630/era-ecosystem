@@ -35,7 +35,7 @@ export class WebhooksPmsReservationLifecycleController {
   return sendJson(httpRes, { received: true, ...body });
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

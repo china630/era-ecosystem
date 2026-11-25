@@ -78,7 +78,7 @@ export class AuthLoginController {
     });
   
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }
@@ -95,7 +95,7 @@ export class AuthLoginController {
   return sendJson(httpRes, describeLoginHostBinding({ get: (name) => nestHeader(httpReq, name) }));
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }
