@@ -13,6 +13,15 @@ const bodySchema = z.object({
   prefixes: z.array(z.string().trim().min(1).max(200)).max(50),
 });
 
+function rememberOrgAuditExemptPrefixes(
+  organizationId: string,
+  prefixes: readonly string[] | null | undefined,
+): void {
+  if (typeof setOrgAuditExemptPrefixes === "function") {
+    setOrgAuditExemptPrefixes(organizationId, prefixes);
+  }
+}
+
 function clean(prefixes: string[]): string[] {
   return [...new Set(prefixes.map((item) => item.trim()).filter((item) => item.startsWith("/api/")))];
 }
@@ -25,7 +34,7 @@ export async function loadClinicAuditExemptCache(): Promise<void> {
       select: { organizationId: true, auditExemptPrefixes: true },
     });
     for (const row of rows) {
-      setOrgAuditExemptPrefixes(row.organizationId, row.auditExemptPrefixes);
+      rememberOrgAuditExemptPrefixes(row.organizationId, row.auditExemptPrefixes);
     }
   } finally {
     await base.$disconnect();
@@ -67,7 +76,7 @@ export class AuditExemptController {
         where: { organizationId: session.organizationId },
         data: { auditExemptPrefixes: prefixes },
       });
-      setOrgAuditExemptPrefixes(session.organizationId, prefixes);
+      rememberOrgAuditExemptPrefixes(session.organizationId, prefixes);
       return {
         prefixes,
         usingDefault: prefixes.length === 0,
