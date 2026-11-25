@@ -49,6 +49,10 @@ type Row = {
   status: string;
   checkInDate: string;
   checkOutDate: string;
+  /** Open business day at CI — shown in Giriş when set. */
+  checkInBusinessDate?: string | null;
+  /** Open business day at CO — shown in Çıxış when set. */
+  checkOutBusinessDate?: string | null;
   guest: { fullName: string; birthDate?: string | null };
   guestLabel?: string;
   guestSegments?: GuestSegment[];
@@ -115,6 +119,15 @@ function partyChannelLabel(row: Row, t: (key: string) => string): string {
 function childrenCount(row: Row): number {
   if (typeof row.children === 'number') return row.children;
   return (row.children11_6 ?? 0) + (row.children5_2 ?? 0) + (row.children1_0 ?? 0);
+}
+
+/** FO list dates: business stamp when realized, else planned stay dates. */
+function foListArrivalYmd(row: Row): string {
+  return String(row.checkInBusinessDate ?? row.checkInDate).slice(0, 10);
+}
+
+function foListDepartureYmd(row: Row): string {
+  return String(row.checkOutBusinessDate ?? row.checkOutDate).slice(0, 10);
 }
 
 type ListFilters = {
@@ -465,13 +478,15 @@ export default function ReservationsListPage() {
                   key: 'arrival',
                   header: t('arrival'),
                   sortable: true,
-                  render: (r) => bakuDateDisplay(String(r.checkInDate).slice(0, 10)),
+                  sortValue: (r) => foListArrivalYmd(r),
+                  render: (r) => bakuDateDisplay(foListArrivalYmd(r)),
                 },
                 {
                   key: 'departure',
                   header: t('departure'),
                   sortable: true,
-                  render: (r) => bakuDateDisplay(String(r.checkOutDate).slice(0, 10)),
+                  sortValue: (r) => foListDepartureYmd(r),
+                  render: (r) => bakuDateDisplay(foListDepartureYmd(r)),
                 },
                 {
                   key: 'type',

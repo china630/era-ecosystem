@@ -12,6 +12,10 @@ import { allocatePatientRefCode } from "@/domain/patient/allocate-patient-ref-co
 import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { fillPatientPageDemographicsFromMdm } from "@/domain/patient/mdm-demographics-cache";
 import { bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
+import {
+  recordEpisodeAudit,
+  type EpisodeAuditCtx,
+} from "@/domain/sanatorium/episode-audit.service";
 
 export class PatientMdmRequiredError extends Error {
   constructor(message = "Patient must resolve to globalPersonId via FIN or passport with issuing country") {
@@ -574,10 +578,25 @@ export async function findPatientContraindicationForDelete(
   });
 }
 
-export async function deletePatientContraindication(patientRefId: string, rowId: string) {
+export async function deletePatientContraindication(
+  patientRefId: string,
+  rowId: string,
+  auditCtx?: EpisodeAuditCtx,
+) {
+  const existing = await prisma.patientContraindication.findFirst({
+    where: { id: rowId, patientRefId },
+    select: { id: true, episodeId: true, bodyPart: true, note: true },
+  });
   await prisma.patientContraindication.deleteMany({
     where: { id: rowId, patientRefId },
   });
+  if (auditCtx && existing?.episodeId) {
+    await recordEpisodeAudit(auditCtx, existing.episodeId, "contraindication_delete", {
+      contraindicationId: rowId,
+      bodyPart: existing.bodyPart,
+      note: existing.note,
+    });
+  }
 }
 
 export async function findClinicalEpisodeForPatient(episodeId: string, patientRefId: string) {
@@ -587,13 +606,16 @@ export async function findClinicalEpisodeForPatient(episodeId: string, patientRe
   });
 }
 
-export async function createPatientContraindication(data: {
-  patientRefId: string;
-  episodeId: string;
-  bodyPart: string;
-  note?: string;
-}) {
-  return prisma.patientContraindication.create({
+export async function createPatientContraindication(
+  data: {
+    patientRefId: string;
+    episodeId: string;
+    bodyPart: string;
+    note?: string;
+  },
+  auditCtx?: EpisodeAuditCtx,
+) {
+  const row = await prisma.patientContraindication.create({
     data: {
       patientRefId: data.patientRefId,
       episodeId: data.episodeId,
@@ -601,6 +623,14 @@ export async function createPatientContraindication(data: {
       note: data.note,
     },
   });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, data.episodeId, "contraindication_create", {
+      contraindicationId: row.id,
+      bodyPart: row.bodyPart,
+      note: row.note,
+    });
+  }
+  return row;
 }
 
 export async function findOrCreateBookingPatientStub(input: {

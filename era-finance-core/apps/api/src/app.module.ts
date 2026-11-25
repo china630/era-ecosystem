@@ -33,6 +33,7 @@ import { InventoryModule } from "./inventory/inventory.module";
 import { ManufacturingModule } from "./manufacturing/manufacturing.module";
 import { PsaModule } from "./psa/psa.module";
 import { ContractsModule } from "./contracts/contracts.module";
+import { PayApplicationsModule } from "./pay-applications/pay-applications.module";
 import { GovBudgetModule } from "./gov-budget/gov-budget.module";
 import { MailModule } from "./mail/mail.module";
 import { ReportingModule } from "./reporting/reporting.module";
@@ -106,6 +107,7 @@ const useControlPlaneAuth =
     ManufacturingModule,
     PsaModule,
     ContractsModule,
+    PayApplicationsModule,
     GovBudgetModule,
     InvoicesModule,
     ExtraFieldsModule,

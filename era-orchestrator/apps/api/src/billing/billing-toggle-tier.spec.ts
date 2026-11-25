@@ -17,6 +17,15 @@ describe("billing module toggle — tier policy", () => {
     expect(patch.extraSlugs).toEqual({ fnb_buffet_planner: true });
   });
 
+  it("maps mgmt_budget_pro onto subscription patch (not UNKNOWN_MODULE)", () => {
+    expect(catalogModuleKeyToPatch("mgmt_budget_pro", true)).toEqual({
+      mgmt_budget_pro: true,
+    });
+    expect(catalogModuleKeyToPatch("mgmt_budget_pro", false)).toEqual({
+      mgmt_budget_pro: false,
+    });
+  });
+
   it("allows marketplace toggle when customConfig has trialPackageId", () => {
     expect(
       hasConstructorModulesInCustomConfig({

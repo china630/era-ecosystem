@@ -20,10 +20,8 @@ import {
 import { assertCanTransferToCityLedger } from '@/lib/services/city-ledger-gate.service';
 import { createFiscalDocumentsOnCheckout } from '@/lib/services/fiscal-document.service';
 import { getReservation } from '@/lib/services/reservation.service';
-import {
-  clinicProgramCodeFromTariff,
-  usesMedicalPackageCompose,
-} from '@/lib/services/medical-package-resolve.service';
+import { clinicProgramCodeForEvent } from '@/lib/integration/clinic-program-codes';
+import { usesMedicalPackageCompose } from '@/lib/services/medical-package-resolve.service';
 import { releaseDoorAfterShareDeparture } from '@/lib/services/share-assignment.service';
 
 export interface CheckoutCityLedgerHandoff {
@@ -424,6 +422,9 @@ export async function checkoutReservation(
     warnings.push(`Tours released: ${toursReleased}`);
   }
 
+  const { getCurrentBusinessDate } = await import('@/lib/services/business-date.service');
+  const checkOutBusinessDate = await getCurrentBusinessDate();
+
   const completed = await prisma.$transaction(async (tx) => {
     await closeFolios(id, { onlyTypes: ['GUEST'], targetStatus: 'CLOSED' });
 
@@ -458,7 +459,7 @@ export async function checkoutReservation(
 
     await tx.stay.updateMany({
       where: { reservationId: id },
-      data: { actualCheckOut: new Date() },
+      data: { actualCheckOut: new Date(), checkOutBusinessDate },
     });
 
     if (reservation.roomId) {
@@ -484,7 +485,7 @@ export async function checkoutReservation(
   void dispatchGuestCheckedOut({
     reservationId: id,
     roomNumber: completed.room?.roomNumber ?? undefined,
-    programCode: clinicProgramCodeFromTariff(completed.ratePlan),
+    programCode: await clinicProgramCodeForEvent(completed.ratePlan),
   }).catch((e) => console.error('Guest lifecycle check-out failed', e));
   const { notifyFbPosReservationLifecycle } = await import('@/lib/integration/fnb-pos-webhook');
   void notifyFbPosReservationLifecycle({

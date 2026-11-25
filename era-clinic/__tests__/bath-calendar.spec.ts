@@ -1,9 +1,14 @@
 import {
   bathSeriesRestYmds,
+  hardSeriesMaxWorkingStreak,
+  illegalHardSeriesBathYmds,
   naftalanWeekIsFull,
+  nextLegalSeriesDay,
   planBathSeries,
   saxlaBlockedDays,
   saxlaDayTaken,
+  saxlaSameSkuKept,
+  saxlaSameSkuKeptForSaxla,
   saxlaSeatKept,
   strayBathOrderIds,
   type StayDay,
@@ -591,5 +596,344 @@ describe("bath series rest for a manual move", () => {
     const others = ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"];
     expect(naftalanWeekIsFull("2026-10-24", others, 5)).toBe(true);
     expect(naftalanWeekIsFull("2026-10-24", others.slice(0, 4), 5)).toBe(false);
+  });
+});
+
+describe("nextLegalSeriesDay", () => {
+  const days: StayDay[] = [
+    { ymd: "2026-11-09", working: true },
+    { ymd: "2026-11-10", working: true },
+    { ymd: "2026-11-11", working: true },
+    { ymd: "2026-11-12", working: true },
+    { ymd: "2026-11-13", working: true },
+    { ymd: "2026-11-14", working: true },
+    { ymd: "2026-11-15", working: false },
+    { ymd: "2026-11-16", working: true },
+  ];
+
+  it("skips a mode-3 rest day after three baths (Galina-class shift)", () => {
+    const used = new Set(["2026-11-10", "2026-11-11"]);
+    const next = nextLegalSeriesDay({
+      days,
+      fromYmd: "2026-11-10",
+      mode: "3",
+      anchorYmd: "2026-11-09",
+      usedYmds: used,
+      weeklyCap: 5,
+      weekBathYmds: ["2026-11-09", "2026-11-10", "2026-11-11"],
+      fillsRestDays: false,
+    });
+    // Anchor 9 → baths 9,10,11 rest 12 → next free is 13
+    expect(next).toBe("2026-11-13");
+  });
+
+  it("respects stay end", () => {
+    expect(
+      nextLegalSeriesDay({
+        days,
+        fromYmd: "2026-11-14",
+        mode: "3",
+        usedYmds: new Set(),
+        weeklyCap: 0,
+        weekBathYmds: [],
+        fillsRestDays: false,
+        stayEndYmd: "2026-11-14",
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("hard-series rhythm invariant (Irina-class)", () => {
+  const stay: StayDay[] = [
+    { ymd: "2026-11-19", working: true },
+    { ymd: "2026-11-20", working: true },
+    { ymd: "2026-11-21", working: true },
+    { ymd: "2026-11-22", working: false },
+    { ymd: "2026-11-23", working: true },
+    { ymd: "2026-11-24", working: true },
+    { ymd: "2026-11-25", working: true },
+    { ymd: "2026-11-26", working: true },
+    { ymd: "2026-11-27", working: true },
+    { ymd: "2026-11-28", working: true },
+  ];
+
+  it("mode-3 first pack does not lay six working baths in a row", () => {
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+          mark: "Nq",
+          mode: "3",
+          qty: 6,
+          fillsRestDays: false,
+          weeklyCap: 5,
+        },
+      ],
+      kept: [],
+      layout: "fresh",
+      notBeforeYmd: "2026-11-19",
+    });
+    const ymds = cells.map((c) => c.ymd);
+    expect(hardSeriesMaxWorkingStreak(ymds, stay)).toBeLessThanOrEqual(3);
+    expect(illegalHardSeriesBathYmds({ bathYmds: ymds, days: stay, mode: "3" })).toEqual([]);
+  });
+
+  it("continue + kept does not hole-fill 20 between 19 and 21", () => {
+    const keptYmds = ["2026-11-19", "2026-11-21", "2026-11-23", "2026-11-24", "2026-11-25", "2026-11-26", "2026-11-27"];
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+          mark: "Nq",
+          mode: "3",
+          qty: keptYmds.length + 1,
+          fillsRestDays: false,
+          weeklyCap: 5,
+        },
+      ],
+      kept: keptYmds.map((ymd) => ({
+        ymd,
+        procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+        locked: true,
+      })),
+      layout: "continue",
+      notBeforeYmd: "2026-11-19",
+    });
+    const newYmds = cells.filter((c) => !c.locked).map((c) => c.ymd);
+    expect(newYmds).not.toContain("2026-11-20");
+  });
+
+  it("flags Irina 23–27 streak as illegal under mode 3", () => {
+    const baths = [
+      "2026-11-19",
+      "2026-11-20",
+      "2026-11-21",
+      "2026-11-23",
+      "2026-11-24",
+      "2026-11-25",
+      "2026-11-26",
+      "2026-11-27",
+    ];
+    expect(hardSeriesMaxWorkingStreak(baths, stay)).toBe(5);
+    expect(
+      illegalHardSeriesBathYmds({ bathYmds: baths, days: stay, mode: "3" }),
+    ).toEqual(expect.arrayContaining(["2026-11-26", "2026-11-27"]));
+  });
+
+  it("saxlaSameSkuKept counts live same-SKU rows", () => {
+    const kept = saxlaSameSkuKept(
+      [
+        { id: "a", ymd: "2026-11-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+        { id: "b", ymd: "2026-11-20", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+        { id: "new", ymd: "2026-11-19", procedureCode: "SVC-NAFTALAN-VANNASI-QADIN" },
+      ],
+      new Set(["new"]),
+      new Set(["SVC-NAFTALAN-VANNASI-QADIN"]),
+    );
+    expect(kept.map((c) => c.ymd).sort()).toEqual(["2026-11-19", "2026-11-20"]);
+  });
+
+  it("saxlaSameSkuKeptForSaxla fresh keeps past and checked-in only", () => {
+    const orders = [
+      { id: "past", ymd: "2026-11-18", procedureCode: "SVC-NAFT", status: "SCHEDULED" },
+      { id: "fut", ymd: "2026-11-25", procedureCode: "SVC-NAFT", status: "SCHEDULED" },
+      { id: "ci", ymd: "2026-11-26", procedureCode: "SVC-NAFT", status: "CHECKED_IN" },
+    ];
+    const kept = saxlaSameSkuKeptForSaxla(
+      orders,
+      new Set(["new"]),
+      new Set(["SVC-NAFT"]),
+      "fresh",
+      "2026-11-20",
+    );
+    expect(kept.map((c) => c.ymd).sort()).toEqual(["2026-11-18", "2026-11-26"]);
+  });
+});
+
+describe("hard-series continue foreign-day break (Eldəniz-class)", () => {
+  const stay: StayDay[] = [
+    { ymd: "2026-11-24", working: true },
+    { ymd: "2026-11-25", working: true },
+    { ymd: "2026-11-26", working: true },
+    { ymd: "2026-11-27", working: true },
+    { ymd: "2026-11-28", working: true },
+  ];
+  const naft = "SVC-NAFTALAN-VANNASI-KISI";
+  const hydro = "SVC-HYDRO";
+
+  it("own baths with a gap are not illegal under mode 3", () => {
+    const baths = ["2026-11-24", "2026-11-25", "2026-11-27"];
+    expect(
+      illegalHardSeriesBathYmds({ bathYmds: baths, days: stay, mode: "3" }),
+    ).toEqual([]);
+  });
+
+  it("foreign hydro day breaks streak so continue can seat the next own bath", () => {
+    const cells = planBathSeries({
+      days: stay,
+      series: [
+        {
+          seriesCode: "NAFTALAN",
+          procedureCode: naft,
+          mark: "Nk",
+          mode: "3",
+          qty: 3,
+          fillsRestDays: false,
+          weeklyCap: 5,
+        },
+      ],
+      kept: [
+        {
+          ymd: "2026-11-24",
+          procedureCode: naft,
+          locked: true,
+          manualRest: false,
+          anchor: true,
+        },
+        {
+          ymd: "2026-11-25",
+          procedureCode: naft,
+          locked: true,
+          manualRest: false,
+          anchor: false,
+        },
+        {
+          ymd: "2026-11-26",
+          procedureCode: hydro,
+          locked: true,
+          manualRest: false,
+          anchor: false,
+        },
+      ],
+      layout: "continue",
+      notBeforeYmd: "2026-11-24",
+    });
+    const own = cells.filter((c) => c.procedureCode === naft).map((c) => c.ymd);
+    expect(own).toContain("2026-11-27");
+    expect(
+      illegalHardSeriesBathYmds({ bathYmds: own, days: stay, mode: "3" }),
+    ).toEqual([]);
+  });
+
+  it("after two own baths the next working day is not phantom mode-3 rest", () => {
+    const next = nextLegalSeriesDay({
+      days: stay,
+      fromYmd: "2026-11-26",
+      mode: "3",
+      anchorYmd: "2026-11-24",
+      usedYmds: new Set(["2026-11-24", "2026-11-25"]),
+      weeklyCap: 5,
+      weekBathYmds: ["2026-11-24", "2026-11-25"],
+      fillsRestDays: false,
+    });
+    // Legacy calendar rest would mark 27; fact streak of two must not invent rest on 26.
+    expect(next).toBe("2026-11-26");
+  });
+});
+
+/** All-working stay — no Sunday — so capacity is pure mode N+R vs qty. */
+function allWorkingStay(startYmd: string, days: number): StayDay[] {
+  const out: StayDay[] = [];
+  const start = new Date(`${startYmd}T12:00:00Z`);
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start);
+    d.setUTCDate(start.getUTCDate() + i);
+    out.push({ ymd: d.toISOString().slice(0, 10), working: true });
+  }
+  return out;
+}
+
+function packYmds(mode: string, stayDays: number, qty: number, weeklyCap = 0): string[] {
+  const days = allWorkingStay("2026-03-02", stayDays);
+  return planBathSeries({
+    days,
+    series: [
+      {
+        seriesCode: "HARD",
+        procedureCode: "SVC-HARD",
+        mark: "H",
+        mode,
+        qty,
+        fillsRestDays: false,
+        weeklyCap,
+      },
+    ],
+    kept: [],
+    layout: "fresh",
+    notBeforeYmd: days[0]!.ymd,
+    policy: { weeklyNaftalanCap: weeklyCap },
+  }).map((c) => c.ymd);
+}
+
+describe("stable hard-series rhythm (rhythm > qty / stay end)", () => {
+  it("5-day stay qty 3 mode-3: three baths, no rest owed yet", () => {
+    const ymds = packYmds("3", 5, 3);
+    expect(ymds).toEqual(["2026-03-02", "2026-03-03", "2026-03-04"]);
+    expect(hardSeriesMaxWorkingStreak(ymds, allWorkingStay("2026-03-02", 5))).toBe(3);
+  });
+
+  it("5-day stay qty 5 mode-3: BBB R B — not five dense days", () => {
+    const days = allWorkingStay("2026-03-02", 5);
+    const ymds = packYmds("3", 5, 5);
+    expect(ymds).toEqual(["2026-03-02", "2026-03-03", "2026-03-04", "2026-03-06"]);
+    expect(ymds).not.toContain("2026-03-05");
+    expect(hardSeriesMaxWorkingStreak(ymds, days)).toBeLessThanOrEqual(3);
+    expect(illegalHardSeriesBathYmds({ bathYmds: ymds, days, mode: "3" })).toEqual([]);
+  });
+
+  it("5-day stay qty 8 mode-3: same rhythm as qty 5, not denser — leftover unplaced", () => {
+    const days = allWorkingStay("2026-03-02", 5);
+    const fit = packYmds("3", 5, 5);
+    const over = packYmds("3", 5, 8);
+    expect(over).toEqual(fit);
+    expect(over.length).toBe(4);
+    expect(hardSeriesMaxWorkingStreak(over, days)).toBeLessThanOrEqual(3);
+    expect(illegalHardSeriesBathYmds({ bathYmds: over, days, mode: "3" })).toEqual([]);
+  });
+
+  it("8-day stay qty 8 mode-3: BBB R BBB R — never densifies to skip rest", () => {
+    const days = allWorkingStay("2026-03-02", 8);
+    const ymds = packYmds("3", 8, 8);
+    expect(ymds).toEqual([
+      "2026-03-02",
+      "2026-03-03",
+      "2026-03-04",
+      "2026-03-06",
+      "2026-03-07",
+      "2026-03-08",
+    ]);
+    expect(ymds).not.toContain("2026-03-05");
+    expect(ymds).not.toContain("2026-03-09");
+    expect(hardSeriesMaxWorkingStreak(ymds, days)).toBeLessThanOrEqual(3);
+    expect(illegalHardSeriesBathYmds({ bathYmds: ymds, days, mode: "3" })).toEqual([]);
+  });
+
+  it("mode-5 uses baths=5 from input (not hard-coded 3)", () => {
+    const days = allWorkingStay("2026-03-02", 8);
+    const ymds = packYmds("5", 8, 8);
+    expect(ymds.slice(0, 5)).toEqual([
+      "2026-03-02",
+      "2026-03-03",
+      "2026-03-04",
+      "2026-03-05",
+      "2026-03-06",
+    ]);
+    expect(ymds).not.toContain("2026-03-07");
+    expect(ymds).toContain("2026-03-08");
+    expect(hardSeriesMaxWorkingStreak(ymds, days)).toBeLessThanOrEqual(5);
+    expect(illegalHardSeriesBathYmds({ bathYmds: ymds, days, mode: "5" })).toEqual([]);
+  });
+
+  it("mode-2 rest after two baths on short stay with excess qty", () => {
+    const days = allWorkingStay("2026-03-02", 5);
+    const fit = packYmds("2", 5, 4);
+    const over = packYmds("2", 5, 9);
+    expect(over).toEqual(fit);
+    expect(over).toEqual(["2026-03-02", "2026-03-03", "2026-03-05", "2026-03-06"]);
+    expect(hardSeriesMaxWorkingStreak(over, days)).toBeLessThanOrEqual(2);
   });
 });

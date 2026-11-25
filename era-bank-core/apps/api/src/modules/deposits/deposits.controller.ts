@@ -77,6 +77,20 @@ export class DepositsController {
     return this.deposits.list();
   }
 
+  /** Static path before `:id` — lab WHT export registry (not live e-taxes). */
+  @Get("wht-registry")
+  whtRegistry() {
+    return this.deposits.listWhtRegistry();
+  }
+
+  /** ADİF depositor registry lab snapshot (official file [U]). */
+  @Get("adif-registry-snapshot")
+  adifRegistrySnapshot(@Query("asOf") asOf?: string) {
+    return this.deposits.buildAdifDepositorRegistrySnapshot(
+      asOf ? new Date(asOf) : new Date(),
+    );
+  }
+
   @Post()
   open(@Body() dto: OpenDepositDto, @Req() req: BankAuthRequest) {
     return this.deposits.open({

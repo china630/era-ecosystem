@@ -282,10 +282,10 @@ export async function upsertReservationFromElektrawebRow(
         'Guest';
       const paxKey =
         'id' in pax && typeof pax.id === 'string' ? pax.id : pax.guest?.id ?? undefined;
-      const { normalizeMedicalPackageCode } = await import(
-        '@/lib/services/medical-package-resolve.service'
+      const { acceptGuestPackageCode } = await import(
+        '@/lib/integration/clinic-program-codes'
       );
-      const guestProgram = normalizeMedicalPackageCode(
+      const guestProgram = await acceptGuestPackageCode(
         pax.medicalPackageCode ?? programCode,
       );
       if (!guestProgram) continue;

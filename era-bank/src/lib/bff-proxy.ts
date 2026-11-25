@@ -35,6 +35,7 @@ function deriveSemanticAction(
   if (tail === "close") return `${area}_CLOSE`;
   if (tail === "disburse") return `${area}_DISBURSE`;
   if (tail === "repay") return `${area}_REPAY`;
+  if (tail === "prepay") return `${area}_PREPAY`;
   if (tail === "rollover") return `${area}_ROLLOVER`;
   if (tail === "run") return `${area}_RUN`;
   if (tail === "cash-deposit") return "POSTING_CASH_DEPOSIT";

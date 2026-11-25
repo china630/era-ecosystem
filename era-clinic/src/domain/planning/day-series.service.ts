@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requestOrganizationId } from "@/lib/request-organization";
+import { clampWeeklyNaftalanCap } from "@/domain/planning/bath-calendar";
 
 export async function listDaySeries() {
   return prisma.procedureDaySeries.findMany({
@@ -13,17 +14,36 @@ export async function saveDaySeries(input: {
   code: string;
   name: string;
   fillsRestDays: boolean;
+  modeCode?: string | null;
+  weeklyCap?: number | null;
+  afternoonPinRetry?: boolean;
   members: Array<{ procedureCode: string; shortMark: string }>;
 }) {
   const organizationId = requestOrganizationId();
   const code = input.code.trim();
+  const modeCode = input.modeCode?.trim()
+    ? String(input.modeCode).trim().toUpperCase().slice(0, 16)
+    : null;
+  const weeklyCap =
+    input.weeklyCap === null || input.weeklyCap === undefined
+      ? null
+      : clampWeeklyNaftalanCap(input.weeklyCap);
+  const afternoonPinRetry = input.afternoonPinRetry !== false;
   const existing = input.id
     ? await prisma.procedureDaySeries.findUnique({ where: { id: input.id } })
     : await prisma.procedureDaySeries.findFirst({ where: { code } });
   const series = existing
     ? await prisma.procedureDaySeries.update({
         where: { id: existing.id },
-        data: { code, name: input.name, fillsRestDays: input.fillsRestDays, active: true },
+        data: {
+          code,
+          name: input.name,
+          fillsRestDays: input.fillsRestDays,
+          modeCode,
+          weeklyCap,
+          afternoonPinRetry,
+          active: true,
+        },
       })
     : await prisma.procedureDaySeries.create({
         data: {
@@ -31,6 +51,9 @@ export async function saveDaySeries(input: {
           code,
           name: input.name,
           fillsRestDays: input.fillsRestDays,
+          modeCode,
+          weeklyCap,
+          afternoonPinRetry,
           active: true,
         },
       });

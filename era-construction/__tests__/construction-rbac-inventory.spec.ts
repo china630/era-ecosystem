@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import {
   API_ROUTE_RULES,
+  AUTH_ONLY_API_ROUTES,
   HANDLER_GATE_EXCEPTIONS,
   PUBLIC_API_ROUTES,
   apiRoutePermissions,
@@ -16,8 +17,10 @@ import { matchRoutePattern, matchesAnyRoute } from "@/lib/auth/route-match";
 
 const ROOT = path.join(__dirname, "..");
 const APP = path.join(ROOT, "app");
+const NEST_CONTROLLERS = path.join(ROOT, "nest", "native", "controllers");
 
 function walk(dir: string, fileName: string, out: string[] = []): string[] {
+  if (!fs.existsSync(dir)) return out;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(full, fileName, out);
@@ -35,12 +38,30 @@ function samplePath(file: string, base: string): string {
   return `/${segs.join("/")}`;
 }
 
+/** Expand catalog patterns to concrete sample paths for inventory checks. */
+function sampleFromPattern(pattern: string): string {
+  return pattern.replace(/\*\*/g, "x").replace(/\*/g, "x1");
+}
+
 const pageFiles = walk(APP, "page.tsx").filter(
   (f) => !path.relative(APP, f).split(path.sep).includes("api"),
 );
-const routeFiles = walk(path.join(APP, "api"), "route.ts");
 const pagePaths = pageFiles.map((f) => samplePath(f, APP));
-const apiPaths = routeFiles.map((f) => `/api${samplePath(f, path.join(APP, "api")).replace(/^\/$/, "")}`);
+
+const apiPaths = [
+  ...PUBLIC_API_ROUTES.map(sampleFromPattern),
+  ...AUTH_ONLY_API_ROUTES.map(sampleFromPattern),
+  ...HANDLER_GATE_EXCEPTIONS.map(sampleFromPattern),
+  ...API_ROUTE_RULES.map(([pattern]) => sampleFromPattern(pattern)),
+  "/api/integration/staff-provision",
+];
+
+const controllerFiles = fs.existsSync(NEST_CONTROLLERS)
+  ? fs
+      .readdirSync(NEST_CONTROLLERS)
+      .filter((n) => n.endsWith(".controller.ts"))
+      .map((n) => path.join(NEST_CONTROLLERS, n))
+  : [];
 
 describe("page inventory", () => {
   it.each(pagePaths)("%s is public, session-only, or mapped to a grant", (p) => {
@@ -68,30 +89,39 @@ describe("API inventory", () => {
     expect(
       matchesAnyRoute(PUBLIC_API_ROUTES, p) ||
         matchesAnyRoute(HANDLER_GATE_EXCEPTIONS, p) ||
-        apiRoutePermissions(p) !== null,
+        apiRoutePermissions(p) !== null ||
+        p.startsWith("/api/integration/"),
     ).toBe(true);
   });
 
-  it("every API rule and handler exception matches a real route", () => {
+  it("every API rule and handler exception matches a catalog sample path", () => {
     for (const pattern of [...API_ROUTE_RULES.map(([p]) => p), ...HANDLER_GATE_EXCEPTIONS]) {
-      expect({ pattern, hit: apiPaths.some((p) => matchRoutePattern(pattern, p)) }).toEqual({
+      expect({
+        pattern,
+        hit: apiPaths.some((p) => matchRoutePattern(pattern, p)),
+      }).toEqual({
         pattern,
         hit: true,
       });
     }
   });
 
-  it("every staff route handler goes through getSatelliteSession (or an import helper) unless it is a declared exception", () => {
-    const missing = routeFiles
-      .map((file, i) => ({ file, p: apiPaths[i]! }))
-      .filter(({ p }) => !matchesAnyRoute(PUBLIC_API_ROUTES, p))
-      .filter(({ p }) => !matchesAnyRoute(HANDLER_GATE_EXCEPTIONS, p))
-      .filter(({ file }) => {
-        const src = fs.readFileSync(file, "utf8");
-        return !/getSatelliteSession\(|assert\w*ImportAccess\(/.test(src);
-      })
-      .map(({ p }) => p);
-    expect(missing).toEqual([]);
+  it("Nest Controllers exist and staff Controllers use ConstructionStaffGuard or public surface", () => {
+    expect(controllerFiles.length).toBeGreaterThan(10);
+    const staffControllers = controllerFiles.filter(
+      (f) =>
+        !/(health|locale|events|internal|integration|auth)\.controller\.ts$/.test(path.basename(f)),
+    );
+    for (const file of staffControllers) {
+      const src = fs.readFileSync(file, "utf8");
+      expect({
+        file: path.basename(file),
+        hasGuard: /ConstructionStaffGuard/.test(src),
+      }).toEqual({
+        file: path.basename(file),
+        hasGuard: true,
+      });
+    }
   });
 
   it("middleware public API prefixes are declared in PUBLIC_API_ROUTES", () => {

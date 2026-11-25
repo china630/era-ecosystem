@@ -35,6 +35,8 @@ services:
     <<: *ghcr-image
     build: !reset null
     image: ${GHCR_IMAGE_PREFIX}/hotel-pms:${IMAGE_TAG}
+    # Cap on the 8 GB Nafta droplet so one Node cannot host-OOM the box (2026-11-18).
+    mem_limit: ${HOTEL_MEM_LIMIT:-2560m}
 
   fnb-pos:
     <<: *ghcr-image
@@ -45,6 +47,8 @@ services:
     <<: *ghcr-image
     build: !reset null
     image: ${GHCR_IMAGE_PREFIX}/clinic:${IMAGE_TAG}
+    # Morning Saxla seating can inflate Node; cgroup kill > host OOM (2026-11-18).
+    mem_limit: ${CLINIC_MEM_LIMIT:-3584m}
     environment:
       # Tokens / CONTROL_PLANE_URL only in base docker-compose.yml — never overlay
       # *_SERVICE_TOKEN here (empty ${…:-} blanks the base value).

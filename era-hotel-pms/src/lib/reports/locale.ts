@@ -6,7 +6,7 @@ function isValidLocale(v: unknown): v is Locale {
   return typeof v === 'string' && (VALID_LOCALES as readonly string[]).includes(v);
 }
 
-export function parseReportLangParam(request: Request): { ok: true; locale: Locale } | { ok: false; message: string } {
+export function parseReportLangParam(request: { url: string; headers: { get(name: string): string | null } }): { ok: true; locale: Locale } | { ok: false; message: string } {
   const url = new URL(request.url);
   const param = url.searchParams.get('lang');
   if (param != null && param !== '' && !isValidLocale(param)) {
@@ -20,7 +20,7 @@ export function reportFileName(name: string, locale: string, date: string, ext: 
   return `${name}_${locale}_${date}.${ext}`;
 }
 
-export function resolveReportLocale(request: Request): Locale {
+export function resolveReportLocale(request: { url: string; headers: { get(name: string): string | null } }): Locale {
   const url = new URL(request.url);
   const param = url.searchParams.get('lang');
   if (isValidLocale(param)) return param;

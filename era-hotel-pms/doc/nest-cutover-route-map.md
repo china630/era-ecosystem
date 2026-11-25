@@ -7,7 +7,9 @@ Regenerate: `node scripts/nest-cutover-route-map.mjs` from `era-hotel-pms`.
 - Handlers: 544
 - Files that re-export handlers (not inlined in this hotel file, still edges): `GET`+`POST` `/api/internal/v1/organization/bind` (`createOrganizationBindHandlers`), `GET`+`POST` `/api/internal/v1/runtime-config` (`createRuntimeConfigHandlers` plus Elektraweb and fiscal hooks), `GET` `/api/platform/billing-status` (kit), `GET` `/api/reports/[slug]` (re-export of `layout/route`).
 - Parser saw no inline verb on: /api/internal/v1/organization/bind, /api/internal/v1/runtime-config, /api/platform/billing-status, /api/reports/[slug]
-- Those three kit edges are mounted by hand in `nest/kit-routes.ts` (same factories as the Next files).
+- API routes are Nest controllers in `nest/native`. There is no generator and no `nest/generated`.
+- Kit billing, runtime-config, and organization bind pass Express headers and body.
+- Guest-app and stay-mobility routes are controllers. Auth and locale cookies are written on the Express response. Route errors are `{ status, body }` written on Express; pages still use `handleRouteError`.
 - Next `app/api/**/route.ts` files for those handlers are removed. Next no longer rewrites `/api` to Nest (`ERA_NEST_CUTOVER` is unused).
 - One origin. Local dev: `node scripts/hotel-front.mjs` on port 3220 (Docker already holds 3201) sends `/api` to Nest **13201** and pages to Next **23201**. The container publishes **3201** and uses the same internal ports. The staff cookie stays on that single host. The front door does not cut the request at 30 seconds.
 - Staff login cookie `maxAge` is 4 hours (`60 * 60 * 4` seconds), matching `SATELLITE_SESSION_COOKIE_MAX_AGE_MS`.

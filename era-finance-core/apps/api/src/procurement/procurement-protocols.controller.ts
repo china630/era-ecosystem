@@ -22,6 +22,10 @@ import {
 import { Permissions } from "../common/decorators/permissions.decorator";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { OrganizationId } from "../common/org-id.decorator";
+import { RequiresModule } from "../subscription/requires-module.decorator";
+import { SubscriptionGuard } from "../subscription/subscription.guard";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
+import { AwardProcurementProtocolDto } from "./dto/award-protocol.dto";
 import {
   CreateProcurementProtocolDto,
   UpdateProcurementProtocolDto,
@@ -101,5 +105,45 @@ export class ProcurementProtocolsController {
     @Param("id", ParseUUIDPipe) id: string,
   ) {
     return this.protocols.register(organizationId, id);
+  }
+
+  @Post(":id/open")
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.PROCUREMENT_TENDERS_PRO)
+  @ApiOperation({ summary: "Open tender (DRAFT/REGISTERED → OPEN)" })
+  open(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    return this.protocols.open(organizationId, id);
+  }
+
+  @Post(":id/award")
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.PROCUREMENT_TENDERS_PRO)
+  @ApiOperation({ summary: "Award winner → draft Contract" })
+  award(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: AwardProcurementProtocolDto,
+  ) {
+    return this.protocols.award(organizationId, id, {
+      winnerBidId: dto.winnerBidId,
+      contractType: dto.contractType as never,
+    });
+  }
+
+  @Post(":id/cancel")
+  @Permissions(CP_PERMISSION.API_PURCHASES_MANAGE)
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.PROCUREMENT_TENDERS_PRO)
+  @ApiOperation({ summary: "Cancel tender protocol" })
+  cancel(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    return this.protocols.cancel(organizationId, id);
   }
 }

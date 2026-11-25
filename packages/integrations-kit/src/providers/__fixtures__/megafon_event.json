@@ -1,0 +1,8 @@
+{
+  "cmd": "event",
+  "type": "INCOMING",
+  "callid": "mf-call-1",
+  "phone": "+994501112233",
+  "user": "101",
+  "crm_token": "crm-token"
+}

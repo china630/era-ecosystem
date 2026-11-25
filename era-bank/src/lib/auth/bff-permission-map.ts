@@ -120,12 +120,17 @@ function readPermission(area: string): Permission | null {
     case "deposits":
       return PERMISSIONS.DEPOSITS_READ;
     case "loans":
+    case "leasing":
+    case "mfi":
       return PERMISSIONS.LOANS_READ;
     case "gl":
       return PERMISSIONS.GL_READ;
     case "aml":
       return PERMISSIONS.AML_READ;
     case "reports":
+    case "mis":
+      return PERMISSIONS.REPORTS_READ;
+    case "webhooks":
       return PERMISSIONS.REPORTS_READ;
     case "cards":
       return PERMISSIONS.CARDS_READ;
@@ -172,6 +177,8 @@ function writePermission(area: string): Permission | null {
     case "deposits":
       return PERMISSIONS.DEPOSITS_WRITE;
     case "loans":
+    case "leasing":
+    case "mfi":
       return PERMISSIONS.LOANS_WRITE;
     case "gl":
       return PERMISSIONS.GL_WRITE;
@@ -201,6 +208,9 @@ function writePermission(area: string): Permission | null {
     case "branches":
       return PERMISSIONS.BRANCHES_WRITE;
     case "reports":
+    case "mis":
+      return PERMISSIONS.REPORTS_READ;
+    case "webhooks":
       return PERMISSIONS.REPORTS_READ;
     default:
       return null;
@@ -216,6 +226,8 @@ function approvePermission(area: string): Permission | null {
     case "deposits":
       return PERMISSIONS.DEPOSITS_APPROVE;
     case "loans":
+    case "leasing":
+    case "mfi":
       return PERMISSIONS.LOANS_APPROVE;
     case "collections":
       return PERMISSIONS.COLLECTIONS_APPROVE;
@@ -235,6 +247,8 @@ function rejectPermission(area: string): Permission | null {
     case "deposits":
       return PERMISSIONS.DEPOSITS_REJECT;
     case "loans":
+    case "leasing":
+    case "mfi":
       return PERMISSIONS.LOANS_REJECT;
     case "collections":
       return PERMISSIONS.COLLECTIONS_APPROVE;

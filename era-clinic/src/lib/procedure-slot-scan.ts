@@ -31,6 +31,7 @@ export type PlacementFailureReason =
   | "lunch"
   | "cross_day"
   | "bath_rest"
+  | "series_rhythm"
   | "week_full"
   | "past_checkout"
   | "checkout_noon"
@@ -181,6 +182,10 @@ export type PlacementFailure = {
   /** Baku clock the pin search started from, `YYYY-MM-DD HH:00`. */
   searchFrom?: string;
   counts?: PlacementBlockCounts;
+  /** Scan loop iterations before miss. */
+  attempts?: number;
+  /** True when the attempt cap stopped the search (not day exhaustion). */
+  hitAttemptCap?: boolean;
 };
 
 function addMinutes(d: Date, mins: number): Date {
@@ -487,6 +492,10 @@ export type CandidateSlotInput = {
   allocationsByStaff?: Map<string, ScanAllocation[]>;
   /** Manual move: this cabin only. Auto search leaves it unset. */
   requiredResourceId?: string | null;
+  /** Reused across attempts on the same Baku day (scan hot path). */
+  dayCapSlots?: DayCapSlotView[];
+  /** Reused for packageDayIsFullForNewCode path. */
+  inPackageSlots?: InPackageSlotView[];
 };
 
 export type CandidateSlotOk = {
@@ -542,12 +551,7 @@ export function evaluateCandidateSlot(
   if (!order.beforeLunchAllowed && startHm.hour < order.typeHours.lunchEndHour) return fail("lunch");
 
   const shareCap = order.inPackage || order.shareGuestDayCap === true;
-  const daySlots = input.patientSlots.map((slot) => ({
-    code: slot.code,
-    start: slot.start,
-    inPackage: slot.inPackage || slot.holdsGuestDay === true,
-    quotaKey: slot.quotaKey || slot.code,
-  }));
+  const daySlots = input.dayCapSlots ?? buildDayCapSlotViews(input.patientSlots);
   if (shareCap && order.quotaKey && order.dailyUseCap != null) {
     if (
       packageBlockDayUseIsFull({
@@ -574,14 +578,8 @@ export function evaluateCandidateSlot(
         return fail("day_full");
       }
     } else if (order.inPackage && order.dailyCap === undefined) {
-      const codesOnDay = inPackageCodesOnBakuDay(
-        input.patientSlots.map((slot) => ({
-          code: slot.code,
-          start: slot.start,
-          inPackage: slot.inPackage,
-        })),
-        slotStart,
-      );
+      const inPkg = input.inPackageSlots ?? buildInPackageSlotViews(input.patientSlots);
+      const codesOnDay = inPackageCodesOnBakuDay(inPkg, slotStart);
       if (packageDayIsFullForNewCode(codesOnDay, order.procedureCode, input.packageCap)) {
         return fail("day_full");
       }
@@ -690,6 +688,99 @@ export function placementBlockReason(
     .filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1]);
   return ranked[0]?.[0] ?? "no_slot";
+}
+
+/**
+ * On a pinned civil day these reasons do not change with the 5-minute grid —
+ * walking the day wastes attempts. Unpinned hunt still jumps to next morning.
+ */
+export function isDayInvariantPinMiss(reason: PlacementFailureReason): boolean {
+  return reason === "same_day" || reason === "day_full" || reason === "closed";
+}
+
+function bumpBlockCount(blocks: PlacementBlockCounts, reason: PlacementFailureReason): void {
+  if (reason === "day_full") blocks.day_full += 1;
+  else if (reason === "same_day") blocks.same_day += 1;
+  else if (reason === "no_staff") blocks.no_staff += 1;
+  else if (reason === "closed") blocks.closed += 1;
+  else if (reason === "staff_busy") blocks.staff_busy += 1;
+  else if (reason === "cabin_busy") blocks.cabin_busy += 1;
+  else if (reason === "rule" || reason === "lunch") blocks.rule += 1;
+}
+
+function emptyBlockCounts(): PlacementBlockCounts {
+  return {
+    day_full: 0,
+    same_day: 0,
+    no_staff: 0,
+    closed: 0,
+    cabin_busy: 0,
+    staff_busy: 0,
+    rule: 0,
+  };
+}
+
+/** Saxla / extras seating wall budget (whole save). Large multi-SKU saves need headroom past 12s. */
+export const SAXLA_SEATING_BUDGET_MS = 20_000;
+/** Default per placeConfirmedProcedures when called from package/bath/extras without a parent deadline. */
+export const PLACE_CONFIRMED_BUDGET_MS = 12_000;
+
+/** Inclusive civil-day span between two YYYY-MM-DD keys (0 when equal). */
+export function bakuYmdSpanDays(fromYmd: string, toYmd: string): number {
+  const a = Date.UTC(
+    Number(fromYmd.slice(0, 4)),
+    Number(fromYmd.slice(5, 7)) - 1,
+    Number(fromYmd.slice(8, 10)),
+  );
+  const b = Date.UTC(
+    Number(toYmd.slice(0, 4)),
+    Number(toYmd.slice(5, 7)) - 1,
+    Number(toYmd.slice(8, 10)),
+  );
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+  return Math.max(0, Math.round((b - a) / 86_400_000));
+}
+
+/** Unpinned hunt attempt ceiling — horizon-aware, never above 4000. */
+export function unpinnedAttemptCap(
+  daySpanHours: number,
+  slotMinutes: number,
+  nowYmd: string,
+  horizonEndYmd: string,
+): number {
+  const slotsPerDay = Math.ceil((Math.max(1, daySpanHours) * 60) / Math.max(1, slotMinutes));
+  const daySpan = Math.max(1, bakuYmdSpanDays(nowYmd, horizonEndYmd) + 1);
+  return Math.min(4000, Math.max(64, daySpan * slotsPerDay * 2));
+}
+
+export type DayCapSlotView = {
+  code: string;
+  start: Date;
+  inPackage: boolean;
+  quotaKey: string;
+};
+
+export type InPackageSlotView = {
+  code: string;
+  start: Date;
+  inPackage: boolean;
+};
+
+export function buildDayCapSlotViews(patientSlots: ScanPatientSlot[]): DayCapSlotView[] {
+  return patientSlots.map((slot) => ({
+    code: slot.code,
+    start: slot.start,
+    inPackage: slot.inPackage || slot.holdsGuestDay === true,
+    quotaKey: slot.quotaKey || slot.code,
+  }));
+}
+
+export function buildInPackageSlotViews(patientSlots: ScanPatientSlot[]): InPackageSlotView[] {
+  return patientSlots.map((slot) => ({
+    code: slot.code,
+    start: slot.start,
+    inPackage: slot.inPackage,
+  }));
 }
 
 /**
@@ -831,12 +922,68 @@ export function scanProcedureSlots(input: {
   patientSlots: ScanPatientSlot[];
   rotationContext: RotationContextSlot[];
   allocations: ScanAllocation[];
-}): { planned: PlannedPlacement[]; failures: PlacementFailure[] } {
+  /** Wall-clock stop (Date.now()). Remaining orders miss with hitAttemptCap. */
+  deadlineMs?: number;
+}): { planned: PlannedPlacement[]; failures: PlacementFailure[]; budgetHit?: boolean } {
   const planned: PlannedPlacement[] = [];
   const failures: PlacementFailure[] = [];
   const occupancy = indexScanAllocations(input.allocations);
+  const nowYmd = bakuDateKey(input.now);
+  let budgetHit = false;
+  let dayViewCache: {
+    slotsLen: number;
+    dayCapSlots: DayCapSlotView[];
+    inPackageSlots: InPackageSlotView[];
+  } | null = null;
+
+  const dayViews = () => {
+    const len = input.patientSlots.length;
+    if (dayViewCache && dayViewCache.slotsLen === len) return dayViewCache;
+    dayViewCache = {
+      slotsLen: len,
+      dayCapSlots: buildDayCapSlotViews(input.patientSlots),
+      inPackageSlots: buildInPackageSlotViews(input.patientSlots),
+    };
+    return dayViewCache;
+  };
+
+  const pushBudgetMiss = (order: ScanOrder, searchFrom: Date) => {
+    const searchHm = bakuHourMinute(searchFrom);
+    failures.push({
+      orderId: order.id,
+      procedureCode: order.procedureCode,
+      procedureName: order.procedureName,
+      reason: "no_slot",
+      ymd: order.pinYmd || nowYmd,
+      staffName: order.preferredStaffName?.trim() || undefined,
+      searchFrom: `${bakuDateKey(searchFrom)} ${String(searchHm.hour).padStart(2, "0")}:${String(searchHm.minute).padStart(2, "0")}`,
+      counts: emptyBlockCounts(),
+      attempts: 0,
+      hitAttemptCap: true,
+    });
+  };
 
   for (const order of input.orders) {
+    if (budgetHit) {
+      const pinStartHour = order.pinYmd
+        ? windowForDay(order, order.pinYmd).startHour
+        : order.typeHours.dayStartHour;
+      pushBudgetMiss(order, pinSearchFrom(input.now, order.pinYmd, pinStartHour));
+      continue;
+    }
+    if (
+      input.deadlineMs != null &&
+      Number.isFinite(input.deadlineMs) &&
+      Date.now() >= input.deadlineMs
+    ) {
+      budgetHit = true;
+      const pinStartHour = order.pinYmd
+        ? windowForDay(order, order.pinYmd).startHour
+        : order.typeHours.dayStartHour;
+      pushBudgetMiss(order, pinSearchFrom(input.now, order.pinYmd, pinStartHour));
+      continue;
+    }
+
     if (order.resources.length === 0) {
       failures.push({
         orderId: order.id,
@@ -883,17 +1030,66 @@ export function scanProcedureSlots(input: {
     let placed: PlannedPlacement | null = null;
     let sawStaffPool = false;
     let lastYmd = "";
-    const blocks: PlacementBlockCounts = {
-      day_full: 0,
-      same_day: 0,
-      no_staff: 0,
-      closed: 0,
-      cabin_busy: 0,
-      staff_busy: 0,
-      rule: 0,
-    };
+    const blocks = emptyBlockCounts();
     const opened = slotStart != null;
-    for (let attempt = 0; attempt < 4000 && slotStart && !placed; attempt++) {
+    const daySpanHours = Math.max(
+      1,
+      order.typeHours.dayEndHour - order.typeHours.dayStartHour,
+    );
+    const attemptCap = order.pinYmd
+      ? Math.max(48, Math.ceil((daySpanHours * 60) / Math.max(1, input.slotMinutes)) * 2)
+      : unpinnedAttemptCap(daySpanHours, input.slotMinutes, nowYmd, input.horizonEndYmd);
+    let attempt = 0;
+    let hitAttemptCap = false;
+
+    const candidateInput = (start: Date, end: Date) => {
+      const views = dayViews();
+      return {
+        order,
+        slotStart: start,
+        slotEnd: end,
+        packageCap: input.packageCap,
+        closedYmds: input.closedYmds,
+        noonCheckoutYmd: input.noonCheckoutYmd,
+        staffByTypeAndYmd: input.staffByTypeAndYmd,
+        rules: input.rules,
+        rotationRules: input.rotationRules,
+        compatibilityRules: input.compatibilityRules,
+        patientSlots: input.patientSlots,
+        rotationContext: input.rotationContext,
+        allocations: input.allocations,
+        allocationsByResource: occupancy.byResource,
+        allocationsByStaff: occupancy.byStaff,
+        dayCapSlots: views.dayCapSlots,
+        inPackageSlots: views.inPackageSlots,
+      };
+    };
+
+    // Prefail: day-invariant pin misses need one check, not a full grid walk.
+    if (order.pinYmd && slotStart && bakuDateKey(slotStart) === order.pinYmd) {
+      const preStart = avoidLunchOverlap(slotStart, order.durationMin, order.typeHours);
+      const preEnd = addMinutes(preStart, order.durationMin);
+      const pre = evaluateCandidateSlot(candidateInput(preStart, preEnd));
+      if (!pre.ok && isDayInvariantPinMiss(pre.reason)) {
+        if (pre.sawStaffPool) sawStaffPool = true;
+        bumpBlockCount(blocks, pre.reason);
+        lastYmd = order.pinYmd;
+        attempt = 1;
+        slotStart = null;
+      }
+    }
+
+    for (; attempt < attemptCap && slotStart && !placed; attempt++) {
+      if (
+        input.deadlineMs != null &&
+        Number.isFinite(input.deadlineMs) &&
+        Date.now() >= input.deadlineMs
+      ) {
+        budgetHit = true;
+        hitAttemptCap = true;
+        slotStart = null;
+        break;
+      }
       if (order.pinYmd && bakuDateKey(slotStart) !== order.pinYmd) {
         slotStart = null;
         break;
@@ -917,32 +1113,15 @@ export function scanProcedureSlots(input: {
 
       const slotEnd = addMinutes(slotStart, order.durationMin);
       lastYmd = bakuDateKey(slotStart);
-      const verdict = evaluateCandidateSlot({
-        order,
-        slotStart,
-        slotEnd,
-        packageCap: input.packageCap,
-        closedYmds: input.closedYmds,
-        noonCheckoutYmd: input.noonCheckoutYmd,
-        staffByTypeAndYmd: input.staffByTypeAndYmd,
-        rules: input.rules,
-        rotationRules: input.rotationRules,
-        compatibilityRules: input.compatibilityRules,
-        patientSlots: input.patientSlots,
-        rotationContext: input.rotationContext,
-        allocations: input.allocations,
-        allocationsByResource: occupancy.byResource,
-        allocationsByStaff: occupancy.byStaff,
-      });
+      const verdict = evaluateCandidateSlot(candidateInput(slotStart, slotEnd));
       if (!verdict.ok) {
         if (verdict.sawStaffPool) sawStaffPool = true;
-        if (verdict.reason === "day_full") blocks.day_full += 1;
-        if (verdict.reason === "same_day") blocks.same_day += 1;
-        if (verdict.reason === "no_staff") blocks.no_staff += 1;
-        if (verdict.reason === "closed") blocks.closed += 1;
-        if (verdict.reason === "staff_busy") blocks.staff_busy += 1;
-        if (verdict.reason === "cabin_busy") blocks.cabin_busy += 1;
-        if (verdict.reason === "rule" || verdict.reason === "lunch") blocks.rule += 1;
+        bumpBlockCount(blocks, verdict.reason);
+        // Day-invariant on pin: answer does not change with +5 min — miss now.
+        if (order.pinYmd && isDayInvariantPinMiss(verdict.reason)) {
+          slotStart = null;
+          continue;
+        }
         // A pinned day stays on that civil day. Jumping to the next morning
         // makes the pin check abort the afternoon after the first miss.
         const jumpMorning =
@@ -951,14 +1130,14 @@ export function scanProcedureSlots(input: {
             verdict.reason === "same_day" ||
             verdict.reason === "no_staff" ||
             verdict.reason === "closed");
-        if (!order.pinYmd && verdict.reason === "cabin_busy") {
+        if (verdict.reason === "cabin_busy") {
           const cabinAt = nextCabinGridTime(
             order,
             slotStart,
             input.allocations,
             input.slotMinutes,
           );
-          slotStart = cabinAt
+          const next = cabinAt
             ? nextOpenSlot(
                 cabinAt,
                 order,
@@ -968,6 +1147,15 @@ export function scanProcedureSlots(input: {
                 input.noonCheckoutYmd,
               )
             : null;
+          if (
+            !next ||
+            next.getTime() <= slotStart.getTime() ||
+            (order.pinYmd && bakuDateKey(next) !== order.pinYmd)
+          ) {
+            slotStart = null;
+          } else {
+            slotStart = next;
+          }
           continue;
         }
         slotStart = jumpMorning
@@ -1041,19 +1229,24 @@ export function scanProcedureSlots(input: {
 
     if (placed) planned.push(placed);
     else {
+      if (attempt >= attemptCap && !placed) hitAttemptCap = true;
       const searchHm = bakuHourMinute(searchFrom);
       failures.push({
         orderId: order.id,
         procedureCode: order.procedureCode,
         procedureName: order.procedureName,
-        reason: placementBlockReason(opened, sawStaffPool, blocks),
+        reason: hitAttemptCap && blocks.day_full + blocks.same_day + blocks.cabin_busy + blocks.rule + blocks.staff_busy + blocks.no_staff + blocks.closed === 0
+          ? "no_slot"
+          : placementBlockReason(opened, sawStaffPool, blocks),
         ymd: lastYmd || order.pinYmd || undefined,
         staffName: order.preferredStaffName?.trim() || undefined,
         searchFrom: `${bakuDateKey(searchFrom)} ${String(searchHm.hour).padStart(2, "0")}:${String(searchHm.minute).padStart(2, "0")}`,
         counts: { ...blocks },
+        attempts: attempt,
+        hitAttemptCap,
       });
     }
   }
 
-  return { planned, failures };
+  return { planned, failures, ...(budgetHit ? { budgetHit: true } : {}) };
 }

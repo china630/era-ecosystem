@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
 import { nestHttpFrame } from "@/lib/nest-http-context";
 import {
   readSatelliteStaffSession,
@@ -12,65 +10,63 @@ import { assertApiRouteGrant } from "@/lib/auth/require";
 import type { RoleGrantRow } from "@/lib/auth/permission-catalog";
 import { grantsForUser, ROLE_GRANT_SELECT } from "@/lib/auth/construction-permission.service";
 
-/** Same value as the kit `ERA_PATHNAME_HEADER`; the staff middleware overwrites any client copy. */
+/** Same value as the kit `ERA_PATHNAME_HEADER`; Nest ALS stamps path/method on the frame. */
 const PATHNAME_HEADER = "x-era-pathname";
 
-export function jsonOk<T>(data: T, status = 200) {
-  return NextResponse.json(data, { status });
+export type RouteErrorBody = Record<string, unknown>;
+export type RouteErrorResult = { status: number; body: RouteErrorBody };
+
+export function jsonErrorBody(message: string): RouteErrorBody {
+  return { error: message };
 }
 
-export function jsonError(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status });
-}
-
-export function handleRouteError(err: unknown) {
+/** Nest-safe error map (no NextResponse). */
+export function handleRouteError(err: unknown): RouteErrorResult {
   if (isSatelliteBillingBlockedError(err)) {
-    return NextResponse.json(
-      { error: err.message, code: err.code, billingStatus: err.billingStatus },
-      { status: err.status },
-    );
+    return {
+      status: err.status,
+      body: { error: err.message, code: err.code, billingStatus: err.billingStatus },
+    };
   }
   if (err && typeof err === "object" && "issues" in err) {
-    return jsonError("Validation failed", 400);
+    return { status: 400, body: jsonErrorBody("Validation failed") };
   }
   if (err instanceof IndustryModuleInactiveError) {
-    return jsonError(err.message, err.status ?? 403);
+    return { status: err.status ?? 403, body: jsonErrorBody(err.message) };
   }
   if (err instanceof Error && err.name === "IndustryModuleInactiveError") {
     const status =
       "status" in err && typeof (err as { status?: number }).status === "number"
         ? (err as { status: number }).status
         : 403;
-    return jsonError(err.message, status);
+    return { status, body: jsonErrorBody(err.message) };
   }
   if (err instanceof Error && (err.name === "UnauthorizedError" || err.name === "PermissionDeniedError")) {
-    return jsonError(err.message, err.name === "UnauthorizedError" ? 401 : 403);
+    return {
+      status: err.name === "UnauthorizedError" ? 401 : 403,
+      body: jsonErrorBody(err.message),
+    };
   }
   const msg = err instanceof Error ? err.message : "Internal error";
-  return jsonError(msg, 500);
+  return { status: 500, body: jsonErrorBody(msg) };
 }
 
 export type StaffSession = SatelliteStaffSessionPayload & { permissions: string[] };
 
 /**
- * Staff session: org from the signed token, active user row, module gate, then
- * the grant for this API path from the role row (CN-RBAC-01).
- * No session → null (401); module off → IndustryModuleInactiveError (403);
- * missing grant → PermissionDeniedError (403).
- * Call once per handler, inside try, and pass the session on.
+ * Staff session for the Nest edge: org from the signed token, active user row,
+ * module gate, then the grant for this API path (CN-RBAC-01).
+ * Pass cookie and header readers from the Express request.
+ * With neither readers nor a test frame, there is no session.
  */
-export async function getSatelliteSession(): Promise<StaffSession | null> {
-  let cookieStore: Awaited<ReturnType<typeof cookies>>;
-  let headerStore: Awaited<ReturnType<typeof headers>>;
-  try {
-    cookieStore = await cookies();
-    headerStore = await headers();
-  } catch {
-    const frame = nestHttpFrame();
-    if (!frame) return null;
-    cookieStore = frame.cookies as Awaited<ReturnType<typeof cookies>>;
-    headerStore = frame.headers as Awaited<ReturnType<typeof headers>>;
-  }
+export async function getSatelliteSession(explicit?: {
+  cookies: { get(name: string): { value: string } | undefined };
+  headers: { get(name: string): string | null };
+}): Promise<StaffSession | null> {
+  const frame = nestHttpFrame();
+  const cookieStore = explicit?.cookies ?? frame?.cookies;
+  const headerStore = explicit?.headers ?? frame?.headers;
+  if (!cookieStore || !headerStore) return null;
   const staff = await readSatelliteStaffSession({
     cookies: cookieStore,
     headers: headerStore,

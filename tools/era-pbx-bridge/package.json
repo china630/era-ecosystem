@@ -1,0 +1,14 @@
+{
+  "name": "era-pbx-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "On-prem AMI/ARI agent: normalize Asterisk events to CRM HMAC webhooks",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -3,6 +3,7 @@ const SLOT_I18N: Record<string, string> = {
   CLOSED: "slotClosed",
   DAY_FULL: "slotDayFull",
   BATH_REST: "slotBathRest",
+  SERIES_RHYTHM: "slotSeriesRhythm",
   WEEK_FULL: "slotWeekFull",
   PAST_CHECKOUT: "slotPastCheckout",
   CHECKOUT_NOON: "slotCheckoutNoon",

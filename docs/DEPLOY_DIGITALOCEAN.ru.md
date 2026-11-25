@@ -285,6 +285,7 @@ tar czf /root/era-docker-data.tgz -C /opt/era-ecosystem docker-data
 |---------|----------|
 | 502 / connection refused | `docker compose logs traefik orchestrator` |
 | OOM при build | увеличить droplet или `DOCKER_BUILDKIT=1` и сборка по одному сервису |
+| Host OOM / clinic kill | `./docker/scripts/ensure-swap-4g.sh` (4 GiB swap); `mem_limit` clinic `3584m` / hotel `2560m` в `docker-compose.prod.yml`; после деплоя `./docker/scripts/prune-unused-images.sh` (см. EN `DEPLOY_DIGITALOCEAN.md` §7) |
 | Login 401 | повторить `npm run bootstrap:local:demo` |
 | Finance `Session invalid — use Orchestrator login` | `ORCHESTRATOR_INTERNAL_SERVICE_TOKEN` = `CONTROL_PLANE_SERVICE_TOKEN` в `.env`; `ERA_JWT_JWKS_URL=http://orchestrator:4000/.well-known/jwks.json`. Выкат: **Deploy staging** → scope `finance`. Вход только с `https://app.era-365.online` → workspace → Open Finance. |
 | Deploy `ghcr.io/v2/: denied` | Логин в GHCR идёт в `docker/scripts/deploy-droplet.sh`. В inline-скрипте appleboy/ssh-action нельзя ставить pipe — drone-ssh выкидывает такие строки и `docker login` не выполняется. |

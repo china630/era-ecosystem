@@ -2,7 +2,7 @@ import { updateReservationSchedule } from '@/lib/services/reservation.service';
 import { recordRoomMove } from '@/lib/services/room-occupancy-log.service';
 import { physicalTypeAllowedForDoor } from '@/lib/services/door-type.policy';
 import { prisma } from '@/lib/prisma';
-import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
+import { clinicProgramCodeForEvent } from '@/lib/integration/clinic-program-codes';
 
 const RELOCATABLE = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
@@ -92,7 +92,7 @@ export async function relocateReservationRoom(
       reservationId,
       previousRoomNumber: fromRoom?.roomNumber ?? undefined,
       newRoomNumber: dest?.roomNumber ?? toRoomId,
-      programCode: clinicProgramCodeFromTariff(reservation.ratePlan),
+      programCode: await clinicProgramCodeForEvent(reservation.ratePlan),
     }).catch((e) => console.error('Guest lifecycle room change failed', e));
   }
 

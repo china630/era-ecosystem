@@ -4,6 +4,8 @@ export const CLINIC_URL = (
   process.env.EXPO_PUBLIC_CLINIC_URL ?? "https://clinic.era-365.online"
 ).replace(/\/$/, "");
 
+const DEFAULT_TIMEOUT_MS = 10_000;
+
 export function cookieHeader(token: string): string {
   return `era_session=${token}`;
 }
@@ -13,8 +15,30 @@ async function readJson(res: Response): Promise<Record<string, unknown>> {
   return body;
 }
 
+function withTimeout(ms: number = DEFAULT_TIMEOUT_MS): AbortSignal {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(ms);
+  }
+  const ctrl = new AbortController();
+  setTimeout(() => ctrl.abort(), ms);
+  return ctrl.signal;
+}
+
+/** True when the clinic origin is the shared (non-org-subdomain) host. */
+export function shouldAlwaysAskOrgNo(): boolean {
+  try {
+    const host = new URL(CLINIC_URL).hostname.toLowerCase();
+    return host === "clinic.era-365.online";
+  } catch {
+    return true;
+  }
+}
+
 export async function loginMeta(): Promise<{ hostBound: boolean }> {
-  const res = await fetch(`${CLINIC_URL}/api/auth/login`, { method: "GET" });
+  const res = await fetch(`${CLINIC_URL}/api/auth/login`, {
+    method: "GET",
+    signal: withTimeout(),
+  });
   const body = await readJson(res);
   const data = (body.data ?? body) as { hostBound?: boolean };
   return { hostBound: data.hostBound === true };
@@ -33,6 +57,7 @@ export async function login(input: {
       password: input.password,
       ...(input.orgNo?.trim() ? { orgNo: input.orgNo.trim() } : {}),
     }),
+    signal: withTimeout(),
   });
   const body = await readJson(res);
   const data = (body.data ?? body) as {
@@ -59,6 +84,7 @@ export async function fetchMe(token: string): Promise<MeResult> {
   try {
     const res = await fetch(`${CLINIC_URL}/api/auth/me`, {
       headers: { Accept: "application/json", Cookie: cookieHeader(token) },
+      signal: withTimeout(),
     });
     if (res.status === 401) return { kind: "unauthorized" };
     if (!res.ok) return { kind: "unreachable" };
@@ -78,6 +104,7 @@ export async function logout(token: string): Promise<void> {
   await fetch(`${CLINIC_URL}/api/auth/logout`, {
     method: "POST",
     headers: { Cookie: cookieHeader(token) },
+    signal: withTimeout(5_000),
   }).catch(() => undefined);
 }
 
@@ -90,7 +117,10 @@ export async function fetchBoard(
   try {
     res = await fetch(
       `${CLINIC_URL}/api/procedures?date=${encodeURIComponent(date)}&locale=${encodeURIComponent(locale)}&status=ALL&mine=1`,
-      { headers: { Accept: "application/json", Cookie: cookieHeader(token) } },
+      {
+        headers: { Accept: "application/json", Cookie: cookieHeader(token) },
+        signal: withTimeout(),
+      },
     );
   } catch {
     return { status: 0 };
@@ -120,21 +150,21 @@ export async function postCheckIn(
   token: string,
   procedureId: string,
 ): Promise<{ status: number; code?: string; error?: string }> {
-  let res: Response;
   try {
-    res = await fetch(`${CLINIC_URL}/api/procedures/${procedureId}/check-in`, {
+    const res = await fetch(`${CLINIC_URL}/api/procedures/${encodeURIComponent(procedureId)}/check-in`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
+        "Content-Type": "application/json",
         Cookie: cookieHeader(token),
       },
       body: JSON.stringify({}),
+      signal: withTimeout(),
     });
+    const body = await readJson(res);
+    const data = (body.data ?? body) as { code?: string; error?: string };
+    return { status: res.status, code: data.code, error: data.error };
   } catch {
     return { status: 0 };
   }
-  const body = await readJson(res);
-  const data = (body.data ?? body) as { code?: string; error?: string };
-  return { status: res.status, code: data.code, error: data.error };
 }

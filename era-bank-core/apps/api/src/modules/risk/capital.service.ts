@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { LoanStatus } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import { mulRateRound } from "../../common/money-rate.util";
 
 const STAGE_WEIGHT: Record<1 | 2 | 3, number> = {
   1: 1.0,
@@ -54,7 +55,7 @@ export class CapitalService {
         loan.ifrs9Stage === 2 || loan.ifrs9Stage === 3 ? loan.ifrs9Stage : 1
       ) as 1 | 2 | 3;
       const weight = STAGE_WEIGHT[stage];
-      const rwa = BigInt(Math.round(Number(loan.outstandingMinor) * weight));
+      const rwa = mulRateRound(loan.outstandingMinor, weight);
       creditRwa += rwa;
       details.push({
         loanId: loan.id,

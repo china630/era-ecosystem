@@ -5,16 +5,13 @@ import {
   SATELLITE_STAFF_SESSION,
   type SatelliteNestRequest,
 } from "@era/satellite-kit/nest";
-import { handleRouteError } from "@/lib/api-utils";
+import { describeRouteError } from "@/lib/api-utils";
 import {
   enrichHotelStaffSession,
   loadHotelSessionUser,
   type HotelSessionUser,
 } from "@/lib/auth/session";
 import { runWithSatelliteTenant, agencyAuthCookieName, getBearerOrCookieToken } from "@era/satellite-kit";
-import { runWithNestHttp } from "@/lib/nest-http-context";
-
-export { runWithNestHttp };
 
 type StaffRequest = SatelliteNestRequest & {
   originalUrl?: string;
@@ -85,6 +82,23 @@ export function nestQuery(req: StaffRequest): URLSearchParams {
 
 export function sendJson(res: Response, data: unknown, status = 200): void {
   res.status(status).json(data);
+}
+
+/** Next cookie maxAge is seconds. Express maxAge is milliseconds. */
+export function cookieSeconds(
+  res: Response,
+  name: string,
+  value: string,
+  maxAgeSeconds: number,
+  opts?: { httpOnly?: boolean; secure?: boolean },
+): void {
+  res.cookie(name, value, {
+    httpOnly: opts?.httpOnly !== false,
+    sameSite: "lax",
+    path: "/",
+    maxAge: maxAgeSeconds * 1000,
+    secure: opts?.secure,
+  });
 }
 
 export function sendBytes(
@@ -176,17 +190,8 @@ export async function sendRouteError(res: Response, err: unknown): Promise<void>
       " invocation:\n\n\n$1",
     );
   }
-  const next = handleRouteError(err);
-  res.status(next.status).json(await next.json());
+  const described = describeRouteError(err);
+  if (res.headersSent) return;
+  res.status(described.status).json(described.body);
 }
 
-export async function sendWebResponse(res: Response, next: globalThis.Response): Promise<void> {
-  const bytes = Buffer.from(await next.arrayBuffer());
-  const cookies = typeof next.headers.getSetCookie === "function" ? next.headers.getSetCookie() : [];
-  next.headers.forEach((value, key) => {
-    if (key === "transfer-encoding" || key === "content-length" || key === "set-cookie") return;
-    res.setHeader(key, value);
-  });
-  if (cookies.length) res.setHeader("set-cookie", cookies);
-  res.status(next.status).send(bytes);
-}

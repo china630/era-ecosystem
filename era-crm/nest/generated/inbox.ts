@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createInboxThread, findLeadById, listInboxThreadsRecent } from "@/lib/inbox.service";
-import { enterCrmStaff, crmNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithCrmTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
+import { assertLeadInScope, leadScopedRelationWhere } from "@/lib/integrations/lead-scope";
+import { enterCrmStaff, crmNestSession, runWithCrmTenant, runWithNestHttp, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
 const createSchema = z.object({
   channel: z.enum(["whatsapp", "instagram"]),
@@ -17,21 +18,15 @@ export function register(http: { get: Function; post: Function; put: Function; p
       const session = await crmNestSession(httpReq);
       const web = await runWithCrmTenant(session, async () => {
         return runWithNestHttp(httpReq, async () => {
-      const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
-      const request = {
-        url: requestUrl.toString(),
-        method: httpReq.method,
-        nextUrl: requestUrl,
-        headers: { get: (name: string) => nestHeader(httpReq, name) },
-        json: async () => httpReq.body,
-        text: async () => (typeof httpReq.body === "string" ? httpReq.body : JSON.stringify(httpReq.body ?? "")),
-      };
-
-  
-    if (!(session)) return sendJson(httpRes, { error: "Unauthorized" }, 401);
-    const threads = await listInboxThreadsRecent();
-    return sendJson(httpRes, threads);
-  
+          if (!session) return sendJson(httpRes, { error: "Unauthorized" }, 401);
+          const scopeWhere = await leadScopedRelationWhere({
+            organizationId: session.organizationId,
+            userId: session.sub,
+            permissions: session.permissions ?? [],
+            isOwner: session.isOwner === true,
+          });
+          const threads = await listInboxThreadsRecent(100, scopeWhere);
+          return sendJson(httpRes, threads);
         });
       });
       if (web instanceof Response) await sendWebResponse(httpRes, web);
@@ -45,37 +40,33 @@ export function register(http: { get: Function; post: Function; put: Function; p
       const session = await crmNestSession(httpReq);
       const web = await runWithCrmTenant(session, async () => {
         return runWithNestHttp(httpReq, async () => {
-      const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
-      const req = {
-        url: requestUrl.toString(),
-        method: httpReq.method,
-        nextUrl: requestUrl,
-        headers: { get: (name: string) => nestHeader(httpReq, name) },
-        json: async () => httpReq.body,
-        text: async () => (typeof httpReq.body === "string" ? httpReq.body : JSON.stringify(httpReq.body ?? "")),
-      };
+          if (!session) return sendJson(httpRes, { error: "Unauthorized" }, 401);
+          const body = createSchema.parse(httpReq.body);
 
-  
-    if (!(session)) return sendJson(httpRes, { error: "Unauthorized" }, 401);
-    const body = createSchema.parse(httpReq.body);
+          if (body.leadId) {
+            await assertLeadInScope({
+              organizationId: session.organizationId,
+              userId: session.sub,
+              leadId: body.leadId,
+              permissions: session.permissions ?? [],
+              isOwner: session.isOwner === true,
+            });
+            const lead = await findLeadById(body.leadId, session.organizationId);
+            if (!lead) return sendJson(httpRes, { error: "Lead not found" }, 404);
+          }
 
-    if (body.leadId) {
-      const lead = await findLeadById(body.leadId);
-      if (!lead) return sendJson(httpRes, { error: "Lead not found" }, 404);
-    }
+          const thread = await createInboxThread({
+            organizationId: session.organizationId,
+            channel: body.channel,
+            externalRef: body.externalRef,
+            leadId: body.leadId,
+            preview: body.preview,
+            lastMessageAt: body.lastMessageAt
+              ? new Date(body.lastMessageAt)
+              : new Date(),
+          });
 
-    const thread = await createInboxThread({
-      channel: body.channel,
-      externalRef: body.externalRef,
-      leadId: body.leadId,
-      preview: body.preview,
-      lastMessageAt: body.lastMessageAt
-        ? new Date(body.lastMessageAt)
-        : new Date(),
-    });
-
-    return sendJson(httpRes, thread, 201);
-  
+          return sendJson(httpRes, thread, 201);
         });
       });
       if (web instanceof Response) await sendWebResponse(httpRes, web);

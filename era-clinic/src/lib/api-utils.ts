@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { ClinicJson } from "@/lib/clinic-json";
 import {
   readSatelliteStaffSession,
   type SatelliteStaffSession,
@@ -23,8 +23,10 @@ import {
 } from "@/lib/auth/clinic-permissions";
 import { prisma } from "@/lib/prisma";
 
+export { ClinicJson } from "@/lib/clinic-json";
+
 export function jsonOk<T>(data: T, status = 200) {
-  return NextResponse.json(data, { status });
+  return new ClinicJson(status, data);
 }
 
 export function jsonError(
@@ -32,7 +34,7 @@ export function jsonError(
   status: number,
   extra?: Record<string, unknown>,
 ) {
-  return NextResponse.json({ error: message, ...extra }, { status });
+  return new ClinicJson(status, { error: message, ...extra });
 }
 
 function isCodeUniqueViolation(err: unknown): boolean {
@@ -50,9 +52,9 @@ function isCodeUniqueViolation(err: unknown): boolean {
 
 export function handleRouteError(err: unknown) {
   if (isSatelliteBillingBlockedError(err)) {
-    return NextResponse.json(
+    return new ClinicJson(
+      err.status,
       { error: err.message, code: err.code, billingStatus: err.billingStatus },
-      { status: err.status },
     );
   }
   if (err && typeof err === "object" && "issues" in err) {
@@ -110,6 +112,7 @@ export function handleRouteError(err: unknown) {
       "CROSS_DAY",
       "DAY_FULL",
       "BATH_REST",
+      "SERIES_RHYTHM",
       "WEEK_FULL",
       "PAST_CHECKOUT",
       "CHECKOUT_NOON",
@@ -188,17 +191,33 @@ export async function enrichClinicStaffSession(
   return { ...session, permissions };
 }
 
+const boundClinicSession = new AsyncLocalStorage<SatelliteStaffSessionPayload>();
+
+/** Staff session already loaded by the Nest guard, visible to admin/ops gates. */
+export function runWithBoundClinicSession<T>(
+  session: SatelliteStaffSessionPayload,
+  fn: () => Promise<T>,
+): Promise<T> {
+  return boundClinicSession.run(session, fn);
+}
+
 export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayload | null> {
+  const bound = boundClinicSession.getStore();
+  if (bound) return bound;
   let cookieStore: { get(name: string): { value: string } | undefined };
   let headerStore: { get(name: string): string | null };
-  try {
-    cookieStore = await cookies();
-    headerStore = await headers();
-  } catch {
-    const frame = nestHttpFrame();
-    if (!frame) return null;
+  const frame = nestHttpFrame();
+  if (frame) {
     cookieStore = frame.cookies;
     headerStore = frame.headers;
+  } else {
+    try {
+      const nextHeaders = await import("next/headers");
+      cookieStore = await nextHeaders.cookies();
+      headerStore = await nextHeaders.headers();
+    } catch {
+      return null;
+    }
   }
   const staff = await readSatelliteStaffSession({
     cookies: cookieStore,
@@ -227,7 +246,7 @@ export function hasBusinessOwnerRole(
 export async function requireClinicPermission(
   session: SatelliteSessionPayload | null,
   permission: ClinicPermission,
-): Promise<NextResponse | null> {
+): Promise<ClinicJson | null> {
   return assertClinicPermission(session, permission);
 }
 

@@ -1,6 +1,6 @@
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    clinicalEpisode: { findUnique: jest.fn() },
+    clinicalEpisode: { findUnique: jest.fn(), update: jest.fn().mockResolvedValue({}) },
     episodeCareDoctor: { findFirst: jest.fn() },
     visitServiceLine: { findFirst: jest.fn(), create: jest.fn() },
     visit: { create: jest.fn() },
@@ -69,6 +69,11 @@ jest.mock("@/domain/sanatorium/entitlement-charge.service", () => ({
     priceMissing: boolean;
     reason: string;
   }) => charge,
+}));
+
+jest.mock("@/domain/sanatorium/episode-audit.service", () => ({
+  recordEpisodeAudit: jest.fn().mockResolvedValue(undefined),
+  listEpisodeJournal: jest.fn().mockResolvedValue([]),
 }));
 
 import { prisma } from "@/lib/prisma";

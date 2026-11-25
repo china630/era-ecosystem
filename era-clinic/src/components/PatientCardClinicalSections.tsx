@@ -44,10 +44,6 @@ import {
   formatPhysioFieldsPrint,
   type PhysioOrderFields,
 } from "@/domain/physio/physio-order-fields";
-import {
-  formatPackageAssignMissLines,
-  toastPackageAssignOutcome,
-} from "@/lib/package-assign-toasts";
 type TimelineEvent = {
   id: string;
   type: string;
@@ -176,6 +172,36 @@ function eventTitle(ev: TimelineEvent, locale: string): string {
   return ev.title;
 }
 
+function planEventStatusLabel(
+  status: string,
+  t: (key: string, values?: Record<string, string>) => string,
+): string {
+  switch (status) {
+    case "COMPLETED":
+      return t("statusCompleted");
+    case "CHECKED_IN":
+      return t("statusCheckedIn");
+    case "NO_SHOW":
+      return t("statusNoShow");
+    case "CANCELLED":
+      return t("statusCancelled");
+    case "SCHEDULED":
+      return t("statusScheduled");
+    case "PROPOSED":
+      return t("statusProposed");
+    case "PENDING_PAY":
+      return t("statusPendingPay");
+    default:
+      return status;
+  }
+}
+
+function planEventStatusClass(status: string): string {
+  if (status === "CANCELLED" || status === "NO_SHOW") return "text-[#E67E22]";
+  if (status === "COMPLETED" || status === "CHECKED_IN") return "text-[#27AE60]";
+  return TEXT_MUTED_CLASS;
+}
+
 function planProcedureName(title: string): string {
   return title.replace(/^Procedure\s*[·\-–]\s*/i, "").trim();
 }
@@ -245,67 +271,151 @@ function BroughtInBlank({
 }) {
   const t = useTranslations("patientCard");
   const tc = useTranslations("common");
-  const [on, setOn] = useState(Boolean(resultOn));
+  const [mode, setMode] = useState<"set" | "edit" | "clear" | null>(null);
   const [date, setDate] = useState(resultOn ?? "");
   const [busy, setBusy] = useState(false);
 
-  async function save(nextOn: boolean, nextDate: string) {
+  function openSet() {
+    setDate(todayBakuYmd());
+    setMode("set");
+  }
+
+  function openEdit() {
+    setDate(resultOn ?? todayBakuYmd());
+    setMode("edit");
+  }
+
+  function openClear() {
+    setMode("clear");
+  }
+
+  function closeModal() {
+    if (busy) return;
+    setMode(null);
+  }
+
+  async function submit() {
+    if (mode === "set" || mode === "edit") {
+      if (!date) return;
+      setBusy(true);
+      try {
+        const res = await fetch(`/api/sanatorium/episodes/${episodeId}/brought-in`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serviceCode, resultOn: date }),
+        });
+        if (!res.ok) {
+          showApiError(await res.json().catch(() => ({})), tc("failed"));
+          return;
+        }
+        showSuccess(tc("saved"));
+        setMode(null);
+        onSaved();
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    if (mode !== "clear") return;
     setBusy(true);
     try {
       const res = await fetch(`/api/sanatorium/episodes/${episodeId}/brought-in`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          serviceCode,
-          resultOn: nextOn ? nextDate : null,
-        }),
+        body: JSON.stringify({ serviceCode, resultOn: null }),
       });
       if (!res.ok) {
         showApiError(await res.json().catch(() => ({})), tc("failed"));
-        setOn(Boolean(resultOn));
-        setDate(resultOn ?? "");
         return;
       }
-      showSuccess(tc("saved"));
+      const body = (await res.json().catch(() => ({}))) as { restoredOrderId?: string | null };
+      showSuccess(
+        body.restoredOrderId ? t("broughtInClearedRestored") : t("broughtInCleared"),
+      );
+      setMode(null);
       onSaved();
     } finally {
       setBusy(false);
     }
   }
 
+  const modalOpen = mode != null;
+  const modalTitle =
+    mode === "edit"
+      ? t("broughtInEditTitle")
+      : mode === "clear"
+        ? t("broughtInClearTitle")
+        : t("broughtInSetTitle");
+
   return (
-    <div className="flex shrink-0 items-end gap-2">
-      <label className="flex items-center gap-1 text-[12px]">
-        <input
-          type="checkbox"
-          checked={on}
-          disabled={busy}
-          onChange={(e) => {
-            const next = e.target.checked;
-            setOn(next);
-            if (!next) void save(false, "");
-          }}
-        />
-        {t("broughtInOwn", { days: maxDays })}
-      </label>
-      {on ? (
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+      {resultOn ? (
         <>
-          <DatePicker
-            label={t("broughtInOwn", { days: maxDays })}
-            value={date}
-            onChange={setDate}
-            placeholder="dd.mm.yyyy"
-          />
+          <span className={`text-[12px] font-medium ${TEXT_MUTED_CLASS}`}>
+            {t("broughtInAccepted", { date: resultOn })}
+          </span>
           <button
             type="button"
             className={SECONDARY_BUTTON_CLASS}
-            disabled={busy || !date}
-            onClick={() => void save(true, date)}
+            disabled={busy}
+            onClick={openEdit}
           >
-            {tc("save")}
+            {t("broughtInEditDate")}
+          </button>
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled={busy}
+            onClick={openClear}
+          >
+            {t("broughtInClear")}
           </button>
         </>
-      ) : null}
+      ) : (
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy}
+          onClick={openSet}
+        >
+          {t("broughtInOwn", { days: maxDays })}
+        </button>
+      )}
+
+      <ModalShell
+        open={modalOpen}
+        title={modalTitle}
+        onClose={closeModal}
+        closeLabel={tc("close")}
+        footer={
+          <ModalFooter
+            onCancel={closeModal}
+            onSubmit={() => void submit()}
+            busy={busy}
+            submitDisabled={mode !== "clear" && !date}
+            submitLabel={mode === "clear" ? t("broughtInClearConfirm") : tc("save")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <div className="space-y-3">
+          {mode === "clear" ? (
+            <p className={`text-sm ${TEXT_MUTED_CLASS}`}>{t("broughtInClearHint")}</p>
+          ) : (
+            <>
+              <p className={`text-sm ${TEXT_MUTED_CLASS}`}>
+                {mode === "edit" ? t("broughtInEditHint") : t("broughtInSetHint", { days: maxDays })}
+              </p>
+              <DatePicker
+                label={t("broughtInDate")}
+                value={date}
+                onChange={setDate}
+                placeholder="dd.mm.yyyy"
+              />
+            </>
+          )}
+        </div>
+      </ModalShell>
     </div>
   );
 }
@@ -374,6 +484,12 @@ export function PatientCardClinicalSections({
   const [packageModalOpen, setPackageModalOpen] = useState(false);
   const [diagnosticsModalOpen, setDiagnosticsModalOpen] = useState(false);
   const [diagnosticsPendingBusy, setDiagnosticsPendingBusy] = useState(false);
+  const [unpaidDeleteAsk, setUnpaidDeleteAsk] = useState<
+    | { kind: "extra"; procedureId: string }
+    | { kind: "diag"; orderId: string; diagKind: string }
+    | null
+  >(null);
+  const [unpaidDeleteBusy, setUnpaidDeleteBusy] = useState(false);
   const [quotaRows, setQuotaRows] = useState<
     Array<{
       procedureCode: string;
@@ -389,6 +505,8 @@ export function PatientCardClinicalSections({
   const [packageBlockMinNights, setPackageBlockMinNights] = useState<number | null>(null);
   const [packageBlockMessage, setPackageBlockMessage] = useState<string | null>(null);
   const [packageCode, setPackageCode] = useState<string | null>(null);
+  /** True only when ProgramInstance exists (CLI-69 staff Standart). */
+  const [hasPackageInstance, setHasPackageInstance] = useState(false);
   const [quotaTick, setQuotaTick] = useState(0);
   const [visitSlot, setVisitSlot] = useState<{ id: string; title: string } | null>(null);
   const [visitDate, setVisitDate] = useState("");
@@ -407,6 +525,40 @@ export function PatientCardClinicalSections({
     setSummary(row);
     setLoading(false);
   }, [patientRefId, episodeId, locale, refreshKey]);
+
+  async function confirmUnpaidDelete() {
+    if (!unpaidDeleteAsk) return;
+    setUnpaidDeleteBusy(true);
+    try {
+      if (unpaidDeleteAsk.kind === "extra") {
+        const res = await fetch(`/api/procedures/${unpaidDeleteAsk.procedureId}/cancel`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: "card_unpaid_cancel" }),
+        });
+        if (!res.ok) {
+          showApiError(await res.json().catch(() => ({})), tc("failed"));
+          return;
+        }
+      } else {
+        if (!episodeId) return;
+        const res = await fetch(
+          `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(unpaidDeleteAsk.orderId)}&kind=${unpaidDeleteAsk.diagKind}`,
+          { method: "DELETE" },
+        );
+        if (!res.ok) {
+          showApiError(await res.json().catch(() => ({})), tc("failed"));
+          return;
+        }
+      }
+      setUnpaidDeleteAsk(null);
+      showSuccess(tc("saved"));
+      await loadSummary();
+      setQuotaTick((n) => n + 1);
+    } finally {
+      setUnpaidDeleteBusy(false);
+    }
+  }
 
   useEffect(() => {
     void loadSummary();
@@ -460,6 +612,7 @@ export function PatientCardClinicalSections({
             typeof snap.blockMessage === "string" ? snap.blockMessage : null,
           );
           setPackageCode(typeof snap.packageCode === "string" ? snap.packageCode : null);
+          setHasPackageInstance(typeof snap.templateId === "string" && Boolean(snap.templateId));
         } else {
           setQuotaRows([]);
           setPackageBlock(null);
@@ -467,6 +620,7 @@ export function PatientCardClinicalSections({
           setPackageBlockMinNights(null);
           setPackageBlockMessage(null);
           setPackageCode(null);
+          setHasPackageInstance(false);
         }
       })
       .catch(() => {
@@ -474,7 +628,9 @@ export function PatientCardClinicalSections({
         setPackageBlock(null);
         setPackageBlockNights(null);
         setPackageBlockMinNights(null);
+        setPackageBlockMessage(null);
         setPackageCode(null);
+        setHasPackageInstance(false);
       });
   }, [
     section,
@@ -976,7 +1132,7 @@ export function PatientCardClinicalSections({
             suppressToolbar
             extrasTitle={t("extrasAwaiting", { defaultValue: "Additional procedures (awaiting payment)" })}
             readOnly={readOnly || !studiesUnlocked}
-            hidePackage={patientOrigin === "WALK_IN"}
+            hidePackage={patientOrigin === "WALK_IN" && !hasPackageInstance}
             extrasPending={[]}
             onPackagePlus={() => setPackageModalOpen(true)}
             onExtrasPlus={() => setPackageModalOpen(true)}
@@ -1074,23 +1230,7 @@ export function PatientCardClinicalSections({
                   : () => {
                       const id = row.ids[0];
                       if (!id) return;
-                      void (async () => {
-                        const res = await fetch(`/api/procedures/${id}/cancel`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ reason: "card_unpaid_cancel" }),
-                        });
-                        if (!res.ok) {
-                          showApiError(
-                            await res.json().catch(() => ({})),
-                            tc("failed"),
-                          );
-                          return;
-                        }
-                        showSuccess(tc("saved"));
-                        await loadSummary();
-                        setQuotaTick((n) => n + 1);
-                      })();
+                      setUnpaidDeleteAsk({ kind: "extra", procedureId: id });
                     }
               }
               deleteLabel={tc("delete")}
@@ -1157,27 +1297,11 @@ export function PatientCardClinicalSections({
                   : () => {
                       const first = row.ids[0];
                       if (!first || !episodeId) return;
-                      void (async () => {
-                        setDiagnosticsPendingBusy(true);
-                        try {
-                          const res = await fetch(
-                            `/api/sanatorium/episodes/${episodeId}/diagnostics-extras?id=${encodeURIComponent(first.id)}&kind=${first.kind}`,
-                            { method: "DELETE" },
-                          );
-                          if (!res.ok) {
-                            showApiError(
-                              await res.json().catch(() => ({})),
-                              tc("failed"),
-                            );
-                            return;
-                          }
-                          showSuccess(tc("saved"));
-                          await loadSummary();
-                          setQuotaTick((n) => n + 1);
-                        } finally {
-                          setDiagnosticsPendingBusy(false);
-                        }
-                      })();
+                      setUnpaidDeleteAsk({
+                        kind: "diag",
+                        orderId: first.id,
+                        diagKind: first.kind,
+                      });
                     }
               }
               deleteLabel={tc("delete")}
@@ -1200,7 +1324,7 @@ export function PatientCardClinicalSections({
         </section>
       ) : null}
 
-      {showInlinePlan && !episodeClosed && studiesUnlocked && episodeId ? (
+      {showInlinePlan && studiesUnlocked && episodeId ? (
         <CardTabActions>
           <button
             type="button"
@@ -1214,14 +1338,16 @@ export function PatientCardClinicalSections({
           >
             <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
           </button>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={readOnly || !studiesUnlocked}
-            onClick={() => setPackageModalOpen(true)}
-          >
-            +
-          </button>
+          {episodeClosed ? null : (
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={readOnly || !studiesUnlocked}
+              onClick={() => setPackageModalOpen(true)}
+            >
+              +
+            </button>
+          )}
         </CardTabActions>
       ) : null}
 
@@ -1312,7 +1438,11 @@ export function PatientCardClinicalSections({
           ) : null}
           {planVisible.length === 0 && (planLoading || planUnplaced.length === 0) ? (
             <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
-              {planLoading ? tc("loading") : t("planEmpty")}
+              {planLoading
+                ? tc("loading")
+                : episodeClosed
+                  ? t("planEmptyArchive")
+                  : t("planEmpty")}
             </p>
           ) : planVisible.length === 0 ? null : (
             <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto">
@@ -1336,6 +1466,11 @@ export function PatientCardClinicalSections({
                       ) : null}
                       {ev.codes?.[0] ? (
                         <div className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{ev.codes[0]}</div>
+                      ) : null}
+                      {ev.status ? (
+                        <div className={`text-[12px] font-medium ${planEventStatusClass(ev.status)}`}>
+                          {planEventStatusLabel(ev.status, t)}
+                        </div>
                       ) : null}
                     </div>
                     <p className={`line-clamp-3 min-w-0 text-[12px] ${TEXT_MUTED_CLASS}`}>
@@ -1613,6 +1748,22 @@ export function PatientCardClinicalSections({
               })
               .finally(() => setVisitBusy(false));
           }}
+        />
+      </ModalShell>
+      <ModalShell
+        open={Boolean(unpaidDeleteAsk)}
+        title={t("confirmDeleteUnpaid")}
+        onClose={() => {
+          if (!unpaidDeleteBusy) setUnpaidDeleteAsk(null);
+        }}
+        closeLabel={tc("close")}
+      >
+        <ModalFooter
+          onCancel={() => setUnpaidDeleteAsk(null)}
+          onSubmit={() => void confirmUnpaidDelete()}
+          busy={unpaidDeleteBusy}
+          submitLabel={tc("delete")}
+          cancelLabel={tc("cancel")}
         />
       </ModalShell>
       <PrintLanguageDialog

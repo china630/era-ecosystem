@@ -27,6 +27,7 @@ type Loan = {
   akbScore?: number | null;
   daysPastDue?: number;
   isNpl?: boolean;
+  cbarPrudentialCategory?: string | null;
 };
 
 function LoansPageContent() {
@@ -157,6 +158,14 @@ function LoansPageContent() {
               key: "ifrs9Stage",
               header: t("colStage"),
               render: (row) => String(row.ifrs9Stage ?? 1),
+            },
+            {
+              key: "cbarPrudentialCategory",
+              header: t("cbarCategory"),
+              render: (row) =>
+                row.cbarPrudentialCategory
+                  ? String(row.cbarPrudentialCategory)
+                  : "—",
             },
             {
               key: "akbScore",

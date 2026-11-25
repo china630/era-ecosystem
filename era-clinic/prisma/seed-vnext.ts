@@ -11,6 +11,8 @@ import {
 import { ensureSystemClinicRoles } from "../src/lib/auth/ensure-system-clinic-roles";
 import { CLINIC_ROLE } from "../src/lib/clinic-roles";
 import { ensureDefaultRequirements } from "../src/domain/procedure/procedure-allocation.service";
+import { isReplaceableQuotaLine } from "../src/domain/sanatorium/package-assign-quota";
+import { seedClinicalNoteTemplates } from "./seed-note-templates";
 
 const requireCjs = createRequire(__filename);
 const prisma = new PrismaClient().$extends(
@@ -479,6 +481,7 @@ async function main() {
           fulfillment: block.fulfillment,
           quotaBasis: block.quotaBasis,
           requiresDoctor: block.requiresDoctor,
+          allowReplace: isReplaceableQuotaLine(block.procedureCode, block.procedureName),
         },
       });
       if (block.knots.length > 0) {
@@ -529,6 +532,7 @@ async function main() {
           procedureCode: "NAFTALAN_BATH",
           procedureName: "Naftalan bath",
           quotaTotal: knots[0]?.qty ?? 1,
+          allowReplace: true,
         },
       });
     }
@@ -634,6 +638,7 @@ async function main() {
 
   const diagnosticCatalog = loadDiagnosticCatalog();
   const seeded = await seedDiagnosticCatalog(diagnosticCatalog);
+  const noteTplCount = await seedClinicalNoteTemplates(prisma, seedOrgId());
 
   await prisma.lisFileProfile.upsert({
     where: { name: "default-csv" },
@@ -655,6 +660,7 @@ async function main() {
   console.log("Clinic vNext seed OK", {
     usg: usg.code,
     catalogCodes: seeded.catalogCount,
+    noteTemplates: noteTplCount,
   });
 }
 

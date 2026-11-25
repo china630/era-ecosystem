@@ -5,7 +5,8 @@ import { inferPricingCatalogKind, INDUSTRY_SATELLITE_MODULE_KEYS } from "./hotel
 import {
   inferSatelliteKeyFromModuleKey,
   RETIRED_CLINIC_MODULE_KEYS,
-  rewriteClinicActiveModules,
+  RETIRED_CONSTRUCTION_MODULE_KEYS,
+  rewriteCatalogActiveModules,
 } from "./pricing-catalog-canon";
 
 export type PricingModuleSeedRow = {
@@ -173,6 +174,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     pricePerMonth: 29,
     sortOrder: 14,
     isPremium: true,
+    satelliteKey: "finance_core",
   },
   {
     key: "gov_budget_pro",
@@ -180,6 +182,31 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     pricePerMonth: 39,
     sortOrder: 15,
     isPremium: true,
+    satelliteKey: "finance_core",
+  },
+  {
+    key: "mgmt_budget_pro",
+    name: "Management budget (commercial)",
+    pricePerMonth: 39,
+    sortOrder: 151,
+    isPremium: true,
+    satelliteKey: "finance_core",
+  },
+  {
+    key: "contract_payapp_ks",
+    name: "Construction PayApp / KS-2 KS-3 print",
+    pricePerMonth: 39,
+    sortOrder: 16,
+    isPremium: true,
+    satelliteKey: "finance_core",
+  },
+  {
+    key: "procurement_tenders_pro",
+    name: "Procurement tenders / award",
+    pricePerMonth: 39,
+    sortOrder: 17,
+    isPremium: true,
+    satelliteKey: "finance_core",
   },
   {
     key: "platform_notifications",
@@ -734,10 +761,53 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     satelliteKey: "industry_construction",
   },
   {
-    key: "construction_boq_ks",
-    name: "Construction BOQ / KS-2 KS-3",
-    pricePerMonth: 39,
+    key: "construction_boq",
+    name: "Construction BOQ (ops estimate)",
+    pricePerMonth: 29,
     sortOrder: 342,
+    satelliteKey: "industry_construction",
+  },
+  {
+    key: "construction_estimate_hierarchy",
+    name: "Construction estimate hierarchy (5-level smeta)",
+    pricePerMonth: 39,
+    sortOrder: 3425,
+    satelliteKey: "industry_construction",
+  },
+  {
+    key: "construction_smeta_rate_engine",
+    name: "Construction smeta rate engine (norms)",
+    pricePerMonth: 39,
+    sortOrder: 3426,
+    satelliteKey: "industry_construction",
+  },
+  {
+    key: "construction_schedule",
+    name: "Construction schedule / Gantt",
+    pricePerMonth: 19,
+    sortOrder: 343,
+    satelliteKey: "industry_construction",
+    trialEligibleInTrial: true,
+  },
+  {
+    key: "construction_cde",
+    name: "Construction CDE / drawings",
+    pricePerMonth: 29,
+    sortOrder: 344,
+    satelliteKey: "industry_construction",
+  },
+  {
+    key: "construction_project_depth",
+    name: "Construction project depth (RFI / change / parties)",
+    pricePerMonth: 29,
+    sortOrder: 345,
+    satelliteKey: "industry_construction",
+  },
+  {
+    key: "construction_bim_lite",
+    name: "Construction BIM lite (element refs)",
+    pricePerMonth: 19,
+    sortOrder: 346,
     satelliteKey: "industry_construction",
   },
   {
@@ -768,6 +838,20 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     name: "CRM omni inbox",
     pricePerMonth: 29,
     sortOrder: 361,
+    satelliteKey: "industry_crm",
+  },
+  {
+    key: "crm_selections",
+    name: "CRM selections (post-sale)",
+    pricePerMonth: 19,
+    sortOrder: 362,
+    satelliteKey: "industry_crm",
+  },
+  {
+    key: "crm_warranty",
+    name: "CRM warranty cases",
+    pricePerMonth: 19,
+    sortOrder: 363,
     satelliteKey: "industry_crm",
   },
 ];
@@ -889,19 +973,22 @@ function rewriteCustomConfigModules(raw: unknown): Prisma.InputJsonValue | null 
   const base = raw as Record<string, unknown>;
   if (!Array.isArray(base.modules)) return null;
   const modules = base.modules.filter((m): m is string => typeof m === "string");
-  const next = rewriteClinicActiveModules(modules);
+  const next = rewriteCatalogActiveModules(modules);
   if (sameModuleSet(modules, next)) return null;
   return { ...base, modules: next } as Prisma.InputJsonValue;
 }
 
-async function rewriteClinicEntitlementArrays(prisma: PrismaClient): Promise<void> {
-  const retired = [...RETIRED_CLINIC_MODULE_KEYS];
+async function rewriteCatalogEntitlementArrays(prisma: PrismaClient): Promise<void> {
+  const retired = [
+    ...RETIRED_CLINIC_MODULE_KEYS,
+    ...RETIRED_CONSTRUCTION_MODULE_KEYS,
+  ];
   const orgs = await prisma.organization.findMany({
     where: { activeModules: { hasSome: retired } },
     select: { id: true, activeModules: true },
   });
   for (const row of orgs) {
-    const next = rewriteClinicActiveModules(row.activeModules);
+    const next = rewriteCatalogActiveModules(row.activeModules);
     await prisma.organization.update({
       where: { id: row.id },
       data: { activeModules: next },
@@ -912,7 +999,7 @@ async function rewriteClinicEntitlementArrays(prisma: PrismaClient): Promise<voi
     select: { id: true, activeModules: true },
   });
   for (const row of subs) {
-    const next = rewriteClinicActiveModules(row.activeModules);
+    const next = rewriteCatalogActiveModules(row.activeModules);
     await prisma.organizationSubscription.update({
       where: { id: row.id },
       data: { activeModules: next },
@@ -934,7 +1021,7 @@ async function rewriteClinicEntitlementArrays(prisma: PrismaClient): Promise<voi
     select: { organizationId: true, activeModules: true },
   });
   for (const row of bills) {
-    const next = rewriteClinicActiveModules(row.activeModules);
+    const next = rewriteCatalogActiveModules(row.activeModules);
     await prisma.tenantBilling.update({
       where: { organizationId: row.organizationId },
       data: { activeModules: next },
@@ -946,7 +1033,7 @@ async function rewriteClinicEntitlementArrays(prisma: PrismaClient): Promise<voi
   for (const row of bundles) {
     if (!Array.isArray(row.moduleKeys)) continue;
     const keys = row.moduleKeys.filter((m): m is string => typeof m === "string");
-    const next = rewriteClinicActiveModules(keys);
+    const next = rewriteCatalogActiveModules(keys);
     if (sameModuleSet(keys, next)) continue;
     await prisma.pricingBundle.update({
       where: { id: row.id },
@@ -958,7 +1045,7 @@ async function rewriteClinicEntitlementArrays(prisma: PrismaClient): Promise<voi
 /** Align existing catalog rows to freeze defaults (price, name, premium, satellite). */
 export async function syncPricingModuleCatalog(prisma: PrismaClient): Promise<void> {
   await ensureSatellites(prisma);
-  await rewriteClinicEntitlementArrays(prisma);
+  await rewriteCatalogEntitlementArrays(prisma);
   for (const m of PRICING_MODULE_SEED_DEFAULTS) {
     const data = moduleSeedData(m);
     await prisma.pricingModule.upsert({
@@ -976,6 +1063,10 @@ export async function syncPricingModuleCatalog(prisma: PrismaClient): Promise<vo
     });
   }
   await prisma.pricingModule.deleteMany({
-    where: { key: { in: [...RETIRED_CLINIC_MODULE_KEYS] } },
+    where: {
+      key: {
+        in: [...RETIRED_CLINIC_MODULE_KEYS, ...RETIRED_CONSTRUCTION_MODULE_KEYS],
+      },
+    },
   });
 }

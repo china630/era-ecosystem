@@ -30,6 +30,7 @@ export const CLINIC_PERMISSION = {
   SCREEN_ADMIN_DIAGNOSTIC_CATALOG: "screen:admin.diagnostic_catalog",
   SCREEN_ADMIN_ICD_FAVORITES: "screen:admin.icd_favorites",
   SCREEN_ADMIN_PROGRAM_TEMPLATES: "screen:admin.program_templates",
+  SCREEN_ADMIN_NOTE_TEMPLATES: "screen:admin.note_templates",
   SCREEN_ADMIN_IMPORT: "screen:admin.import",
   SCREEN_ADMIN_PROCEDURE_RULES: "screen:admin.procedure_rules",
   SCREEN_ADMIN_LIS_PROFILES: "screen:admin.lis_profiles",
@@ -167,6 +168,7 @@ const ADMIN_SCREENS: ClinicPermission[] = [
   CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
   CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES,
   CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+  CLINIC_PERMISSION.SCREEN_ADMIN_NOTE_TEMPLATES,
   CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
   CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
@@ -400,6 +402,8 @@ export const READ_OF_WRITE: Readonly<Partial<Record<ClinicPermission, ClinicPerm
   [CLINIC_PERMISSION.API_QUEUE]: CLINIC_PERMISSION.API_QUEUE_READ,
   [CLINIC_PERMISSION.API_MDM]: CLINIC_PERMISSION.API_MDM_READ,
   [CLINIC_PERMISSION.API_APPOINTMENTS_WRITE]: CLINIC_PERMISSION.API_APPOINTMENTS_READ,
+  [CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE]:
+    CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
 };
 
 const MASTER_DATA_SPLIT: ClinicPermission[] = [
@@ -591,6 +595,7 @@ export const ENTITY_ACCESS_MATRIX: {
         CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
         CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES,
         CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+        CLINIC_PERMISSION.SCREEN_ADMIN_NOTE_TEMPLATES,
         CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
         CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
         CLINIC_PERMISSION.SCREEN_ADMIN_LOOKUPS,
@@ -750,19 +755,26 @@ const ROUTE_PERMISSION_EXACT: Record<string, ClinicPermission> = {
   "/reports/bonus": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/revenue": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/patient-assignments": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+  "/reports/insurance": CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
   "/reports/patients-by-country": CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   "/reports/walk-in-by-country": CLINIC_PERMISSION.SCREEN_REPORTS_DIAGNOSES,
   "/sanatorium": CLINIC_PERMISSION.SCREEN_SANATORIUM,
   "/sanatorium/resources": CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES,
+  "/sanatorium/resources/load": CLINIC_PERMISSION.SCREEN_SANATORIUM_RESOURCES,
   "/sanatorium/nurse-roster": CLINIC_PERMISSION.SCREEN_SANATORIUM_NURSE_ROSTER,
   "/inpatient": CLINIC_PERMISSION.SCREEN_INPATIENT,
   "/inpatient/census": CLINIC_PERMISSION.SCREEN_INPATIENT_CENSUS,
   "/admin/wards": CLINIC_PERMISSION.SCREEN_ADMIN_WARDS,
+  "/admin/diet-tables": CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
+  "/admin/patient-form-templates": CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
+  "/admin/waitlist": CLINIC_PERMISSION.SCREEN_APPOINTMENTS,
+  "/print/diet-portions": CLINIC_PERMISSION.SCREEN_HOME,
   "/admin/catalog": CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
   "/admin/departments": CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
   "/admin/diagnostic-catalog": CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
   "/admin/icd-favorites": CLINIC_PERMISSION.SCREEN_ADMIN_ICD_FAVORITES,
   "/admin/program-templates": CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES,
+  "/admin/note-templates": CLINIC_PERMISSION.SCREEN_ADMIN_NOTE_TEMPLATES,
   "/admin/import": CLINIC_PERMISSION.SCREEN_ADMIN_IMPORT,
   "/admin/procedure-rules": CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_RULES,
   "/admin/lis-profiles": CLINIC_PERMISSION.SCREEN_ADMIN_LIS_PROFILES,
@@ -790,6 +802,7 @@ const ROUTE_PREFIX_PERMISSIONS: Array<{ prefix: string; permission: ClinicPermis
     { prefix: "/print/nurse-day", permission: CLINIC_PERMISSION.SCREEN_NURSE },
     { prefix: "/print/reception-day", permission: CLINIC_PERMISSION.SCREEN_RECEPTION_EXTRA_TICKETS },
     { prefix: "/print/checkup", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
+    { prefix: "/print/prescription", permission: CLINIC_PERMISSION.SCREEN_DOCTOR },
     {
       prefix: "/print/patient-assignments",
       permission: CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
@@ -853,6 +866,7 @@ export const PUBLIC_STAFF_PAGE_PREFIXES = [
   "/sso/callback",
   "/help",
   "/portal",
+  "/telehealth",
   "/booking",
   "/images",
 ] as const;
@@ -961,6 +975,9 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/rooms", permission: CLINIC_PERMISSION.SCREEN_ADMIN_ROOMS },
   { prefix: "/api/admin/resources", permission: CLINIC_PERMISSION.SCREEN_ADMIN_RESOURCES },
   { prefix: "/api/admin/program-templates", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROGRAM_TEMPLATES },
+  { prefix: "/api/admin/note-templates", permission: CLINIC_PERMISSION.SCREEN_ADMIN_NOTE_TEMPLATES },
+  { prefix: "/api/admin/diet-tables", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
+  { prefix: "/api/admin/patient-form-templates", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
   { prefix: "/api/admin/catalog-favorites", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG_FAVORITES },
   { prefix: "/api/admin/procedure-types", permission: CLINIC_PERMISSION.SCREEN_ADMIN_PROCEDURE_TYPES },
   { prefix: "/api/admin/catalog", permission: CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG },
@@ -972,6 +989,7 @@ const ADMIN_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/admin/ops-wipe", permission: CLINIC_PERMISSION.SCREEN_ADMIN_OPS_WIPE },
   { prefix: "/api/admin/links", permission: CLINIC_PERMISSION.SCREEN_ADMIN_LINKS },
   { prefix: "/api/admin/settings", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
+  { prefix: "/api/admin/audit-exempt", permission: CLINIC_PERMISSION.SCREEN_ADMIN_SETTINGS },
   { prefix: "/api/admin/clinic-days", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS },
   { prefix: "/api/admin/peak-rules", permission: CLINIC_PERMISSION.SCREEN_ADMIN_WORKING_HOURS },
   // schedule-recalc / schedule-reseat stay off this map — platform SA only in their routes.
@@ -1031,6 +1049,8 @@ export function adminApiRoutePermissions(pathname: string): ClinicPermission[] |
 const OPS_API_PREFIX_PERMISSIONS: Array<{
   prefix: string;
   permission: ClinicPermission;
+  /** When set, any one of these grants access (same idea as admin anyOf). */
+  anyOf?: ClinicPermission[];
 }> = [
   { prefix: "/api/procedures/confirm", permission: CLINIC_PERMISSION.API_PROCEDURES_CONFIRM },
   { prefix: "/api/procedures/bulk-cancel", permission: CLINIC_PERMISSION.API_PROCEDURES_RECEPTION },
@@ -1041,6 +1061,8 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/appointments", permission: CLINIC_PERMISSION.API_APPOINTMENTS_WRITE },
   { prefix: "/api/queue", permission: CLINIC_PERMISSION.API_QUEUE },
   { prefix: "/api/visits", permission: CLINIC_PERMISSION.API_VISITS },
+  { prefix: "/api/notes", permission: CLINIC_PERMISSION.API_VISITS },
+  { prefix: "/api/clinical-note-templates", permission: CLINIC_PERMISSION.API_VISITS_READ },
   { prefix: "/api/inpatient", permission: CLINIC_PERMISSION.API_INPATIENT },
   { prefix: "/api/reports/diagnoses", permission: CLINIC_PERMISSION.API_REPORTS_DIAGNOSES },
   { prefix: "/api/reports/patients-by-country", permission: CLINIC_PERMISSION.API_REPORTS_DIAGNOSES },
@@ -1055,6 +1077,10 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/mdm", permission: CLINIC_PERMISSION.API_MDM },
   { prefix: "/api/icd", permission: CLINIC_PERMISSION.API_ICD_READ },
   { prefix: "/api/ops/day-summary", permission: CLINIC_PERMISSION.API_OPS_DAY_SUMMARY },
+  { prefix: "/api/ops/clinic-kpis", permission: CLINIC_PERMISSION.API_OPS_DAY_SUMMARY },
+  { prefix: "/api/diet-assignments", permission: CLINIC_PERMISSION.API_INPATIENT },
+  { prefix: "/api/diet-portions", permission: CLINIC_PERMISSION.API_OPS_DAY_SUMMARY },
+  { prefix: "/api/waitlist", permission: CLINIC_PERMISSION.API_APPOINTMENTS_READ },
   { prefix: "/api/diagnostic-catalog", permission: CLINIC_PERMISSION.API_CATALOG_READ },
   { prefix: "/api/physio-catalog", permission: CLINIC_PERMISSION.API_CATALOG_READ },
   { prefix: "/api/procedure-types", permission: CLINIC_PERMISSION.API_CATALOG_READ },
@@ -1066,9 +1092,22 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
   { prefix: "/api/cashier", permission: CLINIC_PERMISSION.API_CASHIER },
   { prefix: "/api/fiscal", permission: CLINIC_PERMISSION.API_FISCAL },
   { prefix: "/api/insurance/check", permission: CLINIC_PERMISSION.API_PATIENTS_READ },
+  { prefix: "/api/insurance/policies", permission: CLINIC_PERMISSION.API_PATIENTS_READ },
+  { prefix: "/api/insurance/referrals", permission: CLINIC_PERMISSION.API_PATIENTS_READ },
+  { prefix: "/api/reports/insurance", permission: CLINIC_PERMISSION.API_REPORTS_PROCEDURES },
+  { prefix: "/api/prescriptions/", permission: CLINIC_PERMISSION.API_VISITS },
+  { prefix: "/api/patient-forms/", permission: CLINIC_PERMISSION.API_PATIENTS_READ },
   { prefix: "/api/nurse/qr-scan", permission: CLINIC_PERMISSION.API_NURSE_QR_SCAN },
   { prefix: "/api/nurse/overdue", permission: CLINIC_PERMISSION.API_NURSE_OVERDUE },
   { prefix: "/api/sanatorium/resources", permission: CLINIC_PERMISSION.API_SANATORIUM_RESOURCES },
+  {
+    prefix: "/api/sanatorium/procedure-load",
+    permission: CLINIC_PERMISSION.API_SANATORIUM_RESOURCES,
+    anyOf: [
+      CLINIC_PERMISSION.API_SANATORIUM_RESOURCES,
+      CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ,
+    ],
+  },
   { prefix: "/api/sanatorium/nurse-roster", permission: CLINIC_PERMISSION.API_SANATORIUM_NURSE_ROSTER },
   { prefix: "/api/sanatorium/staff-absences", permission: CLINIC_PERMISSION.API_SANATORIUM_STAFF_ABSENCES },
   {
@@ -1080,35 +1119,41 @@ const OPS_API_PREFIX_PERMISSIONS: Array<{
     permission: CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
   },
   {
+    prefix: "/api/sanatorium/workforce-picker",
+    permission: CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
+  },
+  {
     prefix: "/api/sanatorium/episodes",
     permission: CLINIC_PERMISSION.API_SANATORIUM_EPISODES_WRITE,
   },
 ];
 
-export function opsApiRoutePermission(
-  pathname: string,
-  method?: string,
-): ClinicPermission | null {
+function resolveOpsApiPrefix(pathname: string): (typeof OPS_API_PREFIX_PERMISSIONS)[number] | null {
   const path = pathname.split("?")[0] ?? pathname;
-  let best: { prefix: string; permission: ClinicPermission } | null = null;
+  let best: (typeof OPS_API_PREFIX_PERMISSIONS)[number] | null = null;
   for (const row of OPS_API_PREFIX_PERMISSIONS) {
     if (path === row.prefix || path.startsWith(`${row.prefix}/`)) {
       if (!best || row.prefix.length > best.prefix.length) best = row;
     }
   }
-  const key = best?.permission ?? null;
-  if (!key) return null;
+  return best;
+}
+
+function resolveOpsPermissionKey(
+  path: string,
+  method: string | undefined,
+  base: ClinicPermission,
+): ClinicPermission {
+  let key = base;
   if (key === CLINIC_PERMISSION.API_LAB_ORDERS) {
-    if (path.endsWith("/collect")) return CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT;
-    if (path.endsWith("/complete")) return CLINIC_PERMISSION.API_LAB_ORDERS_COMPLETE;
-    if (path.endsWith("/publish")) return CLINIC_PERMISSION.API_LAB_ORDERS_PUBLISH;
-    if (path.endsWith("/blank")) return CLINIC_PERMISSION.API_LAB_ORDERS_BLANK;
+    if (path.endsWith("/collect")) key = CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT;
+    else if (path.endsWith("/complete")) key = CLINIC_PERMISSION.API_LAB_ORDERS_COMPLETE;
+    else if (path.endsWith("/publish")) key = CLINIC_PERMISSION.API_LAB_ORDERS_PUBLISH;
+    else if (path.endsWith("/blank")) key = CLINIC_PERMISSION.API_LAB_ORDERS_BLANK;
   }
   if (!method) return key;
   const verb = method.toUpperCase();
-  if (verb === "GET" || verb === "HEAD") {
-    return READ_OF_WRITE[key] ?? key;
-  }
+  if (verb === "GET" || verb === "HEAD") return READ_OF_WRITE[key] ?? key;
   const lab =
     path === "/api/lab-orders" ||
     path.startsWith("/api/lab-orders/") ||
@@ -1118,6 +1163,30 @@ export function opsApiRoutePermission(
     return CLINIC_PERMISSION.API_LAB_ORDERS_WRITE;
   }
   return key;
+}
+
+/** All permissions that grant a staff API path (anyOf when configured). */
+export function opsApiRoutePermissions(
+  pathname: string,
+  method?: string,
+): ClinicPermission[] {
+  const path = pathname.split("?")[0] ?? pathname;
+  const best = resolveOpsApiPrefix(path);
+  if (!best) return [];
+  const primary = resolveOpsPermissionKey(path, method, best.permission);
+  if (best.anyOf?.length) {
+    const mapped = best.anyOf.map((p) => resolveOpsPermissionKey(path, method, p));
+    return [...new Set([primary, ...mapped])];
+  }
+  return [primary];
+}
+
+export function opsApiRoutePermission(
+  pathname: string,
+  method?: string,
+): ClinicPermission | null {
+  const keys = opsApiRoutePermissions(pathname, method);
+  return keys[0] ?? null;
 }
 
 export function navEntryPermission(

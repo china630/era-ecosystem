@@ -26,6 +26,7 @@ import {
   businessDateKey,
   dailyDepositInterestMinor,
 } from "./deposit-interest.util";
+import { computeDepositInterestWht } from "./deposit-interest-wht.util";
 
 @Injectable()
 export class DepositsService {
@@ -58,6 +59,40 @@ export class DepositsService {
     });
   }
 
+  /**
+   * Lab WHT registry for finance handoff (JSON). Not live e-taxes submit (P1-7).
+   */
+  async listWhtRegistry() {
+    const rows = await this.prisma.depositContract.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        taxAccruedMinor: { gt: 0n },
+      },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        customerId: true,
+        productTemplateId: true,
+        currency: true,
+        status: true,
+        taxAccruedMinor: true,
+        monthInterestAccruedMinor: true,
+        updatedAt: true,
+        openedAt: true,
+      },
+    });
+    return {
+      labOnly: true,
+      notLiveETaxes: true,
+      generatedAt: new Date().toISOString(),
+      rows: rows.map((r) => ({
+        ...r,
+        taxAccruedMinor: r.taxAccruedMinor.toString(),
+        monthInterestAccruedMinor: r.monthInterestAccruedMinor.toString(),
+      })),
+    };
+  }
+
   private async glByCode(code: string) {
     const gl = await this.prisma.glAccount.findFirst({
       where: { bankOrgId: this.bankOrg.bankOrgId, code },
@@ -83,6 +118,28 @@ export class DepositsService {
     const code = tryProductGlCode(template.paramsJson, "glInterestExpenseCode");
     if (code) return this.glByCode(code);
     return this.systemGl.resolve(SystemGlKey.INTEREST_EXPENSE);
+  }
+
+  private async depositProductParams(
+    productTemplateId: string,
+  ): Promise<DepositProductParams | null> {
+    const template = await this.prisma.productTemplate.findFirst({
+      where: { id: productTemplateId, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!template) return null;
+    return parseProductParams(
+      template.kind,
+      template.paramsJson,
+    ) as DepositProductParams;
+  }
+
+  private async tryDepositInterestTaxPayableGl() {
+    try {
+      return await this.systemGl.resolve(SystemGlKey.DEPOSIT_INTEREST_TAX_PAYABLE);
+    } catch (e) {
+      if (e instanceof NotFoundException) return null;
+      throw e;
+    }
   }
 
   private async resolveContractRate(
@@ -388,6 +445,73 @@ export class DepositsService {
       const expenseGl = await this.interestExpenseGl(dep.productTemplateId);
       const idempotencyKey = `dep-accrual-${dep.id}-${dateKey}`;
 
+      const productParams = await this.depositProductParams(dep.productTemplateId);
+      const monthKey = dateKey.slice(0, 7);
+      let whtMinor = 0n;
+      let netInterest = daily;
+      let monthInterestAccruedMinor = dep.monthInterestAccruedMinor;
+      let interestAccrualMonth = dep.interestAccrualMonth;
+
+      if (
+        productParams?.taxExemptMonthlyMinor != null &&
+        productParams.depositInterestTaxRate != null
+      ) {
+        const wht = computeDepositInterestWht({
+          dailyInterestMinor: daily,
+          monthInterestAccruedMinor: dep.monthInterestAccruedMinor,
+          accrualMonthKey: dep.interestAccrualMonth ?? "",
+          businessMonthKey: monthKey,
+          taxExemptMonthlyMinor: productParams.taxExemptMonthlyMinor,
+          depositInterestTaxRate: productParams.depositInterestTaxRate,
+          termMonths: productParams.termMonths,
+          exemptIfTermMonths: productParams.exemptIfTermMonths,
+        });
+        whtMinor = wht.whtMinor;
+        netInterest = wht.netInterestMinor;
+        monthInterestAccruedMinor = wht.monthInterestAccruedMinor;
+        interestAccrualMonth = monthKey;
+      }
+
+      const legs: Array<{
+        glAccountId: string;
+        branchId: string;
+        debitMinor: bigint;
+        creditMinor: bigint;
+        currency: string;
+      }> = [
+        {
+          glAccountId: expenseGl.id,
+          branchId: account.branchId,
+          debitMinor: daily,
+          creditMinor: 0n,
+          currency: dep.currency,
+        },
+        {
+          glAccountId: termGl.id,
+          branchId: account.branchId,
+          debitMinor: 0n,
+          creditMinor: netInterest,
+          currency: dep.currency,
+        },
+      ];
+
+      const taxGl =
+        whtMinor > 0n ? await this.tryDepositInterestTaxPayableGl() : null;
+      if (whtMinor > 0n && taxGl) {
+        legs.push({
+          glAccountId: taxGl.id,
+          branchId: account.branchId,
+          debitMinor: 0n,
+          creditMinor: whtMinor,
+          currency: dep.currency,
+        });
+      } else if (whtMinor > 0n && !taxGl) {
+        legs[1] = {
+          ...legs[1],
+          creditMinor: daily,
+        };
+      }
+
       await this.postingEngine.post({
         reference: `DEP-ACCRUAL-${dep.id}-${dateKey}`,
         idempotencyKey,
@@ -397,34 +521,22 @@ export class DepositsService {
         branchId: account.branchId,
         autoApprove: true,
         allowDuringEod: true,
-        legs: [
-          {
-            glAccountId: expenseGl.id,
-            branchId: account.branchId,
-            debitMinor: daily,
-            creditMinor: 0n,
-            currency: dep.currency,
-          },
-          {
-            glAccountId: termGl.id,
-            branchId: account.branchId,
-            debitMinor: 0n,
-            creditMinor: daily,
-            currency: dep.currency,
-          },
-        ],
+        legs,
       });
 
       await this.prisma.depositContract.update({
         where: { id: dep.id },
         data: {
-          accruedInterestMinor: dep.accruedInterestMinor + daily,
+          accruedInterestMinor: dep.accruedInterestMinor + netInterest,
+          taxAccruedMinor: dep.taxAccruedMinor + whtMinor,
+          monthInterestAccruedMinor,
+          interestAccrualMonth,
           lastAccrualDate: businessDate,
         },
       });
 
       accruedCount += 1;
-      totalDailyMinor += daily;
+      totalDailyMinor += netInterest;
     }
 
     return {
@@ -540,5 +652,109 @@ export class DepositsService {
         accruedInterestMinor: 0n,
       },
     });
+  }
+
+  /**
+   * ADİF depositor registry snapshot (P2-5 deepen). Official ADIF file layout [U].
+   */
+  async buildAdifDepositorRegistrySnapshot(asOf = new Date()) {
+    const contracts = await this.prisma.depositContract.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        adifTagged: true,
+        status: { in: [DepositStatus.ACTIVE, DepositStatus.MATURED] },
+      },
+      select: {
+        id: true,
+        customerId: true,
+        accountId: true,
+        principalMinor: true,
+        accruedInterestMinor: true,
+        currency: true,
+        openedAt: true,
+        maturityDate: true,
+        productTemplateId: true,
+        status: true,
+      },
+      orderBy: { openedAt: "asc" },
+    });
+    const insuredMinorCap = 30_000_000n;
+    /** Lab contribution estimate: 0.05% of insured balances annualized (stub). */
+    const contributionRateAnnual = 0.0005;
+    const byCustomer = new Map<
+      string,
+      {
+        customerId: string;
+        contracts: typeof contracts;
+        balanceMinor: bigint;
+        insuredMinor: bigint;
+      }
+    >();
+    for (const row of contracts) {
+      const balanceMinor = row.principalMinor + row.accruedInterestMinor;
+      const bucket = byCustomer.get(row.customerId) ?? {
+        customerId: row.customerId,
+        contracts: [],
+        balanceMinor: 0n,
+        insuredMinor: 0n,
+      };
+      bucket.contracts.push(row);
+      bucket.balanceMinor += balanceMinor;
+      byCustomer.set(row.customerId, bucket);
+    }
+    const depositors = [...byCustomer.values()].map((bucket) => {
+      const insuredMinor =
+        bucket.balanceMinor > insuredMinorCap
+          ? insuredMinorCap
+          : bucket.balanceMinor;
+      bucket.insuredMinor = insuredMinor;
+      const contributionEstimateMinor = BigInt(
+        Math.round(Number(insuredMinor) * contributionRateAnnual),
+      );
+      return {
+        customerId: bucket.customerId,
+        contractCount: bucket.contracts.length,
+        currency: "AZN",
+        balanceMinor: bucket.balanceMinor.toString(),
+        insuredMinor: insuredMinor.toString(),
+        contributionEstimateMinor: contributionEstimateMinor.toString(),
+        contracts: bucket.contracts.map((row) => ({
+          depositContractId: row.id,
+          accountId: row.accountId,
+          productTemplateId: row.productTemplateId,
+          status: row.status,
+          currency: row.currency,
+          principalMinor: row.principalMinor.toString(),
+          accruedInterestMinor: row.accruedInterestMinor.toString(),
+          openedAt: row.openedAt.toISOString(),
+          maturityDate: row.maturityDate?.toISOString() ?? null,
+        })),
+      };
+    });
+    const totalInsuredMinor = depositors.reduce(
+      (acc, d) => acc + BigInt(d.insuredMinor),
+      0n,
+    );
+    const totalContributionEstimateMinor = depositors.reduce(
+      (acc, d) => acc + BigInt(d.contributionEstimateMinor),
+      0n,
+    );
+    return {
+      scaffold: false,
+      partial: true,
+      schemaVersion: "ADIF-DEPOSITOR-REGISTRY-LAB-2",
+      asOf: asOf.toISOString(),
+      capMinorPerDepositor: insuredMinorCap.toString(),
+      contributionRateAnnual,
+      totals: {
+        depositorCount: depositors.length,
+        contractCount: contracts.length,
+        totalInsuredMinor: totalInsuredMinor.toString(),
+        totalContributionEstimateMinor:
+          totalContributionEstimateMinor.toString(),
+      },
+      depositors,
+      note: "Official ADIF file / contribution remain [U] — lab snapshot only (P2-5).",
+    };
   }
 }

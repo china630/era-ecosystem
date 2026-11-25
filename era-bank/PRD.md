@@ -1,7 +1,7 @@
 # ERA Bank — Product Requirements Document (PRD)
 
 **App:** `era-bank` — the operational banking **satellite** (carries the `industry_banking` commercial gate).
-**Role:** the UI / workflow / channel-for-staff layer that consumes the headless engine **`era-bank-core`**. See ADR [docs/adr/era-bank-core.md](../docs/adr/era-bank-core.md) D9.
+**Role:** the UI / workflow / channel-for-staff layer that consumes the headless engine **`era-bank-core`**. See ADR [docs/adr/bank/era-bank-core.md](../docs/adr/bank/era-bank-core.md) D9.
 **Status:** Lab-pilot / ops-mvp (`docs/editions/bank.yaml` = `mvp`). Not product ga.
 **Companion docs:** [TZ.md](./TZ.md) · engine [era-bank-core/PRD.md](../era-bank-core/PRD.md) (product-line lead) · [era-bank-core/TZ.md](../era-bank-core/TZ.md) · scope [Bank-Capability-Inventory.md](../docs/acceptance/Bank-Capability-Inventory.md) · [Bank-Acceptance-System.md](../docs/acceptance/Bank-Acceptance-System.md)
 **Language law:** product chat — Russian; this repo doc — English.

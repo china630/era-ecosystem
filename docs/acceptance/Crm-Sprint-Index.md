@@ -28,5 +28,7 @@ Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not cl
 | S-3 | Field / customer sign-off | [ ] | — |
 | S-RBAC | CRM RBAC Variant A + custom roles | [~] | AC-CRM-RBAC 🟡; `/admin/access` clone + assign; system seed; UAT open — not Pilot |
 | S-4 | Green Scaffold BE Wave 8 (WA excl.) | [x] | IM + PRM; WA stays 🟡 External |
+| S-SEL-WAR-UI | Selections + warranty ModalShell product forms | [x] | CRM-SEL/WAR playbook SCREEN; AC 🟡 out of BE rollup; UAT open — not SHOW / Pilot / ga |
+| S-INT-WAVE | Integrations kit + hygiene (ADR `docs/adr/crm/` + TZ) | [~] | vendor-06 W0–W7 + second-pass (recording apply, duplicate ACK, extensions i18n); API/SCREEN; MSM/Collabo/Apple blocked; Meta sandbox + keys UAT open; AC 🟡; not SHOW / Pilot / ga; sell unchanged |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`

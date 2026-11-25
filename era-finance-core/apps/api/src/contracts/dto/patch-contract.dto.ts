@@ -8,13 +8,18 @@ import {
   Matches,
   Min,
 } from "class-validator";
-import { ContractStatus, ContractType } from "@erafinance/database";
+import { ContractRole, ContractStatus, ContractType } from "@erafinance/database";
 
 export class PatchContractDto {
   @ApiPropertyOptional({ enum: ContractType })
   @IsOptional()
   @IsEnum(ContractType)
   type?: ContractType;
+
+  @ApiPropertyOptional({ enum: ContractRole })
+  @IsOptional()
+  @IsEnum(ContractRole)
+  contractRole?: ContractRole;
 
   @ApiPropertyOptional({ enum: ContractStatus })
   @IsOptional()

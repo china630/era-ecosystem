@@ -14,6 +14,7 @@ import {
   showSuccess,
   showWarning,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import ReservationCardModal from '@/components/ReservationCardModal';
 import { hotelDateKey } from '@/lib/hotel-calendar';
@@ -183,7 +184,12 @@ export default function UnsettledDeparturesPage() {
 
       <HotelDataGrid<Row & Record<string, unknown>>
         columns={[
-          { key: 'checkOutDate', header: t('unsettledCheckout'), sortable: true },
+          {
+            key: 'checkOutDate',
+            header: t('unsettledCheckout'),
+            sortable: true,
+            render: (r) => bakuDateDisplay(String(r.checkOutDate).slice(0, 10)),
+          },
           { key: 'guestName', header: t('colName'), sortable: true },
           {
             key: 'roomNumber',

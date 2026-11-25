@@ -50,6 +50,13 @@ export const MODAL_WIDE_CLASS =
 export const MODAL_FULL_CLASS =
   "max-w-[min(98vw,1600px)] w-full min-h-[min(75vh,48rem)] max-h-[90vh]";
 
+/**
+ * Clinic package-assign / dense ops: force fill height.
+ * `!min-h` beats `min-h-0` on MODAL_DIALOG_CONTENT_CLASS (Tailwind source-order clash).
+ */
+export const MODAL_FULL_FILL_CLASS =
+  "max-w-[min(99vw,1680px)] w-full !min-h-[min(92vh,56rem)] h-[min(92vh,56rem)] max-h-[96vh]";
+
 export const MODAL_CLOSE_BUTTON_CLASS =
   "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent text-[#7F8C8D] transition hover:bg-[#F4F5F7] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/30";
 

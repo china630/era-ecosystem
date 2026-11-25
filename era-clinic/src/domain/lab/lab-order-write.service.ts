@@ -19,6 +19,8 @@ export type { ResultLineInput };
 
 /** Thrown when over-quota labs are blocked by `procedureOverQuotaPolicy`. */
 export const LAB_OVER_QUOTA_BLOCKED = "LAB_OVER_QUOTA_BLOCKED";
+/** Thrown when a fresh guest blank already covers this lab on the episode. */
+export const LAB_BROUGHT_IN_COVERS = "LAB_BROUGHT_IN_COVERS";
 
 type Tx = SatelliteTransactionClient;
 
@@ -310,6 +312,18 @@ export async function createLabOrderWithItems(
   params: CreateLabOrderWithItemsParams,
 ): Promise<Prisma.LabOrderGetPayload<{ include: typeof labOrderFullInclude }>> {
   const codes = params.codes;
+  if (params.clinicalEpisodeId) {
+    const { freshBroughtInCodes } = await import("@/domain/lab/brought-in-result");
+    const covered = await freshBroughtInCodes(params.clinicalEpisodeId);
+    const blocked = codes.filter((code) => covered.has(code));
+    if (blocked.length > 0) {
+      const err = new Error(
+        `A fresh brought-in blank already covers ${blocked.join(", ")}`,
+      );
+      (err as Error & { code?: string }).code = LAB_BROUGHT_IN_COVERS;
+      throw err;
+    }
+  }
   const servicesByCode = await resolveDiagnosticServicesByCodes(codes);
   const isExternal = params.source === "EXTERNAL";
   const patientSex =
@@ -391,7 +405,9 @@ export async function createLabOrderWithItems(
             patientOrigin: resolvedOrigin,
             quotaCode: stamp?.packageQuotaCode,
             serviceCode: code,
-            inPackage: Boolean(stamp) && !forcePaid,
+            // false = explicit paid (forcePaid); omit when unknown so charge can
+            // still resolve awaiting_package / package stamp.
+            inPackage: forcePaid ? false : stamp ? true : undefined,
           }),
           { serviceCode: code, where: "lab" },
         );

@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { bakuDateDisplay } from "@era/satellite-kit/time";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   DatePicker,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
@@ -20,6 +21,12 @@ type FatcaRow = {
   updatedAt?: string;
 };
 
+type CbarTemplate = {
+  id: string;
+  code: string;
+  version?: string;
+};
+
 const CLASSIFICATIONS = ["US_PERSON", "REPORTABLE", "NON_REPORTABLE"] as const;
 
 function FatcaCrsPageInner() {
@@ -27,6 +34,7 @@ function FatcaCrsPageInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [templates, setTemplates] = useState<CbarTemplate[]>([]);
   const [template, setTemplate] = useState("CBAR_TRIAL_BALANCE");
   const [periodFrom, setPeriodFrom] = useState("2026-01-01");
   const [periodTo, setPeriodTo] = useState("2026-01-31");
@@ -63,6 +71,26 @@ function FatcaCrsPageInner() {
   }, [load]);
 
   useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/reports/cbar/templates", {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as CbarTemplate[];
+        const list = Array.isArray(data) ? data : [];
+        setTemplates(list);
+        if (list.length > 0 && !list.some((t) => t.code === template)) {
+          setTemplate(list[0].code);
+        }
+      } catch {
+        /* keep hardcoded fallback until API available */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount
+  }, []);
+
+  useEffect(() => {
     if (mode === "edit" && selected) {
       setClassification(selected.classification);
       setTinStatus(selected.tinStatus ?? "");
@@ -70,14 +98,34 @@ function FatcaCrsPageInner() {
   }, [mode, selected]);
 
   async function generateCbar() {
+    setError(null);
     const res = await fetch(`/api/reports/cbar/${template}/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ periodFrom, periodTo }),
     });
+    if (!res.ok) {
+      setError(`CBAR generate failed (${res.status})`);
+      return;
+    }
     const json = (await res.json()) as { id?: string };
     if (json.id) setRunId(json.id);
   }
+
+  const templateOptions =
+    templates.length > 0
+      ? templates.map((t) => ({
+          value: t.code,
+          label: t.version ? `${t.code} (${t.version})` : t.code,
+        }))
+      : [
+          { value: "CBAR_TRIAL_BALANCE", label: "CBAR_TRIAL_BALANCE" },
+          {
+            value: "CBAR_BALANCE_SHEET_STUB",
+            label: "CBAR_BALANCE_SHEET_STUB",
+          },
+          { value: "CBAR_LCR_STUB", label: "CBAR_LCR_STUB" },
+        ];
 
   async function saveClassification(e: React.FormEvent) {
     e.preventDefault();
@@ -114,15 +162,18 @@ function FatcaCrsPageInner() {
       <PageHeader title="Regulatory reports" subtitle="CBAR prudential + FATCA/CRS" />
       <div className={CARD_CONTAINER_CLASS}>
         <h3 className="mb-2 font-medium">CBAR generate</h3>
-        <select
-          className="mb-2 w-full rounded border px-3 py-2 text-sm"
-          value={template}
-          onChange={(e) => setTemplate(e.target.value)}
-        >
-          <option value="CBAR_TRIAL_BALANCE">CBAR_TRIAL_BALANCE</option>
-          <option value="CBAR_BALANCE_SHEET_STUB">CBAR_BALANCE_SHEET_STUB</option>
-          <option value="CBAR_LCR_STUB">CBAR_LCR_STUB</option>
-        </select>
+        <div className="mb-2">
+          <CatalogField
+            kind="CLOSED_MEDIUM"
+            label="Template (institution pack)"
+            options={templateOptions}
+            value={template}
+            onChange={(next) => {
+              const v = Array.isArray(next) ? next[0] ?? "" : next;
+              if (v) setTemplate(v);
+            }}
+          />
+        </div>
         <div className="mb-3 grid gap-2 sm:grid-cols-2">
           <DatePicker label="From" value={periodFrom} onChange={setPeriodFrom} placeholder="dd.mm.yyyy" />
           <DatePicker label="To" value={periodTo} onChange={setPeriodTo} placeholder="dd.mm.yyyy" />

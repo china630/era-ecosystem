@@ -58,6 +58,13 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     sortOrder: 15,
     isPremium: true,
   },
+  {
+    key: "mgmt_budget_pro",
+    name: "Management budget (commercial)",
+    pricePerMonth: 39,
+    sortOrder: 151,
+    isPremium: true,
+  },
 ];
 
 /**

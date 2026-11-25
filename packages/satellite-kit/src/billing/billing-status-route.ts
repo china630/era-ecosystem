@@ -1,6 +1,8 @@
 import { getBearerOrCookieToken } from "../auth/middleware-helpers";
 import { authCookieName, verifySatelliteSession } from "../auth/session";
 import { resolveSatelliteBillingStatus } from "./satellite-billing-gate";
+import { kitJson, kitResultToNext, type KitHttpResult } from "../tenancy/organization-bind";
+import type { KitHeaderSource } from "../http/kit-call";
 
 export type SatelliteBillingStatusBody = {
   billingStatus: "ACTIVE" | "SOFT_BLOCK" | "HARD_BLOCK" | null;
@@ -34,20 +36,20 @@ function cookieReader(header: string | null) {
  * re-exports it from `app/api/platform/billing-status/route.ts`.
  * The org comes from the signed session token only.
  */
-export async function GET(request: Request): Promise<Response> {
+export async function readBillingStatusFrom(headers: KitHeaderSource): Promise<KitHttpResult> {
   const token = getBearerOrCookieToken(
-    cookieReader(request.headers.get("cookie")),
-    request.headers,
+    cookieReader(headers.get("cookie")),
+    headers,
     authCookieName(),
   );
-  if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!token) return kitJson({ error: "Unauthorized" }, 401);
   let organizationId: string | undefined;
   try {
     organizationId = (await verifySatelliteSession(token)).organizationId?.trim();
   } catch {
-    return Response.json({ error: "Invalid session" }, { status: 401 });
+    return kitJson({ error: "Invalid session" }, 401);
   }
-  if (!organizationId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!organizationId) return kitJson({ error: "Unauthorized" }, 401);
 
   const billingStatus = await resolveSatelliteBillingStatus(organizationId);
   const body: SatelliteBillingStatusBody = {
@@ -55,5 +57,13 @@ export async function GET(request: Request): Promise<Response> {
     readOnly: billingStatus === "HARD_BLOCK",
     exportsBlocked: billingStatus === "SOFT_BLOCK",
   };
-  return Response.json(body, { headers: { "Cache-Control": "no-store" } });
+  return kitJson(body, 200, { "Cache-Control": "no-store" });
+}
+
+export async function readBillingStatus(request: Request): Promise<KitHttpResult> {
+  return readBillingStatusFrom(request.headers);
+}
+
+export async function GET(request: Request): Promise<Response> {
+  return kitResultToNext(await readBillingStatus(request));
 }

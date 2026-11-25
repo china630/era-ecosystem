@@ -17,6 +17,10 @@ import {
 } from '@/domain/patient/mdm-demographics-cache';
 import { episodeAssignedToPractitionerWhere } from '@/lib/auth/clinic-data-scope';
 import { bakuDateKey, bakuDayBounds, parseBakuDateTime } from '@/lib/baku-day';
+import {
+  recordEpisodeAudit,
+  type EpisodeAuditCtx,
+} from '@/domain/sanatorium/episode-audit.service';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
@@ -246,8 +250,6 @@ export async function openEpisodeFromStay(input: {
             where: { id: existing.id },
             include: episodeInclude,
           });
-    const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-    await seedAutoPaidLabs(row.id);
     return row;
   };
 
@@ -373,8 +375,6 @@ export async function openEpisodeFromStay(input: {
   }
 
   await fillPatientDemographics(created.patientRefId);
-  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-  await seedAutoPaidLabs(created.id);
   return created;
 }
 
@@ -393,6 +393,9 @@ export async function registerWalkInEpisode(input: {
   issuingCountry?: string;
   globalPersonId?: string | null;
   programCode?: string;
+  /** Ambulatory N-day extras window (CLI-63). Default 1 when omitted. */
+  courseDays?: number;
+  confirmedByUserId?: string;
 }) {
   const key = input.fin?.trim() || input.passport?.trim();
   if (!key) throw new Error("FIN or passport required");
@@ -495,19 +498,30 @@ export async function registerWalkInEpisode(input: {
     globalPersonId: input.globalPersonId,
   });
 
+  const { addBakuDays, parseBakuDateTime, todayBakuYmd } = await import("@/lib/baku-day");
+  const rawDays = input.courseDays != null ? Math.floor(input.courseDays) : 1;
+  const courseDays = Number.isFinite(rawDays) ? Math.min(31, Math.max(1, rawDays)) : 1;
+  const startYmd = todayBakuYmd();
+  const plannedEndsOn = parseBakuDateTime(addBakuDays(startYmd, courseDays), "09:00");
+  const now = new Date();
+
   const episode = await prisma.clinicalEpisode.create({
     data: {
       patientRefId: patient.id,
       globalPersonId: globalPersonId ?? input.globalPersonId ?? patient.globalPersonId,
       organizationId: input.organizationId,
       patientOrigin: "WALK_IN",
+      courseKind: "AMBULATORY",
+      plannedEndsOn,
       programCode: input.programCode ?? null,
+      noPackageConfirmedAt: input.programCode?.trim() ? null : now,
+      noPackageConfirmedByUserId: input.programCode?.trim()
+        ? null
+        : input.confirmedByUserId ?? null,
       status: "OPEN",
     },
     include: { patientRef: true },
   });
-  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-  await seedAutoPaidLabs(episode.id);
   return episode;
 }
 
@@ -574,6 +588,8 @@ export async function listOpenEpisodes(input?: {
   roomNumber?: string;
   programCode?: string;
   course?: "ready" | "attention" | "blocked";
+  /** YYYY-MM-DD. Keeps rows whose arrival (hotel check-in, else program start, else opened day) is on or after this day. */
+  arrivalFrom?: string;
   includeHotelRooms?: boolean;
   includeProgramCodes?: boolean;
   sort?: "patient" | "room" | "origin" | "program" | "status" | "arrival";
@@ -677,6 +693,11 @@ export async function listOpenEpisodes(input?: {
 
   const sortDir = input?.sortDir === "desc" ? "desc" : "asc";
   const sortArrival = input?.sort === "arrival";
+  const arrivalFrom =
+    input?.arrivalFrom && /^\d{4}-\d{2}-\d{2}$/.test(input.arrivalFrom)
+      ? input.arrivalFrom
+      : null;
+  const pageInMemory = sortArrival || Boolean(arrivalFrom);
   const orderBy: Prisma.ClinicalEpisodeOrderByWithRelationInput =
     input?.sort === "patient"
       ? { patientRef: { fullName: sortDir } }
@@ -729,14 +750,14 @@ export async function listOpenEpisodes(input?: {
     },
   };
 
-  const [total, episodesRaw, hotelRooms, programCodes] = await Promise.all([
+  const [sqlTotal, episodesRaw, hotelRooms, programCodes] = await Promise.all([
     prisma.clinicalEpisode.count({ where }),
     prisma.clinicalEpisode.findMany({
       where,
       include: episodeInclude,
       orderBy,
       // Arrival uses hotel check-in after fetch — load the matching set then page in memory.
-      ...(sortArrival
+      ...(pageInMemory
         ? {}
         : { skip: (page - 1) * pageSize, take: pageSize }),
     }),
@@ -770,13 +791,16 @@ export async function listOpenEpisodes(input?: {
   }
 
   /** Ops package signal for list badges / filters. */
+  const { laneDenied, loadLaneGate } = await import("@/domain/sanatorium/lane-gates");
+  const lanePolicy = await loadLaneGate();
   function courseMark(
     hasCareTeam: boolean,
     signal: "OK" | "NO_PROGRAM_CODE" | "NO_PROGRAM" | "NO_PACKAGE_CONFIRMED",
+    clinicalReady: boolean,
   ): "ready" | "attention" | "blocked" {
     if (!hasCareTeam) return "blocked";
-    if (signal === "OK") return "ready";
-    return "attention";
+    if (signal !== "OK" || !clinicalReady) return "attention";
+    return "ready";
   }
 
   function packageSignal(e: {
@@ -815,7 +839,15 @@ export async function listOpenEpisodes(input?: {
       ...flagged,
       programInstance,
       packageSignal: packageSignal(e),
-      courseMark: courseMark(flagged.hasCareTeam, packageSignal(e)),
+      courseMark: courseMark(
+        flagged.hasCareTeam,
+        packageSignal(e),
+        !laneDenied(lanePolicy, "procedures", {
+          anamnesisText: (e as { anamnesisText?: string | null }).anamnesisText,
+          complaintCount: (e as { complaints?: unknown[] }).complaints?.length ?? 0,
+          diagnosisCount: (e as { diagnoses?: unknown[] }).diagnoses?.length ?? 0,
+        }),
+      ),
     };
   }
 
@@ -829,6 +861,15 @@ export async function listOpenEpisodes(input?: {
       if (e.patientOrigin !== "WALK_IN" && window?.checkOutDate) {
         const out = bakuDateKey(window.checkOutDate);
         if (out) departureByEpisodeId.set(e.id, out);
+      } else {
+        // CLI-69: ambulatory / staff benefit window (no hotel checkout).
+        const planned = (e as { plannedEndsOn?: Date | string | null }).plannedEndsOn;
+        const progEnd = (e.programInstance as { endsOn?: Date | string } | null)?.endsOn;
+        const endSrc = progEnd ?? planned;
+        if (endSrc) {
+          const out = bakuDateKey(endSrc);
+          if (out) departureByEpisodeId.set(e.id, out);
+        }
       }
       if (window?.checkInDate) {
         const ymd = bakuDateKey(window.checkInDate);
@@ -855,6 +896,9 @@ export async function listOpenEpisodes(input?: {
     departureOn: departureByEpisodeId.get(row.id) ?? null,
   });
 
+  if (arrivalFrom) {
+    episodes = episodes.filter((e) => (arrivalByEpisodeId.get(e.id) ?? "") >= arrivalFrom);
+  }
   if (sortArrival) {
     episodes = [...episodes].sort((a, b) => {
       const av = arrivalByEpisodeId.get(a.id) ?? "";
@@ -862,6 +906,9 @@ export async function listOpenEpisodes(input?: {
       const cmp = av.localeCompare(bv);
       return sortDir === "desc" ? -cmp : cmp;
     });
+  }
+  const total = pageInMemory ? episodes.length : sqlTotal;
+  if (pageInMemory) {
     episodes = episodes.slice((page - 1) * pageSize, page * pageSize);
   }
 
@@ -945,6 +992,7 @@ export async function addComplaint(
   episodeId: string,
   text: string,
   opts?: { recordedByPractitionerId?: string | null },
+  auditCtx?: EpisodeAuditCtx,
 ) {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
@@ -964,7 +1012,7 @@ export async function addComplaint(
     (err as Error & { code?: string }).code = EPISODE_CLOSED;
     throw err;
   }
-  return prisma.clinicalComplaint.create({
+  const row = await prisma.clinicalComplaint.create({
     data: {
       episodeId,
       text,
@@ -974,6 +1022,13 @@ export async function addComplaint(
       recordedByPractitioner: { select: { fullName: true, specialty: true } },
     },
   });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, episodeId, 'complaint_create', {
+      complaintId: row.id,
+      text: row.text,
+    });
+  }
+  return row;
 }
 
 export async function listEpisodeComplaints(episodeId: string) {
@@ -986,30 +1041,10 @@ export async function listEpisodeComplaints(episodeId: string) {
   });
 }
 
-export async function deleteEpisodeComplaint(id: string, patientRefId: string) {
-  const row = await prisma.clinicalComplaint.findUnique({
-    where: { id },
-    include: { episode: { select: { patientRefId: true, status: true } } },
-  });
-  if (!row || row.episode.patientRefId !== patientRefId) {
-    throw new Error("Complaint not found");
-  }
-  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
-    "@/domain/sanatorium/episode-gates"
-  );
-  const closed = episodeWriteDenied(row.episode.status);
-  if (closed) {
-    const err = new Error(closed);
-    (err as Error & { code?: string }).code = EPISODE_CLOSED;
-    throw err;
-  }
-  await prisma.clinicalComplaint.delete({ where: { id } });
-}
-
-export async function updateEpisodeComplaint(
+export async function deleteEpisodeComplaint(
   id: string,
   patientRefId: string,
-  text: string,
+  auditCtx?: EpisodeAuditCtx,
 ) {
   const row = await prisma.clinicalComplaint.findUnique({
     where: { id },
@@ -1027,13 +1062,51 @@ export async function updateEpisodeComplaint(
     (err as Error & { code?: string }).code = EPISODE_CLOSED;
     throw err;
   }
-  return prisma.clinicalComplaint.update({
+  await prisma.clinicalComplaint.delete({ where: { id } });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, row.episodeId, 'complaint_delete', {
+      complaintId: id,
+      text: row.text,
+    });
+  }
+}
+
+export async function updateEpisodeComplaint(
+  id: string,
+  patientRefId: string,
+  text: string,
+  auditCtx?: EpisodeAuditCtx,
+) {
+  const row = await prisma.clinicalComplaint.findUnique({
+    where: { id },
+    include: { episode: { select: { patientRefId: true, status: true } } },
+  });
+  if (!row || row.episode.patientRefId !== patientRefId) {
+    throw new Error("Complaint not found");
+  }
+  const { episodeWriteDenied, EPISODE_CLOSED } = await import(
+    "@/domain/sanatorium/episode-gates"
+  );
+  const closed = episodeWriteDenied(row.episode.status);
+  if (closed) {
+    const err = new Error(closed);
+    (err as Error & { code?: string }).code = EPISODE_CLOSED;
+    throw err;
+  }
+  const updated = await prisma.clinicalComplaint.update({
     where: { id },
     data: { text: text.trim() },
     include: {
       recordedByPractitioner: { select: { fullName: true, specialty: true } },
     },
   });
+  if (auditCtx) {
+    await recordEpisodeAudit(auditCtx, row.episodeId, 'complaint_update', {
+      complaintId: id,
+      text: updated.text,
+    });
+  }
+  return updated;
 }
 
 export async function addDiagnosis(

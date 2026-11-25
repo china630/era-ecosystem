@@ -5,6 +5,7 @@
  * Nafta seed: `rateMedical` = PKG-STANDART; `mealHB`/`mealBB` args are both Full board (FB)
  * (packages include FB; param names kept for call-site compatibility).
  */
+import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { composePersonFullName } from '../src/lib/person-documents';
 import {
   PaymentMethod,
@@ -353,6 +354,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         data: {
           reservationId: res.id,
           actualCheckIn: spec.checkIn,
+          checkInBusinessDate: bakuCivilUtcDate(hotelDateKey(spec.checkIn)),
         },
       });
     }
@@ -460,6 +462,8 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         reservationId: res.id,
         actualCheckIn: s.checkIn,
         actualCheckOut: s.checkOut,
+        checkInBusinessDate: bakuCivilUtcDate(hotelDateKey(s.checkIn)),
+        checkOutBusinessDate: bakuCivilUtcDate(hotelDateKey(s.checkOut)),
       },
     });
   }

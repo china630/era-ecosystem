@@ -28,8 +28,7 @@
     "db:seed:diagnostic-catalog:base": "node prisma/seed-diagnostic-catalog-base.cjs",
     "db:seed:diagnostic-catalog:nafta": "node prisma/seed-diagnostic-catalog-nafta.cjs",
     "db:seed:backfill-lab-items": "node prisma/backfill-lab-order-items.cjs",
-    "nest:generate": "node scripts/generate-nest.mjs",
-    "nest": "tsx nest/main.ts",
+    "nest": "tsx --tsconfig tsconfig.nest.json nest/main.ts",
     "front": "node scripts/clinic-front.mjs"
   },
   "dependencies": {

@@ -6,7 +6,7 @@ import {
   StayCheckInBlockedError,
 } from '@/lib/guest-stay-requirements';
 import { openFoliosForReservation } from '@/lib/services/folio.service';
-import { normalizeMedicalPackageCode } from '@/lib/services/medical-package-resolve.service';
+import { acceptGuestPackageCode } from '@/lib/integration/clinic-program-codes';
 import {
   dispatchGuestCheckedIn,
   dispatchGuestDeparted,
@@ -55,7 +55,7 @@ export async function admitGuestToClinic(reservationId: string, paxId: string) {
       code: 'CLINIC_ADMIT_DEPARTED',
     });
   }
-  const programCode = normalizeMedicalPackageCode(pax.medicalPackageCode);
+  const programCode = await acceptGuestPackageCode(pax.medicalPackageCode);
   if (!programCode) {
     throw Object.assign(new Error('Guest has no medical package'), {
       status: 409,
@@ -119,7 +119,7 @@ export async function revokeGuestClinicAdmit(reservationId: string, paxId: strin
     reservationId,
     paxKey: pax.id,
     roomNumber: reservation.room?.roomNumber ?? undefined,
-    programCode: normalizeMedicalPackageCode(pax.medicalPackageCode) ?? undefined,
+    programCode: (await acceptGuestPackageCode(pax.medicalPackageCode)) ?? undefined,
     globalPersonId: paxLifecycleGlobalPersonId({
       isPrimary: pax.isPrimary,
       guestId: pax.guestId,

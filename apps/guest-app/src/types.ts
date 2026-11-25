@@ -50,6 +50,37 @@ export type FolioRow = {
   settled?: boolean;
   lines: Array<{ id: string; label: string; amount: string }>;
 };
+export type TransferRow = {
+  id: string;
+  direction: string;
+  status: string;
+  pickupAt: string;
+  flightNo: string | null;
+};
+export type LaundryItemRow = {
+  id: string;
+  code: string;
+  name: string;
+  washPrice: string | null;
+  ironPrice: string | null;
+};
+export type LaundryTicketRow = {
+  id: string;
+  status: string;
+  express: boolean;
+  createdAt: string;
+  lines: Array<{ code: string; name: string; washQty: number; ironQty: number }>;
+};
+export type TourDepartureRow = {
+  id: string;
+  date: string;
+  agenda: string;
+  meetingPoint: string;
+  price: string | null;
+  status: string;
+};
+export type TourBookingRow = { id: string; status: string; date: string; agenda: string };
+
 export type BoardInfo = {
   mealPlanCode: string | null;
   breakfastIncluded: boolean;

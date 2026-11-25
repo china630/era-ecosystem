@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { PageHeader, TEXT_MUTED_CLASS } from '@era/satellite-kit/ui';
 
 type VoidRow = {
@@ -57,7 +58,9 @@ export default function PaymentVoidsPage() {
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-b border-[#D5DADF]">
-                <td className="p-2">{row.voidedAt?.slice(0, 16).replace('T', ' ') ?? '—'}</td>
+                <td className="p-2">
+                  {row.voidedAt ? bakuDateTimeDisplay(row.voidedAt) : '—'}
+                </td>
                 <td className="p-2">{row.folio?.reservation?.room?.roomNumber ?? '—'}</td>
                 <td className="p-2">{row.folio?.reservation?.guest?.fullName ?? '—'}</td>
                 <td className="p-2">{row.paymentMethod}</td>

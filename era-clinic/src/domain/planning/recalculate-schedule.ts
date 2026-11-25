@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { addBakuDays, bakuDateKey } from "@/lib/baku-day";
 import { dayStartInstant, listClinicDays } from "@/domain/planning/clinic-day";
-import { parseBathDayModes, planBathSeries, type KeptCell } from "@/domain/planning/bath-calendar";
+import {
+  illegalHardSeriesBathYmds,
+  parseBathDayModes,
+  planBathSeries,
+  resolveDefaultBathMode,
+  type KeptCell,
+} from "@/domain/planning/bath-calendar";
 import {
   bathPolicyFromSettings,
   defaultBathModeFromSettings,
@@ -111,6 +117,7 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
       mode: string;
       qty: number;
       fillsRestDays: boolean;
+      weeklyCap: number | null;
     }> = [];
     const automaticByCode = new Map<string, typeof bathOrders>();
     for (const [procedureCode, rows] of byProcedure) {
@@ -156,23 +163,53 @@ export async function previewScheduleRecalc(episodeId?: string): Promise<Schedul
         automatic.push(row);
       }
       automaticByCode.set(procedureCode, automatic);
+      const seriesMode = info.series.modeCode
+        ? resolveDefaultBathMode(String(info.series.modeCode), bathModes)
+        : null;
       seriesInputs.push({
         seriesCode: info.series.code,
         procedureCode,
         mark: info.member.shortMark,
-        mode: asMode(fields.dayBlock) ?? defaultBathModeFromSettings(settings),
+        mode:
+          asMode(fields.dayBlock) ?? seriesMode ?? defaultBathModeFromSettings(settings),
         qty: kept.filter((cell) => cell.procedureCode === procedureCode).length + automatic.length,
         fillsRestDays: info.series.fillsRestDays,
+        weeklyCap:
+          info.series.weeklyCap === null || info.series.weeklyCap === undefined
+            ? null
+            : info.series.weeklyCap,
       });
     }
     if (seriesInputs.length > 0) {
-      const planned = planBathSeries({
+      const policy = bathPolicyFromSettings(settings);
+      const plannedRaw = planBathSeries({
         days,
         series: seriesInputs,
         kept,
+        layout: "continue",
         modes: bathModes,
         notBeforeYmd: addBakuDays(today, 1),
-        policy: bathPolicyFromSettings(settings),
+        policy,
+      });
+      /** Rhythm > horizon: drop mode-illegal new cells (same gate as Saxla seat). */
+      const planned = plannedRaw.filter((cell) => {
+        if (cell.locked) return true;
+        const seriesRow = seriesInputs.find((row) => row.procedureCode === cell.procedureCode);
+        if (!seriesRow || seriesRow.fillsRestDays) return true;
+        const existing = kept
+          .filter((row) => row.procedureCode === cell.procedureCode && row.locked && !row.manualRest)
+          .map((row) => row.ymd);
+        const illegal = new Set(
+          illegalHardSeriesBathYmds({
+            bathYmds: [...existing, cell.ymd],
+            days,
+            mode: seriesRow.mode,
+            modes: bathModes,
+            policy,
+            fillsRestDays: false,
+          }),
+        );
+        return !illegal.has(cell.ymd);
       });
       for (const [procedureCode, automatic] of automaticByCode) {
         const plannedDays = planned

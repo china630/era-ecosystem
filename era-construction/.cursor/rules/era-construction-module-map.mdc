@@ -3,6 +3,7 @@ description: Construction — projects, CDE, progress acts, timesheets
 globs:
   - app/**
   - src/**
+  - nest/**
   - prisma/**
 alwaysApply: false
 ---
@@ -13,24 +14,35 @@ alwaysApply: false
 
 | Domain | API prefix | Notes |
 |--------|------------|-------|
-| Auth / SSO | `app/api/auth/` | local + SSO |
-| Projects | `app/api/projects/` | gantt, daily logs, punch list, plan-vs-actual |
-| Progress acts | `progress-acts/` | approve workflow |
-| Materials | `material-requisitions/` | site requisitions |
-| CDE | `app/api/cde/documents` | common data environment |
-| Equipment | `equipment/hours` | machine hours |
-| Timesheets | `timesheets/import` | labor import |
-| Subcontractors | `subcontractor-claims` | claims per project |
-| Events | `events/dispatch` | orchestrator |
-| Internal | `GET/POST /api/internal/v1/organization/bind`, `GET/POST /api/internal/v1/runtime-config` | Orch Sync bind + desired-state config; `instrumentation` boot |
+| Nest HTTP edge | `nest/native/controllers/*` + `nest/main.ts` | Native Nest Controllers over `@/lib`; kit bind/runtime/billing-status via `kit-api.controller.ts` + `kit-routes.ts`; Nest edge has **no** `next/*` imports (Express cookies + ALS session); ADR `construction-nest-native-controllers`; `nest:generate` retired |
+| Auth / SSO | `POST/GET /api/auth/*` (Nest) | local + SSO |
+| Projects | `/api/projects/*` (Nest) | gantt, daily logs, punch list, plan-vs-actual, boq, acts |
+| Structure (Wave 4) | `projects/:id/phases`, `locations` | CRUD + soft-delete; hub Structure tab |
+| MVP (Wave 2) | `projects/:id/boq`, `projects/:id/acts`, `progress-acts/:id/lines`, `…/approve` | BOQ + draft act + SOV lines + approve; hub Ops tab + `/field-ops` |
+| Estimate hierarchy (M20) | `projects/:id/estimate/*`, `estimate-packages/:id/*`, `estimate-documents/:id/lines`, `…/lines/import-csv`, `…/estimate/finance-contract` | Dual mode FLAT_BOQ / ESTIMATE_HIERARCHY; pack → LCR/OCR/SC/SSR/COST_SUMMARY; CSV line import; approve → BoqLine + event `lines[]` → Finance SOV seed; hub **Estimate** tab; SKU `construction_estimate_hierarchy`; ADR construction-estimate-hierarchy D4b |
+| Smeta rate engine | `rate-bases`, `rate-bases/:id/items`, `rate-engine/calc`, `rate-engine/apply`, `rate-engine/materials` | Org RateBase/RateItem (+ optional hub `materialCode`); SatAdmin `/admin/rate-bases`; SKU `construction_smeta_rate_engine` |
+| Progress acts | `projects/:id/acts`, `progress-acts/:id/lines`, `…/approve`, `…/finance-payapp` | Ops SOV lines; Finance journal `construction:{actId}`; soft PayApp ref |
+| Depth (Wave 3) | `parties`, `rfis`, `submittals`, `inspections`, `change-requests`, `cde/documents`, daily/punch deepen | hub Depth tab; status transitions + stub contract events; money ref-only |
+| BIM lite (CN-BIM-01) | punch + RFI `ifcElementId` / `externalViewerUrl` | SKU `construction_bim_lite` / TIER_3 gate via billing-snapshot; Ops + `/field-ops` + Depth; http(s) viewer URL validation; chips only when gated on; no CDE authoring |
+| Staff provision (CN-STAFF-01) | Nest `POST /api/integration/staff-provision` | Orch fan-out `CONSTRUCTION_API_URL`; upsert User + Role; deactivate path; bridge secret |
+| Product hub (Wave 4) | `/projects/[id]` tabs | overview · estimate · ops · depth · structure · schedule · equipment · claims |
+| Progress acts (Nest alias) | `/api/progress-acts/*` | lines + approve + `finance-payapp` (M13; money still Finance) |
+| Materials | `/api/material-requisitions` (Nest) | list + create + status transitions (SUBMITTED/FULFILLED/CANCELLED) |
+| CDE | `/api/cde/documents` (Nest) | CURRENT/SUPERSEDED sheet lifecycle |
+| Schedule | `/api/projects/:id/gantt` (Nest) | GET/POST/DELETE task rows |
+| Equipment | `/api/equipment/hours` (Nest) | GET `?projectId=` + POST hours |
+| Timesheets | `/api/timesheets/import` (Nest) | labor import |
+| Subcontractors | `/api/projects/:id/subcontractor-claims` (Nest) | list/create + status transitions + soft-delete |
+| Events | `/api/events/dispatch` (Nest) | orchestrator; construction event stubs in `@era/contracts` |
+| Internal | `GET/POST /api/internal/v1/organization/bind`, `GET/POST /api/internal/v1/runtime-config` | Kit via `KitApiController`; Orch Sync bind + desired-state config |
 
-**Tenancy (CP-TENANT-01):** `organizationId` on tenant/ops models + kit Prisma extension + `requireSatelliteModule("industry_construction")` (AC-CON-TENANT 🟡 — not live SHARED pool).
+**Tenancy (CP-TENANT-01):** SHARED default — `organizationId` on tenant/ops models + kit Prisma extension + `requireSatelliteModule("industry_construction")` (AC-CON-TENANT 🟡 until field two-org UAT).
 
-| Access matrix (CN-RBAC-01) | `app/api/admin/roles`, `admin/roles/[code]`, `admin/roles/[code]/permissions`, `api/internal/v1/workforce/roles`, `admin/users`, `auth/me`, `auth/session/refresh-permissions`, `auth/logout`; page `/admin/access` | `Role` (`isSystem`, `cloneFromCode`, `permissionCatalogVersion`), `SatelliteAuditLog`; catalog `src/lib/auth/permissions.ts`; page map `page-route-permissions.ts`; API map `api-route-permissions.ts` |
-| Integration channels | `/admin/links`, `GET/PATCH /api/admin/links` | CP-CHANNELS-01 SatAdmin peer channels + money mode |
+| Access matrix (CN-RBAC-01) | Nest `/api/admin/roles`, `/api/admin/roles/:code`, `/api/admin/roles/:code/permissions`, `/api/internal/v1/workforce/roles`, `/api/admin/users`, `/api/auth/me`, `/api/auth/session/refresh-permissions`, `/api/auth/logout`; page `/admin/access` | `Role` (`isSystem`, `cloneFromCode`, `permissionCatalogVersion`), `SatelliteAuditLog`; catalog `src/lib/auth/permissions.ts`; page map `page-route-permissions.ts`; API map `api-route-permissions.ts` |
+| Integration channels | `/admin/links`, `GET/PATCH /api/admin/links` (Nest) | CP-CHANNELS-01 SatAdmin peer channels + money mode |
 
 **RBAC Variant A (CN-RBAC-01):** `getSatelliteSession()` also builds `permissions` from the role row and checks the stamped API path against `api-route-permissions.ts` (unlisted → 403). Pages: middleware `authorizePage` + `page-route-permissions.ts`. A new staff route or page needs a catalog row in the same change. Progress act approve is `api:acts.approve`; the APPROVED reopen refusal stays a domain rule. ADR construction-domain-permissions-and-rbac.
 
 ## Platform billing status
 
-`GET /api/platform/billing-status` — `app/api/platform/billing-status/route.ts` re-exports `@era/satellite-kit/billing/status-route` (banner in `EraAppRouteShell`). Staff calls the orchestrator denies (SOFT_BLOCK export, HARD_BLOCK write) get 402 from kit `readSatelliteStaffSession`; `handleRouteError` returns `{ error, code, billingStatus }`. ADR `docs/adr/billing-enforcement-satellites.md`.
+`GET /api/platform/billing-status` — Nest kit edge (`kit-routes.ts` → `@era/satellite-kit/billing/status-route`; banner in `EraAppRouteShell`). Staff calls the orchestrator denies (SOFT_BLOCK export, HARD_BLOCK write) get 402 from kit `readSatelliteStaffSession`; `handleRouteError` returns `{ error, code, billingStatus }`. ADR `docs/adr/billing-enforcement-satellites.md`.

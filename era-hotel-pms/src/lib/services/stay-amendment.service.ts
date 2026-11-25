@@ -185,7 +185,15 @@ export async function applyStayAmendment(input: {
   });
   if (!res) throw new Error('Reservation not found');
   const newPlan = await prisma.ratePlan.findUnique({ where: { id: input.ratePlanId } });
-  const { ratePlanRequiresGuestPackage, normalizeMedicalPackageCode } = await import(
+  const { loadClinicProgramCodes, acceptGuestPackageCode } = await import(
+    '@/lib/integration/clinic-program-codes'
+  );
+  const { resolveClinicProgramCode } = await import(
+    '@/lib/services/medical-package-resolve.service'
+  );
+  const clinicCodes = await loadClinicProgramCodes();
+  const tariffCode = resolveClinicProgramCode(newPlan?.code, clinicCodes);
+  const { ratePlanRequiresGuestPackage } = await import(
     '@/lib/services/medical-package-resolve.service'
   );
   const guestPackageOnStay = newPlan ? ratePlanRequiresGuestPackage(newPlan) : false;
@@ -194,7 +202,10 @@ export async function applyStayAmendment(input: {
       (p) => p.guestId || p.firstName?.trim() || p.lastName?.trim(),
     );
     const rows = named.length > 0 ? named : res.paxGuests;
-    if (rows.length === 0 || rows.some((p) => !normalizeMedicalPackageCode(p.medicalPackageCode))) {
+    const accepted = await Promise.all(
+      rows.map((p) => acceptGuestPackageCode(p.medicalPackageCode)),
+    );
+    if (rows.length === 0 || accepted.some((code) => !code)) {
       throw new Error('Select a medical package for each guest');
     }
   }
@@ -222,7 +233,16 @@ export async function applyStayAmendment(input: {
     });
   }
 
-  if (!guestPackageOnStay) {
+  if (tariffCode) {
+    await prisma.reservationGuest.updateMany({
+      where: { reservationId: input.reservationId },
+      data: { medicalPackageCode: tariffCode },
+    });
+    await prisma.reservation.update({
+      where: { id: input.reservationId },
+      data: { medicalPackageCode: tariffCode, medicalPackageUnresolved: false },
+    });
+  } else if (clinicCodes && !guestPackageOnStay) {
     await prisma.reservationGuest.updateMany({
       where: { reservationId: input.reservationId, medicalPackageCode: { not: null } },
       data: { medicalPackageCode: null },

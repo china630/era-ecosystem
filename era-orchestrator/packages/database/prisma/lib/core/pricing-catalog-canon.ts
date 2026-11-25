@@ -134,6 +134,30 @@ export function rewriteClinicActiveModules(modules: readonly string[]): string[]
   return [...set];
 }
 
+/**
+ * Retired construction catalog keys.
+ * `construction_boq_ks` mixed ops BOQ with Finance KS print — replaced by `construction_boq`
+ * (ops) + Finance `contract_payapp_ks` (PayApp / KS-2 KS-3 print).
+ */
+export const RETIRED_CONSTRUCTION_MODULE_KEYS = ["construction_boq_ks"] as const;
+
+/** Map legacy construction SKUs onto the current construction + Finance split. */
+export function rewriteConstructionActiveModules(modules: readonly string[]): string[] {
+  const set = new Set(modules.map((m) => m.trim()).filter(Boolean));
+  if (set.has("construction_boq_ks")) {
+    set.add("construction_boq");
+  }
+  for (const k of RETIRED_CONSTRUCTION_MODULE_KEYS) {
+    set.delete(k);
+  }
+  return [...set];
+}
+
+/** Clinic then construction rewrites (used by `syncPricingModuleCatalog`). */
+export function rewriteCatalogActiveModules(modules: readonly string[]): string[] {
+  return rewriteConstructionActiveModules(rewriteClinicActiveModules(modules));
+}
+
 export const INDUSTRY_SUBMODULE_PREFIX_TO_GATE: Readonly<Record<string, string>> = {
   hotel_: "industry_hotel_pms",
   clinic_: "industry_clinic",

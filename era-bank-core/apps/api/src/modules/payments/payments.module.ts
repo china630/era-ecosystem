@@ -2,7 +2,12 @@ import { Module } from "@nestjs/common";
 import { LedgerModule } from "../../kernel/ledger/ledger.module";
 import { PostingEngineModule } from "../../kernel/posting-engine/posting-engine.module";
 import { AmlModule } from "../aml/aml.module";
+import { AzipsRailAdapter } from "./azips.adapter";
+import { XohksRailAdapter } from "./xohks.adapter";
+import { AosRailAdapter } from "./aos.adapter";
+import { SwiftRailAdapter } from "./swift.adapter";
 import { InternalRailAdapter } from "./internal-rail.adapter";
+import { PaymentRailAdapterFactory } from "./rail-adapter.factory";
 import { PaymentsController } from "./payments.controller";
 import { PaymentsService } from "./payments.service";
 import { StubRailAdapter } from "./stub-rail.adapter";
@@ -20,8 +25,13 @@ import {
   controllers: [PaymentsController, CashPaymentsController],
   providers: [
     PaymentsService,
+    AzipsRailAdapter,
+    XohksRailAdapter,
+    AosRailAdapter,
+    SwiftRailAdapter,
     InternalRailAdapter,
     StubRailAdapter,
+    PaymentRailAdapterFactory,
     StandingOrdersService,
     VirtualAccountsService,
     ChequesService,

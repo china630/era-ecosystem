@@ -20,6 +20,7 @@ export type AutoApplyResult =
       skippedLabCodes: string[];
       skippedProcedureCodes: string[];
       pendingDoctor: boolean;
+      packageApplyMisses?: string | null;
     };
 
 type SnapshotProc = EntitlementSnapshot["procedures"][number];
@@ -200,6 +201,82 @@ export async function healUnstampedPackageAutoLabs(input: {
 }
 
 /**
+ * A block marked not in the package must stay a priced cheque line.
+ * Opening the course must not leave it on the quota at 0.
+ */
+export async function releaseExcludedAutoLabs(input: {
+  episodeId: string;
+  instanceId: string;
+  blocks: Array<{ procedureCode: string; serviceCode: string }>;
+}): Promise<{ released: number }> {
+  if (input.blocks.length === 0) return { released: 0 };
+  const { syncEntitlementUsage } = await import(
+    "@/domain/sanatorium/entitlement-usage.service"
+  );
+  const { resolveEntitlementCharge } = await import(
+    "@/domain/sanatorium/entitlement-charge.service"
+  );
+  const touched = new Set<string>();
+  let released = 0;
+  for (const block of input.blocks) {
+    const orders = await prisma.labOrder.findMany({
+      where: {
+        clinicalEpisodeId: input.episodeId,
+        inPackage: true,
+        packageQuotaCode: block.procedureCode,
+        settledAt: null,
+        status: { not: "CANCELLED" },
+        OR: [
+          { testCode: block.serviceCode },
+          { items: { some: { serviceCode: block.serviceCode } } },
+        ],
+      },
+      select: { id: true, patientOrigin: true },
+    });
+    for (const order of orders) {
+      const charge = await resolveEntitlementCharge({
+        episodeId: input.episodeId,
+        patientOrigin: order.patientOrigin === "WALK_IN" ? "WALK_IN" : "IN_HOUSE",
+        serviceCode: block.serviceCode,
+        inPackage: false,
+      });
+      if (!(charge.amountNet > 0)) {
+        console.warn("[package-auto-apply] excluded lab has no price", block.serviceCode);
+        continue;
+      }
+      await prisma.$transaction([
+        prisma.labOrder.update({
+          where: { id: order.id },
+          data: {
+            inPackage: false,
+            packageQuotaCode: null,
+            amountNet: charge.amountNet,
+          },
+        }),
+        prisma.labOrderItem.updateMany({
+          where: { labOrderId: order.id },
+          data: {
+            inPackage: false,
+            packageQuotaCode: null,
+            amountNet: charge.amountNet,
+          },
+        }),
+      ]);
+      released += 1;
+      touched.add(block.procedureCode);
+    }
+  }
+  for (const quotaCode of touched) {
+    await syncEntitlementUsage({
+      instanceId: input.instanceId,
+      episodeId: input.episodeId,
+      quotaCode,
+    });
+  }
+  return { released };
+}
+
+/**
  * Catalog SKUs attached to a quota block. The block code is only the quota key
  * and is never itself a bookable service.
  */
@@ -264,6 +341,7 @@ type TemplateAxisRow = {
   fulfillmentExplicit?: boolean | null;
   kind?: string | null;
   requiresDoctor?: boolean | null;
+  allowReplace?: boolean | null;
 };
 
 /** Copy assign mode, kind, and fulfillment from the current template. Quotas stay on the course snapshot. */
@@ -287,6 +365,7 @@ export function overlayTemplateAxes(
       quotaBasis: row.quotaBasis,
       requiresDoctor: next.requiresDoctor,
       showInProcedures: row.showInProcedures,
+      allowReplace: next.allowReplace === true,
       procedureOrder: row.procedureOrder,
     });
     return {
@@ -297,6 +376,24 @@ export function overlayTemplateAxes(
       procedureName: row.procedureName,
     };
   });
+}
+
+function autoStepOf(block: {
+  autoStep?: string | null;
+  assignMode?: string | null;
+  fulfillment?: string | null;
+}): "CHECKIN" | "DOCTOR" | "CLINICAL" | null {
+  if (block.autoStep === "CHECKIN" || block.autoStep === "DOCTOR" || block.autoStep === "CLINICAL") {
+    return block.autoStep;
+  }
+  if (block.assignMode === "MANUAL" || block.assignMode === "ON_INDICATION") return null;
+  if (block.fulfillment === "VISIT" || block.assignMode === "AUTO_DAY1") return "CLINICAL";
+  if (block.fulfillment === "LAB_ORDER" && block.assignMode === "AUTO_ON_OPEN") return "DOCTOR";
+  return null;
+}
+
+export function blockIncluded(block: { includedInPackage?: boolean | null }): boolean {
+  return block.includedInPackage !== false;
 }
 
 function selectAutoBlocks(
@@ -356,6 +453,7 @@ function axesFromLegacyTemplateProc(p: {
   quotaTotal: number;
   sortOrder?: number | null;
   showInProcedures?: boolean | null;
+  allowReplace?: boolean | null;
   procedureOrder?: number | null;
 }): SnapshotProc {
   const assignMode =
@@ -385,6 +483,7 @@ function axesFromLegacyTemplateProc(p: {
     kind: p.kind ?? null,
     sortOrder: p.sortOrder ?? 0,
     showInProcedures: p.showInProcedures === true,
+    allowReplace: p.allowReplace === true,
     procedureOrder: p.procedureOrder ?? p.sortOrder ?? 0,
     ...axes,
   };
@@ -397,7 +496,12 @@ function axesFromLegacyTemplateProc(p: {
  */
 export async function applyPackageAutoBlocks(
   episodeId: string,
-  opts: { trigger: AutoApplyTrigger },
+  opts: {
+    trigger: AutoApplyTrigger;
+    labsOnly?: boolean;
+    step?: "CHECKIN" | "DOCTOR" | "CLINICAL";
+    auditCtx?: { userId?: string | null; request?: Request };
+  },
 ): Promise<AutoApplyResult> {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
@@ -414,8 +518,6 @@ export async function applyPackageAutoBlocks(
   if (!episode?.patientRefId || !episode.patientRef) {
     throw new Error("Episode patient not found");
   }
-  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-  await seedAutoPaidLabs(episodeId);
   const instance = episode.programInstance;
   const programCode = (instance?.programCode ?? episode.programCode)?.trim() || "";
   if (!instance && (opts.trigger !== "CARE_TEAM" || !programCode)) {
@@ -513,7 +615,11 @@ export async function applyPackageAutoBlocks(
     })),
     opts.trigger,
     instance?.autoApplyState ?? "PENDING",
-  );
+  ).filter((block) => {
+    const step = opts.step ?? (opts.labsOnly ? "DOCTOR" : null);
+    if (!step) return true;
+    return autoStepOf(block) === step;
+  });
 
   const patientRefId = episode.patientRefId;
   const organizationId = episode.organizationId;
@@ -548,6 +654,7 @@ export async function applyPackageAutoBlocks(
       skippedProcedureCodes.push(block.procedureCode);
       continue;
     }
+    if (opts.labsOnly && block.fulfillment === "VISIT") continue;
 
     // Visit.practitionerId is non-null in schema, so a VISIT block always needs a
     // doctor regardless of requiresDoctor (which only frees LAB_ORDER blocks).
@@ -591,7 +698,7 @@ export async function applyPackageAutoBlocks(
     if (block.fulfillment === "LAB_ORDER") {
       const catalog = await catalogLabCodes(serviceCodes);
       for (const serviceCode of serviceCodes) {
-        if (instance) {
+        if (instance && blockIncluded(block)) {
           autoLabBlocksForHeal.push({
             procedureCode: block.procedureCode,
             quotaTotal,
@@ -618,9 +725,11 @@ export async function applyPackageAutoBlocks(
             source: "IN_HOUSE",
             fasting: false,
             patientOrigin,
-            packageStamp: instance
-              ? { packageQuotaCode: block.procedureCode }
-              : null,
+            packageStamp:
+              instance && blockIncluded(block)
+                ? { packageQuotaCode: block.procedureCode }
+                : null,
+            forcePaid: !blockIncluded(block),
           });
         } catch (err) {
           console.warn("[package-auto-apply] lab member skipped", serviceCode, err);
@@ -741,7 +850,9 @@ export async function applyPackageAutoBlocks(
     }
   }
 
-  const autoEligible = selected.filter((p) => p.fulfillment !== "PROCEDURE_ORDER");
+  const autoEligible = selected.filter(
+    (p) => p.fulfillment !== "PROCEDURE_ORDER" && !(opts.labsOnly && p.fulfillment === "VISIT"),
+  );
   let autoApplyState: string;
   if (pendingDoctor) {
     autoApplyState = "PENDING_DOCTOR";
@@ -779,6 +890,8 @@ export async function applyPackageAutoBlocks(
     `trigger=${opts.trigger}`,
     createdVisitCodes.length ? `visits+${createdVisitCodes.join(",")}` : null,
     createdLabCodes.length ? `labs+${createdLabCodes.join(",")}` : null,
+    skippedVisitCodes.length ? `visitsSkip=${skippedVisitCodes.join(",")}` : null,
+    skippedLabCodes.length ? `labsSkip=${skippedLabCodes.join(",")}` : null,
     pendingDoctor ? "pending_doctor" : null,
   ].filter(Boolean);
 
@@ -794,6 +907,32 @@ export async function applyPackageAutoBlocks(
     });
   }
 
+  const packageApplyMisses = [...skippedLabCodes, ...skippedVisitCodes]
+    .filter(Boolean)
+    .join(", ");
+  await prisma.clinicalEpisode.update({
+    where: { id: episodeId },
+    data: { packageApplyMisses: packageApplyMisses || null },
+  });
+
+  const { recordEpisodeAudit } = await import(
+    "@/domain/sanatorium/episode-audit.service"
+  );
+  await recordEpisodeAudit(opts.auditCtx ?? { userId: null }, episodeId, "package_apply", {
+    summary: noteParts.join("; ").slice(0, 500),
+    trigger: opts.trigger,
+    step: opts.step ?? null,
+    autoApplyState,
+    createdVisitCodes,
+    createdLabCodes,
+    skippedVisitCodes,
+    skippedLabCodes,
+    skippedProcedureCodes,
+    pendingDoctor,
+  }).catch((err) => {
+    console.error("[package-auto-apply] audit failed", episodeId, err);
+  });
+
   return {
     episodeId,
     autoApplyState,
@@ -803,6 +942,7 @@ export async function applyPackageAutoBlocks(
     skippedLabCodes,
     skippedProcedureCodes,
     pendingDoctor,
+    packageApplyMisses: packageApplyMisses || null,
   };
 }
 
@@ -845,7 +985,7 @@ export async function linkExistingAutoOrdersToPackage(episodeId: string): Promis
     if (block.fulfillment === "PROCEDURE_ORDER") continue;
     const serviceCodes = resolveAutoBlockServiceCodes(block.procedureCode, snap.members);
     const quotaTotal = Math.max(Number(block.quotaTotal) || 1, serviceCodes.length);
-    if (block.fulfillment === "LAB_ORDER") {
+    if (block.fulfillment === "LAB_ORDER" && blockIncluded(block)) {
       for (const serviceCode of serviceCodes) {
         autoLabBlocks.push({
           procedureCode: block.procedureCode,

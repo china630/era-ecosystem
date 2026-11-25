@@ -19,7 +19,11 @@ function countsByKey(
 
 export type OpsDaySummary = {
   date: string;
-  appointments: { total: number; byStatus: Record<string, number> };
+  appointments: {
+    total: number;
+    byStatus: Record<string, number>;
+    noShowRate: number | null;
+  };
   procedures: {
     total: number;
     byStatus: Record<string, number>;
@@ -139,6 +143,11 @@ export async function getOpsDaySummary(
   ]);
 
   const appointmentByStatus = countsByKey(appointmentGroups);
+  const appointmentTotal = Object.values(appointmentByStatus).reduce((a, b) => a + b, 0);
+  const noShowCount = appointmentByStatus.NO_SHOW ?? 0;
+  const appointmentDenom = appointmentTotal - (appointmentByStatus.CANCELLED ?? 0);
+  const noShowRate =
+    appointmentDenom > 0 ? Math.round((noShowCount / appointmentDenom) * 1000) / 1000 : null;
   const procedureByStatus = countsByKey(procedureGroups);
 
   const { loadCatalogDisplayNameMap } = await import(
@@ -152,8 +161,9 @@ export async function getOpsDaySummary(
   const summary: OpsDaySummary = {
     date,
     appointments: {
-      total: Object.values(appointmentByStatus).reduce((a, b) => a + b, 0),
+      total: appointmentTotal,
       byStatus: appointmentByStatus,
+      noShowRate,
     },
     procedures: {
       total: Object.values(procedureByStatus).reduce((a, b) => a + b, 0),

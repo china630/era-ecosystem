@@ -56,13 +56,13 @@ export async function signBridgeToken(input: {
     .sign(getSecret());
 }
 
-function bearer(request: Request): string | null {
+function bearer(request: { headers: { get(name: string): string | null } }): string | null {
   const auth = request.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return null;
   return auth.slice(7).trim() || null;
 }
 
-export async function authenticateBridgeRequest(request: Request): Promise<BridgeAuthContext> {
+export async function authenticateBridgeRequest(request: { headers: { get(name: string): string | null } }): Promise<BridgeAuthContext> {
   if (!isElektrawebBridgeEnabled()) {
     throw new Error("Elektraweb bridge is disabled (ELEKTRAWEB_BRIDGE_ENABLED≠1)");
   }

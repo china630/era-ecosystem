@@ -5,7 +5,7 @@ import { recalcReservationDailyRates } from '@/lib/services/reservation-pricing.
 import { dispatchGuestDeparted } from '@/lib/integration/guest-lifecycle-events';
 import { paxLifecycleGlobalPersonId } from '@/lib/integration/pax-lifecycle-person';
 import { addReservationTask } from '@/lib/services/reservation-submodals.service';
-import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
+import { clinicProgramCodeForEvent } from '@/lib/integration/clinic-program-codes';
 import {
   countLivePax,
   previewOccupancyAfterDepart,
@@ -191,7 +191,7 @@ export async function departGuestFromStay(
     reservationId,
     paxKey: paxId,
     roomNumber: reservation.room?.roomNumber,
-    programCode: clinicProgramCodeFromTariff(reservation.ratePlan),
+    programCode: await clinicProgramCodeForEvent(reservation.ratePlan),
     globalPersonId: paxGlobalPersonId,
     guestName: guestName || undefined,
     checkOutDate: departedAt.toISOString(),

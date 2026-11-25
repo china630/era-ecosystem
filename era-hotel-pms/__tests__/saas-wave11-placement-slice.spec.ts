@@ -42,9 +42,10 @@ jest.mock("@/lib/prisma", () => ({
 }));
 
 import { exportHotelOrgSlice, importHotelOrgSlice } from "@/lib/placement-slice.service";
-import { register as registerExport } from "../nest/generated/internal_v1_placement_export-slice";
+import { InternalV1PlacementExportSliceController } from "../nest/native/controllers/internal_v1_placement_export-slice";
+import { invokeMethod } from "./nest-invoke";
 import { ORG_FULL_SLICE_FORMAT_VERSION } from "@era/satellite-kit";
-import { invokeNest } from "./nest-invoke";
+import { invokeMethod } from "./nest-invoke";
 
 const ORG_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const ORG_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -75,7 +76,8 @@ describe("saas wave 11 hotel placement slice", () => {
   });
 
   it("POST export-slice returns summary with rowCounts", async () => {
-    const res = await invokeNest(registerExport, "post", "/api/internal/v1/placement/export-slice", {
+    const controller = new InternalV1PlacementExportSliceController();
+    const res = await invokeMethod(controller.post_0.bind(controller), {
       headers: {
         authorization: "Bearer test-token",
         "content-type": "application/json",

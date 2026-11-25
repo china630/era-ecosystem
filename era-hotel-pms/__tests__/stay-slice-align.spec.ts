@@ -1,6 +1,11 @@
 import { bakuCivilUtcDate } from '@era/satellite-kit/time';
 import { parseHotelNoon } from '@/lib/hotel-calendar';
-import { segmentsConsumingType, type InventoryStay } from '@/lib/services/share-assignment.service';
+import {
+  segmentsConsumingType,
+  segmentsPhysicalOnType,
+  segmentsSoldAsType,
+  type InventoryStay,
+} from '@/lib/services/share-assignment.service';
 import { alignStaySlices, planRatePlanRetariff, type AlignSlice } from '@/lib/services/stay-slice-align';
 
 const day = (ymd: string) => bakuCivilUtcDate(ymd);
@@ -198,6 +203,26 @@ describe('segmentsConsumingType', () => {
     ]);
   });
 
+  it('Opera: unassigned mismatched slice tariff does not burn another type', () => {
+    const dlxStay = stay({
+      id: 'dlx-wait',
+      roomTypeId: 'dlx',
+      slices: [
+        {
+          fromDate: day('2026-10-26'),
+          toDate: day('2026-10-28'),
+          roomId: null,
+          roomTypeId: 'jsuit',
+          doorTypeId: null,
+        },
+      ],
+    });
+    expect(segmentsConsumingType('jsuit', [dlxStay])).toEqual([]);
+    expect(segmentsConsumingType('dlx', [dlxStay])).toEqual([
+      expect.objectContaining({ id: 'dlx-wait', roomId: null }),
+    ]);
+  });
+
   it('does not let a slice past the header checkout keep the door', () => {
     const rows = segmentsConsumingType('sdbl', [
       stay({
@@ -216,6 +241,34 @@ describe('segmentsConsumingType', () => {
       }),
     ]);
     expect(rows[0]?.checkOutDate.toISOString()).toBe(parseHotelNoon('2026-10-28').toISOString());
+  });
+
+  it('Sold vs Phys diverge on upgrade (charged type ≠ door type)', () => {
+    const upgraded = stay({
+      id: 'upg',
+      roomId: 'room-209',
+      roomTypeId: 'dlx',
+      doorTypeId: 'jsuit',
+      slices: [
+        {
+          fromDate: day('2026-10-14'),
+          toDate: day('2026-10-28'),
+          roomId: 'room-209',
+          roomTypeId: 'dlx',
+          doorTypeId: 'jsuit',
+        },
+      ],
+    });
+    expect(segmentsSoldAsType('dlx', [upgraded])).toEqual([
+      expect.objectContaining({ id: 'upg', roomId: 'room-209' }),
+    ]);
+    expect(segmentsSoldAsType('jsuit', [upgraded])).toEqual([]);
+    expect(segmentsPhysicalOnType('jsuit', [upgraded])).toEqual([
+      expect.objectContaining({ id: 'upg', roomId: 'room-209' }),
+    ]);
+    expect(segmentsPhysicalOnType('dlx', [upgraded])).toEqual([]);
+    expect(segmentsConsumingType('jsuit', [upgraded])).toHaveLength(1);
+    expect(segmentsConsumingType('dlx', [upgraded])).toEqual([]);
   });
 });
 

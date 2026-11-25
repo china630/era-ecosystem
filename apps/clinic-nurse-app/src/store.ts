@@ -83,6 +83,21 @@ export async function loadOrgNo(): Promise<string> {
   return row?.value ?? "";
 }
 
+export async function loadLocale(): Promise<string> {
+  const row = await (await db()).getFirstAsync<{ value: string }>(
+    "SELECT value FROM device_pref WHERE key = 'locale'",
+  );
+  return row?.value ?? "";
+}
+
+export async function saveLocale(locale: string): Promise<void> {
+  await (await db()).runAsync(
+    `INSERT INTO device_pref (key, value) VALUES ('locale', ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    locale,
+  );
+}
+
 export async function saveOrgNo(orgNo: string): Promise<void> {
   const value = orgNo.trim();
   if (!value) return;

@@ -3,12 +3,18 @@ import { z } from "zod";
 import { LeadStage } from "@prisma/client";
 import { validatePartyForStage } from "@/lib/lead-party";
 import { findLeadById, updateLeadStage } from "@/lib/leads.service";
-import { applyPipelineRules } from "@/lib/pipeline-rules";
+import { assertLeadInScope } from "@/lib/integrations/lead-scope";
 import { enterCrmStaff, crmNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithCrmTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
-const bodySchema = z.object({
-  stage: z.nativeEnum(LeadStage),
-});
+const bodySchema = z
+  .object({
+    stage: z.nativeEnum(LeadStage).optional(),
+    stageId: z.string().min(1).optional(),
+    pipelineStageId: z.string().min(1).optional(),
+  })
+  .refine((b) => Boolean(b.stage || b.stageId || b.pipelineStageId), {
+    message: "stage or stageId required",
+  });
 
 export function register(http: { get: Function; post: Function; put: Function; patch: Function; delete: Function }) {
   http.patch("/api/leads/:id/stage", async (httpReq, httpRes) => {
@@ -30,16 +36,55 @@ export function register(http: { get: Function; post: Function; put: Function; p
   
     if (!(session)) return sendJson(httpRes, { error: "Unauthorized" }, 401);
     const { id } = httpReq.params;
+    await assertLeadInScope({
+      organizationId: session.organizationId,
+      userId: session.sub,
+      leadId: String(id),
+      permissions: session.permissions ?? [],
+      isOwner: session.isOwner === true,
+    });
     const lead = await findLeadById(id);
     if (!lead) return sendJson(httpRes, { error: "Lead not found" }, 404);
     const body = bodySchema.parse(httpReq.body);
 
-    const gateError = validatePartyForStage(lead, body.stage);
+    const pipelineStageId = body.pipelineStageId ?? body.stageId;
+    if (pipelineStageId) {
+      const { prisma } = await import("@/lib/prisma");
+      const stageRow = await prisma.pipelineStage.findFirst({
+        where: {
+          id: pipelineStageId,
+          organizationId: session.organizationId,
+        },
+      });
+      if (!stageRow) {
+        return sendJson(httpRes, { error: "Pipeline stage not found" }, 404);
+      }
+      const legacy =
+        stageRow.legacyStage ??
+        (stageRow.kind === "WON"
+          ? "WON"
+          : stageRow.kind === "LOST"
+            ? "LOST"
+            : lead.stage);
+      const gateError = validatePartyForStage(lead, legacy);
+      if (gateError) return sendJson(httpRes, { error: gateError }, 400);
+      const { moveLeadToPipelineStage } = await import("@/lib/leads.service");
+      const moved = await moveLeadToPipelineStage(String(id), pipelineStageId, {
+        authorId: session.sub,
+      });
+      if (!moved) return sendJson(httpRes, { error: "Pipeline stage not found" }, 404);
+      return sendJson(httpRes, moved);
+    }
+
+    const stage = body.stage!;
+    const gateError = validatePartyForStage(lead, stage);
     if (gateError) return sendJson(httpRes, { error: gateError }, 400);
 
     const fromStage = lead.stage;
-    const updated = await updateLeadStage(id, body.stage, fromStage);
-    await applyPipelineRules(id, body.stage);
+    const updated = await updateLeadStage(id, stage, fromStage, {
+      authorId: session.sub,
+    });
+    // Digital Pipeline lite runs inside updateLeadStage (P1-1).
 
     if (process.env.WHATSAPP_BUSINESS_MODE === "live" && updated.contactRef) {
       const orch = process.env.ORCHESTRATOR_API_URL?.replace(/\/$/, "");

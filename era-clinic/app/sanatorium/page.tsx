@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -12,6 +11,7 @@ import {
   TestTube2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuCivilUtcDate, bakuDateDisplay, todayBakuYmd } from "@/lib/baku-day";
 import {
@@ -20,6 +20,8 @@ import {
   EraDataGrid,
   EraListFilterBar,
   EraListWorkspace,
+  EraMenu,
+  EraMenuItem,
   Field,
   FieldRow,
   FieldSelect,
@@ -43,6 +45,7 @@ import {
 import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { ageYearsFromBirthDate } from "@/domain/patient/patient-demographics";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
+import { StaffBenefitCourseModal } from "@/components/sanatorium/StaffBenefitCourseModal";
 
 type CourseMark = "ready" | "attention" | "blocked";
 
@@ -51,6 +54,7 @@ type EpisodeListFilters = {
   origin: string;
   room: string;
   program: string;
+  arrivalFrom: string;
   course: string;
   sort: string;
   sortDir: "" | "asc" | "desc";
@@ -77,6 +81,7 @@ type Episode = {
   roomNumber: string | null;
   organizationId: string;
   patientOrigin: string;
+  courseKind?: "AMBULATORY" | "STAFF_BENEFIT" | null;
   programCode: string | null;
   checkupCompletedAt: string | null;
   status: string;
@@ -142,6 +147,7 @@ type WalkInForm = {
   birthDate: string;
   nationality: string;
   programCode: string;
+  courseDays: number;
 };
 
 const emptyWalkIn = (): WalkInForm => ({
@@ -155,6 +161,7 @@ const emptyWalkIn = (): WalkInForm => ({
   birthDate: "",
   nationality: "",
   programCode: "",
+  courseDays: 5,
 });
 
 /** Prisma DateTime arrives as an ISO instant; day math needs YYYY-MM-DD. */
@@ -199,8 +206,11 @@ export default function SanatoriumPage() {
   const [cardPanel, setCardPanel] = useState<string | null>(null);
   const [cardEpisodeId, setCardEpisodeId] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const deepLinkHandled = useRef(false);
+  const [newCourseMenuOpen, setNewCourseMenuOpen] = useState(false);
   const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+  const [staffModalOpen, setStaffModalOpen] = useState(false);
   const [walkIn, setWalkIn] = useState<WalkInForm>(emptyWalkIn);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
@@ -208,6 +218,7 @@ export default function SanatoriumPage() {
   const [filterRoom, setFilterRoom] = useState("");
   const [filterProgram, setFilterProgram] = useState("");
   const [filterCourse, setFilterCourse] = useState("");
+  const [filterArrivalFrom, setFilterArrivalFrom] = useState("");
   const [hotelRooms, setHotelRooms] = useState<string[]>([]);
   const [programCodes, setProgramCodes] = useState<string[]>([]);
   const [listSort, setListSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
@@ -220,10 +231,11 @@ export default function SanatoriumPage() {
       room: filterRoom,
       program: filterProgram,
       course: filterCourse,
+      arrivalFrom: filterArrivalFrom,
       sort: listSort?.key ?? "",
       sortDir: listSort?.dir ?? "",
     }),
-    [q, filterOrigin, filterRoom, filterProgram, filterCourse, listSort],
+    [q, filterOrigin, filterRoom, filterProgram, filterCourse, filterArrivalFrom, listSort],
   );
 
   const listFetcher = useCallback(
@@ -247,6 +259,7 @@ export default function SanatoriumPage() {
       if (f.room.trim()) params.set("roomNumber", f.room.trim());
       if (f.program.trim()) params.set("programCode", f.program.trim());
       if (f.course) params.set("course", f.course);
+      if (f.arrivalFrom) params.set("arrivalFrom", f.arrivalFrom);
       if (f.sort && f.sortDir) {
         params.set("sort", f.sort);
         params.set("sortDir", f.sortDir);
@@ -310,10 +323,13 @@ export default function SanatoriumPage() {
     })();
   }, [searchParams, loadDetail]);
 
-  function originLabel(origin: string): string {
-    if (origin === "WALK_IN") return t("originWalkIn");
-    if (origin === "IN_HOUSE") return t("originInHouse");
-    return origin;
+  function originLabel(e: Pick<Episode, "patientOrigin" | "courseKind">): string {
+    if (e.courseKind === "STAFF_BENEFIT") return t("originStaff");
+    if (e.patientOrigin === "WALK_IN" || e.courseKind === "AMBULATORY") {
+      return t("originWalkIn");
+    }
+    if (e.patientOrigin === "IN_HOUSE") return t("originInHouse");
+    return e.patientOrigin;
   }
 
   function openPatientCard(patientId: string, episodeId: string, panel: string) {
@@ -362,6 +378,7 @@ export default function SanatoriumPage() {
         birthDate: walkIn.birthDate || undefined,
         nationality: walkIn.nationality.trim() || undefined,
         programCode: undefined,
+        courseDays: walkIn.courseDays,
       }),
     });
     const data = await res.json();
@@ -372,7 +389,7 @@ export default function SanatoriumPage() {
     }
     setWalkInModalOpen(false);
     setWalkIn(emptyWalkIn());
-    showSuccess(t("walkInRegistered"));
+    showSuccess(t("ambulatoryRegistered"));
     await loadList();
     const ep = data.data ?? data;
     if (ep?.id) setSelectedId(ep.id);
@@ -491,7 +508,7 @@ export default function SanatoriumPage() {
         key: "origin",
         header: t("colOrigin"),
         sortable: true,
-        render: (e) => originLabel(e.patientOrigin),
+        render: (e) => originLabel(e),
       },
       {
         key: "program",
@@ -658,13 +675,40 @@ export default function SanatoriumPage() {
                   {t("applyOpenPackages")}
                 </button>
               ) : null}
-              <Link href="/sanatorium/walk-in-parties" className={SECONDARY_BUTTON_CLASS}>
-                {t("registerWalkInGroup")}
-              </Link>
-              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
-                <Plus className="h-4 w-4" aria-hidden />
-                {t("registerWalkIn")}
-              </button>
+              <EraMenu
+                open={newCourseMenuOpen}
+                onOpenChange={setNewCourseMenuOpen}
+                align="right"
+                trigger={
+                  <button type="button" className={PRIMARY_BUTTON_CLASS}>
+                    <Plus className="h-4 w-4" aria-hidden />
+                    {t("newCourse")}
+                  </button>
+                }
+              >
+                <EraMenuItem
+                  onSelect={() => {
+                    setWalkIn(emptyWalkIn());
+                    setWalkInModalOpen(true);
+                  }}
+                >
+                  {t("newCourseAmbulatory")}
+                </EraMenuItem>
+                <EraMenuItem
+                  onSelect={() => {
+                    router.push("/sanatorium/walk-in-parties");
+                  }}
+                >
+                  {t("newCourseGroup")}
+                </EraMenuItem>
+                <EraMenuItem
+                  onSelect={() => {
+                    setStaffModalOpen(true);
+                  }}
+                >
+                  {t("newCourseStaff")}
+                </EraMenuItem>
+              </EraMenu>
             </div>
           }
         />
@@ -680,6 +724,7 @@ export default function SanatoriumPage() {
               setFilterRoom("");
               setFilterProgram("");
               setFilterCourse("");
+              setFilterArrivalFrom("");
             }}
           >
             <CatalogField
@@ -698,6 +743,13 @@ export default function SanatoriumPage() {
               preset="shortText"
               value={q}
               onChange={(e) => setQ(e.target.value)}
+            />
+            <DatePicker
+              label={t("filterArrivalFrom")}
+              value={filterArrivalFrom}
+              onChange={setFilterArrivalFrom}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
             />
             <FieldSelect
               label={t("filterOrigin")}
@@ -785,7 +837,7 @@ export default function SanatoriumPage() {
 
       <ModalShell
         open={walkInModalOpen}
-        title={t("registerWalkIn")}
+        title={t("ambulatoryTitle")}
         onClose={() => setWalkInModalOpen(false)}
         maxWidthClass="max-w-2xl"
         footer={
@@ -793,7 +845,7 @@ export default function SanatoriumPage() {
             onCancel={() => setWalkInModalOpen(false)}
             onSubmit={() => void registerWalkIn()}
             busy={busy}
-            submitLabel={t("registerWalkIn")}
+            submitLabel={t("ambulatorySubmit")}
           />
         }
       >
@@ -876,10 +928,37 @@ export default function SanatoriumPage() {
               value={walkIn.phone}
               onChange={(e) => setWalkIn({ ...walkIn, phone: e.target.value })}
             />
+            <FieldSelect
+              label={t("courseDays")}
+              preset="select"
+              value={String(walkIn.courseDays)}
+              onChange={(e) =>
+                setWalkIn({
+                  ...walkIn,
+                  courseDays: Number(e.target.value) || 5,
+                })
+              }
+            >
+              {[3, 5, 7, 10, 14].map((d) => (
+                <option key={d} value={d}>
+                  {t("courseDaysOption", { days: d })}
+                </option>
+              ))}
+            </FieldSelect>
           </FieldRow>
-          <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("walkInHint")}</p>
+          <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("ambulatoryHint")}</p>
         </div>
       </ModalShell>
+
+      <StaffBenefitCourseModal
+        open={staffModalOpen}
+        onClose={() => setStaffModalOpen(false)}
+        onOpened={(episodeId, patientId) => {
+          void loadList();
+          setSelectedId(episodeId);
+          if (patientId) openPatientCard(patientId, episodeId, "package");
+        }}
+      />
 
       <PatientCardModal
         patientId={patientCardId}

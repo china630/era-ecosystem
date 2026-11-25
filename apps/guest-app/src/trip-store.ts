@@ -57,6 +57,7 @@ const CARE_KEY = "guestApp.care";
 const CATALOG_KEY = "guestApp.catalog";
 const QUEUE_KEY = "guestApp.orderQueue";
 const MUTE_KEY = "guestApp.muteMarketing";
+const LOCALE_KEY = "guestApp.locale";
 const BIO_UNLOCK_KEY = "guestApp.bioUnlocked";
 
 type MemoryBag = {
@@ -66,6 +67,7 @@ type MemoryBag = {
   __guestCatalog?: CatalogSnapshot;
   __guestQueue?: QueuedOrder[];
   __guestMute?: boolean;
+  __guestLocale?: string;
 };
 const memory = globalThis as MemoryBag;
 
@@ -101,6 +103,7 @@ async function readKey(key: string): Promise<string | null> {
   if (key === MUTE_KEY) {
     return memory.__guestMute != null ? String(memory.__guestMute) : null;
   }
+  if (key === LOCALE_KEY) return memory.__guestLocale ?? null;
   return null;
 }
 
@@ -135,6 +138,7 @@ async function writeKey(key: string, value: string): Promise<void> {
     }
   }
   if (key === MUTE_KEY) memory.__guestMute = value === "true";
+  if (key === LOCALE_KEY) memory.__guestLocale = value;
   try {
     if (typeof localStorage !== "undefined") localStorage.setItem(key, value);
   } catch {
@@ -151,6 +155,27 @@ async function writeKey(key: string, value: string): Promise<void> {
 export async function saveSession(token: string, trip: TripPack): Promise<void> {
   await writeKey(TOKEN_KEY, token);
   await writeKey(TRIP_KEY, JSON.stringify(trip));
+}
+
+async function removeKey(key: string): Promise<void> {
+  if (key === TOKEN_KEY) memory.__guestToken = undefined;
+  if (key === TRIP_KEY) memory.__guestTrip = undefined;
+  try {
+    if (typeof localStorage !== "undefined") localStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+  try {
+    const mod = await import("@react-native-async-storage/async-storage");
+    await mod.default.removeItem(key);
+  } catch {
+    /* optional */
+  }
+}
+
+export async function clearSession(): Promise<void> {
+  await removeKey(TOKEN_KEY);
+  await removeKey(TRIP_KEY);
 }
 
 export async function loadSession(): Promise<{ token: string | null; trip: TripPack | null }> {
@@ -229,6 +254,18 @@ export async function setMuteMarketing(muted: boolean): Promise<void> {
 
 export async function loadMuteMarketing(): Promise<boolean> {
   return (await readKey(MUTE_KEY)) === "true";
+}
+
+export type GuestLocale = "az" | "ru" | "en";
+
+export async function saveLocale(locale: GuestLocale): Promise<void> {
+  await writeKey(LOCALE_KEY, locale);
+}
+
+export async function loadLocale(): Promise<GuestLocale | null> {
+  const raw = await readKey(LOCALE_KEY);
+  if (raw === "az" || raw === "ru" || raw === "en") return raw;
+  return null;
 }
 
 export function phaseFromTrip(trip: TripPack | null, now = new Date()): Phase {

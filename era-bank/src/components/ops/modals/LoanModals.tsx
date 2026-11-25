@@ -38,14 +38,27 @@ type LoanDetail = {
   daysPastDue?: number;
   isNpl?: boolean;
   akbScore?: number | null;
+  aprPercent?: number | null;
   makerUserId?: string | null;
   pricingExceptionReason?: string | null;
+  cbarPrudentialCategory?: string | null;
+  cbarProvisionMinor?: string | null;
+  cbarPrudentialDpd?: number | null;
   collateral?: {
     description?: string;
     amountMinor?: string;
     currency?: string;
     type?: string;
   } | null;
+  collateralLinks?: Array<{
+    id: string;
+    sharePct: string;
+    type?: string;
+    description?: string | null;
+    valuationMinor: string;
+    haircutPct: string;
+    staleRevaluation?: boolean;
+  }>;
 };
 
 type Installment = {
@@ -334,6 +347,10 @@ export function LoanDetailModal({
   const [disburseAccountId, setDisburseAccountId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [repayMajor, setRepayMajor] = useState("1000");
+  const [prepayMajor, setPrepayMajor] = useState("1000");
+  const [prepayMode, setPrepayMode] = useState<"REDUCE_TERM" | "REDUCE_INSTALLMENT">(
+    "REDUCE_TERM",
+  );
   const [ifrs9Stage, setIfrs9Stage] = useState("2");
   const [tab, setTab] = useState<DetailTab>("overview");
 
@@ -384,11 +401,30 @@ export function LoanDetailModal({
 
   async function repay() {
     if (!loanId) return;
+    const amountMinor = String(majorToMinor(repayMajor));
     const res = await fetch(`/api/loans/${loanId}/repay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        amountMinor: String(majorToMinor(repayMajor)),
+        amountMinor,
+        idempotencyKey: `ops-repay-${loanId}-${amountMinor}`,
+      }),
+    });
+    if (!res.ok) setError(await res.text());
+    await load();
+    onUpdated?.();
+  }
+
+  async function prepay() {
+    if (!loanId) return;
+    const amountMinor = String(majorToMinor(prepayMajor));
+    const res = await fetch(`/api/loans/${loanId}/prepay`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amountMinor,
+        mode: prepayMode,
+        idempotencyKey: `ops-prepay-${loanId}-${amountMinor}-${prepayMode}`,
       }),
     });
     if (!res.ok) setError(await res.text());
@@ -500,11 +536,44 @@ export function LoanDetailModal({
               {t("colBureau")}: {data.akbScore ?? "—"}
             </div>
             <div>
+              {t("apr")}:{" "}
+              {data.aprPercent != null ? `${Number(data.aprPercent).toFixed(2)}%` : "—"}
+            </div>
+            <div>
               {t("dpd")}: {data.daysPastDue ?? 0}
+            </div>
+            <div>
+              {t("cbarCategory")}: {data.cbarPrudentialCategory ?? "—"}
+              {data.cbarPrudentialDpd != null
+                ? ` (DPD ${data.cbarPrudentialDpd})`
+                : ""}
+            </div>
+            <div>
+              {t("cbarProvision")}:{" "}
+              {data.cbarProvisionMinor != null
+                ? formatAznMinor(data.cbarProvisionMinor)
+                : "—"}
             </div>
             {data.pricingExceptionReason ? (
               <div className="sm:col-span-2">
                 {t("exceptionReason")}: {data.pricingExceptionReason}
+              </div>
+            ) : null}
+            {(data.collateralLinks?.length ?? 0) > 0 ? (
+              <div className="sm:col-span-2 space-y-1 text-xs">
+                <div className="font-medium">{t("collateralLinks")}</div>
+                {data.collateralLinks!.map((link) => (
+                  <div key={link.id}>
+                    {link.type ?? "—"} · {formatAznMinor(link.valuationMinor)} ·{" "}
+                    {t("haircut")}: {link.haircutPct}% · {t("share")}:{" "}
+                    {link.sharePct}%
+                    {link.staleRevaluation ? (
+                      <span className="ml-1 text-amber-700">
+                        ({t("staleRevaluation")})
+                      </span>
+                    ) : null}
+                  </div>
+                ))}
               </div>
             ) : null}
           </div>
@@ -559,26 +628,69 @@ export function LoanDetailModal({
             </div>
           ) : null}
           {data.status === "DISBURSED" || data.status === "ACTIVE" ? (
-            <div className="flex flex-wrap items-end gap-3">
-              <p className="w-full text-xs text-muted-foreground">
-                {t("repayScheduleHint")}
-              </p>
-              <Field
-                label={t("repayAmountMajor")}
-                preset="amount"
-                type="number"
-                step="0.01"
-                value={repayMajor}
-                onChange={(e) => setRepayMajor(e.target.value)}
-              />
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={mutationsDisabled}
-                onClick={() => void repay()}
-              >
-                {t("repay")}
-              </button>
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-end gap-3">
+                <p className="w-full text-xs text-muted-foreground">
+                  {t("repayScheduleHint")}
+                </p>
+                <Field
+                  label={t("repayAmountMajor")}
+                  preset="amount"
+                  type="number"
+                  step="0.01"
+                  value={repayMajor}
+                  onChange={(e) => setRepayMajor(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className={SECONDARY_BUTTON_CLASS}
+                  disabled={mutationsDisabled}
+                  onClick={() => void repay()}
+                >
+                  {t("repay")}
+                </button>
+              </div>
+              <div className="flex flex-wrap items-end gap-3 border-t pt-3">
+                <p className="w-full text-xs text-muted-foreground">
+                  {t("prepayHint")}
+                </p>
+                <Field
+                  label={t("prepayAmountMajor")}
+                  preset="amount"
+                  type="number"
+                  step="0.01"
+                  value={prepayMajor}
+                  onChange={(e) => setPrepayMajor(e.target.value)}
+                />
+                <CatalogField
+                  kind="CLOSED_SMALL"
+                  label={t("prepayMode")}
+                  options={[
+                    { value: "REDUCE_TERM", label: t("prepayReduceTerm") },
+                    {
+                      value: "REDUCE_INSTALLMENT",
+                      label: t("prepayReduceInstallment"),
+                    },
+                  ]}
+                  value={prepayMode}
+                  onChange={(next) =>
+                    setPrepayMode(
+                      (Array.isArray(next) ? next[0] : next) ===
+                        "REDUCE_INSTALLMENT"
+                        ? "REDUCE_INSTALLMENT"
+                        : "REDUCE_TERM",
+                    )
+                  }
+                />
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={mutationsDisabled}
+                  onClick={() => void prepay()}
+                >
+                  {t("prepay")}
+                </button>
+              </div>
             </div>
           ) : null}
         </div>

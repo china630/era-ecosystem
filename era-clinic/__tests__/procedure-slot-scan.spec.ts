@@ -1,12 +1,15 @@
 import { bakuDateKey, bakuHourMinute, parseBakuDateTime } from "@/lib/baku-day";
 import {
   evaluateCandidateSlot,
+  isDayInvariantPinMiss,
   pinSearchFrom,
   placementBlockReason,
   restGap,
   nextCabinGridTime,
   orderScarceSeriesFirst,
   scanProcedureSlots,
+  unpinnedAttemptCap,
+  bakuYmdSpanDays,
   type ScanOrder,
 } from "@/lib/procedure-slot-scan";
 import type { TenantWorkHours } from "@/domain/settings/scheduling-settings";
@@ -334,7 +337,130 @@ describe("evaluateCandidateSlot", () => {
     expect(result.planned).toEqual([]);
     expect(result.failures[0]?.reason).toBe("day_full");
     expect(result.failures[0]?.ymd).toBe("2026-10-16");
-    expect(result.failures[0]?.counts?.day_full ?? 0).toBeGreaterThan(1);
+    expect(result.failures[0]?.counts?.day_full).toBe(1);
+    expect(result.failures[0]?.attempts).toBe(1);
+  });
+
+  it("pin same_day fails in one attempt without walking the grid", () => {
+    const bath = {
+      ...order(),
+      id: "bath-same",
+      procedureCode: "SVC-NAFTALAN",
+      procedureName: "Naftalan",
+      pinYmd: "2026-10-16",
+    };
+    const dayStart = parseBakuDateTime("2026-10-16", "09:00");
+    const dayEnd = parseBakuDateTime("2026-10-16", "09:20");
+    const result = scanProcedureSlots({
+      orders: [bath],
+      now: dayStart,
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [
+        {
+          code: "SVC-NAFTALAN",
+          start: dayStart,
+          end: dayEnd,
+          patientRestMinutes: 0,
+          inPackage: true,
+          countsForRest: true,
+        },
+      ],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.planned).toEqual([]);
+    expect(result.failures[0]?.reason).toBe("same_day");
+    expect(result.failures[0]?.counts?.same_day).toBe(1);
+    expect(result.failures[0]?.attempts).toBe(1);
+  });
+
+  it("pin cabin_busy jumps then misses without a full 5-minute walk", () => {
+    const bath = {
+      ...order(),
+      id: "bath-cabin",
+      procedureCode: "SVC-NAFTALAN",
+      procedureName: "Naftalan",
+      pinYmd: "2026-10-16",
+      durationMin: 20,
+    };
+    const dayStart = parseBakuDateTime("2026-10-16", "09:00");
+    const result = scanProcedureSlots({
+      orders: [bath],
+      now: dayStart,
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [],
+      rotationContext: [],
+      allocations: [
+        {
+          role: "LOCATION",
+          resourceId: "cabin-1",
+          practitionerId: null,
+          startsAt: parseBakuDateTime("2026-10-16", "08:00"),
+          endsAt: parseBakuDateTime("2026-10-16", "18:00"),
+          procedureOrderId: "other-all-day",
+          resourceGapMinutes: 0,
+        },
+      ],
+    });
+    expect(result.planned).toEqual([]);
+    expect(result.failures[0]?.reason).toBe("cabin_busy");
+    expect(result.failures[0]?.ymd).toBe("2026-10-16");
+    expect(result.failures[0]?.attempts ?? 99).toBeLessThan(20);
+  });
+
+  it("pin rest/rule still steps; day-invariant abort does not fire", () => {
+    const bath = {
+      ...order(),
+      id: "bath-rest",
+      procedureCode: "SVC-OTHER",
+      procedureName: "Other",
+      pinYmd: "2026-10-16",
+      patientRestMinutes: 30,
+      durationMin: 20,
+    };
+    const result = scanProcedureSlots({
+      orders: [bath],
+      now: parseBakuDateTime("2026-10-16", "09:00"),
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [
+        {
+          code: "SVC-PARA",
+          start: parseBakuDateTime("2026-10-16", "09:00"),
+          end: parseBakuDateTime("2026-10-16", "09:20"),
+          patientRestMinutes: 40,
+          inPackage: true,
+          countsForRest: true,
+        },
+      ],
+      rotationContext: [],
+      allocations: [],
+    });
+    expect(result.failures).toEqual([]);
+    expect(result.planned).toHaveLength(1);
+    expect(result.planned[0]!.slotStart.getTime()).toBeGreaterThanOrEqual(
+      parseBakuDateTime("2026-10-16", "10:00").getTime(),
+    );
   });
 
   it("reports no staff when the duty line is empty", () => {
@@ -356,6 +482,95 @@ describe("placementBlockReason", () => {
 
   it("still reports no_staff when the duty pool was empty", () => {
     expect(placementBlockReason(true, false, empty)).toBe("no_staff");
+  });
+});
+
+describe("isDayInvariantPinMiss", () => {
+  it("flags same_day, day_full, and closed only", () => {
+    expect(isDayInvariantPinMiss("same_day")).toBe(true);
+    expect(isDayInvariantPinMiss("day_full")).toBe(true);
+    expect(isDayInvariantPinMiss("closed")).toBe(true);
+    expect(isDayInvariantPinMiss("rule")).toBe(false);
+    expect(isDayInvariantPinMiss("cabin_busy")).toBe(false);
+    expect(isDayInvariantPinMiss("staff_busy")).toBe(false);
+  });
+});
+
+describe("unpinnedAttemptCap", () => {
+  it("stays at or below 4000 and grows with horizon", () => {
+    expect(bakuYmdSpanDays("2026-10-16", "2026-10-16")).toBe(0);
+    expect(bakuYmdSpanDays("2026-10-16", "2026-10-18")).toBe(2);
+    const short = unpinnedAttemptCap(8, 5, "2026-10-16", "2026-10-18");
+    const long = unpinnedAttemptCap(8, 5, "2026-10-16", "2026-11-16");
+    expect(short).toBeGreaterThanOrEqual(64);
+    expect(short).toBeLessThanOrEqual(4000);
+    expect(long).toBeGreaterThan(short);
+    expect(long).toBeLessThanOrEqual(4000);
+  });
+
+  it("keeps an always-busy unpinned hunt under the old 4000 ceiling", () => {
+    const probe = order();
+    probe.id = "busy-1";
+    probe.staffMode = "HARD";
+    const cap = unpinnedAttemptCap(8, 5, "2026-10-16", "2026-10-18");
+    const result = scanProcedureSlots({
+      orders: [probe],
+      now: parseBakuDateTime("2026-10-16", "09:00"),
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([
+        ["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]],
+        ["type-1|2026-10-17", [{ id: "nurse-1", fullName: "A", code: "N1" }]],
+        ["type-1|2026-10-18", [{ id: "nurse-1", fullName: "A", code: "N1" }]],
+      ]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [],
+      rotationContext: [],
+      allocations: [
+        {
+          role: "STAFF",
+          resourceId: null,
+          practitionerId: "nurse-1",
+          startsAt: parseBakuDateTime("2026-10-16", "00:00"),
+          endsAt: parseBakuDateTime("2026-10-19", "00:00"),
+          procedureOrderId: "nurse-block",
+          resourceGapMinutes: 0,
+        },
+      ],
+    });
+    expect(result.planned).toEqual([]);
+    expect(result.failures[0]?.reason).toBe("staff_busy");
+    expect(result.failures[0]?.attempts ?? 0).toBeLessThanOrEqual(cap);
+    expect(result.failures[0]?.attempts ?? 0).toBeLessThan(4000);
+  });
+
+  it("marks remaining orders when the wall deadline is already past", () => {
+    const first = { ...order(), id: "a" };
+    const second = { ...order(), id: "b", procedureCode: "SVC-B" };
+    const result = scanProcedureSlots({
+      orders: [first, second],
+      now: parseBakuDateTime("2026-10-16", "09:00"),
+      slotMinutes: 5,
+      packageCap: 8,
+      horizonEndYmd: "2026-10-18",
+      closedYmds: new Set(),
+      staffByTypeAndYmd: new Map([["type-1|2026-10-16", [{ id: "nurse-1", fullName: "A", code: "N1" }]]]),
+      rules: [],
+      rotationRules: [],
+      compatibilityRules: [],
+      patientSlots: [],
+      rotationContext: [],
+      allocations: [],
+      deadlineMs: Date.now() - 1,
+    });
+    expect(result.budgetHit).toBe(true);
+    expect(result.failures).toHaveLength(2);
+    expect(result.failures.every((row) => row.hitAttemptCap)).toBe(true);
+    expect(result.planned).toEqual([]);
   });
 });
 

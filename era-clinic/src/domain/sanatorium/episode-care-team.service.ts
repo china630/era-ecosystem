@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { episodeWriteDenied, EPISODE_CLOSED } from "@/domain/sanatorium/episode-gates";
+import { recordEpisodeAudit } from "@/domain/sanatorium/episode-audit.service";
 
 export type CareDoctorRow = {
   id: string;
@@ -121,6 +122,17 @@ export async function addEpisodeCareDoctor(input: {
     },
   });
 
+  await recordEpisodeAudit(
+    { userId: input.assignedByUserId },
+    input.episodeId,
+    "care_team_add",
+    {
+      summary: practitioner.fullName,
+      practitionerId: practitioner.id,
+      practitionerName: practitioner.fullName,
+    },
+  );
+
   return {
     id: row.id,
     practitionerId: row.practitionerId,
@@ -133,6 +145,7 @@ export async function addEpisodeCareDoctor(input: {
 export async function removeEpisodeCareDoctor(input: {
   episodeId: string;
   practitionerId: string;
+  removedByUserId?: string | null;
 }): Promise<void> {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: input.episodeId },
@@ -172,4 +185,12 @@ export async function removeEpisodeCareDoctor(input: {
     (err as Error & { code?: string }).code = "NOT_FOUND";
     throw err;
   }
+  await recordEpisodeAudit(
+    { userId: input.removedByUserId },
+    input.episodeId,
+    "care_team_remove",
+    {
+      practitionerId: input.practitionerId,
+    },
+  );
 }

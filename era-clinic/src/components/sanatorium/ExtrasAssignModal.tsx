@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ModalShell,
@@ -179,13 +179,15 @@ export function ExtrasAssignModal({
     [pending],
   );
 
+  const loadRef = useRef(load);
+  loadRef.current = load;
   useEffect(() => {
     if (!open) return;
     setDraft([]);
     setCode("");
     setFormOpen(false);
-    void load();
-  }, [open, load]);
+    void loadRef.current();
+  }, [open, episodeId]);
 
   const selected = useMemo(
     () => options.find((o) => o.value === code),
@@ -268,32 +270,46 @@ export function ExtrasAssignModal({
           }),
         },
       );
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       if (res.ok) {
         const payload = d.data ?? d;
-        if (Array.isArray(payload.misses) && payload.misses.length > 0) {
-          toastPackageAssignOutcome(
-            draft.map((row) => ({
-              procedureCode: row.procedureCode,
-              procedureName: row.procedureName,
-              qty: row.qty,
-            })),
-            payload.misses,
-            (key, values) => tPhysio(key, values),
-          );
-        }
+        toastPackageAssignOutcome(
+          draft.map((row) => ({
+            procedureCode: row.procedureCode,
+            procedureName: row.procedureName,
+            qty: row.qty,
+          })),
+          Array.isArray(payload.misses) ? payload.misses : [],
+          (key, values) => tPhysio(key, values),
+        );
       }
       if (!res.ok) {
         const code = typeof d?.code === "string" ? d.code : null;
-        showApiError(
-          code === "CABIN_SEX" ? { ...d, error: tPhysio("packageAssignMissCabinSex") } : d,
-          tc("saveFailed"),
-        );
+        const stayMaxMatch =
+          typeof d?.error === "string"
+            ? /remaining stay days \((\d+)\)/i.exec(d.error)
+            : null;
+        const mapped =
+          code === "CABIN_SEX"
+            ? { ...d, error: tPhysio("packageAssignMissCabinSex") }
+            : code === "QUOTA_REMAINING"
+              ? { ...d, error: tPhysio("packageAssignQuotaRemaining") }
+              : code === "STAY_QTY_EXCEEDED"
+                ? {
+                    ...d,
+                    error: tPhysio("staySeatMaxExceeded", {
+                      max: stayMaxMatch?.[1] ?? "0",
+                    }),
+                  }
+                : d;
+        showApiError(mapped, tc("saveFailed"));
         return;
       }
       setDraft([]);
       onSaved();
       onClose();
+    } catch {
+      showApiError({ error: tc("saveFailed") });
     } finally {
       setBusy(false);
     }

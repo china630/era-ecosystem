@@ -40,26 +40,26 @@ describe('reservationQueueWhere', () => {
     });
   });
 
-  it('realized arrivals are in-house guests whose actual check-in was today', () => {
+  it('realized arrivals match FO Status: check-in business day today (in-house or checked out)', () => {
     const where = reservationQueueWhere({
       queue: 'realizedArrivals',
       today,
       dateFrom: '2026-01-01',
       dateTo: '2026-12-31',
     });
-    expect(where.status).toBe('IN_HOUSE');
+    expect(where.status).toEqual({ in: ['IN_HOUSE', 'CHECKED_OUT'] });
     expect(where.checkInDate).toBeUndefined();
     expect(where.stay).toEqual({
       is: {
-        actualCheckIn: {
-          gte: new Date('2026-10-10T00:00:00.000+04:00'),
-          lte: new Date('2026-10-10T23:59:59.999+04:00'),
+        checkInBusinessDate: {
+          gte: new Date('2026-10-10T00:00:00.000Z'),
+          lt: new Date('2026-10-11T00:00:00.000Z'),
         },
       },
     });
   });
 
-  it('realized departures are guests who checked out on the business day', () => {
+  it('realized departures are guests whose check-out business day is today', () => {
     const where = reservationQueueWhere({
       queue: 'realizedDepartures',
       today,
@@ -69,9 +69,9 @@ describe('reservationQueueWhere', () => {
     expect(where.checkOutDate).toBeUndefined();
     expect(where.stay).toEqual({
       is: {
-        actualCheckOut: {
-          gte: new Date('2026-10-10T00:00:00.000+04:00'),
-          lte: new Date('2026-10-10T23:59:59.999+04:00'),
+        checkOutBusinessDate: {
+          gte: new Date('2026-10-10T00:00:00.000Z'),
+          lt: new Date('2026-10-11T00:00:00.000Z'),
         },
       },
     });

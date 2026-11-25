@@ -20,6 +20,7 @@ import {
 } from "@/domain/settings/scheduling-settings";
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { replaceProcedureAllocations } from "@/domain/procedure/procedure-allocation.service";
+import { updateProcedureOrderIfPresent } from "@/domain/procedure/procedure-order-if-present";
 import { orderCountsForWallClockRest } from "@/domain/procedure/open-attendance";
 import { isAbsentOnYmd, resolveDutyCandidates } from "@/domain/staff/staff-kind";
 import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
@@ -365,6 +366,8 @@ export type CabinScanBag = {
   staffStamp?: string;
   allocations?: Awaited<ReturnType<typeof loadOccupancyForScan>>;
   allocStamp?: string;
+  /** Shared Saxla wall deadline (Date.now() absolute). */
+  deadlineMs?: number;
 };
 
 export async function placeConfirmedProcedures(
@@ -381,6 +384,8 @@ export async function placeConfirmedProcedures(
     pinStrict?: boolean;
     /** Reused across cabin chunks of one save so rules, staff and occupancy load once. */
     cabinBag?: CabinScanBag;
+    /** Absolute Date.now() deadline for the scan hunt. */
+    deadlineMs?: number;
   },
 ): Promise<PlaceConfirmedResult> {
   if (orderIds.length === 0) return { placed: 0, placedIds: [], missingCabinNames: [], failures: [] };
@@ -426,9 +431,14 @@ export async function placeConfirmedProcedures(
   const bag = opts?.cabinBag;
   const rules = bag?.rules ?? (await prisma.procedureRule.findMany());
   if (bag && !bag.rules) bag.rules = rules;
-  const types = bag?.types ?? (await prisma.procedureType.findMany({
-    include: { requirements: true },
-  }));
+  const orderCodes = [...new Set(orders.map((row) => row.procedureCode))];
+  const types =
+    bag?.types ??
+    (await prisma.procedureType.findMany({
+      // With a shared bag, load the full catalog once for later chunks; otherwise only this batch.
+      where: bag || orderCodes.length === 0 ? undefined : { code: { in: orderCodes } },
+      include: { requirements: true },
+    }));
   if (bag && !bag.types) bag.types = types;
   const typeByCode = new Map(types.map((t) => [t.code, t]));
 
@@ -742,6 +752,12 @@ export async function placeConfirmedProcedures(
     bag.allocStamp = allocStamp;
   }
 
+  const deadlineMs =
+    opts?.deadlineMs ??
+    (bag?.deadlineMs != null && Number.isFinite(bag.deadlineMs) ? bag.deadlineMs : undefined);
+  if (deadlineMs != null && bag && bag.deadlineMs == null) bag.deadlineMs = deadlineMs;
+
+  const scanStarted = Date.now();
   const scanned = scanProcedureSlots({
     orders: orderScarceSeriesFirst(
       scanOrders.filter((order) => !sexFailures.some((row) => row.orderId === order.id)),
@@ -767,12 +783,24 @@ export async function placeConfirmedProcedures(
     patientSlots,
     rotationContext,
     allocations,
+    deadlineMs,
   });
 
   const failures = [...untyped, ...sexFailures, ...scanned.failures];
   const missingCabinNames = [
     ...new Set(failures.filter((row) => row.reason === "no_cabin").map((row) => row.procedureName)),
   ];
+  const attemptsSum = scanned.failures.reduce((sum, row) => sum + (row.attempts ?? 0), 0);
+  const capOrBudget = scanned.failures.some((row) => row.hitAttemptCap) || scanned.budgetHit === true;
+  if (capOrBudget || attemptsSum > 200) {
+    console.info("[clinic] placeConfirmedProcedures scan", {
+      placed: scanned.planned.length,
+      failed: scanned.failures.length,
+      attemptsSum,
+      ms: Date.now() - scanStarted,
+      budgetHit: scanned.budgetHit === true,
+    });
+  }
   if (opts?.atomic && failures.length > 0) {
     return { placed: 0, placedIds: [], missingCabinNames, failures };
   }
@@ -786,12 +814,13 @@ export async function placeConfirmedProcedures(
         )?.id ?? null
       : null;
   const orderById = new Map(orders.map((order) => [order.id, order]));
+  const written: string[] = [];
   for (const row of scanned.planned) {
     const order = orderById.get(row.orderId);
     const accessCode = order?.accessCode?.trim() || (await generateUniqueAccessCode(row.organizationId));
-    await prisma.procedureOrder.update({
-      where: { id: row.orderId },
-      data: {
+    const seated = await updateProcedureOrderIfPresent(
+      row.orderId,
+      {
         status: "SCHEDULED",
         scheduledAt: row.slotStart,
         endsAt: row.slotEnd,
@@ -802,7 +831,10 @@ export async function placeConfirmedProcedures(
         accessCode,
         bodyPart: row.bodyPart ?? undefined,
       },
-    });
+      "placeConfirmedProcedures",
+    );
+    if (!seated) continue;
+    written.push(row.orderId);
     await replaceProcedureAllocations(row.orderId, [
       {
         role: row.physicalRole,
@@ -820,8 +852,8 @@ export async function placeConfirmedProcedures(
   }
 
   return {
-    placed: scanned.planned.length,
-    placedIds: scanned.planned.map((row) => row.orderId),
+    placed: written.length,
+    placedIds: written,
     missingCabinNames,
     failures,
   };

@@ -5,7 +5,7 @@ import { physicalTypeAllowedForDoor } from '@/lib/services/door-type.policy';
 import { dispatchRoomChanged } from '@/lib/integration/guest-lifecycle-events';
 import { REISSUE_KEY_TASK_TITLE } from '@/lib/services/depart-guest.service';
 import { addReservationTask } from '@/lib/services/reservation-submodals.service';
-import { clinicProgramCodeFromTariff } from '@/lib/services/medical-package-resolve.service';
+import { clinicProgramCodeForEvent } from '@/lib/integration/clinic-program-codes';
 import {
   doorTypeNeedsSettlement,
   isClassSettlement,
@@ -227,18 +227,24 @@ export async function swapReservationRooms(
     status: 'APPLIED',
   });
 
-  void dispatchRoomChanged({
-    reservationId: a.id,
-    previousRoomNumber: roomA.roomNumber,
-    newRoomNumber: roomB.roomNumber,
-    programCode: clinicProgramCodeFromTariff(a.ratePlan),
-  }).catch(() => undefined);
-  void dispatchRoomChanged({
-    reservationId: b.id,
-    previousRoomNumber: roomB.roomNumber,
-    newRoomNumber: roomA.roomNumber,
-    programCode: clinicProgramCodeFromTariff(b.ratePlan),
-  }).catch(() => undefined);
+  void (async () => {
+    const programCode = await clinicProgramCodeForEvent(a.ratePlan);
+    await dispatchRoomChanged({
+      reservationId: a.id,
+      previousRoomNumber: roomA.roomNumber,
+      newRoomNumber: roomB.roomNumber,
+      programCode,
+    });
+  })().catch(() => undefined);
+  void (async () => {
+    const programCode = await clinicProgramCodeForEvent(b.ratePlan);
+    await dispatchRoomChanged({
+      reservationId: b.id,
+      previousRoomNumber: roomB.roomNumber,
+      newRoomNumber: roomA.roomNumber,
+      programCode,
+    });
+  })().catch(() => undefined);
 
   await Promise.all([
     addReservationTask(a.id, { title: REISSUE_KEY_TASK_TITLE }).catch(() => undefined),

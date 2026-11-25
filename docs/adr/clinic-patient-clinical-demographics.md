@@ -1,44 +1,5 @@
-# ADR: Clinic patient clinical demographics (ops cache)
+# ADR stub
 
-**Status:** Accepted — implemented 2026-07-14  
-**Date:** 2026-07-14  
+> **Moved.** Canonical copy: [./clinic/clinic-patient-clinical-demographics.md](./clinic/clinic-patient-clinical-demographics.md).
 
-Amends the clinic side of [era-mdm-natural-person-identity.md](./era-mdm-natural-person-identity.md). Complements [hotel-guest-pii-ops-cache.md](./hotel-guest-pii-ops-cache.md).
-
-## Context
-
-Patient card identity showed MDM link, phone, and identifier *types*, but not sex or age. Care staff (nurse, doctor, reception) need sex and age at a glance for protocols, dosing context, and sanatorium rooming.
-
-Clinic keeps a minimal ops display cache: `fullName`, `phone`, `nationality`, `sex`, `birthDate` on `PatientRef`, while **identifiers** (FIN/passport) stay MDM-only after Wave 1. **Legal sex and birthDate SoR is MDM** person core (`MALE`/`FEMALE`/`UNKNOWN`).
-
-## Decision
-
-Add a **clinical demographics ops cache** on `PatientRef`:
-
-| Field | Notes |
-|-------|--------|
-| `sex` (`PatientSex`) | MALE / FEMALE / UNKNOWN (no OTHER — aligned with MDM person core) |
-| `firstName` / `middleName` / `lastName` | Canon name parts (physical `given_name` / `father_name` / `surname`); denorm `fullName` via `composePersonFullName` |
-| `birthDate` (date) | Source of truth for age; UI derives `ageYears` |
-| `bloodGroup` | ABO± for care / emergency; optional UNKNOWN |
-| `emergencyContactName` / `emergencyContactPhone` | Sanatorium emergency reachability |
-| `nationality` | Already present — surface on card |
-
-**Not stored locally as SoR:** FIN, passport, issuing country (remain MDM / transient intake). **Phone is not an MDM identifier** — create/walk-in requires FIN or passport+issuingCountry (or existing `globalPersonId`). **Sex and birthDate** are MDM person-core SoR (`MALE`/`FEMALE`/`UNKNOWN` — no OTHER); `PatientRef` columns remain an ops cache filled from resolve/ops-profile. **MDM link** sends `firstName`/`middleName`/`lastName` and ISO nationality (not collapsed to OTHER).
-
-**Anamnesis is not demographics.** As of 2026-08-31 / CLI-55 SCREEN: [clinic-episode-as-clinical-course.md](./clinic-episode-as-clinical-course.md) — anamnesis and contraindications live on `ClinicalEpisode`. Demographics PATCH no longer requires anamnesis; procedure assign/confirm requires OPEN-course anamnesis.
-
-**Not in this wave:** height/weight, pregnancy status, preferred language, allergy free-text (structured contraindications + procedures already cover care alerts).
-
-Clinic prefers resolve-from-MDM and treats local columns as cache (same path as hotel guest ops-profile).
-
-## Consequences
-
-- Card header shows `refCode · sex · age`.
-- Register + edit capture demographics without changing MDM identity contract.
-- Slight intentional denormalization of non-identifier clinical PII — documented exception parallel to hotel Guest `gender` / `birthDate`.
-
-## Related
-
-- CLI-28 in `docs/COVERAGE_MATRIX.md`
-- `era-clinic` migration `20260714160000_patient_clinical_demographics`
+This stub keeps old links working. Do not edit content here.

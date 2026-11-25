@@ -1,5 +1,8 @@
 import { runWithSatelliteTenant } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
+import { createLaundryTicket } from "@/lib/services/hk-nafta.service";
+import { listOpenTransfersForStay } from "@/lib/services/stay-mobility-sync.service";
+import { addTourBooking, listTourDepartures } from "@/lib/services/tour.service";
 import { GuestAppHttpError } from "@/lib/services/guest-app-link.ops";
 import {
   hashSecret,
@@ -917,4 +920,157 @@ export async function staffSendGuestAppMessage(args: {
     })
     .catch(() => undefined);
   return { id: row.id, kind: row.kind, createdAt: row.createdAt.toISOString() };
+}
+
+function money(value: unknown): string | null {
+  if (value == null) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(2) : null;
+}
+
+async function stayForGuest(session: { organizationId: string; reservationId: string }) {
+  const stay = await prisma.reservation.findFirst({
+    where: { id: session.reservationId, organizationId: session.organizationId },
+    select: { id: true, roomId: true, checkInDate: true, checkOutDate: true, status: true },
+  });
+  if (!stay) throw new GuestAppHttpError(404, "NOT_FOUND");
+  return stay;
+}
+
+export async function guestOpenTransfers(token: string) {
+  const session = await requireSession(token);
+  return runWithSatelliteTenant({ organizationId: session.organizationId }, async () => {
+    const rows = await listOpenTransfersForStay(session.reservationId);
+    return {
+      items: rows.map((row) => ({
+        id: row.id,
+        direction: row.direction,
+        status: row.status,
+        pickupAt: row.pickupAt.toISOString(),
+        flightNo: row.flightNo,
+      })),
+    };
+  });
+}
+
+export async function guestLaundryBoard(token: string) {
+  const session = await requireSession(token);
+  return runWithSatelliteTenant({ organizationId: session.organizationId }, async () => {
+    const items = await prisma.laundryItem.findMany({
+      where: { organizationId: session.organizationId, active: true },
+      orderBy: [{ category: "asc" }, { code: "asc" }],
+    });
+    const tickets = await prisma.laundryTicket.findMany({
+      where: { organizationId: session.organizationId, reservationId: session.reservationId },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+      include: { lines: { include: { item: { select: { code: true, name: true } } } } },
+    });
+    return {
+      items: items.map((item) => ({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        washPrice: money(item.washPrice),
+        ironPrice: money(item.ironPrice),
+      })),
+      tickets: tickets.map((ticket) => ({
+        id: ticket.id,
+        status: ticket.status,
+        express: ticket.express,
+        createdAt: ticket.createdAt.toISOString(),
+        lines: ticket.lines.map((line) => ({
+          code: line.item.code,
+          name: line.item.name,
+          washQty: line.washQty,
+          ironQty: line.ironQty,
+        })),
+      })),
+    };
+  });
+}
+
+export async function guestCreateLaundryTicket(args: {
+  token: string;
+  itemId: string;
+  washQty: number;
+  ironQty: number;
+  express?: boolean;
+}) {
+  const session = await requireSession(args.token);
+  return runWithSatelliteTenant({ organizationId: session.organizationId }, async () => {
+    const stay = await stayForGuest(session);
+    if (!stay.roomId) throw new GuestAppHttpError(400, "NO_ROOM");
+    try {
+      const ticket = await createLaundryTicket({
+        roomId: stay.roomId,
+        reservationId: stay.id,
+        express: Boolean(args.express),
+        lines: [
+          {
+            itemId: args.itemId,
+            washQty: args.washQty,
+            ironQty: args.ironQty,
+          },
+        ],
+      });
+      return { id: ticket.id, status: ticket.status };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "LAUNDRY_FAILED";
+      throw new GuestAppHttpError(400, message);
+    }
+  });
+}
+
+export async function guestTourBoard(token: string) {
+  const session = await requireSession(token);
+  return runWithSatelliteTenant({ organizationId: session.organizationId }, async () => {
+    const stay = await stayForGuest(session);
+    const departures = await listTourDepartures({
+      from: stay.checkInDate ?? undefined,
+      to: stay.checkOutDate ?? undefined,
+      status: "OPEN",
+    });
+    const mine = await prisma.tourBooking.findMany({
+      where: {
+        organizationId: session.organizationId,
+        reservationId: session.reservationId,
+        status: { not: "CANCELLED" },
+      },
+      include: { departure: { select: { date: true, agenda: true, status: true } } },
+    });
+    return {
+      departures: departures.map((row) => ({
+        id: row.id,
+        date: row.date.toISOString(),
+        agenda: row.agenda,
+        meetingPoint: row.meetingPoint,
+        price: money(row.price),
+        status: row.status,
+        seatsTaken: row._count.bookings,
+      })),
+      bookings: mine.map((row) => ({
+        id: row.id,
+        status: row.status,
+        date: row.departure.date.toISOString(),
+        agenda: row.departure.agenda,
+      })),
+    };
+  });
+}
+
+export async function guestBookTour(args: { token: string; departureId: string }) {
+  const session = await requireSession(args.token);
+  return runWithSatelliteTenant({ organizationId: session.organizationId }, async () => {
+    try {
+      const booking = await addTourBooking({
+        departureId: args.departureId,
+        reservationId: session.reservationId,
+      });
+      return { id: booking.id, status: booking.status };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "TOUR_FAILED";
+      throw new GuestAppHttpError(400, message);
+    }
+  });
 }

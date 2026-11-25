@@ -6,7 +6,8 @@ import {
   type SatelliteUserRecord,
 } from "./login-user";
 import { ORG_NO_RE } from "./resolve-login-org";
-import { readStaffLoginJson, resolveStaffLoginTenant } from "./staff-login-org";
+import { readStaffLoginBody, readStaffLoginJson, resolveStaffLoginTenant } from "./staff-login-org";
+import type { KitHeaderSource } from "../http/kit-call";
 
 const bodySchema = z.object({
   login: z.string().min(1),
@@ -30,19 +31,27 @@ export type IndustryStaffLoginResult =
  * itself immediately before that query.
  */
 export async function openStaffLogin(input: {
-  request: Request;
+  request?: Request;
+  headers?: KitHeaderSource;
+  body?: unknown;
   isShared: boolean;
   satelliteKey?: string;
 }): Promise<OpenedStaffLogin> {
-  const rawBody = await readStaffLoginJson(input.request);
+  if (!input.request && !input.headers) {
+    return { ok: false, status: 400, error: "Invalid JSON" };
+  }
+  const rawBody = input.request
+    ? await readStaffLoginJson(input.request)
+    : readStaffLoginBody(input.body);
   if (!rawBody.ok) {
     return { ok: false, status: rawBody.status, error: rawBody.error };
   }
   const body = bodySchema.parse(rawBody.raw);
+  const source: Request | KitHeaderSource = input.headers ?? (input.request as Request);
   const tenant = await resolveStaffLoginTenant({
     orgNo: body.orgNo,
     isShared: input.isShared,
-    request: input.request,
+    request: source,
     satelliteKey: input.satelliteKey,
   });
   if (!tenant.ok) {
@@ -61,7 +70,9 @@ export async function openStaffLogin(input: {
  * keeps session, roles, and cookies.
  */
 export async function authenticateIndustryStaffLogin(input: {
-  request: Request;
+  request?: Request;
+  headers?: KitHeaderSource;
+  body?: unknown;
   prisma: unknown;
   isShared: boolean;
   satelliteKey?: string;

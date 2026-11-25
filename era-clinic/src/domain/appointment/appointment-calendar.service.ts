@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
 import { listClinicDays } from "@/domain/planning/clinic-day";
-import { addBakuDays, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
+import { addBakuDays, bakuDateTimeDisplay, bakuDayBounds, todayBakuYmd } from "@/lib/baku-day";
 import {
   intervalsCover,
   resolveManyDayIntervals,
@@ -504,9 +504,9 @@ export async function processAppointmentRemindersForOrganization(organizationId:
         recipient: phone,
         sourceEntityType: "appointment",
         sourceEntityId: appt.id,
-        body: `Напоминание: приём ${appt.scheduledAt.toISOString()} — ${appt.practitioner.fullName}`,
+        body: `Напоминание: приём ${bakuDateTimeDisplay(appt.scheduledAt)} — ${appt.practitioner.fullName}`,
         payload: {
-          scheduledAt: appt.scheduledAt.toISOString(),
+          scheduledAt: bakuDateTimeDisplay(appt.scheduledAt),
           practitionerName: appt.practitioner.fullName,
         },
       },

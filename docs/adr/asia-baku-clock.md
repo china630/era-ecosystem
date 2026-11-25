@@ -3,7 +3,7 @@
 **Status:** Accepted  
 **Date:** 2026-09-22  
 **Implementation:** Waves **0–6 landed** — kit, hotel/clinic/F&B ops day, orch/finance billing, UI labels, leftover satellites, lint lock (`lint:baku-clock`), native date controls and `MM-DD` headers.  
-**Related:** [era-common-laws.mdc](../../.cursor/rules/era-common-laws.mdc) · clinic `baku-day` · hotel `hotel-calendar.ts`
+**Related:** [era-common-laws.mdc](../../.cursor/rules/era-common-laws.mdc) · clinic `baku-day` · hotel `hotel-calendar.ts` · [hotel-fo-business-day-checkin-out.md](./hotel-fo-business-day-checkin-out.md)
 
 ## Context
 

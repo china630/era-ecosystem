@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { PageHeader, EraListFilterBar,
   useDebouncedValue, Field, CARD_CONTAINER_CLASS } from '@era/satellite-kit/ui';
 import { useGuestCrmList } from '@/components/guest-crm/useGuestCrmList';
@@ -54,7 +55,7 @@ export default function GuestBookerHistoryPage() {
         <ul className={`${CARD_CONTAINER_CLASS} space-y-2 p-3 text-[13px]`}>
           {filtered.map((r) => {
             const guest = r.guest as { fullName?: string } | undefined;
-            const label = `${guest?.fullName ?? ''} · ${String(r.checkInDate).slice(0, 10)}`.trim();
+            const label = `${guest?.fullName ?? ''} · ${bakuDateDisplay(String(r.checkInDate).slice(0, 10))}`.trim();
             return (
               <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
                 <button

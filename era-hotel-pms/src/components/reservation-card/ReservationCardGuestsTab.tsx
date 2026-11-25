@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { ArrowRightLeft, Camera, LogOut, Search, Smartphone, Star, Stethoscope, Trash2, UserPlus } from 'lucide-react';
 import { GuestAppLinkModal } from '@/components/reservation-card/GuestAppLinkModal';
 import { MrzLiveFrame } from '@/components/mrz/MrzLiveFrame';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import {
   CatalogField,
   DROPDOWN_ITEM_CLASS,
@@ -344,7 +345,7 @@ export function ReservationCardGuestsTab({
         render: (row) => {
           const dob = row.birthDate ? String(row.birthDate).slice(0, 10) : '';
           if (!dob) return '—';
-          return `${dob} · ${ageYearsFromBirthDate(dob)}`;
+          return `${bakuDateDisplay(dob)} · ${ageYearsFromBirthDate(dob)}`;
         },
       },
       {

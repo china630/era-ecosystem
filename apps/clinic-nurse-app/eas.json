@@ -13,7 +13,7 @@
       },
       "env": {
         "EXPO_PUBLIC_CLINIC_URL": "https://clinic.era-365.online",
-        "EXPO_PUBLIC_UPDATE_URL": "${EXPO_PUBLIC_UPDATE_URL}",
+        "EXPO_PUBLIC_UPDATE_URL": "https://app.era-365.online/tablet-apps/nurse",
         "EXPO_PUBLIC_KIOSK_PIN": "${EXPO_PUBLIC_KIOSK_PIN}"
       }
     }

@@ -249,6 +249,13 @@ function runSatellite(dir) {
 console.log("ERA ship pre-push (local gates — not full GitHub CI)\n");
 
 run(
+  "satellite-kit export gate",
+  "node",
+  [".github/scripts/check-satellite-kit-exports.mjs"],
+  root,
+);
+
+run(
   "quality-gates",
   "npm",
   ["run", strict ? "run:quality-gates:strict" : "run:quality-gates"],

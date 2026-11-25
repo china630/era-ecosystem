@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
   IsArray,
+  IsIn,
   IsInt,
   IsNumber,
   IsObject,
@@ -13,6 +14,9 @@ import {
   MinLength,
   ValidateNested,
 } from "class-validator";
+
+export const BUDGET_YEAR_MODES = ["GOV", "MANAGEMENT"] as const;
+export type BudgetYearMode = (typeof BUDGET_YEAR_MODES)[number];
 
 export class CreateBudgetLineDto {
   @ApiProperty({ example: "221" })
@@ -54,6 +58,15 @@ export class CreateBudgetYearDto {
   @IsInt()
   @Min(1)
   version?: number;
+
+  @ApiPropertyOptional({
+    enum: BUDGET_YEAR_MODES,
+    default: "GOV",
+    description: "GOV = B2G NAS-Gov; MANAGEMENT = commercial simplified articles",
+  })
+  @IsOptional()
+  @IsIn(BUDGET_YEAR_MODES)
+  mode?: BudgetYearMode;
 
   @ApiPropertyOptional({ type: [CreateBudgetLineDto] })
   @IsOptional()

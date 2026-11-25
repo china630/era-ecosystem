@@ -10,11 +10,45 @@ export type BureauReport = {
   pulledAt: string;
 };
 
+export type BureauFullReport = BureauReport & {
+  obligations?: Array<{ lender: string; outstandingMinor: string }>;
+  inquiriesLast12m?: number;
+};
+
+export type CreditHistorySubmission = {
+  bankOrgId: string;
+  batchId: string;
+  subjectConsentRef: string;
+  records: Array<{
+    customerId: string;
+    loanId: string;
+    status: string;
+    outstandingMinor: string;
+    effectiveDate: string;
+  }>;
+};
+
+export type CreditHistorySubmissionResult = {
+  accepted: boolean;
+  batchId: string;
+  provider: string;
+  message?: string;
+};
+
 export interface CreditBureauAdapter {
   pullScore(input: {
     customerId: string;
     bankOrgId: string;
+    subjectConsentRef?: string;
   }): Promise<BureauReport>;
+  pullReport(input: {
+    customerId: string;
+    bankOrgId: string;
+    subjectConsentRef: string;
+  }): Promise<BureauFullReport>;
+  submitCreditHistory(
+    batch: CreditHistorySubmission,
+  ): Promise<CreditHistorySubmissionResult>;
 }
 
 /** Dev/lab stub bureau. */
@@ -22,6 +56,7 @@ export class StubCreditBureauAdapter implements CreditBureauAdapter {
   async pullScore(input: {
     customerId: string;
     bankOrgId: string;
+    subjectConsentRef?: string;
   }): Promise<BureauReport> {
     const hash = [...input.customerId].reduce((a, c) => a + c.charCodeAt(0), 0);
     const score = 550 + (hash % 250);
@@ -30,6 +65,42 @@ export class StubCreditBureauAdapter implements CreditBureauAdapter {
       reportId: `stub-akb-${input.customerId.slice(0, 8)}-${Date.now()}`,
       provider: "STUB_AKB",
       pulledAt: new Date().toISOString(),
+    };
+  }
+
+  async pullReport(input: {
+    customerId: string;
+    bankOrgId: string;
+    subjectConsentRef: string;
+  }): Promise<BureauFullReport> {
+    const base = await this.pullScore(input);
+    return {
+      ...base,
+      obligations: [
+        {
+          lender: "STUB_BANK",
+          outstandingMinor: "0",
+        },
+      ],
+      inquiriesLast12m: 1,
+    };
+  }
+
+  async submitCreditHistory(
+    batch: CreditHistorySubmission,
+  ): Promise<CreditHistorySubmissionResult> {
+    if (!batch.subjectConsentRef?.trim()) {
+      return {
+        accepted: false,
+        batchId: batch.batchId,
+        provider: "STUB_AKB",
+        message: "subjectConsentRef required",
+      };
+    }
+    return {
+      accepted: batch.records.length > 0,
+      batchId: batch.batchId,
+      provider: "STUB_AKB_BATCH",
     };
   }
 }
@@ -48,6 +119,7 @@ export class LiveAkbAdapter implements CreditBureauAdapter {
   async pullScore(input: {
     customerId: string;
     bankOrgId: string;
+    subjectConsentRef?: string;
   }): Promise<BureauReport> {
     const url = `${this.baseUrl.replace(/\/$/, "")}/v1/score`;
     const controller = new AbortController();
@@ -84,6 +156,46 @@ export class LiveAkbAdapter implements CreditBureauAdapter {
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  async pullReport(input: {
+    customerId: string;
+    bankOrgId: string;
+    subjectConsentRef: string;
+  }): Promise<BureauFullReport> {
+    const base = await this.pullScore(input);
+    return {
+      ...base,
+      provider: "AKB_LIVE_REPORT",
+    };
+  }
+
+  async submitCreditHistory(
+    batch: CreditHistorySubmission,
+  ): Promise<CreditHistorySubmissionResult> {
+    const url = `${this.baseUrl.replace(/\/$/, "")}/v1/credit-history`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify(batch),
+    });
+    if (!res.ok) {
+      return {
+        accepted: false,
+        batchId: batch.batchId,
+        provider: "AKB_LIVE",
+        message: `HTTP ${res.status}`,
+      };
+    }
+    const data = (await res.json()) as { accepted?: boolean };
+    return {
+      accepted: data.accepted === true,
+      batchId: batch.batchId,
+      provider: "AKB_LIVE",
+    };
   }
 }
 

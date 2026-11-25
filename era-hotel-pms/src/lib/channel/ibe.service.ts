@@ -47,7 +47,7 @@ export function ibeErrorStatus(err: unknown): number {
   return 500;
 }
 
-export async function resolveIbeTenant(req: Request): Promise<{
+export async function resolveIbeTenant(req: { headers: { get(name: string): string | null } }): Promise<{
   organizationId: string;
   origins: string[];
 }> {

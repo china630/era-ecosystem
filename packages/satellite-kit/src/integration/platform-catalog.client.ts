@@ -184,6 +184,48 @@ export type PlatformIcd10Page = {
   nextCursor?: string | null;
 };
 
+export type PlatformConstructionMaterial = {
+  code: string;
+  nameAz: string;
+  nameRu: string;
+  nameEn: string;
+  uomCode: string;
+  hsCode?: string | null;
+  classPath?: string | null;
+  indicativePriceAzn?: string | number | null;
+};
+
+export type PlatformConstructionMaterialsPage = {
+  meta?: { asOf?: string; source?: string; version?: string };
+  materials: PlatformConstructionMaterial[];
+};
+
+/** Industry: construction materials nomenclature via Platform Gateway → Data Hub. */
+export async function platformConstructionMaterialsList(
+  params?: { q?: string },
+  opts?: PlatformCatalogClientOptions,
+): Promise<PlatformConstructionMaterialsPage | null> {
+  const q = new URLSearchParams();
+  if (params?.q?.trim()) q.set("q", params.q.trim());
+  const suffix = q.toString() ? `?${q}` : "";
+  return platformCatalogGet<PlatformConstructionMaterialsPage>(
+    `/construction-materials${suffix}`,
+    opts,
+  );
+}
+
+export async function platformConstructionMaterialByCode(
+  code: string,
+  opts?: PlatformCatalogClientOptions,
+): Promise<{ material: PlatformConstructionMaterial } | null> {
+  const id = code.trim();
+  if (!id) return null;
+  return platformCatalogGet<{ material: PlatformConstructionMaterial }>(
+    `/construction-materials/${encodeURIComponent(id)}`,
+    opts,
+  );
+}
+
 /** Industry-only: WHO ICD-10 via orchestrator gateway (not data-hub). */
 export async function platformIcd10Search(
   params?: {

@@ -12,6 +12,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
+import { bakuDateDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { hotelDateKey } from '@/lib/hotel-calendar';
 import { useAuth } from '@/hooks/useAuth';
@@ -467,8 +468,18 @@ export default function AgencyCommissionPage() {
               sortable: true,
               render: (r) => r.guestName ?? '—',
             },
-            { key: 'fromDate', header: t('colFrom'), sortable: true },
-            { key: 'toDate', header: t('colTo'), sortable: true },
+            {
+              key: 'fromDate',
+              header: t('colFrom'),
+              sortable: true,
+              render: (r) => bakuDateDisplay(String(r.fromDate).slice(0, 10)),
+            },
+            {
+              key: 'toDate',
+              header: t('colTo'),
+              sortable: true,
+              render: (r) => bakuDateDisplay(String(r.toDate).slice(0, 10)),
+            },
             {
               key: 'revenueBase',
               header: t('colBase'),

@@ -4,6 +4,7 @@ export const SATELLITE_KEY_CLINIC = "industry_clinic" as const;
 export const SATELLITE_KEY_HOTEL = "industry_hotel_pms" as const;
 export const SATELLITE_KEY_FNB = "industry_fnb_pos" as const;
 export const SATELLITE_KEY_RETAIL = "industry_retail" as const;
+export const SATELLITE_KEY_CONSTRUCTION = "industry_construction" as const;
 
 /** Operational industry satellites wired through CP Workforce role matrix / grants. */
 export const WORKFORCE_OPERATIONAL_SATELLITE_KEYS = [
@@ -11,6 +12,7 @@ export const WORKFORCE_OPERATIONAL_SATELLITE_KEYS = [
   SATELLITE_KEY_HOTEL,
   SATELLITE_KEY_FNB,
   SATELLITE_KEY_RETAIL,
+  SATELLITE_KEY_CONSTRUCTION,
 ] as const;
 
 export type WorkforceOperationalSatelliteKey =
@@ -47,16 +49,28 @@ export const retailSatelliteRoleSchema = z.enum([
   "STAFF",
 ]);
 
+/** Codes match Construction system roles (CP aliases map via satellite ROLE_ALIASES). */
+export const constructionSatelliteRoleSchema = z.enum([
+  "PROJECT_MANAGER",
+  "SITE_MANAGER",
+  "ESTIMATOR",
+  "STAFF",
+]);
+
 export type ClinicSatelliteRole = z.infer<typeof clinicSatelliteRoleSchema>;
 export type HotelSatelliteRole = z.infer<typeof hotelSatelliteRoleSchema>;
 export type FnbSatelliteRole = z.infer<typeof fnbSatelliteRoleSchema>;
 export type RetailSatelliteRole = z.infer<typeof retailSatelliteRoleSchema>;
+export type ConstructionSatelliteRole = z.infer<
+  typeof constructionSatelliteRoleSchema
+>;
 
 const ROLES_BY_SATELLITE: Record<string, readonly string[]> = {
   [SATELLITE_KEY_CLINIC]: clinicSatelliteRoleSchema.options,
   [SATELLITE_KEY_HOTEL]: hotelSatelliteRoleSchema.options,
   [SATELLITE_KEY_FNB]: fnbSatelliteRoleSchema.options,
   [SATELLITE_KEY_RETAIL]: retailSatelliteRoleSchema.options,
+  [SATELLITE_KEY_CONSTRUCTION]: constructionSatelliteRoleSchema.options,
 };
 
 const DEFAULT_ROLE_BY_SATELLITE: Record<string, string> = {
@@ -64,6 +78,7 @@ const DEFAULT_ROLE_BY_SATELLITE: Record<string, string> = {
   [SATELLITE_KEY_HOTEL]: "STAFF",
   [SATELLITE_KEY_FNB]: "STAFF",
   [SATELLITE_KEY_RETAIL]: "CASHIER",
+  [SATELLITE_KEY_CONSTRUCTION]: "SITE_MANAGER",
 };
 
 /** Nafta default position name → satellite role hints for seed scripts. */
@@ -79,6 +94,26 @@ export const NAFTA_POSITION_ROLE_SEED: Array<{
   { positionNamePattern: "reception", satelliteKey: SATELLITE_KEY_HOTEL, satelliteRole: "RECEPTION" },
   { positionNamePattern: "cashier", satelliteKey: SATELLITE_KEY_RETAIL, satelliteRole: "CASHIER" },
   { positionNamePattern: "kassir", satelliteKey: SATELLITE_KEY_RETAIL, satelliteRole: "CASHIER" },
+  {
+    positionNamePattern: "project manager",
+    satelliteKey: SATELLITE_KEY_CONSTRUCTION,
+    satelliteRole: "PROJECT_MANAGER",
+  },
+  {
+    positionNamePattern: "site manager",
+    satelliteKey: SATELLITE_KEY_CONSTRUCTION,
+    satelliteRole: "SITE_MANAGER",
+  },
+  {
+    positionNamePattern: "foreman",
+    satelliteKey: SATELLITE_KEY_CONSTRUCTION,
+    satelliteRole: "SITE_MANAGER",
+  },
+  {
+    positionNamePattern: "estimator",
+    satelliteKey: SATELLITE_KEY_CONSTRUCTION,
+    satelliteRole: "ESTIMATOR",
+  },
 ];
 
 export function operationalRolesForSatellite(

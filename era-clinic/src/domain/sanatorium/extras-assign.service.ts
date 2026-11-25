@@ -7,6 +7,10 @@ import type { Prisma } from "@prisma/client";
 import { DEFAULT_OVER_QUOTA_AZN } from "@/domain/sanatorium/entitlement-charge.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 import { placeConfirmedProcedures } from "@/lib/treatment-planner.service";
+import {
+  PLACE_CONFIRMED_BUDGET_MS,
+  SAXLA_SEATING_BUDGET_MS,
+} from "@/lib/procedure-slot-scan";
 import { ANAMNESIS_REQUIRED } from "@/domain/sanatorium/episode-gates";
 import {
   CARE_TEAM_REQUIRED,
@@ -184,6 +188,7 @@ export async function prescribeExtras(
     procedureName: string;
     reason: string;
     ymd?: string;
+    schedulingMode?: "OPEN" | "FIXED";
   }> = [];
   const now = new Date();
   const prescribedByPractitionerId = await resolvePrescriberForExtra(episodeId, actorUserId);
@@ -192,15 +197,31 @@ export async function prescribeExtras(
   for (const line of lines) {
     if (line.qty < 1) continue;
     const openQuota = await remainingPackageQuotaCode(episodeId, line.procedureCode);
-    if (openQuota?.toUpperCase().startsWith("XFER-")) {
+    if (openQuota) {
       throw new PackageAssignError(
-        "Use transferred package remaining before a paid extra",
+        "Use package remaining before a paid extra",
         "QUOTA_REMAINING",
         409,
       );
     }
     // Overflow past package quota is a paid extra. Quota no longer blocks the write.
     const pt = typeByCode.get(line.procedureCode);
+    if (pt) {
+      const { countRemainingOpenSeatDays, countRemainingStayWorkingDays } = await import(
+        "@/domain/sanatorium/stay-seat-cap"
+      );
+      const stayMax =
+        pt.openAttendance === true
+          ? (await countRemainingOpenSeatDays(episodeId, line.procedureCode)).remainingSeatDays
+          : await countRemainingStayWorkingDays(episodeId);
+      if (stayMax < 1 || line.qty > stayMax) {
+        throw new PackageAssignError(
+          `Quantity exceeds remaining stay days (${stayMax})`,
+          "STAY_QTY_EXCEEDED",
+          409,
+        );
+      }
+    }
     if (!pt) {
       const { prescribeDiagnosticsExtras } = await import(
         "@/domain/sanatorium/diagnostics-extras.service"
@@ -280,14 +301,31 @@ export async function prescribeExtras(
       .map((row) => row.id);
     if (fixedIds.length > 0) {
       const held = await seatUnpaidExtras(fixedIds);
-      misses.push(...held);
+      misses.push(
+        ...held.map((row) => ({ ...row, schedulingMode: "FIXED" as const })),
+      );
     }
     // OPEN = day-bucket across stay (no cabin). Pay keeps the pin; nurse seats on arrival.
     if (openIds.length > 0) {
-      misses.push(...(await pinUnpaidOpenExtras(openIds, episodeId)));
+      misses.push(
+        ...(await pinUnpaidOpenExtras(openIds, episodeId)).map((row) => ({
+          ...row,
+          schedulingMode: "OPEN" as const,
+        })),
+      );
     }
   }
   const missedIds = new Set(misses.map((row) => row.orderId));
+  if (ids.length > 0 || misses.length > 0) {
+    try {
+      const { invalidateProcedureLoadCache } = await import(
+        "@/domain/planning/procedure-load.service"
+      );
+      invalidateProcedureLoadCache();
+    } catch {
+      /* optional cache */
+    }
+  }
   return {
     orderIds: ids.filter((id) => !missedIds.has(id)),
     labOrderIds,
@@ -298,7 +336,9 @@ export async function prescribeExtras(
 
 const CHECKOUT_HOLD = "await_checkout_morning";
 
-function isCheckoutHoldReason(reason: string): boolean {
+function isCheckoutHoldReason(reason: string, hitAttemptCap?: boolean): boolean {
+  // Cap/budget stop can look like no_slot with empty blocks — not a stay-horizon miss.
+  if (hitAttemptCap) return false;
   return reason === "no_slot" || reason === "no_day";
 }
 
@@ -307,11 +347,21 @@ async function stayEndForOrders(ids: string[]): Promise<Date | undefined> {
   const rows = await prisma.procedureOrder.findMany({
     where: { id: { in: ids } },
     select: {
-      clinicalEpisode: { select: { programInstance: { select: { endsOn: true } } } },
+      clinicalEpisode: {
+        select: {
+          plannedEndsOn: true,
+          programInstance: { select: { endsOn: true } },
+        },
+      },
     },
   });
   const ends = rows
-    .map((row) => row.clinicalEpisode?.programInstance?.endsOn)
+    .map(
+      (row) =>
+        row.clinicalEpisode?.programInstance?.endsOn ??
+        row.clinicalEpisode?.plannedEndsOn ??
+        null,
+    )
     .filter((value): value is Date => value instanceof Date && !Number.isNaN(value.getTime()));
   if (ends.length === 0) return undefined;
   return ends.reduce((earliest, value) => (value < earliest ? value : earliest));
@@ -320,17 +370,34 @@ async function stayEndForOrders(ids: string[]): Promise<Date | undefined> {
 /** Place as PROPOSED, then return seated rows to PENDING_PAY. Every miss is returned. A stay-horizon miss is also held for the checkout question. */
 async function seatUnpaidExtras(
   ids: string[],
-): Promise<Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>> {
+): Promise<
+  Array<{
+    orderId: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    ymd?: string;
+    hitAttemptCap?: boolean;
+  }>
+> {
   await prisma.procedureOrder.updateMany({
     where: { id: { in: ids }, status: "PENDING_PAY" },
     data: { status: "PROPOSED" },
   });
   let failedIds: string[] = [];
   let heldIds: string[] = [];
-  let reported: Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }> = [];
+  let reported: Array<{
+    orderId: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    ymd?: string;
+    hitAttemptCap?: boolean;
+  }> = [];
   try {
     const placement = await placeConfirmedProcedures(ids, {
       scheduleBefore: await stayEndForOrders(ids),
+      deadlineMs: Date.now() + SAXLA_SEATING_BUDGET_MS,
     });
     reported = placement.failures.map((row) => ({
       orderId: row.orderId,
@@ -338,8 +405,11 @@ async function seatUnpaidExtras(
       procedureName: row.procedureName,
       reason: row.reason,
       ymd: row.ymd,
+      ...(row.hitAttemptCap ? { hitAttemptCap: true as const } : {}),
     }));
-    heldIds = reported.filter((row) => isCheckoutHoldReason(row.reason)).map((row) => row.orderId);
+    heldIds = reported
+      .filter((row) => isCheckoutHoldReason(row.reason, row.hitAttemptCap))
+      .map((row) => row.orderId);
     failedIds = reported.map((row) => row.orderId).filter((id) => !heldIds.includes(id));
     if (heldIds.length > 0) {
       await prisma.procedureOrder.updateMany({
@@ -371,7 +441,8 @@ async function seatUnpaidExtras(
 /**
  * Pin OPEN unpaid extras onto working days until stay endsOn.
  * Different codes share a day; the same code takes the next working day.
- * A stay-horizon miss (`no_slot` / `no_day`) is held for the checkout-morning question. Any other miss is deleted.
+ * Any miss is deleted (same as FIXED unseated) — no checkout-morning hold for OPEN.
+ * Successful pins return to PENDING_PAY (Pay sets SCHEDULED + paidAt).
  */
 async function pinUnpaidOpenExtras(
   ids: string[],
@@ -385,8 +456,13 @@ async function pinUnpaidOpenExtras(
   });
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
-    select: { programInstance: { select: { endsOn: true } } },
+    select: {
+      plannedEndsOn: true,
+      programInstance: { select: { endsOn: true } },
+    },
   });
+  const scheduleBefore =
+    episode?.programInstance?.endsOn ?? episode?.plannedEndsOn ?? undefined;
   let failures: Array<{
     orderId: string;
     procedureCode: string;
@@ -400,7 +476,7 @@ async function pinUnpaidOpenExtras(
       "@/domain/procedure/open-attendance"
     );
     const pinned = await pinOpenAttendanceOrders(ids, {
-      scheduleBefore: episode?.programInstance?.endsOn ?? undefined,
+      scheduleBefore,
       startAt: new Date(),
     });
     failures = pinned.failures;
@@ -414,16 +490,10 @@ async function pinUnpaidOpenExtras(
     }));
     throw err;
   } finally {
-    const heldIds = failures.filter((row) => isCheckoutHoldReason(row.reason)).map((row) => row.orderId);
-    if (heldIds.length > 0) {
-      await prisma.procedureOrder.updateMany({
-        where: { id: { in: heldIds } },
-        data: { cancelReason: CHECKOUT_HOLD, resourceId: null, status: "PROPOSED" },
-      });
-    }
+    // All successes → PENDING_PAY (never leave unpaid SCHEDULED).
     await prisma.procedureOrder.updateMany({
       where: {
-        id: { in: ids.filter((id) => !heldIds.includes(id)) },
+        id: { in: ids },
         status: { in: ["PROPOSED", "SCHEDULED"] },
       },
       data: { status: "PENDING_PAY" },
@@ -434,13 +504,31 @@ async function pinUnpaidOpenExtras(
       });
     }
   }
-  const dropIds = failures
-    .filter((row) => !isCheckoutHoldReason(row.reason))
-    .map((row) => row.orderId);
+  const dropIds = failures.map((row) => row.orderId);
   if (dropIds.length > 0) {
     await releaseProcedureOccupancy(dropIds);
     await prisma.procedureOrder.deleteMany({
       where: { id: { in: dropIds }, status: "PENDING_PAY", inPackage: false },
+    });
+  }
+  // Money invariant: unpaid extras must not sit as SCHEDULED without paidAt.
+  const leaked = await prisma.procedureOrder.count({
+    where: {
+      id: { in: ids },
+      inPackage: false,
+      status: "SCHEDULED",
+      paidAt: null,
+    },
+  });
+  if (leaked > 0) {
+    await prisma.procedureOrder.updateMany({
+      where: {
+        id: { in: ids },
+        inPackage: false,
+        status: "SCHEDULED",
+        paidAt: null,
+      },
+      data: { status: "PENDING_PAY" },
     });
   }
   return failures;
@@ -462,9 +550,13 @@ export async function placeHeldExtrasOnCheckoutMorning(
 }> {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
-    select: { programInstance: { select: { endsOn: true } } },
+    select: {
+      plannedEndsOn: true,
+      programInstance: { select: { endsOn: true } },
+    },
   });
-  const endsOn = episode?.programInstance?.endsOn ?? null;
+  const endsOn =
+    episode?.programInstance?.endsOn ?? episode?.plannedEndsOn ?? null;
   const orders = await prisma.procedureOrder.findMany({
     where: { clinicalEpisodeId: episodeId, ...heldExtraWhere },
     select: {
@@ -476,7 +568,13 @@ export async function placeHeldExtrasOnCheckoutMorning(
   if (!endsOn || orders.length === 0) return { placed: 0, misses: [] };
   const openIds = orders.filter((row) => row.procedureType?.openAttendance === true).map((row) => row.id);
   const cabinIds = orders.filter((row) => row.procedureType?.openAttendance !== true).map((row) => row.id);
-  const misses: Array<{ ymd: string; procedureCode: string; procedureName: string; reason: string }> = [];
+  const misses: Array<{
+    ymd: string;
+    procedureCode: string;
+    procedureName: string;
+    reason: string;
+    hitAttemptCap?: boolean;
+  }> = [];
   let placed = 0;
   if (openIds.length > 0) {
     const { pinOpenAttendanceOrders } = await import("@/domain/procedure/open-attendance");
@@ -501,6 +599,7 @@ export async function placeHeldExtrasOnCheckoutMorning(
       confirmedByUserId,
       scheduleBefore: endsOn,
       checkoutMorning: true,
+      deadlineMs: Date.now() + PLACE_CONFIRMED_BUDGET_MS,
     });
     placed += placement.placed;
     misses.push(
@@ -509,6 +608,7 @@ export async function placeHeldExtrasOnCheckoutMorning(
         procedureCode: row.procedureCode,
         procedureName: row.procedureName,
         reason: row.reason,
+        ...(row.hitAttemptCap ? { hitAttemptCap: true } : {}),
       })),
     );
   }
@@ -527,6 +627,16 @@ export async function placeHeldExtrasOnCheckoutMorning(
   if (stillHeldIds.length > 0) {
     await releaseProcedureOccupancy(stillHeldIds);
     await prisma.procedureOrder.deleteMany({ where: { id: { in: stillHeldIds } } });
+  }
+  if (placed > 0 || misses.length > 0) {
+    try {
+      const { invalidateProcedureLoadCache } = await import(
+        "@/domain/planning/procedure-load.service"
+      );
+      invalidateProcedureLoadCache();
+    } catch {
+      /* optional cache */
+    }
   }
   return { placed, misses };
 }
@@ -574,12 +684,13 @@ export async function listExtraUnitPrices(): Promise<Record<string, number>> {
 
 const PAID_EXTRA_STATUSES = ["SCHEDULED", "CHECKED_IN", "COMPLETED", "NO_SHOW"] as const;
 
-/** Paid extras already on the schedule. Not editable from the package modal. */
+/** Paid extras already on the schedule. Not editable from the package modal. Requires paidAt. */
 export async function listPaidExtras(episodeId: string) {
   return prisma.procedureOrder.findMany({
     where: {
       clinicalEpisodeId: episodeId,
       inPackage: false,
+      paidAt: { not: null },
       status: { in: [...PAID_EXTRA_STATUSES] },
     },
     orderBy: { createdAt: "asc" },
@@ -855,6 +966,7 @@ export async function payAndScheduleExtras(
           await placeConfirmedProcedures(fixedLoose, {
             confirmedByUserId: actorUserId,
             scheduleBefore: await stayEndForOrders(fixedLoose),
+            deadlineMs: Date.now() + PLACE_CONFIRMED_BUDGET_MS,
           })
         ).placed;
       }
@@ -890,6 +1002,15 @@ export async function payAndScheduleExtras(
     "EXTRA_PAY_AND_SCHEDULE",
     { orderIds, placed, printPaths, paymentReceiptRef: receipt, accepted, rejected },
   );
+
+  try {
+    const { invalidateProcedureLoadCache } = await import(
+      "@/domain/planning/procedure-load.service"
+    );
+    invalidateProcedureLoadCache();
+  } catch {
+    /* optional cache */
+  }
 
   return { printPaths, placed, orders: issuedOrders, paymentReceiptRef: receipt, accepted, rejected };
 }
@@ -931,6 +1052,7 @@ export async function scheduleWalkInExtraAfterSettlement(orderId: string): Promi
       } else {
         await placeConfirmedProcedures([order.id], {
           scheduleBefore: await stayEndForOrders([order.id]),
+          deadlineMs: Date.now() + PLACE_CONFIRMED_BUDGET_MS,
         });
       }
     } catch (err) {

@@ -18,7 +18,7 @@ import {
   showApiError,
   showSuccess,
 } from '@era/satellite-kit/ui';
-import { bakuDateTimeDisplay } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateTimeDisplay } from '@era/satellite-kit/time';
 import { HotelDataGrid } from '@/components/HotelDataGrid';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -188,7 +188,7 @@ export default function TransfersPage() {
         @media print{button{display:none}}
       </style></head><body>
       <h1>${t('driverSheetTitle')}</h1>
-      <h2>${boardDate}</h2>
+      <h2>${bakuDateDisplay(boardDate)}</h2>
       <table><thead><tr>
         <th>${t('pickupAt')}</th><th>${t('guest')}</th><th>${t('room')}</th>
         <th>${t('direction')}</th><th>${t('flightNo')}</th><th>${t('vehicle')}</th><th>${tc('status')}</th>

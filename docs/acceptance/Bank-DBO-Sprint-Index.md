@@ -21,6 +21,8 @@ Current rollup: Gate ✅ · BE 🟡 · UI ✅ · Demo ✅ · Pilot lab [x] · Pi
 | YC-D2 Pilot lab | gate[x] | ✅ | [x] lab | `reports/bank-dbo-pilot-lab-signoff.md` |
 | YC-E3/E7 | gate[ ] | ✅ | [ ] | ⏸ live ASAN / field |
 | Green-BE W8 | gate[x] | 🟡 | [ ] | OPEN briefly excl.; **reverted** — OPEN in rollup (Code). TENANT still out |
+| Wave 1 loans/lease | gate[x] | 🟡 | [ ] | Full `/loans` schedule+APR/prepay; `/leasing` list honesty SCREEN. Sell/`mvp`/`pilot_ready` unchanged. Parent Wave 1 Bank closeout. |
+| Waves 2–4 parent lab | gate[x] | 🟡 | [ ] | DBO lease schedule read + OB SCA on parent consent create; audit-v3 Nest BFF verified. ASAN live complete still fail-closed. Sell/`mvp`/`pilot_ready` unchanged. |
 
 ## Backlog
 

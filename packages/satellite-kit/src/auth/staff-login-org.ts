@@ -18,11 +18,13 @@ import {
   resolveLoginHost,
   satelliteKeyFromEnv,
 } from "../tenancy/login-hostname-memory";
+import { kitHeadersOf, type KitHeaderSource } from "../http/kit-call";
 
-export function clientIpFromRequest(request: Request): string {
+export function clientIpFromRequest(source: Request | KitHeaderSource): string {
+  const headers = kitHeadersOf(source);
   return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headers.get("x-real-ip") ||
     "unknown"
   );
 }
@@ -39,13 +41,12 @@ export type StaffLoginTenantResult =
 export async function resolveStaffLoginTenant(input: {
   orgNo?: string;
   isShared: boolean;
-  request: Request;
+  request: Request | KitHeaderSource;
   /** Current satellite gate key (defaults to ERA_SATELLITE_KEY). */
   satelliteKey?: string;
 }): Promise<StaffLoginTenantResult> {
-  const host =
-    input.request.headers.get("x-forwarded-host") ||
-    input.request.headers.get("host");
+  const headers = kitHeadersOf(input.request);
+  const host = headers.get("x-forwarded-host") || headers.get("host");
   const sub = parseEraOrgSubdomain(host, loginPoolHostSuffixesFromEnv());
   const hostOrgNo = sub && "orgNo" in sub ? sub.orgNo : undefined;
   const satelliteKey = input.satelliteKey ?? satelliteKeyFromEnv();
@@ -127,10 +128,9 @@ export type LoginHostBinding = {
 /** Public GET /api/auth/login — hide orgNo field only for ERA-owned `{orgNo}.pool` Host.
  * Custom white-label hosts are not advertised here (Host-header enumeration).
  */
-export function describeLoginHostBinding(request: Request): LoginHostBinding {
-  const host =
-    request.headers.get("x-forwarded-host") ||
-    request.headers.get("host");
+export function describeLoginHostBinding(source: Request | KitHeaderSource): LoginHostBinding {
+  const headers = kitHeadersOf(source);
+  const host = headers.get("x-forwarded-host") || headers.get("host");
   const sub = parseEraOrgSubdomain(host, loginPoolHostSuffixesFromEnv());
   if (sub && "orgNo" in sub) {
     return { hostBound: true, orgNo: sub.orgNo };
@@ -140,6 +140,20 @@ export function describeLoginHostBinding(request: Request): LoginHostBinding {
 
 export function jsonLoginHostBinding(request: Request): Response {
   return Response.json(describeLoginHostBinding(request));
+}
+
+export function readStaffLoginBody(
+  raw: unknown,
+): { ok: true; raw: unknown } | { ok: false; status: 400; error: string } {
+  if (
+    raw &&
+    typeof raw === "object" &&
+    !Array.isArray(raw) &&
+    Object.prototype.hasOwnProperty.call(raw, "organizationId")
+  ) {
+    return { ok: false, status: 400, error: "Invalid organization code" };
+  }
+  return { ok: true, raw };
 }
 
 /** Cut UUID from local login JSON: reject leftover `organizationId` (Zod strips extras). */
@@ -154,13 +168,5 @@ export async function readStaffLoginJson(
   } catch {
     return { ok: false, status: 400, error: "Invalid JSON" };
   }
-  if (
-    raw &&
-    typeof raw === "object" &&
-    !Array.isArray(raw) &&
-    Object.prototype.hasOwnProperty.call(raw, "organizationId")
-  ) {
-    return { ok: false, status: 400, error: "Invalid organization code" };
-  }
-  return { ok: true, raw };
+  return readStaffLoginBody(raw);
 }

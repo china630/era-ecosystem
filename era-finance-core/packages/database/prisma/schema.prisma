@@ -216,6 +216,8 @@ model Organization {
   employeeDocuments               EmployeeDocument[]
   psaProjects                     PsaProject[]
   contracts                       Contract[]
+  contractAmendments              ContractAmendment[]
+  payApplications                 PayApplication[]
   budgetYears                     BudgetYear[]
   overheadDrivers                 OverheadDriver[]
   overheadPools                   OverheadPool[]
@@ -2581,6 +2583,7 @@ model Contract {
   number               String
   type                 ContractType
   status               ContractStatus        @default(DRAFT)
+  contractRole         ContractRole          @default(PRIME) @map("contract_role")
   currency             String                @default("AZN")
   amountLimit          Decimal?              @map("amount_limit") @db.Decimal(19, 4)
   dateFrom             DateTime?             @map("date_from") @db.Date
@@ -2593,6 +2596,8 @@ model Contract {
   currencyRef          Currency              @relation("ContractCurrency", fields: [currency], references: [code], onUpdate: Cascade)
   lines                ContractLine[]
   commitments          ContractCommitment[]
+  amendments           ContractAmendment[]
+  payApplications      PayApplication[]
   procurementProtocols ProcurementProtocol[]
 
   @@unique([organizationId, number])
@@ -2600,9 +2605,97 @@ model Contract {
   @@map("contracts")
 }
 
+enum ContractRole {
+  PRIME
+  COMMITMENT
+}
+
+enum ContractAmendmentStatus {
+  DRAFT
+  ACTIVE
+  CANCELLED
+}
+
+model ContractAmendment {
+  id               String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String                  @map("organization_id") @db.Uuid
+  contractId       String                  @map("contract_id") @db.Uuid
+  status           ContractAmendmentStatus @default(DRAFT)
+  number           String
+  amountLimitDelta Decimal?                @map("amount_limit_delta") @db.Decimal(19, 4)
+  dateTo           DateTime?               @map("date_to") @db.Date
+  description      String?
+  sourceType       String?                 @map("source_type") @db.VarChar(64)
+  sourceId         String?                 @map("source_id") @db.VarChar(128)
+  activatedAt      DateTime?               @map("activated_at")
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+  organization     Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contract         Contract                @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, number])
+  @@index([contractId])
+  @@index([organizationId, status])
+  @@map("contract_amendments")
+}
+
+enum PayApplicationStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  POSTED
+  CANCELLED
+}
+
+model PayApplication {
+  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String              @map("organization_id") @db.Uuid
+  contractId        String              @map("contract_id") @db.Uuid
+  number            String
+  periodFrom        DateTime?           @map("period_from") @db.Date
+  periodTo          DateTime?           @map("period_to") @db.Date
+  retentionPct      Decimal             @default(0) @map("retention_pct") @db.Decimal(8, 4)
+  status            PayApplicationStatus @default(DRAFT)
+  amountGross       Decimal             @default(0) @map("amount_gross") @db.Decimal(19, 4)
+  amountRetention   Decimal             @default(0) @map("amount_retention") @db.Decimal(19, 4)
+  amountNet         Decimal             @default(0) @map("amount_net") @db.Decimal(19, 4)
+  printSnapshotJson Json?               @map("print_snapshot_json")
+  postedJournalId   String?             @map("posted_journal_id") @db.Uuid
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  organization      Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contract          Contract            @relation(fields: [contractId], references: [id], onDelete: Restrict)
+  lines             PayApplicationLine[]
+
+  @@unique([organizationId, number])
+  @@index([contractId])
+  @@index([organizationId, status])
+  @@map("pay_applications")
+}
+
+model PayApplicationLine {
+  id               String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  payApplicationId String         @map("pay_application_id") @db.Uuid
+  contractLineId   String?        @map("contract_line_id") @db.Uuid
+  description      String?
+  quantity         Decimal?       @db.Decimal(19, 4)
+  amount           Decimal        @default(0) @db.Decimal(19, 4)
+  sourceActId      String?        @map("source_act_id") @db.VarChar(128)
+  sortOrder        Int            @default(0) @map("sort_order")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  payApplication   PayApplication @relation(fields: [payApplicationId], references: [id], onDelete: Cascade)
+  contractLine     ContractLine?  @relation(fields: [contractLineId], references: [id], onDelete: SetNull)
+
+  @@index([payApplicationId])
+  @@map("pay_application_lines")
+}
+
 enum ProcurementProtocolStatus {
   DRAFT
   REGISTERED
+  OPEN
+  AWARDED
+  CANCELLED
 }
 
 model ProcurementProtocol {
@@ -2646,14 +2739,17 @@ model Bid {
 }
 
 model ContractLine {
-  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  contractId  String   @map("contract_id") @db.Uuid
-  description String?
-  quantity    Decimal? @db.Decimal(19, 4)
-  unitPrice   Decimal? @map("unit_price") @db.Decimal(19, 4)
-  amount      Decimal? @db.Decimal(19, 4)
-  createdAt   DateTime @default(now()) @map("created_at")
-  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  id                 String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  contractId         String               @map("contract_id") @db.Uuid
+  description        String?
+  code               String?              @db.VarChar(64)
+  sortOrder          Int                  @default(0) @map("sort_order")
+  quantity           Decimal?             @db.Decimal(19, 4)
+  unitPrice          Decimal?             @map("unit_price") @db.Decimal(19, 4)
+  amount             Decimal?             @db.Decimal(19, 4)
+  createdAt          DateTime             @default(now()) @map("created_at")
+  contract           Contract             @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  payApplicationLines PayApplicationLine[]
 
   @@index([contractId])
   @@map("contract_lines")
@@ -2680,6 +2776,8 @@ model BudgetYear {
   year           Int
   status         BudgetYearStatus @default(DRAFT)
   version        Int              @default(1)
+  /// GOV (NAS-Gov / B2G) | MANAGEMENT (commercial simplified articles)
+  mode           String           @default("GOV") @map("mode")
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
   organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -2687,6 +2785,7 @@ model BudgetYear {
 
   @@unique([organizationId, year, version])
   @@index([organizationId, year])
+  @@index([organizationId, mode])
   @@map("budget_years")
 }
 

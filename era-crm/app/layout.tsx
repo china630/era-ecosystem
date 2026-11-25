@@ -9,7 +9,12 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("meta");
-  return { title: t("title"), description: t("description") };
+  return {
+    title: t("title"),
+    description: t("description"),
+    manifest: "/manifest.webmanifest",
+    themeColor: "#2C3E50",
+  };
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +23,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale}>
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="theme-color" content="#2C3E50" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body className={APP_SHELL_CLASS}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SatelliteAppProviders>
@@ -26,6 +36,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </SatelliteRootChrome>
           </SatelliteAppProviders>
         </NextIntlClientProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}",
+          }}
+        />
       </body>
     </html>
   );

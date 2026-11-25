@@ -3,7 +3,7 @@ jest.mock("@era/satellite-kit/ui", () => ({
   showSuccess: jest.fn(),
 }));
 
-import { packageAssignMissReasonText } from "@/lib/package-assign-toasts";
+import { isPackageAssignNoonHold, packageAssignMissReasonText } from "@/lib/package-assign-toasts";
 import { packageAssignBlockText } from "@/lib/package-assign-block";
 
 describe("package assign failure text", () => {
@@ -15,6 +15,34 @@ describe("package assign failure text", () => {
     });
     expect(keys).toEqual(["packageAssignMissAnamnesis"]);
     expect(text).toBe("packageAssignMissAnamnesis");
+  });
+
+  it("names same_day instead of a missing day", () => {
+    const keys: string[] = [];
+    const text = packageAssignMissReasonText("same_day", (key) => {
+      keys.push(key);
+      return key;
+    });
+    expect(keys).toEqual(["packageAssignMissSameDay"]);
+    expect(text).toBe("packageAssignMissSameDay");
+  });
+
+  it("prefers busy copy when the attempt cap or time budget stopped the hunt", () => {
+    const keys: string[] = [];
+    const text = packageAssignMissReasonText(
+      "no_slot",
+      (key) => {
+        keys.push(key);
+        return key;
+      },
+      { hitAttemptCap: true },
+    );
+    expect(keys).toEqual(["packageAssignMissBusy"]);
+    expect(text).toBe("packageAssignMissBusy");
+  });
+
+  it("does not treat attempt-cap no_slot as checkout-morning hold", () => {
+    expect(isPackageAssignNoonHold({ reason: "no_slot", hitAttemptCap: true })).toBe(false);
   });
 
   it("shows the instantiate error instead of the template hint", () => {

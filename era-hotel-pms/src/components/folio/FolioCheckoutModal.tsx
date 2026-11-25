@@ -1068,7 +1068,7 @@ export function FolioCheckoutModal({
                   <CatalogField
                     key={row.id}
                     kind="CLOSED_SMALL"
-                    label={`${tt('directionOut')} · ${row.pickupAt.slice(0, 16).replace('T', ' ')}${
+                    label={`${tt('directionOut')} · ${bakuDateTimeDisplay(row.pickupAt)}${
                       row.flightNo ? ` · ${row.flightNo}` : ''
                     }`}
                     value={outActions[row.id] ?? 'SHIFT'}

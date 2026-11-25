@@ -109,6 +109,9 @@ export async function getFoStatusDashboard(
         agency: { select: { name: true } },
         company: { select: { name: true } },
         folios: { select: { type: true, status: true } },
+        stay: {
+          select: { checkInBusinessDate: true, checkOutBusinessDate: true },
+        },
       },
     }),
     prisma.folioCharge.findMany({
@@ -148,6 +151,12 @@ export async function getFoStatusDashboard(
   const stays: DashStay[] = reservationRows.map((row) => {
     const inYmd = civilDay(row.checkInDate);
     const outYmd = civilDay(row.checkOutDate);
+    const checkInBizYmd = row.stay?.checkInBusinessDate
+      ? civilDay(row.stay.checkInBusinessDate)
+      : null;
+    const checkOutBizYmd = row.stay?.checkOutBusinessDate
+      ? civilDay(row.stay.checkOutBusinessDate)
+      : null;
     const walkIn = Boolean(row.walkInProfileCode);
     const channel = walkIn
       ? walkInName.get(row.walkInProfileCode ?? '') ?? row.walkInProfileCode ?? 'OTHERS'
@@ -163,6 +172,8 @@ export async function getFoStatusDashboard(
       roomCount: Math.max(1, row.roomCount ?? 1),
       inYmd,
       outYmd,
+      checkInBizYmd,
+      checkOutBizYmd,
       createdYmd: civilDay(row.createdAt),
       updatedYmd: civilDay(row.updatedAt),
       nights: nightsOf(inYmd, outYmd),

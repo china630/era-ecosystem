@@ -33,6 +33,7 @@ import {
 import { bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { CLINIC_PRESET } from "@/domain/presets/clinic-presets";
+import { AppointmentsWaitlistPanel } from "@/components/AppointmentsWaitlistPanel";
 
 type DetailState = {
   appointmentId: string;
@@ -271,6 +272,8 @@ export default function AppointmentsPage() {
           />
         )}
       </div>
+
+      <AppointmentsWaitlistPanel />
 
       <AppointmentCreateModal
         open={createOpen}

@@ -14,6 +14,8 @@ import {
 } from "@era/satellite-kit/ui";
 import { DiagnosisPanel } from "@/components/DiagnosisPanel";
 import { VisitCpoePanel } from "@/components/VisitCpoePanel";
+import { VisitClinicalNotesPanel } from "@/components/VisitClinicalNotesPanel";
+import { VisitCarePlanPanel } from "@/components/VisitCarePlanPanel";
 
 type VisitDetail = {
   id: string;
@@ -25,11 +27,21 @@ type VisitDetail = {
   serviceLines: Array<{ serviceCode: string; description: string; amount: string }>;
 };
 
+type InsuranceCard = {
+  status?: string;
+  eligible?: boolean;
+  insurerName?: string;
+  payerName?: string;
+  limitAzN?: string | number;
+  limit?: string | number;
+  message?: string;
+  error?: string;
+};
+
 export default function VisitDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations("visits");
-  const tc = useTranslations("common");
   const [visit, setVisit] = useState<VisitDetail | null>(null);
   const [message, setMessage] = useState("");
   const [completing, setCompleting] = useState(false);
@@ -41,7 +53,10 @@ export default function VisitDetailPage() {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountPercent, setDiscountPercent] = useState("10");
   const [discountReason, setDiscountReason] = useState("");
-  const [insuranceResult, setInsuranceResult] = useState<string | null>(null);
+  const [insuranceOpen, setInsuranceOpen] = useState(false);
+  const [insuranceFin, setInsuranceFin] = useState("");
+  const [insuranceCard, setInsuranceCard] = useState<InsuranceCard | null>(null);
+  const [insuranceBusy, setInsuranceBusy] = useState(false);
 
   useEffect(() => {
     if (!params.id) return;
@@ -62,8 +77,13 @@ export default function VisitDetailPage() {
         return;
       }
       setVisit(data.data ?? data);
-      setMessage(t("completeSuccess"));
+      setMessage(
+        visit.patientOrigin === "WALK_IN" ? t("completeToCashierSuccess") : t("completeSuccess"),
+      );
       setCompleteOpen(false);
+      if (visit.patientOrigin === "WALK_IN") {
+        router.push(`/cashier?visitId=${visit.id}`);
+      }
     } finally {
       setCompleting(false);
     }
@@ -104,16 +124,27 @@ export default function VisitDetailPage() {
   }
 
   async function checkInsurance() {
-    if (!visit) return;
-    const fin = window.prompt(t("insuranceFinPrompt"));
-    if (!fin?.trim()) return;
-    const res = await fetch("/api/insurance/check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patientFin: fin.trim().toUpperCase() }),
-    });
-    const data = await res.json();
-    setInsuranceResult(JSON.stringify(data.data ?? data, null, 2));
+    if (!visit || !insuranceFin.trim()) return;
+    setInsuranceBusy(true);
+    try {
+      const res = await fetch("/api/insurance/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientFin: insuranceFin.trim().toUpperCase() }),
+      });
+      const data = await res.json();
+      const raw = (data.data ?? data) as InsuranceCard;
+      setInsuranceCard({
+        status: raw.status ?? (res.ok ? (raw.eligible ? "ELIGIBLE" : "NOT_ELIGIBLE") : "ERROR"),
+        eligible: raw.eligible,
+        insurerName: raw.insurerName ?? raw.payerName,
+        limitAzN: raw.limitAzN ?? raw.limit,
+        message: raw.message ?? raw.error,
+      });
+      setInsuranceOpen(false);
+    } finally {
+      setInsuranceBusy(false);
+    }
   }
 
   if (!visit) {
@@ -122,7 +153,10 @@ export default function VisitDetailPage() {
 
   const canComplete =
     visit.status !== "COMPLETED" &&
-    (visit.patientOrigin === "IN_HOUSE" || visit.patientOrigin === "HOTEL");
+    (visit.patientOrigin === "IN_HOUSE" || visit.patientOrigin === "WALK_IN");
+
+  const completeLabel =
+    visit.patientOrigin === "WALK_IN" ? t("completeToCashier") : t("completeVisit");
 
   return (
     <>
@@ -147,9 +181,27 @@ export default function VisitDetailPage() {
           apiBase={`/api/visits/${visit.id}/diagnoses`}
           title={t("diagnoses")}
         />
+        <VisitClinicalNotesPanel visitId={visit.id} />
+        <VisitCarePlanPanel visitId={visit.id} />
         <VisitCpoePanel visitId={visit.id} />
-        {insuranceResult && (
-          <pre className="rounded border bg-slate-50 p-2 text-xs">{insuranceResult}</pre>
+        {insuranceCard && (
+          <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm">
+            <p className="font-medium">{t("insuranceCardTitle")}</p>
+            <p>
+              {t("insuranceStatus")}: {insuranceCard.status ?? "—"}
+            </p>
+            {insuranceCard.insurerName && (
+              <p>
+                {t("insuranceInsurer")}: {insuranceCard.insurerName}
+              </p>
+            )}
+            {insuranceCard.limitAzN != null && insuranceCard.limitAzN !== "" && (
+              <p>
+                {t("insuranceLimit")}: {String(insuranceCard.limitAzN)} AZN
+              </p>
+            )}
+            {insuranceCard.message && <p className="text-slate-600">{insuranceCard.message}</p>}
+          </div>
         )}
         {message && <p className="text-sm text-slate-600">{message}</p>}
         <div className="flex flex-wrap gap-2">
@@ -160,7 +212,7 @@ export default function VisitDetailPage() {
               disabled={completing}
               onClick={() => setCompleteOpen(true)}
             >
-              {completing ? t("completing") : t("completeVisit")}
+              {completing ? t("completing") : completeLabel}
             </button>
           )}
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setPrescriptionOpen(true)}>
@@ -169,8 +221,15 @@ export default function VisitDetailPage() {
           <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setDiscountOpen(true)}>
             Discount
           </button>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void checkInsurance()}>
-            Insurance check
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => {
+              setInsuranceFin(visit.patientRef.refCode?.slice(0, 7) ?? "");
+              setInsuranceOpen(true);
+            }}
+          >
+            {t("insuranceCheck")}
           </button>
           <Link href={`/cashier?visitId=${visit.id}`} className={PRIMARY_BUTTON_CLASS}>
             Cashier
@@ -181,11 +240,13 @@ export default function VisitDetailPage() {
         </div>
       </div>
       <ModalShell open={completeOpen} title={t("completeConfirmTitle")} onClose={() => setCompleteOpen(false)}>
-        <p className="text-[13px]">{t("completeConfirmBody")}</p>
+        <p className="text-[13px]">
+          {visit.patientOrigin === "WALK_IN" ? t("completeToCashierBody") : t("completeConfirmBody")}
+        </p>
         <ModalFooter
           onCancel={() => setCompleteOpen(false)}
           onSubmit={() => void completeVisit()}
-          submitLabel={t("completeVisit")}
+          submitLabel={completeLabel}
         />
       </ModalShell>
       <ModalShell open={prescriptionOpen} title={t("prescriptionTitle")} onClose={() => setPrescriptionOpen(false)}>
@@ -202,6 +263,22 @@ export default function VisitDetailPage() {
           <input className={MODAL_INPUT_CLASS} placeholder="Reason" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} />
         </div>
         <ModalFooter onCancel={() => setDiscountOpen(false)} onSubmit={() => void applyDiscount()} submitLabel="Apply" />
+      </ModalShell>
+      <ModalShell open={insuranceOpen} title={t("insuranceCheck")} onClose={() => setInsuranceOpen(false)}>
+        <div className="space-y-2">
+          <label className="text-sm text-slate-600">{t("insuranceFinLabel")}</label>
+          <input
+            className={MODAL_INPUT_CLASS}
+            value={insuranceFin}
+            onChange={(e) => setInsuranceFin(e.target.value)}
+            maxLength={7}
+          />
+        </div>
+        <ModalFooter
+          onCancel={() => setInsuranceOpen(false)}
+          onSubmit={() => void checkInsurance()}
+          submitLabel={insuranceBusy ? t("insuranceChecking") : t("insuranceCheck")}
+        />
       </ModalShell>
     </>
   );

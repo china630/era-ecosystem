@@ -25,6 +25,9 @@ import {
 import { enterRequestTenant } from "@/lib/request-organization";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 
+/** Unfiltered due desk. Hit this and the page says the list is cut. */
+const EXTRA_DESK_TAKE = 2000;
+
 export type ExtraTicketListRow = {
   id: string;
   kind: "procedure" | "lab" | "visit";
@@ -77,6 +80,7 @@ export async function listExtrasAwaitingTicket(
   orders: ExtraTicketListRow[];
   needsFilter: boolean;
   needsDates: boolean;
+  truncated: boolean;
   scope: ExtraListScope;
 }> {
   const orgId = resolveClinicCutoverOrgId(organizationId);
@@ -86,9 +90,6 @@ export async function listExtrasAwaitingTicket(
   const q = filter?.q?.trim() ?? "";
   const locale = filter?.locale ?? "az";
   const scope: ExtraListScope = filter?.scope ?? "due";
-  if (!room && !q) {
-    return { dualRun, orders: [], needsFilter: true, needsDates: false, scope };
-  }
   const todayBounds = bakuDayBounds(todayBakuYmd());
   const todayStart = todayBounds.start;
   const todayEnd = todayBounds.end;
@@ -98,16 +99,16 @@ export async function listExtrasAwaitingTicket(
     const from = filter?.dateFrom?.trim() ?? "";
     const to = filter?.dateTo?.trim() ?? "";
     if (!from || !to) {
-      return { dualRun, orders: [], needsFilter: false, needsDates: true, scope };
+      return { dualRun, orders: [], needsFilter: false, needsDates: true, truncated: false, scope };
     }
     try {
       rangeStart = bakuDayBounds(from).start;
       rangeEnd = bakuDayBounds(to).end;
     } catch {
-      return { dualRun, orders: [], needsFilter: false, needsDates: true, scope };
+      return { dualRun, orders: [], needsFilter: false, needsDates: true, truncated: false, scope };
     }
     if (rangeEnd.getTime() <= rangeStart.getTime()) {
-      return { dualRun, orders: [], needsFilter: false, needsDates: true, scope };
+      return { dualRun, orders: [], needsFilter: false, needsDates: true, truncated: false, scope };
     }
   }
   const start = todayStart;
@@ -199,7 +200,7 @@ export async function listExtrasAwaitingTicket(
       },
       include: { patientRef: true, clinicalEpisode: { select: { roomNumber: true } } },
       orderBy: { scheduledAt: "asc" },
-      take: 400,
+      take: EXTRA_DESK_TAKE,
     }),
     prisma.labOrder.findMany({
       where: {
@@ -278,7 +279,7 @@ export async function listExtrasAwaitingTicket(
         },
       },
       orderBy: { createdAt: "asc" },
-      take: 400,
+      take: EXTRA_DESK_TAKE,
     }),
     prisma.visit.findMany({
       where: {
@@ -348,7 +349,7 @@ export async function listExtrasAwaitingTicket(
         appointment: { select: { scheduledAt: true } },
       },
       orderBy: { createdAt: "asc" },
-      take: 400,
+      take: EXTRA_DESK_TAKE,
     }),
   ]);
 
@@ -452,7 +453,8 @@ export async function listExtrasAwaitingTicket(
     .filter((row): row is ExtraTicketListRow => row != null)
     .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
 
-  return { dualRun, orders, needsFilter: false, needsDates: false, scope };
+  const truncated = procedures.length >= EXTRA_DESK_TAKE || labs.length >= EXTRA_DESK_TAKE || visits.length >= EXTRA_DESK_TAKE;
+  return { dualRun, orders, needsFilter: false, needsDates: false, truncated, scope };
 }
 
 export async function issueExtraTickets(

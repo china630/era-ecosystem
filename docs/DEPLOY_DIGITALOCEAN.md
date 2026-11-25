@@ -83,8 +83,11 @@ Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW An
 | Task | Command |
 |------|---------|
 | Logs | `docker compose -f docker-compose.prod.yml logs -f orchestrator` |
-| Prune old images | `docker image prune -f` (also in deploy workflow) |
+| Prune unused image tags | `./docker/scripts/prune-unused-images.sh` (also after every full/scoped run of `deploy-droplet.sh`) |
+| Host swap (8 GB droplet) | `./docker/scripts/ensure-swap-4g.sh` once — 4 GiB `/swapfile` + `fstab` + `vm.swappiness=10` |
 | Update stack | New `IMAGE_TAG` → `pull` → `migrate-all.sh` → `up -d` |
+
+**Memory caps (prod overlay):** `docker-compose.prod.yml` sets `mem_limit` for `clinic` (`CLINIC_MEM_LIMIT`, default `3584m`) and `hotel-pms` (`HOTEL_MEM_LIMIT`, default `2560m`) so one Node process is cgroup-killed instead of host-OOM’ing the box. Override via `.env` if the droplet size changes.
 
 ## Troubleshooting
 
@@ -92,6 +95,8 @@ Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW An
 |-------|--------|
 | Pull 401 / `ghcr.io/v2/: denied` | Actions deploy logs in with the job `github.token` (not a stale `GHCR_PULL_TOKEN` PAT). Manual pull still needs a PAT with `read:packages`. `.env` is scp'd; login/pull run in `docker/scripts/deploy-droplet.sh`. |
 | Migrate fails | Postgres up? `DATABASE_URL` in `.env`. Satellites without an init migration need `prisma/baseline.sql` (rebuild image) or host `migrate-all.sh` baseline via `npx prisma migrate diff`. |
+| Host OOM / clinic kill | Confirm `swapon --show` (4 G), `docker inspect era-clinic --format '{{.HostConfig.Memory}}'` (~3.5 GiB), prune unused tags; morning Saxla seating is the heavy path |
+| Disk near full | `./docker/scripts/prune-unused-images.sh` — unused GHCR tags only; running containers keep their image |
 | OOM on pull | Droplet RAM, prune images, deploy fewer services temporarily |
 | TLS fails | Port 80 reachable for ACME, DNS propagated |
 | Deploy SSH timeout | `dial tcp :22: i/o timeout` — open UFW/DO firewall port 22; verify `SSH_HOST` secret; optional `SSH_PORT` secret |

@@ -54,6 +54,8 @@ type ProgramBlock = {
   sortOrder: number;
   memberCodes: string[];
   assignMode: AssignMode | "";
+  autoStep?: "CHECKIN" | "DOCTOR" | "CLINICAL" | "";
+  includedInPackage?: boolean;
   fulfillment: ProgramBlockFulfillment | "";
   fulfillmentExplicit: boolean;
   quotaBasis: QuotaBasis | "";
@@ -64,6 +66,7 @@ type ProgramBlock = {
   quotaPerWeek: number | null;
   dailyUseCap: number | null;
   showInProcedures: boolean;
+  allowReplace: boolean;
   procedureOrder: number;
 };
 
@@ -194,6 +197,8 @@ function emptyBlockDraft(existing: ProgramBlock[]): ProgramBlock {
     sortOrder: existing.length,
     memberCodes: [],
     assignMode: "",
+    autoStep: "",
+    includedInPackage: true,
     fulfillment: "",
     fulfillmentExplicit: false,
     quotaBasis: "",
@@ -204,6 +209,7 @@ function emptyBlockDraft(existing: ProgramBlock[]): ProgramBlock {
     quotaPerWeek: null,
     dailyUseCap: 1,
     showInProcedures: false,
+    allowReplace: false,
     procedureOrder: 0,
   };
 }
@@ -575,6 +581,11 @@ export default function ProgramTemplatesAdminPage() {
           sortOrder: p.sortOrder ?? i,
           memberCodes: Array.isArray(p.memberCodes) ? p.memberCodes : [],
           assignMode: (p.assignMode as AssignMode) || "MANUAL",
+          autoStep:
+            p.autoStep === "CHECKIN" || p.autoStep === "DOCTOR" || p.autoStep === "CLINICAL"
+              ? p.autoStep
+              : "",
+          includedInPackage: p.includedInPackage !== false,
           fulfillment:
             p.fulfillment === "LAB_ORDER" ||
             p.fulfillment === "VISIT" ||
@@ -593,6 +604,7 @@ export default function ProgramTemplatesAdminPage() {
               : null,
           dailyUseCap: p.dailyUseCap ?? Math.max(1, Math.ceil(startRate)),
           showInProcedures: p.showInProcedures === true,
+          allowReplace: p.allowReplace === true,
           procedureOrder: p.procedureOrder ?? p.sortOrder ?? i,
         };
       }),
@@ -1038,11 +1050,17 @@ ${head}
           sortOrder: b.sortOrder ?? i,
           memberCodes: b.memberCodes,
           assignMode: b.assignMode || "MANUAL",
+          autoStep:
+            b.assignMode === "AUTO_ON_OPEN" || b.assignMode === "AUTO_DAY1"
+              ? b.autoStep || null
+              : null,
+          includedInPackage: b.includedInPackage !== false,
           fulfillment: b.fulfillment || fulfillmentFromKind(b.kind),
           fulfillmentExplicit: b.fulfillmentExplicit === true,
           quotaBasis: b.quotaBasis || "PER_NIGHTS",
           requiresDoctor: Boolean(b.requiresDoctor),
           showInProcedures: b.showInProcedures === true,
+          allowReplace: b.allowReplace === true,
           procedureOrder: b.showInProcedures ? Math.max(1, b.procedureOrder || 0) : 0,
           dailyDistinctCap:
             b.kind === "PHYSIO" || b.kind === "BATH" || b.kind === "PARAFFIN"
@@ -2128,6 +2146,17 @@ ${head}
                 />
                 {t("showInProcedures")}
               </label>
+              <label className="inline-flex items-center gap-2 text-[13px] text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={blockDraft.allowReplace}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setBlockDraft((prev) => (prev ? { ...prev, allowReplace: on } : prev));
+                  }}
+                />
+                {t("allowReplace")}
+              </label>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -2311,6 +2340,41 @@ ${head}
                 }
                 options={assignModeOptions}
               />
+              {blockDraft.assignMode === "AUTO_ON_OPEN" || blockDraft.assignMode === "AUTO_DAY1" ? (
+                <>
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t("autoStep")}
+                    value={blockDraft.autoStep || ""}
+                    onChange={(v) =>
+                      setBlockDraft({
+                        ...blockDraft,
+                        autoStep: String(v ?? "") as ProgramBlock["autoStep"],
+                      })
+                    }
+                    options={(["CHECKIN", "DOCTOR", "CLINICAL"] as const).map((value) => ({
+                      value,
+                      label: t(`autoStep_${value}`),
+                    }))}
+                  />
+                  <CatalogField
+                    kind="CLOSED_SMALL"
+                    label={t("includedInPackage")}
+                    hint={t("includedInPackageHint")}
+                    value={blockDraft.includedInPackage === false ? "no" : "yes"}
+                    onChange={(v) =>
+                      setBlockDraft({
+                        ...blockDraft,
+                        includedInPackage: v !== "no",
+                      })
+                    }
+                    options={[
+                      { value: "yes", label: t("includedInPackage") },
+                      { value: "no", label: t("includedInPackageHint") },
+                    ]}
+                  />
+                </>
+              ) : null}
               <CatalogField
                 kind="CLOSED_SMALL"
                 label={t("fulfillment")}

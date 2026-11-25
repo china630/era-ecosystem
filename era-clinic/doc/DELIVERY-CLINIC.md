@@ -30,9 +30,9 @@ PRD: [../PRD.md](../PRD.md)
 
 - [x] CLI-05 practitioner day matrix — `/appointments` + `GET /api/appointments/calendar`; legacy `/scheduling` page + `GET /api/scheduling/slots` + `getAvailableSlots` **removed** (no redirect stub)
 - [x] CLI-35 sidebar cleanup — Setup split into **Catalogs** / **Rules & data**; `/admin/wards` moved under Inpatient module; `/executive` merged into Home for owners (`canViewExecutive`) and route deleted; `/admin/catalog-favorites` merged into `/admin/diagnostic-catalog` favorites tab and route deleted; catalog labels disambiguated (Service prices vs Diagnostic catalog)
-- [x] CLI-36 practitioner shift rotation — `PractitionerScheduleRule`/`PractitionerScheduleException`; rule engine (WEEKLY / WEEK_PARITY / MONTH_DAY_PARITY / CYCLE) + per-day hours + exceptions; matrix blocks off-shift slots; create/reschedule guard (409 off-shift); SatAdmin **Shifts** modal on `/admin/master-data` (`GET/PUT /api/admin/practitioners/[id]/schedule`); ADR [clinic-practitioner-shifts.md](../../docs/adr/clinic-practitioner-shifts.md)
+- [x] CLI-36 practitioner shift rotation — `PractitionerScheduleRule`/`PractitionerScheduleException`; rule engine (WEEKLY / WEEK_PARITY / MONTH_DAY_PARITY / CYCLE) + per-day hours + exceptions; matrix blocks off-shift slots; create/reschedule guard (409 off-shift); SatAdmin **Shifts** modal on `/admin/master-data` (`GET/PUT /api/admin/practitioners/[id]/schedule`); ADR [clinic-practitioner-shifts.md](../../docs/adr/clinic/clinic-practitioner-shifts.md)
 - [x] CLI-37 UI list/filter standard — global `EraListFilterBar` instant filters (no Apply; Reset inline; `useDebouncedValue` 300ms); clinic home full-width + shared date; ops/SatAdmin tables name-first + Lucide icon row actions; DESIGN + UI_PLAYBOOK updated
-- [x] CLI-38 staff kind + monthly duty roster — `Practitioner.staffKind` (DOCTOR/NURSE/LAB/BATH/MASSAGE); procedure chart lists doctors, nurses, bath attendants, and massage therapists; several people per procedure SKU; `StaffDutyRoster`/`StaffDutyLine`/`StaffAbsence`; `/sanatorium/nurse-roster` (head doctor); planner walks the posted list and skips a HARD-busy person; clinic-local absences (Finance HR later); ADR [clinic-staff-duty-roster.md](../../docs/adr/clinic-staff-duty-roster.md)
+- [x] CLI-38 staff kind + monthly duty roster — `Practitioner.staffKind` (DOCTOR/NURSE/LAB/BATH/MASSAGE); procedure chart lists doctors, nurses, bath attendants, and massage therapists; several people per procedure SKU; `StaffDutyRoster`/`StaffDutyLine`/`StaffAbsence`; `/sanatorium/nurse-roster` (head doctor); planner walks the posted list and skips a HARD-busy person; clinic-local absences (Finance HR later); ADR [clinic-staff-duty-roster.md](../../docs/adr/clinic/clinic-staff-duty-roster.md)
 - [x] CLI-38b duty roster dual view + day substitution — by-nurse table (same SoT as by-procedure); `StaffDutyDayOverride`; planner: override → posted → **no** silent skilled-pool substitute when posted absent; head doctor only; ADR amend 2026-09-03
 - [x] CLI-39 sanatorium ICD-10 search/picker — WHO ICD-10 2019 `IcdCode`; `GET /api/icd`; `IcdPicker` (`CatalogField` SEARCHABLE) on `/sanatorium`; selectable CATEGORY/LEAF only
 - [x] CLI-40 visit + inpatient + print + favorites — `VisitDiagnosis` / `AdmissionDiagnosis`; `/visits/[id]`; `/inpatient` diagnoses modal; print checkup diagnosis block; `/admin/icd-favorites` (pin + retire, no title CRUD)
@@ -46,7 +46,7 @@ PRD: [../PRD.md](../PRD.md)
 ## K4
 
 - [x] LIS file import — **v1.1** (M11)
-- [x] Patient portal (deferred module M8) — `/portal` + `/api/portal/session`
+- [~] Patient portal (M8 PARTIAL) — `/portal` + `/api/portal/session` lab results only; not full booking/docs/pay
 
 ## K5 — Sanatorium bridge (Wave 3 Nafta)
 
@@ -106,32 +106,32 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 - [x] M6: Service catalog cache API + SatAdmin `/admin/catalog` + sync + Nafta import; catalog-driven procedure pricing on create/complete (`resolveProcedureAmount`); `ServiceCatalogKind` (PROCEDURE/DIAGNOSTIC/LAB/VISIT/OTHER) — procedure-type picker uses `kind=PROCEDURE` only
 - [x] M5: Critical lab flag UI on publish (beyond refMin/refMax)
 - [x] M9: Multi-room drag reschedule
-- [x] M14: Telehealth / portal deep link on lab publish
+- [s] M14: Telehealth STUB — module key + lab publish `telehealthUrl` only; no `/telehealth` UI
 
 ## Planned — v1.1
 
 - [x] M10: EHR templates / CPOE lite
 - [x] M10 pack: standard diagnostic + lab templates v1.2 — [DIAGNOSTIC_AND_LAB_CATALOG.md](./DIAGNOSTIC_AND_LAB_CATALOG.md) + `prisma/seed-data/diagnostic-lab-catalog.json` (85 studies, 48 lab panels, ~362 analytes, 13 visits, 7 packages)
 - [x] Diagnostic catalog UI — picker on `/lab-orders`, template result form on `/lab-orders/[id]`, favorites tab on `/admin/diagnostic-catalog` (`Tenant.catalogFavoriteCodes` + mode; standalone `/admin/catalog-favorites` route removed)
-- [x] Diagnostic catalog **DB source of truth** (CLI-32) - Modality/DiagnosticService/DiagnosticAnalyte; seed from JSON; SatAdmin `/admin/diagnostic-catalog` CRUD. Unscoped `AnalyteDictionary` (310 codes) fills the add-analyte modal; panel norms stay on the panel - ADR [clinic-diagnostic-catalog-db.md](../../docs/adr/clinic-diagnostic-catalog-db.md)
+- [x] Diagnostic catalog **DB source of truth** (CLI-32) - Modality/DiagnosticService/DiagnosticAnalyte; seed from JSON; SatAdmin `/admin/diagnostic-catalog` CRUD. Unscoped `AnalyteDictionary` (310 codes) fills the add-analyte modal; panel norms stay on the panel - ADR [clinic-diagnostic-catalog-db.md](../../docs/adr/clinic/clinic-diagnostic-catalog-db.md)
 - [x] Lab order normalization (CLI-32) - `LabOrderItem` + `LabResult`; dual-write legacy `testCode`/`resultJson`; backfill; results read-only after PUBLISHED; `/lab-orders` DATA_TABLE + filters/pagination
 - [x] Patient card clinical sections — `/patients/[id]`: contraindications (collapsed by default) → ICD-10 (open episode) → now/next (incl. pending labs ORDERED/COLLECTED/IN_PROGRESS) → results preview → plan preview; history/plan modals; `GET /api/patients/:id/card-summary` + `…/card-feed`; diagnoses `GET/POST/DELETE /api/patients/:id/diagnoses`; admin card limits in settings
 - [x] Patient clinical demographics — sex, birthDate→age, blood group, emergency contact on `PatientRef` ops cache; register + card UI (CLI-28 / ADR clinic-patient-clinical-demographics)
 - [x] Ops home (Ana səhifə) — `/` day dashboard + `GET /api/ops/day-summary` (appointments, procedures by status/type, queue, labs, overdue; inpatient beds when preset) (CLI-29)
 - [x] Patient clinical timeline API (legacy feed) — `GET /api/patients/:id/timeline` (Baku day groups; still available). Linked Appointment+Visit collapse to one visit row (slot `scheduledAt`, href `/visits/[id]`); appointment-only rows remain for slots without a visit.
-- [x] Procedure day-ops (CLI-26) — ADR [clinic-procedure-day-ops.md](../../docs/adr/clinic-procedure-day-ops.md): check-in → `CHECKED_IN`; auto-complete by `endsAt`; `NO_SHOW` burns quota + may charge; MANUAL channel + `checkInRequiresQr`; cron auto-complete / no-show sweep; nurse board (queue / in progress / late until day end / done, fullscreen; seated `PENDING_PAY` ages to Late after deadline); resource matrix modal Check-in when `receptionProcedureCheckIn` (Nafta default on); bonus = `checkedInAt` + status in CHECKED_IN/COMPLETED
-- [x] Multi-resource scheduling (CLI-30) — ADR [clinic-multi-resource-scheduling.md](../../docs/adr/clinic-multi-resource-scheduling.md): Pattern A sanatorium (`ProcedureTypeRequirement` + `PractitionerSkill` + `ProcedureAllocation`); Pattern B outpatient optional `Appointment.resourceId`; SatAdmin skills/requirements on `/admin/master-data` (Add+Edit: resource + STAFF HARD/SOFT; backfill missing reqs); planner honors SOFT (shared nurse pool)
-- [x] Scheduling time layers (CLI-26/30/31 follow-up) — ADR [clinic-scheduling-time-layers.md](../../docs/adr/clinic-scheduling-time-layers.md): per-type `resourceGapMinutes` + `patientRestMinutes`; occupying-tail; Nafta gel 10/0/15; laser/darsonval gap 0; paraffin cycle 20; baths follow tenant 09–17 (SatAdmin may extend a type); SOFT nurse ≠ cabin gap
-- [x] Doctor-confirmed FIFO planning (CLI-31) — ADR [clinic-doctor-confirmed-fifo-planning.md](../../docs/adr/clinic-doctor-confirmed-fifo-planning.md): package → `PROPOSED`; doctor `POST /api/procedures/confirm` → `placeConfirmedProcedures`; incremental context from existing orders; `bodyPart` + rotation/substitution rules; peak `extendedEndHour`; cabins, body part, rotation, and substitution are master data (`planning-rules` import does not rewrite them); bulk-cancel+replace; external lab >90d block; fasting next-morning labs
-- [x] Clinic→hotel capacity foresight (CLI-27) — ADR [clinic-hotel-capacity-foresight.md](../../docs/adr/clinic-hotel-capacity-foresight.md): remaining% slot inventory; warn ≤15% / critical blocks medical booking; `SATELLITE_CLINIC_CAPACITY_CHANGED`
+- [x] Procedure day-ops (CLI-26) — ADR [clinic-procedure-day-ops.md](../../docs/adr/clinic/clinic-procedure-day-ops.md): check-in → `CHECKED_IN`; auto-complete by `endsAt`; `NO_SHOW` burns quota + may charge; MANUAL channel + `checkInRequiresQr`; cron auto-complete / no-show sweep; nurse board (queue / in progress / late until day end / done, fullscreen; seated `PENDING_PAY` ages to Late after deadline); resource matrix modal Check-in when `receptionProcedureCheckIn` (Nafta default on); bonus = `checkedInAt` + status in CHECKED_IN/COMPLETED
+- [x] Multi-resource scheduling (CLI-30) — ADR [clinic-multi-resource-scheduling.md](../../docs/adr/clinic/clinic-multi-resource-scheduling.md): Pattern A sanatorium (`ProcedureTypeRequirement` + `PractitionerSkill` + `ProcedureAllocation`); Pattern B outpatient optional `Appointment.resourceId`; SatAdmin skills/requirements on `/admin/master-data` (Add+Edit: resource + STAFF HARD/SOFT; backfill missing reqs); planner honors SOFT (shared nurse pool)
+- [x] Scheduling time layers (CLI-26/30/31 follow-up) — ADR [clinic-scheduling-time-layers.md](../../docs/adr/clinic/clinic-scheduling-time-layers.md): per-type `resourceGapMinutes` + `patientRestMinutes`; occupying-tail; Nafta gel 10/0/15; laser/darsonval gap 0; paraffin cycle 20; baths follow tenant 09–17 (SatAdmin may extend a type); SOFT nurse ≠ cabin gap
+- [x] Doctor-confirmed FIFO planning (CLI-31) — ADR [clinic-doctor-confirmed-fifo-planning.md](../../docs/adr/clinic/clinic-doctor-confirmed-fifo-planning.md): package → `PROPOSED`; doctor `POST /api/procedures/confirm` → `placeConfirmedProcedures`; incremental context from existing orders; `bodyPart` + rotation/substitution rules; peak `extendedEndHour`; cabins, body part, rotation, and substitution are master data (`planning-rules` import does not rewrite them); bulk-cancel+replace; external lab >90d block; fasting next-morning labs
+- [x] Clinic→hotel capacity foresight (CLI-27) — ADR [clinic-hotel-capacity-foresight.md](../../docs/adr/clinic/clinic-hotel-capacity-foresight.md): remaining% slot inventory; warn ≤15% / critical blocks medical booking; `SATELLITE_CLINIC_CAPACITY_CHANGED`
 - [x] M11: LIS analyzer import
-- [x] M12: Insurance / DMS eligibility
+- [~] M12: Insurance / DMS eligibility — PARTIAL Finance proxy (not full policy/limits product)
 - [x] Ops UX wave (2026-07-19) — Tenant working hours in `/admin/settings`; patient registry paginated filters + anamnesis gate; inpatient ward tiles + `/inpatient/census`; matrix horizon/patient filters
-- [x] M13: Inpatient / bed management — **SHIPPED** (ADT-light + `/admin/wards` modal CRUD + daily charge cron + census grid)
+- [~] M13: Inpatient / bed management — **PARTIAL** ward-lite (ADT-light + `/admin/wards` + daily charge + census); not full HIS
 
 ## vNext — Clinic + shared fiscal (2026-06)
 
-ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `20260603120000_clinic_vnext`.
+ADR: [sanatorium-vnext.md](../../docs/adr/clinic/sanatorium-vnext.md). Migration: `20260603120000_clinic_vnext`.
 
 ### Foundation
 
@@ -160,17 +160,18 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 
 - [x] Billing router: `WALK_IN` → finance event; `IN_HOUSE` → hotel `room-charge` MEDICAL
 - [x] Nafta dual-run extra tickets: `/reception/extra-tickets` + hotel Elektraweb outbox at issue (not `COMPLETED`); nurse `TICKET_REQUIRED`. HOT-06 remains HEADLESS.
-- [~] CLI-58 SCREEN: bath day series (`/admin/procedure-rules` tab) + Saxla auto-seat (`defaultBathMode`, closed-day rest flags, weekly naftalan cap in `/admin/settings`); first new bath = Saxla start day+hour, later days clinic open; pin miss → afternoon then next working day (morning+afternoon) before abandon; bath minutes and closed weekdays share `listClinicDays` with physio; manual matrix move stays same-day; the plan card may change the day through `evaluateCandidateSlot` (block cap, bath rest, weekly naftalan, checkout until 12:00; no snap); `/admin/settings` reseat overlaps + move off closed days (super-admin); package modal has no mini calendar; bath rest is the series rhythm from the first remaining bath, plus stored `physioFields.restYmds`; `planning-rules` import creates missing series only; UAT open — not SHIPPED
+- [~] CLI-58 SCREEN: day series (`/admin/procedure-rules` tab: per-series `modeCode`/`weeklyCap`/`afternoonPinRetry`/`fillsRestDays` + clinic defaults) + joint Saxla seat for all day-series SKUs; pin miss → afternoon (if series allows) then `nextLegalSeriesDay` fact-replan capped by stay end (not last+21); bath minutes and closed weekdays share `listClinicDays` with physio; manual matrix move stays same-day; the plan card may change the day through `evaluateCandidateSlot` (block cap, bath rest, weekly cap, checkout until 12:00; no snap); `/admin/settings` reseat overlaps + move off closed days (super-admin); Settings «Baths» chip removed (link to Day series); package modal has no mini calendar; bath rest is the series rhythm from the first remaining bath, plus stored `physioFields.restYmds`; `planning-rules` import creates missing series only (HYDRO/IODINE fills-rest); UAT open — not SHIPPED
 - [~] CLI-59 SCREEN: clinic calendar day open/close (`/admin/settings`) + super-admin schedule recalc preview/apply; UAT open — not SHIPPED
 - [~] CLI-60 SCREEN: Word lab blanks (`/admin/lis-profiles` mapper; lab order reads a filled `.docx` into result lines); `LAB-CBC` + `LAB-URINE` on every package apply; urine U-SG 1010–1030, U-PH 6.0–7.4; UAT open — not SHIPPED
-- [~] CLI-57 SCREEN: package balance assign modal + extras `PENDING_PAY`; org route `PLAN_BEFORE_PAY` (default, legacy `SHOW_ON_PLAN`) seats each unpaid extra on its own day and cabin, nurse red block, day-end `UNPAID_MISSED` (today seated + overdue + unseated before today); `/reception/extra-tickets` date `DD.MM.YYYY HH:mm` when `scheduledAt` set; checkout closes all remaining unpaid; `HOLD_UNTIL_PAY` hides them until pay; Pay keeps a held cabin or seats then ticket×3; storno of one cheque line; `inPackage` flag; walk-in extras-only; Replace+FO manager; per-block daily cap (physio 3 / bath 1 / paraffin 1, paid extras in the block share it); bath Saxla pin miss afternoon/next-day (CLI-58); `package_assign` audit `startOn`/`startHour`; over-quota lab/visit → paid `LabOrder`/`Visit` (Diagnostics tab + pay-gate); UAT open — not SHIPPED. ADR `docs/adr/clinic-paid-diagnostics-from-episode.md`
-- [~] Paid diagnostics from episode SCREEN: package burns `amountNet=0`; heal; DiagnosticsAssignModal = package lanes (assignedStudies lock, accordion, Ödəniləcək, no Pay); auto LAB analyses+diagnostics stamp inPackage like visits + studyBalances heal (assign GET + day-1 linkExisting; remaining quota); Extra tickets labs+visits; `QUOTA_REMAINING`; UAT open — not SHIPPED. ADR `docs/adr/clinic-paid-diagnostics-from-episode.md`
-- [~] CLI-64 SCREEN: patient assignment ledger `/reports/patient-assignments` + print; one episode; procedures/labs/visits; room+kind filters; amount after payment acceptance; UAT open — not SHIPPED. ADR `docs/adr/clinic-patient-assignment-ledger.md`
-- [~] Walk-in groups (CLI-61 SCREEN): `/sanatorium/walk-in-parties` — list + ModalShell CRUD; empty selects; sticky doctor; physio on procedure add; line grid + Eye; no journal in ops modal; hotel cashier basket (`basketRef`). Not SHIPPED. ADR `docs/adr/clinic-walk-in-party.md`
-- [~] Open attendance + SAME_DAY (CLI-62 SCREEN): `ProcedureType.openAttendance` → `schedulingMode` OPEN day-bucket (different codes share a day, same code once); Saxla/confirm/reseat via `placeOrPinOrders`; nurse seat-on-arrival; SAME_DAY rebase seated FIXED only; matrix foresight; settings STRICT|SAME_DAY+until; `orderCountsForWallClockRest` — OPEN unseated day-anchor out of FIXED restGap / overlap / compatibility. UAT §11b open — not SHIPPED. ADR `docs/adr/clinic-open-attendance.md`
+- [~] CLI-57 SCREEN: package balance assign modal + extras `PENDING_PAY`; org route `PLAN_BEFORE_PAY` (default, legacy `SHOW_ON_PLAN`) seats each unpaid extra on its own day and cabin, nurse red block, day-end `UNPAID_MISSED` (today seated + overdue + unseated before today); `/reception/extra-tickets` date `DD.MM.YYYY HH:mm` when `scheduledAt` set; checkout closes all remaining unpaid; `HOLD_UNTIL_PAY` hides them until pay; Pay keeps a held cabin or seats then ticket×3; storno of one cheque line; `inPackage` flag; walk-in extras-only; Replace+FO manager; per-block daily cap (physio 3 / bath 1 / paraffin 1, paid extras in the block share it); bath Saxla pin miss afternoon/next-day (CLI-58); `package_assign` audit `startOn`/`startHour`; over-quota lab/visit → paid `LabOrder`/`Visit` (Diagnostics tab + pay-gate); UAT open — not SHIPPED. ADR `docs/adr/clinic/clinic-paid-diagnostics-from-episode.md`
+- [~] Paid diagnostics from episode SCREEN: package burns `amountNet=0`; heal; DiagnosticsAssignModal = package lanes (assignedStudies lock, accordion, Ödəniləcək, no Pay); auto LAB analyses+diagnostics stamp inPackage like visits + studyBalances heal (assign GET + day-1 linkExisting; remaining quota); Extra tickets labs+visits; `QUOTA_REMAINING`; UAT open — not SHIPPED. ADR `docs/adr/clinic/clinic-paid-diagnostics-from-episode.md`
+- [~] CLI-64 SCREEN: patient assignment ledger `/reports/patient-assignments` + print; one episode; procedures/labs/visits; room+kind filters; amount after payment acceptance; UAT open — not SHIPPED. ADR `docs/adr/clinic/clinic-patient-assignment-ledger.md`
+- [~] Walk-in groups (CLI-61 SCREEN): `/sanatorium/walk-in-parties` — list + ModalShell CRUD; empty selects; sticky doctor; physio on procedure add; line grid + Eye; no journal in ops modal; hotel cashier basket (`basketRef`). Not SHIPPED. ADR `docs/adr/clinic/clinic-walk-in-party.md`
+- [~] Open attendance + SAME_DAY (CLI-62 SCREEN): `ProcedureType.openAttendance` → `schedulingMode` OPEN day-bucket (different codes share a day, same code once); Saxla/confirm/reseat via `placeOrPinOrders`; nurse seat-on-arrival; SAME_DAY rebase seated FIXED only; matrix foresight; settings STRICT|SAME_DAY+until; `orderCountsForWallClockRest` — OPEN unseated day-anchor out of FIXED restGap / overlap / compatibility. UAT §11b open — not SHIPPED. ADR `docs/adr/clinic/clinic-open-attendance.md`
+- [~] Courses without room (CLI-69 SCREEN): `/sanatorium` **New course** menu (Ambulatory / Group / Staff); ambulatory `courseDays` → `plannedEndsOn` + no-package; Workforce picker + `POST …/staff-course` → `PKG-STANDART`; `PATCH …/course-window`; package assign on WALK_IN only with `ProgramInstance`. UAT §11c open — not SHIPPED. ADR `docs/adr/clinic/clinic-course-without-room.md`
 - [x] Hotel lifecycle emit on bus only (no direct hotel→clinic HTTP); orchestrator fan-out → clinic `POST /api/integration/hotel-lifecycle` (entitlement `industry_clinic` + `SatelliteEndpoint` registry); program templates + scheduler service
-- [~] Wave A dual-run (CLI-50 SCREEN): episode always opens without hotel `programCode`; staff Select `PKG-STANDART|PREMIUM|DERMO|DETOKS` on `/sanatorium`; `?episode=` opens the patient card Package tab; ADR [nafta-medical-sku-dual-run.md](../../docs/adr/nafta-medical-sku-dual-run.md)
-- [~] Wave B PDF quota knots (CLI-51 SCREEN): `ProgramTemplateQuotaKnot` + `quotaFor` interpolate; `ProgramTemplateBlockMember` whitelist; **template versioning** + `entitlementSnapshot` pin; `recalcProgramQuotas` night-only keeps pin; super-admin package apply adopts the current version and cancels excess future `SCHEDULED`/`PROPOSED`; `/admin/program-templates` entitlement blocks + knots matrix (`max-w-4xl`); ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md)
+- [~] Wave A dual-run (CLI-50 SCREEN): episode always opens without hotel `programCode`; staff Select `PKG-STANDART|PREMIUM|DERMO|DETOKS` on `/sanatorium`; `?episode=` opens the patient card Package tab; ADR [nafta-medical-sku-dual-run.md](../../docs/adr/clinic/nafta-medical-sku-dual-run.md)
+- [~] Wave B PDF quota knots (CLI-51 SCREEN): `ProgramTemplateQuotaKnot` + `quotaFor` interpolate; `ProgramTemplateBlockMember` whitelist; **template versioning** + `entitlementSnapshot` pin; `recalcProgramQuotas` night-only keeps pin; super-admin package apply adopts the current version and cancels excess future `SCHEDULED`/`PROPOSED`; `/admin/program-templates` entitlement blocks + knots matrix (`max-w-4xl`); ADR [nafta-program-quota-knots.md](../../docs/adr/clinic/nafta-program-quota-knots.md)
 - [~] W1 entitlement usage: LabOrderItem/VisitServiceLine `inPackage`+`packageQuotaCode`; single COUNT SoT (`entitlement-usage.service`); charge uses `packageQuotaCode`; intake stamps balances when ProgramInstance matches; UI UAT deferred
 - [~] W2 block axes + auto-apply: `assignMode`/`fulfillment`/`quotaBasis`/`requiresDoctor` on template blocks; `applyPackageAutoBlocks` (course save calls `CARE_TEAM`; episode open does not; OPEN/DAY1/MANUAL_RETRY remain); `packageSignal` + confirm-no-package; intake blocks on import `#23` PKG-* (optional `npm run db:seed:intake-blocks` / `db:seed:demo` only); admin matrix PER_STAY + auto badge; UI UAT deferred
 - [~] W3 entitlement charge: one catalog price; `resolveEntitlementCharge` for labs/visits/procedures; intake/lab create priced from entitlement; admin `?missingListPrice=1`; cashier skips zero package lines
@@ -203,7 +204,7 @@ Trilingual print routes (lab/USM/checkup/procedures), tenant branding, qualitati
 
 ### Planned — CLI-47 procedure TTK
 
-Docs only (2026-08-21): [clinic-procedure-consumable-ttk.md](../../docs/adr/clinic-procedure-consumable-ttk.md). Dummy `PROC-*` on complete remains until W1.
+Docs only (2026-08-21): [clinic-procedure-consumable-ttk.md](../../docs/adr/clinic/clinic-procedure-consumable-ttk.md). Dummy `PROC-*` on complete remains until W1.
 
 ### W3 — type-gated physio order fields (CLI-49)
 
@@ -219,7 +220,7 @@ Docs only (2026-08-21): [clinic-procedure-consumable-ttk.md](../../docs/adr/clin
 
 ### CLI-55 episode as care course — SCREEN
 
-[clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-clinical-course.md). Waves W1–W5 landed; keep SCREEN until field punch (not SHIPPED).
+[clinic-episode-as-clinical-course.md](../../docs/adr/clinic/clinic-episode-as-clinical-course.md). Waves W1–W5 landed; keep SCREEN until field punch (not SHIPPED).
 
 - [x] Anamnesis + contraindications on `ClinicalEpisode` (not demographics gate)
 - [x] `clinicalEpisodeId` on procedures, visits; labs stamped when OPEN exists
@@ -231,4 +232,13 @@ Docs only (2026-08-21): [clinic-procedure-consumable-ttk.md](../../docs/adr/clin
 ### CLI-WF-PWD-01 local password
 
 - [x] Profile → `/account/password`; first workforce PIN `0000`; `PATCH /api/auth/password`; SSO accounts 403
+
+### MED-P1-06…11 foundations (2026-11-25) — SCREEN
+
+- [~] CLI-65 ambulatory care plan — `AmbulatoryCarePlan` + `/api/visits/[id]/care-plan` + visit panel
+- [~] CLI-66 diets — `DietTable` / `DietAssignment` migration `20261125150000_diets`; portion list API/print
+- [~] CLI-67 waitlist — `WaitlistEntry`; `/api/waitlist`; appointments panel + `/admin/waitlist`
+- [~] CLI-68 KPI — `noShowRate` on day-summary; `GET /api/ops/clinic-kpis`
+- [~] CLI-23 — `src/integration/lis/README.md` adapter port; stays STUB
+- [ ] P1-08 — CLI-55/57/58/62 UAT → SHIPPED; hotel medical dual-write freeze (ADR note only)
 

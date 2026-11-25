@@ -15,6 +15,8 @@ module.exports = {
           moduleResolution: "node",
           esModuleInterop: true,
           jsx: "react-jsx",
+          experimentalDecorators: true,
+          emitDecoratorMetadata: true,
         },
       },
     ],

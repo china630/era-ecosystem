@@ -18,7 +18,10 @@ const proxies: ProxyOptions[] = [
   { enginePrefix: "gl", entitlementModule: "banking_core", logAction: "GL_READ" },
   { enginePrefix: "islamic", entitlementModule: "banking_islamic", logAction: "ISLAMIC_PROXY" },
   { enginePrefix: "loans", entitlementModule: "banking_loans", logAction: "LOANS_PROXY" },
+  { enginePrefix: "leasing", entitlementModule: "banking_loans", logAction: "LEASING_PROXY" },
+  { enginePrefix: "mfi", entitlementModule: "banking_loans", logAction: "MFI_PROXY" },
   { enginePrefix: "markets", entitlementModule: "banking_markets", logAction: "MARKETS_PROXY" },
+  { enginePrefix: "mis", entitlementModule: "banking_regreporting", logAction: "MIS_PROXY" },
   { enginePrefix: "payments", entitlementModule: "banking_payments", logAction: "PAYMENTS_PROXY" },
   { enginePrefix: "postings", entitlementModule: "banking_core", logAction: "POSTINGS_PROXY" },
   { enginePrefix: "product-templates", entitlementModule: "banking_core", logAction: "PRODUCT_TEMPLATES_PROXY" },
@@ -27,6 +30,7 @@ const proxies: ProxyOptions[] = [
   { enginePrefix: "trade", entitlementModule: "banking_trade", logAction: "TRADE_PROXY" },
   { enginePrefix: "treasury", entitlementModule: "banking_treasury", logAction: "TREASURY_PROXY" },
   { enginePrefix: "wealth", entitlementModule: "banking_wealth", logAction: "WEALTH_PROXY" },
+  { enginePrefix: "webhooks", entitlementModule: "banking_core", logAction: "WEBHOOKS_PROXY" },
 ];
 
 type ExpressReq = {

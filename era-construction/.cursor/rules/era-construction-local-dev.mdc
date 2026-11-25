@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Construction — local development
 
-**Inherits:** monorepo root `.cursor/rules/`. Port **3206** — `npm run dev`.
+**Inherits:** monorepo root `.cursor/rules/`. Port **3206** — `npm run front` (proxy). Next **23206**, Nest **13206** (`npm run nest` → native Controllers in `nest/native/`; `nest:generate` retired).
 
 Prisma: `prisma/schema.prisma`. **Env:** standard satellite vars.
 

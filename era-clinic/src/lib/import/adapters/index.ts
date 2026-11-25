@@ -21,6 +21,7 @@ import {
 } from "@/domain/patient/patient-ref-code";
 import { splitFullNameToParts } from "@era/satellite-kit";
 import { ensureWritableCurrentTemplate } from "@/domain/sanatorium/program-template-admin";
+import { isReplaceableQuotaLine } from "@/domain/sanatorium/package-assign-quota";
 import { ensureIntakeBlocksOnTemplate } from "@/domain/sanatorium/intake-blocks";
 import { ensurePlanningDefaults } from "@/domain/planning/ensure-planning-defaults";
 
@@ -1726,6 +1727,7 @@ const programTemplatesAdapter: ImportAdapter<{
           procedureCode: row.procedureCode,
           procedureName: row.procedureName,
           quotaTotal: row.qty,
+          allowReplace: isReplaceableQuotaLine(row.procedureCode, row.procedureName),
         },
       });
     } else if (row.qty > line.quotaTotal) {

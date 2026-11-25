@@ -8,25 +8,28 @@ datasource db {
 }
 
 model Tenant {
-  id        String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  code String
-  name      String
-  createdAt DateTime @default(now())
-  outlets   Outlet[]
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  code           String
+  name           String
+  /// When non-empty, replaces the platform audit exempt prefixes for this org.
+  auditExemptPrefixes String[] @default([]) @map("audit_exempt_prefixes")
+  createdAt      DateTime @default(now())
+  outlets        Outlet[]
+
   @@unique([organizationId, code])
   @@index([organizationId])
 }
 
 model Outlet {
-  id        String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  tenantId  String
-  code      String
-  name      String
-  preset    String?
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  tenantId       String
+  code           String
+  name           String
+  preset         String?
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt      DateTime @default(now())
 
   @@unique([tenantId, code])
   @@index([organizationId])
@@ -34,12 +37,16 @@ model Outlet {
 
 model Project {
   id                   String                @id @default(cuid())
-  organizationId String @map("organization_id")
-  code String
+  organizationId       String                @map("organization_id")
+  code                 String
   name                 String
+  /// FLAT_BOQ | ESTIMATE_HIERARCHY — dual mode in one satellite (ADR construction-estimate-hierarchy)
+  estimateMode         String                @default("FLAT_BOQ") @map("estimate_mode")
+  financeContractId    String?               @map("finance_contract_id")
   progressActs         ProgressAct[]
   materialRequisitions MaterialRequisition[]
   boqLines             BoqLine[]
+  estimatePackages     EstimatePackage[]
   dailyLogs            DailyLog[]
   punchListItems       PunchListItem[]
   subcontractorClaims  SubcontractorClaim[]
@@ -47,126 +54,277 @@ model Project {
   equipmentLogs        EquipmentLog[]
   drawingRevisions     DrawingRevision[]
   timesheetEntries     TimesheetEntry[]
+  parties              ProjectParty[]
+  phases               ProjectPhase[]
+  locations            ProjectLocation[]
+  rfis                 Rfi[]
+  submittals           Submittal[]
+  inspections          SiteInspection[]
+  changeRequests       ChangeRequest[]
+  deletedAt            DateTime?             @map("deleted_at")
   createdAt            DateTime              @default(now())
+
   @@unique([organizationId, code])
   @@index([organizationId])
 }
 
+/// Versioned five-level smeta pack (ops). Ledger stays Finance.
+model EstimatePackage {
+  id                String             @id @default(cuid())
+  organizationId    String             @map("organization_id")
+  projectId         String             @map("project_id")
+  version           Int                @default(1)
+  title             String
+  status            String             @default("DRAFT")
+  notes             String?
+  financeContractId String?            @map("finance_contract_id")
+  approvedAt        DateTime?          @map("approved_at")
+  deletedAt         DateTime?          @map("deleted_at")
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  documents         EstimateDocument[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  @@unique([projectId, version])
+  @@index([organizationId])
+  @@index([projectId, status])
+}
+
+/// LCR | OCR | SC | SSR | COST_SUMMARY (421/пр §25 kinds).
+model EstimateDocument {
+  id               String           @id @default(cuid())
+  organizationId   String           @map("organization_id")
+  packageId        String           @map("package_id")
+  kind             String
+  cipher           String
+  title            String
+  parentDocumentId String?          @map("parent_document_id")
+  chapterNo        Int?             @map("chapter_no")
+  amountNet        Decimal          @default(0) @db.Decimal(14, 2) @map("amount_net")
+  sortOrder        Int              @default(0) @map("sort_order")
+  deletedAt        DateTime?        @map("deleted_at")
+  package          EstimatePackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  parent           EstimateDocument? @relation("EstimateDocTree", fields: [parentDocumentId], references: [id], onDelete: SetNull)
+  children         EstimateDocument[] @relation("EstimateDocTree")
+  lines            EstimateLine[]
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  @@unique([packageId, cipher])
+  @@index([organizationId])
+  @@index([packageId, kind])
+}
+
+model EstimateLine {
+  id             String           @id @default(cuid())
+  organizationId String           @map("organization_id")
+  documentId     String           @map("document_id")
+  itemCode       String           @map("item_code")
+  description    String
+  unit           String           @default("ед.")
+  qty            Decimal          @db.Decimal(14, 3)
+  unitRate       Decimal          @default(0) @db.Decimal(14, 4) @map("unit_rate")
+  amountNet      Decimal          @db.Decimal(14, 2) @map("amount_net")
+  sortOrder      Int              @default(0) @map("sort_order")
+  boqLineId      String?          @map("boq_line_id")
+  deletedAt      DateTime?        @map("deleted_at")
+  document       EstimateDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  @@index([documentId, sortOrder])
+  @@index([organizationId])
+  @@index([itemCode])
+}
+
+model ProjectPhase {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id")
+  code           String
+  name           String
+  sortOrder      Int       @default(0) @map("sort_order")
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@unique([projectId, code])
+  @@index([organizationId])
+}
+
+model ProjectLocation {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id")
+  code           String
+  name           String
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@unique([projectId, code])
+  @@index([organizationId])
+}
+
+/// Ops participant on a project. Money identity stays Finance counterparty.
+model ProjectParty {
+  id                    String    @id @default(cuid())
+  organizationId        String    @map("organization_id")
+  projectId             String    @map("project_id")
+  role                  String
+  displayName           String    @map("display_name")
+  financeCounterpartyId String?   @map("finance_counterparty_id")
+  deletedAt             DateTime? @map("deleted_at")
+  project               Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  @@index([projectId, role])
+  @@index([organizationId])
+}
+
 model ProjectTask {
-  id          String    @id @default(cuid())
-  organizationId String @map("organization_id")
-  projectId   String
-  name        String
-  startDate   DateTime  @db.Date
-  endDate     DateTime  @db.Date
-  dependsOnId String?
-  progressPct Int       @default(0)
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String
+  name           String
+  startDate      DateTime  @db.Date
+  endDate        DateTime  @db.Date
+  dependsOnId    String?
+  progressPct    Int       @default(0)
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([organizationId])
 }
 
 model EquipmentLog {
-  id           String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  projectId    String
-  equipmentCode String
-  hours        Decimal  @db.Decimal(10, 2)
-  logDate      DateTime @db.Date
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String
+  equipmentCode  String
+  hours          Decimal   @db.Decimal(10, 2)
+  logDate        DateTime  @db.Date
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
 
   @@index([projectId, logDate])
   @@index([organizationId])
 }
 
 model DrawingRevision {
-  id          String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  projectId   String
-  drawingCode String
-  revision    String
-  fileName    String?
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String
+  drawingCode    String
+  revision       String
+  sheetNumber    String?   @map("sheet_number")
+  /// CURRENT | SUPERSEDED (Wave 1 stub)
+  status         String    @default("CURRENT")
+  fileName       String?
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  punchListItems PunchListItem[]
+  createdAt      DateTime  @default(now())
 
   @@index([projectId, drawingCode])
   @@index([organizationId])
 }
 
 model TimesheetEntry {
-  id              String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  projectId       String
-  workerRef       String
-  cpEmploymentId  String?  @map("cp_employment_id")
-  hours           Decimal  @db.Decimal(10, 2)
-  workDate        DateTime @db.Date
-  source          String   @default("CSV")
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt       DateTime @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String
+  workerRef      String
+  cpEmploymentId String?   @map("cp_employment_id")
+  hours          Decimal   @db.Decimal(10, 2)
+  workDate       DateTime  @db.Date
+  source         String    @default("CSV")
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
 
   @@index([projectId, workDate])
   @@index([organizationId])
 }
 
 model DailyLog {
-  id         String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  projectId  String
-  logDate    DateTime @db.Date
-  weather    String?
-  crewCount  Int?
-  notes      String?
-  reportedBy String?
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String
+  logDate        DateTime  @db.Date
+  weather        String?
+  crewCount      Int?
+  notes          String?
+  reportedBy     String?
+  /// Crew headcount by ProjectParty id → count
+  crewByPartyJson String?  @map("crew_by_party_json")
+  equipmentNotes String?   @map("equipment_notes")
+  photoUrl       String?   @map("photo_url")
+  /// DRAFT | SUBMITTED
+  status         String    @default("DRAFT")
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
 
   @@index([projectId, logDate])
   @@index([organizationId])
 }
 
 model PunchListItem {
-  id          String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  projectId   String
-  location    String
-  description String
-  status      String   @default("OPEN")
-  photoUrl    String?
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id                 String    @id @default(cuid())
+  organizationId     String    @map("organization_id")
+  projectId          String
+  location           String
+  description        String
+  status             String    @default("OPEN")
+  photoUrl           String?
+  assignee           String?
+  dueDate            DateTime? @map("due_date") @db.Date
+  drawingRevisionId  String?   @map("drawing_revision_id")
+  pinX               Decimal?  @map("pin_x") @db.Decimal(8, 4)
+  pinY               Decimal?  @map("pin_y") @db.Decimal(8, 4)
+  /// BIM lite: IFC / model element ref (no authoring).
+  ifcElementId       String?   @map("ifc_element_id") @db.VarChar(128)
+  externalViewerUrl  String?   @map("external_viewer_url") @db.VarChar(512)
+  deletedAt          DateTime? @map("deleted_at")
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  drawingRevision    DrawingRevision? @relation(fields: [drawingRevisionId], references: [id], onDelete: SetNull)
+  createdAt          DateTime  @default(now())
 
   @@index([projectId, status])
   @@index([organizationId])
 }
 
 model SubcontractorClaim {
-  id                String   @id @default(cuid())
-  organizationId String @map("organization_id")
+  id                String    @id @default(cuid())
+  organizationId    String    @map("organization_id")
   projectId         String
   subcontractorName String
-  amountNet         Decimal  @default(0) @db.Decimal(12, 2)
-  status            String   @default("DRAFT")
+  amountNet         Decimal   @default(0) @db.Decimal(12, 2)
+  status            String    @default("DRAFT")
   notes             String?
-  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt         DateTime @default(now())
+  deletedAt         DateTime? @map("deleted_at")
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
 
   @@index([projectId, status])
   @@index([organizationId])
 }
 
 model BoqLine {
-  id               String   @id @default(cuid())
-  organizationId String @map("organization_id")
+  id               String            @id @default(cuid())
+  organizationId   String            @map("organization_id")
   projectId        String
   itemCode         String
   description      String
-  plannedQty       Decimal  @db.Decimal(12, 3)
-  plannedAmountNet Decimal  @default(0) @db.Decimal(12, 2)
-  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt        DateTime @default(now())
+  plannedQty       Decimal           @db.Decimal(12, 3)
+  plannedAmountNet Decimal           @default(0) @db.Decimal(12, 2)
+  /// Source estimate line after hierarchy approve projection (optional).
+  estimateLineId   String?           @map("estimate_line_id")
+  deletedAt        DateTime?         @map("deleted_at")
+  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  progressActLines ProgressActLine[]
+  createdAt        DateTime          @default(now())
 
   @@unique([projectId, itemCode])
   @@index([projectId])
@@ -174,65 +332,171 @@ model BoqLine {
 }
 
 model MaterialRequisition {
-  id          String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  projectId   String
-  itemCode    String
-  description String
-  qty         Decimal  @db.Decimal(12, 3)
-  status      String   @default("DRAFT")
-  project     Project  @relation(fields: [projectId], references: [id])
-  createdAt   DateTime @default(now())
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String
+  itemCode       String
+  description    String
+  qty            Decimal   @db.Decimal(12, 3)
+  status         String    @default("DRAFT")
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id])
+  createdAt      DateTime  @default(now())
 
   @@index([projectId, status])
   @@index([organizationId])
 }
 
 model ProgressAct {
-  id         String    @id @default(cuid())
-  organizationId String @map("organization_id")
-  projectId  String
-  periodKey  String?
-  amountNet  Decimal   @db.Decimal(12, 2)
-  status     String    @default("DRAFT")
-  approvedAt DateTime?
-  project    Project   @relation(fields: [projectId], references: [id])
-  createdAt  DateTime  @default(now())
+  id                String            @id @default(cuid())
+  organizationId    String            @map("organization_id")
+  projectId         String
+  periodKey         String?
+  amountNet         Decimal           @db.Decimal(12, 2)
+  financeContractId String?           @map("finance_contract_id")
+  /// Soft ref to Finance PayApplication id (ops only; ledger stays Finance).
+  financePayAppId   String?           @map("finance_pay_app_id")
+  status            String            @default("DRAFT")
+  approvedAt        DateTime?
+  deletedAt         DateTime?         @map("deleted_at")
+  project           Project           @relation(fields: [projectId], references: [id])
+  lines             ProgressActLine[]
+  createdAt         DateTime          @default(now())
 
   @@index([projectId])
   @@index([organizationId])
 }
 
+/// Operational SOV / act lines. Not a Finance ledger — posted via approve event.
+model ProgressActLine {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  progressActId  String       @map("progress_act_id")
+  boqLineId      String?      @map("boq_line_id")
+  itemCode       String       @map("item_code")
+  description    String
+  qty            Decimal      @db.Decimal(12, 3)
+  amountNet      Decimal      @db.Decimal(12, 2)
+  sortOrder      Int          @default(0) @map("sort_order")
+  deletedAt      DateTime?    @map("deleted_at")
+  progressAct    ProgressAct  @relation(fields: [progressActId], references: [id], onDelete: Cascade)
+  boqLine        BoqLine?     @relation(fields: [boqLineId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([progressActId, sortOrder])
+  @@index([organizationId])
+}
+
+model Rfi {
+  id                 String    @id @default(cuid())
+  organizationId     String    @map("organization_id")
+  projectId          String    @map("project_id")
+  subject            String
+  question           String
+  status             String    @default("OPEN")
+  assignee           String?
+  dueDate            DateTime? @map("due_date") @db.Date
+  answer             String?
+  impactSchedule     Boolean   @default(false) @map("impact_schedule")
+  impactCost         Boolean   @default(false) @map("impact_cost")
+  /// BIM lite: IFC / model element ref (no authoring).
+  ifcElementId       String?   @map("ifc_element_id") @db.VarChar(128)
+  externalViewerUrl  String?   @map("external_viewer_url") @db.VarChar(512)
+  deletedAt          DateTime? @map("deleted_at")
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  changeRequests     ChangeRequest[]
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  @@index([projectId, status])
+  @@index([organizationId])
+}
+
+model Submittal {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id")
+  title          String
+  specSection    String?   @map("spec_section")
+  status         String    @default("DRAFT")
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([projectId, status])
+  @@index([organizationId])
+}
+
+model SiteInspection {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  projectId      String    @map("project_id")
+  title          String
+  status         String    @default("DRAFT")
+  formJson       String    @default("{}") @map("form_json")
+  deletedAt      DateTime? @map("deleted_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([projectId, status])
+  @@index([organizationId])
+}
+
+/// Ops change pack only — commercial CO / money settle stays Finance.
+model ChangeRequest {
+  id                String    @id @default(cuid())
+  organizationId    String    @map("organization_id")
+  projectId         String    @map("project_id")
+  title             String
+  description       String?
+  status            String    @default("DRAFT")
+  impactSchedule    Boolean   @default(false) @map("impact_schedule")
+  impactCost        Boolean   @default(false) @map("impact_cost")
+  rfiId             String?   @map("rfi_id")
+  financeContractId String?   @map("finance_contract_id")
+  deletedAt         DateTime? @map("deleted_at")
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rfi               Rfi?      @relation(fields: [rfiId], references: [id], onDelete: SetNull)
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  @@index([projectId, status])
+  @@index([organizationId])
+}
+
 model Role {
-  id              String   @id @default(cuid())
-  organizationId String @map("organization_id")
-  code String
-  name            String
-  permissionsJson String   @default("[]")
-  /// System package seeded by `ensureSystemRoles`; cannot be renamed or deleted.
-  isSystem                 Boolean @default(false) @map("is_system")
-  cloneFromCode            String? @map("clone_from_code")
-  /// 0 = pre-matrix row; its `[]` is the column default and takes a template once.
-  permissionCatalogVersion Int     @default(0) @map("permission_catalog_version")
-  users           User[]
+  id                       String   @id @default(cuid())
+  organizationId           String   @map("organization_id")
+  code                     String
+  name                     String
+  permissionsJson          String   @default("[]")
+  isSystem                 Boolean  @default(false) @map("is_system")
+  cloneFromCode            String?  @map("clone_from_code")
+  permissionCatalogVersion Int      @default(0) @map("permission_catalog_version")
+  users                    User[]
+
   @@unique([organizationId, code])
   @@index([organizationId])
 }
 
 model User {
-  id              String    @id @default(cuid())
-  organizationId String @map("organization_id")
-  login String
-  email           String?
-  phone           String?   
-  fullName        String
-  passwordHash    String
-  roleId          String
-  role            Role      @relation(fields: [roleId], references: [id])
-  status          String    @default("ACTIVE")
-  isCrossSystem   Boolean   @default(false) @map("is_cross_system")
-  lastLoginAt     DateTime? @map("last_login_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
+  id                String    @id @default(cuid())
+  organizationId    String    @map("organization_id")
+  login             String
+  email             String?
+  phone             String?
+  fullName          String
+  passwordHash      String
+  roleId            String
+  role              Role      @relation(fields: [roleId], references: [id])
+  status            String    @default("ACTIVE")
+  isCrossSystem     Boolean   @default(false) @map("is_cross_system")
+  positionTitle     String?   @map("position_title")
+  department        String?
+  globalPersonId    String?   @map("global_person_id")
+  financeEmployeeId String?   @map("finance_employee_id")
+  cpEmploymentId    String?   @unique @map("cp_employment_id")
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
   @@unique([organizationId, login])
   @@unique([organizationId, phone])
   @@index([organizationId])
@@ -254,4 +518,50 @@ model SatelliteAuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("satellite_audit_logs")
+}
+
+/// Org-owned rate base (smeta norms). SKU `construction_smeta_rate_engine`.
+model RateBase {
+  id             String     @id @default(cuid())
+  organizationId String     @map("organization_id")
+  code           String
+  title          String
+  version        Int        @default(1)
+  currency       String     @default("AZN")
+  notes          String?
+  deletedAt      DateTime?  @map("deleted_at")
+  items          RateItem[]
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  @@unique([organizationId, code, version])
+  @@index([organizationId])
+  @@map("rate_bases")
+}
+
+/// Labor / material / machine composition row inside a rate base.
+model RateItem {
+  id              String    @id @default(cuid())
+  organizationId  String    @map("organization_id")
+  rateBaseId      String    @map("rate_base_id")
+  code            String
+  title           String
+  unit            String    @default("ед.")
+  /// LABOR | MATERIAL | MACHINE | COMPOSITE
+  kind            String    @default("COMPOSITE")
+  /// Base amount per 1 unit of work (AZN).
+  unitAmount      Decimal   @db.Decimal(14, 4) @map("unit_amount")
+  /// Optional hub material code (Wave C).
+  materialCode    String?   @map("material_code")
+  /// JSON resource breakdown stub: [{kind,code,qty,unit,amount}]
+  compositionJson String    @default("[]") @map("composition_json")
+  sortOrder       Int       @default(0) @map("sort_order")
+  deletedAt       DateTime? @map("deleted_at")
+  rateBase        RateBase  @relation(fields: [rateBaseId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@unique([rateBaseId, code])
+  @@index([organizationId])
+  @@index([code])
+  @@map("rate_items")
 }

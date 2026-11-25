@@ -10,6 +10,8 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-26 native handlers):** Public Nest routes call their handler body. The image starts Nest through `tsconfig.nest.json` so parameter decorators load. No new screen. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot lab [ ] / Pilot field [ ] / Edition `mvp` / Sell unchanged. Rollup unchanged. `fnb.yaml` untouched. `era-readiness-matrix` N/A.
+
 **Closeout (2026-11-10 access denied):** A missing screen grant opens `/access-denied`. A PIN session still returns to the floor. AC-FNB-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
 
 **Closeout (2026-11-10 settings split):** Catalog v7. `admin:master_data` is dropped. Audit, links, and limits are their own screens. Buffet cost and integration writes use the buffet and integration keys. AC-FNB-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.

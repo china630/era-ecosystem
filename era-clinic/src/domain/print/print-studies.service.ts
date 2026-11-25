@@ -48,9 +48,23 @@ export async function buildStudiesPrint(
       });
 
   const episodeFilter = episode ? { clinicalEpisodeId: episode.id } : {};
+  const episodeClosed = episode?.status === "CLOSED";
+  const clinicSettings = episodeClosed
+    ? await (await import("@/domain/settings/settings.service")).getClinicSettings()
+    : null;
+  const showNonExecuted = clinicSettings?.patientCardArchiveShowNonExecuted !== false;
+  const { archiveLabWhere, archiveVisitWhere } = await import(
+    "@/domain/patient/closed-course-archive-filter"
+  );
+  const labWhere = episodeClosed
+    ? { patientRefId: patientId, ...episodeFilter, ...archiveLabWhere(showNonExecuted) }
+    : { patientRefId: patientId, ...episodeFilter, cancelledAt: null };
+  const visitStatusWhere = episodeClosed
+    ? archiveVisitWhere(showNonExecuted)
+    : { status: { not: "CANCELLED" as const } };
   const [orders, visits] = await Promise.all([
     prisma.labOrder.findMany({
-      where: { patientRefId: patientId, ...episodeFilter, cancelledAt: null },
+      where: labWhere,
       include: { items: { include: { diagnosticService: true } } },
       orderBy: [{ scheduledCollectionAt: "asc" }, { createdAt: "asc" }],
     }),
@@ -58,7 +72,7 @@ export async function buildStudiesPrint(
       where: {
         patientRefId: patientId,
         ...episodeFilter,
-        status: { not: "CANCELLED" },
+        ...visitStatusWhere,
         OR: [
           { serviceLines: { some: { inPackage: true } } },
           { serviceLines: { some: { packageQuotaCode: { not: null } } } },

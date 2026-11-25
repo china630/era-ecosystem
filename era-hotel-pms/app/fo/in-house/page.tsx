@@ -39,6 +39,10 @@ type StayPayload = {
   room: { roomNumber: string } | null;
   checkInDate?: string;
   checkOutDate?: string;
+  stay?: {
+    checkInBusinessDate?: string | null;
+    checkOutBusinessDate?: string | null;
+  } | null;
   paxGuests?: Array<{
     id: string;
     guestId?: string | null;
@@ -51,8 +55,13 @@ type StayPayload = {
 };
 
 function livePartyRows(stay: StayPayload): InHouseGuest[] {
-  const checkInDate = String(stay.checkInDate ?? '').slice(0, 10);
-  const checkOutDate = String(stay.checkOutDate ?? '').slice(0, 10);
+  // Same FO rule as /fo/reservations: business stamp when present, else planned.
+  const checkInDate = String(
+    stay.stay?.checkInBusinessDate ?? stay.checkInDate ?? '',
+  ).slice(0, 10);
+  const checkOutDate = String(
+    stay.stay?.checkOutBusinessDate ?? stay.checkOutDate ?? '',
+  ).slice(0, 10);
   const roomNumber = stay.room?.roomNumber ?? null;
   const pax = stay.paxGuests ?? [];
   const live = pax.filter((row) => !isDepartedPartyRow(row));

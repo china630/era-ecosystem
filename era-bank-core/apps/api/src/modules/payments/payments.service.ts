@@ -18,8 +18,7 @@ import {
   SystemGlConfigService,
   SystemGlKey,
 } from "../../kernel/ledger/system-gl-config.service";
-import { InternalRailAdapter } from "./internal-rail.adapter";
-import { StubRailAdapter } from "./stub-rail.adapter";
+import { PaymentRailAdapterFactory } from "./rail-adapter.factory";
 import { AmlService } from "../aml/aml.service";
 
 const EXTERNAL_RAILS: PaymentRail[] = [
@@ -40,8 +39,7 @@ export class PaymentsService {
     private readonly bankOrg: BankOrgConfig,
     private readonly postingEngine: PostingEngineService,
     private readonly systemGl: SystemGlConfigService,
-    private readonly internalRail: InternalRailAdapter,
-    private readonly stubRail: StubRailAdapter,
+    private readonly railFactory: PaymentRailAdapterFactory,
     private readonly aml: AmlService,
   ) {}
 
@@ -164,8 +162,7 @@ export class PaymentsService {
   }
 
   private async executeRail(order: PaymentOrder) {
-    const adapter =
-      order.rail === PaymentRail.INTERNAL ? this.internalRail : this.stubRail;
+    const adapter = this.railFactory.resolve(order.rail);
     const result = await adapter.submit(order);
 
     await this.prisma.paymentRailMessage.create({

@@ -776,6 +776,27 @@ export function MainSidebar({
             icon={FileCheck2}
             onNavClick={onNavClick}
           />
+          <SideNavSubItem
+            href="/contracts"
+            label={t("nav.contracts", { defaultValue: "Contracts" })}
+            isActive={pathname.startsWith("/contracts")}
+            icon={FileText}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/pay-applications"
+            label={t("nav.payApplications", { defaultValue: "Pay applications" })}
+            isActive={pathname.startsWith("/pay-applications")}
+            icon={FileCheck2}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/gov-budget"
+            label={t("nav.govBudget")}
+            isActive={pathname.startsWith("/gov-budget")}
+            icon={Scale}
+            onNavClick={onNavClick}
+          />
           {canPostAccounting ? (
             <SideNavSubItem
               href="/finance/payables/suppliers"

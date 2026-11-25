@@ -12,6 +12,7 @@ import {
 } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import { InstitutionConfigService } from "../../common/institution-config.service";
 import { OrchestratorEventsPublisher } from "../../integration/orchestrator-events.publisher";
 import {
   assertLiveConfigured,
@@ -19,19 +20,23 @@ import {
   ConfigError,
 } from "../../integration/live-mode";
 import { LedgerService } from "../../kernel/ledger/ledger.service";
-
-type TrialRow = {
-  glAccountId: string;
-  debitMinor: bigint;
-  creditMinor: bigint;
-  currency: string;
-};
+import { filterRegTemplateCodesForInstitution } from "../../common/institution-type.util";
+import {
+  assembleGlReportPayload,
+  buildLcrGlStub,
+  parseRegReportDefinition,
+  pickActiveRegReportTemplate,
+  validateControlRatios,
+  type CreditPortfolioCategoryRow,
+  type TrialRow,
+} from "./reg-report.engine";
 
 @Injectable()
 export class RegReportingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
+    private readonly institutionConfig: InstitutionConfigService,
     private readonly ledger: LedgerService,
     private readonly events: OrchestratorEventsPublisher,
   ) {}
@@ -47,52 +52,94 @@ export class RegReportingService {
     });
     if (existing) return existing;
 
+    const institutionType = await this.institutionConfig.getInstitutionType();
+    const allowedCodes = filterRegTemplateCodesForInstitution(institutionType, [
+      template,
+    ]);
+    if (!allowedCodes.includes(template)) {
+      throw new BadRequestException(
+        `Template ${template} is not in the ${institutionType} report pack`,
+      );
+    }
+    const templateRows = await this.prisma.regReportTemplate.findMany({
+      where: { code: template },
+    });
+    const activeTemplate = pickActiveRegReportTemplate(
+      templateRows.map((r) => ({
+        id: r.id,
+        code: r.code,
+        version: r.version,
+        validFrom: r.validFrom,
+        institutionType: r.institutionType,
+        definitionJson: r.definitionJson,
+        outputFormat: r.outputFormat,
+      })),
+      institutionType,
+      periodTo,
+    );
+    if (!activeTemplate) {
+      throw new BadRequestException(
+        `Unknown or missing CBAR template: ${template} (seed reg report templates)`,
+      );
+    }
+
+    const definition = parseRegReportDefinition(activeTemplate.definitionJson);
+
     const trialBalance = await this.ledger.trialBalance(periodTo);
     const glAccounts = await this.prisma.glAccount.findMany({
       where: { bankOrgId: this.bankOrg.bankOrgId },
     });
     const glById = new Map(
-      glAccounts.map((g: { id: string; code: string; name: string; type?: string }) => [g.id, g]),
+      glAccounts.map((g: { id: string; code: string; name: string; type?: string }) => [
+        g.id,
+        g,
+      ]),
     );
 
-    let outputJson: Record<string, unknown>;
+    const creditCategories =
+      definition.assembly.kind === "CREDIT_PORTFOLIO_BY_CATEGORY" ||
+      definition.assembly.kind === "CREDIT_PORTFOLIO_PLACEHOLDER"
+        ? await this.loadPrudentialCreditCategories()
+        : undefined;
 
-    switch (template) {
-      case "CBAR_TRIAL_BALANCE":
-        outputJson = this.buildTrialBalanceOutput(
-          template,
-          trialBalance,
-          glById as Map<string, { code: string; name: string }>,
-        );
-        break;
-      case "CBAR_BALANCE_SHEET_STUB":
-        outputJson = this.buildBalanceSheetStub(
-          template,
-          trialBalance,
-          glById as Map<string, { code: string; name: string; type: GlAccountType }>,
-        );
-        break;
-      case "CBAR_LCR_STUB":
-        outputJson = await this.buildLcrFromRisk(
-          template,
-          trialBalance,
-          glById as Map<string, { code: string; type: GlAccountType }>,
-        );
-        break;
-      case "CBAR_CAR_STUB":
-        outputJson = await this.buildCarFromRisk(template);
-        break;
-      default:
-        throw new BadRequestException(`Unknown CBAR template: ${template}`);
+    let outputJson: Record<string, unknown> = assembleGlReportPayload(
+      template,
+      definition,
+      trialBalance,
+      glById as Map<string, { code: string; name: string; type?: GlAccountType }>,
+      activeTemplate.version,
+      creditCategories,
+    );
+
+    if (definition.assembly.kind === "LCR_FROM_RISK_OR_GL") {
+      outputJson = await this.mergeLcrOutput(
+        template,
+        trialBalance,
+        glById as Map<string, { code: string; type: GlAccountType }>,
+        outputJson,
+      );
+    } else if (definition.assembly.kind === "CAR_FROM_RISK") {
+      outputJson = await this.mergeCarOutput(template, outputJson);
     }
+
+    const validation = validateControlRatios(definition, outputJson);
+    outputJson = {
+      ...outputJson,
+      controlValidation: validation,
+    };
+
+    const status = validation.passed
+      ? RegReportStatus.VALIDATED
+      : RegReportStatus.GENERATED;
 
     return this.prisma.regReportRun.create({
       data: {
         bankOrgId: this.bankOrg.bankOrgId,
         templateCode: template,
+        regReportTemplateId: activeTemplate.id,
         periodFrom,
         periodTo,
-        status: RegReportStatus.GENERATED,
+        status,
         outputJson: outputJson as Prisma.InputJsonValue,
       },
     });
@@ -264,93 +311,11 @@ export class RegReportingService {
     });
   }
 
-  private buildTrialBalanceOutput(
-    template: string,
-    trialBalance: TrialRow[],
-    glById: Map<string, { code: string; name: string }>,
-  ) {
-    const lines = trialBalance.map((row) => ({
-      glCode: glById.get(row.glAccountId)?.code ?? row.glAccountId,
-      glName: glById.get(row.glAccountId)?.name ?? "",
-      debitMinor: row.debitMinor.toString(),
-      creditMinor: row.creditMinor.toString(),
-      currency: row.currency,
-    }));
-    let totalDebit = 0n;
-    let totalCredit = 0n;
-    for (const row of trialBalance) {
-      totalDebit += row.debitMinor;
-      totalCredit += row.creditMinor;
-    }
-    return {
-      template,
-      lines,
-      totals: {
-        debitMinor: totalDebit.toString(),
-        creditMinor: totalCredit.toString(),
-        balanced: totalDebit === totalCredit,
-      },
-    };
-  }
-
-  private buildBalanceSheetStub(
-    template: string,
-    trialBalance: TrialRow[],
-    glById: Map<string, { code: string; name: string; type: GlAccountType }>,
-  ) {
-    const buckets: Record<string, bigint> = {
-      ASSET: 0n,
-      LIABILITY: 0n,
-      EQUITY: 0n,
-    };
-    for (const row of trialBalance) {
-      const gl = glById.get(row.glAccountId);
-      if (!gl) continue;
-      if (gl.type === GlAccountType.ASSET) buckets.ASSET += row.debitMinor - row.creditMinor;
-      if (gl.type === GlAccountType.LIABILITY) buckets.LIABILITY += row.creditMinor - row.debitMinor;
-      if (gl.type === GlAccountType.EQUITY) buckets.EQUITY += row.creditMinor - row.debitMinor;
-    }
-    return {
-      template,
-      aggregated: Object.entries(buckets).map(([type, netMinor]) => ({
-        type,
-        netMinor: netMinor.toString(),
-      })),
-    };
-  }
-
-  private buildLcrStub(
+  private async mergeLcrOutput(
     template: string,
     trialBalance: TrialRow[],
     glById: Map<string, { code: string; type: GlAccountType }>,
-  ) {
-    let liquidAssets = 0n;
-    let outflows = 0n;
-    for (const row of trialBalance) {
-      const gl = glById.get(row.glAccountId);
-      if (!gl) continue;
-      if (gl.code.startsWith("100") || gl.code.startsWith("161")) {
-        liquidAssets += row.debitMinor - row.creditMinor;
-      }
-      if (gl.type === GlAccountType.LIABILITY) {
-        outflows += row.creditMinor - row.debitMinor;
-      }
-    }
-    const ratio = outflows > 0n ? Number(liquidAssets) / Number(outflows) : 1;
-    return {
-      template,
-      formula: "liquidAssets / liabilityOutflows (stub)",
-      liquidAssetsMinor: liquidAssets.toString(),
-      outflowsMinor: outflows.toString(),
-      lcrRatio: ratio.toFixed(4),
-    };
-  }
-
-  /** Prefer risk-owned LCR from latest LiquidityGapSnapshot; fall back to GL stub. */
-  private async buildLcrFromRisk(
-    template: string,
-    trialBalance: TrialRow[],
-    glById: Map<string, { code: string; type: GlAccountType }>,
+    base: Record<string, unknown>,
   ) {
     const snap = await this.prisma.liquidityGapSnapshot.findFirst({
       where: { bankOrgId: this.bankOrg.bankOrgId },
@@ -361,32 +326,37 @@ export class RegReportingService {
     };
     if (snap && buckets.lcrRatioStub != null) {
       return {
-        template,
+        ...base,
         source: "banking_risk via LiquidityGapSnapshot",
         gapSnapshotId: snap.id,
         asOfDate: snap.asOfDate.toISOString().slice(0, 10),
         lcrRatio: String(buckets.lcrRatioStub),
+        awaitingRiskAssembly: false,
       };
     }
     return {
-      ...this.buildLcrStub(template, trialBalance, glById),
+      ...buildLcrGlStub(template, trialBalance, glById),
+      ...base,
       source: "gl_fallback",
+      awaitingRiskAssembly: false,
     };
   }
 
-  private async buildCarFromRisk(template: string) {
+  private async mergeCarOutput(template: string, base: Record<string, unknown>) {
     const car = await this.prisma.capitalAdequacySnapshot.findFirst({
       where: { bankOrgId: this.bankOrg.bankOrgId },
       orderBy: { asOfDate: "desc" },
     });
     if (!car) {
       return {
-        template,
+        ...base,
         note: "No CapitalAdequacySnapshot — run POST /risk/capital/run",
         carRatio: null,
+        awaitingRiskAssembly: false,
       };
     }
     return {
+      ...base,
       template,
       source: "banking_risk.CapitalAdequacySnapshot",
       asOfDate: car.asOfDate.toISOString().slice(0, 10),
@@ -394,7 +364,77 @@ export class RegReportingService {
       tier1Ratio: car.tier1Ratio,
       rwaMinor: car.rwaMinor.toString(),
       tier1CapitalMinor: car.tier1CapitalMinor.toString(),
+      awaitingRiskAssembly: false,
     };
+  }
+
+  async listCbarTemplates() {
+    const institutionType = await this.institutionConfig.getInstitutionType();
+    const rows = await this.prisma.regReportTemplate.findMany({
+      orderBy: [{ code: "asc" }, { version: "desc" }],
+    });
+    const codes = [...new Set(rows.map((r) => r.code))];
+    const allowed = new Set(
+      filterRegTemplateCodesForInstitution(institutionType, codes),
+    );
+    return rows
+      .filter(
+        (r) =>
+          allowed.has(r.code) &&
+          (r.institutionType == null || r.institutionType === institutionType),
+      )
+      .map((r) => ({
+        id: r.id,
+        code: r.code,
+        version: r.version,
+        institutionType: r.institutionType,
+        outputFormat: r.outputFormat,
+        labExportOnly: true,
+      }));
+  }
+
+  private async loadPrudentialCreditCategories(): Promise<
+    CreditPortfolioCategoryRow[]
+  > {
+    const run = await this.prisma.prudentialClassificationRun.findFirst({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        status: "COMPLETED",
+      },
+      orderBy: { completedAt: "desc" },
+      include: { results: true },
+    });
+    if (!run?.results.length) return [];
+    const loanIds = run.results.map((r) => r.loanId);
+    const loans = await this.prisma.loanContract.findMany({
+      where: { id: { in: loanIds }, bankOrgId: this.bankOrg.bankOrgId },
+      select: { id: true, outstandingMinor: true },
+    });
+    const outstandingByLoan = new Map(
+      loans.map((l) => [l.id, l.outstandingMinor]),
+    );
+    const byCat = new Map<
+      string,
+      { outstanding: bigint; provision: bigint; count: number }
+    >();
+    for (const r of run.results) {
+      const key = String(r.category);
+      const cur = byCat.get(key) ?? {
+        outstanding: 0n,
+        provision: 0n,
+        count: 0,
+      };
+      cur.provision += r.provisionMinor;
+      cur.outstanding += outstandingByLoan.get(r.loanId) ?? 0n;
+      cur.count += 1;
+      byCat.set(key, cur);
+    }
+    return [...byCat.entries()].map(([categoryCode, v]) => ({
+      categoryCode,
+      outstandingMinor: v.outstanding.toString(),
+      provisionMinor: v.provision.toString(),
+      loanCount: v.count,
+    }));
   }
 
   private toCsv(output: Record<string, unknown>): string {

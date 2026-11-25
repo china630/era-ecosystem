@@ -17,6 +17,9 @@ export const PERMISSIONS = {
   PROJECTS_READ: "api:projects.read",
   BOQ: "api:boq",
   BOQ_READ: "api:boq.read",
+  ESTIMATE: "api:estimate",
+  ESTIMATE_READ: "api:estimate.read",
+  ESTIMATE_APPROVE: "api:estimate.approve",
   DAILY_LOGS: "api:daily_logs",
   DAILY_LOGS_READ: "api:daily_logs.read",
   PUNCH_LIST: "api:punch_list",
@@ -32,6 +35,17 @@ export const PERMISSIONS = {
   ACTS_APPROVE: "api:acts.approve",
   TIMESHEETS_IMPORT: "api:timesheets.import",
   EQUIPMENT_HOURS: "api:equipment.hours",
+
+  PARTIES: "api:parties",
+  PARTIES_READ: "api:parties.read",
+  RFIS: "api:rfis",
+  RFIS_READ: "api:rfis.read",
+  SUBMITTALS: "api:submittals",
+  SUBMITTALS_READ: "api:submittals.read",
+  INSPECTIONS: "api:inspections",
+  INSPECTIONS_READ: "api:inspections.read",
+  CHANGE_REQUESTS: "api:change_requests",
+  CHANGE_REQUESTS_READ: "api:change_requests.read",
 
   ACCESS_MANAGE: "admin:access_manage",
 } as const;
@@ -76,20 +90,28 @@ export const ROLE_ALIASES: Record<string, RoleCode> = {
   DIRECTOR: ROLE_CODES.PROJECT_MANAGER,
   CHIEF_ENGINEER: ROLE_CODES.PROJECT_MANAGER,
   FOREMAN: ROLE_CODES.SITE_MANAGER,
+  STAFF: ROLE_CODES.SITE_MANAGER,
   QS: ROLE_CODES.ESTIMATOR,
 };
 
-export const PERMISSION_CATALOG_VERSION = 2;
+/** Estimate hierarchy keys — bump so system packages refresh from templates. */
+export const PERMISSION_CATALOG_VERSION = 4;
 
 export const READ_OF_WRITE: Readonly<Record<string, Permission>> = {
   [PERMISSIONS.PROJECTS]: PERMISSIONS.PROJECTS_READ,
   [PERMISSIONS.BOQ]: PERMISSIONS.BOQ_READ,
+  [PERMISSIONS.ESTIMATE]: PERMISSIONS.ESTIMATE_READ,
   [PERMISSIONS.DAILY_LOGS]: PERMISSIONS.DAILY_LOGS_READ,
   [PERMISSIONS.PUNCH_LIST]: PERMISSIONS.PUNCH_LIST_READ,
   [PERMISSIONS.GANTT]: PERMISSIONS.GANTT_READ,
   [PERMISSIONS.REQUISITIONS]: PERMISSIONS.REQUISITIONS_READ,
   [PERMISSIONS.CDE]: PERMISSIONS.CDE_READ,
   [PERMISSIONS.SUBCONTRACTOR_CLAIMS]: PERMISSIONS.SUBCONTRACTOR_CLAIMS_READ,
+  [PERMISSIONS.PARTIES]: PERMISSIONS.PARTIES_READ,
+  [PERMISSIONS.RFIS]: PERMISSIONS.RFIS_READ,
+  [PERMISSIONS.SUBMITTALS]: PERMISSIONS.SUBMITTALS_READ,
+  [PERMISSIONS.INSPECTIONS]: PERMISSIONS.INSPECTIONS_READ,
+  [PERMISSIONS.CHANGE_REQUESTS]: PERMISSIONS.CHANGE_REQUESTS_READ,
 };
 
 export function expandEntityReads(keys: readonly string[]): Permission[] {
@@ -137,6 +159,9 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
       PERMISSIONS.PROJECTS_READ,
       PERMISSIONS.BOQ,
       PERMISSIONS.BOQ_READ,
+      PERMISSIONS.ESTIMATE,
+      PERMISSIONS.ESTIMATE_READ,
+      PERMISSIONS.ESTIMATE_APPROVE,
       PERMISSIONS.GANTT,
       PERMISSIONS.GANTT_READ,
       PERMISSIONS.ACTS_APPROVE,
@@ -144,6 +169,10 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
       PERMISSIONS.SUBCONTRACTOR_CLAIMS_READ,
       PERMISSIONS.CDE,
       PERMISSIONS.CDE_READ,
+      PERMISSIONS.PARTIES,
+      PERMISSIONS.PARTIES_READ,
+      PERMISSIONS.CHANGE_REQUESTS,
+      PERMISSIONS.CHANGE_REQUESTS_READ,
     ],
   },
   {
@@ -158,6 +187,12 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
       PERMISSIONS.REQUISITIONS_READ,
       PERMISSIONS.TIMESHEETS_IMPORT,
       PERMISSIONS.EQUIPMENT_HOURS,
+      PERMISSIONS.RFIS,
+      PERMISSIONS.RFIS_READ,
+      PERMISSIONS.SUBMITTALS,
+      PERMISSIONS.SUBMITTALS_READ,
+      PERMISSIONS.INSPECTIONS,
+      PERMISSIONS.INSPECTIONS_READ,
     ],
   },
   {
@@ -175,6 +210,8 @@ const OPS_TEMPLATE: readonly Permission[] = [
   PERMISSIONS.SCREEN_MATERIAL_REQUISITIONS,
   PERMISSIONS.PROJECTS,
   PERMISSIONS.BOQ,
+  PERMISSIONS.ESTIMATE,
+  PERMISSIONS.ESTIMATE_APPROVE,
   PERMISSIONS.DAILY_LOGS,
   PERMISSIONS.PUNCH_LIST,
   PERMISSIONS.GANTT,
@@ -184,6 +221,11 @@ const OPS_TEMPLATE: readonly Permission[] = [
   PERMISSIONS.EQUIPMENT_HOURS,
   PERMISSIONS.CDE,
   PERMISSIONS.SUBCONTRACTOR_CLAIMS,
+  PERMISSIONS.PARTIES,
+  PERMISSIONS.RFIS,
+  PERMISSIONS.SUBMITTALS,
+  PERMISSIONS.INSPECTIONS,
+  PERMISSIONS.CHANGE_REQUESTS,
 ];
 
 /** Seed packages. Every ops role keeps the full project and site flow, act approve included; settings and access go to the manager. */
@@ -211,6 +253,14 @@ export const ENTITY_ACCESS_MATRIX: {
   },
   { id: "boq", cells: { view: [PERMISSIONS.BOQ_READ], change: [PERMISSIONS.BOQ] } },
   {
+    id: "estimate",
+    cells: {
+      view: [PERMISSIONS.ESTIMATE_READ],
+      change: [PERMISSIONS.ESTIMATE],
+      operate: [PERMISSIONS.ESTIMATE_APPROVE],
+    },
+  },
+  {
     id: "dailyLog",
     cells: {
       view: [PERMISSIONS.DAILY_LOGS_READ, PERMISSIONS.SCREEN_FIELD_OPS],
@@ -232,6 +282,14 @@ export const ENTITY_ACCESS_MATRIX: {
   {
     id: "claim",
     cells: { view: [PERMISSIONS.SUBCONTRACTOR_CLAIMS_READ], change: [PERMISSIONS.SUBCONTRACTOR_CLAIMS] },
+  },
+  { id: "parties", cells: { view: [PERMISSIONS.PARTIES_READ], change: [PERMISSIONS.PARTIES] } },
+  { id: "rfi", cells: { view: [PERMISSIONS.RFIS_READ], change: [PERMISSIONS.RFIS] } },
+  { id: "submittal", cells: { view: [PERMISSIONS.SUBMITTALS_READ], change: [PERMISSIONS.SUBMITTALS] } },
+  { id: "inspection", cells: { view: [PERMISSIONS.INSPECTIONS_READ], change: [PERMISSIONS.INSPECTIONS] } },
+  {
+    id: "changeRequest",
+    cells: { view: [PERMISSIONS.CHANGE_REQUESTS_READ], change: [PERMISSIONS.CHANGE_REQUESTS] },
   },
   {
     id: "access",

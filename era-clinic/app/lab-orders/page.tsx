@@ -501,7 +501,7 @@ export default function LabOrdersPage() {
     setStatusById((prev) => ({ ...prev, [id]: "COMPLETED" }));
   }
 
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const groups = useMemo(() => {
     const map = new Map<
       string,
@@ -661,7 +661,7 @@ export default function LabOrdersPage() {
                 </tr>
               ) : (
                 groups.map((group) => {
-                  const open = !collapsed.has(group.id);
+                  const open = expanded.has(group.id);
                   const allClosed =
                     group.items.length > 0 &&
                     group.items.every((order) => labRowClosed(orderStatus(order)));
@@ -674,7 +674,7 @@ export default function LabOrdersPage() {
                             className="flex items-center gap-2 text-left"
                             aria-expanded={open}
                             onClick={() =>
-                              setCollapsed((prev) => {
+                              setExpanded((prev) => {
                                 const next = new Set(prev);
                                 if (next.has(group.id)) next.delete(group.id);
                                 else next.add(group.id);
@@ -695,7 +695,8 @@ export default function LabOrdersPage() {
                         </td>
                         <td className={DATA_TABLE_TD_CLASS}>{group.room || "—"}</td>
                         <td className={DATA_TABLE_TD_CLASS}>{group.doctor || "—"}</td>
-                        <td className={DATA_TABLE_TD_CLASS} colSpan={5} />
+                        <td className={DATA_TABLE_TD_CLASS}>{group.items.length}</td>
+                        <td className={DATA_TABLE_TD_CLASS} colSpan={4} />
                       </tr>
                       {open
                         ? group.items.map((order) => {

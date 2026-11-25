@@ -10,6 +10,12 @@
 **BE deepen (2026-08-17):** Green Scaffold BE wave 4 — `apps/api/__tests__/dh-*-negative.spec.ts` (REG/FX/BANK/HS).  
 **Wave 8 (2026-08-18):** AC-DH-VOEN excluded from Scaffold BE rollup (Hotel INT pattern); stays Scaffold 🟡 / External ⏸ (e-taxes BLOCKED).
 
+**Closeout (2026-11-20 construction materials second-pass):** No product surface change (HEADLESS). AC-DH-MAT-CON stays 🟡 **out of Scaffold BE rollup**. No Scaffold ✅. Gate/Pilot/`data-hub.yaml` untouched.
+
+**Closeout (2026-11-20 construction materials MVP):** AC-DH-MAT-CON 🟡 **out of Scaffold BE rollup** (`dh-mat-con-negative.spec.ts`; registry+gateway+seed). No Scaffold ✅. Gate/Pilot/`data-hub.yaml` untouched.
+
+**Closeout (2026-11-20 construction materials debt):** AC-DH-MAT-CON 🟡 **out of Scaffold BE rollup** (ADR sketch + COVERAGE Doc only). No Scaffold ✅. Gate/Pilot/`data-hub.yaml` untouched.
+
 ---
 
 ## AC rollup
@@ -22,9 +28,10 @@
 | AC-DH-VOEN | VÖEN company lookup + PII masking | 🟡 | [ ] | Wave 3; IND-VOEN live e-taxes BLOCKED | External ⏸ — e-taxes BLOCKED; **excluded from Scaffold BE rollup** (Hotel INT) |
 | AC-DH-HS | HS / tariff + static catalogs | ✅ | [ ] | `__tests__/dh-hs-negative.spec.ts` | Negative: HS_NOT_FOUND; TARIFF_NOT_FOUND |
 | AC-DH-POL | Per-catalog external fetch + FX code lists | 🟡 | [ ] | `reference-policy.controller.ts`; COVERAGE DH-POL-01 | No negative spec for unknown kind / empty token on PATCH. SuperAdmin screen is orchestrator, UAT not walked. Not Scaffold ✅ |
+| AC-DH-MAT-CON | Construction materials nomenclature (+ Platform Gateway) | 🟡 | [ ] | `__tests__/dh-mat-con-negative.spec.ts`; COVERAGE DH-MAT-CON-01 | **Out of Scaffold BE rollup.** Registry + Gateway + seed + kit client; UAT open — not Scaffold ✅ |
 
 **Edition / wave rollup (BE only)** = worst(REG, FX, BANK, HS, POL) → **🟡** (POL).  
-AC-DH-VOEN remains 🟡 and is **out of Scaffold BE rollup** until live e-taxes clears BLOCKED. Do **not** mark VOEN Scaffold ✅.  
+AC-DH-VOEN and AC-DH-MAT-CON remain 🟡 and are **out of Scaffold BE rollup** (e-taxes BLOCKED / materials UAT open). Do **not** mark VOEN or MAT-CON Scaffold ✅.  
 AC-DH-POL is **in** the rollup (settings replaced the env switch) and stays 🟡 until a negative path exists.  
 Do not call this table «product readiness».
 
@@ -34,6 +41,7 @@ Do not call this table «product readiness».
 |----|----------|----------|--------|
 | AC-DH-VOEN | Live e-taxes VÖEN lookup | External ⏸ | BLOCKED (e-taxes); **Excluded from Scaffold BE rollup** (Wave 8; Hotel INT) |
 | AC-DH-POL | Policy PATCH negative path + SuperAdmin UAT | Code | In BE rollup; Scaffold 🟡 |
+| AC-DH-MAT-CON | Field UAT / richer content pack | Out of BE rollup | HEADLESS API |
 
 ### Negative-path proof index
 
@@ -43,3 +51,4 @@ Do not call this table «product readiness».
 | `era-data-hub/apps/api/__tests__/dh-fx-negative.spec.ts` | AC-DH-FX |
 | `era-data-hub/apps/api/__tests__/dh-bank-negative.spec.ts` | AC-DH-BANK |
 | `era-data-hub/apps/api/__tests__/dh-hs-negative.spec.ts` | AC-DH-HS |
+| `era-data-hub/apps/api/__tests__/dh-mat-con-negative.spec.ts` | AC-DH-MAT-CON |

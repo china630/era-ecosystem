@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from "@nestjs/common";
@@ -26,7 +27,22 @@ import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { CheckContractLimitDto } from "./dto/check-contract-limit.dto";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { PatchContractDto } from "./dto/patch-contract.dto";
+import {
+  CreateAmendmentDto,
+  ReplaceContractLinesDto,
+} from "./dto/create-amendment.dto";
 import { ContractsService } from "./contracts.service";
+import { Type } from "class-transformer";
+import { IsArray, ValidateNested } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+
+class ReplaceLinesBodyDto {
+  @ApiProperty({ type: [ReplaceContractLinesDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReplaceContractLinesDto)
+  lines!: ReplaceContractLinesDto[];
+}
 
 @ApiTags("contracts")
 @ApiBearerAuth("bearer")
@@ -99,5 +115,38 @@ export class ContractsController {
     @Param("id", new ParseUUIDPipe({ version: "4" })) id: string,
   ) {
     return this.contracts.activate(organizationId, id);
+  }
+
+  @Put(":id/lines")
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
+  @ApiOperation({ summary: "Replace SOV / contract lines" })
+  replaceLines(
+    @OrganizationId() organizationId: string,
+    @Param("id", new ParseUUIDPipe({ version: "4" })) id: string,
+    @Body() dto: ReplaceLinesBodyDto,
+  ) {
+    return this.contracts.replaceLines(organizationId, id, dto.lines ?? []);
+  }
+
+  @Post(":id/amendments")
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
+  @ApiOperation({ summary: "Create DRAFT contract amendment" })
+  createAmendment(
+    @OrganizationId() organizationId: string,
+    @Param("id", new ParseUUIDPipe({ version: "4" })) id: string,
+    @Body() dto: CreateAmendmentDto,
+  ) {
+    return this.contracts.createAmendment(organizationId, id, dto);
+  }
+
+  @Post(":id/amendments/:amendmentId/activate")
+  @Permissions(CP_PERMISSION.API_LEDGER_PERIOD_CLOSE)
+  @ApiOperation({ summary: "Activate amendment (apply limit/date delta)" })
+  activateAmendment(
+    @OrganizationId() organizationId: string,
+    @Param("amendmentId", new ParseUUIDPipe({ version: "4" }))
+    amendmentId: string,
+  ) {
+    return this.contracts.activateAmendment(organizationId, amendmentId);
   }
 }

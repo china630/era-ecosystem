@@ -1,0 +1,7 @@
+{
+  "event": "message",
+  "timestamp": 1700000000000,
+  "message_token": 5123456789,
+  "sender": { "id": "viber-user-1", "name": "Ada" },
+  "message": { "type": "text", "text": "Hello from Viber fixture" }
+}

@@ -37,7 +37,11 @@ import { useClinicAuth } from "@/hooks/useClinicAuth";
 
 type OpsDaySummary = {
   date: string;
-  appointments: { total: number; byStatus: Record<string, number> };
+  appointments: {
+    total: number;
+    byStatus: Record<string, number>;
+    noShowRate?: number | null;
+  };
   procedures: {
     total: number;
     byStatus: Record<string, number>;
@@ -370,6 +374,13 @@ export function OpsHomeDashboard({
             emptyLabel={t("emptyDay")}
             statusLabel={statusLabel}
           />
+          {summary.appointments.noShowRate != null ? (
+            <p className="mt-2 text-sm text-slate-600">
+              {t("noShowRate", {
+                pct: Math.round(summary.appointments.noShowRate * 1000) / 10,
+              })}
+            </p>
+          ) : null}
           <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#EBEDF0] pt-3">
             <div className={`${SUBSECTION_SURFACE_CLASS} rounded-xl px-3 py-2`}>
               <p className={`text-[11px] font-semibold uppercase tracking-wide ${TEXT_MUTED_CLASS}`}>

@@ -225,7 +225,8 @@ export class TreasuryService {
     });
     if (!nostroGl) throw new NotFoundException("Nostro GL missing");
 
-    const posting = await this.postingEngine.post({
+    let placementId: string | null = null;
+    await this.postingEngine.post({
       reference: `IB-OPEN-${input.idempotencyKey}`,
       idempotencyKey: `ib-open-${input.idempotencyKey}`,
       valueDate: input.startDate,
@@ -249,29 +250,47 @@ export class TreasuryService {
           currency: input.currency,
         },
       ],
-    });
-
-    const placement = await this.prisma.interbankPlacement.create({
-      data: {
-        bankOrgId: this.bankOrg.bankOrgId,
-        counterpartyId: input.counterpartyId,
-        nostroAccountId: input.nostroAccountId,
-        principalMinor: input.principalMinor,
-        currency: input.currency,
-        rateAnnual: input.rateAnnual,
-        startDate: input.startDate,
-        maturityDate: input.maturityDate,
-        status: PlacementStatus.ACTIVE,
-        openPostingTxnId: posting.id,
+      nostroAdjustments: [
+        { nostroAccountId: nostro.id, deltaMinor: -input.principalMinor },
+      ],
+      sideEffectsInTx: async (tx, journalTxn) => {
+        const created = await tx.interbankPlacement.create({
+          data: {
+            bankOrgId: this.bankOrg.bankOrgId,
+            counterpartyId: input.counterpartyId,
+            nostroAccountId: input.nostroAccountId,
+            principalMinor: input.principalMinor,
+            currency: input.currency,
+            rateAnnual: input.rateAnnual,
+            startDate: input.startDate,
+            maturityDate: input.maturityDate,
+            status: PlacementStatus.ACTIVE,
+            openPostingTxnId: journalTxn.id,
+          },
+        });
+        placementId = String(created.id);
       },
     });
 
-    await this.prisma.nostroVostroAccount.update({
-      where: { id: nostro.id },
-      data: { ledgerBalanceMinor: { decrement: input.principalMinor } },
+    if (!placementId) {
+      // Idempotent replay: posting returned existing txn without re-running sideEffects.
+      const existing = await this.prisma.interbankPlacement.findFirst({
+        where: {
+          bankOrgId: this.bankOrg.bankOrgId,
+          nostroAccountId: input.nostroAccountId,
+          principalMinor: input.principalMinor,
+          maturityDate: input.maturityDate,
+        },
+        orderBy: { startDate: "desc" },
+      });
+      if (!existing) {
+        throw new BadRequestException("Interbank placement missing after posting");
+      }
+      return existing;
+    }
+    return this.prisma.interbankPlacement.findFirstOrThrow({
+      where: { id: placementId },
     });
-
-    return placement;
   }
 
   async matureInterbank(id: string, maturedByUserId: string) {
@@ -288,18 +307,23 @@ export class TreasuryService {
     const nostroGl = await this.systemGl.resolve(SystemGlKey.NOSTRO);
     const incomeGl = await this.systemGl.resolve(SystemGlKey.INTEREST_INCOME);
 
-    const days =
-      (placement.maturityDate.getTime() - placement.startDate.getTime()) / 86400000;
-    const interestMinor = BigInt(
+    const days = Math.max(
+      0,
       Math.round(
-        Number(placement.principalMinor) *
-          Number(placement.rateAnnual) *
-          (days / 365),
+        (placement.maturityDate.getTime() - placement.startDate.getTime()) /
+          86400000,
       ),
     );
+    const rateScaled = BigInt(
+      Math.round(Number(placement.rateAnnual) * 100_000_000),
+    );
+    const interestMinor =
+      (placement.principalMinor * rateScaled * BigInt(days) +
+        365n * 50_000_000n) /
+      (365n * 100_000_000n);
     const totalReturn = placement.principalMinor + interestMinor;
 
-    const posting = await this.postingEngine.post({
+    await this.postingEngine.post({
       reference: `IB-MATURE-${placement.id}`,
       idempotencyKey: `ib-mature-${placement.id}`,
       valueDate: new Date(),
@@ -330,19 +354,25 @@ export class TreasuryService {
           currency: placement.currency,
         },
       ],
-    });
-
-    await this.prisma.nostroVostroAccount.update({
-      where: { id: placement.nostroAccountId },
-      data: { ledgerBalanceMinor: { increment: totalReturn } },
-    });
-
-    return this.prisma.interbankPlacement.update({
-      where: { id },
-      data: {
-        status: PlacementStatus.MATURED,
-        closePostingTxnId: posting.id,
+      nostroAdjustments: [
+        {
+          nostroAccountId: placement.nostroAccountId,
+          deltaMinor: totalReturn,
+        },
+      ],
+      sideEffectsInTx: async (tx, journalTxn) => {
+        await tx.interbankPlacement.update({
+          where: { id },
+          data: {
+            status: PlacementStatus.MATURED,
+            closePostingTxnId: journalTxn.id,
+          },
+        });
       },
+    });
+
+    return this.prisma.interbankPlacement.findFirstOrThrow({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
     });
   }
 
@@ -702,7 +732,8 @@ export class TreasuryService {
     const bookGl = await this.glByCode(input.bookGlCode);
     const nostro = await this.nostroById(input.nostroAccountId);
 
-    const posting = await this.postingEngine.post({
+    let placementId: string | null = null;
+    await this.postingEngine.post({
       reference: `MM-OPEN-${input.idempotencyKey}`,
       idempotencyKey: `mm-open-${input.idempotencyKey}`,
       valueDate: input.startDate,
@@ -726,23 +757,42 @@ export class TreasuryService {
           currency: input.currency,
         },
       ],
+      nostroAdjustments: [
+        { nostroAccountId: nostro.id, deltaMinor: -input.principalMinor },
+      ],
+      sideEffectsInTx: async (tx, journalTxn) => {
+        const created = await tx.moneyMarketPlacement.create({
+          data: {
+            bankOrgId: this.bankOrg.bankOrgId,
+            counterpartyId: input.counterpartyId,
+            nostroAccountId: input.nostroAccountId,
+            principalMinor: input.principalMinor,
+            currency: input.currency,
+            rateAnnual: input.rateAnnual,
+            startDate: input.startDate,
+            maturityDate: input.maturityDate,
+            bookGlCode: input.bookGlCode,
+            status: PlacementStatus.ACTIVE,
+            openPostingTxnId: journalTxn.id,
+            idempotencyKey: input.idempotencyKey,
+          },
+        });
+        placementId = String(created.id);
+      },
     });
 
-    return this.prisma.moneyMarketPlacement.create({
-      data: {
-        bankOrgId: this.bankOrg.bankOrgId,
-        counterpartyId: input.counterpartyId,
-        nostroAccountId: input.nostroAccountId,
-        principalMinor: input.principalMinor,
-        currency: input.currency,
-        rateAnnual: input.rateAnnual,
-        startDate: input.startDate,
-        maturityDate: input.maturityDate,
-        bookGlCode: input.bookGlCode,
-        status: PlacementStatus.ACTIVE,
-        openPostingTxnId: posting.id,
-        idempotencyKey: input.idempotencyKey,
-      },
+    if (!placementId) {
+      // Idempotent replay: posting returned existing txn without re-running sideEffects.
+      const replay = await this.prisma.moneyMarketPlacement.findUnique({
+        where: { idempotencyKey: input.idempotencyKey } as never,
+      });
+      if (!replay) {
+        throw new BadRequestException("MM placement missing after posting");
+      }
+      return replay;
+    }
+    return this.prisma.moneyMarketPlacement.findFirstOrThrow({
+      where: { id: placementId },
     });
   }
 
@@ -759,18 +809,23 @@ export class TreasuryService {
     const bookGl = await this.glByCode(placement.bookGlCode);
     const nostro = await this.nostroById(placement.nostroAccountId);
     const incomeGl = await this.systemGl.resolve(SystemGlKey.INTEREST_INCOME);
-    const days =
-      (placement.maturityDate.getTime() - placement.startDate.getTime()) / 86400000;
-    const interestMinor = BigInt(
+    const days = Math.max(
+      0,
       Math.round(
-        Number(placement.principalMinor) *
-          Number(placement.rateAnnual) *
-          (days / 365),
+        (placement.maturityDate.getTime() - placement.startDate.getTime()) /
+          86400000,
       ),
     );
+    const rateScaled = BigInt(
+      Math.round(Number(placement.rateAnnual) * 100_000_000),
+    );
+    const interestMinor =
+      (placement.principalMinor * rateScaled * BigInt(days) +
+        365n * 50_000_000n) /
+      (365n * 100_000_000n);
     const totalReturn = placement.principalMinor + interestMinor;
 
-    const posting = await this.postingEngine.post({
+    await this.postingEngine.post({
       reference: `MM-MATURE-${placement.id}`,
       idempotencyKey: `mm-mature-${placement.id}`,
       valueDate: new Date(),
@@ -801,14 +856,22 @@ export class TreasuryService {
           currency: placement.currency,
         },
       ],
+      nostroAdjustments: [
+        { nostroAccountId: nostro.id, deltaMinor: totalReturn },
+      ],
+      sideEffectsInTx: async (tx, journalTxn) => {
+        await tx.moneyMarketPlacement.update({
+          where: { id },
+          data: {
+            status: PlacementStatus.MATURED,
+            closePostingTxnId: journalTxn.id,
+          },
+        });
+      },
     });
 
-    return this.prisma.moneyMarketPlacement.update({
-      where: { id },
-      data: {
-        status: PlacementStatus.MATURED,
-        closePostingTxnId: posting.id,
-      },
+    return this.prisma.moneyMarketPlacement.findFirstOrThrow({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
     });
   }
 
@@ -851,11 +914,9 @@ export class TreasuryService {
           currency: nostro.currency,
         },
       ],
-    });
-
-    await this.prisma.nostroVostroAccount.update({
-      where: { id: nostro.id },
-      data: { ledgerBalanceMinor: { decrement: input.amountMinor } },
+      nostroAdjustments: [
+        { nostroAccountId: nostro.id, deltaMinor: -input.amountMinor },
+      ],
     });
 
     return { postingId: posting.id, nostroId: nostro.id };

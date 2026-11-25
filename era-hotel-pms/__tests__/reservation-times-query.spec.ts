@@ -2,14 +2,20 @@ import { describe, expect, it } from '@jest/globals';
 import { buildReservationTimesWhere } from '@/lib/services/reports.service';
 
 describe('reservation times query', () => {
-  it('requires actual CI or CO in the date window and sorts newest CI first (caller)', () => {
+  it('requires check-in or check-out business day in the date window', () => {
     const where = buildReservationTimesWhere({
       from: new Date('2026-09-01T12:00:00'),
       to: new Date('2026-09-06T12:00:00'),
     });
     expect(where.stay.is.OR).toHaveLength(2);
-    expect(where.stay.is.OR[0]!.actualCheckIn).toBeDefined();
-    expect(where.stay.is.OR[1]!.actualCheckOut).toBeDefined();
+    expect(where.stay.is.OR[0]!.checkInBusinessDate).toEqual({
+      gte: new Date('2026-09-01T00:00:00.000Z'),
+      lt: new Date('2026-09-07T00:00:00.000Z'),
+    });
+    expect(where.stay.is.OR[1]!.checkOutBusinessDate).toEqual({
+      gte: new Date('2026-09-01T00:00:00.000Z'),
+      lt: new Date('2026-09-07T00:00:00.000Z'),
+    });
     expect(where).not.toHaveProperty('guest');
   });
 

@@ -48,9 +48,13 @@ Kernel routes consumed by `era-bank` BFF (prefix `/api/v1/`).
 |--------|--------|
 | Payments | `GET/POST /payments/orders`, `GET /payments/orders/:id`, `POST .../submit`, `POST /payments/inbound` |
 | Payments cash | `/payments/standing-orders`, `/payments/virtual-accounts`, `/payments/cheques`, `/payments/sweep-rules`, `/payments/nostro-statement-import` |
-| Deposits | `GET/POST /deposits`, `GET /deposits/:id`, `POST .../close`, `POST .../rollover` (maturity extend only) |
-| Loans | `GET/POST /loans`, `GET /loans/:id`, `GET .../schedule`, `POST .../disburse`, `.../repay`, `.../restructure` |
+| Deposits | `GET/POST /deposits`, `GET /deposits/wht-registry` (lab WHT export), `GET /deposits/:id`, `POST .../close`, `POST .../rollover` (maturity extend only) |
+| Loan collateral items | `GET/POST /loans/collateral-items`, `POST /loans/collateral-items/:itemId/revalue`, `GET/POST /loans/:id/collateral-links` |
+| Loans | `GET/POST /loans`, `GET /loans/:id`, `GET .../schedule`, `POST .../disburse`, `.../repay`, `.../prepay`, `.../restructure`, `PATCH .../quality-flags` |
 | Loans deep | applications, credit-lines, drawdowns, score, collateral valuations, liens |
+| Leasing | `GET/POST /leasing/assets`, `GET/POST /leasing/contracts`, `GET .../schedule`, `GET .../buyout-quote`, `POST .../accrue-finance-income` (IFRS 16 lab) |
+| MFI | `GET/POST /mfi/groups`, `POST .../members`, `.../activate`, `.../originate-jlg`, `GET /mfi/par30-by-officer`, `GET/POST .../collection-sheets`, `POST /mfi/collection-sheets/:id/collect` (lab) |
+| Loans CKR lab | `GET /loans/ckr/queue`, `GET /loans/ckr/journal`, `POST /loans/ckr/validate-pack`, `POST /loans/ckr/submit-stub` (live fail-closed) |
 
 ## BE Lite→Deep L2
 
@@ -63,8 +67,13 @@ Kernel routes consumed by `era-bank` BFF (prefix `/api/v1/`).
 | Islamic | `/islamic/contracts` |
 | Wealth | `/wealth/safekeeping`, `/wealth/positions/receive`, `/wealth/insurance-commissions` |
 | AML extras | `/aml/cases`, `/aml/fraud/score` |
-| Risk extras | `/risk/irrbb/inputs`, `/risk/oprisk/...` |
-| DBO ops | H2H jobs + OB consents (dbo-ops) |
+| Risk extras | `/risk/collateral`, `/risk/collateral-items` (stale flags, RISK_READ), `/risk/irrbb/inputs`, `/risk/oprisk/...`, `/risk/prudential/last`, `/risk/prudential/run`, `/risk/prudential/loans/:loanId/write-off` (ümidsiz), `/risk/prudential/:id/provision-approve` |
+| Reg CBAR templates | `GET /reports/cbar/templates` (filtered by InstitutionType pack) |
+| Webhooks | `GET/POST /webhooks/subscriptions`, `POST .../deliver`, `POST .../enqueue`, `GET /webhooks/outbox`, `POST /webhooks/outbox/drain` (durable outbox + HMAC) |
+| MIS | `GET /mis/report-keys`, `POST /mis/assemble` (thin JSON/CSV — not full BI) |
+| Deposits ADIF | `GET /deposits/adif-registry-snapshot` (lab-2; official file [U]) |
+| DBO customer | `GET /dbo/loans`, `GET /dbo/loans/:id`, `POST /dbo/loans/:id/prepay`, `GET /dbo/leasing/contracts`, `GET /dbo/leasing/contracts/:id/schedule` |
+| DBO ops | H2H jobs + OB consents (`scaChallengeId` required; no CBAR gateway) |
 
 ## Product factory
 
@@ -72,6 +81,8 @@ Kernel routes consumed by `era-bank` BFF (prefix `/api/v1/`).
 |--------|------|
 | GET | `/product-templates` |
 | POST | `/product-templates` |
+| GET | `/product-templates/:id/yaml` |
+| POST | `/product-templates/yaml/import-dry-run`, `/product-templates/yaml/diff` |
 
 ## Internal (orchestrator Sync — no `/api/v1` prefix)
 

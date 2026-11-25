@@ -56,3 +56,64 @@ export function isSatelliteCrmVisitLogged(
 ): data is SatelliteCrmVisitLoggedEvent {
   return satelliteCrmVisitLoggedSchema.safeParse(data).success;
 }
+
+export const SATELLITE_CRM_MESSAGE_RECEIVED =
+  "SATELLITE_CRM_MESSAGE_RECEIVED" as const;
+export const SATELLITE_CRM_MESSAGE_SENT = "SATELLITE_CRM_MESSAGE_SENT" as const;
+export const SATELLITE_CRM_CALL_STARTED = "SATELLITE_CRM_CALL_STARTED" as const;
+export const SATELLITE_CRM_CALL_ENDED = "SATELLITE_CRM_CALL_ENDED" as const;
+export const SATELLITE_CRM_LEAD_CAPTURED =
+  "SATELLITE_CRM_LEAD_CAPTURED" as const;
+
+export const satelliteCrmMessageReceivedSchema = satelliteEventBaseSchema.extend(
+  {
+    type: z.literal(SATELLITE_CRM_MESSAGE_RECEIVED),
+    payload: z.object({
+      organizationId: z.string(),
+      conversationId: z.string(),
+      messageId: z.string(),
+      leadId: z.string().optional(),
+      channel: z.string(),
+    }),
+  },
+);
+
+export const satelliteCrmMessageSentSchema = satelliteEventBaseSchema.extend({
+  type: z.literal(SATELLITE_CRM_MESSAGE_SENT),
+  payload: z.object({
+    organizationId: z.string(),
+    conversationId: z.string(),
+    messageId: z.string(),
+    leadId: z.string().optional(),
+    channel: z.string(),
+  }),
+});
+
+export const satelliteCrmCallStartedSchema = satelliteEventBaseSchema.extend({
+  type: z.literal(SATELLITE_CRM_CALL_STARTED),
+  payload: z.object({
+    organizationId: z.string(),
+    callId: z.string(),
+    leadId: z.string().optional(),
+    fromNumber: z.string().optional(),
+  }),
+});
+
+export const satelliteCrmCallEndedSchema = satelliteEventBaseSchema.extend({
+  type: z.literal(SATELLITE_CRM_CALL_ENDED),
+  payload: z.object({
+    organizationId: z.string(),
+    callId: z.string(),
+    leadId: z.string().optional(),
+    status: z.string(),
+  }),
+});
+
+export const satelliteCrmLeadCapturedSchema = satelliteEventBaseSchema.extend({
+  type: z.literal(SATELLITE_CRM_LEAD_CAPTURED),
+  payload: z.object({
+    organizationId: z.string(),
+    leadId: z.string(),
+    source: z.string(),
+  }),
+});

@@ -32,12 +32,26 @@
 
 Детали: [doc/clone-spec/01-finance-boundary.md](./doc/clone-spec/01-finance-boundary.md)
 
-### 1.4. Out-of-scope v1
+### 1.4. Cross-vertical: construction sales
+
+Buildertrend-style "lead → contract → site → warranty" is **split** in ERA. **IN this product (Wave C1):** post-sale **selections** (`SelectionPackage`) and **warranty** cases on the lead after convert (SKU `crm_selections` / `crm_warranty`). Site ops stay construction; money stays Finance:
+
+| Step | Owner |
+|------|--------|
+| Lead, visit, qualify, convert | **era-crm** (this product) |
+| Selections + warranty (post-sale) | **era-crm** (`SelectionPackage` / `WarrantyCase`) |
+| Counterparty, invoice, payment, commercial contract / PayApp / tenders | **era-finance-core** |
+| Site project, field, acts | **era-construction** |
+
+Do not add construction site screens here. Optional later: link a won lead / Finance contract id onto a construction project (additive event or ref). Canon: [construction-domain-boundaries.md](../docs/adr/construction-domain-boundaries.md).
+
+### 1.5. Out-of-scope v1
 
 - Полноценный helpdesk / ticket system
 - Массовые рассылки WA (marketing) — compliance risk
 - Дублирование Finance `/crm` counterparty screens
 - Склад, оплаты, GL
+- Construction daily log / punch / BOQ / progress acts (→ `era-construction`)
 
 ---
 
@@ -76,12 +90,12 @@
 |----|--------|-----------|--------|---------|
 | M0 | Shell, SSO, health | — | **DONE** | — |
 | M1 | Lead pipeline | Kommo pipeline | **DONE** | — |
-| M2 | Lead card & activities | Bitrix timeline | **DONE** | — |
-| M3 | Channel inbox (WA/IG stub) | Respond.io | **DONE** | — |
+| M2 | Lead card & activities | Bitrix timeline | **PARTIAL** — stage history + visits + Activity feed; calls/player still deepening | — |
+| M3 | Channel inbox (WA/IG) | Respond.io | **PARTIAL** — `/inbox` Conversation/Message + outbox worker; live WA/TG adapters landing | — |
 | M4 | Visit log & geo stub | — | **DONE** | — |
 | M5 | Convert lead | Kommo «won» | **DONE** | `SATELLITE_CRM_LEAD_CONVERTED` |
 | M6 | Finance handoff UI | — | **DONE** | Link to Finance counterparty |
-| M7 | WA Business API live | Respond.io | **DONE** (v2.0) | Finance sends invoice |
+| M7 | WA Business API outbound notify | Respond.io | **PARTIAL** (v2.0) — stage/convert outbound via orch only; bidirectional inbox = M17 / CRM-INBOX-01 | Finance sends invoice |
 | M4 (extend) | Visit geo check-in | Field GPS stub | **MVP** | `Visit.latitude` / `longitude` on `/visits` |
 | **M8** | **Next-contact reminder** | HubSpot tasks | **MVP** | `Lead.nextContactAt` + follow-up API |
 | M9 | Lead scoring / SLA timers | Kommo | **MVP** | `POST /api/leads/:id/score` |
@@ -113,10 +127,12 @@
 
 ## §6. Integrations
 
-| Event | When | Finance |
-|-------|------|---------|
+| Event | When | Finance / CRM |
+|-------|------|---------------|
 | `SATELLITE_CRM_LEAD_CONVERTED` | Lead → Won | Link/create counterparty; optional draft invoice |
 | `SATELLITE_CRM_VISIT_LOGGED` | Field visit logged | Activity log stub in Finance worker |
+| MESSAGE (inbound/outbound) | Conversation send/receive | CRM `Message` + outbox; channel adapters via `@era/integrations-kit` |
+| CALL (RINGING/…) | Telephony webhook / originate | CRM `Call` + SSE `/api/realtime/calls`; no GL |
 
 ---
 
@@ -126,8 +142,8 @@
 |-------|--------|
 | **C0** | Scaffold, SSO, dispatch stub (done) |
 | **C1** | Pipeline + convert + Finance E2E |
-| **C2** | Visits, assignment, inbox stub |
-| **C3** | Live WA Business API via Finance bridge |
+| **C2** | Visits, assignment, **conversations inbox** (not stub) |
+| **C3** | Live WA Business API (tenant `whatsapp_cloud`; orch ENV fallback retiring) |
 
 ---
 
@@ -138,11 +154,12 @@
 | 2026-05-23 | Scaffold |
 | 2026-05-24 | PRD v1.0 + explicit Finance boundary |
 | 2026-05-25 | SP1 C2: visits API + `SATELLITE_CRM_VISIT_LOGGED` dispatch |
-| 2026-05-25 | SP1 C2 SW2: visit UI, agent assignment, inbox stub (WA/IG metadata) |
+| 2026-05-25 | SP1 C2 SW2: visit UI, agent assignment, early inbox (superseded by Conversation/Message) |
 | 2026-05-28 | Enrichment W1: M4 geo, M8 next-contact |
 | 2026-05-28 | Enrichment W2: M9–M10 |
 | 2026-07-02 | §9 **v3.0 roadmap** — party model, import, Finance auto-CP; ADR [crm-lead-party-model-and-prospect-import](../docs/adr/crm-lead-party-model-and-prospect-import.md) |
 | 2026-07-02 | §9.8 Bitrix backlog M17–M30 — deferred waves; ADR §8 |
+| 2026-11-25 | Sales-agent harden: record-scope by-id, WA 24h server, SSE RINGING, integrations honesty; merge/KPI/parties/CF already in code (see §9.8 note) |
 
 ---
 
@@ -174,19 +191,21 @@ One operational pipeline for **customers and partner prospects** (physical + leg
 | **M14** | Prospect import | **DONE (v3.0)** | CSV/XLSX upload; map `data/legal-entities` columns |
 | **M15** | Finance auto-counterparty | **DONE (v3.0)** | Extended convert event → Finance find-or-create CP |
 | **M16** | Individual FIN (MDM) | **DONE (v3.0)** | Optional FIN lookup; `globalPersonId` on lead |
-| M3 ext | Inbox 2-way (WA live thread) | **DEFERRED (v3.1)** | M17 — ADR §8 |
-| M2 ext | Activity timeline (calls, files) | **DEFERRED (v3.1)** | M18 — ADR §8 |
+| M3 ext | Inbox 2-way (WA/TG live thread) | **IN PROGRESS** | CRM-INBOX-01 / ADR `docs/adr/crm/` + kit adapters |
+| M2 ext | Activity timeline (calls, files) | **PARTIAL** | Activity writers + lead-card feed; telephony UI deepening |
 | — | Orchestrator `Partner` on convert | **DEFERRED (v3.1)** | M20 — ADR §8 |
 
-### 9.8. Bitrix24 backlog (deferred — much later)
+### 9.8. Bitrix24 backlog (honesty)
 
 Full table and never-copy list: [ADR §8](../docs/adr/crm-lead-party-model-and-prospect-import.md#8-bitrix24-benchmark-backlog-deferred).
 
+**Already in code (API/SCREEN — not SHIPPED / not ga):** inbox 2-way (`Conversation`/`Message`), activity timeline, lead merge, Contact/Company parties, custom fields + tags, funnel KPI / sales goals, telephony + email adapters, calendar OAuth, PWA shell. Remaining: Meta sandbox / live ATS UAT, MSM/Collabo vendor packs, Partner convert hook, quotes depth.
+
 | Wave | Modules | Headline |
 |------|---------|----------|
-| **v3.1** | M17–M21 | Inbox 2-way, rich timeline, lead merge, Partner hook, import column mapper |
-| **v4.0** | M22–M28 | Funnel KPI, Contact/Company split, custom fields, quotes, calendar, telephony/email |
-| **v5.0+** | M29–M30 | Field-sales mobile, field-level ACL |
+| **v3.1** | M17–M21 | Inbox 2-way, rich timeline, lead merge, Partner hook, import column mapper — **partially landed** (Partner hook still deferred) |
+| **v4.0** | M22–M28 | Funnel KPI, Contact/Company, custom fields, quotes, calendar, telephony/email — **partially landed** (quotes thin; UAT open) |
+| **v5.0+** | M29–M30 | Field-sales mobile, field-level ACL (scope own/group/all API wired; UAT open) |
 | **Never** | — | Automation constructor, mass marketing, helpdesk, CRM billing clone |
 
 ### 9.4. User stories (v3.0)

@@ -112,4 +112,41 @@ export class RuntimeConfigBodyDto {
   @IsOptional()
   @Allow()
   orgProfile?: unknown;
+
+  /** Sync sends these on every bind. Finance stores the bind and ignores the rest. */
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  satellitePublicBaseUrl?: string;
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  orchestratorPublicBaseUrl?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  placementFreeze?: boolean;
+
+  @IsOptional()
+  @Allow()
+  placementFrozenOrgIds?: unknown;
+
+  @IsOptional()
+  @Allow()
+  mutationAuditExemptPrefixes?: unknown;
+
+  @IsOptional()
+  @Allow()
+  paymentMethodCatalogOrgId?: unknown;
+
+  @IsOptional()
+  @Allow()
+  fiscalRouting?: unknown;
+
+  @IsOptional()
+  @Allow()
+  parentOrgId?: unknown;
+
+  @IsOptional()
+  @Allow()
+  paymentMethods?: unknown;
 }

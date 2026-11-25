@@ -114,3 +114,16 @@ API-only Nest service — curl deny is acceptable proof alongside Jest units.
 4. **HS bad code:** `GET /registry/v1/hs/99999999` with key → **404** `HS_NOT_FOUND`. Proof: `dh-hs-negative.spec.ts`.
 
 5. **VOEN:** not in this deny section — AC-DH-VOEN remains External (e-taxes BLOCKED).
+
+6. **Construction materials missing code:** `GET /registry/v1/construction/materials/MISSING` with key → **404** `MATERIAL_NOT_FOUND`. Proof: `dh-mat-con-negative.spec.ts`.
+
+## DH-MAT-CON-01 — Construction materials (HEADLESS; not Pilot)
+
+After `db:migrate` + `db:seed` (includes construction materials slice):
+
+```http
+GET http://127.0.0.1:4200/registry/v1/construction/materials
+X-Api-Key: dev-data-hub-key
+```
+
+Expect `materials` array (e.g. `CEM-42.5`). Industry path: `GET /platform/v1/catalog/construction-materials` via orch satellite token + `X-Organization-Id` (not direct hub from satellite).

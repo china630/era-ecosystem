@@ -119,6 +119,22 @@ function rewriteClinicActiveModules(modules) {
     }
     return [...set];
 }
+exports.RETIRED_CONSTRUCTION_MODULE_KEYS = ["construction_boq_ks"];
+function rewriteConstructionActiveModules(modules) {
+    const set = new Set(modules.map((m) => m.trim()).filter(Boolean));
+    if (set.has("construction_boq_ks")) {
+        set.add("construction_boq");
+    }
+    for (const k of exports.RETIRED_CONSTRUCTION_MODULE_KEYS) {
+        set.delete(k);
+    }
+    return [...set];
+}
+function rewriteCatalogActiveModules(modules) {
+    return rewriteConstructionActiveModules(rewriteClinicActiveModules(modules));
+}
+exports.rewriteConstructionActiveModules = rewriteConstructionActiveModules;
+exports.rewriteCatalogActiveModules = rewriteCatalogActiveModules;
 exports.INDUSTRY_SUBMODULE_PREFIX_TO_GATE = {
     hotel_: "industry_hotel_pms",
     clinic_: "industry_clinic",

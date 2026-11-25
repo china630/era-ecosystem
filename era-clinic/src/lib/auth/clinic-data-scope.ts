@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import type { SatelliteSessionPayload } from "@era/satellite-kit";
 import { hasClinicPermissionBypass } from "@/lib/auth/clinic-admin-access";
@@ -7,6 +6,7 @@ import {
   CLINIC_PERMISSION,
   type ClinicPermission,
 } from "@/lib/auth/clinic-permissions";
+import { ClinicJson } from "@/lib/clinic-json";
 import { prisma } from "@/lib/prisma";
 
 export type ClinicDataScopeMode = "ALL" | "ASSIGNED";
@@ -71,14 +71,14 @@ export function labOrderAssignedToPractitionerWhere(
 export async function assertEpisodeDataScope(
   session: SatelliteSessionPayload,
   episodeId: string,
-): Promise<NextResponse | null> {
+): Promise<ClinicJson | null> {
   const scope = await resolveClinicDataScope(
     session,
     CLINIC_PERMISSION.SCOPE_EPISODES_ALL,
   );
   if (scope.mode === "ALL") return null;
   if (!scope.practitionerId) {
-    return NextResponse.json({ error: "Episode not found" }, { status: 404 });
+    return new ClinicJson(404, { error: "Episode not found" });
   }
   const hit = await prisma.clinicalEpisode.findFirst({
     where: {
@@ -90,7 +90,7 @@ export async function assertEpisodeDataScope(
     select: { id: true },
   });
   if (!hit) {
-    return NextResponse.json({ error: "Episode not found" }, { status: 404 });
+    return new ClinicJson(404, { error: "Episode not found" });
   }
   return null;
 }
@@ -98,14 +98,14 @@ export async function assertEpisodeDataScope(
 export async function assertLabOrderDataScope(
   session: SatelliteSessionPayload,
   labOrderId: string,
-): Promise<NextResponse | null> {
+): Promise<ClinicJson | null> {
   const scope = await resolveClinicDataScope(
     session,
     CLINIC_PERMISSION.SCOPE_LAB_ORDERS_ALL,
   );
   if (scope.mode === "ALL") return null;
   if (!scope.practitionerId) {
-    return NextResponse.json({ error: "Lab order not found" }, { status: 404 });
+    return new ClinicJson(404, { error: "Lab order not found" });
   }
   const hit = await prisma.labOrder.findFirst({
     where: {
@@ -117,7 +117,7 @@ export async function assertLabOrderDataScope(
     select: { id: true },
   });
   if (!hit) {
-    return NextResponse.json({ error: "Lab order not found" }, { status: 404 });
+    return new ClinicJson(404, { error: "Lab order not found" });
   }
   return null;
 }

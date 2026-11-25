@@ -12,6 +12,8 @@ export {
 } from "./orchestrator-gateway";
 export {
   createOrganizationBindHandlers,
+  kitJson,
+  type KitHttpResult,
   type OrganizationBindHandlerOptions,
 } from "./tenancy/organization-bind";
 export {
@@ -161,7 +163,7 @@ export {
   defaultGuestIdentityExpiresAt,
   type GuestIdentityTokenPayload,
 } from "./auth/guest-identity-token";
-export { fetchVoenPreviewFromRequest } from "./bff/voen-preview-route";
+export { fetchVoenPreview, fetchVoenPreviewFromRequest } from "./bff/voen-preview-route";
 export {
   executeSatelliteSsoExchange,
   type SsoExchangePrisma,
@@ -243,10 +245,18 @@ export {
   describeLoginHostBinding,
   jsonLoginHostBinding,
   readStaffLoginJson,
+  readStaffLoginBody,
   type StaffLoginTenantResult,
   type LoginHostBinding,
 } from "./auth/staff-login-org";
-export { redirectNoStore } from "./auth/redirect-no-store";
+export {
+  expressCookieReader,
+  expressHeaderReader,
+  expressKitHeaders,
+  kitHeadersOf,
+  type KitCall,
+  type KitHeaderSource,
+} from "./http/kit-call";
 export { assignNoStoreRedirect } from "./auth/assign-no-store-redirect";
 export {
   FINANCE_OWNER_ROLES,
@@ -501,9 +511,13 @@ export {
   platformCatalogGet,
   platformFxConvert,
   platformVoenLookup,
+  platformConstructionMaterialsList,
+  platformConstructionMaterialByCode,
   platformIcd10Search,
   type PlatformCatalogClientOptions,
   type PlatformIcd10Page,
+  type PlatformConstructionMaterial,
+  type PlatformConstructionMaterialsPage,
 } from "./integration/platform-catalog.client";
 export {
   fetchWorkforcePolicy,
@@ -659,6 +673,10 @@ export {
   type ScheduleHttpMutationAuditDeps,
   type MutationAuditHandler,
 } from "./audit/mutation-audit-belt";
+export {
+  setOrgAuditExemptPrefixes,
+  orgAuditExemptPrefixes,
+} from "./audit/audit-exempt-org-cache";
 
 export {
   buildAgencySsoPayload,

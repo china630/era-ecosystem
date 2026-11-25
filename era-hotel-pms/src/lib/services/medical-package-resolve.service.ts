@@ -136,18 +136,19 @@ export function packageSkipPostsRoom(plan: { code?: string | null }): boolean {
   return stayProductFamily(plan) === "infotur";
 }
 
-/** Guest-column options: the four medical SKUs only. Never Infotur. */
+/** Guest-column options. `clinicCodes` is the current clinic template list; the four SKUs are only the fallback when that list has not loaded. */
 export function medicalPackageChoices(
   plans: Array<{ code?: string | null; label?: string | null }>,
+  clinicCodes?: readonly string[],
 ): Array<{ value: string; label: string }> {
   const labels = new Map<string, string>();
   for (const plan of plans) {
-    const code = normalizeMedicalPackageCode(plan.code);
-    if (!code) continue;
+    const code = (plan.code ?? "").trim().toUpperCase();
     const label = (plan.label ?? "").trim();
-    if (label && !labels.has(code)) labels.set(code, label);
+    if (code && label && !labels.has(code)) labels.set(code, label);
   }
-  return MEDICAL_PACKAGE_CODES.map((code) => ({
+  const codes = clinicCodes?.length ? clinicCodes : MEDICAL_PACKAGE_CODES;
+  return codes.map((code) => ({
     value: code,
     label: labels.get(code) ?? code,
   }));
@@ -177,7 +178,24 @@ export function normalizeMedicalPackageCode(
   return null;
 }
 
-/** Clinic programCode from the stay tariff. Infotur and MEDICAL RATES parent are not templates. */
+/**
+ * Code to send to the clinic. Aliases still map STANDART/DETOX.
+ * `codes` is the current clinic template list. Null means the clinic did not answer:
+ * only the legacy four aliases pass, and nothing new is invented.
+ */
+export function resolveClinicProgramCode(
+  raw: string | null | undefined,
+  codes: ReadonlySet<string> | null,
+): string | null {
+  if (!raw?.trim()) return null;
+  const aliased = normalizeMedicalPackageCode(raw);
+  const compact = raw.trim().toUpperCase().replace(/\s+/g, "");
+  const candidate = aliased ?? compact;
+  if (codes) return codes.has(candidate) ? candidate : null;
+  return aliased;
+}
+
+/** Clinic programCode from the stay tariff when the clinic list is already loaded. */
 export function clinicProgramCodeFromTariff(
   plan: { code?: string | null } | null | undefined,
 ): string | undefined {
@@ -541,12 +559,13 @@ export function overlayFoPackageCodes(
   resolved: ResolveMedicalSkuResult,
   foCodes: Array<string | null | undefined>,
   agencyName?: string | null,
+  clinicCodes?: ReadonlySet<string> | null,
 ): ResolveMedicalSkuResult {
   const length = Math.max(resolved.perGuestCodes.length, foCodes.length);
   const perGuestCodes: (MedicalPackageCode | null)[] = [];
   for (let i = 0; i < length; i++) {
-    const explicit = normalizeMedicalPackageCode(foCodes[i] ?? null);
-    perGuestCodes.push(explicit ?? resolved.perGuestCodes[i] ?? null);
+    const explicit = resolveClinicProgramCode(foCodes[i] ?? null, clinicCodes ?? null);
+    perGuestCodes.push((explicit as MedicalPackageCode | null) ?? resolved.perGuestCodes[i] ?? null);
   }
   const summarized = summarizeMedicalSku(perGuestCodes, agencyName);
   if (summarized.stayKind === "unresolved" && resolved.stayKind === "leisure") {

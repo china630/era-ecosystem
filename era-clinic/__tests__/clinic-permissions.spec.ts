@@ -5,6 +5,7 @@ import {
   routePermissions,
   adminApiRoutePermission,
   adminApiRoutePermissions,
+  isPublicStaffPage,
   migrateStoredPermissions,
   effectiveRolePermissions,
   permissionsJsonNeedsTemplate,
@@ -117,6 +118,12 @@ describe("clinic default permissions", () => {
     expect(adminApiRoutePermission("/api/admin/diagnostic-catalog/services")).toBe(
       CLINIC_PERMISSION.SCREEN_ADMIN_DIAGNOSTIC_CATALOG,
     );
+    expect(adminApiRoutePermission("/api/admin/diet-tables")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
+    );
+    expect(adminApiRoutePermission("/api/admin/patient-form-templates")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
+    );
     expect(adminApiRoutePermission("/api/admin/clinical-templates")).toBeNull();
     expect(adminApiRoutePermission("/api/admin/hotel-revenue-codes")).toBe(
       CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
@@ -124,6 +131,19 @@ describe("clinic default permissions", () => {
     expect(adminApiRoutePermissions("/api/admin/hotel-revenue-codes")).toEqual([
       CLINIC_PERMISSION.API_HOTEL_REVENUE_CODES,
     ]);
+  });
+
+  it("routePermissions maps MED-P1 screens and public telehealth", () => {
+    expect(routePermission("/admin/patient-form-templates")).toBe(
+      CLINIC_PERMISSION.SCREEN_ADMIN_CATALOG,
+    );
+    expect(routePermission("/reports/insurance")).toBe(
+      CLINIC_PERMISSION.SCREEN_REPORTS_PROCEDURES,
+    );
+    expect(routePermission("/print/prescription/x")).toBe(
+      CLINIC_PERMISSION.SCREEN_DOCTOR,
+    );
+    expect(isPublicStaffPage("/telehealth")).toBe(true);
   });
 
   it("CLINIC_ADMIN defaults include program templates and not legacy templates key", () => {

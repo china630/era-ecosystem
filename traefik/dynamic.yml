@@ -24,6 +24,17 @@ http:
       service: orchestrator-web
       priority: 100
 
+    # APK + version.json for kiosk auto-update (static tree under data/tablet-apps).
+    # Higher priority than orchestrator-app so Next does not 404 missing routes.
+    tablet-apps:
+      rule: "Host(`app.era-365.online`) && PathPrefix(`/tablet-apps`)"
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: tablet-apps
+      priority: 200
+
     orchestrator-app:
       rule: Host(`app.era-365.online`)
       entryPoints:
@@ -178,6 +189,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://127.0.0.1"
+
+    tablet-apps:
+      loadBalancer:
+        servers:
+          - url: "http://tablet-apps:80"
 
     orchestrator-web:
       loadBalancer:

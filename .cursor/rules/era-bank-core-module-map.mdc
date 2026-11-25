@@ -13,7 +13,7 @@ Core Banking System (CBS) for AZ banks. Two apps (ADR D9):
 - **`era-bank`** — operational satellite (`industry_banking` gate): UI/workflow client of the engine. Web+`/api` `:3210`, DB `era_bank` (ops/UI state only).
 - (future) `era-bank-dbo` — customer channels (`banking_dbo`).
 
-Canonical: engine [era-bank-core/PRD.md](../../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../../era-bank-core/TZ.md) · satellite [era-bank/PRD.md](../../era-bank/PRD.md) · [era-bank/TZ.md](../../era-bank/TZ.md) · ADR [docs/adr/era-bank-core.md](../../docs/adr/era-bank-core.md) · risk/audit ADR [docs/adr/era-bank-risk-and-audit.md](../../docs/adr/era-bank-risk-and-audit.md) · GL mapping ADR [docs/adr/era-bank-gl-account-mapping.md](../../docs/adr/era-bank-gl-account-mapping.md).
+Canonical: engine [era-bank-core/PRD.md](../../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../../era-bank-core/TZ.md) · satellite [era-bank/PRD.md](../../era-bank/PRD.md) · [era-bank/TZ.md](../../era-bank/TZ.md) · ADR index [docs/adr/bank/README.md](../../docs/adr/bank/README.md) · [era-bank-core.md](../../docs/adr/bank/era-bank-core.md) · risk/audit [era-bank-risk-and-audit.md](../../docs/adr/bank/era-bank-risk-and-audit.md) · GL mapping [era-bank-gl-account-mapping.md](../../docs/adr/bank/era-bank-gl-account-mapping.md).
 
 ## Hard boundaries (do not violate)
 
@@ -49,15 +49,21 @@ Canonical: engine [era-bank-core/PRD.md](../../era-bank-core/PRD.md) · [era-ban
 | Product Factory | `POST /product-templates` |
 | EOD | `POST /eod/run`, `GET /eod/:date` |
 | deposits | `POST /deposits`, `/:id/close`, `/:id/rollover` |
-| loans | `POST /loans`, `/:id/disburse`, `/:id/repay`, `/:id/restructure`, `GET /:id/schedule` |
+| loans | `POST /loans`, `/:id/disburse`, `/:id/repay`, `/:id/prepay`, `/:id/restructure`, `GET /:id/schedule`, `POST /loans/collateral-items`, `POST|GET /:id/collateral-links` |
+| leasing | `GET/POST /leasing/assets|contracts`, `GET .../schedule`, `GET .../buyout-quote`, `POST .../accrue-finance-income` (IFRS 16 lab) |
+| mfi | groups + collection-sheets + collect + `GET /mfi/par30-by-officer` (P1-2 lab) |
+| loans ckr | `GET /loans/ckr/queue|journal`, `POST .../validate-pack|submit-stub` (lab; live fail-closed) |
 | cards | `GET/POST /cards`, `PATCH /cards/:id/limits`, block/unblock/close, `POST /card-txns/authorize|capture|reverse`, `POST /cards/acquiring/inbound/*` |
 | treasury | `GET/POST /treasury/nostro-vostro`, `POST /treasury/fx-deals`, `POST /treasury/interbank`, `POST /treasury/gov-securities`, `GET /treasury/liquidity-gap` |
 | payments | `POST /payments/orders`, `/:id/submit`, `POST /payments/inbound` |
-| aml | `GET /aml/alerts`, `GET /aml/alerts/:id`, `PATCH /aml/alerts/:id`, `POST /aml/alerts/:id/escalate`, `GET/PUT /aml/rules/:code`, `POST /aml/screen`, `POST /aml/reports/fmn`, `GET /aml/reports/fmn/:id/export` |
+| aml | `GET /aml/alerts`, `GET /aml/alerts/:id`, `PATCH /aml/alerts/:id`, `POST /aml/alerts/:id/escalate`, `GET/PUT /aml/rules/:code`, `POST /aml/screen`, `POST /aml/reports/fmn`, `GET /aml/reports/fmn/filing-queue`, `GET /aml/reports/fmn/:id/export` |
 | treasury | `POST /treasury/fx-deals`, `/treasury/interbank`, `GET /treasury/liquidity-gap` |
 | regreporting | `GET/POST /reports/cbar/:template`, `GET /reports/cbar/runs/:id/export`, `GET/PUT /reports/fatca-crs` |
-| risk (PROPOSED) | `GET /risk/exposures`, `POST /risk/staging/run`, `POST /risk/ecl/run`, `POST /risk/ecl/runs/:id/post-provisions`, `GET /risk/rwa`, `GET /risk/capital-adequacy`, `GET /risk/large-exposures`, `GET /risk/lcr`, `GET /risk/nsfr`, `GET/PUT /risk/limits/:code` — computes risk read-models; provisions posted via kernel posting-engine (no parallel ledger); AML stays in `banking_aml` |
-| dbo | `POST /dbo/auth/otp/*`, `POST /dbo/auth/asan/*`, `GET /dbo/auth/me`, `GET /dbo/accounts`, `GET /dbo/cards`, `POST /dbo/cards/:id/temporary-block`, `POST /dbo/transfers/internal`, `POST /dbo/payments/orders/*`, `POST /dbo/open/payments/orders/*` |
+| mis (PARTIAL) | `GET /mis/report-keys`, `POST /mis/assemble` — thin JSON/CSV (P2-3; not full BI) |
+| webhooks (PARTIAL) | subscriptions + deliver + enqueue + outbox drain (P2-2 durable) |
+| deposits adif | `GET /deposits/adif-registry-snapshot` (lab-2; official [U]) |
+| risk (PROPOSED) | `GET /risk/exposures`, `POST /risk/staging/run`, `POST /risk/ecl/run`, `POST /risk/ecl/runs/:id/post-provisions`, `GET /risk/prudential/last`, `POST /risk/prudential/run`, `POST /risk/prudential/:id/provision-approve`, `GET /risk/rwa`, `GET /risk/capital-adequacy`, `GET /risk/large-exposures`, `GET /risk/lcr`, `GET /risk/nsfr`, `GET/PUT /risk/limits/:code` — computes risk read-models; provisions posted via kernel posting-engine (no parallel ledger); AML stays in `banking_aml` |
+| dbo | auth OTP/ASAN, accounts/cards/transfers/payments; `GET /dbo/loans|leasing/contracts`, `GET /dbo/leasing/contracts/:id/schedule`; OB consents require `scaChallengeId` |
 | internal | `POST /internal/v1/staff-provisioning`, `POST /internal/v1/finance-bridge/summary` |
 
 `era-bank/app/api/*` is a **BFF proxy** to these routes (auth + entitlement + branch scope; no business postings locally).

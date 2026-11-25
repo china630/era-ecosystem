@@ -13,7 +13,9 @@
     "more": "Ещё",
     "logout": "Выход",
     "standingOrders": "ПО",
-    "openApi": "API"
+    "openApi": "API",
+    "loans": "Кредиты",
+    "leasing": "Лизинг"
   },
   "login": {
     "title": "Вход",
@@ -119,5 +121,28 @@
     "create": "Создать ключ",
     "revoke": "Отозвать",
     "shownOnce": "Скопируйте сейчас — показывается один раз"
+  },
+  "loans": {
+    "title": "Мои кредиты",
+    "apply": "Заявка",
+    "empty": "Нет активных кредитов",
+    "apr": "ФГПС",
+    "prepay": "Досрочно",
+    "prepayTitle": "Досрочное погашение",
+    "amount": "Сумма (AZN)",
+    "reduceTerm": "Сократить срок",
+    "reduceInstallment": "Уменьшить платёж",
+    "confirmPrepay": "Подтвердить"
+  },
+  "leasing": {
+    "title": "Мои лизинги",
+    "empty": "Нет договоров лизинга",
+    "months": "мес.",
+    "residual": "Остаток",
+    "scheduleHonesty": "График IFRS 16 — только lab (не сертифицирован). Котировка выкупа — в ops.",
+    "viewSchedule": "Показать lab-график",
+    "loadingSchedule": "Загрузка…",
+    "scheduleTitle": "График платежей (lab)",
+    "labNote": "Методология: IFRS 16 lab — не сертифицирован"
   }
 }

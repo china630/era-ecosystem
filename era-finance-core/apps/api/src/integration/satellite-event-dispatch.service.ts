@@ -11,6 +11,8 @@ import {
   isSatelliteHotelRoomChanged,
   isSatelliteHotelStayProductChanged,
   isSatelliteConstructionProgressActApproved,
+  isSatelliteConstructionChangeRequestApproved,
+  isSatelliteConstructionEstimatePackageApproved,
   isSatelliteCrmLeadConverted,
   isSatelliteCrmVisitLogged,
   isSatelliteHotelNightAuditClosed,
@@ -47,6 +49,8 @@ import {
   satelliteHotelGuestCheckedOutSchema,
   satelliteHotelRoomChangedSchema,
   satelliteConstructionProgressActSchema,
+  satelliteConstructionChangeRequestApprovedSchema,
+  satelliteConstructionEstimatePackageApprovedSchema,
   satelliteCrmLeadConvertedSchema,
   satelliteCrmVisitLoggedSchema,
   satelliteHotelNightAuditClosedSchema,
@@ -83,6 +87,7 @@ import { CounterpartiesService } from "../counterparties/counterparties.service"
 import { TimesheetService } from "../hr/timesheet.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { InventoryService } from "../inventory/inventory.service";
+import { ContractsService } from "../contracts/contracts.service";
 import { WorkforceAbsenceSyncService } from "./workforce-absence-sync.service";
 import { WorkforceOrgSyncService } from "./workforce-org-sync.service";
 import { WorkforceEmploymentSyncService } from "./workforce-employment-sync.service";
@@ -161,6 +166,7 @@ export class SatelliteEventDispatchService {
     private readonly counterparties: CounterpartiesService,
     private readonly inventory: InventoryService,
     private readonly notifications: NotificationService,
+    private readonly contracts: ContractsService,
   ) {}
 
   private async defaultOpsBookId(
@@ -242,6 +248,14 @@ export class SatelliteEventDispatchService {
     if (isSatelliteConstructionProgressActApproved(data)) {
       const event = satelliteConstructionProgressActSchema.parse(data);
       return this.handleConstructionAct(organizationId, event);
+    }
+    if (isSatelliteConstructionChangeRequestApproved(data)) {
+      const event = satelliteConstructionChangeRequestApprovedSchema.parse(data);
+      return this.handleConstructionChangeRequest(organizationId, event);
+    }
+    if (isSatelliteConstructionEstimatePackageApproved(data)) {
+      const event = satelliteConstructionEstimatePackageApprovedSchema.parse(data);
+      return this.handleConstructionEstimateApproved(organizationId, event);
     }
     if (isSatelliteCrmLeadConverted(data)) {
       const event = satelliteCrmLeadConvertedSchema.parse(data);
@@ -1674,25 +1688,187 @@ export class SatelliteEventDispatchService {
     });
   }
 
+  private async handleConstructionEstimateApproved(
+    organizationId: string,
+    event: ReturnType<
+      typeof satelliteConstructionEstimatePackageApprovedSchema.parse
+    >,
+  ): Promise<SatelliteDispatchResult> {
+    const contractId = event.payload.financeContractId ?? null;
+    if (!contractId) {
+      return {
+        meta: {
+          projectId: event.payload.projectId,
+          packageId: event.payload.packageId,
+          skipped: "missing_financeContractId",
+        },
+      };
+    }
+    const lines = event.payload.lines ?? [];
+    const result = await this.contracts.seedSovFromEstimatePackage({
+      organizationId,
+      contractId,
+      packageId: event.payload.packageId,
+      version: event.payload.version,
+      amountNet: event.payload.amountNet,
+      lines,
+    });
+    return {
+      meta: {
+        projectId: event.payload.projectId,
+        packageId: event.payload.packageId,
+        version: event.payload.version,
+        contractId,
+        seeded: result.seeded,
+        idempotent: result.idempotent,
+        skipped: result.skipped,
+        lineCount: "lineCount" in result ? result.lineCount : lines.length,
+      },
+    };
+  }
+
+  private async handleConstructionChangeRequest(
+    organizationId: string,
+    event: ReturnType<
+      typeof satelliteConstructionChangeRequestApprovedSchema.parse
+    >,
+  ): Promise<SatelliteDispatchResult> {
+    const changeRequestId =
+      event.payload.changeRequestId ?? event.payload.entityId ?? null;
+    const contractId = event.payload.financeContractId ?? null;
+    if (!contractId || !changeRequestId) {
+      return {
+        meta: {
+          projectId: event.payload.projectId,
+          skipped: "missing_financeContractId_or_changeRequestId",
+        },
+      };
+    }
+    const result = await this.contracts.draftAmendmentFromChangeRequest({
+      organizationId,
+      contractId,
+      changeRequestId,
+      amountLimitDelta: event.payload.amountLimitDelta ?? null,
+      description: event.payload.description ?? null,
+    });
+    return {
+      meta: {
+        projectId: event.payload.projectId,
+        changeRequestId,
+        contractId,
+        amendmentId: result.amendment?.id ?? null,
+        idempotent: result.idempotent,
+        skipped: "skipped" in result ? result.skipped : null,
+      },
+    };
+  }
+
   private async handleConstructionAct(
     organizationId: string,
     event: ReturnType<typeof satelliteConstructionProgressActSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    const reference = `construction:${event.payload.actId}`;
+    const lineCount = event.payload.lines?.length ?? 0;
+    const existing = await this.prisma.transaction.findFirst({
+      where: { organizationId, reference },
+      select: { id: true },
+    });
+    if (existing) {
+      return {
+        transactionId: existing.id,
+        meta: {
+          projectId: event.payload.projectId,
+          actId: event.payload.actId,
+          contractId: event.payload.contractId ?? null,
+          lineCount,
+          idempotent: true,
+        },
+      };
+    }
+
+    const enforceLimit =
+      process.env.CONSTRUCTION_ACT_ENFORCES_CONTRACT_LIMIT === "true";
+    let limitMeta: Record<string, unknown> = {};
+    if (event.payload.contractId) {
+      try {
+        const check = await this.contracts.checkLimit(
+          event.payload.contractId,
+          event.payload.amountNet,
+          organizationId,
+        );
+        limitMeta = {
+          contractLimitAllowed: check.allowed,
+          contractLimitReason: check.reason,
+        };
+        if (enforceLimit && !check.allowed) {
+          throw new Error(check.reason ?? "CONTRACT_LIMIT_EXCEEDED");
+        }
+      } catch (err) {
+        if (enforceLimit) throw err;
+        limitMeta = {
+          ...limitMeta,
+          contractLimitWarn: err instanceof Error ? err.message : "limit_check_failed",
+        };
+      }
+    }
+
     return this.prisma.$transaction(async (tx) => {
+      if (event.payload.contractId && !enforceLimit) {
+        // Soft path: optional commitment reserve when limit allows; ignore failures.
+        try {
+          const check = await this.contracts.checkLimit(
+            event.payload.contractId,
+            event.payload.amountNet,
+            organizationId,
+          );
+          if (check.allowed) {
+            await this.contracts.reserveCommitmentInTransaction(
+              tx,
+              organizationId,
+              event.payload.contractId,
+              event.payload.amountNet,
+              "construction_act",
+              event.payload.actId,
+            );
+          }
+        } catch {
+          // journal still posts
+        }
+      } else if (event.payload.contractId && enforceLimit) {
+        await this.contracts.reserveCommitmentInTransaction(
+          tx,
+          organizationId,
+          event.payload.contractId,
+          event.payload.amountNet,
+          "construction_act",
+          event.payload.actId,
+        );
+      }
+
       const [receivableDefault, wipDefault] = await Promise.all([
         this.satelliteGlAccount(organizationId, "SATELLITE_GL_RECEIVABLE", "TRADE_RECEIVABLE", tx),
         this.satelliteGlAccount(organizationId, "SATELLITE_GL_WIP", "WIP_MANUFACTURING", tx),
       ]);
+      const contractNote = event.payload.contractId
+        ? ` contract=${event.payload.contractId}`
+        : "";
       const transactionId = await this.postBalancedJournal(tx, organizationId, {
         amount: event.payload.amountNet,
-        reference: `construction:${event.payload.actId}`,
-        description: `Construction progress act (${event.correlationId})`,
+        reference,
+        description: `Construction progress act (${event.correlationId})${lineCount ? ` lines=${lineCount}` : ""}${contractNote}`,
         debitAccount: receivableDefault,
         creditAccount: wipDefault,
       });
       return {
         transactionId,
-        meta: { projectId: event.payload.projectId, actId: event.payload.actId },
+        meta: {
+          projectId: event.payload.projectId,
+          actId: event.payload.actId,
+          contractId: event.payload.contractId ?? null,
+          lineCount,
+          idempotent: false,
+          ...limitMeta,
+        },
       };
     });
   }

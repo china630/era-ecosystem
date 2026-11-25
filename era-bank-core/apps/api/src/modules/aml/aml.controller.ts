@@ -229,6 +229,11 @@ export class AmlController {
     });
   }
 
+  @Get("reports/fmn/filing-queue")
+  fmnFilingQueue() {
+    return this.aml.listFmnFilingQueue();
+  }
+
   @Get("reports/fmn/:id/export")
   exportFmn(
     @Param("id") id: string,

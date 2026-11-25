@@ -9,6 +9,13 @@ export interface PostingLegInput {
   currency: string;
 }
 
+/** Nostro/vostro cache update applied inside the same Serializable money tx as the journal. */
+export interface NostroBalanceAdjustment {
+  nostroAccountId: string;
+  /** Signed: credit − debit semantics (positive increases nostro ledger). */
+  deltaMinor: bigint;
+}
+
 export interface PostingRequest {
   reference: string;
   idempotencyKey: string;
@@ -20,6 +27,15 @@ export interface PostingRequest {
   autoApprove?: boolean;
   /** Internal EOD / system steps may post while EodRun is RUNNING. */
   allowDuringEod?: boolean;
+  /** Optional nostro register updates locked FOR UPDATE in the same money tx (ADR D6). */
+  nostroAdjustments?: NostroBalanceAdjustment[];
+  /**
+   * Domain side-effects (loan outstanding, schedule, …) run inside the same
+   * Serializable transaction after balances are applied — keeps money + register atomic.
+   * `journalTxn` is the created (or pending) journal row.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sideEffectsInTx?: (tx: any, journalTxn: { id: string }) => Promise<void>;
 }
 
 export interface ApprovePostingRequest {

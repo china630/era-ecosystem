@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { bakuDateDisplay, bakuDateKey, bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
 import { getClinicSettings } from "@/domain/settings/settings.service";
@@ -103,6 +104,56 @@ export async function buildEpisodeSummaryPrint(
   });
 
   const { labOrderVisibleToGuestWhere } = await import("@/domain/lab/lab-order-pay-gate");
+  const {
+    archiveProcedureWhere,
+    archiveEpisodeSummaryLabStatusWhere,
+  } = await import("@/domain/patient/closed-course-archive-filter");
+  const episodeClosed = episode.status === "CLOSED";
+  const showNonExecuted = clinicSettings.patientCardArchiveShowNonExecuted !== false;
+  const summaryLabStatus = archiveEpisodeSummaryLabStatusWhere(
+    episodeClosed ? showNonExecuted : false,
+  );
+  const labResultOrCancelled: Prisma.LabOrderWhereInput =
+    episodeClosed && showNonExecuted
+      ? {
+          OR: [
+            { status: "CANCELLED" as const },
+            {
+              status: { in: ["RESULT_READY", "PUBLISHED", "COMPLETED"] },
+              OR: [
+                { items: { some: { results: { some: {} } } } },
+                {
+                  AND: [
+                    { resultJson: { not: null } },
+                    { NOT: { resultJson: { in: ["", "[]"] } } },
+                  ],
+                },
+              ],
+            },
+          ],
+        }
+      : {
+          ...summaryLabStatus,
+          OR: [
+            { items: { some: { results: { some: {} } } } },
+            {
+              AND: [
+                { resultJson: { not: null } },
+                { NOT: { resultJson: { in: ["", "[]"] } } },
+              ],
+            },
+          ],
+        };
+  const procedureStatusWhere = episodeClosed
+    ? archiveProcedureWhere(showNonExecuted)
+    : showsUnpaidExtraOnPlan(clinicSettings.extraProcedureRoute)
+      ? {
+          OR: [
+            { status: { in: [...PRINT_PROCEDURE_STATUSES] } },
+            { status: "PENDING_PAY" as const, inPackage: false },
+          ],
+        }
+      : { status: { in: [...PRINT_PROCEDURE_STATUSES] } };
   const [labOrders, procedureOrders, examNotes] = await Promise.all([
     prisma.labOrder.findMany({
       where: {
@@ -114,18 +165,7 @@ export async function buildEpisodeSummaryPrint(
               { visit: { clinicalEpisodeId: episode.id } },
             ],
           },
-          {
-            status: { in: ["RESULT_READY", "PUBLISHED", "COMPLETED"] },
-            OR: [
-              { items: { some: { results: { some: {} } } } },
-              {
-                AND: [
-                  { resultJson: { not: null } },
-                  { NOT: { resultJson: { in: ["", "[]"] } } },
-                ],
-              },
-            ],
-          },
+          labResultOrCancelled,
         ],
       },
       include: {
@@ -144,14 +184,7 @@ export async function buildEpisodeSummaryPrint(
       where: {
         patientRefId: patientId,
         clinicalEpisodeId: episode.id,
-        ...(showsUnpaidExtraOnPlan(clinicSettings.extraProcedureRoute)
-          ? {
-              OR: [
-                { status: { in: [...PRINT_PROCEDURE_STATUSES] } },
-                { status: "PENDING_PAY" as const, inPackage: false },
-              ],
-            }
-          : { status: { in: [...PRINT_PROCEDURE_STATUSES] } }),
+        ...procedureStatusWhere,
       },
       include: {
         resource: { include: { room: true } },

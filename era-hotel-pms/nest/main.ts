@@ -2,25 +2,15 @@ import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { Module } from "@nestjs/common";
 import express from "express";
-import {
-  createSatelliteApiController,
-  SatelliteMutationAuditInterceptor,
-} from "@era/satellite-kit/nest";
+import { SatelliteMutationAuditInterceptor } from "@era/satellite-kit/nest";
 import { prisma } from "@/lib/prisma";
-import { registerGuestRoutes } from "./generated/register";
-import { registerGuestAppRoutes } from "./guest-app-routes";
-import { registerKitRoutes } from "./kit-routes";
-import { registerStayMobilityRoutes } from "./stay-mobility-routes";
+import { HotelNativeModule } from "./native/hotel-native.module";
+import { KitApiController } from "./kit-api.controller";
 
-const router = express.Router();
-registerGuestRoutes(router);
-registerGuestAppRoutes(router);
-registerKitRoutes(router);
-registerStayMobilityRoutes(router);
-const HotelApiController = createSatelliteApiController(router);
+void KitApiController;
 
 @Module({
-  controllers: [HotelApiController],
+  imports: [HotelNativeModule],
 })
 class HotelGuestNestModule {}
 

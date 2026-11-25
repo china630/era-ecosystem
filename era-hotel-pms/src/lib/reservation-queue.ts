@@ -1,4 +1,5 @@
 import type { Prisma, ReservationStatus } from '@prisma/client';
+import { addBakuDays, bakuCivilUtcDate } from '@era/satellite-kit/time';
 
 /** Front-desk queues on the reservation list. Order is the chip order. */
 export const RESERVATION_QUEUE_CODES = [
@@ -48,10 +49,19 @@ function arrivalRange(dateFrom?: string, dateTo?: string): Prisma.DateTimeFilter
   return range;
 }
 
+/** Inclusive business-day stamp stored as UTC midnight of YYYY-MM-DD. */
+function businessDateEquals(ymd: string): Prisma.DateTimeFilter {
+  return {
+    gte: bakuCivilUtcDate(ymd),
+    lt: bakuCivilUtcDate(addBakuDays(ymd, 1)),
+  };
+}
+
 /**
  * Who the reservation list shows for one chip.
- * `today` is the hotel civil date (YYYY-MM-DD).
+ * `today` is the hotel business date (YYYY-MM-DD).
  * `overdue` is the night-audit tail: open stays whose arrival is already before `today`.
+ * Realized queues use Stay check-in/out **business** stamps, not wall actual*.
  */
 export function reservationQueueWhere(input: {
   queue: ReservationQueue;
@@ -93,9 +103,11 @@ export function reservationQueueWhere(input: {
   }
 
   if (queue === 'realizedArrivals') {
+    // Same set as FO Status realized arrivals: checked in on this business day
+    // (still in-house or already checked out the same day).
     return {
-      status: 'IN_HOUSE',
-      stay: { is: { actualCheckIn: { gte: dayStart(today), lte: dayEnd(today) } } },
+      status: { in: ['IN_HOUSE', 'CHECKED_OUT'] },
+      stay: { is: { checkInBusinessDate: businessDateEquals(today) } },
     };
   }
 
@@ -114,7 +126,7 @@ export function reservationQueueWhere(input: {
   if (queue === 'realizedDepartures') {
     return {
       status: 'CHECKED_OUT',
-      stay: { is: { actualCheckOut: { gte: dayStart(today), lte: dayEnd(today) } } },
+      stay: { is: { checkOutBusinessDate: businessDateEquals(today) } },
     };
   }
 

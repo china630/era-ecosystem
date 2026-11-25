@@ -3,7 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CreditCard, Home, KeyRound, LogOut, PieChart, Repeat, Send, ShieldCheck, Wallet } from "lucide-react";
+import {
+  Building2,
+  CreditCard,
+  Home,
+  KeyRound,
+  Landmark,
+  LogOut,
+  PieChart,
+  Repeat,
+  Send,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 
 type Props = {
   children: React.ReactNode;
@@ -13,6 +25,8 @@ type Props = {
 const retailItems = [
   { href: "/dashboard", labelKey: "home" as const, icon: Home },
   { href: "/accounts", labelKey: "accounts" as const, icon: CreditCard },
+  { href: "/loans", labelKey: "loans" as const, icon: Landmark },
+  { href: "/leasing", labelKey: "leasing" as const, icon: Building2 },
   { href: "/cards", labelKey: "cards" as const, icon: Wallet },
   { href: "/payments", labelKey: "pay" as const, icon: Send },
   { href: "/pfm", labelKey: "pfm" as const, icon: PieChart },

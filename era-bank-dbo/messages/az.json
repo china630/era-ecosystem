@@ -14,7 +14,9 @@
     "logout": "Çıxış",
     "standingOrders": "SO",
     "pfm": "PFM",
-    "openApi": "API"
+    "openApi": "API",
+    "loans": "Kreditlər",
+    "leasing": "Lizinq"
   },
   "login": {
     "title": "Giriş",
@@ -120,5 +122,28 @@
     "create": "Açar yarat",
     "revoke": "Ləğv et",
     "shownOnce": "İndi kopyala — bir dəfə göstərilir"
+  },
+  "loans": {
+    "title": "Kreditlərim",
+    "apply": "Müraciət",
+    "empty": "Aktiv kredit yoxdur",
+    "apr": "FGPS",
+    "prepay": "Vaxtından əvvəl",
+    "prepayTitle": "Vaxtından əvvəl ödəniş",
+    "amount": "Məbləğ (AZN)",
+    "reduceTerm": "Müddəti azalt",
+    "reduceInstallment": "Ödənişi azalt",
+    "confirmPrepay": "Təsdiq"
+  },
+  "leasing": {
+    "title": "Lizinqlərim",
+    "empty": "Lizinq müqaviləsi yoxdur",
+    "months": "ay",
+    "residual": "Qalıq",
+    "scheduleHonesty": "IFRS 16 cədvəli yalnız labdır (sertifikatlaşdırılmayıb). Alış kotirovkası ops-dadır.",
+    "viewSchedule": "Lab cədvəlinə bax",
+    "loadingSchedule": "Yüklənir…",
+    "scheduleTitle": "Ödəniş cədvəli (lab)",
+    "labNote": "Metodologiya: IFRS 16 lab — sertifikatlaşdırılmayıb"
   }
 }

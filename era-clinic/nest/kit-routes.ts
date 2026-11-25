@@ -1,11 +1,13 @@
-import type { Express, Request as ExpressRequest, Response as ExpressResponse } from "express";
-import { createOrganizationBindHandlers, createRuntimeConfigHandlers } from "@era/satellite-kit";
-import { GET as billingStatusGet } from "@era/satellite-kit/billing/status-route";
+import type { Request as ExpressRequest, Response as ExpressResponse } from "express";
+import { Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
+import { createOrganizationBindHandlers, createRuntimeConfigHandlers, type KitHttpResult } from "@era/satellite-kit";
+import { expressKitHeaders } from "./express-kit-headers";
+import { readBillingStatusFrom } from "@era/satellite-kit/billing/status-route";
 import { prisma } from "@/lib/prisma";
 import { upsertClinicCutoverPolicy } from "@/domain/physio/clinic-cutover.service";
 import { ensureClinicCatalogIfEmpty } from "@/domain/catalog/ensure-clinic-catalog-from-templates";
 import { ensureSystemClinicRoles } from "@/lib/auth/ensure-system-clinic-roles";
-import { runWithNestHttp, runWithStaffTenantIfPresent, sendRouteError, sendWebResponse } from "./bridge";
+import { runWithStaffTenantIfPresent, sendRouteError } from "./bridge";
 
 const runtimeConfig = createRuntimeConfigHandlers({
   getPrisma: () => prisma,
@@ -18,45 +20,11 @@ const organizationBind = createOrganizationBindHandlers({
   getPrisma: () => prisma,
 });
 
-function webRequest(httpReq: ExpressRequest): Request {
-  const url = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
-  const headers = new Headers();
-  for (const [key, value] of Object.entries(httpReq.headers)) {
-    if (typeof value === "string") headers.set(key, value);
-    else if (Array.isArray(value)) headers.set(key, value.join(", "));
-  }
-  const method = httpReq.method ?? "GET";
-  const init: RequestInit = { method, headers };
-  if (method !== "GET" && method !== "HEAD") {
-    init.body = JSON.stringify(httpReq.body ?? {});
-    if (!headers.has("content-type")) headers.set("content-type", "application/json");
-  }
-  return new Request(url, init);
-}
-
-function mount(
-  http: Express,
-  method: "get" | "post",
-  path: string,
-  handler: (request: Request) => Promise<Response>,
-) {
-  http[method](path, async (httpReq: ExpressRequest, httpRes: ExpressResponse) => {
-    try {
-      const web = await runWithNestHttp(httpReq, async () =>
-        runWithStaffTenantIfPresent(httpReq, async () => handler(webRequest(httpReq))),
-      );
-      if (web instanceof Response) await sendWebResponse(httpRes, web);
-    } catch (err) {
-      await sendRouteError(httpRes, err);
-    }
-  });
-}
-
-async function bindPost(request: Request): Promise<Response> {
-  const res = await organizationBind.POST(request);
-  if (!res.ok) return res;
+async function bindWrite(req: ExpressRequest): Promise<KitHttpResult> {
+  const result = await organizationBind.writeFrom(expressKitHeaders(req), req.body);
+  if (result.status >= 400) return result;
   try {
-    const body = (await res.clone().json()) as { organizationId?: string };
+    const body = result.body as { organizationId?: string };
     const orgId = body.organizationId?.trim();
     if (orgId && orgId !== "demo-org") {
       await ensureSystemClinicRoles(prisma, orgId);
@@ -65,14 +33,56 @@ async function bindPost(request: Request): Promise<Response> {
   } catch (err) {
     console.error("[clinic] post-bind catalog ensure failed", err);
   }
-  return res;
+  return result;
 }
 
-/** Kit re-exports the generator skips. Same handlers as the Next route files. */
-export function registerKitRoutes(http: Express) {
-  mount(http, "get", "/api/platform/billing-status", billingStatusGet);
-  mount(http, "get", "/api/internal/v1/runtime-config", runtimeConfig.GET);
-  mount(http, "post", "/api/internal/v1/runtime-config", runtimeConfig.POST);
-  mount(http, "get", "/api/internal/v1/organization/bind", organizationBind.GET);
-  mount(http, "post", "/api/internal/v1/organization/bind", bindPost);
+@Controller()
+export class ClinicKitController {
+  @Get("api/platform/billing-status")
+  @HttpCode(200)
+  billing(@Req() req: ExpressRequest, @Res({ passthrough: false }) res: ExpressResponse) {
+    return this.send(req, res, () => readBillingStatusFrom(expressKitHeaders(req)));
+  }
+
+  @Get("api/internal/v1/runtime-config")
+  @HttpCode(200)
+  runtimeGet(@Req() req: ExpressRequest, @Res({ passthrough: false }) res: ExpressResponse) {
+    return this.send(req, res, () => runtimeConfig.readFrom(expressKitHeaders(req)));
+  }
+
+  @Post("api/internal/v1/runtime-config")
+  @HttpCode(200)
+  runtimePost(@Req() req: ExpressRequest, @Res({ passthrough: false }) res: ExpressResponse) {
+    return this.send(req, res, () => runtimeConfig.writeFrom(expressKitHeaders(req), req.body));
+  }
+
+  @Get("api/internal/v1/organization/bind")
+  @HttpCode(200)
+  bindGet(@Req() req: ExpressRequest, @Res({ passthrough: false }) res: ExpressResponse) {
+    return this.send(req, res, () => organizationBind.readFrom(expressKitHeaders(req)));
+  }
+
+  @Post("api/internal/v1/organization/bind")
+  @HttpCode(200)
+  bindPostRoute(@Req() req: ExpressRequest, @Res({ passthrough: false }) res: ExpressResponse) {
+    return this.send(req, res, () => bindWrite(req));
+  }
+
+  private async send(
+    httpReq: ExpressRequest,
+    httpRes: ExpressResponse,
+    run: () => Promise<KitHttpResult>,
+  ) {
+    try {
+      const result = await runWithStaffTenantIfPresent(httpReq, run);
+      if (!result || typeof result !== "object" || !("status" in result)) return;
+      const row = result as KitHttpResult;
+      if (row.headers) {
+        for (const [key, value] of Object.entries(row.headers)) httpRes.setHeader(key, value);
+      }
+      httpRes.status(row.status).json(row.body);
+    } catch (err) {
+      await sendRouteError(httpRes, err);
+    }
+  }
 }

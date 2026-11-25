@@ -1,18 +1,4 @@
-jest.mock("next/server", () => ({
-  NextResponse: {
-    json: (data: unknown, init?: { status?: number }) => ({
-      status: init?.status ?? 200,
-      json: async () => data,
-    }),
-  },
-}));
-
-jest.mock("next/headers", () => ({
-  cookies: jest.fn(async () => ({ get: () => undefined })),
-  headers: jest.fn(async () => ({
-    get: (name: string) => (name === "x-era-pathname" ? "/api/auth/me" : null),
-  })),
-}));
+import "./_nest-http-frame-mock";
 
 jest.mock("@/lib/prisma", () => ({ prisma: {} }));
 
@@ -66,9 +52,10 @@ describe("Construction MAT negative paths (AC-CON-MAT)", () => {
         name: "IndustryModuleInactiveError",
         moduleKey: "industry_construction",
       });
-      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_construction", { organizationId: "org-1" });
+      expect(requireSatelliteModule).toHaveBeenCalledWith("industry_construction", {
+        organizationId: "org-1",
+      });
     });
-
   });
 
   describe("domain deny", () => {

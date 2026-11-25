@@ -17,7 +17,7 @@ Related (do not conflate):
 - Invoice guest portal — [era-finance-core/PRD.md](../../era-finance-core/PRD.md) §4.4.1 (one invoice, no login).  
 - Wholesale credit stub — `GET /api/credit-limit`.  
 - Hotel agency portal / CL — [hotel-agency-portal.md](./hotel-agency-portal.md), [hotel-city-ledger-and-fo-money.md](./hotel-city-ledger-and-fo-money.md).  
-- Bank credit/ECL — [era-bank-risk-and-audit.md](./era-bank-risk-and-audit.md) (**out** of this SKU).  
+- Bank credit/ECL — [era-bank-risk-and-audit.md](./bank/era-bank-risk-and-audit.md) (**out** of this SKU).  
 - Multi-book — [finance-accounting-book.md](./finance-accounting-book.md) (eng-complete; Lab RT deferred). Trade credit is a **separate** Finance domain (AR + shipment gate), not a GAAP follow-up PR. Exposure reads the **default ops** book.
 
 ## Decision

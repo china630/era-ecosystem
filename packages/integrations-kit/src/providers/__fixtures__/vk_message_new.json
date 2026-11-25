@@ -1,0 +1,13 @@
+{
+  "type": "message_new",
+  "secret": "vk-secret",
+  "object": {
+    "message": {
+      "id": 42,
+      "date": 1700000000,
+      "peer_id": 2000001,
+      "from_id": 2000001,
+      "text": "Hello from VK fixture"
+    }
+  }
+}

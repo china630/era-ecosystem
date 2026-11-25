@@ -32,4 +32,5 @@ Spawn `satellite_{domain}_finance_bridge.plan.md` when starting a new bridge inc
 | Bridge | Apps | Plan |
 |--------|------|------|
 | Hotel daily revenue → GL | hotel-pms, finance-core | `satellite_finance_gl_bridge` |
-| Progress act → Finance | construction | event `SATELLITE_CONSTRUCTION_PROGRESS_APPROVED` (extend with mapping if needed) |
+| Progress act → Finance | construction | event `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` (optional `lines[]` / `contractId`; mapping if needed) — [construction-domain-boundaries.md](./construction-domain-boundaries.md) |
+| Estimate approve → Contract SOV | construction, finance-core | event `SATELLITE_CONSTRUCTION_ESTIMATE_PACKAGE_APPROVED` + `handleConstructionEstimateApproved` / `seedSovFromEstimatePackage` (no auto-GL) — [construction-estimate-hierarchy.md](./construction-estimate-hierarchy.md) |

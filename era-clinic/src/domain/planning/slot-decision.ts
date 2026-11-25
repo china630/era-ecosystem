@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import {
   bathSeriesRestYmds,
+  illegalHardSeriesBathYmds,
   naftalanWeekIsFull,
   parseBathDayModes,
   bakuMondayYmd,
+  resolveDefaultBathMode,
 } from "@/domain/planning/bath-calendar";
 import { listClinicDays } from "@/domain/planning/clinic-day";
 import { loadPeakRulesForRange } from "@/domain/planning/peak-rules.service";
@@ -58,6 +60,7 @@ export const SLOT_REASON_MESSAGE: Record<PlacementFailureReason, string> = {
   lunch: "Procedure cannot be scheduled in the lunch break",
   cross_day: "Manual move must stay on the same day",
   bath_rest: "This day is a rest day for this bath",
+  series_rhythm: "This day breaks the series rhythm (too many sessions in a row)",
   week_full: "The weekly naftalan limit is used up",
   past_checkout: "That day is after checkout",
   checkout_noon: "On checkout day the procedure must finish by 12:00",
@@ -416,7 +419,16 @@ async function assertBathSeriesMove(input: {
 }): Promise<void> {
   const member = await prisma.procedureDaySeriesMember.findFirst({
     where: { procedureCode: input.procedureCode, series: { active: true } },
-    select: { series: { select: { fillsRestDays: true } } },
+    select: {
+      series: {
+        select: {
+          fillsRestDays: true,
+          modeCode: true,
+          weeklyCap: true,
+          code: true,
+        },
+      },
+    },
   });
   if (!member) return;
 
@@ -427,6 +439,15 @@ async function assertBathSeriesMove(input: {
   ]);
   if (stored.has(input.targetYmd)) throw new SlotDecisionError("bath_rest");
 
+  const modes = parseBathDayModes(input.settings.bathDayModesJson);
+  const mode =
+    storedBathMode(input.ownFields) ??
+    storedBathMode(sameSku[0]?.physioFields) ??
+    (member.series.modeCode
+      ? resolveDefaultBathMode(member.series.modeCode, modes)
+      : defaultBathModeFromSettings(input.settings));
+  const policy = bathPolicyFromSettings(input.settings);
+
   const anchorRow = [...sameSku].sort((a, b) => a.ymd.localeCompare(b.ymd))[0];
   if (anchorRow && input.targetYmd >= anchorRow.ymd) {
     const end = input.targetYmd > anchorRow.ymd ? input.targetYmd : anchorRow.ymd;
@@ -434,27 +455,54 @@ async function assertBathSeriesMove(input: {
     const rest = bathSeriesRestYmds({
       days,
       anchorYmd: anchorRow.ymd,
-      mode:
-        storedBathMode(input.ownFields) ??
-        storedBathMode(anchorRow.physioFields) ??
-        defaultBathModeFromSettings(input.settings),
-      modes: parseBathDayModes(input.settings.bathDayModesJson),
-      policy: bathPolicyFromSettings(input.settings),
+      mode,
+      modes,
+      policy,
+      countYmds: new Set(sameSku.map((row) => row.ymd)),
     });
     if (rest.includes(input.targetYmd)) throw new SlotDecisionError("bath_rest");
   }
 
+  if (!member.series.fillsRestDays && sameSku.length > 0) {
+    let replaced = false;
+    const bathYmds = sameSku.map((row) => {
+      if (!replaced && row.ymd === input.originYmd) {
+        replaced = true;
+        return input.targetYmd;
+      }
+      return row.ymd;
+    });
+    if (!replaced) bathYmds.push(input.targetYmd);
+    const sorted = [...bathYmds].sort();
+    const from = sorted[0]!;
+    const to = sorted[sorted.length - 1]!;
+    const streakDays = await listClinicDays(from, addBakuDays(to, 1));
+    const illegal = illegalHardSeriesBathYmds({
+      bathYmds,
+      days: streakDays,
+      mode,
+      modes,
+      policy,
+      fillsRestDays: false,
+    });
+    if (illegal.includes(input.targetYmd)) throw new SlotDecisionError("series_rhythm");
+  }
+
   if (member.series.fillsRestDays) return;
   if (bakuMondayYmd(input.originYmd) === bakuMondayYmd(input.targetYmd)) return;
-  const naftalan = await prisma.procedureDaySeriesMember.findMany({
-    where: { series: { active: true, fillsRestDays: false } },
+  const sameSeriesMembers = await prisma.procedureDaySeriesMember.findMany({
+    where: { series: { active: true, code: member.series.code } },
     select: { procedureCode: true },
   });
-  const codes = new Set(naftalan.map((row) => row.procedureCode));
+  const codes = new Set(sameSeriesMembers.map((row) => row.procedureCode));
   const weekYmds = input.others
     .filter((row) => codes.has(row.procedureCode))
     .map((row) => row.ymd);
-  if (naftalanWeekIsFull(input.targetYmd, weekYmds, input.settings.weeklyNaftalanCap)) {
+  const weeklyCap =
+    member.series.weeklyCap === null || member.series.weeklyCap === undefined
+      ? input.settings.weeklyNaftalanCap
+      : member.series.weeklyCap;
+  if (naftalanWeekIsFull(input.targetYmd, weekYmds, weeklyCap)) {
     throw new SlotDecisionError("week_full");
   }
 }

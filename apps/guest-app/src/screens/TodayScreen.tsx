@@ -3,7 +3,7 @@ import { EmergencyCard } from "../chrome";
 import type { Copy, Phase } from "../copy";
 import { MrzCameraFrame } from "../mrz-camera";
 import { parseGuestMrz } from "../mrz-parse";
-import type { Brand, CareRow, TripPack } from "../types";
+import type { BoardInfo, Brand, CareRow, FolioRow, TransferRow, TripPack } from "../types";
 import { INK, OK, DANGER, space } from "../theme";
 import {
   Card,
@@ -16,7 +16,6 @@ import {
   PrimaryButton,
   SectionTitle,
 } from "../ui";
-import { AuthPanel } from "./AuthPanel";
 
 export function TodayScreen(props: {
   copy: Copy;
@@ -27,33 +26,14 @@ export function TodayScreen(props: {
   phase: Phase;
   offers: string[];
   nextProcedure: CareRow | null;
+  board: BoardInfo | null;
+  folio: FolioRow[];
+  transfers: TransferRow[];
   onOpenTrip: () => void;
   onOpenCare: () => void;
   onOpenHotel: () => void;
+  onOpenAccount: () => void;
   onRefreshTrip: () => void;
-  // auth
-  code: string;
-  setCode: (v: string) => void;
-  onExchange: () => void;
-  linkError: string | null;
-  authChannel: "SMS" | "WHATSAPP" | "EMAIL";
-  setAuthChannel: (v: "SMS" | "WHATSAPP" | "EMAIL") => void;
-  phone: string;
-  setPhone: (v: string) => void;
-  otp: string;
-  setOtp: (v: string) => void;
-  onStartOtp: () => void;
-  onVerifyOtp: () => void;
-  confNo: string;
-  setConfNo: (v: string) => void;
-  confSurname: string;
-  setConfSurname: (v: string) => void;
-  confArrival: string;
-  setConfArrival: (v: string) => void;
-  onConfirm: () => void;
-  authMsg: string | null;
-  limited: Record<string, unknown> | null;
-  // questionnaire
   qFirst: string;
   setQFirst: (v: string) => void;
   qLast: string;
@@ -77,31 +57,18 @@ export function TodayScreen(props: {
 
   if (!trip || !unlocked) {
     return (
-      <AuthPanel
-        copy={copy}
-        color={color}
-        code={props.code}
-        setCode={props.setCode}
-        onExchange={props.onExchange}
-        linkError={props.linkError}
-        authChannel={props.authChannel}
-        setAuthChannel={props.setAuthChannel}
-        phone={props.phone}
-        setPhone={props.setPhone}
-        otp={props.otp}
-        setOtp={props.setOtp}
-        onStartOtp={props.onStartOtp}
-        onVerifyOtp={props.onVerifyOtp}
-        confNo={props.confNo}
-        setConfNo={props.setConfNo}
-        confSurname={props.confSurname}
-        setConfSurname={props.setConfSurname}
-        confArrival={props.confArrival}
-        setConfArrival={props.setConfArrival}
-        onConfirm={props.onConfirm}
-        authMsg={props.authMsg}
-        limited={props.limited}
-      />
+      <View>
+        <Card>
+          <SectionTitle>{copy.signInTitle}</SectionTitle>
+          <Muted>{copy.signInBody}</Muted>
+          <PrimaryButton label={copy.openAccount} color={color} onPress={props.onOpenAccount} />
+        </Card>
+        <EmergencyCard
+          copy={copy}
+          deskPhone={props.brand?.deskPhone}
+          doctorPhone={props.brand?.doctorOnDutyPhone}
+        />
+      </View>
     );
   }
 
@@ -139,6 +106,42 @@ export function TodayScreen(props: {
 
       {phase === "in_house" ? (
         <Card>
+          <SectionTitle>{copy.stayStatus}</SectionTitle>
+          <Text style={{ color: INK, fontWeight: "700" }}>
+            {props.trip?.party?.[0]
+              ? `${props.trip.party[0].firstName ?? ""} ${props.trip.party[0].lastName ?? ""}`.trim()
+              : "—"}
+          </Text>
+          <Muted>
+            {copy.room} {props.board?.roomNumber ?? "—"} · {props.trip?.status ?? "—"}
+          </Muted>
+          <Muted>
+            {copy.checkIn} {props.trip?.checkIn?.slice(0, 10) ?? "—"} · {copy.checkOut}{" "}
+            {props.trip?.checkOut?.slice(0, 10) ?? "—"}
+          </Muted>
+          <Muted>
+            {copy.boardTitle}: {props.board?.mealPlanCode ?? copy.boardEmpty}
+          </Muted>
+          <SectionTitle>{copy.transfersTitle}</SectionTitle>
+          {props.transfers.length === 0 ? <Muted>{copy.noTransfer}</Muted> : null}
+          {props.transfers.map((row) => (
+            <ListRow
+              key={row.id}
+              title={`${row.direction} ${row.flightNo ?? ""}`.trim()}
+              subtitle={row.pickupAt.replace("T", " ").slice(0, 16)}
+              meta={row.status}
+            />
+          ))}
+          <SectionTitle>{copy.folioTitle}</SectionTitle>
+          {props.folio.length === 0 ? <Muted>{copy.folioEmpty}</Muted> : null}
+          {props.folio.map((f) => (
+            <View key={f.id}>
+              <Muted>{f.settled || !f.open ? copy.folioSettled : copy.folioOpen}</Muted>
+              {f.lines.map((line) => (
+                <ListRow key={line.id} title={line.label} meta={line.amount} />
+              ))}
+            </View>
+          ))}
           <SectionTitle>{copy.nextUp}</SectionTitle>
           {props.nextProcedure ? (
             <ListRow

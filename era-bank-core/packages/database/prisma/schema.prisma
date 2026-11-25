@@ -24,6 +24,13 @@ enum BranchStatus {
   CLOSED
 }
 
+enum InstitutionType {
+  BANK
+  BOKT
+  LEASING_COMPANY
+  CREDIT_UNION
+}
+
 enum CustomerType {
   NATURAL
   LEGAL
@@ -169,6 +176,43 @@ enum LoanStatus {
   PENDING_PRICING_APPROVAL
 }
 
+enum LoanRepaymentFrequency {
+  MONTHLY
+  QUARTERLY
+  BULLET
+}
+
+enum LoanLiabilityType {
+  INDIVIDUAL
+  JLG
+  SOLIDARITY
+}
+
+enum BorrowerGroupStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum GroupMemberRole {
+  LEADER
+  MEMBER
+}
+
+enum LeaseAssetStatus {
+  AVAILABLE
+  LEASED
+  RETIRED
+}
+
+enum LeaseContractStatus {
+  DRAFT
+  ACTIVE
+  MATURED
+  CLOSED
+  DEFAULTED
+}
+
 enum InstallmentStatus {
   SCHEDULED
   DUE
@@ -202,6 +246,12 @@ enum RegReportStatus {
   GENERATED
   VALIDATED
   EXPORTED
+}
+
+enum RegReportOutputFormat {
+  JSON
+  CSV
+  XML
 }
 
 enum FatcaCrsClass {
@@ -305,6 +355,19 @@ enum PositionStatus {
 }
 
 // ─── Kernel L1 models ───────────────────────────────────────────────────────
+
+/// Regulated institution class per bank org (BANK vs BOKT vs leasing). Drives product/report gates.
+model BankInstitutionConfig {
+  id              String          @id @default(cuid())
+  organizationId  String          @map("organization_id")
+  bankOrgId       String          @unique @map("bank_org_id")
+  institutionType InstitutionType @default(BANK) @map("institution_type")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@map("bank_institution_configs")
+}
 
 model GlAccount {
   id         String        @id @default(cuid())
@@ -626,6 +689,9 @@ model DepositContract {
   productTemplateId    String        @map("product_template_id")
   principalMinor       BigInt        @map("principal_minor")
   accruedInterestMinor BigInt        @default(0) @map("accrued_interest_minor")
+  taxAccruedMinor      BigInt        @default(0) @map("tax_accrued_minor")
+  monthInterestAccruedMinor BigInt   @default(0) @map("month_interest_accrued_minor")
+  interestAccrualMonth String?       @map("interest_accrual_month")
   /// Contract rate locked at open (annual fraction). EOD accrual uses this, not live product params.
   rateAnnual           Decimal       @default(0) @map("rate_annual") @db.Decimal(9, 6)
   dayCountConvention   String        @default("ACT_365") @map("day_count_convention")
@@ -683,17 +749,112 @@ model LoanContract {
   participationPct  Decimal?   @map("participation_pct") @db.Decimal(7, 4)
   leadBankName      String?    @map("lead_bank_name")
   disbursedAt       DateTime?  @map("disbursed_at")
+  accruedInterestMinor BigInt  @default(0) @map("accrued_interest_minor")
+  accruedPenaltyMinor  BigInt  @default(0) @map("accrued_penalty_minor")
+  lastAccrualDate   DateTime?  @map("last_accrual_date")
+  gracePrincipalMonths Int     @default(0) @map("grace_principal_months")
+  graceInterestMonths  Int     @default(0) @map("grace_interest_months")
+  penaltyRateAnnual    Float?  @map("penalty_rate_annual")
+  repaymentFrequency   LoanRepaymentFrequency @default(MONTHLY) @map("repayment_frequency")
+  firstDueDate         DateTime? @map("first_due_date")
+  aprPercent           Float?  @map("apr_percent")
   makerUserId       String?    @map("maker_user_id")
   pricingExceptionReason String? @map("pricing_exception_reason")
+  groupId           String?    @map("group_id")
+  liabilityType     LoanLiabilityType? @map("liability_type")
+  /** CBAR qualitative impairment flags (string[]) — drives prudential category with DPD. */
+  qualityFlagsJson  Json       @default("[]") @map("quality_flags_json")
   createdAt         DateTime   @default(now()) @map("created_at")
   updatedAt         DateTime   @updatedAt @map("updated_at")
 
   installments LoanScheduleInstallment[]
+  collateralLinks LoanCollateralLink[]
+  group        BorrowerGroup? @relation(fields: [groupId], references: [id])
+  leaseContract LeaseContract?
 
   @@index([bankOrgId, customerId])
   @@index([bankOrgId, status])
+  @@index([bankOrgId, groupId])
   @@index([organizationId])
   @@map("loan_contracts")
+}
+
+model CollateralItem {
+  id              String   @id @default(cuid())
+  organizationId String @map("organization_id")
+  bankOrgId       String   @map("bank_org_id")
+  ownerId         String   @map("owner_id")
+  type            String
+  valuationMinor  BigInt   @map("valuation_minor")
+  haircutPct      Decimal  @default(0) @map("haircut_pct") @db.Decimal(7, 4)
+  registry        String
+  encumbranceRef  String?  @map("encumbrance_ref")
+  insuredUntil    DateTime? @map("insured_until")
+  currency        String   @default("AZN")
+  description     String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  loanLinks LoanCollateralLink[]
+
+  @@index([bankOrgId, ownerId])
+  @@index([organizationId])
+  @@map("collateral_items")
+}
+
+model LoanCollateralLink {
+  id               String   @id @default(cuid())
+  organizationId String @map("organization_id")
+  bankOrgId        String   @map("bank_org_id")
+  loanId           String   @map("loan_id")
+  collateralItemId String   @map("collateral_item_id")
+  sharePct         Decimal  @map("share_pct") @db.Decimal(7, 4)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  loan           LoanContract  @relation(fields: [loanId], references: [id])
+  collateralItem CollateralItem @relation(fields: [collateralItemId], references: [id])
+
+  @@unique([loanId, collateralItemId])
+  @@index([bankOrgId, loanId])
+  @@index([organizationId])
+  @@map("loan_collateral_links")
+}
+
+model CreditDebtStatusQueueItem {
+  id             String    @id @default(cuid())
+  organizationId String @map("organization_id")
+  bankOrgId      String    @map("bank_org_id")
+  loanId         String    @map("loan_id")
+  customerId     String    @map("customer_id")
+  previousStatus String?   @map("previous_status")
+  newStatus      String    @map("new_status")
+  changedAt      DateTime  @map("changed_at")
+  enqueuedAt     DateTime  @default(now()) @map("enqueued_at")
+  submittedAt    DateTime? @map("submitted_at")
+
+  @@index([bankOrgId, submittedAt])
+  @@index([organizationId])
+  @@map("credit_debt_status_queue")
+}
+
+/** Lab stub submit response journal — never implies live CBAR/CKR acceptance. */
+model CreditRegistrySubmitJournal {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  bankOrgId      String   @map("bank_org_id")
+  batchId        String   @map("batch_id")
+  recordCount    Int      @map("record_count")
+  valid          Boolean
+  submittedLive  Boolean  @default(false) @map("submitted_live")
+  provider       String
+  errorsJson     Json     @default("[]") @map("errors_json")
+  responseJson   Json     @default("{}") @map("response_json")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([bankOrgId, createdAt])
+  @@index([organizationId])
+  @@map("credit_registry_submit_journal")
 }
 
 model LoanScheduleInstallment {
@@ -715,6 +876,120 @@ model LoanScheduleInstallment {
   @@unique([loanId, sequenceNo])
   @@index([organizationId])
   @@map("loan_schedule_installments")
+}
+
+// ─── P1-1 Leasing MVP ───────────────────────────────────────────────────────
+
+model LeaseAsset {
+  id                 String           @id @default(cuid())
+  organizationId     String           @map("organization_id")
+  bankOrgId          String           @map("bank_org_id")
+  description        String
+  serialRef          String?          @map("serial_ref")
+  catalogValueMinor  BigInt           @map("catalog_value_minor")
+  currency           String           @default("AZN")
+  status             LeaseAssetStatus @default(AVAILABLE)
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  contracts LeaseContract[]
+
+  @@index([bankOrgId, status])
+  @@index([organizationId])
+  @@map("lease_assets")
+}
+
+model LeaseContract {
+  id                   String              @id @default(cuid())
+  organizationId       String              @map("organization_id")
+  bankOrgId            String              @map("bank_org_id")
+  customerId           String              @map("customer_id")
+  assetId              String              @map("asset_id")
+  loanContractId       String?             @unique @map("loan_contract_id")
+  advancePct           Decimal             @map("advance_pct") @db.Decimal(5, 2)
+  residualValueMinor   BigInt              @map("residual_value_minor")
+  termMonths           Int                 @map("term_months")
+  rateAnnual           Decimal             @default(0) @map("rate_annual") @db.Decimal(9, 6)
+  /** IFRS 16 lab: net investment in the lease (financed principal). */
+  netInvestmentMinor   BigInt              @default(0) @map("net_investment_minor")
+  accruedFinanceIncomeMinor BigInt         @default(0) @map("accrued_finance_income_minor")
+  lastFinanceAccrualDate DateTime?         @map("last_finance_accrual_date")
+  currency             String              @default("AZN")
+  status               LeaseContractStatus @default(DRAFT)
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+
+  asset LeaseAsset    @relation(fields: [assetId], references: [id])
+  loan  LoanContract? @relation(fields: [loanContractId], references: [id])
+
+  @@index([bankOrgId, customerId])
+  @@index([bankOrgId, status])
+  @@index([organizationId])
+  @@map("lease_contracts")
+}
+
+// ─── P1-2 MFI group lending MVP ─────────────────────────────────────────────
+
+model BorrowerGroup {
+  id             String               @id @default(cuid())
+  organizationId String               @map("organization_id")
+  bankOrgId      String               @map("bank_org_id")
+  name           String
+  officerId      String?              @map("officer_id")
+  liabilityType  LoanLiabilityType    @default(JLG) @map("liability_type")
+  status         BorrowerGroupStatus  @default(DRAFT)
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+
+  memberships     GroupMembership[]
+  loans           LoanContract[]
+  collectionSheets CollectionSheet[]
+
+  @@index([bankOrgId, status])
+  @@index([bankOrgId, officerId])
+  @@index([organizationId])
+  @@map("borrower_groups")
+}
+
+enum CollectionSheetStatus {
+  OPEN
+  COLLECTED
+  CANCELLED
+}
+
+model CollectionSheet {
+  id             String                @id @default(cuid())
+  organizationId String                @map("organization_id")
+  bankOrgId      String                @map("bank_org_id")
+  groupId        String                @map("group_id")
+  meetingDate    DateTime              @map("meeting_date")
+  status         CollectionSheetStatus @default(OPEN)
+  linesJson      Json                  @default("[]") @map("lines_json")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  group BorrowerGroup @relation(fields: [groupId], references: [id])
+
+  @@index([bankOrgId, groupId])
+  @@index([organizationId])
+  @@map("collection_sheets")
+}
+
+model GroupMembership {
+  id             String          @id @default(cuid())
+  organizationId String          @map("organization_id")
+  bankOrgId      String          @map("bank_org_id")
+  groupId        String          @map("group_id")
+  customerId     String          @map("customer_id")
+  role           GroupMemberRole @default(MEMBER)
+  joinedAt       DateTime        @default(now()) @map("joined_at")
+
+  group BorrowerGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, customerId])
+  @@index([bankOrgId, customerId])
+  @@index([organizationId])
+  @@map("group_memberships")
 }
 
 // ─── Risk ECL L2 (stage flat-rate MVP — not certified IFRS 9) ────────────────
@@ -771,6 +1046,88 @@ model EclResult {
   @@index([bankOrgId, loanId])
   @@index([organizationId])
   @@map("ecl_results")
+}
+
+// ─── CBAR prudential asset classification (parallel to IFRS 9 ECL) ─────────────
+
+enum PrudentialCategory {
+  QENAETBEXS
+  NEZARET
+  ELAVE_RISK
+  QEYRI_QENAETBEXS
+  TEHLUKELI
+  UMIDSIZ
+}
+
+enum PrudentialRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PENDING_PROVISION_APPROVAL
+}
+
+model PrudentialRateTable {
+  id              String             @id @default(cuid())
+  organizationId  String             @map("organization_id")
+  bankOrgId       String             @map("bank_org_id")
+  category        PrudentialCategory
+  dpdMin          Int                @default(0) @map("dpd_min")
+  dpdMax          Int?               @map("dpd_max")
+  provisionRate   Float              @map("provision_rate")
+  rateLabel       String             @map("rate_label")
+  active          Boolean            @default(true)
+  validFrom       DateTime           @default(now()) @map("valid_from")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, category])
+  @@index([bankOrgId, active])
+  @@index([organizationId])
+  @@map("prudential_rate_tables")
+}
+
+model PrudentialClassificationRun {
+  id                    String                @id @default(cuid())
+  organizationId        String                @map("organization_id")
+  bankOrgId             String                @map("bank_org_id")
+  asOfDate              DateTime              @map("as_of_date")
+  status                PrudentialRunStatus   @default(RUNNING)
+  totalOutstandingMinor BigInt                @default(0) @map("total_outstanding_minor")
+  totalProvisionMinor   BigInt                @default(0) @map("total_provision_minor")
+  provisionDeltaMinor   BigInt                @default(0) @map("provision_delta_minor")
+  postingTxnId          String?               @map("posting_txn_id")
+  makerUserId           String?               @map("maker_user_id")
+  checkerUserId         String?               @map("checker_user_id")
+  note                  String?
+  createdAt             DateTime              @default(now()) @map("created_at")
+  completedAt           DateTime?             @map("completed_at")
+
+  results PrudentialClassificationResult[]
+
+  @@index([bankOrgId, asOfDate])
+  @@index([bankOrgId, status])
+  @@index([organizationId])
+  @@map("prudential_classification_runs")
+}
+
+model PrudentialClassificationResult {
+  id              String             @id @default(cuid())
+  organizationId  String             @map("organization_id")
+  bankOrgId       String             @map("bank_org_id")
+  runId           String             @map("run_id")
+  loanId          String             @map("loan_id")
+  category        PrudentialCategory
+  dpd             Int
+  qualityFlags    Json                 @default("[]") @map("quality_flags")
+  rate            Float
+  provisionMinor  BigInt               @map("provision_minor")
+
+  run PrudentialClassificationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([bankOrgId, loanId])
+  @@index([organizationId])
+  @@map("prudential_classification_results")
 }
 
 model RateIndexQuote {
@@ -919,19 +1276,40 @@ model FmnReport {
 
 // ─── Reg reporting L2 ───────────────────────────────────────────────────────
 
+model RegReportTemplate {
+  id              String                 @id @default(cuid())
+  code            String
+  institutionType InstitutionType?       @map("institution_type")
+  version         String
+  validFrom       DateTime               @map("valid_from")
+  definitionJson  Json                   @map("definition_json")
+  outputFormat    RegReportOutputFormat  @default(JSON) @map("output_format")
+  createdAt       DateTime               @default(now()) @map("created_at")
+
+  runs RegReportRun[]
+
+  @@unique([code, institutionType, version])
+  @@index([code, validFrom])
+  @@map("reg_report_templates")
+}
+
 model RegReportRun {
-  id           String          @id @default(cuid())
-  organizationId String @map("organization_id")
-  bankOrgId    String          @map("bank_org_id")
-  templateCode String          @map("template_code")
-  periodFrom   DateTime        @map("period_from")
-  periodTo     DateTime        @map("period_to")
-  status       RegReportStatus @default(GENERATED)
-  outputJson   Json            @map("output_json")
-  exportedAt   DateTime?       @map("exported_at")
-  createdAt    DateTime        @default(now()) @map("created_at")
+  id                  String          @id @default(cuid())
+  organizationId      String          @map("organization_id")
+  bankOrgId           String          @map("bank_org_id")
+  templateCode        String          @map("template_code")
+  regReportTemplateId String?         @map("reg_report_template_id")
+  periodFrom          DateTime        @map("period_from")
+  periodTo            DateTime        @map("period_to")
+  status              RegReportStatus @default(GENERATED)
+  outputJson          Json            @map("output_json")
+  exportedAt          DateTime?       @map("exported_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+
+  template RegReportTemplate? @relation(fields: [regReportTemplateId], references: [id])
 
   @@index([bankOrgId, templateCode])
+  @@index([regReportTemplateId])
   @@index([organizationId])
   @@map("reg_report_runs")
 }
@@ -2178,7 +2556,9 @@ model OpenBankingConsent {
   customerId String          @map("customer_id")
   scopes     Json            @default("[]")
   status     ObConsentStatus @default(ACTIVE)
-  expiresAt  DateTime?       @map("expires_at")
+  expiresAt  DateTime        @map("expires_at")
+  /** Lab SCA proof: OTP or ASAN challenge id required before ACTIVE. */
+  scaChallengeId String?     @map("sca_challenge_id")
   createdAt  DateTime        @default(now()) @map("created_at")
   updatedAt  DateTime        @updatedAt @map("updated_at")
 
@@ -2584,4 +2964,52 @@ model DmsDocumentMeta {
   @@unique([bankOrgId, documentRef])
   @@index([organizationId])
   @@map("dms_document_meta")
+}
+
+// ─── Integrator webhooks (P2 scaffold) ─────────────────────────────────────
+
+model WebhookSubscription {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  bankOrgId      String   @map("bank_org_id")
+  url            String
+  secretEnc      String?  @map("secret_enc")
+  eventsJson     Json     @default("[]") @map("events_json")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  deliveries WebhookDeliveryOutbox[]
+
+  @@index([bankOrgId, active])
+  @@index([organizationId])
+  @@map("webhook_subscriptions")
+}
+
+enum WebhookOutboxStatus {
+  PENDING
+  DELIVERED
+  FAILED
+  DEAD
+}
+
+model WebhookDeliveryOutbox {
+  id               String              @id @default(cuid())
+  organizationId   String              @map("organization_id")
+  bankOrgId        String              @map("bank_org_id")
+  subscriptionId   String              @map("subscription_id")
+  eventType        String              @map("event_type")
+  payloadJson      Json                @map("payload_json")
+  status           WebhookOutboxStatus @default(PENDING)
+  attempts         Int                 @default(0)
+  nextAttemptAt    DateTime            @default(now()) @map("next_attempt_at")
+  lastError        String?             @map("last_error")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([bankOrgId, status, nextAttemptAt])
+  @@index([organizationId])
+  @@map("webhook_delivery_outbox")
 }

@@ -97,9 +97,27 @@ export class ProductFactoryController {
     return { kind, hints: paramHintsForKind(kind) };
   }
 
+  @Post("yaml/import-dry-run")
+  importYamlDryRun(@Body() body: { yaml: string }) {
+    return this.productFactory.importYamlDryRun(body.yaml ?? "");
+  }
+
+  @Post("yaml/diff")
+  diffYaml(@Body() body: { leftYaml: string; rightYaml: string }) {
+    return this.productFactory.diffYaml(
+      body.leftYaml ?? "",
+      body.rightYaml ?? "",
+    );
+  }
+
   @Get(":id")
   get(@Param("id") id: string) {
     return this.productFactory.getById(id);
+  }
+
+  @Get(":id/yaml")
+  exportYaml(@Param("id") id: string) {
+    return this.productFactory.exportYaml(id);
   }
 
   @Post()

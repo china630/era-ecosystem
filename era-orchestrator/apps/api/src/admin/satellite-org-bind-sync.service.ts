@@ -319,6 +319,15 @@ export class SatelliteOrgBindSyncService {
     if (source === "hub" || source === "excel") {
       body.referenceSource = source;
     }
+    const auditExempt = settings.mutationAuditExemptPrefixes;
+    if (Array.isArray(auditExempt)) {
+      const prefixes = auditExempt
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => item.startsWith("/api/"))
+        .slice(0, 50);
+      if (prefixes.length > 0) body.mutationAuditExemptPrefixes = prefixes;
+    }
     const placementFreeze = settings.placementFreeze;
     if (
       placementFreeze &&

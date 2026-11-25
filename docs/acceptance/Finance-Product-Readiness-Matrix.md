@@ -10,6 +10,10 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-26 Sync DTO on dev):** `placementFreeze` is allowed in the finance DTO on `dev` `f51cf7c`. The droplet still returns 400 until that image is deployed. AC-FIN-CFG stays Scaffold ✅. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot [ ] / Edition `mvp` / Sell unchanged. Rollup unchanged. `finance.yaml` untouched. `era-readiness-matrix` N/A.
+
+**Closeout (2026-11-25 finance Sync body):** The droplet still returns 400 on `placementFreeze`. AC-FIN-CFG stays Scaffold ✅ on the 401 and short-SSO negatives. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot [ ] / Edition `mvp` / Sell unchanged. Rollup stays the existing worst layer. `finance.yaml` untouched. `era-readiness-matrix` N/A. Not SHIPPED.
+
 **Closeout (2026-11-10):** Bank, ƏMAS, and e-taxes reads can take the organization key from the platform access tab. Missing bank key does not call the bank. ASAN ID is no longer edited in finance settings. Gate / BE / UI / Demo / Pilot / edition `mvp` / Sell unchanged. Not SHIPPED.
 
 **Closeout (2026-10-31):** Finance home FX may show the previous CBAR day until today's FINAL exists. Postings stay on the document date. Direct bank sync stays off until `bankingDirect.syncMode` is `mock` or `rest`. Taxpayer and signature stubs stay off unless `settings.tax.taxLookupMock` or `signatureGatewayMock` is set. FIN-ASAN-01 stays API/STUB. VAT-threshold audit rows now take a chain hash; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, not the warehouse; the row opens the package lines, with quantity purpose labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. **Migration machine (FIN-MIG-01 / AC-FIN-MIG) 97–98% wave:** `/settings/migration` **SHOW**; COVERAGE **SHIPPED**; AC Scaffold ✅ (out of W6 BE rollup until Pilot); UAT-SMOKE + signoff — does **not** move Gate / BE ✅ / Demo ❌ / Pilot `[ ]` / Sell. Edition stays `mvp` (`pilot_ready: false`).
@@ -30,6 +34,20 @@
 
 ## UI (short)
 
+**Closeout (2026-11-20 commercial budget second-pass):** CP `mgmt_budget_pro` toggle; Sidebar Purchases → `/gov-budget`; page i18n en/az/ru; `hardGate` validator. Still SCREEN / not SHOW. AC-FIN-BUDGET-COMM 🟡. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot / Sell unchanged. Edition `mvp` untouched.
+
+**Closeout (2026-11-20 commercial budget MVP):** FIN-BUDGET-COMM-01 API+SCREEN (`mgmt_budget_pro`; `BudgetYear.mode=MANAGEMENT`; reserve). AC-FIN-BUDGET-COMM 🟡. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot / Sell unchanged. Edition `mvp` untouched.
+
+**Closeout (2026-11-23 Construction Pilot W2):** Contract SOV empty state adds `sovSeedHint` (Construction estimate seed). AC-FIN-CON 🟡. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot / Sell unchanged. Edition `mvp` untouched.
+
+**Closeout (2026-11-20 estimate SOV seed second-pass):** orch ingress accepts estimate event (was rejected by `isSatelliteEvent`). AC-FIN-CON 🟡. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot / Sell unchanged. Edition `mvp` untouched.
+
+**Closeout (2026-11-20 estimate SOV seed):** Construction approve → Contract SOV seed (HEADLESS consumer; no new Finance screen). AC-FIN-CON 🟡. Gate / BE ✅ / UI 🟡 / Demo ❌ / Pilot / Sell unchanged. Edition `mvp` untouched.
+
+**Closeout (2026-11-18 construction commercial):** AC-FIN-CON / PAYAPP / KS / TENDER 🟡 out of BE rollup. FIN-* COVERAGE API/SCREEN. Gate / BE ✅ rollup / UI 🟡 / Demo ❌ / Pilot / Sell unchanged. Edition `mvp` untouched. `era-readiness-matrix` N/A.
+
+**Closeout (2026-11-18 product UI):** Contract SOV + amendment ModalShell, PayApp detail lifecycle + DatePicker, tender ENTITY_REF bids — still UI 🟡 SCREEN (not SHOW). Demo/Pilot/Sell/edition untouched.
+
 **UI class rollup:** SCREEN — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
 
 | Surface | Path | Level |
@@ -45,6 +63,9 @@
 | Invoice extra fields | `/settings/extra-fields` + invoice modal | 🟡 — W1 SCREEN; not sell; extras never post GL |
 | Invoice register saved views | `/sales/invoices` filters + named views | 🟡 — W2 SCREEN; not sell; not SQL / not СКД |
 | Commercial invoice print | `/print/invoice/:id` + modal Print + `/settings/print-placeholders` | 🟡 — W3 SCREEN; not sell; not fiscal/e-qaimə |
+| Construction contracts / PayApp / KS | `/contracts`, `/contracts/[id]`, `/pay-applications`, `/pay-applications/[id]`, `/print/ks2|ks3/[id]` | 🟡 — playbook SCREEN; AC-FIN-CON/PAYAPP/KS 🟡 out of BE rollup; not sell |
+| Org / management budget | `/gov-budget` (Sidebar Purchases) | 🟡 — SCREEN; SKU `gov_budget_pro` / `mgmt_budget_pro`; AC-FIN-BUDGET-COMM 🟡; UAT open; not sell |
+| Procurement tenders award | `/procurement/protocols` ENTITY_REF bids + award | 🟡 — playbook SCREEN; AC-FIN-TENDER 🟡; SKU `procurement_tenders_pro`; not sell |
 | CP grant doors (Wave 5) | Finance `can()` + Nest `PermissionsGuard`; matrix = Orch `/settings/access` | 🟡 — FIN-RBAC-01 SCREEN; AC-FIN-RBAC out of BE rollup; not SHOW |
 | Reference Excel | `/settings/reference-data` | 🟡 — FC-REF-01 SCREEN; upload stays in this org; UAT open; not SHOW |
 | Simplified-tax watch | `/reporting/tax-export`, org settings regime, SuperAdmin `/admin/data/tax-schemes` | 🟡 — SCREEN; FIN-TAX-SCHEME-01 API; AC-FIN-TAX-SCHEME 🟡 out of W6 BE rollup; does not post or switch regime; not SHOW |

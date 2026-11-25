@@ -14,7 +14,7 @@ import {
   showSuccess,
   showWarning,
 } from '@era/satellite-kit/ui';
-import { bakuDateDisplay, bakuTimeLabel, todayBakuYmd } from '@era/satellite-kit/time';
+import { bakuDateDisplay, bakuDateTimeDisplay, bakuTimeLabel, todayBakuYmd } from '@era/satellite-kit/time';
 import { guestListItems } from '@/lib/guest-list-identity';
 import {
   isPreArrivalStatus,
@@ -474,6 +474,21 @@ export function ReservationCardEditor({
   const [pax, setPax] = useState<PaxRow[]>([]);
   const [ratePlanId, setRatePlanId] = useState('');
   const [ratePlans, setRatePlans] = useState<RatePlanOption[]>([]);
+  const [clinicProgramCodes, setClinicProgramCodes] = useState<string[]>([]);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void fetch('/api/clinic-program-codes')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { codes?: string[] } | null) => {
+        if (cancelled || !body?.codes) return;
+        setClinicProgramCodes(body.codes);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
   const [guestId, setGuestId] = useState('');
   /** Latest party for async guest-card create/save (avoid stale closure). */
   const paxRef = useRef<PaxRow[]>(pax);
@@ -3210,7 +3225,7 @@ export function ReservationCardEditor({
         <div className="space-y-3 text-[13px] text-[#34495E]">
           <p className="m-0">
             {t('changeRoomPayerBody', {
-              date: todayBakuYmd(),
+              date: bakuDateDisplay(todayBakuYmd()),
               summary: billingRoutingSummary,
             })}
           </p>
@@ -3292,7 +3307,9 @@ export function ReservationCardEditor({
                   ? t('stayActionCheckOut')
                   : pendingStayAction === 'checkIn' &&
                       checkIn < (pricingBusinessDate ?? todayBakuYmd())
-                    ? t('stayActionLateIn', { date: pricingBusinessDate ?? todayBakuYmd() })
+                    ? t('stayActionLateIn', {
+                        date: bakuDateDisplay(pricingBusinessDate ?? todayBakuYmd()),
+                      })
                     : checkInTime < '14:00'
                       ? t('stayActionEarlyHour')
                       : t('stayActionCheckIn')}
@@ -3352,7 +3369,7 @@ export function ReservationCardEditor({
                     ...mobility.transfers.map((row) => ({
                       key: `xfer-${row.id}`,
                       label: row.direction === 'OUT' ? tt('directionOut') : tt('directionIn'),
-                      value: String(row.pickupAt).slice(0, 16).replace('T', ' '),
+                      value: bakuDateTimeDisplay(row.pickupAt),
                       onClick: () => {
                         window.open(`/transfers?reservationId=${reservationId}`, '_blank');
                       },
@@ -3567,7 +3584,7 @@ export function ReservationCardEditor({
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
                   }}
-                  packageOptions={medicalPackageChoices(ratePlans)}
+                  packageOptions={medicalPackageChoices(ratePlans, clinicProgramCodes)}
                   showMedicalPackages={ratePlanRequiresGuestPackage({
                     code: ratePlans.find((row) => row.id === ratePlanId)?.code,
                     medicalFlag: ratePlans.find((row) => row.id === ratePlanId)?.medicalFlag,

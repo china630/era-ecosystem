@@ -334,20 +334,24 @@ async function openWalkInEpisode(patientRefId: string, organizationId: string) {
     );
   }
   if (open) {
-    const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-    await seedAutoPaidLabs(open.id);
     return open;
   }
+  const { addBakuDays, parseBakuDateTime, todayBakuYmd } = await import(
+    "@/lib/baku-day"
+  );
+  const startYmd = todayBakuYmd();
+  const plannedEndsOn = parseBakuDateTime(addBakuDays(startYmd, 1), "09:00");
   const created = await prisma.clinicalEpisode.create({
     data: {
       patientRefId,
       organizationId,
       patientOrigin: "WALK_IN",
+      courseKind: "AMBULATORY",
+      plannedEndsOn,
+      noPackageConfirmedAt: new Date(),
       status: "OPEN",
     },
   });
-  const { seedAutoPaidLabs } = await import("@/domain/sanatorium/auto-paid-lab.service");
-  await seedAutoPaidLabs(created.id);
   return created;
 }
 

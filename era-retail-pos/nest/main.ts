@@ -2,21 +2,15 @@ import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { Module } from "@nestjs/common";
 import express from "express";
-import {
-  createSatelliteApiController,
-  SatelliteMutationAuditInterceptor,
-} from "@era/satellite-kit/nest";
+import { SatelliteMutationAuditInterceptor } from "@era/satellite-kit/nest";
 import { prisma } from "@/lib/prisma";
-import { registerRetailRoutes } from "./generated/register";
-import { registerKitRoutes } from "./kit-routes";
+import { RetailNativeModule } from "./native/retail-native.module";
+import { KitApiController } from "./kit-api.controller";
 
-const router = express.Router();
-registerRetailRoutes(router);
-registerKitRoutes(router);
-const RetailApiController = createSatelliteApiController(router);
+void KitApiController;
 
 @Module({
-  controllers: [RetailApiController],
+  imports: [RetailNativeModule],
 })
 class RetailNestModule {}
 

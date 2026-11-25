@@ -4,6 +4,7 @@ import { syncContactRef, validatePartyForStage } from "@/lib/lead-party";
 import { findLeadById, findLeadDetailById, updateLead } from "@/lib/leads.service";
 import { assertPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { assertLeadInScope } from "@/lib/integrations/lead-scope";
 import { enterCrmStaff, crmNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithCrmTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
 
@@ -29,6 +30,13 @@ export function register(http: { get: Function; post: Function; put: Function; p
     if (!session) return sendJson(httpRes, { error: "Unauthorized" }, 401);
     assertPermission(session, PERMISSIONS.LEADS_READ);
     const { id } = httpReq.params;
+    await assertLeadInScope({
+      organizationId: session.organizationId,
+      userId: session.sub,
+      leadId: String(id),
+      permissions: session.permissions ?? [],
+      isOwner: session.isOwner === true,
+    });
     const lead = await findLeadDetailById(id);
     if (!lead) return sendJson(httpRes, { error: "Lead not found" }, 404);
     const score =
@@ -62,6 +70,13 @@ export function register(http: { get: Function; post: Function; put: Function; p
     if (!session) return sendJson(httpRes, { error: "Unauthorized" }, 401);
     assertPermission(session, PERMISSIONS.LEADS_WRITE);
     const { id } = httpReq.params;
+    await assertLeadInScope({
+      organizationId: session.organizationId,
+      userId: session.sub,
+      leadId: String(id),
+      permissions: session.permissions ?? [],
+      isOwner: session.isOwner === true,
+    });
     const lead = await findLeadById(id);
     if (!lead) return sendJson(httpRes, { error: "Lead not found" }, 404);
 

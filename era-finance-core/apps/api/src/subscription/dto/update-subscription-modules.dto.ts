@@ -70,4 +70,8 @@ export class UpdateSubscriptionModulesDto {
   @IsOptional()
   @IsBoolean()
   gov_budget_pro?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  mgmt_budget_pro?: boolean;
 }

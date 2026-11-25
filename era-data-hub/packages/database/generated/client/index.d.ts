@@ -69,6 +69,11 @@ export type City = $Result.DefaultSelection<Prisma.$CityPayload>
  */
 export type TaxRate = $Result.DefaultSelection<Prisma.$TaxRatePayload>
 /**
+ * Model ConstructionMaterial
+ * Shared construction materials nomenclature (not rates / not stock).
+ */
+export type ConstructionMaterial = $Result.DefaultSelection<Prisma.$ConstructionMaterialPayload>
+/**
  * Model ReferenceIngestPolicy
  * 
  */
@@ -136,7 +141,8 @@ export const ReferenceCatalogKind: {
   CURRENCIES: 'CURRENCIES',
   TAX_RATES: 'TAX_RATES',
   CHART_OF_ACCOUNTS: 'CHART_OF_ACCOUNTS',
-  CALENDAR: 'CALENDAR'
+  CALENDAR: 'CALENDAR',
+  CONSTRUCTION_MATERIALS: 'CONSTRUCTION_MATERIALS'
 };
 
 export type ReferenceCatalogKind = (typeof ReferenceCatalogKind)[keyof typeof ReferenceCatalogKind]
@@ -393,6 +399,16 @@ export class PrismaClient<
     * ```
     */
   get taxRate(): Prisma.TaxRateDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.constructionMaterial`: Exposes CRUD operations for the **ConstructionMaterial** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ConstructionMaterials
+    * const constructionMaterials = await prisma.constructionMaterial.findMany()
+    * ```
+    */
+  get constructionMaterial(): Prisma.ConstructionMaterialDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.referenceIngestPolicy`: Exposes CRUD operations for the **ReferenceIngestPolicy** model.
@@ -858,6 +874,7 @@ export namespace Prisma {
     Country: 'Country',
     City: 'City',
     TaxRate: 'TaxRate',
+    ConstructionMaterial: 'ConstructionMaterial',
     ReferenceIngestPolicy: 'ReferenceIngestPolicy',
     HubPlatformSetting: 'HubPlatformSetting'
   };
@@ -875,7 +892,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "calendarDay" | "cbarOfficialRate" | "globalCompanyDirectory" | "bankGlossary" | "bankBranch" | "customsTariffRate" | "unitOfMeasure" | "currency" | "country" | "city" | "taxRate" | "referenceIngestPolicy" | "hubPlatformSetting"
+      modelProps: "calendarDay" | "cbarOfficialRate" | "globalCompanyDirectory" | "bankGlossary" | "bankBranch" | "customsTariffRate" | "unitOfMeasure" | "currency" | "country" | "city" | "taxRate" | "constructionMaterial" | "referenceIngestPolicy" | "hubPlatformSetting"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1693,6 +1710,80 @@ export namespace Prisma {
           }
         }
       }
+      ConstructionMaterial: {
+        payload: Prisma.$ConstructionMaterialPayload<ExtArgs>
+        fields: Prisma.ConstructionMaterialFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ConstructionMaterialFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ConstructionMaterialFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>
+          }
+          findFirst: {
+            args: Prisma.ConstructionMaterialFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ConstructionMaterialFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>
+          }
+          findMany: {
+            args: Prisma.ConstructionMaterialFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>[]
+          }
+          create: {
+            args: Prisma.ConstructionMaterialCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>
+          }
+          createMany: {
+            args: Prisma.ConstructionMaterialCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ConstructionMaterialCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>[]
+          }
+          delete: {
+            args: Prisma.ConstructionMaterialDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>
+          }
+          update: {
+            args: Prisma.ConstructionMaterialUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>
+          }
+          deleteMany: {
+            args: Prisma.ConstructionMaterialDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ConstructionMaterialUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ConstructionMaterialUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>[]
+          }
+          upsert: {
+            args: Prisma.ConstructionMaterialUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConstructionMaterialPayload>
+          }
+          aggregate: {
+            args: Prisma.ConstructionMaterialAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateConstructionMaterial>
+          }
+          groupBy: {
+            args: Prisma.ConstructionMaterialGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ConstructionMaterialGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ConstructionMaterialCountArgs<ExtArgs>
+            result: $Utils.Optional<ConstructionMaterialCountAggregateOutputType> | number
+          }
+        }
+      }
       ReferenceIngestPolicy: {
         payload: Prisma.$ReferenceIngestPolicyPayload<ExtArgs>
         fields: Prisma.ReferenceIngestPolicyFieldRefs
@@ -1960,6 +2051,7 @@ export namespace Prisma {
     country?: CountryOmit
     city?: CityOmit
     taxRate?: TaxRateOmit
+    constructionMaterial?: ConstructionMaterialOmit
     referenceIngestPolicy?: ReferenceIngestPolicyOmit
     hubPlatformSetting?: HubPlatformSettingOmit
   }
@@ -14509,6 +14601,1191 @@ export namespace Prisma {
 
 
   /**
+   * Model ConstructionMaterial
+   */
+
+  export type AggregateConstructionMaterial = {
+    _count: ConstructionMaterialCountAggregateOutputType | null
+    _avg: ConstructionMaterialAvgAggregateOutputType | null
+    _sum: ConstructionMaterialSumAggregateOutputType | null
+    _min: ConstructionMaterialMinAggregateOutputType | null
+    _max: ConstructionMaterialMaxAggregateOutputType | null
+  }
+
+  export type ConstructionMaterialAvgAggregateOutputType = {
+    indicativePriceAzn: Decimal | null
+    version: number | null
+    sortOrder: number | null
+  }
+
+  export type ConstructionMaterialSumAggregateOutputType = {
+    indicativePriceAzn: Decimal | null
+    version: number | null
+    sortOrder: number | null
+  }
+
+  export type ConstructionMaterialMinAggregateOutputType = {
+    id: string | null
+    code: string | null
+    nameAz: string | null
+    nameRu: string | null
+    nameEn: string | null
+    uomCode: string | null
+    hsCode: string | null
+    classPath: string | null
+    indicativePriceAzn: Decimal | null
+    version: number | null
+    effectiveFrom: Date | null
+    isActive: boolean | null
+    sortOrder: number | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ConstructionMaterialMaxAggregateOutputType = {
+    id: string | null
+    code: string | null
+    nameAz: string | null
+    nameRu: string | null
+    nameEn: string | null
+    uomCode: string | null
+    hsCode: string | null
+    classPath: string | null
+    indicativePriceAzn: Decimal | null
+    version: number | null
+    effectiveFrom: Date | null
+    isActive: boolean | null
+    sortOrder: number | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ConstructionMaterialCountAggregateOutputType = {
+    id: number
+    code: number
+    nameAz: number
+    nameRu: number
+    nameEn: number
+    uomCode: number
+    hsCode: number
+    classPath: number
+    indicativePriceAzn: number
+    version: number
+    effectiveFrom: number
+    isActive: number
+    sortOrder: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ConstructionMaterialAvgAggregateInputType = {
+    indicativePriceAzn?: true
+    version?: true
+    sortOrder?: true
+  }
+
+  export type ConstructionMaterialSumAggregateInputType = {
+    indicativePriceAzn?: true
+    version?: true
+    sortOrder?: true
+  }
+
+  export type ConstructionMaterialMinAggregateInputType = {
+    id?: true
+    code?: true
+    nameAz?: true
+    nameRu?: true
+    nameEn?: true
+    uomCode?: true
+    hsCode?: true
+    classPath?: true
+    indicativePriceAzn?: true
+    version?: true
+    effectiveFrom?: true
+    isActive?: true
+    sortOrder?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ConstructionMaterialMaxAggregateInputType = {
+    id?: true
+    code?: true
+    nameAz?: true
+    nameRu?: true
+    nameEn?: true
+    uomCode?: true
+    hsCode?: true
+    classPath?: true
+    indicativePriceAzn?: true
+    version?: true
+    effectiveFrom?: true
+    isActive?: true
+    sortOrder?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ConstructionMaterialCountAggregateInputType = {
+    id?: true
+    code?: true
+    nameAz?: true
+    nameRu?: true
+    nameEn?: true
+    uomCode?: true
+    hsCode?: true
+    classPath?: true
+    indicativePriceAzn?: true
+    version?: true
+    effectiveFrom?: true
+    isActive?: true
+    sortOrder?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ConstructionMaterialAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ConstructionMaterial to aggregate.
+     */
+    where?: ConstructionMaterialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConstructionMaterials to fetch.
+     */
+    orderBy?: ConstructionMaterialOrderByWithRelationInput | ConstructionMaterialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ConstructionMaterialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConstructionMaterials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConstructionMaterials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ConstructionMaterials
+    **/
+    _count?: true | ConstructionMaterialCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ConstructionMaterialAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ConstructionMaterialSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ConstructionMaterialMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ConstructionMaterialMaxAggregateInputType
+  }
+
+  export type GetConstructionMaterialAggregateType<T extends ConstructionMaterialAggregateArgs> = {
+        [P in keyof T & keyof AggregateConstructionMaterial]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateConstructionMaterial[P]>
+      : GetScalarType<T[P], AggregateConstructionMaterial[P]>
+  }
+
+
+
+
+  export type ConstructionMaterialGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ConstructionMaterialWhereInput
+    orderBy?: ConstructionMaterialOrderByWithAggregationInput | ConstructionMaterialOrderByWithAggregationInput[]
+    by: ConstructionMaterialScalarFieldEnum[] | ConstructionMaterialScalarFieldEnum
+    having?: ConstructionMaterialScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ConstructionMaterialCountAggregateInputType | true
+    _avg?: ConstructionMaterialAvgAggregateInputType
+    _sum?: ConstructionMaterialSumAggregateInputType
+    _min?: ConstructionMaterialMinAggregateInputType
+    _max?: ConstructionMaterialMaxAggregateInputType
+  }
+
+  export type ConstructionMaterialGroupByOutputType = {
+    id: string
+    code: string
+    nameAz: string
+    nameRu: string
+    nameEn: string
+    uomCode: string
+    hsCode: string | null
+    classPath: string | null
+    indicativePriceAzn: Decimal | null
+    version: number
+    effectiveFrom: Date
+    isActive: boolean
+    sortOrder: number
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ConstructionMaterialCountAggregateOutputType | null
+    _avg: ConstructionMaterialAvgAggregateOutputType | null
+    _sum: ConstructionMaterialSumAggregateOutputType | null
+    _min: ConstructionMaterialMinAggregateOutputType | null
+    _max: ConstructionMaterialMaxAggregateOutputType | null
+  }
+
+  type GetConstructionMaterialGroupByPayload<T extends ConstructionMaterialGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ConstructionMaterialGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ConstructionMaterialGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ConstructionMaterialGroupByOutputType[P]>
+            : GetScalarType<T[P], ConstructionMaterialGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ConstructionMaterialSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    code?: boolean
+    nameAz?: boolean
+    nameRu?: boolean
+    nameEn?: boolean
+    uomCode?: boolean
+    hsCode?: boolean
+    classPath?: boolean
+    indicativePriceAzn?: boolean
+    version?: boolean
+    effectiveFrom?: boolean
+    isActive?: boolean
+    sortOrder?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["constructionMaterial"]>
+
+  export type ConstructionMaterialSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    code?: boolean
+    nameAz?: boolean
+    nameRu?: boolean
+    nameEn?: boolean
+    uomCode?: boolean
+    hsCode?: boolean
+    classPath?: boolean
+    indicativePriceAzn?: boolean
+    version?: boolean
+    effectiveFrom?: boolean
+    isActive?: boolean
+    sortOrder?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["constructionMaterial"]>
+
+  export type ConstructionMaterialSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    code?: boolean
+    nameAz?: boolean
+    nameRu?: boolean
+    nameEn?: boolean
+    uomCode?: boolean
+    hsCode?: boolean
+    classPath?: boolean
+    indicativePriceAzn?: boolean
+    version?: boolean
+    effectiveFrom?: boolean
+    isActive?: boolean
+    sortOrder?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["constructionMaterial"]>
+
+  export type ConstructionMaterialSelectScalar = {
+    id?: boolean
+    code?: boolean
+    nameAz?: boolean
+    nameRu?: boolean
+    nameEn?: boolean
+    uomCode?: boolean
+    hsCode?: boolean
+    classPath?: boolean
+    indicativePriceAzn?: boolean
+    version?: boolean
+    effectiveFrom?: boolean
+    isActive?: boolean
+    sortOrder?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ConstructionMaterialOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "code" | "nameAz" | "nameRu" | "nameEn" | "uomCode" | "hsCode" | "classPath" | "indicativePriceAzn" | "version" | "effectiveFrom" | "isActive" | "sortOrder" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["constructionMaterial"]>
+
+  export type $ConstructionMaterialPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ConstructionMaterial"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      code: string
+      nameAz: string
+      nameRu: string
+      nameEn: string
+      uomCode: string
+      hsCode: string | null
+      classPath: string | null
+      indicativePriceAzn: Prisma.Decimal | null
+      version: number
+      effectiveFrom: Date
+      isActive: boolean
+      sortOrder: number
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["constructionMaterial"]>
+    composites: {}
+  }
+
+  type ConstructionMaterialGetPayload<S extends boolean | null | undefined | ConstructionMaterialDefaultArgs> = $Result.GetResult<Prisma.$ConstructionMaterialPayload, S>
+
+  type ConstructionMaterialCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ConstructionMaterialFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ConstructionMaterialCountAggregateInputType | true
+    }
+
+  export interface ConstructionMaterialDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ConstructionMaterial'], meta: { name: 'ConstructionMaterial' } }
+    /**
+     * Find zero or one ConstructionMaterial that matches the filter.
+     * @param {ConstructionMaterialFindUniqueArgs} args - Arguments to find a ConstructionMaterial
+     * @example
+     * // Get one ConstructionMaterial
+     * const constructionMaterial = await prisma.constructionMaterial.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ConstructionMaterialFindUniqueArgs>(args: SelectSubset<T, ConstructionMaterialFindUniqueArgs<ExtArgs>>): Prisma__ConstructionMaterialClient<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ConstructionMaterial that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ConstructionMaterialFindUniqueOrThrowArgs} args - Arguments to find a ConstructionMaterial
+     * @example
+     * // Get one ConstructionMaterial
+     * const constructionMaterial = await prisma.constructionMaterial.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ConstructionMaterialFindUniqueOrThrowArgs>(args: SelectSubset<T, ConstructionMaterialFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ConstructionMaterialClient<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ConstructionMaterial that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConstructionMaterialFindFirstArgs} args - Arguments to find a ConstructionMaterial
+     * @example
+     * // Get one ConstructionMaterial
+     * const constructionMaterial = await prisma.constructionMaterial.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ConstructionMaterialFindFirstArgs>(args?: SelectSubset<T, ConstructionMaterialFindFirstArgs<ExtArgs>>): Prisma__ConstructionMaterialClient<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ConstructionMaterial that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConstructionMaterialFindFirstOrThrowArgs} args - Arguments to find a ConstructionMaterial
+     * @example
+     * // Get one ConstructionMaterial
+     * const constructionMaterial = await prisma.constructionMaterial.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ConstructionMaterialFindFirstOrThrowArgs>(args?: SelectSubset<T, ConstructionMaterialFindFirstOrThrowArgs<ExtArgs>>): Prisma__ConstructionMaterialClient<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ConstructionMaterials that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConstructionMaterialFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ConstructionMaterials
+     * const constructionMaterials = await prisma.constructionMaterial.findMany()
+     * 
+     * // Get first 10 ConstructionMaterials
+     * const constructionMaterials = await prisma.constructionMaterial.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const constructionMaterialWithIdOnly = await prisma.constructionMaterial.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ConstructionMaterialFindManyArgs>(args?: SelectSubset<T, ConstructionMaterialFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ConstructionMaterial.
+     * @param {ConstructionMaterialCreateArgs} args - Arguments to create a ConstructionMaterial.
+     * @example
+     * // Create one ConstructionMaterial
+     * const ConstructionMaterial = await prisma.constructionMaterial.create({
+     *   data: {
+     *     // ... data to create a ConstructionMaterial
+     *   }
+     * })
+     * 
+     */
+    create<T extends ConstructionMaterialCreateArgs>(args: SelectSubset<T, ConstructionMaterialCreateArgs<ExtArgs>>): Prisma__ConstructionMaterialClient<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ConstructionMaterials.
+     * @param {ConstructionMaterialCreateManyArgs} args - Arguments to create many ConstructionMaterials.
+     * @example
+     * // Create many ConstructionMaterials
+     * const constructionMaterial = await prisma.constructionMaterial.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ConstructionMaterialCreateManyArgs>(args?: SelectSubset<T, ConstructionMaterialCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ConstructionMaterials and returns the data saved in the database.
+     * @param {ConstructionMaterialCreateManyAndReturnArgs} args - Arguments to create many ConstructionMaterials.
+     * @example
+     * // Create many ConstructionMaterials
+     * const constructionMaterial = await prisma.constructionMaterial.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ConstructionMaterials and only return the `id`
+     * const constructionMaterialWithIdOnly = await prisma.constructionMaterial.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ConstructionMaterialCreateManyAndReturnArgs>(args?: SelectSubset<T, ConstructionMaterialCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ConstructionMaterial.
+     * @param {ConstructionMaterialDeleteArgs} args - Arguments to delete one ConstructionMaterial.
+     * @example
+     * // Delete one ConstructionMaterial
+     * const ConstructionMaterial = await prisma.constructionMaterial.delete({
+     *   where: {
+     *     // ... filter to delete one ConstructionMaterial
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ConstructionMaterialDeleteArgs>(args: SelectSubset<T, ConstructionMaterialDeleteArgs<ExtArgs>>): Prisma__ConstructionMaterialClient<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ConstructionMaterial.
+     * @param {ConstructionMaterialUpdateArgs} args - Arguments to update one ConstructionMaterial.
+     * @example
+     * // Update one ConstructionMaterial
+     * const constructionMaterial = await prisma.constructionMaterial.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ConstructionMaterialUpdateArgs>(args: SelectSubset<T, ConstructionMaterialUpdateArgs<ExtArgs>>): Prisma__ConstructionMaterialClient<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ConstructionMaterials.
+     * @param {ConstructionMaterialDeleteManyArgs} args - Arguments to filter ConstructionMaterials to delete.
+     * @example
+     * // Delete a few ConstructionMaterials
+     * const { count } = await prisma.constructionMaterial.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ConstructionMaterialDeleteManyArgs>(args?: SelectSubset<T, ConstructionMaterialDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ConstructionMaterials.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConstructionMaterialUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ConstructionMaterials
+     * const constructionMaterial = await prisma.constructionMaterial.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ConstructionMaterialUpdateManyArgs>(args: SelectSubset<T, ConstructionMaterialUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ConstructionMaterials and returns the data updated in the database.
+     * @param {ConstructionMaterialUpdateManyAndReturnArgs} args - Arguments to update many ConstructionMaterials.
+     * @example
+     * // Update many ConstructionMaterials
+     * const constructionMaterial = await prisma.constructionMaterial.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ConstructionMaterials and only return the `id`
+     * const constructionMaterialWithIdOnly = await prisma.constructionMaterial.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ConstructionMaterialUpdateManyAndReturnArgs>(args: SelectSubset<T, ConstructionMaterialUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ConstructionMaterial.
+     * @param {ConstructionMaterialUpsertArgs} args - Arguments to update or create a ConstructionMaterial.
+     * @example
+     * // Update or create a ConstructionMaterial
+     * const constructionMaterial = await prisma.constructionMaterial.upsert({
+     *   create: {
+     *     // ... data to create a ConstructionMaterial
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ConstructionMaterial we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ConstructionMaterialUpsertArgs>(args: SelectSubset<T, ConstructionMaterialUpsertArgs<ExtArgs>>): Prisma__ConstructionMaterialClient<$Result.GetResult<Prisma.$ConstructionMaterialPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ConstructionMaterials.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConstructionMaterialCountArgs} args - Arguments to filter ConstructionMaterials to count.
+     * @example
+     * // Count the number of ConstructionMaterials
+     * const count = await prisma.constructionMaterial.count({
+     *   where: {
+     *     // ... the filter for the ConstructionMaterials we want to count
+     *   }
+     * })
+    **/
+    count<T extends ConstructionMaterialCountArgs>(
+      args?: Subset<T, ConstructionMaterialCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ConstructionMaterialCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ConstructionMaterial.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConstructionMaterialAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ConstructionMaterialAggregateArgs>(args: Subset<T, ConstructionMaterialAggregateArgs>): Prisma.PrismaPromise<GetConstructionMaterialAggregateType<T>>
+
+    /**
+     * Group by ConstructionMaterial.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConstructionMaterialGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ConstructionMaterialGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ConstructionMaterialGroupByArgs['orderBy'] }
+        : { orderBy?: ConstructionMaterialGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ConstructionMaterialGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetConstructionMaterialGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ConstructionMaterial model
+   */
+  readonly fields: ConstructionMaterialFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ConstructionMaterial.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ConstructionMaterialClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ConstructionMaterial model
+   */
+  interface ConstructionMaterialFieldRefs {
+    readonly id: FieldRef<"ConstructionMaterial", 'String'>
+    readonly code: FieldRef<"ConstructionMaterial", 'String'>
+    readonly nameAz: FieldRef<"ConstructionMaterial", 'String'>
+    readonly nameRu: FieldRef<"ConstructionMaterial", 'String'>
+    readonly nameEn: FieldRef<"ConstructionMaterial", 'String'>
+    readonly uomCode: FieldRef<"ConstructionMaterial", 'String'>
+    readonly hsCode: FieldRef<"ConstructionMaterial", 'String'>
+    readonly classPath: FieldRef<"ConstructionMaterial", 'String'>
+    readonly indicativePriceAzn: FieldRef<"ConstructionMaterial", 'Decimal'>
+    readonly version: FieldRef<"ConstructionMaterial", 'Int'>
+    readonly effectiveFrom: FieldRef<"ConstructionMaterial", 'DateTime'>
+    readonly isActive: FieldRef<"ConstructionMaterial", 'Boolean'>
+    readonly sortOrder: FieldRef<"ConstructionMaterial", 'Int'>
+    readonly deletedAt: FieldRef<"ConstructionMaterial", 'DateTime'>
+    readonly createdAt: FieldRef<"ConstructionMaterial", 'DateTime'>
+    readonly updatedAt: FieldRef<"ConstructionMaterial", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ConstructionMaterial findUnique
+   */
+  export type ConstructionMaterialFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * Filter, which ConstructionMaterial to fetch.
+     */
+    where: ConstructionMaterialWhereUniqueInput
+  }
+
+  /**
+   * ConstructionMaterial findUniqueOrThrow
+   */
+  export type ConstructionMaterialFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * Filter, which ConstructionMaterial to fetch.
+     */
+    where: ConstructionMaterialWhereUniqueInput
+  }
+
+  /**
+   * ConstructionMaterial findFirst
+   */
+  export type ConstructionMaterialFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * Filter, which ConstructionMaterial to fetch.
+     */
+    where?: ConstructionMaterialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConstructionMaterials to fetch.
+     */
+    orderBy?: ConstructionMaterialOrderByWithRelationInput | ConstructionMaterialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ConstructionMaterials.
+     */
+    cursor?: ConstructionMaterialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConstructionMaterials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConstructionMaterials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConstructionMaterials.
+     */
+    distinct?: ConstructionMaterialScalarFieldEnum | ConstructionMaterialScalarFieldEnum[]
+  }
+
+  /**
+   * ConstructionMaterial findFirstOrThrow
+   */
+  export type ConstructionMaterialFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * Filter, which ConstructionMaterial to fetch.
+     */
+    where?: ConstructionMaterialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConstructionMaterials to fetch.
+     */
+    orderBy?: ConstructionMaterialOrderByWithRelationInput | ConstructionMaterialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ConstructionMaterials.
+     */
+    cursor?: ConstructionMaterialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConstructionMaterials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConstructionMaterials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConstructionMaterials.
+     */
+    distinct?: ConstructionMaterialScalarFieldEnum | ConstructionMaterialScalarFieldEnum[]
+  }
+
+  /**
+   * ConstructionMaterial findMany
+   */
+  export type ConstructionMaterialFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * Filter, which ConstructionMaterials to fetch.
+     */
+    where?: ConstructionMaterialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConstructionMaterials to fetch.
+     */
+    orderBy?: ConstructionMaterialOrderByWithRelationInput | ConstructionMaterialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ConstructionMaterials.
+     */
+    cursor?: ConstructionMaterialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConstructionMaterials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConstructionMaterials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConstructionMaterials.
+     */
+    distinct?: ConstructionMaterialScalarFieldEnum | ConstructionMaterialScalarFieldEnum[]
+  }
+
+  /**
+   * ConstructionMaterial create
+   */
+  export type ConstructionMaterialCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ConstructionMaterial.
+     */
+    data: XOR<ConstructionMaterialCreateInput, ConstructionMaterialUncheckedCreateInput>
+  }
+
+  /**
+   * ConstructionMaterial createMany
+   */
+  export type ConstructionMaterialCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ConstructionMaterials.
+     */
+    data: ConstructionMaterialCreateManyInput | ConstructionMaterialCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ConstructionMaterial createManyAndReturn
+   */
+  export type ConstructionMaterialCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * The data used to create many ConstructionMaterials.
+     */
+    data: ConstructionMaterialCreateManyInput | ConstructionMaterialCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ConstructionMaterial update
+   */
+  export type ConstructionMaterialUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ConstructionMaterial.
+     */
+    data: XOR<ConstructionMaterialUpdateInput, ConstructionMaterialUncheckedUpdateInput>
+    /**
+     * Choose, which ConstructionMaterial to update.
+     */
+    where: ConstructionMaterialWhereUniqueInput
+  }
+
+  /**
+   * ConstructionMaterial updateMany
+   */
+  export type ConstructionMaterialUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ConstructionMaterials.
+     */
+    data: XOR<ConstructionMaterialUpdateManyMutationInput, ConstructionMaterialUncheckedUpdateManyInput>
+    /**
+     * Filter which ConstructionMaterials to update
+     */
+    where?: ConstructionMaterialWhereInput
+    /**
+     * Limit how many ConstructionMaterials to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ConstructionMaterial updateManyAndReturn
+   */
+  export type ConstructionMaterialUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * The data used to update ConstructionMaterials.
+     */
+    data: XOR<ConstructionMaterialUpdateManyMutationInput, ConstructionMaterialUncheckedUpdateManyInput>
+    /**
+     * Filter which ConstructionMaterials to update
+     */
+    where?: ConstructionMaterialWhereInput
+    /**
+     * Limit how many ConstructionMaterials to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ConstructionMaterial upsert
+   */
+  export type ConstructionMaterialUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ConstructionMaterial to update in case it exists.
+     */
+    where: ConstructionMaterialWhereUniqueInput
+    /**
+     * In case the ConstructionMaterial found by the `where` argument doesn't exist, create a new ConstructionMaterial with this data.
+     */
+    create: XOR<ConstructionMaterialCreateInput, ConstructionMaterialUncheckedCreateInput>
+    /**
+     * In case the ConstructionMaterial was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ConstructionMaterialUpdateInput, ConstructionMaterialUncheckedUpdateInput>
+  }
+
+  /**
+   * ConstructionMaterial delete
+   */
+  export type ConstructionMaterialDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+    /**
+     * Filter which ConstructionMaterial to delete.
+     */
+    where: ConstructionMaterialWhereUniqueInput
+  }
+
+  /**
+   * ConstructionMaterial deleteMany
+   */
+  export type ConstructionMaterialDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ConstructionMaterials to delete
+     */
+    where?: ConstructionMaterialWhereInput
+    /**
+     * Limit how many ConstructionMaterials to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ConstructionMaterial without action
+   */
+  export type ConstructionMaterialDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConstructionMaterial
+     */
+    select?: ConstructionMaterialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ConstructionMaterial
+     */
+    omit?: ConstructionMaterialOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model ReferenceIngestPolicy
    */
 
@@ -16654,6 +17931,28 @@ export namespace Prisma {
   export type TaxRateScalarFieldEnum = (typeof TaxRateScalarFieldEnum)[keyof typeof TaxRateScalarFieldEnum]
 
 
+  export const ConstructionMaterialScalarFieldEnum: {
+    id: 'id',
+    code: 'code',
+    nameAz: 'nameAz',
+    nameRu: 'nameRu',
+    nameEn: 'nameEn',
+    uomCode: 'uomCode',
+    hsCode: 'hsCode',
+    classPath: 'classPath',
+    indicativePriceAzn: 'indicativePriceAzn',
+    version: 'version',
+    effectiveFrom: 'effectiveFrom',
+    isActive: 'isActive',
+    sortOrder: 'sortOrder',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ConstructionMaterialScalarFieldEnum = (typeof ConstructionMaterialScalarFieldEnum)[keyof typeof ConstructionMaterialScalarFieldEnum]
+
+
   export const ReferenceIngestPolicyScalarFieldEnum: {
     catalogKind: 'catalogKind',
     externalFetchEnabled: 'externalFetchEnabled',
@@ -17816,6 +19115,115 @@ export namespace Prisma {
     isActive?: BoolWithAggregatesFilter<"TaxRate"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"TaxRate"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"TaxRate"> | Date | string
+  }
+
+  export type ConstructionMaterialWhereInput = {
+    AND?: ConstructionMaterialWhereInput | ConstructionMaterialWhereInput[]
+    OR?: ConstructionMaterialWhereInput[]
+    NOT?: ConstructionMaterialWhereInput | ConstructionMaterialWhereInput[]
+    id?: UuidFilter<"ConstructionMaterial"> | string
+    code?: StringFilter<"ConstructionMaterial"> | string
+    nameAz?: StringFilter<"ConstructionMaterial"> | string
+    nameRu?: StringFilter<"ConstructionMaterial"> | string
+    nameEn?: StringFilter<"ConstructionMaterial"> | string
+    uomCode?: StringFilter<"ConstructionMaterial"> | string
+    hsCode?: StringNullableFilter<"ConstructionMaterial"> | string | null
+    classPath?: StringNullableFilter<"ConstructionMaterial"> | string | null
+    indicativePriceAzn?: DecimalNullableFilter<"ConstructionMaterial"> | Decimal | DecimalJsLike | number | string | null
+    version?: IntFilter<"ConstructionMaterial"> | number
+    effectiveFrom?: DateTimeFilter<"ConstructionMaterial"> | Date | string
+    isActive?: BoolFilter<"ConstructionMaterial"> | boolean
+    sortOrder?: IntFilter<"ConstructionMaterial"> | number
+    deletedAt?: DateTimeNullableFilter<"ConstructionMaterial"> | Date | string | null
+    createdAt?: DateTimeFilter<"ConstructionMaterial"> | Date | string
+    updatedAt?: DateTimeFilter<"ConstructionMaterial"> | Date | string
+  }
+
+  export type ConstructionMaterialOrderByWithRelationInput = {
+    id?: SortOrder
+    code?: SortOrder
+    nameAz?: SortOrder
+    nameRu?: SortOrder
+    nameEn?: SortOrder
+    uomCode?: SortOrder
+    hsCode?: SortOrderInput | SortOrder
+    classPath?: SortOrderInput | SortOrder
+    indicativePriceAzn?: SortOrderInput | SortOrder
+    version?: SortOrder
+    effectiveFrom?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ConstructionMaterialWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    code?: string
+    AND?: ConstructionMaterialWhereInput | ConstructionMaterialWhereInput[]
+    OR?: ConstructionMaterialWhereInput[]
+    NOT?: ConstructionMaterialWhereInput | ConstructionMaterialWhereInput[]
+    nameAz?: StringFilter<"ConstructionMaterial"> | string
+    nameRu?: StringFilter<"ConstructionMaterial"> | string
+    nameEn?: StringFilter<"ConstructionMaterial"> | string
+    uomCode?: StringFilter<"ConstructionMaterial"> | string
+    hsCode?: StringNullableFilter<"ConstructionMaterial"> | string | null
+    classPath?: StringNullableFilter<"ConstructionMaterial"> | string | null
+    indicativePriceAzn?: DecimalNullableFilter<"ConstructionMaterial"> | Decimal | DecimalJsLike | number | string | null
+    version?: IntFilter<"ConstructionMaterial"> | number
+    effectiveFrom?: DateTimeFilter<"ConstructionMaterial"> | Date | string
+    isActive?: BoolFilter<"ConstructionMaterial"> | boolean
+    sortOrder?: IntFilter<"ConstructionMaterial"> | number
+    deletedAt?: DateTimeNullableFilter<"ConstructionMaterial"> | Date | string | null
+    createdAt?: DateTimeFilter<"ConstructionMaterial"> | Date | string
+    updatedAt?: DateTimeFilter<"ConstructionMaterial"> | Date | string
+  }, "id" | "code">
+
+  export type ConstructionMaterialOrderByWithAggregationInput = {
+    id?: SortOrder
+    code?: SortOrder
+    nameAz?: SortOrder
+    nameRu?: SortOrder
+    nameEn?: SortOrder
+    uomCode?: SortOrder
+    hsCode?: SortOrderInput | SortOrder
+    classPath?: SortOrderInput | SortOrder
+    indicativePriceAzn?: SortOrderInput | SortOrder
+    version?: SortOrder
+    effectiveFrom?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ConstructionMaterialCountOrderByAggregateInput
+    _avg?: ConstructionMaterialAvgOrderByAggregateInput
+    _max?: ConstructionMaterialMaxOrderByAggregateInput
+    _min?: ConstructionMaterialMinOrderByAggregateInput
+    _sum?: ConstructionMaterialSumOrderByAggregateInput
+  }
+
+  export type ConstructionMaterialScalarWhereWithAggregatesInput = {
+    AND?: ConstructionMaterialScalarWhereWithAggregatesInput | ConstructionMaterialScalarWhereWithAggregatesInput[]
+    OR?: ConstructionMaterialScalarWhereWithAggregatesInput[]
+    NOT?: ConstructionMaterialScalarWhereWithAggregatesInput | ConstructionMaterialScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"ConstructionMaterial"> | string
+    code?: StringWithAggregatesFilter<"ConstructionMaterial"> | string
+    nameAz?: StringWithAggregatesFilter<"ConstructionMaterial"> | string
+    nameRu?: StringWithAggregatesFilter<"ConstructionMaterial"> | string
+    nameEn?: StringWithAggregatesFilter<"ConstructionMaterial"> | string
+    uomCode?: StringWithAggregatesFilter<"ConstructionMaterial"> | string
+    hsCode?: StringNullableWithAggregatesFilter<"ConstructionMaterial"> | string | null
+    classPath?: StringNullableWithAggregatesFilter<"ConstructionMaterial"> | string | null
+    indicativePriceAzn?: DecimalNullableWithAggregatesFilter<"ConstructionMaterial"> | Decimal | DecimalJsLike | number | string | null
+    version?: IntWithAggregatesFilter<"ConstructionMaterial"> | number
+    effectiveFrom?: DateTimeWithAggregatesFilter<"ConstructionMaterial"> | Date | string
+    isActive?: BoolWithAggregatesFilter<"ConstructionMaterial"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"ConstructionMaterial"> | number
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"ConstructionMaterial"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ConstructionMaterial"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ConstructionMaterial"> | Date | string
   }
 
   export type ReferenceIngestPolicyWhereInput = {
@@ -18993,6 +20401,139 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ConstructionMaterialCreateInput = {
+    id?: string
+    code: string
+    nameAz: string
+    nameRu: string
+    nameEn: string
+    uomCode: string
+    hsCode?: string | null
+    classPath?: string | null
+    indicativePriceAzn?: Decimal | DecimalJsLike | number | string | null
+    version?: number
+    effectiveFrom?: Date | string
+    isActive?: boolean
+    sortOrder?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ConstructionMaterialUncheckedCreateInput = {
+    id?: string
+    code: string
+    nameAz: string
+    nameRu: string
+    nameEn: string
+    uomCode: string
+    hsCode?: string | null
+    classPath?: string | null
+    indicativePriceAzn?: Decimal | DecimalJsLike | number | string | null
+    version?: number
+    effectiveFrom?: Date | string
+    isActive?: boolean
+    sortOrder?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ConstructionMaterialUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    nameAz?: StringFieldUpdateOperationsInput | string
+    nameRu?: StringFieldUpdateOperationsInput | string
+    nameEn?: StringFieldUpdateOperationsInput | string
+    uomCode?: StringFieldUpdateOperationsInput | string
+    hsCode?: NullableStringFieldUpdateOperationsInput | string | null
+    classPath?: NullableStringFieldUpdateOperationsInput | string | null
+    indicativePriceAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    version?: IntFieldUpdateOperationsInput | number
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConstructionMaterialUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    nameAz?: StringFieldUpdateOperationsInput | string
+    nameRu?: StringFieldUpdateOperationsInput | string
+    nameEn?: StringFieldUpdateOperationsInput | string
+    uomCode?: StringFieldUpdateOperationsInput | string
+    hsCode?: NullableStringFieldUpdateOperationsInput | string | null
+    classPath?: NullableStringFieldUpdateOperationsInput | string | null
+    indicativePriceAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    version?: IntFieldUpdateOperationsInput | number
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConstructionMaterialCreateManyInput = {
+    id?: string
+    code: string
+    nameAz: string
+    nameRu: string
+    nameEn: string
+    uomCode: string
+    hsCode?: string | null
+    classPath?: string | null
+    indicativePriceAzn?: Decimal | DecimalJsLike | number | string | null
+    version?: number
+    effectiveFrom?: Date | string
+    isActive?: boolean
+    sortOrder?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ConstructionMaterialUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    nameAz?: StringFieldUpdateOperationsInput | string
+    nameRu?: StringFieldUpdateOperationsInput | string
+    nameEn?: StringFieldUpdateOperationsInput | string
+    uomCode?: StringFieldUpdateOperationsInput | string
+    hsCode?: NullableStringFieldUpdateOperationsInput | string | null
+    classPath?: NullableStringFieldUpdateOperationsInput | string | null
+    indicativePriceAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    version?: IntFieldUpdateOperationsInput | number
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConstructionMaterialUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    nameAz?: StringFieldUpdateOperationsInput | string
+    nameRu?: StringFieldUpdateOperationsInput | string
+    nameEn?: StringFieldUpdateOperationsInput | string
+    uomCode?: StringFieldUpdateOperationsInput | string
+    hsCode?: NullableStringFieldUpdateOperationsInput | string | null
+    classPath?: NullableStringFieldUpdateOperationsInput | string | null
+    indicativePriceAzn?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    version?: IntFieldUpdateOperationsInput | number
+    effectiveFrom?: DateTimeFieldUpdateOperationsInput | Date | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ReferenceIngestPolicyCreateInput = {
     catalogKind: $Enums.ReferenceCatalogKind
     externalFetchEnabled?: boolean
@@ -19949,6 +21490,102 @@ export namespace Prisma {
     _max?: NestedEnumTaxRateKindFilter<$PrismaModel>
   }
 
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type ConstructionMaterialCountOrderByAggregateInput = {
+    id?: SortOrder
+    code?: SortOrder
+    nameAz?: SortOrder
+    nameRu?: SortOrder
+    nameEn?: SortOrder
+    uomCode?: SortOrder
+    hsCode?: SortOrder
+    classPath?: SortOrder
+    indicativePriceAzn?: SortOrder
+    version?: SortOrder
+    effectiveFrom?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ConstructionMaterialAvgOrderByAggregateInput = {
+    indicativePriceAzn?: SortOrder
+    version?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type ConstructionMaterialMaxOrderByAggregateInput = {
+    id?: SortOrder
+    code?: SortOrder
+    nameAz?: SortOrder
+    nameRu?: SortOrder
+    nameEn?: SortOrder
+    uomCode?: SortOrder
+    hsCode?: SortOrder
+    classPath?: SortOrder
+    indicativePriceAzn?: SortOrder
+    version?: SortOrder
+    effectiveFrom?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ConstructionMaterialMinOrderByAggregateInput = {
+    id?: SortOrder
+    code?: SortOrder
+    nameAz?: SortOrder
+    nameRu?: SortOrder
+    nameEn?: SortOrder
+    uomCode?: SortOrder
+    hsCode?: SortOrder
+    classPath?: SortOrder
+    indicativePriceAzn?: SortOrder
+    version?: SortOrder
+    effectiveFrom?: SortOrder
+    isActive?: SortOrder
+    sortOrder?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ConstructionMaterialSumOrderByAggregateInput = {
+    indicativePriceAzn?: SortOrder
+    version?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
   export type EnumReferenceCatalogKindFilter<$PrismaModel = never> = {
     equals?: $Enums.ReferenceCatalogKind | EnumReferenceCatalogKindFieldRefInput<$PrismaModel>
     in?: $Enums.ReferenceCatalogKind[] | ListEnumReferenceCatalogKindFieldRefInput<$PrismaModel>
@@ -20229,6 +21866,14 @@ export namespace Prisma {
 
   export type EnumTaxRateKindFieldUpdateOperationsInput = {
     set?: $Enums.TaxRateKind
+  }
+
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type EnumReferenceCatalogKindFieldUpdateOperationsInput = {
@@ -20527,6 +22172,33 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTaxRateKindFilter<$PrismaModel>
     _max?: NestedEnumTaxRateKindFilter<$PrismaModel>
+  }
+
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumReferenceCatalogKindFilter<$PrismaModel = never> = {
