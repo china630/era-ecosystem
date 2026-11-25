@@ -4,6 +4,7 @@ import {
   DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES,
   setOrgAuditExemptPrefixes,
 } from "@era/satellite-kit";
+import { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { withClinicStaff } from "./bridge";
 import { ClinicApiGuard, readClinicSession } from "./native/clinic-api.guard";
@@ -17,11 +18,17 @@ function clean(prefixes: string[]): string[] {
 }
 
 export async function loadClinicAuditExemptCache(): Promise<void> {
-  const rows = await prisma.tenant.findMany({
-    select: { organizationId: true, auditExemptPrefixes: true },
-  });
-  for (const row of rows) {
-    setOrgAuditExemptPrefixes(row.organizationId, row.auditExemptPrefixes);
+  // SHARED boot clears the process bind. The tenant extension cannot list every org.
+  const base = new PrismaClient();
+  try {
+    const rows = await base.tenant.findMany({
+      select: { organizationId: true, auditExemptPrefixes: true },
+    });
+    for (const row of rows) {
+      setOrgAuditExemptPrefixes(row.organizationId, row.auditExemptPrefixes);
+    }
+  } finally {
+    await base.$disconnect();
   }
 }
 
