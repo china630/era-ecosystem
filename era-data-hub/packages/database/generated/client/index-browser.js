@@ -275,6 +275,25 @@ exports.Prisma.TaxRateScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ConstructionMaterialScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  nameAz: 'nameAz',
+  nameRu: 'nameRu',
+  nameEn: 'nameEn',
+  uomCode: 'uomCode',
+  hsCode: 'hsCode',
+  classPath: 'classPath',
+  indicativePriceAzn: 'indicativePriceAzn',
+  version: 'version',
+  effectiveFrom: 'effectiveFrom',
+  isActive: 'isActive',
+  sortOrder: 'sortOrder',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ReferenceIngestPolicyScalarFieldEnum = {
   catalogKind: 'catalogKind',
   externalFetchEnabled: 'externalFetchEnabled',
@@ -352,7 +371,8 @@ exports.ReferenceCatalogKind = exports.$Enums.ReferenceCatalogKind = {
   CURRENCIES: 'CURRENCIES',
   TAX_RATES: 'TAX_RATES',
   CHART_OF_ACCOUNTS: 'CHART_OF_ACCOUNTS',
-  CALENDAR: 'CALENDAR'
+  CALENDAR: 'CALENDAR',
+  CONSTRUCTION_MATERIALS: 'CONSTRUCTION_MATERIALS'
 };
 
 exports.Prisma.ModelName = {
@@ -367,6 +387,7 @@ exports.Prisma.ModelName = {
   Country: 'Country',
   City: 'City',
   TaxRate: 'TaxRate',
+  ConstructionMaterial: 'ConstructionMaterial',
   ReferenceIngestPolicy: 'ReferenceIngestPolicy',
   HubPlatformSetting: 'HubPlatformSetting'
 };

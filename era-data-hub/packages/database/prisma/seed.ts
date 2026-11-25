@@ -1,12 +1,15 @@
 import "dotenv/config";
 import { PrismaClient } from "../generated/client";
 import { seedCalendarAz } from "./seeds/calendar-az";
+import { seedConstructionMaterials } from "./seeds/construction-materials";
 
 const prisma = new PrismaClient();
 
 async function main() {
   await seedCalendarAz(prisma);
   console.info("[data-hub:seed] calendar AZ 2025–2028 done");
+  await seedConstructionMaterials(prisma);
+  console.info("[data-hub:seed] construction materials done");
 }
 
 main()
