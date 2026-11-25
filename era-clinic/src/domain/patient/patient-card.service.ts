@@ -710,14 +710,22 @@ export async function getPatientHistoryPage(
   };
 }
 
-/** Closed course file: procedures, labs, and visits that were actually delivered. */
-async function executedCoursePage(patientRefId: string, episodeId: string, locale: string) {
+/** Closed course file: delivered rows, optionally CANCELLED/NO_SHOW for archive. */
+async function executedCoursePage(
+  patientRefId: string,
+  episodeId: string,
+  locale: string,
+  showNonExecuted: boolean,
+) {
+  const { archiveProcedureWhere, archiveLabWhere, archiveVisitWhere } = await import(
+    "@/domain/patient/closed-course-archive-filter"
+  );
   const [procedures, labs, visits, catalog] = await Promise.all([
     prisma.procedureOrder.findMany({
       where: {
         patientRefId,
         clinicalEpisodeId: episodeId,
-        status: { in: ["CHECKED_IN", "COMPLETED"] },
+        ...archiveProcedureWhere(showNonExecuted),
       },
       include: PROCEDURE_PHYSIO_INCLUDE,
       orderBy: { scheduledAt: "asc" },
@@ -726,14 +734,19 @@ async function executedCoursePage(patientRefId: string, episodeId: string, local
       where: {
         patientRefId,
         clinicalEpisodeId: episodeId,
-        status: { in: ["COLLECTED", "IN_PROGRESS", "RESULT_READY", "PUBLISHED", "COMPLETED"] },
+        ...archiveLabWhere(showNonExecuted),
       },
       orderBy: { createdAt: "asc" },
     }),
     prisma.visit.findMany({
-      where: { patientRefId, clinicalEpisodeId: episodeId, status: "COMPLETED" },
+      where: {
+        patientRefId,
+        clinicalEpisodeId: episodeId,
+        ...archiveVisitWhere(showNonExecuted),
+      },
       select: {
         id: true,
+        status: true,
         completedAt: true,
         createdAt: true,
         serviceLines: { select: { description: true } },
@@ -759,7 +772,7 @@ async function executedCoursePage(patientRefId: string, episodeId: string, local
       type: "visit" as const,
       at: (row.completedAt ?? row.createdAt).toISOString(),
       title: row.serviceLines.map((line) => line.description).filter(Boolean).join(", ") || "Visit",
-      status: "COMPLETED",
+      status: row.status,
       showClock: true,
     })),
   ];
@@ -795,7 +808,12 @@ export async function getPatientPlanPage(
       select: { status: true },
     });
     if (episode?.status === "CLOSED") {
-      return executedCoursePage(patientRefId, opts.episodeId, opts.locale ?? "az");
+      return executedCoursePage(
+        patientRefId,
+        opts.episodeId,
+        opts.locale ?? "az",
+        settings.patientCardArchiveShowNonExecuted !== false,
+      );
     }
   }
   const paged = opts.limit != null;

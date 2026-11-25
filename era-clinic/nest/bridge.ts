@@ -12,9 +12,8 @@ import {
   type ClinicSessionUser,
 } from "@/lib/api-utils";
 import { runWithSatelliteTenant, agencyAuthCookieName, getBearerOrCookieToken } from "@era/satellite-kit";
-import { runWithNestHttp } from "@/lib/nest-http-context";
-
-export { runWithNestHttp };
+import { runWithBoundClinicSession } from "@/lib/api-utils";
+import { ClinicJson } from "@/lib/clinic-json";
 
 type StaffRequest = SatelliteNestRequest & {
   originalUrl?: string;
@@ -168,6 +167,36 @@ export function nestHeader(req: StaffRequest, name: string): string | null {
   return null;
 }
 
+/** Absolute URL plus method for guards that only read pathname and query. */
+export function clinicRoute(req: StaffRequest): { url: string; method: string } {
+  return {
+    url: new URL(req.originalUrl ?? req.url ?? "/", "http://127.0.0.1").toString(),
+    method: req.method ?? "GET",
+  };
+}
+
+/** Staff route: tenant ALS. Returns the domain value. */
+export function withClinicStaff<T>(
+  req: StaffRequest,
+  session: { organizationId?: string },
+  fn: () => Promise<T>,
+): Promise<T> {
+  return runWithClinicTenant(session, () =>
+    runWithBoundClinicSession(session as never, fn),
+  );
+}
+
+/** Public route: Nest frame, staff tenant when a session cookie is present. */
+export function withClinicHttp<T>(req: StaffRequest, fn: () => Promise<T>): Promise<T> {
+  return runWithStaffTenantIfPresent(req, fn);
+}
+
+/** Turn a ClinicJson into a Nest return or HttpException. Status 200 yields the body. */
+export function clinicBody(value: ClinicJson): unknown {
+  if (value.status !== 200) throw new HttpException(value.body, value.status);
+  return value.body;
+}
+
 export async function sendRouteError(res: Response, err: unknown): Promise<void> {
   if (err instanceof Error && err.message.includes(" invocation in")) {
     err.message = err.message.replace(/`tx\./g, "`prisma.");
@@ -180,10 +209,25 @@ export async function sendRouteError(res: Response, err: unknown): Promise<void>
   res.status(next.status).json(await next.json());
 }
 
-export async function sendWebResponse(res: Response, next: globalThis.Response): Promise<void> {
+export async function sendWebResponse(
+  res: Response,
+  next: {
+    status: number;
+    json?: () => Promise<unknown>;
+    arrayBuffer?: () => Promise<ArrayBuffer>;
+    headers?: {
+      forEach?: (fn: (value: string, key: string) => void) => void;
+      getSetCookie?: () => string[];
+    };
+  },
+): Promise<void> {
+  if (typeof next.arrayBuffer !== "function") {
+    res.status(next.status).json(await next.json?.());
+    return;
+  }
   const bytes = Buffer.from(await next.arrayBuffer());
-  const cookies = typeof next.headers.getSetCookie === "function" ? next.headers.getSetCookie() : [];
-  next.headers.forEach((value, key) => {
+  const cookies = next.headers?.getSetCookie?.() ?? [];
+  next.headers?.forEach?.((value, key) => {
     if (key === "transfer-encoding" || key === "content-length" || key === "set-cookie") return;
     res.setHeader(key, value);
   });

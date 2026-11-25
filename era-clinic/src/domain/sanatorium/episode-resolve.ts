@@ -7,6 +7,7 @@ export type EpisodeListItem = {
   id: string;
   status: string;
   patientOrigin: string;
+  courseKind: "AMBULATORY" | "STAFF_BENEFIT" | null;
   programCode: string | null;
   roomNumber: string | null;
   reservationId: string | null;
@@ -15,6 +16,8 @@ export type EpisodeListItem = {
   stayStartsOn: string | null;
   stayEndsOn: string | null;
   stayNights: number | null;
+  /** True when clinic owns end date (no hotel reservation) — CLI-69 course-window. */
+  courseWindowEditable: boolean;
   anamnesisText: string | null;
   autoPaidLabMisses: string | null;
   packageApplyMisses: string | null;
@@ -53,6 +56,8 @@ export async function listPatientEpisodes(
       id: true,
       status: true,
       patientOrigin: true,
+      courseKind: true,
+      plannedEndsOn: true,
       programCode: true,
       roomNumber: true,
       reservationId: true,
@@ -79,24 +84,26 @@ export async function listPatientEpisodes(
     const hotel = hotelWindows.get(r.id);
     const startsOn = hotel
       ? new Date(hotel.checkInDate)
-      : (r.programInstance?.startsOn ?? null);
+      : (r.programInstance?.startsOn ?? r.openedAt);
     const endsOn = hotel
       ? new Date(hotel.checkOutDate)
-      : (r.programInstance?.endsOn ?? null);
+      : (r.programInstance?.endsOn ?? r.plannedEndsOn ?? null);
     const datesOk =
       startsOn != null && endsOn != null && !Number.isNaN(startsOn.getTime()) && !Number.isNaN(endsOn.getTime());
     return {
       id: r.id,
       status: r.status,
       patientOrigin: r.patientOrigin,
+      courseKind: r.courseKind,
       programCode: r.programCode,
       roomNumber: r.roomNumber,
       reservationId: r.reservationId,
       openedAt: r.openedAt.toISOString(),
       closedAt: r.closedAt?.toISOString() ?? null,
       stayStartsOn: datesOk ? startsOn.toISOString() : null,
-      stayEndsOn: datesOk ? endsOn.toISOString() : null,
-      stayNights: datesOk ? nightsBetween(startsOn, endsOn) : null,
+      stayEndsOn: datesOk ? endsOn!.toISOString() : null,
+      stayNights: datesOk ? nightsBetween(startsOn, endsOn!) : null,
+      courseWindowEditable: !r.reservationId && r.status === "OPEN",
       anamnesisText: r.anamnesisText,
       autoPaidLabMisses: r.autoPaidLabMisses,
       packageApplyMisses: r.packageApplyMisses,

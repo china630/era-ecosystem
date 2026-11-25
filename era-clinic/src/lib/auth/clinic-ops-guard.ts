@@ -8,15 +8,15 @@ import {
   type ClinicPermission,
 } from "@/lib/auth/clinic-permissions";
 import { sessionHasAnyClinicPermission } from "@/lib/auth/clinic-permission-check";
-import type { NextResponse } from "next/server";
+import type { ClinicJson } from "@/lib/clinic-json";
 import type { SatelliteStaffSessionPayload } from "@era/satellite-kit";
 
 type GuardOk = { session: SatelliteStaffSessionPayload; error?: undefined };
-type GuardFail = { session?: undefined; error: NextResponse };
+type GuardFail = { session?: undefined; error: ClinicJson };
 
 /** Staff API gate via opsApiRoutePermission (Wave 3). */
 export async function assertOpsApiPermission(
-  req: Request,
+  req: { url: string; method?: string },
   permissionOverride?: ClinicPermission,
 ): Promise<GuardOk | GuardFail> {
   const session = await getSatelliteSession();
@@ -27,7 +27,7 @@ export async function assertOpsApiPermission(
     return { session };
   }
   const path = new URL(req.url).pathname;
-  const allowed = opsApiRoutePermissions(path, req.method);
+  const allowed = opsApiRoutePermissions(path, req.method ?? "GET");
   if (!allowed.length) {
     return { error: jsonError("Forbidden", 403, { code: "FORBIDDEN" }) };
   }

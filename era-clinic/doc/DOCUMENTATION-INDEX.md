@@ -8,9 +8,9 @@
 - [Physio sites canon](./physio-site-canon.md) — S catalog, order fields, unmatched queue, UI waves
 - [Physio S-zone table](./physio-zone-s-catalog.md)
 - [Physio S-zone WO coverage](./physio-zone-s-coverage.md)
-- ADR: [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md) — satellite templates + org overlay + Connect copy-if-empty; `db:seed` vs `db:seed:demo`
-- ADR: [clinic-physio-site-catalog.md](../../docs/adr/clinic-physio-site-catalog.md)
-- ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-clinical-course.md) — episode = care course; card switcher; walk-in close (CLI-55 **SCREEN**)
+- ADR: [clinic-catalog-template-overlay.md](../../docs/adr/clinic/clinic-catalog-template-overlay.md) — satellite templates + org overlay + Connect copy-if-empty; `db:seed` vs `db:seed:demo`
+- ADR: [clinic-physio-site-catalog.md](../../docs/adr/clinic/clinic-physio-site-catalog.md)
+- ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic/clinic-episode-as-clinical-course.md) — episode = care course; card switcher; walk-in close (CLI-55 **SCREEN**)
 - [00-vision](./clone-spec/00-vision-and-boundaries.md)
 - [01-finance-boundary](./clone-spec/01-finance-boundary.md)
 - Module roadmap: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../../docs/PRODUCT_VERSIONING.md)

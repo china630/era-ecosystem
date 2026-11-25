@@ -5,14 +5,18 @@ const writeAudit: SatelliteAuditWriter = async (row) => {
   await prisma.satelliteAuditLog.create({ data: row });
 };
 
-export function clientIp(request: Request): string | null {
-  const forwarded = request.headers.get("x-forwarded-for");
+export function clientIp(source: { get(name: string): string | null } | { headers: { get(name: string): string | null } }): string | null {
+  const headers = "get" in source && !("headers" in source) ? source : source.headers;
+  const forwarded = headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]?.trim() ?? null;
-  return request.headers.get("x-real-ip");
+  return headers.get("x-real-ip");
 }
 
 export async function recordClinicAudit(
-  ctx: { userId?: string | null; request?: Request },
+  ctx: {
+    userId?: string | null;
+    request?: { get(name: string): string | null } | { headers: { get(name: string): string | null } };
+  },
   entityType: string,
   entityId: string,
   action: string,

@@ -4,6 +4,16 @@ import { buildStudiesPrint } from "@/domain/print/print-studies.service";
 import { printLabel } from "@/domain/print/print-labels";
 import { normalizePrintLang } from "@/domain/print/print-types";
 import { enterPrintSession } from "@/domain/print/print-session";
+import type { PrintLang } from "@/domain/print/print-types";
+
+function studyStatusLabel(lang: PrintLang, status: string): string {
+  const labKey = `labStatus_${status}`;
+  const lab = printLabel(lang, labKey);
+  if (lab !== labKey) return lab;
+  const procKey = `procStatus_${status}`;
+  const proc = printLabel(lang, procKey);
+  return proc !== procKey ? proc : status;
+}
 
 type Props = {
   params: Promise<{ patientId: string }>;
@@ -41,7 +51,7 @@ export default async function PrintStudiesPage({ params, searchParams }: Props) 
               <td className="p-1">{index + 1}</td>
               <td className="p-1">{row.name}</td>
               <td className="p-1">{row.when}</td>
-              <td className="p-1">{printLabel(lang, `labStatus_${row.status}`) || row.status}</td>
+              <td className="p-1">{studyStatusLabel(lang, row.status)}</td>
             </tr>
           ))}
         </tbody>

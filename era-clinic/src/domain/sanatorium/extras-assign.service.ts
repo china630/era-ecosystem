@@ -347,11 +347,21 @@ async function stayEndForOrders(ids: string[]): Promise<Date | undefined> {
   const rows = await prisma.procedureOrder.findMany({
     where: { id: { in: ids } },
     select: {
-      clinicalEpisode: { select: { programInstance: { select: { endsOn: true } } } },
+      clinicalEpisode: {
+        select: {
+          plannedEndsOn: true,
+          programInstance: { select: { endsOn: true } },
+        },
+      },
     },
   });
   const ends = rows
-    .map((row) => row.clinicalEpisode?.programInstance?.endsOn)
+    .map(
+      (row) =>
+        row.clinicalEpisode?.programInstance?.endsOn ??
+        row.clinicalEpisode?.plannedEndsOn ??
+        null,
+    )
     .filter((value): value is Date => value instanceof Date && !Number.isNaN(value.getTime()));
   if (ends.length === 0) return undefined;
   return ends.reduce((earliest, value) => (value < earliest ? value : earliest));
@@ -446,8 +456,13 @@ async function pinUnpaidOpenExtras(
   });
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
-    select: { programInstance: { select: { endsOn: true } } },
+    select: {
+      plannedEndsOn: true,
+      programInstance: { select: { endsOn: true } },
+    },
   });
+  const scheduleBefore =
+    episode?.programInstance?.endsOn ?? episode?.plannedEndsOn ?? undefined;
   let failures: Array<{
     orderId: string;
     procedureCode: string;
@@ -461,7 +476,7 @@ async function pinUnpaidOpenExtras(
       "@/domain/procedure/open-attendance"
     );
     const pinned = await pinOpenAttendanceOrders(ids, {
-      scheduleBefore: episode?.programInstance?.endsOn ?? undefined,
+      scheduleBefore,
       startAt: new Date(),
     });
     failures = pinned.failures;
@@ -535,9 +550,13 @@ export async function placeHeldExtrasOnCheckoutMorning(
 }> {
   const episode = await prisma.clinicalEpisode.findUnique({
     where: { id: episodeId },
-    select: { programInstance: { select: { endsOn: true } } },
+    select: {
+      plannedEndsOn: true,
+      programInstance: { select: { endsOn: true } },
+    },
   });
-  const endsOn = episode?.programInstance?.endsOn ?? null;
+  const endsOn =
+    episode?.programInstance?.endsOn ?? episode?.plannedEndsOn ?? null;
   const orders = await prisma.procedureOrder.findMany({
     where: { clinicalEpisodeId: episodeId, ...heldExtraWhere },
     select: {

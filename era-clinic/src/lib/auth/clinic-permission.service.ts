@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import type { SatelliteSessionPayload } from "@era/satellite-kit";
+import { ClinicJson } from "@/lib/clinic-json";
 import { prisma } from "@/lib/prisma";
 import {
   effectiveRolePermissions,
@@ -13,11 +13,11 @@ import {
 export { sessionHasClinicPermission, resolveSessionPermissions };
 
 function jsonForbidden(message: string) {
-  return NextResponse.json({ error: message, code: "FORBIDDEN" }, { status: 403 });
+  return new ClinicJson(403, { error: message, code: "FORBIDDEN" });
 }
 
 function jsonUnauthorized() {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  return new ClinicJson(401, { error: "Unauthorized" });
 }
 
 export async function permissionsForUser(userId: string): Promise<ClinicPermission[]> {
@@ -56,7 +56,7 @@ export async function resolveEffectivePermissionsForUser(
 export async function assertClinicPermission(
   session: SatelliteSessionPayload | null,
   permission: ClinicPermission,
-): Promise<NextResponse | null> {
+): Promise<ClinicJson | null> {
   if (!session) return jsonUnauthorized();
   if (!sessionHasClinicPermission(session, permission)) {
     return jsonForbidden("Forbidden");

@@ -1,0 +1,1 @@
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "audit_exempt_prefixes" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

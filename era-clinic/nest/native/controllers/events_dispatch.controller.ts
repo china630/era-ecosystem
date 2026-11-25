@@ -1,0 +1,72 @@
+import { Controller, HttpCode, Post, Req, HttpException } from "@nestjs/common";
+import type { Request } from "express";
+import {
+  nestHeader,
+  withClinicHttp,
+} from "../../bridge";
+import { randomUUID } from "crypto";
+import { isSatelliteEvent } from "@era/contracts";
+import { assertEnvServiceToken, assertRevenueEventForPublish, organizationIdOnIncomingRequest, publishToOrchestratorGateway } from "@era/satellite-kit";
+
+
+/** SEC-SAT-01: require service token; never trust client organizationId or the process bind. */
+
+@Controller()
+export class EventsDispatchController {
+
+  @Post("api/events/dispatch")
+  @HttpCode(200)
+  async post_0(
+    @Req() httpReq: Request,
+  ) {
+    return withClinicHttp(httpReq, async () => {
+      const authz = assertEnvServiceToken({
+    expectedEnvKeys: ["SATELLITE_EVENT_SERVICE_TOKEN"],
+    authorization: nestHeader(httpReq, "authorization"),
+    xServiceToken: nestHeader(httpReq, "x-service-token"),
+    // Always require token — route is on public API prefix (SEC-SAT-01)
+    allowOpenInNonProduction: false,
+  });
+  if (!authz.ok) {
+    throw new HttpException({ ok: false, error: authz.error }, ( { status: authz.status }).status ?? 200);
+  }
+
+  const organizationId = organizationIdOnIncomingRequest({ headers: { get: (name) => nestHeader(httpReq, name) } });
+  if (!organizationId) {
+    throw new HttpException({ ok: false, error: "organizationId is not bound on this request" }, 400);
+  }
+
+  const body = (httpReq.body) as Record<string, unknown>;
+  const event = {
+    ...body,
+    organizationId,
+    correlationId:
+      typeof body.correlationId === "string" ? body.correlationId : randomUUID(),
+    occurredAt:
+      typeof body.occurredAt === "string"
+        ? body.occurredAt
+        : new Date().toISOString(),
+  };
+  if (!isSatelliteEvent(event)) {
+    throw new HttpException({ ok: false, error: "Unknown or invalid satellite event type" }, 400);
+  }
+  try {
+    await assertRevenueEventForPublish({
+      organizationId,
+      fromSatelliteKey: "industry_clinic",
+      eventType: String(event.type),
+    });
+  } catch (err) {
+    if (err instanceof HttpException) throw err;
+    const message = err instanceof Error ? err.message : "Revenue channel disabled";
+    throw new HttpException({ ok: false, error: message }, 403);
+  }
+  const result = await publishToOrchestratorGateway(event as Record<string, unknown>);
+  if (!result.ok) {
+    throw new HttpException({ ok: false, error: result.error }, 502);
+  }
+  return { ok: true, event };
+
+        });
+  }
+}

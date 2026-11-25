@@ -17,7 +17,7 @@ function clientIp(request: Request): string | null {
 /** Best-effort. Sign-in continues when the journal table is not migrated yet. */
 export async function recordUserLogin(
   user: { id: string; organizationId: string; login: string },
-  request: Request,
+  request: { get(name: string): string | null } | { headers: { get(name: string): string | null } },
 ): Promise<void> {
   try {
     await prisma.userLogin.create({

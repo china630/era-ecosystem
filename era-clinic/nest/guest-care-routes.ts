@@ -1,4 +1,5 @@
-import type { Express, Request as ExpressRequest, Response as ExpressResponse } from "express";
+import { Controller, Get, HttpCode, Req, Res } from "@nestjs/common";
+import type { Request, Response } from "express";
 import { runWithSatelliteTenant } from "@era/satellite-kit";
 import { listPublishedPortalLabResults } from "@/domain/portal/portal-session.service";
 import { prisma } from "@/lib/prisma";
@@ -13,8 +14,11 @@ import {
  * Results never include draft / other-person / cross-org rows.
  * Prisma tenant extension requires runWithSatelliteTenant.
  */
-export function registerGuestCareRoutes(http: Express) {
-  http.get("/api/internal/v1/guest-care/timetable", async (req: ExpressRequest, res: ExpressResponse) => {
+@Controller()
+export class GuestCareController {
+  @Get("api/internal/v1/guest-care/timetable")
+  @HttpCode(200)
+  async timetable(@Req() req: Request, @Res({ passthrough: false }) res: Response) {
     if (!assertGuestCareServiceToken(req)) {
       res.status(401).json({ error: "unauthorized" });
       return;
@@ -55,9 +59,11 @@ export function registerGuestCareRoutes(http: Express) {
       };
     });
     res.json(body);
-  });
+  }
 
-  http.get("/api/internal/v1/guest-care/results", async (req: ExpressRequest, res: ExpressResponse) => {
+  @Get("api/internal/v1/guest-care/results")
+  @HttpCode(200)
+  async results(@Req() req: Request, @Res({ passthrough: false }) res: Response) {
     if (!assertGuestCareServiceToken(req)) {
       res.status(401).json({ error: "unauthorized" });
       return;
@@ -85,9 +91,11 @@ export function registerGuestCareRoutes(http: Express) {
       };
     });
     res.json(body);
-  });
+  }
 
-  http.get("/api/internal/v1/guest-care/episodes", async (req: ExpressRequest, res: ExpressResponse) => {
+  @Get("api/internal/v1/guest-care/episodes")
+  @HttpCode(200)
+  async episodes(@Req() req: Request, @Res({ passthrough: false }) res: Response) {
     if (!assertGuestCareServiceToken(req)) {
       res.status(401).json({ error: "unauthorized" });
       return;
@@ -118,9 +126,11 @@ export function registerGuestCareRoutes(http: Express) {
       };
     });
     res.json(body);
-  });
+  }
 
-  http.get("/api/internal/v1/program-template-codes", async (req: ExpressRequest, res: ExpressResponse) => {
+  @Get("api/internal/v1/program-template-codes")
+  @HttpCode(200)
+  async programTemplateCodes(@Req() req: Request, @Res({ passthrough: false }) res: Response) {
     if (!assertGuestCareServiceToken(req)) {
       res.status(401).json({ error: "unauthorized" });
       return;
@@ -138,5 +148,5 @@ export function registerGuestCareRoutes(http: Express) {
       return [...new Set(rows.map((row) => row.code.trim().toUpperCase()).filter(Boolean))];
     });
     res.json({ codes });
-  });
+  }
 }

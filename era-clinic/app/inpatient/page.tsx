@@ -57,7 +57,12 @@ export default function InpatientPage() {
   const [loading, setLoading] = useState(true);
   const [assignOpen, setAssignOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
-  const [assignForm, setAssignForm] = useState({ bedId: "", patientRefId: "" });
+  const [assignForm, setAssignForm] = useState({
+    bedId: "",
+    patientRefId: "",
+    admissionKind: "PLANNED",
+    source: "SELF",
+  });
   const [transferForm, setTransferForm] = useState({
     admissionId: "",
     newBedId: "",
@@ -107,7 +112,12 @@ export default function InpatientPage() {
   }
 
   function openAssign(bedId?: string) {
-    setAssignForm({ bedId: bedId ?? "", patientRefId: "" });
+    setAssignForm({
+      bedId: bedId ?? "",
+      patientRefId: "",
+      admissionKind: "PLANNED",
+      source: "SELF",
+    });
     setAssignOpen(true);
   }
 
@@ -129,6 +139,8 @@ export default function InpatientPage() {
         action: "admit",
         bedId: assignForm.bedId,
         patientRefId: assignForm.patientRefId,
+        admissionKind: assignForm.admissionKind,
+        source: assignForm.source,
       }),
     });
     const json = await res.json();
@@ -329,6 +341,27 @@ export default function InpatientPage() {
                 {p.refCode} — {p.fullName}
               </option>
             ))}
+          </FieldSelect>
+          <FieldSelect
+            label={t("admissionKind")}
+            preset="select"
+            value={assignForm.admissionKind}
+            onChange={(e) => setAssignForm({ ...assignForm, admissionKind: e.target.value })}
+          >
+            <option value="PLANNED">{t("kindPlanned")}</option>
+            <option value="EMERGENCY">{t("kindEmergency")}</option>
+          </FieldSelect>
+          <FieldSelect
+            label={t("admissionSource")}
+            preset="selectWide"
+            value={assignForm.source}
+            onChange={(e) => setAssignForm({ ...assignForm, source: e.target.value })}
+          >
+            <option value="SELF">{t("sourceSelf")}</option>
+            <option value="REFERRAL">{t("sourceReferral")}</option>
+            <option value="AMBULANCE">{t("sourceAmbulance")}</option>
+            <option value="TRANSFER">{t("sourceTransfer")}</option>
+            <option value="ITS_REFERRAL">{t("sourceIts")}</option>
           </FieldSelect>
         </div>
         <ModalFooter

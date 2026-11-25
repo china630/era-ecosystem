@@ -172,6 +172,36 @@ function eventTitle(ev: TimelineEvent, locale: string): string {
   return ev.title;
 }
 
+function planEventStatusLabel(
+  status: string,
+  t: (key: string, values?: Record<string, string>) => string,
+): string {
+  switch (status) {
+    case "COMPLETED":
+      return t("statusCompleted");
+    case "CHECKED_IN":
+      return t("statusCheckedIn");
+    case "NO_SHOW":
+      return t("statusNoShow");
+    case "CANCELLED":
+      return t("statusCancelled");
+    case "SCHEDULED":
+      return t("statusScheduled");
+    case "PROPOSED":
+      return t("statusProposed");
+    case "PENDING_PAY":
+      return t("statusPendingPay");
+    default:
+      return status;
+  }
+}
+
+function planEventStatusClass(status: string): string {
+  if (status === "CANCELLED" || status === "NO_SHOW") return "text-[#E67E22]";
+  if (status === "COMPLETED" || status === "CHECKED_IN") return "text-[#27AE60]";
+  return TEXT_MUTED_CLASS;
+}
+
 function planProcedureName(title: string): string {
   return title.replace(/^Procedure\s*[·\-–]\s*/i, "").trim();
 }
@@ -475,6 +505,8 @@ export function PatientCardClinicalSections({
   const [packageBlockMinNights, setPackageBlockMinNights] = useState<number | null>(null);
   const [packageBlockMessage, setPackageBlockMessage] = useState<string | null>(null);
   const [packageCode, setPackageCode] = useState<string | null>(null);
+  /** True only when ProgramInstance exists (CLI-69 staff Standart). */
+  const [hasPackageInstance, setHasPackageInstance] = useState(false);
   const [quotaTick, setQuotaTick] = useState(0);
   const [visitSlot, setVisitSlot] = useState<{ id: string; title: string } | null>(null);
   const [visitDate, setVisitDate] = useState("");
@@ -580,6 +612,7 @@ export function PatientCardClinicalSections({
             typeof snap.blockMessage === "string" ? snap.blockMessage : null,
           );
           setPackageCode(typeof snap.packageCode === "string" ? snap.packageCode : null);
+          setHasPackageInstance(typeof snap.templateId === "string" && Boolean(snap.templateId));
         } else {
           setQuotaRows([]);
           setPackageBlock(null);
@@ -587,6 +620,7 @@ export function PatientCardClinicalSections({
           setPackageBlockMinNights(null);
           setPackageBlockMessage(null);
           setPackageCode(null);
+          setHasPackageInstance(false);
         }
       })
       .catch(() => {
@@ -594,7 +628,9 @@ export function PatientCardClinicalSections({
         setPackageBlock(null);
         setPackageBlockNights(null);
         setPackageBlockMinNights(null);
+        setPackageBlockMessage(null);
         setPackageCode(null);
+        setHasPackageInstance(false);
       });
   }, [
     section,
@@ -1096,7 +1132,7 @@ export function PatientCardClinicalSections({
             suppressToolbar
             extrasTitle={t("extrasAwaiting", { defaultValue: "Additional procedures (awaiting payment)" })}
             readOnly={readOnly || !studiesUnlocked}
-            hidePackage={patientOrigin === "WALK_IN"}
+            hidePackage={patientOrigin === "WALK_IN" && !hasPackageInstance}
             extrasPending={[]}
             onPackagePlus={() => setPackageModalOpen(true)}
             onExtrasPlus={() => setPackageModalOpen(true)}
@@ -1288,7 +1324,7 @@ export function PatientCardClinicalSections({
         </section>
       ) : null}
 
-      {showInlinePlan && !episodeClosed && studiesUnlocked && episodeId ? (
+      {showInlinePlan && studiesUnlocked && episodeId ? (
         <CardTabActions>
           <button
             type="button"
@@ -1302,14 +1338,16 @@ export function PatientCardClinicalSections({
           >
             <Printer className="h-4 w-4 text-[#2980B9]" aria-hidden />
           </button>
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={readOnly || !studiesUnlocked}
-            onClick={() => setPackageModalOpen(true)}
-          >
-            +
-          </button>
+          {episodeClosed ? null : (
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={readOnly || !studiesUnlocked}
+              onClick={() => setPackageModalOpen(true)}
+            >
+              +
+            </button>
+          )}
         </CardTabActions>
       ) : null}
 
@@ -1400,7 +1438,11 @@ export function PatientCardClinicalSections({
           ) : null}
           {planVisible.length === 0 && (planLoading || planUnplaced.length === 0) ? (
             <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>
-              {planLoading ? tc("loading") : t("planEmpty")}
+              {planLoading
+                ? tc("loading")
+                : episodeClosed
+                  ? t("planEmptyArchive")
+                  : t("planEmpty")}
             </p>
           ) : planVisible.length === 0 ? null : (
             <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto">
@@ -1424,6 +1466,11 @@ export function PatientCardClinicalSections({
                       ) : null}
                       {ev.codes?.[0] ? (
                         <div className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{ev.codes[0]}</div>
+                      ) : null}
+                      {ev.status ? (
+                        <div className={`text-[12px] font-medium ${planEventStatusClass(ev.status)}`}>
+                          {planEventStatusLabel(ev.status, t)}
+                        </div>
                       ) : null}
                     </div>
                     <p className={`line-clamp-3 min-w-0 text-[12px] ${TEXT_MUTED_CLASS}`}>

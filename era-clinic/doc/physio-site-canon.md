@@ -1,7 +1,7 @@
 # Physio / sanatorium sites (S) — product canon
 
 **Status:** W3 — SatAdmin catalog + `sites[]` + doctor chips + type-gated order fields. Unmatched import queue is W4.  
-**ADR:** [clinic-physio-site-catalog.md](../../docs/adr/clinic-physio-site-catalog.md)  
+**ADR:** [clinic-physio-site-catalog.md](../../docs/adr/clinic/clinic-physio-site-catalog.md)  
 **Zone table:** [physio-zone-s-catalog.md](./physio-zone-s-catalog.md)  
 **WO coverage:** [physio-zone-s-coverage.md](./physio-zone-s-coverage.md)
 

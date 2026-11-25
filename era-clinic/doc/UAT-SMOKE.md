@@ -113,10 +113,11 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 8. **Guest nationality** — hotel check-in, sanatorium booking, and stay-product events carry guest nationality (ISO). Clinic writes `PatientRef.nationality` only when the field is empty.
 9. Dispute path: audit on ProcedureOrder (`checkedInAt/By`, `checkInChannel`, `completedAt/By`, `noShowAt/By`).
 10. Reschedule procedure time on chart → conflict rules enforced (cabin + staff).
-11. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
-11a. **Register a group** (`/sanatorium/walk-in-parties`, CLI-61): list only; **Create group** opens a modal (name + visit date). Row click opens the party modal (no audit journal). **Add guest** / **Edit guest** / **Add service** / remove confirms are nested modals (sex + country required and empty by default; name optional → Guest N). Add service: kind empty until picked; doctor sticks for that guest; procedures use physio chips; line grid shows parameters; Eye opens patient card or line detail. **To cashier** sends one hotel pending line per service under one receipt. The hotel pending list shows one basket; Cash/Card writes one fiscal receipt. Unpaid procedures follow the extra-procedure route. Not a hotel group booking. Not SHIPPED / not SHOW.
+11. **New course** menu on `/sanatorium` (CLI-69): one primary button → Ambulatory / Group / Staff. Ambulatory modal (not “Walk-in”): identity + **course days** → `POST /api/sanatorium/episodes` stamps `AMBULATORY` + `plannedEndsOn` + no-package; extras only on the card (package assign hidden). Group → `/sanatorium/walk-in-parties`. Staff → Workforce CatalogField only (`GET /api/sanatorium/workforce-picker`); free name/FIN refused; `POST …/staff-course` opens `PKG-STANDART` + package assign visible. Not SHIPPED / not SHOW until field punch.
+11a. **Register a group** (`/sanatorium/walk-in-parties`, CLI-61): list only; **Create group** opens a modal (name + visit date). Row click opens the party modal (no audit journal). **Add guest** / **Edit guest** / **Add service** / remove confirms are nested modals (sex + country required and empty by default; name optional → Guest N). Add service: kind empty until picked; doctor sticks for that guest; procedures use physio chips; line grid shows parameters; Eye opens patient card or line detail. **To cashier** sends one hotel pending line per service under one receipt. The hotel pending list shows one basket; Cash/Card writes one fiscal receipt. Unpaid procedures follow the extra-procedure route. Guest open stamps `AMBULATORY` + same-day window. Not a hotel group booking. Not SHIPPED / not SHOW.
 
 11b. **Open attendance + SAME_DAY** (CLI-62): Admin → procedure type → enable **Open attendance** on a soft SKU. Two different OPEN codes may share one working day; the same code is once that day and then the next working day through the day before checkout. Checkout day is only after the package dialog agrees. A paid extra past the stay is not kept (message, no minute-stamp pile). Package Saxla → plan/print shows «open attendance» first that day (no matrix bar; plan has no reschedule/matrix DnD for unseated OPEN). Nurse check-in seats a free cabin → bar appears → auto-complete by duration; board shows open label until seated. Guest who does not arrive: no auto-NO_SHOW burn for OPEN. Settings → **SAME_DAY** (+ until date): timed row check-in any time that clinic day **only if already seated**; occupancy rebases to now; unseated FIXED refuses; after until date STRICT again. Matrix shows the open queue as a morning band and an afternoon band on that procedure's cabins (waiting shared, arrivals split at lunch; not a timed bar); DnD of unseated OPEN refused. Not SHIPPED / not SHOW until field punch.
+11c. **Courses without room (CLI-69):** Ambulatory 5-day course → extras prescribe across days (`staySeatMax` > 0 from `plannedEndsOn`); Staff from Workforce → Standart package assign visible; terminated/`cpEmploymentId` missing → 409/400; card Course end DatePicker (`PATCH …/course-window`) extends ambulatory/staff window; hotel IN_HOUSE refuse → `409 HOTEL_OWNED_WINDOW` (no DatePicker when reservation owned). Not SHIPPED / not SHOW.
 12. Early hotel check-out → future procedures **CANCELLED** (lifecycle consumer).
 13. Hotel stay product change from date (`SATELLITE_HOTEL_STAY_PRODUCT_CHANGED`) → remaining **PROPOSED** and **SCHEDULED** orders from the effective date are cancelled; completed/checked-in stay. Clinic rebuilds a new **PROPOSED** plan for the new program when a matching template exists. The same event fills an empty patient nationality.
 14. **`/admin/master-data`** — practitioner **skills** (procedure types); procedure type **requirements** on **Add and Edit** (resource dropdown + STAFF HARD/SOFT); single Save; optional catalog code pick on create; resource ↔ room link. Opening the list backfills missing requirements (SVC-* get SOFT staff by default) and drops an empty EQUIPMENT row plus a second STAFF row.
@@ -212,6 +213,7 @@ Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fa
 1. Admin -> Settings -> Print branding: set AZ clinic name + phone; save.
 2. Lab order workflow -> Print -> three language chips (UI locale selected) -> Print opens the form and the print dialog. Empty / dash / catalog-range-echo analyte rows are absent; № is contiguous on filled rows only (blood, urine, any lab panel — not USM). Same chips on the episode summary, the procedure sheet, and the visit exam.
 3. Patient card stay strip **printer** → language dialog → `/print/episode/…?episode=` (stay, anamnesis, complaints, ICD, labs, exam notes, seated procedures). OPEN course still prints (interim note). Results **per-row** print (lab/USM) and Plan **Print schedule** stay separate. Check-up form remains at `/print/checkup/...` (no header button on Results/intake).
+3a. **CLOSED course archive (CLI-25):** Admin → Settings → archive cancelled/no-show **on** (default). Open a checked-out guest (e.g. room 503). Plan lists cancelled procedures with status (not `package_assign_adjust` duplicates) plus completed labs; Print schedule / studies / episode match Plan. Toggle **off** → Plan and those three prints show executed only.
 4. Qualitative analyte (if configured): enter via select; reprint in another language shows translated label.
 
 ## Extra tickets (Nafta dual-run, HOT-06)
@@ -237,7 +239,7 @@ cd era-hotel-pms && npm test -- --testPathPattern=saas-wave6-hot06-lab
 
 ## Episode procedure assign (CLI-57)
 
-**Status:** SCREEN — not SHIPPED / not Pilot. ADR `docs/adr/clinic-episode-procedure-assign-modal.md`.
+**Status:** SCREEN — not SHIPPED / not Pilot. ADR `docs/adr/clinic/clinic-episode-procedure-assign-modal.md`.
 
 1. **In-house** patient card **Package** tab: **Procedures in package** `+` → left remaining / right assigned (one card per SKU); leftover draft icon +/−; physio form overlay aligned with the left list top; **Save** places. **Saxla** seats new lines **top-to-bottom in add order** (first row claims the day first). Daily free cap is **per package block** (`ProgramTemplateProcedure.dailyDistinctCap`; empty = 1). A new SKU past that block's limit toasts **this package block's daily limit is used up** (`day_full`, not “no staff”). A paid extra does not share that cap and does not burn quota. Bath and paraffin lines have **Əvəz et** before Hamısı; a replacement spends the predecessor block's daily cap. **Plan** tab lists every still-open procedure of the episode (no 25-row page). Reschedule from the plan card can change the day; the resource matrix stays on the same day. The move uses the same slot door: block daily cap, bath rest day, weekly naftalan cap, and a checkout day only when the procedure ends by 12:00. A later day is refused. **Print** shows the checkout day even when it has no procedures, and its last line is **12:00** check-out. Plan chips + print stay in the same card frame. Language picker must sit **above** the card. Print **Doctor** = episode care team (not cabin/roster nurse).
 2. **Walk-in:** package block hidden; **Additional procedures** only; reception Pay requires payment receipt/cheque ref.
@@ -320,7 +322,7 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 ## Procedure TTK → Finance (CLI-47)
 
-**Status:** API landed (W1+W2). Sign-off required before SHIPPED. ADR: [clinic-procedure-consumable-ttk.md](../../docs/adr/clinic-procedure-consumable-ttk.md).
+**Status:** API landed (W1+W2). Sign-off required before SHIPPED. ADR: [clinic-procedure-consumable-ttk.md](../../docs/adr/clinic/clinic-procedure-consumable-ttk.md).
 
 1. SatAdmin → `/admin/master-data` → Procedure types → edit type → **Procedure TTK**: search Finance product, set qty per session, save.
 2. Empty BOM: complete a procedure → event `lines=[]`; Finance shows no stock movement for that order id.
@@ -439,7 +441,7 @@ Doctor card (no curl):
 
 **Status:** SCREEN (waves W1–W4 landed). Keep SCREEN until field punch — do not claim SHIPPED / SHOW / Pilot.
 
-ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-clinical-course.md).
+ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic/clinic-episode-as-clinical-course.md).
 
 1. Patient card — episode CatalogField (default latest); anamnesis (+Anamnesis modal once per episode, then edit; author specialty + name under text) above CI → complaints/ICD (author under each row) → clinical blocks; CLOSED = read-only.
 2. Empty OPEN anamnesis → confirm procedures disabled / API `409 ANAMNESIS_REQUIRED`; demographics save works without anamnesis.
@@ -450,7 +452,7 @@ ADR: [clinic-episode-as-clinical-course.md](../../docs/adr/clinic-episode-as-cli
 
 ## Episode care team (CLI-56) — SCREEN
 
-**Status:** SCREEN. Not SHIPPED. ADR: [clinic-episode-care-team.md](../../docs/adr/clinic-episode-care-team.md).
+**Status:** SCREEN. Not SHIPPED. ADR: [clinic-episode-care-team.md](../../docs/adr/clinic/clinic-episode-care-team.md).
 
 1. Reception opens patient card from `/sanatorium` → sees identity + package + **Care team** only.
 2. **+ Doctor** (therapist / gyn / uro …) → Save → doctor with assigned-only scope sees the course on `/sanatorium`.

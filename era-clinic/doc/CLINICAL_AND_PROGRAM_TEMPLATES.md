@@ -66,6 +66,6 @@ Day-series rhythm policy lives on `ProcedureDaySeries` (`modeCode`, `weeklyCap`,
 ## Related
 
 - [DIAGNOSTIC_AND_LAB_CATALOG.md](./DIAGNOSTIC_AND_LAB_CATALOG.md)
-- ADR [clinic-print-forms.md](../../docs/adr/clinic-print-forms.md) (visit-exam route)
-- ADR [nafta-program-quota-knots.md](../../docs/adr/nafta-program-quota-knots.md) (CLI-51 packages)
+- ADR [clinic-print-forms.md](../../docs/adr/clinic/clinic-print-forms.md) (visit-exam route)
+- ADR [nafta-program-quota-knots.md](../../docs/adr/clinic/nafta-program-quota-knots.md) (CLI-51 packages)
 - Seed: `prisma/seed-diagnostic-catalog*.cjs` (not ClinicalTemplate)

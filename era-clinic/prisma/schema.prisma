@@ -24,10 +24,14 @@ model Tenant {
   catalogFavoriteCodes           String[]                 @default([]) @map("catalog_favorite_codes")
   /// `first` = favorites sorted to top; `only` = hide non-favorites in pickers
   catalogFavoritesMode           String                   @default("first") @map("catalog_favorites_mode")
+  /// When non-empty, replaces the platform audit exempt prefixes for this org.
+  auditExemptPrefixes            String[]                 @default([]) @map("audit_exempt_prefixes")
   patientCardResultsPreview      Int                      @default(5) @map("patient_card_results_preview")
   patientCardPlanPreview         Int                      @default(15) @map("patient_card_plan_preview")
   patientCardHistoryPageSize     Int                      @default(25) @map("patient_card_history_page_size")
   patientCardPlanPageSize        Int                      @default(25) @map("patient_card_plan_page_size")
+  /// Closed-course Plan + guest prints: include CANCELLED/NO_SHOW (not package_assign_adjust).
+  patientCardArchiveShowNonExecuted Boolean               @default(true) @map("patient_card_archive_show_non_executed")
   /// Check-in allowed from scheduledAt − N minutes
   procedureCheckInGraceBeforeMin Int                      @default(5) @map("procedure_check_in_grace_before_min")
   /// Check-in allowed until scheduledAt + N minutes
@@ -147,6 +151,12 @@ enum PatientOrigin {
   IN_HOUSE
 }
 
+/// Course opened without a hotel room (CLI-63). null = hotel / legacy.
+enum ClinicalCourseKind {
+  AMBULATORY
+  STAFF_BENEFIT
+}
+
 enum AppointmentStatus {
   SCHEDULED
   CHECKED_IN
@@ -154,6 +164,59 @@ enum AppointmentStatus {
   COMPLETED
   NO_SHOW
   CANCELLED
+}
+
+enum AppointmentMode {
+  IN_PERSON
+  VIDEO
+}
+
+enum ClinicPayerKind {
+  ITS
+  DMS
+  CORPORATE
+  PATIENT
+}
+
+enum InsuranceReferralSource {
+  E_TABIB
+  INSURER
+  MANUAL
+}
+
+enum InsuranceReferralStatus {
+  NEW
+  USED
+  EXPIRED
+  REJECTED
+}
+
+enum PrescriptionStatus {
+  ISSUED
+  SENT_TO_PHARMACY
+  DISPENSED
+  CANCELLED
+}
+
+enum PatientFormSignatureKind {
+  SIMPLE
+  OTP
+  ASAN_IMZA
+}
+
+enum ClinicalNoteKind {
+  VISIT_EXAM
+  ADMISSION_EXAM
+  DAILY_DIARY
+  STAGE_EPICRISIS
+  DISCHARGE_SUMMARY
+  CONSULTATION
+}
+
+enum ClinicalNoteStatus {
+  DRAFT
+  SIGNED
+  AMENDED
 }
 
 enum VisitStatus {
@@ -357,14 +420,21 @@ model PatientRef {
   appointments          Appointment[]
   visits                Visit[]
   labOrders             LabOrder[]
+  insurancePolicies     PatientInsurancePolicy[]
+  formResponses         PatientFormResponse[]
+  prescriptions         Prescription[]
   episodes              ClinicalEpisode[]
   procedureOrders       ProcedureOrder[]
   contraindications     PatientContraindication[]
   bedAssignments        BedAssignment[]
   inpatientAdmissions   InpatientAdmission[]
+  vitalSigns            VitalSign[]
+  clinicalNotes         ClinicalNote[]
   receipts              ClinicReceipt[]
   procedureChargeLogs   ProcedureChargeLog[]
   walkInPartyGuests     WalkInPartyGuest[]
+  waitlistEntries       WaitlistEntry[]
+  ambulatoryCarePlans   AmbulatoryCarePlan[]
   createdAt             DateTime                  @default(now())
 
   @@unique([organizationId, refCode])
@@ -418,6 +488,7 @@ model Practitioner {
   procedureAllocations      ProcedureAllocation[]
   prescribedProcedureOrders ProcedureOrder[]                @relation("ProcedureOrder_prescribedByPractitioner")
   prescribedLabOrders       LabOrder[]                      @relation("LabOrder_prescribedByPractitioner")
+  clinicalNotesAuthored     ClinicalNote[]                  @relation("ClinicalNoteAuthor")
   scheduleRules             PractitionerScheduleRule[]
   scheduleExceptions        PractitionerScheduleException[]
   dutyLines                 StaffDutyLine[]
@@ -425,9 +496,13 @@ model Practitioner {
   absences                  StaffAbsence[]
   episodeCareRows           EpisodeCareDoctor[]
   preferredProcedureOrders  ProcedureOrder[]                @relation("ProcedureOrder_preferredPractitioner")
+  attendingInpatientAdmissions InpatientAdmission[]           @relation("InpatientAttending")
+  inpatientOrdersAuthored   InpatientOrder[]                @relation("InpatientOrderAuthor")
   anamnesisEpisodes         ClinicalEpisode[]               @relation("EpisodeAnamnesisAuthor")
   authoredComplaints        ClinicalComplaint[]             @relation("ComplaintAuthor")
   authoredDiagnoses         ClinicalDiagnosis[]             @relation("DiagnosisAuthor")
+  dietAssignmentsAssigned   DietAssignment[]                @relation("DietAssignedBy")
+  waitlistEntries           WaitlistEntry[]                 @relation("WaitlistPractitioner")
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -586,10 +661,14 @@ model Appointment {
   /// Pattern B secondary location/equipment (optional).
   resourceId      String?           @map("resource_id")
   status          AppointmentStatus @default(SCHEDULED)
+  mode            AppointmentMode   @default(IN_PERSON)
+  videoRoomUrl    String?           @map("video_room_url")
+  videoProvider   String?           @map("video_provider")
   /// Length of this reception. The calendar paints occupancy from this, not from the doctor card.
   durationMinutes Int               @default(30) @map("duration_minutes")
   reminderSentAt  DateTime?
   patientRef      PatientRef        @relation(fields: [patientRefId], references: [id])
+  formResponses   PatientFormResponse[]
   practitioner    Practitioner      @relation(fields: [practitionerId], references: [id])
   resource        Resource?         @relation(fields: [resourceId], references: [id])
   visit           Visit?
@@ -610,6 +689,8 @@ model Visit {
   /// Optional link to sanatorium care course (Pattern B outpatient may stay null).
   clinicalEpisodeId   String?              @map("clinical_episode_id")
   status              VisitStatus          @default(IN_PROGRESS)
+  payerKind           ClinicPayerKind?     @map("payer_kind")
+  referralId          String?              @map("referral_id")
   patientOrigin       PatientOrigin        @default(WALK_IN)
   billingTarget       BillingTarget        @default(FINANCE)
   settlementPendingId String?
@@ -628,6 +709,8 @@ model Visit {
   patientRef          PatientRef           @relation(fields: [patientRefId], references: [id])
   practitioner        Practitioner         @relation(fields: [practitionerId], references: [id])
   appointment         Appointment?         @relation(fields: [appointmentId], references: [id])
+  referral            InsuranceReferral?   @relation(fields: [referralId], references: [id], onDelete: SetNull)
+  prescriptions       Prescription[]
   clinicalEpisode     ClinicalEpisode?     @relation(fields: [clinicalEpisodeId], references: [id])
   serviceLines        VisitServiceLine[]
   labOrders           LabOrder[]
@@ -637,6 +720,9 @@ model Visit {
   receipts            ClinicReceipt[]
   queueTickets        QueueTicket[]
   diagnoses           VisitDiagnosis[]
+  vitalSigns          VitalSign[]
+  clinicalNotes       ClinicalNote[]
+  ambulatoryCarePlan  AmbulatoryCarePlan?
   createdAt           DateTime             @default(now())
 
   @@index([patientRefId, status])
@@ -1103,6 +1189,12 @@ model ClinicalEpisode {
   organizationId             String
   patientOrigin              PatientOrigin             @default(IN_HOUSE)
   programCode                String?
+  /// AMBULATORY / STAFF_BENEFIT when opened without a hotel room (CLI-63).
+  courseKind                 ClinicalCourseKind?       @map("course_kind")
+  /// Extras / seat horizon when there is no ProgramInstance (ambulatory N-day course).
+  plannedEndsOn              DateTime?                 @map("planned_ends_on")
+  /// CP Workforce employment id when courseKind = STAFF_BENEFIT.
+  benefitEmploymentId        String?                   @map("benefit_employment_id")
   checkupCompletedAt         DateTime?
   /// Paid auto-labs that could not be created (no list price). Shown on the episode.
   autoPaidLabMisses          String?                   @map("auto_paid_lab_misses") @db.Text
@@ -1131,11 +1223,16 @@ model ClinicalEpisode {
   /// CLI-56 — doctors on this course (therapist, gyn, uro, …).
   careDoctors                EpisodeCareDoctor[]
   walkInPartyGuests          WalkInPartyGuest[]
+  vitalSigns                 VitalSign[]
+  clinicalNotes              ClinicalNote[]
+  dietAssignments            DietAssignment[]
 
   @@index([reservationId])
   @@index([organizationId, status])
   @@index([reservationId, patientRefId, status])
   @@index([anamnesisByPractitionerId])
+  @@index([organizationId, courseKind, status])
+  @@index([benefitEmploymentId])
 }
 
 enum WalkInPartyStatus {
@@ -1529,6 +1626,7 @@ model ProcedureType {
   skills             PractitionerSkill[]
   dutyLines          StaffDutyLine[]
   dutyDayOverrides   StaffDutyDayOverride[]
+  inpatientOrders    InpatientOrder[]
 
   @@unique([organizationId, code])
   @@index([resourceCode])
@@ -1907,7 +2005,10 @@ model ServiceDepartment {
   active         Boolean               @default(true)
   createdAt      DateTime              @default(now()) @map("created_at")
   updatedAt      DateTime              @updatedAt @map("updated_at")
-  catalogRows    ServiceCatalogCache[]
+  catalogRows         ServiceCatalogCache[]
+  inpatientAdmissions InpatientAdmission[]
+  movementsFrom       InpatientMovement[]      @relation("MovementFromDept")
+  movementsTo         InpatientMovement[]      @relation("MovementToDept")
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -2379,25 +2480,258 @@ model PhysioNahiyeQueue {
 }
 
 enum InpatientAdmissionStatus {
+  REGISTERED
   ADMITTED
   DISCHARGED
+  REFUSED
+}
+
+enum InpatientAdmissionKind {
+  PLANNED
+  EMERGENCY
+}
+
+enum InpatientAdmissionSource {
+  SELF
+  REFERRAL
+  AMBULANCE
+  TRANSFER
+  ITS_REFERRAL
+}
+
+enum InpatientAdmissionOutcome {
+  RECOVERED
+  IMPROVED
+  UNCHANGED
+  WORSENED
   TRANSFERRED
+  DIED
+  SELF_DISCHARGE
+}
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+  CLEANING
+  BLOCKED
+}
+
+enum VitalSignKind {
+  TEMP
+  BP_SYS
+  BP_DIA
+  PULSE
+  RESP
+  SPO2
+  WEIGHT
+  HEIGHT
+  PAIN
+  GLUCOSE
+}
+
+enum RiskAssessmentScale {
+  MORSE
+  WATERLOW
+  NEWS2
+  VAS
+}
+
+enum InpatientOrderKind {
+  MEDICATION
+  PROCEDURE
+  REGIMEN
+  DIET
+  NURSING
+}
+
+enum InpatientMedicationRoute {
+  PO
+  IV
+  IM
+  SC
+  TOP
+  INH
+  SL
+  PR
+  OTHER
+}
+
+enum InpatientOrderStatus {
+  ACTIVE
+  STOPPED
+  COMPLETED
+}
+
+enum OrderAdministrationStatus {
+  DUE
+  GIVEN
+  MISSED
+  REFUSED
+  HELD
 }
 
 model InpatientAdmission {
-  id             String                   @id @default(cuid())
-  organizationId String
-  patientRefId   String                   @map("patient_ref_id")
-  status         InpatientAdmissionStatus @default(ADMITTED)
-  admittedAt     DateTime                 @default(now()) @map("admitted_at")
-  dischargedAt   DateTime?                @map("discharged_at")
-  patient        PatientRef               @relation(fields: [patientRefId], references: [id])
-  assignments    BedAssignment[]
-  dailyCharges   InpatientDailyCharge[]
-  diagnoses      AdmissionDiagnosis[]
+  id                       String                    @id @default(cuid())
+  organizationId             String
+  patientRefId             String                    @map("patient_ref_id")
+  status                   InpatientAdmissionStatus  @default(ADMITTED)
+  admissionKind            InpatientAdmissionKind    @default(PLANNED) @map("admission_kind")
+  source                   InpatientAdmissionSource  @default(SELF)
+  referralRef              String?                   @map("referral_ref")
+  departmentId             String?                   @map("department_id")
+  attendingPractitionerId  String?                   @map("attending_practitioner_id")
+  admissionNoteId          String?                   @map("admission_note_id")
+  refusalReason            String?                   @map("refusal_reason") @db.Text
+  outcome                  InpatientAdmissionOutcome?
+  caseNumber               String?                   @map("case_number")
+  registeredAt             DateTime?                 @map("registered_at")
+  admittedAt               DateTime                  @default(now()) @map("admitted_at")
+  dischargedAt             DateTime?                 @map("discharged_at")
+  patient                  PatientRef                @relation(fields: [patientRefId], references: [id])
+  department               ServiceDepartment?        @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  attendingPractitioner    Practitioner?             @relation("InpatientAttending", fields: [attendingPractitionerId], references: [id], onDelete: SetNull)
+  assignments              BedAssignment[]
+  dailyCharges             InpatientDailyCharge[]
+  diagnoses                AdmissionDiagnosis[]
+  movements                InpatientMovement[]
+  vitals                   VitalSign[]
+  riskAssessments          RiskAssessment[]
+  orders                   InpatientOrder[]
+  clinicalNotes            ClinicalNote[]
+  dietAssignments          DietAssignment[]
 
+  @@unique([organizationId, caseNumber])
   @@index([patientRefId, status])
+  @@index([organizationId, status])
+  @@index([attendingPractitionerId])
+  @@index([departmentId])
+}
+
+model InpatientMovement {
+  id                 String             @id @default(cuid())
+  organizationId     String
+  admissionId        String             @map("admission_id")
+  fromBedId          String?            @map("from_bed_id")
+  toBedId            String?            @map("to_bed_id")
+  fromDepartmentId   String?            @map("from_department_id")
+  toDepartmentId     String?            @map("to_department_id")
+  reason             String?            @db.Text
+  byUserId           String?            @map("by_user_id")
+  movedAt            DateTime           @default(now()) @map("moved_at")
+  admission          InpatientAdmission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  fromBed            Bed?               @relation("MovementFromBed", fields: [fromBedId], references: [id], onDelete: SetNull)
+  toBed              Bed?               @relation("MovementToBed", fields: [toBedId], references: [id], onDelete: SetNull)
+  fromDepartment     ServiceDepartment? @relation("MovementFromDept", fields: [fromDepartmentId], references: [id], onDelete: SetNull)
+  toDepartment       ServiceDepartment? @relation("MovementToDept", fields: [toDepartmentId], references: [id], onDelete: SetNull)
+
+  @@index([admissionId, movedAt])
   @@index([organizationId])
+  @@map("inpatient_movement")
+}
+
+model VitalSign {
+  id             String            @id @default(cuid())
+  organizationId String
+  patientRefId   String            @map("patient_ref_id")
+  admissionId    String?           @map("admission_id")
+  visitId        String?           @map("visit_id")
+  clinicalEpisodeId String?        @map("clinical_episode_id")
+  kind           VitalSignKind
+  value          Decimal           @db.Decimal(12, 3)
+  unit           String
+  measuredAt     DateTime          @map("measured_at")
+  byUserId       String?           @map("by_user_id")
+  patient        PatientRef        @relation(fields: [patientRefId], references: [id], onDelete: Cascade)
+  admission      InpatientAdmission? @relation(fields: [admissionId], references: [id], onDelete: SetNull)
+  visit          Visit?            @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  episode        ClinicalEpisode?  @relation(fields: [clinicalEpisodeId], references: [id], onDelete: SetNull)
+
+  @@index([admissionId, measuredAt])
+  @@index([patientRefId, kind, measuredAt])
+  @@index([organizationId])
+  @@map("vital_sign")
+}
+
+model RiskAssessment {
+  id             String              @id @default(cuid())
+  organizationId String
+  admissionId    String              @map("admission_id")
+  scale          RiskAssessmentScale
+  score          Int
+  answersJson    String              @map("answers_json") @db.Text
+  assessedAt     DateTime            @default(now()) @map("assessed_at")
+  byUserId       String?             @map("by_user_id")
+  admission      InpatientAdmission  @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+
+  @@index([admissionId, assessedAt])
+  @@index([organizationId])
+  @@map("risk_assessment")
+}
+
+model MedicationCatalog {
+  id             String           @id @default(cuid())
+  organizationId String
+  code           String
+  innName        String           @map("inn_name")
+  tradeName      String?          @map("trade_name")
+  form           String?
+  strength       String?
+  unit           String?
+  atcCode        String?          @map("atc_code")
+  financeSku     String?          @map("finance_sku")
+  active         Boolean          @default(true)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  orders         InpatientOrder[]
+  prescriptionLines PrescriptionLine[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, active])
+  @@map("medication_catalog")
+}
+
+model InpatientOrder {
+  id                     String                  @id @default(cuid())
+  organizationId         String
+  admissionId            String                  @map("admission_id")
+  kind                   InpatientOrderKind
+  medicationId           String?                 @map("medication_id")
+  procedureTypeId        String?                 @map("procedure_type_id")
+  dose                   String?
+  doseUnit               String?                 @map("dose_unit")
+  route                  InpatientMedicationRoute?
+  frequency              String?
+  startAt                DateTime                @map("start_at")
+  endAt                  DateTime?               @map("end_at")
+  prn                    Boolean                 @default(false)
+  status                 InpatientOrderStatus    @default(ACTIVE)
+  orderedByPractitionerId String?                @map("ordered_by_practitioner_id")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  admission              InpatientAdmission      @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  medication             MedicationCatalog?      @relation(fields: [medicationId], references: [id], onDelete: SetNull)
+  procedureType          ProcedureType?          @relation(fields: [procedureTypeId], references: [id], onDelete: SetNull)
+  orderedByPractitioner  Practitioner?           @relation("InpatientOrderAuthor", fields: [orderedByPractitionerId], references: [id], onDelete: SetNull)
+  administrations        OrderAdministration[]
+
+  @@index([admissionId, status])
+  @@index([organizationId])
+  @@map("inpatient_order")
+}
+
+model OrderAdministration {
+  id             String                     @id @default(cuid())
+  organizationId String
+  orderId        String                     @map("order_id")
+  scheduledAt    DateTime                   @map("scheduled_at")
+  status         OrderAdministrationStatus  @default(DUE)
+  givenAt        DateTime?                  @map("given_at")
+  givenByUserId  String?                    @map("given_by_user_id")
+  note           String?                    @db.Text
+  order          InpatientOrder             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, scheduledAt])
+  @@index([scheduledAt, status])
+  @@index([organizationId])
+  @@map("order_administration")
 }
 
 model InpatientDailyCharge {
@@ -2431,9 +2765,11 @@ model Bed {
   organizationId String
   wardId         String
   code           String
-  status         String          @default("AVAILABLE")
+  status         BedStatus       @default(AVAILABLE)
   ward           Ward            @relation(fields: [wardId], references: [id], onDelete: Cascade)
   assignments    BedAssignment[]
+  movementsFrom  InpatientMovement[] @relation("MovementFromBed")
+  movementsTo    InpatientMovement[] @relation("MovementToBed")
 
   @@unique([wardId, code])
   @@index([organizationId])
@@ -2467,6 +2803,59 @@ model CpoeEntry {
 
   @@index([visitId])
   @@index([organizationId])
+}
+
+model ClinicalNoteTemplate {
+  id             String          @id @default(cuid())
+  organizationId String
+  code           String
+  titleJson      String          @map("title_json") @db.Text
+  specialty      String?
+  sectionsJson   String          @map("sections_json") @db.Text
+  isActive       Boolean         @default(true) @map("is_active")
+  version        Int             @default(1)
+  notes          ClinicalNote[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+}
+
+model ClinicalNote {
+  id                     String               @id @default(cuid())
+  organizationId         String
+  visitId                String?              @map("visit_id")
+  clinicalEpisodeId      String?              @map("clinical_episode_id")
+  admissionId            String?              @map("admission_id")
+  patientRefId           String               @map("patient_ref_id")
+  authorPractitionerId   String               @map("author_practitioner_id")
+  templateId             String               @map("template_id")
+  templateVersion        Int                  @map("template_version")
+  kind                   ClinicalNoteKind
+  payloadJson            String               @map("payload_json") @db.Text
+  status                 ClinicalNoteStatus   @default(DRAFT)
+  signedAt               DateTime?            @map("signed_at")
+  signedByUserId         String?              @map("signed_by_user_id")
+  amendsNoteId           String?              @map("amends_note_id")
+  visit                  Visit?               @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  clinicalEpisode        ClinicalEpisode?     @relation(fields: [clinicalEpisodeId], references: [id], onDelete: SetNull)
+  admission              InpatientAdmission?  @relation(fields: [admissionId], references: [id], onDelete: SetNull)
+  patientRef             PatientRef           @relation(fields: [patientRefId], references: [id])
+  authorPractitioner     Practitioner         @relation("ClinicalNoteAuthor", fields: [authorPractitionerId], references: [id])
+  template               ClinicalNoteTemplate @relation(fields: [templateId], references: [id])
+  amendsNote             ClinicalNote?        @relation("ClinicalNoteAmendment", fields: [amendsNoteId], references: [id], onDelete: SetNull)
+  amendments             ClinicalNote[]       @relation("ClinicalNoteAmendment")
+  createdAt              DateTime             @default(now()) @map("created_at")
+  updatedAt              DateTime             @updatedAt @map("updated_at")
+
+  @@index([visitId, status])
+  @@index([patientRefId, createdAt])
+  @@index([clinicalEpisodeId])
+  @@index([admissionId])
+  @@index([organizationId])
+  @@index([templateId])
+  @@index([amendsNoteId])
 }
 
 model ClinicShift {
@@ -2769,4 +3158,224 @@ model ConsumptionOutbox {
 
   @@index([organizationId, status])
   @@map("consumption_outbox")
+}
+
+model PatientInsurancePolicy {
+  id                    String       @id @default(cuid())
+  organizationId        String       @map("organization_id")
+  patientRefId          String       @map("patient_ref_id")
+  payerKind             ClinicPayerKind @map("payer_kind")
+  payerCounterpartyId   String?      @map("payer_counterparty_id")
+  policyNumber          String       @map("policy_number")
+  validFrom             DateTime?    @map("valid_from")
+  validTo               DateTime?    @map("valid_to")
+  programCode           String?      @map("program_code")
+  active                Boolean      @default(true)
+  createdAt             DateTime     @default(now()) @map("created_at")
+  patientRef            PatientRef   @relation(fields: [patientRefId], references: [id], onDelete: Cascade)
+  referrals             InsuranceReferral[]
+
+  @@index([patientRefId, active])
+  @@index([organizationId])
+  @@map("patient_insurance_policy")
+}
+
+model InsuranceReferral {
+  id                    String                   @id @default(cuid())
+  organizationId        String                   @map("organization_id")
+  policyId              String?                  @map("policy_id")
+  patientRefId          String                   @map("patient_ref_id")
+  source                InsuranceReferralSource
+  referralCode          String                   @map("referral_code")
+  issuedAt              DateTime                 @map("issued_at")
+  expiresAt             DateTime?                @map("expires_at")
+  allowedServiceCodes   String[]                 @default([]) @map("allowed_service_codes")
+  status                InsuranceReferralStatus  @default(NEW)
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  policy                PatientInsurancePolicy?  @relation(fields: [policyId], references: [id], onDelete: SetNull)
+  visits                Visit[]
+
+  @@index([patientRefId, status])
+  @@index([organizationId, referralCode])
+  @@map("insurance_referral")
+}
+
+model Prescription {
+  id                    String              @id @default(cuid())
+  organizationId        String              @map("organization_id")
+  visitId               String              @map("visit_id")
+  patientRefId          String              @map("patient_ref_id")
+  status                PrescriptionStatus  @default(ISSUED)
+  prescriptionQueueId   String?             @map("prescription_queue_id")
+  issuedByUserId        String?             @map("issued_by_user_id")
+  issuedAt              DateTime            @default(now()) @map("issued_at")
+  visit                 Visit               @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  patientRef            PatientRef          @relation(fields: [patientRefId], references: [id], onDelete: Cascade)
+  lines                 PrescriptionLine[]
+
+  @@index([visitId])
+  @@index([patientRefId, issuedAt])
+  @@index([organizationId])
+  @@map("prescription")
+}
+
+model PrescriptionLine {
+  id              String            @id @default(cuid())
+  organizationId  String            @map("organization_id")
+  prescriptionId  String            @map("prescription_id")
+  medicationId    String?           @map("medication_id")
+  sku             String?
+  qty             Decimal           @db.Decimal(12, 3)
+  dose            String?
+  route           String?
+  frequency       String?
+  durationDays    Int?              @map("duration_days")
+  instructions    String?           @db.Text
+  rxRequired      Boolean           @default(true) @map("rx_required")
+  prescription    Prescription      @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medication      MedicationCatalog? @relation(fields: [medicationId], references: [id], onDelete: SetNull)
+
+  @@index([prescriptionId])
+  @@index([organizationId])
+  @@map("prescription_line")
+}
+
+model PatientFormTemplate {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  code           String
+  titleEn        String   @map("title_en")
+  titleRu        String   @map("title_ru")
+  titleAz        String   @map("title_az")
+  sectionsJson   String   @map("sections_json") @db.Text
+  consentRequired Boolean @default(false) @map("consent_required")
+  active         Boolean  @default(true)
+  version        Int      @default(1)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([organizationId, code])
+  @@index([organizationId, active])
+  @@map("patient_form_template")
+}
+
+model PatientFormResponse {
+  id             String                   @id @default(cuid())
+  organizationId String                   @map("organization_id")
+  templateCode   String                   @map("template_code")
+  patientRefId   String                   @map("patient_ref_id")
+  appointmentId  String?                  @map("appointment_id")
+  answersJson    String                   @map("answers_json") @db.Text
+  signedAt       DateTime?                @map("signed_at")
+  signatureKind  PatientFormSignatureKind @default(SIMPLE) @map("signature_kind")
+  createdAt      DateTime                 @default(now()) @map("created_at")
+  patientRef     PatientRef               @relation(fields: [patientRefId], references: [id], onDelete: Cascade)
+  appointment    Appointment?             @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([patientRefId, templateCode])
+  @@index([appointmentId])
+  @@index([organizationId])
+  @@map("patient_form_response")
+}
+
+enum AmbulatoryCarePlanStatus {
+  DRAFT
+  PROPOSED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+/// MED-P1-06 — outpatient treatment plan (lite; not sanatorium ProgramTemplate).
+model AmbulatoryCarePlan {
+  id              String                   @id @default(cuid())
+  organizationId  String
+  visitId         String                   @unique @map("visit_id")
+  patientRefId    String                   @map("patient_ref_id")
+  title           String?
+  stagesJson      Json                     @map("stages_json")
+  status          AmbulatoryCarePlanStatus @default(DRAFT)
+  proposedAt      DateTime?                @map("proposed_at")
+  acceptedAt      DateTime?                @map("accepted_at")
+  createdByUserId String?                  @map("created_by_user_id")
+  visit           Visit                    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  patientRef      PatientRef               @relation(fields: [patientRefId], references: [id])
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @updatedAt @map("updated_at")
+
+  @@index([patientRefId])
+  @@index([organizationId])
+  @@map("ambulatory_care_plans")
+}
+
+/// MED-P1-07 — diet table catalog (kitchen / F&B portion list).
+model DietTable {
+  id             String           @id @default(cuid())
+  organizationId String
+  code           String
+  titleAz        String           @map("title_az")
+  titleRu        String           @map("title_ru")
+  titleEn        String           @map("title_en")
+  description    String?          @db.Text
+  isActive       Boolean          @default(true) @map("is_active")
+  assignments    DietAssignment[]
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@map("diet_tables")
+}
+
+model DietAssignment {
+  id                       String              @id @default(cuid())
+  organizationId           String
+  dietTableId              String              @map("diet_table_id")
+  clinicalEpisodeId        String?             @map("clinical_episode_id")
+  admissionId              String?             @map("admission_id")
+  assignedFrom             DateTime            @map("assigned_from") @db.Date
+  assignedTo               DateTime?           @map("assigned_to") @db.Date
+  assignedByPractitionerId String?             @map("assigned_by_practitioner_id")
+  notes                    String?             @db.Text
+  dietTable                DietTable           @relation(fields: [dietTableId], references: [id])
+  clinicalEpisode          ClinicalEpisode?    @relation(fields: [clinicalEpisodeId], references: [id], onDelete: SetNull)
+  admission                InpatientAdmission? @relation(fields: [admissionId], references: [id], onDelete: SetNull)
+  assignedByPractitioner   Practitioner?       @relation("DietAssignedBy", fields: [assignedByPractitionerId], references: [id], onDelete: SetNull)
+  createdAt                DateTime            @default(now()) @map("created_at")
+  updatedAt                DateTime            @updatedAt @map("updated_at")
+
+  @@index([dietTableId, assignedFrom])
+  @@index([clinicalEpisodeId])
+  @@index([admissionId])
+  @@index([organizationId])
+  @@map("diet_assignments")
+}
+
+enum WaitlistEntryStatus {
+  OPEN
+  OFFERED
+  BOOKED
+  CANCELLED
+}
+
+/// MED-P1-09 — appointment waitlist (offer on cancel is future).
+model WaitlistEntry {
+  id             String              @id @default(cuid())
+  organizationId String
+  patientRefId   String              @map("patient_ref_id")
+  serviceCode    String?             @map("service_code")
+  practitionerId String?             @map("practitioner_id")
+  preferredFrom  DateTime?           @map("preferred_from") @db.Date
+  preferredTo    DateTime?           @map("preferred_to") @db.Date
+  status         WaitlistEntryStatus @default(OPEN)
+  notes          String?             @db.Text
+  patientRef     PatientRef          @relation(fields: [patientRefId], references: [id])
+  practitioner   Practitioner?       @relation("WaitlistPractitioner", fields: [practitionerId], references: [id], onDelete: SetNull)
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  @@index([status, preferredFrom])
+  @@index([patientRefId])
+  @@index([organizationId])
+  @@map("waitlist_entries")
 }

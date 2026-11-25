@@ -4,6 +4,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { addBakuDays, bakuDateKey, todayBakuYmd } from "@/lib/baku-day";
+import { resolveEpisodeScheduleBefore } from "@/domain/sanatorium/episode-schedule-horizon";
 
 export type StaySeatCap = {
   /** Working days available for a new OPEN pin of this code (0 when none). */
@@ -25,12 +26,9 @@ export async function countRemainingOpenSeatDays(
     horizonEndYmd: null,
     checkoutYmd: null,
   };
-  const instance = await prisma.programInstance.findFirst({
-    where: { episodeId },
-    select: { endsOn: true, startsOn: true },
-  });
-  if (!instance?.endsOn) return empty;
-  const checkoutYmd = bakuDateKey(instance.endsOn);
+  const endsOn = await resolveEpisodeScheduleBefore(episodeId);
+  if (!endsOn) return empty;
+  const checkoutYmd = bakuDateKey(endsOn);
   const today = todayBakuYmd();
   const horizonEndYmd = addBakuDays(checkoutYmd, -1);
   if (horizonEndYmd < today) {
