@@ -32,6 +32,7 @@ import { register as register30 } from "./leads__id_score";
 import { register as register31 } from "./leads__id_stage";
 import { register as register32 } from "./leads_import__batchId";
 import { register as register33 } from "./lookups__id";
+import { register as register34 } from "./selections_warranty";
 
 export function registerCrmRoutes(http: { get: Function; post: Function; put: Function; patch: Function; delete: Function }) {
   register0(http);
@@ -68,4 +69,5 @@ export function registerCrmRoutes(http: { get: Function; post: Function; put: Fu
   register31(http);
   register32(http);
   register33(http);
+  register34(http);
 }

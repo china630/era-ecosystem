@@ -1,10 +1,10 @@
-import type { Response } from "express";
+import type { CookieOptions, Response } from "express";
 import { handleRouteError } from "@/lib/api-utils";
 import { getSatelliteSession } from "@/lib/api-utils";
-import { runWithSatelliteTenant } from "@era/satellite-kit";
-import { runWithNestHttp } from "@/lib/nest-http-context";
+import { authCookieName, expressCookieReader, expressHeaderReader, runWithSatelliteTenant } from "@era/satellite-kit";
+import { expressCookieFromSeconds } from "./native/cookie-opts";
 
-export { runWithNestHttp };
+export { expressCookieFromSeconds };
 
 type StaffRequest = {
   originalUrl?: string;
@@ -17,9 +17,18 @@ type StaffRequest = {
   __constructionSession?: Awaited<ReturnType<typeof getSatelliteSession>>;
 };
 
+const AUTH_COOKIE_OPTS: CookieOptions = {
+  httpOnly: true,
+  sameSite: "lax",
+  path: "/",
+};
+
 export async function enterConstructionStaff(req: StaffRequest, res: Response): Promise<boolean> {
   try {
-    const session = await runWithNestHttp(req, () => getSatelliteSession());
+    const session = await getSatelliteSession({
+      cookies: expressCookieReader(req),
+      headers: expressHeaderReader(req),
+    });
     if (!session) {
       res.status(401).json({ error: "Unauthorized" });
       return false;
@@ -47,7 +56,10 @@ export function runWithConstructionTenant<T>(
 
 export async function runWithStaffTenantIfPresent<T>(req: StaffRequest, fn: () => Promise<T>): Promise<T> {
   try {
-    const session = await runWithNestHttp(req, () => getSatelliteSession());
+    const session = await getSatelliteSession({
+      cookies: expressCookieReader(req),
+      headers: expressHeaderReader(req),
+    });
     return runWithConstructionTenant(session, fn);
   } catch {
     return fn();
@@ -85,9 +97,10 @@ export function sendBytes(res: Response, body: Buffer, headers: Record<string, s
 
 export async function sendRouteError(res: Response, err: unknown): Promise<void> {
   const next = handleRouteError(err);
-  res.status(next.status).json(await next.json());
+  res.status(next.status).json(next.body);
 }
 
+/** Copy a Web Fetch `Response` (kit handlers) onto Express — not Next-specific. */
 export async function sendWebResponse(res: Response, next: globalThis.Response): Promise<void> {
   const bytes = Buffer.from(await next.arrayBuffer());
   const cookies = typeof next.headers.getSetCookie === "function" ? next.headers.getSetCookie() : [];
@@ -97,4 +110,19 @@ export async function sendWebResponse(res: Response, next: globalThis.Response):
   });
   if (cookies.length) res.setHeader("set-cookie", cookies);
   res.status(next.status).send(bytes);
+}
+
+/**
+ * Express `res.cookie` maxAge is milliseconds (Next cookies.set used seconds).
+ * Default TTL matches the former Nest/Next auth cookie (8h).
+ */
+export function setStaffAuthCookie(res: Response, token: string, maxAgeSec = 60 * 60 * 8): void {
+  res.cookie(authCookieName(), token, {
+    ...AUTH_COOKIE_OPTS,
+    ...expressCookieFromSeconds({ maxAge: maxAgeSec }),
+  });
+}
+
+export function clearStaffAuthCookie(res: Response): void {
+  res.cookie(authCookieName(), "", { ...AUTH_COOKIE_OPTS, maxAge: 0 });
 }

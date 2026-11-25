@@ -11,19 +11,24 @@ Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-CRM.md
 | Entitlement | `industry_crm_field` (or early-access module key) |
 | Packages | `@era/contracts`, `@era/satellite-kit` |
 
-## Data model (CRM-1 target)
+## Data model (CRM ops)
 
 ```text
 Tenant → Lead → Visit → LeadStageHistory
-ChannelThread (stub, Phase 2)
+       → Conversation → Message
+       → Call / Task / Activity
+       → IntegrationConnection (+ inbound/outbox)
 ```
 
-## API surface (planned)
+Legacy `ChannelThread` / inbox-stub naming is **retired** as SoT — use `Conversation`/`Message`.
 
-| Method | Path | PRD |
-|--------|------|-----|
-| GET/POST | `/api/leads` | CRM-01 |
-| POST | `/api/leads/:id/visits` | CRM-02 |
+## API surface (core)
+
+| Method | Path | PRD / notes |
+|--------|------|-------------|
+| GET/POST | `/api/leads` | CRM-01; list applies record-scope |
+| GET/PATCH | `/api/leads/:id` | Lead card; `assertLeadInScope` |
+| POST | `/api/leads/:id/visits` | CRM-02 (also `/api/visits`) |
 | POST | `/api/leads/:id/convert` | CRM-03 → `SATELLITE_CRM_LEAD_CONVERTED` |
 | POST | `/api/events/dispatch` | platform |
 
@@ -31,12 +36,18 @@ ChannelThread (stub, Phase 2)
 
 **No GL in CRM.** Conversion creates counterparty opportunity handoff in Finance via event only — see [doc/clone-spec/01-finance-boundary.md](./doc/clone-spec/01-finance-boundary.md).
 
-## Product APIs (v1.0)
+## Product APIs (ops + integrations)
 
-| Method | Path | Model |
-|--------|------|-------|
+| Method | Path | Model / notes |
+|--------|------|-------------|
 | GET/POST | `/api/visits` | `Visit.latitude`, `Visit.longitude`, `addressLabel` |
-| PATCH | `/api/leads/:id/follow-up` | `Lead.nextContactAt` → `trySendPlatformNotification` (M8) |
+| PATCH | `/api/leads/:id/follow-up` | `Lead.nextContactAt` → task / notify |
+| GET/POST | `/api/conversations` | Inbox threads |
+| GET/POST | `/api/conversations/:id/messages` | Chat; WhatsApp free-text enforces 24h `lastInboundAt` (`OUTSIDE_WINDOW`) |
+| GET/POST | `/api/calls`, POST `/api/calls/originate` | Telephony; originate requires tenant connection |
+| GET | `/api/realtime/calls` | SSE RINGING |
+| GET/POST/… | `/api/integrations/*` | Catalog, connections, hooks, OAuth |
+| GET/POST | `/api/tasks` | Follow-up / ops tasks |
 
 ## Environment
 

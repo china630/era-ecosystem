@@ -225,6 +225,10 @@ Ranked open architecture debts that must not be “forgotten in chat”. **Not**
 | Pri | Debt | Status | ADR / plan |
 |-----|------|--------|------------|
 | **P0** | Industry satellite API stack: Next `app/api` → Nest API + Next UI. | Code cutover 2026-11-12. Not Pilot, not Gate, not sell. | [industry-satellite-api-nest-migration.md](./adr/industry-satellite-api-nest-migration.md) |
+| **P0** | Retire industry Nest HTTP **codegen** (`nest/generated` + `npm run nest:generate`) toward hand-written Nest controllers (Finance-shaped). Clinic domain routes are `nest/native/controllers`; guest-care and kit bind/runtime/billing stay on an exact-path edge because kit still returns a web Response. Other satellites still generate. | Open follow-up | [industry-satellite-api-nest-migration.md](./adr/industry-satellite-api-nest-migration.md) · clinic [nest-cutover.md](../era-clinic/doc/nest-cutover.md) |
+| **P1** | Construction **smeta rate engine** MVP (SKU on Construction; org rates → estimate lines; not full DESN content) | MVP landed; UAT open | [construction-smeta-rate-engine.md](./adr/construction-smeta-rate-engine.md) · [smeta-budget-materials-ecosystem.plan.md](../.cursor/plans/smeta-budget-materials-ecosystem.plan.md) |
+| **P1** | Finance **commercial** budget + execution trace (management budget for COMMERCIAL; deepen §4.16 plan–fact / commitments) | MVP landed; UAT open | [finance-commercial-budget-execution.md](./adr/finance-commercial-budget-execution.md) · Finance [OPEN-TASKS.md](../era-finance-core/docs/OPEN-TASKS.md) |
+| **P2** | Data Hub **construction materials** catalog (+ Platform Gateway) | MVP landed; UAT open | [data-hub-construction-materials.md](./adr/data-hub-construction-materials.md) |
 | — | Mutation audit depth (fail-closed Next belt, Layer B, Finance kit-align, journal UI) | Active follow-up after UI/API parity | [mutation-audit-depth.plan.md](../.cursor/plans/mutation-audit-depth.plan.md) · [era-mutation-audit-standard.md](./adr/era-mutation-audit-standard.md) |
 
 ## Standards

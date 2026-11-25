@@ -415,7 +415,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const purchasesActive =
       pathname.startsWith("/purchases") ||
       pathname.startsWith("/finance/payables") ||
-      pathname.startsWith("/customs");
+      pathname.startsWith("/customs") ||
+      pathname.startsWith("/procurement") ||
+      pathname.startsWith("/contracts") ||
+      pathname.startsWith("/pay-applications") ||
+      pathname.startsWith("/gov-budget");
     const manufacturingNavActive = pathname.startsWith("/manufacturing");
     const warehouseActive = pathname.startsWith("/inventory");
     const catalogCrmActive =

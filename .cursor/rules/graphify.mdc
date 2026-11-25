@@ -1,0 +1,40 @@
+---
+description: graphify knowledge graph — agent-only navigation for ERA chat
+alwaysApply: true
+---
+
+This repo has a local Graphify graph at `graphify-out/graph.json` (built on D:, never commit).
+
+## Audience (critical)
+
+The human works at **product / flow / satellite / acceptance** level — not function callers.
+Never answer with raw symbol lists unless they explicitly ask for a symbol.
+Never tell them to open a terminal or run `graphify` themselves. **You** run Graphify via Shell; they only chat.
+
+CLI lives at `D:\tools\uv\bin` — prepend that to PATH in Shell when calling graphify.
+
+## When to use Graphify (you, silently)
+
+Before broad exploration (Read/Grep/Glob across apps), orient with Graphify when the task is about:
+
+- cross-satellite flows (orch ↔ finance ↔ hotel/clinic/fnb/…)
+- SSO / workforce / MDM / satellite-events / billing gates / org operating mode
+- “what does this area touch?” / “where does this capability live?” / impact of a wave
+- finding the right app/module/files for a plan
+
+Prefer concept and path queries phrased in **domain words**, then translate results into ERA language (apps, routes, modules, docs).
+
+Useful agent commands (run yourself; do not paste as user homework):
+
+- `graphify query "<domain question>" --budget 4000`
+- `graphify explain "<concept>"`
+- `graphify path "<A>" "<B>"` when tracing a flow between two named areas
+- `graphify affected "<hub or module cue>" --depth 2` for change blast radius
+- `graphify update .` after substantive code edits (AST-only)
+
+Skip Graphify when: graph missing; tiny one-file edit already located; docs-only acceptance matrix edit with known paths.
+
+## How to talk to the human
+
+Answer with: which satellite/core, which screens/API areas, which docs to update, risk to neighbors.
+Do **not** lead with `who calls foo()` or edge dumps. Cite a few concrete file paths only as evidence after the product answer.

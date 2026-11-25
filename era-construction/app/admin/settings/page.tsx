@@ -12,6 +12,7 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+import { AuditExemptPanel } from "@/components/admin/AuditExemptPanel";
 
 export default function ConstructionSettingsPage() {
   const t = useTranslations("adminSettings");
@@ -32,6 +33,11 @@ export default function ConstructionSettingsPage() {
           </Link>
         }
       />
+      <p className="mt-3 text-sm">
+        <Link href="/admin/rate-bases" className={SECONDARY_BUTTON_CLASS}>
+          {tNav("rateBases")}
+        </Link>
+      </p>
       <table className={`${CARD_CONTAINER_CLASS} mt-4 w-full text-left text-sm`}>
         <thead>
           <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
@@ -61,6 +67,7 @@ export default function ConstructionSettingsPage() {
         />
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => { setSiteName(draft.trim() || siteName); setOpen(false); }} submitLabel={tc("save")} />
       </ModalShell>
+      <AuditExemptPanel />
     </div>
   );
 }

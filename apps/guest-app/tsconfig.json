@@ -8,5 +8,6 @@
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true
-  }
+  },
+  "extends": "expo/tsconfig.base"
 }

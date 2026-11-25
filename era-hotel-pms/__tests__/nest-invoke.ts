@@ -62,3 +62,22 @@ export async function invokeNest(
     json: async () => payload,
   };
 }
+
+/** Call a Nest controller method and read the Express-style JSON reply. */
+export async function invokeMethod(
+  method: (req: unknown, res: unknown) => Promise<unknown>,
+  init?: { headers?: Record<string, string>; body?: unknown; params?: Record<string, string> },
+) {
+  return invokeNest(
+    (http) => {
+      http.post("/method", method);
+      http.get("/method", method);
+      http.put("/method", method);
+      http.patch("/method", method);
+      http.delete("/method", method);
+    },
+    "post",
+    "/method",
+    init,
+  );
+}

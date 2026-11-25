@@ -78,4 +78,52 @@ describe("GovBudgetService ledger", () => {
       svc.recordFundingReceipt("org-1", { amount: 100 }),
     ).rejects.toThrow(/BUDGET organization/);
   });
+
+  it("reserveCommitment soft-links CONTRACT_COMMITMENT without NAS ledger", async () => {
+    prisma.budgetLine.findFirst.mockResolvedValueOnce({
+      id: "line-1",
+      budgetYear: { organizationId: "org-1", status: "APPROVED", mode: "MANAGEMENT" },
+    });
+    const out = await svc.reserveCommitment("org-1", {
+      budgetLineId: "line-1",
+      amount: 250,
+      referenceType: "CONTRACT_COMMITMENT",
+      referenceId: "cc-9",
+    });
+    expect(out.id).toBe("c-1");
+    expect(prisma.budgetCommitment.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          referenceType: "CONTRACT_COMMITMENT",
+          referenceId: "cc-9",
+        }),
+      }),
+    );
+    expect(postingJournal.postInTransaction).not.toHaveBeenCalled();
+  });
+
+  it("reserveCommitment hardGate refuses when limit exceeded", async () => {
+    prisma.budgetLine.findFirst.mockResolvedValue({
+      id: "line-1",
+      budgetYear: { organizationId: "org-1", status: "APPROVED", mode: "MANAGEMENT" },
+    });
+    jest.spyOn(svc, "checkLimit").mockResolvedValue({
+      allowed: false,
+      blocked: true,
+      reason: "LIMIT_EXCEEDED",
+      limitAnnual: "100",
+      committed: "100",
+      remaining: "0",
+      requested: "50",
+    });
+    await expect(
+      svc.reserveCommitment("org-1", {
+        budgetLineId: "line-1",
+        amount: 50,
+        referenceType: "PAYMENT",
+        referenceId: "pay-1",
+        hardGate: true,
+      }),
+    ).rejects.toMatchObject({ response: expect.objectContaining({ code: "LIMIT_EXCEEDED" }) });
+  });
 });

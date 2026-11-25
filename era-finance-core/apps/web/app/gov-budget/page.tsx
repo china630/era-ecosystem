@@ -27,12 +27,16 @@ type BudgetYearRow = {
   year: number;
   version: number;
   status: string;
+  mode?: string;
   _count?: { lines: number };
 };
 
-function hasGovBudgetModule(activeModules: string[], tier: string): boolean {
+function hasBudgetModule(activeModules: string[], tier: string): boolean {
   if (tier === "TIER_3") return true;
-  return activeModules.includes("gov_budget_pro");
+  return (
+    activeModules.includes("gov_budget_pro") ||
+    activeModules.includes("mgmt_budget_pro")
+  );
 }
 
 export default function GovBudgetPage() {
@@ -43,7 +47,12 @@ export default function GovBudgetPage() {
   const moduleLocked =
     subReady &&
     snapshot &&
-    !hasGovBudgetModule(snapshot.activeModules ?? [], tier);
+    !hasBudgetModule(snapshot.activeModules ?? [], tier);
+  const commercialOnly =
+    !moduleLocked &&
+    (snapshot?.activeModules ?? []).includes("mgmt_budget_pro") &&
+    !(snapshot?.activeModules ?? []).includes("gov_budget_pro") &&
+    tier !== "TIER_3";
 
   const [rows, setRows] = useState<BudgetYearRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -51,6 +60,12 @@ export default function GovBudgetPage() {
   const [pageSize, setPageSize] = useState(25);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+
+  const orchBase = (
+    process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000"
+  ).replace(/\/$/, "");
+  const subscriptionHref = `${orchBase}/settings/subscription`;
 
   const load = useCallback(async () => {
     if (!token || moduleLocked) {
@@ -62,7 +77,7 @@ export default function GovBudgetPage() {
     const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     const res = await apiFetch(`/api/gov-budget/years?${qs.toString()}`);
     if (!res.ok) {
-      setErr(`Failed to load budget years (${res.status})`);
+      setErr(t("govBudget.loadErr", { status: res.status }));
       setRows([]);
       setTotal(0);
       setLoading(false);
@@ -72,7 +87,7 @@ export default function GovBudgetPage() {
     setRows(parsed.items);
     setTotal(parsed.total);
     setLoading(false);
-  }, [token, moduleLocked, page, pageSize]);
+  }, [token, moduleLocked, page, pageSize, t]);
 
   useEffect(() => {
     if (!ready || !token || moduleLocked) return;
@@ -85,49 +100,95 @@ export default function GovBudgetPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Gov budget"
-        subtitle="Annual budget plan and execution (B2G)"
+        title={commercialOnly ? t("govBudget.titleMgmt") : t("govBudget.titleGov")}
+        subtitle={
+          commercialOnly ? t("govBudget.subtitleMgmt") : t("govBudget.subtitleGov")
+        }
         actions={
-          <Link href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/subscription`} className={SECONDARY_BUTTON_CLASS}>
-            Subscription
+          <Link href={subscriptionHref} className={SECONDARY_BUTTON_CLASS}>
+            {t("govBudget.subscription")}
           </Link>
         }
       />
 
       {moduleLocked ? (
         <EmptyState
-          title="Gov Budget is not enabled"
-          description="Enable the gov_budget_pro module for budget-year planning and limit checks."
+          title={t("govBudget.lockedTitle")}
+          description={t("govBudget.lockedDesc")}
           action={
-            <Link href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/subscription`} className={PRIMARY_BUTTON_CLASS}>
-              Manage subscription
+            <Link href={subscriptionHref} className={PRIMARY_BUTTON_CLASS}>
+              {t("govBudget.manageSubscription")}
             </Link>
           }
         />
       ) : (
         <>
           {err ? <p className="text-sm text-red-600">{err}</p> : null}
-          {loading ? <p className="text-gray-600">Loading…</p> : null}
+          {loading ? <p className="text-gray-600">{t("govBudget.loading")}</p> : null}
 
           {!loading && (
             <>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={creating}
+                  onClick={() => {
+                    void (async () => {
+                      setCreating(true);
+                      setErr(null);
+                      const year = new Date().getFullYear();
+                      const res = await apiFetch("/api/gov-budget/years", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          year,
+                          mode: commercialOnly ? "MANAGEMENT" : "GOV",
+                          lines: commercialOnly
+                            ? [
+                                {
+                                  accountCode: "OPEX",
+                                  limitAnnual: 100000,
+                                },
+                              ]
+                            : undefined,
+                        }),
+                      });
+                      setCreating(false);
+                      if (!res.ok) {
+                        setErr(t("govBudget.createErr", { status: res.status }));
+                        return;
+                      }
+                      await load();
+                    })();
+                  }}
+                >
+                  {creating
+                    ? "…"
+                    : commercialOnly
+                      ? t("govBudget.newYearMgmt")
+                      : t("govBudget.newYearGov")}
+                </button>
+              </div>
               <div className={DATA_TABLE_VIEWPORT_CLASS}>
                 <table className={`${DATA_TABLE_CLASS} min-w-full`}>
                   <thead>
                     <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
-                      <th className={DATA_TABLE_TH_LEFT_CLASS}>Year</th>
-                      <th className={DATA_TABLE_TH_LEFT_CLASS}>Version</th>
-                      <th className={DATA_TABLE_TH_LEFT_CLASS}>Status</th>
-                      <th className={DATA_TABLE_TH_LEFT_CLASS}>Lines</th>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("govBudget.thYear")}</th>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("govBudget.thMode")}</th>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("govBudget.thVersion")}</th>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("govBudget.thStatus")}</th>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("govBudget.thLines")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.length === 0 ? (
-                      <FinanceEmptyTableRow colSpan={4} message={t("common.noRows")} />
+                      <FinanceEmptyTableRow colSpan={5} message={t("common.noRows")} />
                     ) : (
                       rows.map((row) => (
                         <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
                           <td className={DATA_TABLE_TD_CLASS}>{row.year}</td>
+                          <td className={DATA_TABLE_TD_CLASS}>{row.mode ?? "GOV"}</td>
                           <td className={DATA_TABLE_TD_CLASS}>{row.version}</td>
                           <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
                           <td className={DATA_TABLE_TD_CLASS}>{row._count?.lines ?? 0}</td>

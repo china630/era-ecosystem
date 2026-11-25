@@ -1,5 +1,6 @@
 import { computeLeadScore } from "@/lib/lead-score";
 import { findLeadWithVisits, updateLeadScore } from "@/lib/leads.service";
+import { assertLeadInScope } from "@/lib/integrations/lead-scope";
 import { enterCrmStaff, crmNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithCrmTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
 
@@ -24,6 +25,13 @@ export function register(http: { get: Function; post: Function; put: Function; p
   
     if (!(session)) return sendJson(httpRes, { error: "Unauthorized" }, 401);
     const { id } = httpReq.params;
+    await assertLeadInScope({
+      organizationId: session.organizationId,
+      userId: session.sub,
+      leadId: String(id),
+      permissions: session.permissions ?? [],
+      isOwner: session.isOwner === true,
+    });
     const lead = await findLeadWithVisits(id);
     if (!lead) return sendJson(httpRes, { error: "Lead not found" }, 404);
     const score = computeLeadScore(lead);

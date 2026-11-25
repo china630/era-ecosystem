@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application
+    android:label="ERA Nurse Cover"
+    android:allowBackup="false"
+    android:supportsRtl="true"
+    android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+    <activity
+      android:name=".CoverActivity"
+      android:exported="true"
+      android:excludeFromRecents="true"
+      android:launchMode="singleTask"
+      android:screenOrientation="landscape"
+      android:showWhenLocked="true"
+      android:turnScreenOn="true"
+      android:taskAffinity=""
+      android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="online.era365.nurse.cover.ACTION_SHOW" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="online.era365.nurse.cover.ACTION_FINISH" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

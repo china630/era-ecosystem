@@ -7,7 +7,7 @@
 **Related:**
 
 - [fnb-domain-permissions-and-rbac.md](./fnb-domain-permissions-and-rbac.md) — reference shape
-- [bank-domain-permissions-and-rbac.md](./bank-domain-permissions-and-rbac.md) — role assign on `/admin/access`
+- [bank-domain-permissions-and-rbac.md](./bank/bank-domain-permissions-and-rbac.md) — role assign on `/admin/access`
 - [saas-request-tenant-and-vendor-bridges.md](./saas-request-tenant-and-vendor-bridges.md) §2 — one session read per handler
 
 ---

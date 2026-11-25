@@ -1,17 +1,4 @@
-jest.mock("next/server", () => ({
-  NextResponse: {
-    json: (data: unknown, init?: { status?: number }) => ({
-      status: init?.status ?? 200,
-      json: async () => data,
-    }),
-  },
-}));
-
-const headerValues: Record<string, string | null> = {};
-jest.mock("next/headers", () => ({
-  cookies: jest.fn(async () => ({ get: () => undefined })),
-  headers: jest.fn(async () => ({ get: (name: string) => headerValues[name] ?? null })),
-}));
+import { nestFrameHeaders, resetNestFrameHeaders } from "./_nest-http-frame-mock";
 
 const findMany = jest.fn();
 jest.mock("@/lib/prisma", () => ({ prisma: { project: { findMany } } }));
@@ -26,11 +13,25 @@ jest.mock("@era/satellite-kit", () => {
 });
 
 import { readSatelliteStaffSession } from "@era/satellite-kit";
-import { PERMISSIONS, ROLE_CODES, ROLE_TEMPLATES, PERMISSION_CATALOG_VERSION } from "@/lib/auth/permissions";
+import {
+  PERMISSIONS,
+  ROLE_CODES,
+  ROLE_TEMPLATES,
+  PERMISSION_CATALOG_VERSION,
+} from "@/lib/auth/permissions";
 
-function staffAs(roleCode: string, permissions: readonly string[] = ROLE_TEMPLATES[roleCode as keyof typeof ROLE_TEMPLATES]) {
+function staffAs(
+  roleCode: string,
+  permissions: readonly string[] = ROLE_TEMPLATES[roleCode as keyof typeof ROLE_TEMPLATES],
+) {
   (readSatelliteStaffSession as jest.Mock).mockResolvedValue({
-    session: { sub: "u-1", login: "staff", role: roleCode, fullName: "Staff", organizationId: "org-1" },
+    session: {
+      sub: "u-1",
+      login: "staff",
+      role: roleCode,
+      fullName: "Staff",
+      organizationId: "org-1",
+    },
     user: {
       organizationId: "org-1",
       active: true,
@@ -48,7 +49,7 @@ function staffAs(roleCode: string, permissions: readonly string[] = ROLE_TEMPLAT
 describe("Construction doors (CN-RBAC-01)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    for (const k of Object.keys(headerValues)) delete headerValues[k];
+    resetNestFrameHeaders();
     findMany.mockResolvedValue([]);
   });
 
@@ -59,7 +60,12 @@ describe("Construction doors (CN-RBAC-01)", () => {
       ROLE_CODES.PLATFORM_MEMBER,
       ROLE_CODES.SATELLITE_OPERATOR,
     ]) {
-      for (const p of [PERMISSIONS.ACTS_APPROVE, PERMISSIONS.DAILY_LOGS, PERMISSIONS.REQUISITIONS, PERMISSIONS.BOQ]) {
+      for (const p of [
+        PERMISSIONS.ACTS_APPROVE,
+        PERMISSIONS.DAILY_LOGS,
+        PERMISSIONS.REQUISITIONS,
+        PERMISSIONS.BOQ,
+      ]) {
         expect(ROLE_TEMPLATES[code]).toContain(p);
       }
       expect(ROLE_TEMPLATES[code]).not.toContain(PERMISSIONS.SCREEN_ADMIN_SETTINGS);
@@ -73,17 +79,20 @@ describe("Construction doors (CN-RBAC-01)", () => {
       ROLE_TEMPLATES[ROLE_CODES.SITE_MANAGER].filter((p) => p !== PERMISSIONS.ACTS_APPROVE),
     );
     const { getSatelliteSession } = await import("@/lib/api-utils");
-    headerValues["x-era-pathname"] = "/api/progress-acts/act-1/approve";
+    nestFrameHeaders["x-era-pathname"] = "/api/progress-acts/act-1/approve";
     await expect(getSatelliteSession()).rejects.toMatchObject({ name: "PermissionDeniedError" });
-    headerValues["x-era-pathname"] = "/api/projects/p1/daily-logs";
+    nestFrameHeaders["x-era-pathname"] = "/api/projects/p1/daily-logs";
     await expect(getSatelliteSession()).resolves.toMatchObject({ role: ROLE_CODES.SITE_MANAGER });
   });
 
-  it("an estimator whose package lost api:projects gets 403 from the project list handler", async () => {
-    headerValues["x-era-pathname"] = "/api/projects";
-    const { GET } = await import("../app/api/projects/route");
-    staffAs(ROLE_CODES.ESTIMATOR, ROLE_TEMPLATES[ROLE_CODES.ESTIMATOR].filter((p) => p !== PERMISSIONS.PROJECTS));
-    expect((await GET()).status).toBe(403);
+  it("an estimator whose package lost api:projects is denied on the projects list path", async () => {
+    staffAs(
+      ROLE_CODES.ESTIMATOR,
+      ROLE_TEMPLATES[ROLE_CODES.ESTIMATOR].filter((p) => p !== PERMISSIONS.PROJECTS),
+    );
+    const { getSatelliteSession } = await import("@/lib/api-utils");
+    nestFrameHeaders["x-era-pathname"] = "/api/projects";
+    await expect(getSatelliteSession()).rejects.toMatchObject({ name: "PermissionDeniedError" });
     expect(findMany).not.toHaveBeenCalled();
   });
 
@@ -91,7 +100,7 @@ describe("Construction doors (CN-RBAC-01)", () => {
     staffAs(ROLE_CODES.SITE_MANAGER);
     const { getSatelliteSession } = await import("@/lib/api-utils");
     for (const path of ["/api/admin/roles", "/api/admin/users"]) {
-      headerValues["x-era-pathname"] = path;
+      nestFrameHeaders["x-era-pathname"] = path;
       await expect(getSatelliteSession()).rejects.toMatchObject({ name: "PermissionDeniedError" });
     }
   });

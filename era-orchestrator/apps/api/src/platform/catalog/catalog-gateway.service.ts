@@ -140,6 +140,25 @@ export class CatalogGatewayService {
     };
   }
 
+  listConstructionMaterials(organizationId: string, q?: string) {
+    const params = new URLSearchParams();
+    if (q?.trim()) params.set("q", q.trim());
+    const qs = params.toString();
+    return this.proxy(
+      organizationId,
+      `/construction/materials${qs ? `?${qs}` : ""}`,
+      "catalog_construction_materials_list",
+    );
+  }
+
+  getConstructionMaterial(code: string, organizationId: string) {
+    return this.proxy(
+      organizationId,
+      `/construction/materials/${encodeURIComponent(code.trim())}`,
+      "catalog_construction_material_get",
+    );
+  }
+
   async companyByVoen(voen: string, organizationId: string) {
     const id = voen.replace(/\D/g, "");
     if (!/^\d{10}$/.test(id)) {

@@ -7,7 +7,9 @@
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable — do not claim GA; Pilot open; KKM STUB  
 **Overbook (2026-10-31):** type and house allowances default 0. HOT-FO-01/02 stay SHIPPED. AC-HOT-FO stays ✅. Does not change the rollup. `docs/editions/hotel.yaml` unchanged.
+**Opera inventory + Avl (2026-11-15):** unassigned=charged / assigned=door; matrix Avl may be negative vs base + Sold/Phys; last-slot assign OK; sell still base+overbook. HOT-FO-01/02 SHIPPED deepen. AC-HOT-FO stays ✅. Does not change the rollup. `hotel.yaml` untouched.
 **Night audit → finance (2026-10-31):** queue accepts the night-audit correlation id. HOT-NA-01 stays SHIPPED. Does not change the rollup.
+**FO business-day CI/CO (2026-11-14):** Stay stamps + realized queues / FO Status align (same status sets); Giriş/Çıxış on reservations + in-house + Status prefer stamps; FO Status + reservation-times default to open business day. HOT-UI-01 / HOT-NA-01 SHIPPED deepen. AC-HOT-FO stays ✅. Does not change the rollup. `hotel.yaml` untouched.
 
 ---
 
@@ -18,7 +20,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | W0 baseline | gate[x] | 🟡 | [ ] | `reports/hotel-stage-W0-signoff.md` scaffold-gate-pass |
 | W1 P5 FO money | gate[x] | 🟡→✅ code | [ ] | COVERAGE SHIPPED for the signed cashier. 2026-10-27 MOVE_PAYER_CL + unsettled; room payer + gross/net; corp contract→COMPANY; HOT-CL-07 API; HOT-AG-01 contracts UI; folio signed ledger + open-debt payment gate (HOT-CASH-01 deepen; HOT-FOLIO-DESK still API). 2026-10-28 `ensureOpenCashShift` + pending receipt (HOT-CASH-02/06); NA stop-step reservation refs (HOT-NA-02); CL audit HOT-CL-06. 2026-10-29 HOT-AG-COMM-01…04 agency commission payable; folio Debit\|Credit + stay-wide lodging pay + Nafta revenue v2 remap scripts (HOT-CASH-01 deepen; HOT-FOLIO-DESK/HOT-REV-01 API); folio UI polish shipped #368/#369 (drop Sətir, Bu sətri ödə GUEST-only, EraMenu portal, short labels, PKG i18n) + staging label cleanup; AC-HOT-AG-COMM 🟡. 2026-11-01 paymentCategory pay + pocket + mid-stay category-refund + `__tests__/payment-category-pay.spec.ts`; Gate/Pilot/edition unchanged. **2026-11-03** FO corp+medical: keep Volkin/Merikl beside contract; allotment missing row → `NO_ALLOTMENT_BAR` hotel Avl; HOT-BOOK-02/FO-02/CL-01/AG-01 SHIPPED deepen; second-pass GroupBooking + package-switch clear + medical toast suppress + ADR; Gate/Pilot/edition unchanged. Pilot lab still needs UAT §27 1c re-sign / §29 1a–1b / §27c artifact |
 | W2 BE scaffold green | gate[x] | ✅ (INT excl.) | [ ] | `reports/hotel-stage-W2-signoff.md` — negative-path suites |
-| W3 UI / Demo | gate[x] | ✅ | [ ] | `reports/hotel-demo-te-signoff.md` — UI/Demo ✅; lab open. 2026-11-02 HOT-UI-01 FO reservations/in-house list polish (children, departed strike, Res.ID copy, party in-house); **2026-11-03** party channel + company in `q` + in-house Res.ID copy; Gate/Pilot/edition unchanged |
+| W3 UI / Demo | gate[x] | ✅ | [ ] | `reports/hotel-demo-te-signoff.md` — UI/Demo ✅; lab open. 2026-11-02 HOT-UI-01 FO reservations/in-house list polish (children, departed strike, Res.ID copy, party in-house); **2026-11-03** party channel + company in `q` + in-house Res.ID copy; **2026-11-14** realized chips / FO Status on business-day Stay stamps + Giriş/Çıxış prefer stamps + business-day defaults (ADR hotel-fo-business-day-checkin-out); **2026-11-15** HOT-FO-01/02 Opera inventory + Avl negative vs base + Sold/Phys (ADR hotel-fo-screen-chain); Gate/Pilot/edition unchanged |
 
 ## Backlog
 
@@ -55,6 +57,8 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-30 | Guest phone app (cycles 2–10) | [~] | HOT-GUEST-APP-01…08 API/SCREEN; AC-HOT-GUEST-APP + AC-HOT-GUEST-APP-REQ 🟡 out of BE rollup; Nest + `/fo/guest-requests` + Guests stay-orders/family Ops + `apps/guest-app`; SMS/WA STUB; `KIND_DISABLED`; not SHIPPED; gate/sell/`hotel.yaml` unchanged |
 | S-31 | Guest phone harden + orch preview (waves A–J) | [~] | 2026-11-11 — Care/clinic, offline, alarm/bio, bell, folio/board, notify adapters, MRZ/EAS, store runbook, UAT template; HOT-GUEST-APP-01…10 + Ops send-to-phone; AC-HOT-GUEST-APP-HARDEN 🟡; evidence `reports/guest-app-uat-smoke.md` unsigned; not SHIPPED/SHOW; hotel.yaml untouched; readiness-matrix N/A |
 | S-32 | Guest phone product polish | [~] | 2026-11-11 — `apps/guest-app` screens/chrome/theme; trip-phase Today; auth/lists/i18n; HOT-GUEST-APP-01…10 SCREEN deepen; still AC 🟡; UAT unsigned; not SHIPPED/SHOW; hotel.yaml untouched |
+| S-33 | Guest phone exchange on the hotel image | [~] | 2026-11-13 — Nest tenancy import + public Location rewrite, image `dev-8ebca44`. Overlay chrome not in this image. HOT-GUEST-APP-01/09 stay API/SCREEN; AC 🟡; UAT unsigned; not SHIPPED/SHOW; hotel.yaml untouched; readiness-matrix N/A |
+| S-34 | Guest stay surface (laundry, tours, transfers) | [~] | 2026-11-13 — Today stay/board/folio/transfers; Trip laundry + tour seats on guest token. HOT-GUEST-APP-01/04/10 API/SCREEN; AC 🟡; not in image `dev-8ebca44`; not SHIPPED/SHOW; hotel.yaml untouched; readiness-matrix N/A |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 
@@ -73,3 +77,7 @@ Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 **2026-11-11 (harden A–J + second-pass):** HOT-GUEST-APP-01…10 deepen; Ops send-to-phone; AC-HOT-GUEST-APP-HARDEN 🟡; UAT template `reports/guest-app-uat-smoke.md` open; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A.
 
 **2026-11-11 (product polish):** `apps/guest-app` screen modules + trip-driven Today + product copy az/ru/en. HOT-GUEST-APP-01…10 stay API/SCREEN; AC-HOT-GUEST-APP* 🟡; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A.
+
+**2026-11-13 (hotel image exchange):** Nest imports tenancy from the kit root. The image front rewrites internal redirects to the public host (`dev-8ebca44`). Overlay chrome is not in this image. HOT-GUEST-APP-01/09 stay API/SCREEN; AC 🟡; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A.
+
+**2026-11-13 (guest stay surface):** Today shows stay, board, folio lines, and open transfers. Trip adds guest laundry and tour seats. HOT-GUEST-APP-01/04/10 stay API/SCREEN; AC 🟡; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A. Routes are not in image `dev-8ebca44`.

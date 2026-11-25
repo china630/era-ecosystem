@@ -28,7 +28,8 @@ alwaysApply: false
 
 | Leads | `app/api/leads/` | CRUD, stage, score, convert, assign, follow-up |
 
-| Lead detail | `app/leads/[id]/` | party card UI (v3.0) |
+| Lead detail | `app/leads/[id]/` | party card UI (v3.0); Selections + Warranty sections |
+| Selections / warranty (CRM-SEL / CRM-WAR) | `POST/PATCH /api/selection-packages/:id`, `POST /api/leads/:id/warranty-cases`, `PATCH /api/warranty-cases/:id` | nest `selections_warranty`; seed SelectionPackage on convert won; lead detail ModalShell add warranty / add selection item; CatalogField statuses; empty states |
 
 | Import | `app/api/leads/import/` | CSV/XLSX bulk (v3.0) |
 
@@ -36,7 +37,7 @@ alwaysApply: false
 
 | Visits | `app/api/visits/` | field visits |
 
-| Inbox | `app/api/inbox/` | communications inbox |
+| Inbox | `/api/conversations`, `/inbox` | Bidirectional chat (not legacy InboxThread stub) |
 
 | Users | `app/api/users/` | team |
 
@@ -48,10 +49,25 @@ alwaysApply: false
 
 | Admin import UI | `app/admin/import/` | SatAdmin upload (v3.0) |
 | Integration channels | `/admin/links`, `GET/PATCH /api/admin/links` | CP-CHANNELS-01 SatAdmin peer channels + money mode |
+| External integrations (CRM-INT-01) | `/admin/integrations`, `/api/integrations/*`, hooks `/api/integrations/hooks/:provider/:publicId` (+ `/*` subPath) | Vendor connectors; ADR `docs/adr/crm/01-integrations-architecture.md` + `06-vendor-public-api-reference.md` — not peer `/admin/links` |
+| Conversations / inbox | `/api/conversations`, `/inbox` | Bidirectional messages (CRM-INBOX-01); replaces InboxThread stub |
+| Calls | `/api/calls`, `POST /api/calls/originate`, `GET /api/realtime/calls` (SSE RINGING) | Telephony CRM-TEL-01; toast in CrmOpsShell |
+| Tasks / activity / reports | `/api/tasks`, home today/overdue, lead timeline, `/reports` (dwell + first response) | CRM-TASK-01 / CRM-ACT-01 / CRM-RPT-01 |
+| Pipelines admin (P0-5) | `/admin/pipelines`, `/api/pipelines*`, `PATCH …/stages/:id`, `POST /api/pipelines/templates/:vertical` | Configurable Pipeline + PipelineStage CRUD; board/detail use `stageId`; Digital Pipeline lite on stage enter |
+| Meta OAuth refresh (T-I12) | `POST /api/integrations/connections/:id/oauth/refresh` | Long-lived token re-exchange |
+| Unsorted inbound (CRM-UNSORT-01) | `/unsorted`, `/api/unsorted`, `/api/unsorted/:id/accept|link|reject` | Accept / Link / Reject; list excludes unsorted by default |
+| Convert side effects (P1-8) | `/admin/settings`, `GET/PATCH /api/admin/convert-settings` | `CrmOrgSettings.convertSideEffectsJson` drives convert |
+| Contact / Company (CRM-ENT-01) | `GET/POST /api/companies`, `GET/POST /api/contacts`, `/parties` | Nest `integrations-routes` + OpsUI; MDM/Finance remain legal SoR |
+| Lead merge (CRM-MERGE-01) | `POST /api/leads/merge` | Rebind Visit/Activity/Conversation/Call/Task; delete duplicate |
+| Custom fields / tags (CRM-CF-01) | `/admin/custom-fields`, `/api/custom-fields`, `/api/tags`, `PATCH /api/leads/:id/custom`, `GET/POST/DELETE /api/leads/:id/tags` | CustomFieldDef admin + lead values/tags |
+| Sales goals (CRM-KPI-01) | `GET/POST /api/sales-goals`, `GET /api/sales-goals/:id/fact` | Plan-fact lite |
+| Payment status E5 (CRM-PAY-01) | `GET/PATCH /api/leads/:id/payment`, lead card | Display only; PSP orch/Finance |
+| Bot lite (CRM-BOT-01) | PipelineRule `actionJson.autoReply` | MESSAGE_IN → outbox; no visual builder |
+| PWA (CRM-PWA-01) | `/manifest.webmanifest`, `/sw.js` | Field installable shell |
 
 | Access matrix (CRM-RBAC-01) | `app/api/admin/roles`, `admin/roles/[code]`, `admin/roles/[code]/permissions`, `api/internal/v1/workforce/roles`, `admin/users`, `auth/session/refresh-permissions`, `auth/logout`; page `/admin/access` | `Role` (`isSystem`, `cloneFromCode`, `permissionCatalogVersion`), `SatelliteAuditLog`; catalog `src/lib/auth/permissions.ts`; page map `page-route-permissions.ts`; API map `api-route-permissions.ts` |
 
-**RBAC Variant A (CRM-RBAC-01):** `getSatelliteSession()` also builds `permissions` from the role row and checks the stamped API path against `api-route-permissions.ts` (unlisted → 403). `/api/leads` and `/api/leads/[id]` assert `api:leads.read` / `api:leads.write` per method. Pages: middleware `authorizePage` + `page-route-permissions.ts`. A new staff route or page needs a catalog row in the same change. ADR crm-domain-permissions-and-rbac.
+**RBAC Variant A (CRM-RBAC-01):** `getSatelliteSession()` also builds `permissions` from the role row and checks the stamped API path against `api-route-permissions.ts` (unlisted → 403). `/api/leads` and `/api/leads/[id]` assert `api:leads.read` / `api:leads.write` per method. Pages: middleware `authorizePage` + `page-route-permissions.ts`. A new staff route or page needs a catalog row in the same change. ADR `docs/adr/crm/crm-domain-permissions-and-rbac.md`. CRM ADR index: `docs/adr/crm/README.md`.
 
 **Tenancy (CP-TENANT-01):** `organizationId` on tenant/ops models + kit Prisma extension + `requireSatelliteModule("industry_crm")` (AC-CRM-TENANT 🟡 — not live SHARED pool).
 

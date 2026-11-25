@@ -12,7 +12,7 @@
     "db:push": "prisma db push",
     "test": "jest --ci",
     "nest:generate": "node scripts/generate-nest.mjs",
-    "nest": "tsx nest/main.ts",
+    "nest": "tsx --tsconfig tsconfig.nest.json nest/main.ts",
     "front": "node scripts/construction-front.mjs"
   },
   "dependencies": {

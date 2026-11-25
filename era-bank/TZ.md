@@ -1,7 +1,7 @@
 # ERA Bank (satellite) — Technical Specification (TZ)
 
 **Scope:** `era-bank` — operational banking satellite (`industry_banking` gate); UI/workflow client of the headless engine `era-bank-core`.
-**Companion:** [PRD.md](./PRD.md) · engine [era-bank-core/TZ.md](../era-bank-core/TZ.md) · ADR [docs/adr/era-bank-core.md](../docs/adr/era-bank-core.md) D9.
+**Companion:** [PRD.md](./PRD.md) · engine [era-bank-core/TZ.md](../era-bank-core/TZ.md) · ADR [docs/adr/bank/era-bank-core.md](../docs/adr/bank/era-bank-core.md) D9.
 **Stack:** Next.js (web + `/api` route handlers) + Prisma + PostgreSQL; `next-intl` + `@era/i18n-common`; `@era/satellite-kit` (SSO, entitlement, UI shell). Consistent with other industry satellites.
 
 ---

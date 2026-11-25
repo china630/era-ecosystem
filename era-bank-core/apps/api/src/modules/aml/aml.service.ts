@@ -12,9 +12,22 @@ import {
 } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import { DataHubClient } from "../../integration/data-hub.client";
 import { assertAlertStatusTransition } from "./aml-workflow";
-import { scoreSanctionMatch } from "./aml-rules.engine";
+import {
+  computeCashFmnFilingDeadline,
+  scoreSanctionMatch,
+} from "./aml-rules.engine";
+import {
+  resolveFmnFormatter,
+  type FmnFilingQueueItem,
+  type FmnReportDocument,
+  type FmnSuspiciousTransaction,
+} from "./fmn-report-formatter";
+/** Lab-only static list — NOT official OFAC/EU/UN ingest (CAP-AML-FEED BLOCKED). */
 import sanctionsSeed from "./sanctions-seed.json";
+
+const SANCTIONS_LAB_LIST_VERSION = "sanctions-seed-v2-LAB-NOT-LIVE";
 
 const SCREEN_THRESHOLD = 80;
 
@@ -25,7 +38,20 @@ export class AmlService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
+    private readonly dataHub: DataHubClient,
   ) {}
+
+  /** T+N via DataHub working days; weekend fallback (same as monitoring). */
+  private async cashFilingDeadline(
+    from: Date,
+    filingBusinessDays = 3,
+  ): Promise<Date> {
+    try {
+      return await this.dataHub.addBusinessDays(from, filingBusinessDays);
+    } catch {
+      return computeCashFmnFilingDeadline(from, filingBusinessDays);
+    }
+  }
 
   listAlerts(filters?: {
     status?: AmlAlertStatus;
@@ -63,7 +89,12 @@ export class AmlService {
         })
       : null;
 
-    return { ...alert, transaction };
+    const filingDeadlineAt =
+      alert.ruleCode === "CASH_THRESHOLD"
+        ? await this.cashFilingDeadline(alert.createdAt, 3)
+        : undefined;
+
+    return { ...alert, transaction, filingDeadlineAt };
   }
 
   async patchAlert(
@@ -179,6 +210,7 @@ export class AmlService {
     amountMinor?: bigint;
     currency?: string;
     counterpartyRef?: string;
+    filingDeadlineAt?: Date;
   }) {
     return this.prisma.amlAlert.create({
       data: {
@@ -218,14 +250,17 @@ export class AmlService {
     });
 
     const institutionMfo = process.env.ERA_BANK_MFO ?? "200001";
-    const payload = {
-      schemaVersion: "FMN-TEST-1",
-      institutionMfo,
-      reportType: "SUSPICIOUS_TRANSACTION",
-      periodFrom: input.periodFrom.toISOString(),
-      periodTo: input.periodTo.toISOString(),
-      listVersion: "sanctions-seed-v1",
-      suspiciousTransactions: alerts.map((a) => ({
+    const formatter = resolveFmnFormatter();
+
+    const suspiciousTransactions: FmnSuspiciousTransaction[] = [];
+    for (const a of alerts) {
+      const filingDeadline =
+        a.ruleCode === "CASH_THRESHOLD"
+          ? (await this.cashFilingDeadline(a.createdAt, 3))
+              .toISOString()
+              .slice(0, 10)
+          : undefined;
+      suspiciousTransactions.push({
         alertId: a.id,
         ruleCode: a.ruleCode,
         transactionId: a.transactionId,
@@ -234,8 +269,34 @@ export class AmlService {
         currency: a.currency,
         narrative: a.narrative,
         screeningHitCount: a.screeningHits.length,
-      })),
-    };
+        filingDeadline,
+        txnObservedAt: a.createdAt.toISOString(),
+      });
+    }
+
+    const cashDeadlines = suspiciousTransactions
+      .map((tx) => tx.filingDeadline)
+      .filter((d): d is string => Boolean(d));
+    const filingQueue: FmnFilingQueueItem | undefined =
+      cashDeadlines.length > 0
+        ? {
+            status: "QUEUED",
+            filingDeadline: cashDeadlines.sort()[0],
+            businessDaysAfterTxn: 3,
+            alertIds: suspiciousTransactions
+              .filter((tx) => tx.ruleCode === "CASH_THRESHOLD")
+              .map((tx) => tx.alertId),
+          }
+        : undefined;
+
+    const payload = formatter.buildDocument({
+      institutionMfo,
+      periodFrom: input.periodFrom,
+      periodTo: input.periodTo,
+      listVersion: SANCTIONS_LAB_LIST_VERSION,
+      suspiciousTransactions,
+      filingQueue,
+    });
 
     return this.prisma.fmnReport.create({
       data: {
@@ -249,22 +310,61 @@ export class AmlService {
     });
   }
 
+  async listFmnFilingQueue() {
+    const alerts = await this.prisma.amlAlert.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        ruleCode: "CASH_THRESHOLD",
+        status: { in: [AmlAlertStatus.OPEN, AmlAlertStatus.UNDER_REVIEW, AmlAlertStatus.ESCALATED] },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const out: Array<{
+      alertId: string;
+      status: AmlAlertStatus;
+      transactionId: string | null;
+      amountMinor: string | null;
+      currency: string | null;
+      filingDeadline: string;
+      queueStatus: "QUEUED";
+    }> = [];
+    for (const a of alerts) {
+      out.push({
+        alertId: a.id,
+        status: a.status,
+        transactionId: a.transactionId,
+        amountMinor: a.amountMinor?.toString() ?? null,
+        currency: a.currency,
+        filingDeadline: (
+          await this.cashFilingDeadline(a.createdAt, 3)
+        ).toISOString(),
+        queueStatus: "QUEUED",
+      });
+    }
+    return out;
+  }
+
   async exportFmnReport(id: string, format: "json" | "xml") {
     const report = await this.prisma.fmnReport.findFirst({
       where: { id, bankOrgId: this.bankOrg.bankOrgId },
     });
     if (!report) throw new NotFoundException("FMN report not found");
 
+    const payload = report.payloadJson as Record<string, unknown>;
+    const formatter = resolveFmnFormatter(
+      typeof payload.schemaVersion === "string" ? payload.schemaVersion : undefined,
+    );
+    const document = payload as unknown as FmnReportDocument;
+
     if (format === "json") {
       return {
         contentType: "application/json",
-        body: JSON.stringify(report.payloadJson, null, 2),
+        body: formatter.formatJson(document),
       };
     }
 
-    const payload = report.payloadJson as Record<string, unknown>;
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<fmnReport>\n  <institutionMfo>${payload.institutionMfo ?? ""}</institutionMfo>\n  <reportType>${payload.reportType ?? ""}</reportType>\n  <periodFrom>${payload.periodFrom ?? ""}</periodFrom>\n  <periodTo>${payload.periodTo ?? ""}</periodTo>\n</fmnReport>`;
-    return { contentType: "application/xml", body: xml };
+    return { contentType: "application/xml", body: formatter.formatXml(document) };
   }
 
   listCases(status?: AmlCaseStatus) {

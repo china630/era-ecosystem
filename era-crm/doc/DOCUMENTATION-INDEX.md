@@ -9,5 +9,7 @@
 - Module roadmap: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../../docs/PRODUCT_VERSIONING.md)
 - DELIVERY: § Product modules (v1.0) · § Planned — v1.1 · § Planned — v3.0 (shipped)
 - Audit baseline: [V3-AUDIT.md](./V3-AUDIT.md)
-- **v3.0 (planned):** PRD [§9](../PRD.md#9-roadmap--v30-party-model-partners-import) · ADR [crm-lead-party-model-and-prospect-import](../../docs/adr/crm-lead-party-model-and-prospect-import.md) (§8 = Bitrix deferred backlog M17–M30)
+- **v3.0 (planned):** PRD [§9](../PRD.md#9-roadmap--v30-party-model-partners-import) · ADR [crm-lead-party-model-and-prospect-import](../../docs/adr/crm/crm-lead-party-model-and-prospect-import.md) (§8 = Bitrix deferred backlog M17–M30)
+- **CRM ADR tree:** [docs/adr/crm/README.md](../../docs/adr/crm/README.md) — positioning, integrations architecture, channel/telephony catalogs, implementation plan; RBAC ADR [crm-domain-permissions-and-rbac](../../docs/adr/crm/crm-domain-permissions-and-rbac.md)
+- **Integrations plan tracker:** [`.cursor/plans/crm-integrations-full.plan.md`](../../.cursor/plans/crm-integrations-full.plan.md)
 - Import source schema: [data/legal-entities/README.md](../../data/legal-entities/README.md)

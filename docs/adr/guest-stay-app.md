@@ -264,7 +264,7 @@ Orchestrator live phone preview binds to Guest app form state (no hotel Nest fro
 
 ## Product shell polish (post harden)
 
-`apps/guest-app` is split into `theme` / `ui` / `chrome` / `copy` / `screens/*` with a thin `App.tsx` wiring layer. Today is trip-phase driven (before / in_house / after) — no manual phase toggles and no scaffold placeholder rows. Auth (desk code, phone OTP, confirmation pack) is a single block when the trip is locked. Care / Trip / Bell / Hotel use list rows with offline cache stamps. Locale strings are product copy (az/ru/en). Status stays SCREEN / API 🟡 until device UAT is signed — not SHOW / not SHIPPED.
+`apps/guest-app` is split into `theme` / `ui` / `chrome` / `copy` / `screens/*` with a thin `App.tsx` wiring layer. Today is trip-phase driven (before / in_house / after) — no manual phase toggles and no scaffold placeholder rows. Auth (desk code, phone OTP, confirmation pack) is a single block when the trip is locked. Care / Trip / Bell / Hotel use list rows with offline cache stamps. Locale strings are product copy (az/ru/en). Language chips live on the Account overlay; guest override is stored on device and wins over the org brand default locale. Account and Bell are overlays: header shows Back, and the bottom TabBar stays mounted so the guest is never trapped. Desk-code exchange posts to hotel Nest with the build’s organization brand slot (one field on the phone). Nest `guest-app-routes` must import `runWithSatelliteTenant` from `@era/satellite-kit` — the `./tenancy` package export is the Prisma extension surface, not the ALS helper. Status stays SCREEN / API 🟡 until device UAT is signed — not SHOW / not SHIPPED.
 
 ## Consequences
 

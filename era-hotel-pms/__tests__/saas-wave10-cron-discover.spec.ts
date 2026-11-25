@@ -18,8 +18,8 @@ jest.mock("@/lib/services/auto-bar-engine.service", () => ({
 
 import { runCronForEachTenant } from "@era/satellite-kit";
 import { fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
-import { register } from "../nest/generated/cron_auto-bar";
-import { invokeNest } from "./nest-invoke";
+import { CronAutoBarController } from "../nest/native/controllers/cron_auto-bar";
+import { invokeMethod } from "./nest-invoke";
 
 describe("saas wave 10 hotel cron discover", () => {
   beforeEach(() => {
@@ -43,7 +43,8 @@ describe("saas wave 10 hotel cron discover", () => {
       },
     );
 
-    const res = await invokeNest(register, "post", "/api/cron/auto-bar", {
+    const controller = new CronAutoBarController();
+    const res = await invokeMethod(controller.post_0.bind(controller), {
       headers: { authorization: "Bearer test" },
     });
     const body = await res.json();
@@ -60,7 +61,8 @@ describe("saas wave 10 hotel cron discover", () => {
       status: 503,
       reason: "pool_registry_empty",
     });
-    const res = await invokeNest(register, "post", "/api/cron/auto-bar");
+    const controller = new CronAutoBarController();
+    const res = await invokeMethod(controller.post_0.bind(controller));
     expect(res.status).toBe(503);
     expect(await res.json()).toEqual({ error: "pool_registry_empty" });
   });

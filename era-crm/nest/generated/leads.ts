@@ -4,6 +4,11 @@ import { syncContactRef } from "@/lib/lead-party";
 import { createLead, listLeads } from "@/lib/leads.service";
 import { assertPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import {
+  applyOwnerListFilter,
+  leadScopeWhere,
+  resolveLeadScopeFromGrants,
+} from "@/lib/integrations/lead-scope";
 import { enterCrmStaff, crmNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithCrmTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
 
@@ -33,10 +38,24 @@ export function register(http: { get: Function; post: Function; put: Function; p
     const mine = searchParams.get("mine") === "true";
     const prospectType = searchParams.get("prospectType");
     const userId = session.sub;
+    const organizationId = session.organizationId;
 
-    const where: Record<string, unknown> = {};
-    if (mine && userId) where.ownerId = userId;
-    else if (ownerId) where.ownerId = ownerId;
+    const scope = resolveLeadScopeFromGrants({
+      permissions: session.permissions ?? [],
+      isOwner: session.isOwner === true,
+      queryScope: searchParams.get("scope"),
+    });
+    const scopeWhere = userId
+      ? await leadScopeWhere(organizationId, userId, scope)
+      : { organizationId };
+
+    const where = await applyOwnerListFilter({
+      scopeWhere,
+      scope,
+      sessionUserId: String(userId ?? ""),
+      mine,
+      queryOwnerId: ownerId,
+    });
     if (
       prospectType === "CUSTOMER" ||
       prospectType === "PARTNER" ||
@@ -44,10 +63,14 @@ export function register(http: { get: Function; post: Function; put: Function; p
     ) {
       where.prospectType = prospectType;
     }
+    // Unsorted queue has its own screen; keep pipeline list clean by default.
+    if (searchParams.get("includeUnsorted") !== "true") {
+      where.isUnsorted = false;
+    }
 
     const sort = searchParams.get("sort");
     const leads = await listLeads({
-      where: Object.keys(where).length ? where : undefined,
+      where,
       orderBy: sort === "score" ? { score: "desc" } : { updatedAt: "desc" },
     });
     const withScores = leads.map((l) => {
@@ -97,14 +120,31 @@ export function register(http: { get: Function; post: Function; put: Function; p
       return sendJson(httpRes, { error: "contactRef or contactPhone required" }, 400);
     }
 
+    // Bind new leads to default PipelineStage when present (P0-5 sibling of kanban).
+    const { prisma } = await import("@/lib/prisma");
+    const defaultPipe = await prisma.pipeline.findFirst({
+      where: { organizationId: session.organizationId, isDefault: true },
+      include: { stages: { orderBy: { sortOrder: "asc" } } },
+    });
+    const matchedStage =
+      defaultPipe?.stages.find((s) => s.legacyStage === stage) ??
+      defaultPipe?.stages[0] ??
+      null;
+
     const lead = await createLead({
+      organizationId: session.organizationId,
       title: body.title,
       contactRef,
       stage,
       channel,
       ...partyData,
+      pipelineId: defaultPipe?.id ?? null,
+      stageId: matchedStage?.id ?? null,
       stageHistory: {
-        create: { toStage: stage },
+        create: {
+          organizationId: session.organizationId,
+          toStage: stage,
+        },
       },
     });
     return sendJson(httpRes, lead, 201);

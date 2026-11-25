@@ -6,8 +6,12 @@ import type {
   BookingRow,
   Brand,
   FolioRow,
+  LaundryItemRow,
+  LaundryTicketRow,
   OrderRow,
   QueuedOrder,
+  TourBookingRow,
+  TourDepartureRow,
   TripPack,
 } from "../types";
 import { orderKindsFromBrand } from "../types";
@@ -42,6 +46,12 @@ export function TripScreen(props: {
   bookings: BookingRow[];
   board: BoardInfo | null;
   folio: FolioRow[];
+  laundryItems: LaundryItemRow[];
+  laundryTickets: LaundryTicketRow[];
+  onLaundryWash: (itemId: string) => void;
+  tours: TourDepartureRow[];
+  tourBookings: TourBookingRow[];
+  onBookTour: (departureId: string) => void;
   orderKind: string;
   setOrderKind: (v: string) => void;
   onOrderOnline: () => void;
@@ -140,6 +150,45 @@ export function TripScreen(props: {
             deskPhone={props.brand?.deskPhone}
             doctorPhone={props.brand?.doctorOnDutyPhone}
           />
+
+          <Card>
+            <SectionTitle>{copy.laundryTitle}</SectionTitle>
+            {props.laundryTickets.length === 0 ? <Muted>{copy.laundryEmpty}</Muted> : null}
+            {props.laundryTickets.map((ticket) => (
+              <ListRow
+                key={ticket.id}
+                title={ticket.lines.map((line) => line.name).join(", ") || ticket.id.slice(0, 8)}
+                meta={ticket.status}
+              />
+            ))}
+            {props.laundryItems.map((item) => (
+              <ListRow
+                key={item.id}
+                title={item.name}
+                subtitle={item.washPrice ? `${copy.laundryWash} ${item.washPrice}` : undefined}
+                meta={copy.laundryWash}
+                onPress={() => props.onLaundryWash(item.id)}
+              />
+            ))}
+          </Card>
+
+          <Card>
+            <SectionTitle>{copy.tourTitle}</SectionTitle>
+            {props.tours.length === 0 ? <Muted>{copy.tourEmpty}</Muted> : null}
+            {props.tours.map((tour) => (
+              <ListRow
+                key={tour.id}
+                title={tour.agenda || tour.date.slice(0, 10)}
+                subtitle={`${tour.date.slice(0, 10)} · ${tour.price ?? ""}`}
+                meta={copy.tourBook}
+                onPress={() => props.onBookTour(tour.id)}
+              />
+            ))}
+            <Text style={{ marginTop: 8, fontWeight: "600", color: INK }}>{copy.tourMine}</Text>
+            {props.tourBookings.map((row) => (
+              <ListRow key={row.id} title={row.agenda || row.date.slice(0, 10)} meta={row.status} />
+            ))}
+          </Card>
 
           <Card>
             <SectionTitle>{copy.orderTitle}</SectionTitle>

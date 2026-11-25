@@ -54,6 +54,7 @@ export function catalogModuleKeyToPatch(
   compliance_pro?: boolean;
   contract_management_pro?: boolean;
   gov_budget_pro?: boolean;
+  mgmt_budget_pro?: boolean;
   accounting_book_extra?: boolean;
   accountingBookExtraSlots?: number;
   extraSlugs?: Record<string, boolean>;
@@ -100,6 +101,8 @@ export function catalogModuleKeyToPatch(
       return { contract_management_pro: enabled };
     case "gov_budget_pro":
       return { gov_budget_pro: enabled };
+    case "mgmt_budget_pro":
+      return { mgmt_budget_pro: enabled };
     default:
       throw new BadRequestException({
         code: "UNKNOWN_MODULE",

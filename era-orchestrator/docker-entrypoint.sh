@@ -92,6 +92,9 @@ if [ "$1" = "start" ]; then
   else
     echo "[entrypoint] WARN: platform-web standalone missing — skip :${PLATFORM_WEB_PORT}" >&2
   fi
+  if [ -z "${TABLET_APPS_DIR:-}" ]; then
+    export TABLET_APPS_DIR="/app/apps/web/tablet-apps"
+  fi
   if [ -f apps/web/.next/standalone/apps/web/server.js ]; then
     export PORT="${WEB_PORT}"
     export HOSTNAME=0.0.0.0

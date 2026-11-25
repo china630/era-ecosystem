@@ -79,11 +79,14 @@ export class GovBudgetService {
       }
     }
 
+    const mode = dto.mode === "MANAGEMENT" ? "MANAGEMENT" : "GOV";
+
     return this.prisma.budgetYear.create({
       data: {
         organizationId,
         year: dto.year,
         version,
+        mode,
         lines: dto.lines?.length
           ? {
               create: dto.lines.map((line) => ({
@@ -191,6 +194,7 @@ export class GovBudgetService {
     amount: number | Decimal,
     referenceType: string,
     referenceId: string,
+    opts?: { hardGate?: boolean },
   ) {
     const line = await this.prisma.budgetLine.findFirst({
       where: { id: budgetLineId },
@@ -198,6 +202,19 @@ export class GovBudgetService {
     });
     if (!line || line.budgetYear.organizationId !== organizationId) {
       throw new NotFoundException("Budget line not found");
+    }
+    if (opts?.hardGate) {
+      const check = await this.checkLimit(organizationId, {
+        budgetLineId,
+        amount: Number(amount.toString()),
+      });
+      if (!check.allowed) {
+        throw new BadRequestException({
+          code: check.reason ?? "BUDGET_LIMIT_EXCEEDED",
+          message: "Budget line limit exceeded",
+          ...check,
+        });
+      }
     }
     const commitment = await this.prisma.budgetCommitment.create({
       data: {
@@ -208,6 +225,27 @@ export class GovBudgetService {
       },
     });
     return commitment;
+  }
+
+  /** Soft (or hard) reserve: contract / payment / construction act → budget line. */
+  async reserveCommitment(
+    organizationId: string,
+    dto: {
+      budgetLineId: string;
+      amount: number;
+      referenceType: string;
+      referenceId: string;
+      hardGate?: boolean;
+    },
+  ) {
+    return this.documentUsage(
+      organizationId,
+      dto.budgetLineId,
+      dto.amount,
+      dto.referenceType,
+      dto.referenceId,
+      { hardGate: dto.hardGate === true },
+    );
   }
 
   /**

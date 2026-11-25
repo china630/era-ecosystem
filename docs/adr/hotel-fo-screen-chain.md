@@ -12,7 +12,7 @@ Operators confused Room plan empty cells (free doors) with sellable inventory. E
 
 | # | Screen | Route | Question |
 |---|--------|-------|----------|
-| 1 | Room type availability | `/availability` | How many of each type can still be sold on these dates? (Occ includes unassigned stays) |
+| 1 | Room type availability | `/availability` | Balance vs physical fund (Avl may be negative into overbook). Sold = charged type; Phys = assigned door. Sell still allows type overbook. |
 | 2 | Reservation list | `/reports/reservations` | Which stays exist (arrivals / future), assign, check-in |
 | 3 | Room rack | `/` | Door status now (Clean/Dirty, in-house, today's arrival). Assigned stay without check-in is not an occupant. |
 | 4 | Room plan | `/room-plan` | Who occupies which door across dates (bars) |
@@ -25,8 +25,11 @@ Operators confused Room plan empty cells (free doors) with sellable inventory. E
 | Booking | ReservationGroup envelope |
 | RoomStay | Prisma Reservation (one sold room intent, roomCount=1) |
 | Assignment | roomId (+ share pool + shareBedIndex 1..maxBed at assign; Stay at check-in) |
-| Sellable (Avl) | quota minus **door** consumption. An assigned door counts as that door's physical type. The sold type counts only while that segment has no door. Exclusive stays on one door count once; share packs beds by gender — [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
-| Hotel night D | Occupied when the Asia/Baku civil arrival date is on or before D and the civil checkout date is after D. A `@db.Date` at UTC midnight does not occupy the previous night. Checkout morning is turnover, not Occ on D. Matrix cells, `GET /api/fo/sellable`, and create all use this window — card `available` = min matrix Avl over `[check-in, check-out)`. Civil `bakuDayBounds` is not a door-night. |
+| House inventory (Opera) | Assigned door → physical door type. No door → **charged** type only (slice tariff alone must not burn another type). Exclusive stays on one door count once; share packs beds by gender — [hotel-shared-twin-assignment.md](./hotel-shared-twin-assignment.md) |
+| Matrix Avl | `baseQuota −` house inventory (may be **negative** = into overbook). Stop-sell → 0. Does **not** add `overbookAllowance`. |
+| Sell / TYPE_CAP | Still `baseQuota + overbookAllowance` (and house cap). Card create uses sellable, not matrix Avl sign. |
+| Matrix Sold / Phys | Sold = charged-type stays; Phys = assigned doors of that type (upgrades visible when they diverge). |
+| Hotel night D | Occupied when the Asia/Baku civil arrival date is on or before D and the civil checkout date is after D. A `@db.Date` at UTC midnight does not occupy the previous night. Checkout morning is turnover, not Occ on D. Matrix inventory, `GET /api/fo/sellable`, and create share this window. Card `available` = min **sellable** (base+overbook, house cap) over `[check-in, check-out)` — not the matrix Avl sign (matrix Avl is base−inventory and may be negative). Civil `bakuDayBounds` is not a door-night. |
 | Free door | Physical room without overlapping assigned stay (share pool may be n/maxBed occupied) |
 | Share door | Up to maxBed independent RoomStays on one door, same gender (M or F only); checkbox on card, not guest count |
 
@@ -85,9 +88,14 @@ Bottom “Packages” sub-modal (folio package lines) is **not** where FO picks 
 
 Inventory/FO chain above does **not** include cash close. City Ledger transfer, deposit@checkout, refunds, NA polish: [hotel-city-ledger-and-fo-money.md](./hotel-city-ledger-and-fo-money.md) · coverage `HOT-CASH-*` / `HOT-CL-*` · backlog P5 `H-BL-40…48`.
 
+## Realized arrivals / departures (business day)
+
+List chips «arrived/departed today» and FO Status realized tabs attribute to the open **business day** stamped on `Stay` at check-in/out — not wall civil day of `actual*`. Giriş/Çıxış columns on those surfaces show the same stamps when present (else planned). Fact timestamps stay wall clock. Canon: [hotel-fo-business-day-checkin-out.md](./hotel-fo-business-day-checkin-out.md).
+
 ## References
 
 - hotel-booking-hierarchy.md
 - hotel-city-ledger-and-fo-money.md
+- hotel-fo-business-day-checkin-out.md
 - era-hotel-pms/doc/FRONT-OFFICE-ELECTRAWEB.md
 - docs/HOSPITALITY_FINANCE_BOUNDARY.md

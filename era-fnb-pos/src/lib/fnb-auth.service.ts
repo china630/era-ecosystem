@@ -8,9 +8,13 @@ import { prisma } from "@/lib/prisma";
 import { ensureSystemFnbRoles, resolveFnbEdition } from "@/lib/auth/ensure-system-fnb-roles";
 import type { FnbEdition } from "@/lib/auth/permissions";
 
-export async function authenticateFnbStaffLogin(request: Request) {
+export async function authenticateFnbStaffLogin(input: {
+  headers: { get(name: string): string | null };
+  body: unknown;
+}) {
   return authenticateIndustryStaffLogin({
-    request,
+    headers: input.headers,
+    body: input.body,
     prisma,
     isShared: satelliteRuntimeConfig().deploymentTopology === "SHARED",
   });

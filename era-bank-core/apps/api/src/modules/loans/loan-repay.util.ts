@@ -21,6 +21,7 @@ export type InstallmentPatch = {
 };
 
 export type AllocateRepaymentResult = {
+  penaltyTotal: bigint;
   principalTotal: bigint;
   interestTotal: bigint;
   remainingUnallocated: bigint;
@@ -32,22 +33,74 @@ const TERMINAL = new Set<string>([
   InstallmentStatus.WAIVED,
 ]);
 
+export type RepayWaterfallStep = "PENALTY" | "INTEREST" | "PRINCIPAL";
+
+export const DEFAULT_REPAY_WATERFALL: readonly RepayWaterfallStep[] = [
+  "PENALTY",
+  "INTEREST",
+  "PRINCIPAL",
+] as const;
+
+const WATERFALL_STEPS = new Set<string>(["PENALTY", "INTEREST", "PRINCIPAL"]);
+
+/** Read `repayWaterfall` string[] from ProductTemplate.paramsJson when present. */
+export function repayWaterfallFromParams(
+  paramsJson: unknown,
+): readonly RepayWaterfallStep[] {
+  if (!paramsJson || typeof paramsJson !== "object" || Array.isArray(paramsJson)) {
+    return DEFAULT_REPAY_WATERFALL;
+  }
+  const raw = (paramsJson as Record<string, unknown>).repayWaterfall;
+  if (!Array.isArray(raw) || raw.length === 0) return DEFAULT_REPAY_WATERFALL;
+  const steps = raw
+    .map((s) => String(s).toUpperCase())
+    .filter((s): s is RepayWaterfallStep => WATERFALL_STEPS.has(s));
+  return steps.length > 0 ? steps : DEFAULT_REPAY_WATERFALL;
+}
+
+export type AllocateRepaymentOptions = {
+  /** Loan-level accrued penalty — taken when waterfall includes PENALTY. */
+  accruedPenaltyMinor?: bigint;
+  /** Product-configurable order; default penalty → interest → principal. */
+  waterfall?: readonly RepayWaterfallStep[];
+};
+
 /**
- * Waterfall: unpaid installments by sequenceNo — interest remaining, then principal.
+ * Waterfall over accrued penalty then unpaid installments by sequenceNo.
+ * Default order: penalty → interest → principal (product params may override).
  */
 export function allocateRepayment(
   installments: RepayInstallmentInput[],
   amountMinor: bigint,
   asOf: Date = new Date(),
+  options: AllocateRepaymentOptions = {},
 ): AllocateRepaymentResult {
   let remaining = amountMinor < 0n ? 0n : amountMinor;
   const patches: InstallmentPatch[] = [];
   let principalTotal = 0n;
   let interestTotal = 0n;
+  let penaltyTotal = 0n;
+
+  const waterfall = options.waterfall?.length
+    ? options.waterfall
+    : DEFAULT_REPAY_WATERFALL;
+
+  const penaltyDue =
+    options.accruedPenaltyMinor != null && options.accruedPenaltyMinor > 0n
+      ? options.accruedPenaltyMinor
+      : 0n;
+  if (waterfall.includes("PENALTY") && penaltyDue > 0n && remaining > 0n) {
+    const take = remaining < penaltyDue ? remaining : penaltyDue;
+    penaltyTotal = take;
+    remaining -= take;
+  }
 
   const ordered = [...installments]
     .filter((i) => !TERMINAL.has(String(i.status)))
     .sort((a, b) => a.sequenceNo - b.sequenceNo);
+
+  const interestFirst =
+    waterfall.indexOf("INTEREST") <= waterfall.indexOf("PRINCIPAL");
 
   for (const inst of ordered) {
     if (remaining <= 0n) break;
@@ -64,17 +117,37 @@ export function allocateRepayment(
         ? inst.principalMinor - paidPrincipal
         : 0n;
 
-    if (interestDue > 0n && remaining > 0n) {
-      const take = remaining < interestDue ? remaining : interestDue;
-      paidInterest += take;
-      interestTotal += take;
-      remaining -= take;
-    }
-    if (principalDue > 0n && remaining > 0n) {
-      const take = remaining < principalDue ? remaining : principalDue;
-      paidPrincipal += take;
-      principalTotal += take;
-      remaining -= take;
+    const applyInterest = () => {
+      if (interestDue > 0n && remaining > 0n && waterfall.includes("INTEREST")) {
+        const take = remaining < interestDue ? remaining : interestDue;
+        paidInterest += take;
+        interestTotal += take;
+        remaining -= take;
+      }
+    };
+    const applyPrincipal = () => {
+      if (
+        principalDue > 0n &&
+        remaining > 0n &&
+        waterfall.includes("PRINCIPAL")
+      ) {
+        const dueLeft =
+          inst.principalMinor > paidPrincipal
+            ? inst.principalMinor - paidPrincipal
+            : 0n;
+        const take = remaining < dueLeft ? remaining : dueLeft;
+        paidPrincipal += take;
+        principalTotal += take;
+        remaining -= take;
+      }
+    };
+
+    if (interestFirst) {
+      applyInterest();
+      applyPrincipal();
+    } else {
+      applyPrincipal();
+      applyInterest();
     }
 
     const fullyPaid =
@@ -103,6 +176,7 @@ export function allocateRepayment(
   }
 
   return {
+    penaltyTotal,
     principalTotal,
     interestTotal,
     remainingUnallocated: remaining,

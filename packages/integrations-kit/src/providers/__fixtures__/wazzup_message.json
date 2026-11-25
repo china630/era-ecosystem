@@ -1,0 +1,12 @@
+{
+  "messages": [
+    {
+      "messageId": "wz-1",
+      "chatId": "994501112233",
+      "chatType": "whatsapp",
+      "text": "Hello from Wazzup fixture",
+      "contact": { "name": "Ada", "phone": "+994501112233" },
+      "dateTime": "2026-11-25T00:00:00.000Z"
+    }
+  ]
+}

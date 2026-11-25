@@ -1,7 +1,11 @@
 import {
   applyCatalogMutex,
+  CATALOG_PALETTE_AZN,
   isClinicFeatureEntitled,
   isPassThroughCatalogModuleKeyExtended,
+  PRICING_MODULE_SEED_DEFAULTS,
+  rewriteCatalogActiveModules,
+  rewriteConstructionActiveModules,
   workforceFeatureAllowed,
   workforceHeadcountRateAzn,
   workforceNavHref,
@@ -91,6 +95,38 @@ describe("pricing catalog freeze", () => {
     expect(keys).toEqual(["clinic_registry_emr"]);
     expect(isClinicFeatureEntitled(keys, "clinic_patients")).toBe(false);
     expect(isClinicFeatureEntitled(keys, "clinic_registry_emr")).toBe(true);
+  });
+
+  it("rewrites construction_boq_ks onto construction_boq without granting PayApp", () => {
+    expect(rewriteConstructionActiveModules(["construction_boq_ks", "industry_construction"]).sort()).toEqual(
+      ["construction_boq", "industry_construction"].sort(),
+    );
+    expect(rewriteCatalogActiveModules(["construction_boq_ks"])).toEqual(["construction_boq"]);
+    expect(rewriteCatalogActiveModules(["construction_boq_ks"])).not.toContain("contract_payapp_ks");
+  });
+
+  it("keeps construction / Finance / CRM seed prices on the 19/29/39/99 palette", () => {
+    const keys = [
+      "construction_boq",
+      "construction_estimate_hierarchy",
+      "construction_smeta_rate_engine",
+      "construction_schedule",
+      "construction_cde",
+      "construction_project_depth",
+      "construction_bim_lite",
+      "contract_payapp_ks",
+      "mgmt_budget_pro",
+      "procurement_tenders_pro",
+      "crm_selections",
+      "crm_warranty",
+    ];
+    const palette = new Set(CATALOG_PALETTE_AZN as readonly number[]);
+    for (const key of keys) {
+      const row = PRICING_MODULE_SEED_DEFAULTS.find((m) => m.key === key);
+      expect(row).toBeDefined();
+      expect(palette.has(row!.pricePerMonth)).toBe(true);
+    }
+    expect(PRICING_MODULE_SEED_DEFAULTS.some((m) => m.key === "construction_boq_ks")).toBe(false);
   });
 
   it("does not treat inpatient beds as sanatorium entitlement", () => {

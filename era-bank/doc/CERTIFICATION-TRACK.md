@@ -25,7 +25,7 @@ Do **not** narrate YC-E completion as product ga — Full CBS product-depth wave
 |-------|-----|----------------|
 | YC-E1 rails | `BANK_RAIL_MODE`, `BANK_RAIL_BASE_URL`, `BANK_RAIL_API_KEY` | `era-bank-core/apps/api/src/modules/payments/stub-rail.adapter.ts` |
 | YC-E2 cards | `BANK_CARDS_MODE`, `BANK_CARDS_BASE_URL`, `BANK_CARDS_API_KEY` | `era-bank-core/apps/api/src/modules/cards/gateway/mock-azericard.gateway.ts` |
-| YC-E3 ASAN | `BANK_ASAN_MODE`, `BANK_ASAN_BASE_URL`, `BANK_ASAN_API_KEY` | `era-bank-core/apps/api/src/integration/asan-sima-stub.adapter.ts` |
+| YC-E3 ASAN | `BANK_ASAN_MODE`, `BANK_ASAN_BASE_URL`, `BANK_ASAN_API_KEY` | `asan-sima.adapter.ts` — live `completeChallenge` **ConfigError** until partner callback (no fake success) |
 | YC-E4 AKB | `BANK_BUREAU_MODE`, `BANK_AKB_BASE_URL`, `BANK_AKB_API_KEY` | `era-bank-core/apps/api/src/modules/loans/bureau.adapter.ts` |
 | YC-E5 CBAR | `BANK_CBAR_MODE`, `BANK_CBAR_BASE_URL`, `BANK_CBAR_API_KEY` | `era-bank-core/apps/api/src/modules/regreporting/regreporting.service.ts` |
 | Mode helpers | — | `era-bank-core/apps/api/src/integration/live-mode.ts` |

@@ -18,10 +18,9 @@ export class SubscriptionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const moduleName = this.reflector.getAllAndOverride<string | undefined>(
-      REQUIRES_MODULE_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const moduleName = this.reflector.getAllAndOverride<
+      string | readonly string[] | undefined
+    >(REQUIRES_MODULE_KEY, [context.getHandler(), context.getClass()]);
     if (!moduleName) {
       return true;
     }
@@ -35,10 +34,24 @@ export class SubscriptionGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    await this.access.assertModuleAccess(orgId, moduleName, {
+    const opts = {
       userEmail: req.user?.email,
       isSuperAdmin: req.user?.isSuperAdmin,
-    });
-    return true;
+    };
+    const keys = Array.isArray(moduleName) ? moduleName : [moduleName];
+    if (keys.length === 1) {
+      await this.access.assertModuleAccess(orgId, keys[0]!, opts);
+      return true;
+    }
+    let lastErr: unknown;
+    for (const key of keys) {
+      try {
+        await this.access.assertModuleAccess(orgId, key, opts);
+        return true;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr;
   }
 }

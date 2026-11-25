@@ -18,6 +18,15 @@ dist/
 
 # Local scratch under tmp/ (never commit; ship never_commit already lists tmp/)
 tmp/
+# One-off probes (guest lookups, droplet SQL). Not product code.
+**/scripts/tmp-*
+# Local screenshot / APK dumps at repo root (ship rest bucket would otherwise add them)
+/tmp-*
+
+# Gradle output for RN modules that sit outside apps/*/android/.gitignore
+**/android/build/
+# Expo device cache (local APK and device ids)
+**/.expo/
 # Local dev credentials (never commit)
 tmp/era-local-credentials.md
 # Droplet → local DB pull dumps (may contain PII)
@@ -71,4 +80,12 @@ data/legal-entities/.token-seeds-*.json
 
 # WebOnly clinic cutover dumps (patient PII — never commit; keep under D:\ERA-BACKUP)
 data/nafta-webonly-dumps/
+
+
+# Kiosk APK binaries (served from data/tablet-apps on the droplet)
+data/tablet-apps/**/*.apk
+era-orchestrator/apps/web/tablet-apps/**/*.apk
+
+
+graphify-out/
 

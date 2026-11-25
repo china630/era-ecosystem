@@ -21,6 +21,9 @@ export declare function shouldWaiveEraFoundation(org: {
 export declare const CLINIC_COMMERCIAL_MODULE_KEYS: readonly ["clinic_registry_emr", "clinic_lab", "clinic_sanatorium", "clinic_nurse_roster", "clinic_inpatient", "clinic_telehealth", "clinic_insurance"];
 export declare const RETIRED_CLINIC_MODULE_KEYS: readonly ["clinic_shell", "clinic_schedule", "clinic_appointments", "clinic_service_catalog", "clinic_patients", "clinic_visit", "clinic_ehr", "clinic_reschedule", "clinic_lis_import", "clinic_portal", "clinic_notifications", "clinic_sanatorium_clinical"];
 export declare function rewriteClinicActiveModules(modules: readonly string[]): string[];
+export declare const RETIRED_CONSTRUCTION_MODULE_KEYS: readonly ["construction_boq_ks"];
+export declare function rewriteConstructionActiveModules(modules: readonly string[]): string[];
+export declare function rewriteCatalogActiveModules(modules: readonly string[]): string[];
 export declare const INDUSTRY_SUBMODULE_PREFIX_TO_GATE: Readonly<Record<string, string>>;
 export declare const PASS_THROUGH_CATALOG_KEYS: readonly ["nas", "fixed_assets", "consolidation_pro"];
 export type CapacityDriverDef = {

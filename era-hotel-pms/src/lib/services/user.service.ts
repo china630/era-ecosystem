@@ -157,7 +157,7 @@ export async function listUserLogins(opts: { q?: string; from?: string; to?: str
 
 export async function recordUserLogin(
   user: { id: string; organizationId: string; login: string },
-  request: Request,
+  request: { headers: { get(name: string): string | null } },
 ) {
   await runWithSatelliteTenant({ organizationId: user.organizationId }, async () => {
     try {

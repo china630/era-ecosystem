@@ -9,6 +9,12 @@
 
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.  
+**Closeout (2026-11-25 clinic Sync headers):** CP-CFG-01 stays API. AC-CP-CFG stays Scaffold ✅. Clinic image `dev-c32960d` accepts the Sync POST. Finance image still 400 on `placementFreeze`. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell **unchanged**. Rollup stays 🟡. `platform.yaml` untouched. `era-readiness-matrix` N/A. Not SHIPPED. Not a SHARED pool.
+
+**Closeout (2026-11-25 Nafta cadre rules ops seed):** staging IR + kadrlar-suallar → position regime/hours, dual-stavka siblings, unit managers (SPA→Baş həkim), shift types/cycles. CP-WF-ORG/JOB/POS stay **API**; AC-CP-WF-JOB 🟡. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell **unchanged**. `platform.yaml` untouched. `era-readiness-matrix` N/A (no DELIVERY % / consumer API level).
+
+**Closeout (2026-11-18 construction staff fan-out):** CP-WF-HIRE hire/Login & access includes `industry_construction`; fan-out `CONSTRUCTION_API_URL` → CN-STAFF-01. Gate ✅ / BE 🟡 / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. `platform.yaml` untouched. `era-readiness-matrix` N/A.
+
 **Closeout (2026-11-11):** guest app frame. AC-CP-GUEST-APP 🟡 out of BE rollup. CP-GUEST-APP-01 API/SCREEN. Gate ✅ / BE 🟡 / UI 🟡 / Demo ❌ / Pilot [ ] / Edition `mvp` / Sell unchanged. `platform.yaml` untouched. `READINESS_MATRIX` N/A. The line rollup stays the existing worst layer.
 
 **Closeout (2026-11-11 catalog):** AC-CP-GUEST-APP-CATALOG 🟡 out of BE rollup. CP-GUEST-APP-02 API/SCREEN. Gate/Sell/`platform.yaml` unchanged. `era-readiness-matrix` N/A.
@@ -16,6 +22,8 @@
 **Closeout (2026-11-11 guest app preview):** AC-CP-GUEST-APP-PREVIEW 🟡. CP-GUEST-APP-03 SCREEN. Gate ✅ / BE 🟡 / UI 🟡 / Demo ❌ / Pilot [ ] / Edition `mvp` / Sell unchanged. `platform.yaml` untouched.
 
 **Closeout (2026-11-11 guest phone product polish):** Hotel `apps/guest-app` shell deepen only. CP-GUEST-APP-01…03 stay API/SCREEN; AC-CP-GUEST-APP* stay 🟡. Gate/BE/UI/Demo/Pilot/Edition/Sell/`platform.yaml` unchanged.
+
+**Closeout (2026-11-12 guest phone chrome + exchange):** Hotel shell overlay escape; CP-GUEST-APP-01…03 stay API/SCREEN; AC-CP-GUEST-APP* stay 🟡. Gate/BE/UI/Demo/Pilot/Edition/Sell/`platform.yaml` unchanged.
 
 **Closeout (2026-11-11 catalog):** AC-CP-GUEST-APP-CATALOG 🟡. CP-GUEST-APP-02 API. Gate/BE/UI/Demo/Pilot/Edition/Sell unchanged. `platform.yaml` untouched.
 
@@ -144,7 +152,7 @@ Routes added 2026-08-17 (still 🟡 / not sell-ready): org catalog, referrals, l
 | SHARED SaaS pool (many orgs, one clinic/hotel DB) | **Not built** (schema-ready + kit filter + two-org UAT outline; pool ops open) — Nafta = DEDICATED/ONPREM; AC-CP-TOPO 🟡 **in BE rollup** (not Scaffold ✅); still not sellable |
 | Automated SHARED ⇄ DEDICATED ⇄ ONPREM | **API scaffold only** — PlacementBatch Wave 2 Start→CONFIGURE (recipe + agent lab/compose probe + process log) + SHARED↔ONPREM reject; **not sellable** live migrate |
 | Org UUID bind from Super-admin | **API** (CP-BIND-01 / AC-CP-BIND ✅ Scaffold BE) — Sync + kit boot; deny bad token 401; not Pilot / not sell |
-| Desired-state runtime config (SSO / PSA / event) | **API** (CP-CFG-01 / AC-CP-CFG ✅ Scaffold BE) via Sync → industry + Finance Nest; deny missing Bearer / short SSO; not Pilot |
+| Desired-state runtime config (SSO / PSA / event) | **API** (CP-CFG-01 / AC-CP-CFG ✅ Scaffold BE) via Sync → industry + Finance Nest; deny missing Bearer / short SSO; not Pilot. **2026-11-25:** clinic image accepts the Sync POST. Finance image still returns 400 on `placementFreeze`. A folklore event token still skips the minute pull |
 | Additive `organizationId` on satellite tenant rows | **API** (CP-TENANT-01) — clinic/hotel/fnb/retail roots + kit filter; UAT outline in clinic UAT-SMOKE (pending field); not a live SHARED pool |
 | Mix hotel DEDICATED + clinic SHARED | Allowed **sales shape** after endpoints+events; not Nafta default; not demoable as one DB |
 | Source license SKU | Commercial offer, not a topology — not in edition yaml yet |

@@ -56,17 +56,25 @@ export async function enrichHotelStaffSession(
   return { ...session, permissions, isOwner };
 }
 
-export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayload | null> {
+export async function getSatelliteSession(explicit?: {
+  cookies: { get(name: string): { value: string } | undefined };
+  headers: { get(name: string): string | null };
+}): Promise<SatelliteStaffSessionPayload | null> {
   let cookieStore: { get(name: string): { value: string } | undefined };
   let headerStore: { get(name: string): string | null };
-  try {
-    cookieStore = await cookies();
-    headerStore = await headers();
-  } catch {
-    const frame = nestHttpFrame();
-    if (!frame) return null;
-    cookieStore = frame.cookies;
-    headerStore = frame.headers;
+  if (explicit) {
+    cookieStore = explicit.cookies;
+    headerStore = explicit.headers;
+  } else {
+    try {
+      cookieStore = await cookies();
+      headerStore = await headers();
+    } catch {
+      const frame = nestHttpFrame();
+      if (!frame) return null;
+      cookieStore = frame.cookies;
+      headerStore = frame.headers;
+    }
   }
   const staff = await readSatelliteStaffSession({
     cookies: cookieStore,

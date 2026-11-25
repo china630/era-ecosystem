@@ -47,6 +47,7 @@ Check only rows that the change could have missed:
 - **i18n trio.** User-visible copy in `en` / `az` / `ru`. Key added in one file only, hardcoded string, or a key removed while still referenced.
 - **Call sites and types.** Stale arguments, a newly required field, a return shape callers still unwrap the old way, dead branch left by the edit.
 - **Empty and edge paths.** Null, empty list, void, inactive/retired catalog row, permission denied, partial save. The happy path already works; these are the misses.
+- **Draft vs reload.** An effect that clears a local draft (modal assign, unsaved form) must run on open, not when the load callback identity changes. A new `useCallback` dep must not wipe rows the user has not saved.
 - **Schema pair.** Prisma field without a migration, or a migration without the schema field. New column with no backfill where existing rows would be wrong.
 - **Docs that this change made false.** Module-map route, a sentence in the owning PRD/TZ/ADR. If sell/show or SHIPPED status changed and was not updated, name that gap; run `acceptance-closeout` only in **Fix** mode when that update is part of closing it.
 - **Tests that now lie.** An existing test still asserts the old behavior. Do not add a new suite as a drive-by.

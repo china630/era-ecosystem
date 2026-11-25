@@ -12,6 +12,10 @@
 
 **Closeout (2026-10-31):** CBAR ingest schedule and dashboard `fallback=previous` do not change this row. Scaffold BE stays **🟡** because AC-DH-POL has no negative spec. REG/FX/BANK/HS stay ✅. VOEN stays excluded (e-taxes BLOCKED). Hub process is still HEADLESS; the settings screen is orchestrator `/super-admin/reference` (SCREEN, UAT open). Do **not** claim GA; edition stays `mvp`.
 
+**Closeout (2026-11-20 construction materials second-pass):** no product surface change. AC-DH-MAT-CON 🟡 out of BE rollup. Gate ✅ · Scaffold BE 🟡 · UI n/a · Demo 🟡 · Pilot `[ ]` · edition `mvp` · Sell unchanged. No `ga`.
+
+**Closeout (2026-11-20 construction materials MVP):** DH-MAT-CON-01 HEADLESS registry + Platform Gateway + seed + kit client. AC-DH-MAT-CON 🟡 out of BE rollup. Gate ✅ · Scaffold BE 🟡 · UI n/a · Demo 🟡 · Pilot `[ ]` · edition `mvp` · Sell unchanged. No `ga`.
+
 ---
 
 ## Line summary (SSOT readiness)

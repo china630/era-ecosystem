@@ -23,6 +23,7 @@
 | AC-DH-BANK | `era-data-hub/apps/api/__tests__/dh-bank-negative.spec.ts` | UAT-SMOKE § Deny (curl) |
 | AC-DH-HS | `era-data-hub/apps/api/__tests__/dh-hs-negative.spec.ts` | UAT-SMOKE § Deny (curl) |
 | AC-DH-VOEN | — (External e-taxes BLOCKED) | not Scaffold ✅ — **excluded from BE rollup** (Wave 8; Hotel INT) |
+| AC-DH-MAT-CON | `dh-mat-con-negative.spec.ts` | UAT open → AC 🟡; **out of BE rollup**; not Scaffold ✅ |
 
 ## Green Scaffold BE Wave 8 (2026-08-18)
 

@@ -1,5 +1,6 @@
 import {
   SATELLITE_KEY_CLINIC,
+  SATELLITE_KEY_CONSTRUCTION,
   SATELLITE_KEY_FNB,
   SATELLITE_KEY_HOTEL,
   SATELLITE_KEY_RETAIL,
@@ -15,11 +16,12 @@ export const WORKFORCE_UI_SATELLITES = [
   { key: SATELLITE_KEY_HOTEL, i18n: "hotel" },
   { key: SATELLITE_KEY_FNB, i18n: "fnb" },
   { key: SATELLITE_KEY_RETAIL, i18n: "retail" },
+  { key: SATELLITE_KEY_CONSTRUCTION, i18n: "construction" },
 ] as const;
 
 /**
  * PIN satellites this org can staff. A missing snapshot yields nothing:
- * do not flash clinic/hotel/F&B/retail before `/v1/subscription/me` returns.
+ * do not flash clinic/hotel/F&B/retail/construction before `/v1/subscription/me` returns.
  * Saved templates for a hidden key stay in the database.
  */
 export function workforceSatellitesForModules(
@@ -71,6 +73,9 @@ export const SATELLITE_LOGIN_ORIGIN: Record<string, string> = {
   [SATELLITE_KEY_RETAIL]:
     process.env.NEXT_PUBLIC_SATELLITE_RETAIL_URL?.replace(/\/$/, "") ||
     "https://retail-pos.era-365.online",
+  [SATELLITE_KEY_CONSTRUCTION]:
+    process.env.NEXT_PUBLIC_SATELLITE_CONSTRUCTION_URL?.replace(/\/$/, "") ||
+    "https://construction.era-365.online",
 };
 
 export function satelliteLoginHref(

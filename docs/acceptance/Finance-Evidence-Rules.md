@@ -41,6 +41,12 @@ UAT source: [`era-finance-core/doc/UAT-SMOKE.md`](../../era-finance-core/doc/UAT
 | Scaffold BE Product-Readiness ✅ | In-scope AC rollup; UI 🟡 / Demo ❌ / Pilot unchanged |
 | Signoff | [`reports/finance-be-negative-signoff.md`](../../reports/finance-be-negative-signoff.md) |
 
+### AC residual evidence (out of W6 BE rollup)
+
+| AC | Proof | UAT |
+|----|-------|-----|
+| AC-FIN-BUDGET-COMM | `gov-budget-ledger.spec.ts` reserve soft/hard | UAT-SMOKE § FIN-BUDGET-COMM-01 — open → AC 🟡; not Scaffold ✅ |
+
 ### UAT-SMOKE deny steps (lab)
 
 See `era-finance-core/doc/UAT-SMOKE.md` § FIN-RBAC-01 (CP grant doors) and related surface sections. Wave 5 deny paths are SCREEN evidence only — not SHOW/Pilot.

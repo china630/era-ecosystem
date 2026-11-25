@@ -9,9 +9,13 @@ import { ensureSystemHotelRoles } from '@/lib/auth/ensure-system-hotel-roles';
 import { ROLE_CODES } from '@/lib/auth/permissions';
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 
-export async function authenticateStaffLogin(request: Request) {
+export async function authenticateStaffLogin(input: {
+  headers: { get(name: string): string | null };
+  body: unknown;
+}) {
   return authenticateIndustryStaffLogin({
-    request,
+    headers: input.headers,
+    body: input.body,
     prisma,
     isShared: satelliteRuntimeConfig().deploymentTopology === 'SHARED',
   });

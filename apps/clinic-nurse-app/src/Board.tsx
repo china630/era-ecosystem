@@ -56,9 +56,6 @@ function Card({
               ? `  ·  ${t.colRoom} ${order.clinicalEpisode.roomNumber.trim()}`
               : ""}
           </Text>
-          <Text style={styles.patient} numberOfLines={2}>
-            {order.patientRef.fullName}
-          </Text>
           <Text style={styles.procedure} numberOfLines={2}>
             {order.procedureName}
           </Text>
@@ -75,6 +72,9 @@ function Card({
           </Pressable>
         </View>
       </View>
+      <Text style={styles.patient} numberOfLines={2}>
+        {order.patientRef.fullName}
+      </Text>
       {order.status === "PENDING_PAY" ? (
         <Text style={styles.unpaid}>{t.unpaidBlock}</Text>
       ) : null}

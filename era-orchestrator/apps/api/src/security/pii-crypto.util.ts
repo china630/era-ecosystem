@@ -10,7 +10,18 @@ function resolveKey(primaryName: string, fallbackSecretName = "JWT_SECRET"): Buf
     if (asB64.length >= 32) return createHash("sha256").update(asB64).digest();
     return createHash("sha256").update(raw).digest();
   }
+  // Production: never fall back to JWT_SECRET or a hardcoded string (CRM integrations use
+  // packages/integrations-kit crypto with CRM_INTEGRATIONS_KEK — also fail-closed).
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      `${primaryName} is required in production; refusing JWT_SECRET / hardcoded fallback`,
+    );
+  }
   const fallback = process.env[fallbackSecretName] ?? "erafinance-dev-fallback";
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[pii-crypto] ${primaryName} missing; using non-prod fallback via ${fallbackSecretName}`,
+  );
   return createHash("sha256").update(`${primaryName}:${fallback}`).digest();
 }
 

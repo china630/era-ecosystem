@@ -14,7 +14,9 @@
     "logout": "Log out",
     "standingOrders": "SO",
     "pfm": "PFM",
-    "openApi": "API"
+    "openApi": "API",
+    "loans": "Loans",
+    "leasing": "Leasing"
   },
   "login": {
     "title": "Sign in",
@@ -129,5 +131,28 @@
     "totalBalance": "Total balance",
     "accounts": "Accounts",
     "spendCategories": "Spend categories"
+  },
+  "loans": {
+    "title": "My loans",
+    "apply": "Apply",
+    "empty": "No active loans",
+    "apr": "APR",
+    "prepay": "Prepay",
+    "prepayTitle": "Early repayment",
+    "amount": "Amount (AZN)",
+    "reduceTerm": "Reduce term",
+    "reduceInstallment": "Reduce installment",
+    "confirmPrepay": "Confirm"
+  },
+  "leasing": {
+    "title": "My leases",
+    "empty": "No lease contracts",
+    "months": "months",
+    "residual": "Residual",
+    "scheduleHonesty": "IFRS 16 schedule is lab-only (not certified). Buy-out quote remains ops channel.",
+    "viewSchedule": "View lab schedule",
+    "loadingSchedule": "Loading…",
+    "scheduleTitle": "Payment schedule (lab)",
+    "labNote": "Methodology: IFRS 16 lab — not certified"
   }
 }

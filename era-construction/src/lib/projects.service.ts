@@ -2,18 +2,19 @@ import { prisma } from "@/lib/prisma";
 
 export async function listProjects() {
   return prisma.project.findMany({
-    include: { progressActs: true },
+    where: { deletedAt: null },
+    include: { progressActs: { where: { deletedAt: null } } },
     orderBy: { createdAt: "desc" },
   });
 }
 
 export async function findProjectById(id: string) {
-  return prisma.project.findUnique({ where: { id } });
+  return prisma.project.findFirst({ where: { id, deletedAt: null } });
 }
 
 export async function findProjectByCode(code: string) {
-  return prisma.project.findUnique({
-    where: { code } as never,
+  return prisma.project.findFirst({
+    where: { code, deletedAt: null } as never,
   });
 }
 
@@ -86,12 +87,15 @@ export async function createOrUpdateProjectWithProgressAct(body: CreateProjectWi
 }
 
 export async function findProjectPlanVsActual(projectId: string) {
-  return prisma.project.findUnique({
-    where: { id: projectId },
+  return prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
     include: {
-      boqLines: true,
-      materialRequisitions: true,
-      progressActs: true,
+      boqLines: { where: { deletedAt: null } },
+      materialRequisitions: { where: { deletedAt: null } },
+      progressActs: {
+        where: { deletedAt: null },
+        include: { lines: { where: { deletedAt: null } } },
+      },
     },
   });
 }

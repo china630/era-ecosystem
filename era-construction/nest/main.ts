@@ -2,26 +2,22 @@ import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { Module } from "@nestjs/common";
 import express from "express";
-import {
-  createSatelliteApiController,
-  SatelliteMutationAuditInterceptor,
-} from "@era/satellite-kit/nest";
+import { SatelliteMutationAuditInterceptor } from "@era/satellite-kit/nest";
 import { prisma } from "@/lib/prisma";
-import { registerConstructionRoutes } from "./generated/register";
-import { registerKitRoutes } from "./kit-routes";
-
-const router = express.Router();
-registerConstructionRoutes(router);
-registerKitRoutes(router);
-const ConstructionApiController = createSatelliteApiController(router);
+import { loadConstructionAuditExemptCache } from "./native/controllers/audit-exempt.controller";
+import { ConstructionNativeModule } from "./native/construction-native.module";
+import { ConstructionExceptionFilter } from "./native/filters/construction-exception.filter";
+import { KitApiController } from "./kit-api.controller";
 
 @Module({
-  controllers: [ConstructionApiController],
+  imports: [ConstructionNativeModule],
+  controllers: [KitApiController],
 })
 class ConstructionNestModule {}
 
 async function main() {
   const app = await NestFactory.create(ConstructionNestModule, { logger: ["error", "warn"] });
+  app.useGlobalFilters(new ConstructionExceptionFilter());
   app.useGlobalInterceptors(
     new SatelliteMutationAuditInterceptor(async (row) => {
       await prisma.satelliteAuditLog.create({ data: row });
@@ -39,18 +35,27 @@ async function main() {
     "/api/internal",
     "/api/integration/staff-provision",
   ];
-  http.use((req: { originalUrl?: string; url?: string; headers: Record<string, unknown> }, res: { status: (code: number) => { json: (body: unknown) => void } }, next: () => void) => {
-    const pathname = String(req.originalUrl ?? req.url ?? "").split("?")[0];
-    if (!pathname.startsWith("/api")) return next();
-    if (publicApi.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return next();
-    const cookie = String(req.headers.cookie ?? "");
-    const bearer = String(req.headers.authorization ?? "");
-    if (!cookie && !bearer.startsWith("Bearer ")) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
-    next();
-  });
+  http.use(
+    (
+      req: { originalUrl?: string; url?: string; headers: Record<string, unknown> },
+      res: { status: (code: number) => { json: (body: unknown) => void } },
+      next: () => void,
+    ) => {
+      const pathname = String(req.originalUrl ?? req.url ?? "").split("?")[0];
+      if (!pathname.startsWith("/api")) return next();
+      if (publicApi.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+        return next();
+      }
+      const cookie = String(req.headers.cookie ?? "");
+      const bearer = String(req.headers.authorization ?? "");
+      if (!cookie && !bearer.startsWith("Bearer ")) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+      next();
+    },
+  );
+  await loadConstructionAuditExemptCache();
   const port = Number(process.env.NEST_PORT ?? process.env.CONSTRUCTION_NEST_PORT ?? 13206);
   await app.listen(port, "127.0.0.1");
   console.log(`construction nest http://127.0.0.1:${port}`);

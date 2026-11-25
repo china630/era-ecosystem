@@ -11,6 +11,8 @@ export const PERMISSIONS = {
   SCREEN_INBOX: "screen:inbox",
   SCREEN_VISITS: "screen:visits",
   SCREEN_ADMIN_ACCESS: "screen:admin.access",
+  SCREEN_ADMIN_INTEGRATIONS: "screen:admin.integrations",
+  SCREEN_REPORTS: "screen:reports",
 
   LEADS_READ: "api:leads.read",
   LEADS_WRITE: "api:leads.write",
@@ -18,8 +20,16 @@ export const PERMISSIONS = {
   LEADS_CONVERT: "api:leads.convert",
   LEADS_FOLLOW_UP: "api:leads.follow_up",
   LEADS_ASSIGN: "api:leads.assign",
+  LEADS_EXPORT: "api:leads.export",
   INBOX: "api:inbox",
   INBOX_READ: "api:inbox.read",
+  CONVERSATIONS_READ: "api:conversations.read",
+  CONVERSATIONS_WRITE: "api:conversations.write",
+  CALLS_READ: "api:calls.read",
+  CALLS_ORIGINATE: "api:calls.originate",
+  CALLS_RECORDINGS: "api:calls.recordings",
+  TASKS_READ: "api:tasks.read",
+  TASKS_WRITE: "api:tasks.write",
   VISITS: "api:visits",
   VISITS_READ: "api:visits.read",
   LOOKUPS: "api:lookups",
@@ -28,6 +38,7 @@ export const PERMISSIONS = {
 
   ADMIN_IMPORT: "admin:import",
   ADMIN_PIPELINE: "admin:pipeline",
+  ADMIN_INTEGRATIONS: "admin:integrations",
   ACCESS_MANAGE: "admin:access_manage",
 } as const;
 
@@ -75,7 +86,7 @@ export const ROLE_ALIASES: Record<string, RoleCode> = {
   REP: ROLE_CODES.FIELD_REP,
 };
 
-export const PERMISSION_CATALOG_VERSION = 2;
+export const PERMISSION_CATALOG_VERSION = 3;
 
 export const READ_OF_WRITE: Readonly<Record<string, Permission>> = {
   [PERMISSIONS.INBOX]: PERMISSIONS.INBOX_READ,
@@ -116,7 +127,9 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
       PERMISSIONS.SCREEN_LEADS_DETAIL,
       PERMISSIONS.SCREEN_INBOX,
       PERMISSIONS.SCREEN_VISITS,
+      PERMISSIONS.SCREEN_REPORTS,
       PERMISSIONS.SCREEN_ADMIN_ACCESS,
+      PERMISSIONS.SCREEN_ADMIN_INTEGRATIONS,
     ],
   },
   {
@@ -129,17 +142,38 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
       PERMISSIONS.LEADS_CONVERT,
       PERMISSIONS.LEADS_FOLLOW_UP,
       PERMISSIONS.LEADS_ASSIGN,
+      PERMISSIONS.LEADS_EXPORT,
     ],
   },
   {
     id: "field",
     labelKey: "groups.field",
-    permissions: [PERMISSIONS.INBOX, PERMISSIONS.INBOX_READ, PERMISSIONS.VISITS, PERMISSIONS.VISITS_READ, PERMISSIONS.LOOKUPS, PERMISSIONS.LOOKUPS_READ, PERMISSIONS.USERS_LIST],
+    permissions: [
+      PERMISSIONS.INBOX,
+      PERMISSIONS.INBOX_READ,
+      PERMISSIONS.CONVERSATIONS_READ,
+      PERMISSIONS.CONVERSATIONS_WRITE,
+      PERMISSIONS.CALLS_READ,
+      PERMISSIONS.CALLS_ORIGINATE,
+      PERMISSIONS.CALLS_RECORDINGS,
+      PERMISSIONS.TASKS_READ,
+      PERMISSIONS.TASKS_WRITE,
+      PERMISSIONS.VISITS,
+      PERMISSIONS.VISITS_READ,
+      PERMISSIONS.LOOKUPS,
+      PERMISSIONS.LOOKUPS_READ,
+      PERMISSIONS.USERS_LIST,
+    ],
   },
   {
     id: "admin",
     labelKey: "groups.admin",
-    permissions: [PERMISSIONS.ADMIN_IMPORT, PERMISSIONS.ADMIN_PIPELINE, PERMISSIONS.ACCESS_MANAGE],
+    permissions: [
+      PERMISSIONS.ADMIN_IMPORT,
+      PERMISSIONS.ADMIN_PIPELINE,
+      PERMISSIONS.ADMIN_INTEGRATIONS,
+      PERMISSIONS.ACCESS_MANAGE,
+    ],
   },
 ];
 
@@ -149,12 +183,19 @@ const AGENT_TEMPLATE: readonly Permission[] = [
   PERMISSIONS.SCREEN_LEADS_DETAIL,
   PERMISSIONS.SCREEN_INBOX,
   PERMISSIONS.SCREEN_VISITS,
+  PERMISSIONS.SCREEN_REPORTS,
   PERMISSIONS.LEADS_READ,
   PERMISSIONS.LEADS_WRITE,
   PERMISSIONS.LEADS_STAGE,
   PERMISSIONS.LEADS_CONVERT,
   PERMISSIONS.LEADS_FOLLOW_UP,
   PERMISSIONS.INBOX,
+  PERMISSIONS.CONVERSATIONS_READ,
+  PERMISSIONS.CONVERSATIONS_WRITE,
+  PERMISSIONS.CALLS_READ,
+  PERMISSIONS.CALLS_ORIGINATE,
+  PERMISSIONS.TASKS_READ,
+  PERMISSIONS.TASKS_WRITE,
   PERMISSIONS.VISITS,
   PERMISSIONS.LOOKUPS,
   PERMISSIONS.USERS_LIST,

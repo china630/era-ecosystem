@@ -68,7 +68,7 @@ managerChain(n) = apply lineManager n times
 - Talent / KPI / succession
 - Full N-edge people graph (solid + matrix only)
 - Finance payroll band sync in this wave
-- Nafta Excel load (full roster / absences / grades — separate; leadership flags from IR «Vəzifələr» may be applied as a one-shot ops patch)
+- Nafta Excel load (full roster / absences / grades — separate). Ops one-shots may seed **rules without claiming SHIPPED**: leadership from IR «Vəzifələr»; position `defaultWorkRegime` / `weeklyHours` + dual-stavka sibling seats + unit managers (SPA → Baş həkim) + shift types / `SIX_ONE_*` cycles from IR + `NAFTA-kadrlar-suallar` (`era-orchestrator/scripts/ops/apply-nafta-*-from-excel.mjs`). People stay on hire / cadre UI; vacation balance remains Finance SoR.
 
 ## Deferred debt (backlog)
 

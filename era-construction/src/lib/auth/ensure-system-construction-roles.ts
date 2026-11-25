@@ -86,10 +86,8 @@ export async function ensureSystemRoles(db: unknown, organizationId: string): Pr
     }
     if ((row.permissionCatalogVersion ?? 0) < PERMISSION_CATALOG_VERSION) {
       data.permissionCatalogVersion = PERMISSION_CATALOG_VERSION;
-      if (!data.permissionsJson) {
-        const current = parsePermissions(row.permissionsJson);
-        if (current.length > 0) data.permissionsJson = serializePermissions(expandEntityReads(current));
-      }
+      // System packages take the current template on catalog bump (Wave 1 scaffold keys).
+      data.permissionsJson = serializePermissions(ROLE_TEMPLATES[code]);
     }
     if (Object.keys(data).length > 0) {
       await roleDb.update({ where: { id: row.id }, data });

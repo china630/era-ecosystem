@@ -179,4 +179,39 @@ export class DboAccountsService {
       include: { installments: { orderBy: { sequenceNo: "asc" } } },
     });
   }
+
+  async getLoan(auth: CustomerJwtPayload, loanId: string) {
+    const loan = await this.prisma.loanContract.findFirst({
+      where: {
+        id: loanId,
+        bankOrgId: this.bankOrg.bankOrgId,
+        customerId: auth.sub,
+      },
+      include: { installments: { orderBy: { sequenceNo: "asc" } } },
+    });
+    if (!loan) return null;
+    return loan;
+  }
+
+  async listLeases(auth: CustomerJwtPayload) {
+    return this.prisma.leaseContract.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        customerId: auth.sub,
+      },
+      include: { asset: true },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  getLease(auth: CustomerJwtPayload, leaseId: string) {
+    return this.prisma.leaseContract.findFirst({
+      where: {
+        id: leaseId,
+        bankOrgId: this.bankOrg.bankOrgId,
+        customerId: auth.sub,
+      },
+      include: { asset: true },
+    });
+  }
 }

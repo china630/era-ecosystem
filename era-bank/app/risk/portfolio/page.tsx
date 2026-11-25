@@ -14,6 +14,7 @@ type Exposure = {
   daysPastDue?: number;
   isNpl?: boolean;
   akbScore?: number | null;
+  cbarPrudentialCategory?: string | null;
 };
 
 export default function RiskPortfolioPage() {
@@ -72,6 +73,14 @@ export default function RiskPortfolioPage() {
               key: "ifrs9Stage",
               header: t("colStage"),
               render: (row) => String(row.ifrs9Stage ?? 1),
+            },
+            {
+              key: "cbarPrudentialCategory",
+              header: t("colCbarCategory"),
+              render: (row) =>
+                row.cbarPrudentialCategory
+                  ? String(row.cbarPrudentialCategory)
+                  : "—",
             },
             {
               key: "daysPastDue",

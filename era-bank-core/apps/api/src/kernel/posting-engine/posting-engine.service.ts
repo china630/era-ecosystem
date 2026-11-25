@@ -13,7 +13,6 @@ import { AuditService } from "../audit/audit.service";
 import {
   assertBalancedLegs,
   mirrorLeg,
-  validateLegShape,
 } from "./posting-engine.validation";
 import {
   ApprovePostingRequest,
@@ -22,6 +21,12 @@ import {
   ReversePostingRequest,
 } from "./posting-engine.types";
 import { emitPostingCommitted } from "./posting-hooks.registry";
+import {
+  computeAvailableMinor,
+  lockAccountsForUpdate,
+  lockNostroAccountsForUpdate,
+  runSerializableMoneyTx,
+} from "./posting-money-tx";
 
 @Injectable()
 export class PostingEngineService {
@@ -34,83 +39,108 @@ export class PostingEngineService {
   async post(request: PostingRequest) {
     assertBalancedLegs(request.legs);
 
-    const existing = await this.prisma.journalTransaction.findUnique({
-      where: { idempotencyKey: request.idempotencyKey } as never,
-      include: { entries: true },
-    });
+    const existing = await this.findByIdempotencyKey(request.idempotencyKey);
     if (existing) return existing;
 
     const requiresApproval = CONTROLLED_TXN_TYPES.has(request.type) && !request.autoApprove;
     const initialStatus = requiresApproval ? TxnStatus.PENDING : TxnStatus.POSTED;
     const bookingDate = new Date();
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      if (!request.allowDuringEod) {
-        const eodLock = await tx.eodRun.findFirst({
-          where: { bankOrgId: this.bankOrg.bankOrgId, status: EodStatus.RUNNING },
-        });
-        if (eodLock) {
-          throw new HttpException(
-            "EOD is running — mutations blocked",
-            HttpStatus.LOCKED,
-          );
+    let result;
+    try {
+      result = await runSerializableMoneyTx(this.prisma, async (txRaw) => {
+        const tx = txRaw as typeof this.prisma;
+        if (!request.allowDuringEod) {
+          const eodLock = await tx.eodRun.findFirst({
+            where: { bankOrgId: this.bankOrg.bankOrgId, status: EodStatus.RUNNING },
+          });
+          if (eodLock) {
+            throw new HttpException(
+              "EOD is running — mutations blocked",
+              HttpStatus.LOCKED,
+            );
+          }
         }
-      }
 
-      for (const leg of request.legs) {
-        if (leg.accountId) {
-          await this.assertAccountCanDebit(tx, leg);
+        const accountIds = request.legs
+          .map((l) => l.accountId)
+          .filter((id): id is string => Boolean(id));
+        await lockAccountsForUpdate(tx as never, accountIds, this.bankOrg.bankOrgId);
+
+        const nostroIds = (request.nostroAdjustments ?? []).map(
+          (n) => n.nostroAccountId,
+        );
+        await lockNostroAccountsForUpdate(tx as never, nostroIds, this.bankOrg.bankOrgId);
+
+        for (const leg of request.legs) {
+          if (leg.accountId) {
+            await this.assertAccountCanDebit(tx, leg);
+          }
         }
-      }
 
-      const journalTxn = await tx.journalTransaction.create({
-        data: {
-          bankOrgId: this.bankOrg.bankOrgId,
-          reference: request.reference,
-          idempotencyKey: request.idempotencyKey,
-          valueDate: request.valueDate,
-          bookingDate,
-          branchId: request.branchId,
-          type: request.type,
-          status: initialStatus,
-          makerUserId: request.makerUserId,
-          entries: {
-            create: request.legs.map((leg) => ({
-              bankOrgId: this.bankOrg.bankOrgId,
-              accountId: leg.accountId,
-              glAccountId: leg.glAccountId,
-              branchId: leg.branchId,
-              debitMinor: leg.debitMinor,
-              creditMinor: leg.creditMinor,
-              currency: leg.currency,
-            })),
+        const journalTxn = await tx.journalTransaction.create({
+          data: {
+            bankOrgId: this.bankOrg.bankOrgId,
+            reference: request.reference,
+            idempotencyKey: request.idempotencyKey,
+            valueDate: request.valueDate,
+            bookingDate,
+            branchId: request.branchId,
+            type: request.type,
+            status: initialStatus,
+            makerUserId: request.makerUserId,
+            entries: {
+              create: request.legs.map((leg) => ({
+                bankOrgId: this.bankOrg.bankOrgId,
+                accountId: leg.accountId,
+                glAccountId: leg.glAccountId,
+                branchId: leg.branchId,
+                debitMinor: leg.debitMinor,
+                creditMinor: leg.creditMinor,
+                currency: leg.currency,
+              })),
+            },
           },
-        },
-        include: { entries: true },
-      });
+          include: { entries: true },
+        });
 
-      if (initialStatus === TxnStatus.POSTED) {
-        await this.applyBalanceUpdates(tx, request.legs);
+        if (initialStatus === TxnStatus.POSTED) {
+          await this.applyBalanceUpdates(tx, request.legs);
+          await this.applyNostroAdjustments(tx, request.nostroAdjustments ?? []);
+        }
+
+        if (request.sideEffectsInTx) {
+          await request.sideEffectsInTx(tx, { id: journalTxn.id });
+        }
+
+        await this.audit.appendInTx(tx, {
+          entity: "JournalTransaction",
+          entityId: journalTxn.id,
+          action: initialStatus === TxnStatus.POSTED ? "POSTED" : "PENDING",
+          afterJson: journalTxn,
+          actorUserId: request.makerUserId,
+        });
+
+        return journalTxn;
+      });
+    } catch (err) {
+      // Parallel posts with the same key: unique constraint race → return winner.
+      if (this.isUniqueViolation(err)) {
+        const raced = await this.findByIdempotencyKey(request.idempotencyKey);
+        if (raced) return raced;
       }
-
-      await this.audit.appendInTx(tx, {
-        entity: "JournalTransaction",
-        entityId: journalTxn.id,
-        action: initialStatus === TxnStatus.POSTED ? "POSTED" : "PENDING",
-        afterJson: journalTxn,
-        actorUserId: request.makerUserId,
-      });
-
-      return journalTxn;
-    });
+      throw err;
+    }
 
     if (result.status === TxnStatus.POSTED) {
       await emitPostingCommitted({
         transactionId: result.id,
         bankOrgId: this.bankOrg.bankOrgId,
         type: result.type,
+        reference: result.reference,
         entries: result.entries.map((e) => ({
           accountId: e.accountId,
+          glAccountId: e.glAccountId,
           debitMinor: e.debitMinor,
           creditMinor: e.creditMinor,
           currency: e.currency,
@@ -121,8 +151,25 @@ export class PostingEngineService {
     return result;
   }
 
+  private findByIdempotencyKey(idempotencyKey: string) {
+    return this.prisma.journalTransaction.findUnique({
+      where: { idempotencyKey } as never,
+      include: { entries: true },
+    });
+  }
+
+  private isUniqueViolation(err: unknown): boolean {
+    return (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code?: string }).code === "P2002"
+    );
+  }
+
   async approve(request: ApprovePostingRequest) {
-    const updated = await this.prisma.$transaction(async (tx) => {
+    const updated = await runSerializableMoneyTx(this.prisma, async (txRaw) => {
+      const tx = txRaw as typeof this.prisma;
       const journalTxn = await tx.journalTransaction.findFirst({
         where: { id: request.transactionId, bankOrgId: this.bankOrg.bankOrgId },
         include: { entries: true },
@@ -144,6 +191,10 @@ export class PostingEngineService {
         currency: e.currency,
       }));
       assertBalancedLegs(legs);
+      const accountIds = legs
+        .map((l) => l.accountId)
+        .filter((id): id is string => Boolean(id));
+      await lockAccountsForUpdate(tx as never, accountIds, this.bankOrg.bankOrgId);
       for (const leg of legs) {
         if (leg.accountId) await this.assertAccountCanDebit(tx, leg);
       }
@@ -175,8 +226,10 @@ export class PostingEngineService {
       transactionId: updated.id,
       bankOrgId: this.bankOrg.bankOrgId,
       type: updated.type,
+      reference: updated.reference,
       entries: updated.entries.map((e) => ({
         accountId: e.accountId,
+        glAccountId: e.glAccountId,
         debitMinor: e.debitMinor,
         creditMinor: e.creditMinor,
         currency: e.currency,
@@ -255,7 +308,11 @@ export class PostingEngineService {
       _sum: { amountMinor: true },
     });
     const held = holds._sum.amountMinor ?? 0n;
-    const available = account.ledgerBalanceMinor - held + account.overdraftLimitMinor;
+    const available = computeAvailableMinor({
+      ledgerBalanceMinor: account.ledgerBalanceMinor,
+      heldMinor: held,
+      overdraftLimitMinor: account.overdraftLimitMinor,
+    });
     if (leg.debitMinor > available) {
       throw new BadRequestException("Insufficient available balance");
     }
@@ -322,15 +379,61 @@ export class PostingEngineService {
     tx: any,
     legs: Array<{ accountId?: string; debitMinor: bigint; creditMinor: bigint }>,
   ) {
+    const deltas = new Map<string, bigint>();
     for (const leg of legs) {
       if (!leg.accountId) continue;
       const delta = leg.creditMinor - leg.debitMinor;
+      deltas.set(leg.accountId, (deltas.get(leg.accountId) ?? 0n) + delta);
+    }
+    for (const [accountId, delta] of deltas) {
+      const account = await tx.account.findFirst({
+        where: { id: accountId, bankOrgId: this.bankOrg.bankOrgId },
+      });
+      if (!account) {
+        throw new BadRequestException(`Account ${accountId} not found for balance update`);
+      }
+      const holds = await tx.accountHold.aggregate({
+        where: { accountId, status: "ACTIVE" },
+        _sum: { amountMinor: true },
+      });
+      const held = holds._sum.amountMinor ?? 0n;
+      const nextLedger = account.ledgerBalanceMinor + delta;
+      const nextAvailable = computeAvailableMinor({
+        ledgerBalanceMinor: nextLedger,
+        heldMinor: held,
+        overdraftLimitMinor: account.overdraftLimitMinor,
+      });
       await tx.account.update({
-        where: { id: leg.accountId },
+        where: { id: accountId },
         data: {
-          ledgerBalanceMinor: { increment: delta },
-          availableBalanceMinor: { increment: delta },
+          ledgerBalanceMinor: nextLedger,
+          availableBalanceMinor: nextAvailable,
         },
+      });
+    }
+  }
+
+  private async applyNostroAdjustments(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tx: any,
+    adjustments: Array<{ nostroAccountId: string; deltaMinor: bigint }>,
+  ) {
+    for (const adj of adjustments) {
+      if (adj.deltaMinor === 0n) continue;
+      const row = await tx.nostroVostroAccount.findFirst({
+        where: {
+          id: adj.nostroAccountId,
+          bankOrgId: this.bankOrg.bankOrgId,
+        },
+      });
+      if (!row) {
+        throw new BadRequestException(
+          `Nostro account ${adj.nostroAccountId} not found`,
+        );
+      }
+      await tx.nostroVostroAccount.update({
+        where: { id: adj.nostroAccountId },
+        data: { ledgerBalanceMinor: { increment: adj.deltaMinor } },
       });
     }
   }

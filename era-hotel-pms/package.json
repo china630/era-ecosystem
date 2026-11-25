@@ -5,8 +5,7 @@
   "description": "Standalone hotel PMS satellite — Nafta / ERA integration",
   "scripts": {
     "dev": "next dev -p 3201",
-    "nest:guests": "tsx nest/main.ts",
-    "nest:guests:generate": "node scripts/generate-guest-nest.mjs",
+    "nest:guests": "tsx --tsconfig tsconfig.nest.json nest/main.ts",
     "nest:guests:compare": "node scripts/compare-guest-nest.mjs",
     "build": "npm run verify:i18n && prisma generate && next build",
     "start": "next start -p 3201",

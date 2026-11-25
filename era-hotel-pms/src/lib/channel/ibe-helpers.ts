@@ -29,7 +29,7 @@ export class IbeUnavailableError extends Error {
 }
 
 /** Header-only — never query `?key=` (leaks into logs / Referer). */
-export function parseIbePublishableKey(req: Request): string | null {
+export function parseIbePublishableKey(req: { headers: { get(name: string): string | null } }): string | null {
   const auth = req.headers.get('authorization')?.trim();
   if (auth?.toLowerCase().startsWith('bearer ')) {
     return auth.slice(7).trim() || null;

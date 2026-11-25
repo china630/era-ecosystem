@@ -18,6 +18,7 @@ import {
   isHttpMutationMethod,
   isMutationAuditExemptPath,
 } from "../audit/mutation-audit-belt";
+import { orgAuditExemptPrefixes } from "../audit/audit-exempt-org-cache";
 import {
   recordSatelliteAudit,
   type SatelliteAuditWriter,
@@ -108,7 +109,7 @@ export class SatelliteMutationAuditInterceptor implements NestInterceptor {
     const res = http.getResponse<{ statusCode?: number }>();
     const method = (req.method ?? "").toUpperCase();
     const path = requestPath(req);
-    if (!isHttpMutationMethod(method) || isMutationAuditExemptPath(path, this.extraExemptPrefixes)) {
+    if (!isHttpMutationMethod(method)) {
       return next.handle();
     }
     return next.handle().pipe(
@@ -126,6 +127,12 @@ export class SatelliteMutationAuditInterceptor implements NestInterceptor {
   private async persist(req: Incoming, method: string, path: string, status: number) {
     const actor = await organizationAndUser(req);
     if (!actor.organizationId) return;
+    const orgList = orgAuditExemptPrefixes(actor.organizationId);
+    const extra = orgList ? [...orgList, ...this.extraExemptPrefixes] : this.extraExemptPrefixes;
+    const exempt = orgList
+      ? isMutationAuditExemptPath(path, extra, true)
+      : isMutationAuditExemptPath(path, extra);
+    if (exempt) return;
     const organizationId = actor.organizationId;
     await recordSatelliteAudit(
       async (row) => {

@@ -12,13 +12,25 @@ import {
   MinLength,
   ValidateNested,
 } from "class-validator";
-import { ContractType } from "@erafinance/database";
+import { ContractRole, ContractType } from "@erafinance/database";
 
 export class CreateContractLineDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  sortOrder?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -55,6 +67,11 @@ export class CreateContractDto {
   @ApiProperty({ enum: ContractType })
   @IsEnum(ContractType)
   type!: ContractType;
+
+  @ApiPropertyOptional({ enum: ContractRole, default: ContractRole.PRIME })
+  @IsOptional()
+  @IsEnum(ContractRole)
+  contractRole?: ContractRole;
 
   @ApiPropertyOptional({ default: "AZN" })
   @IsOptional()

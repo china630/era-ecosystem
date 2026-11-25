@@ -120,6 +120,15 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.BankInstitutionConfigScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  institutionType: 'institutionType',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.GlAccountScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
@@ -342,6 +351,9 @@ exports.Prisma.DepositContractScalarFieldEnum = {
   productTemplateId: 'productTemplateId',
   principalMinor: 'principalMinor',
   accruedInterestMinor: 'accruedInterestMinor',
+  taxAccruedMinor: 'taxAccruedMinor',
+  monthInterestAccruedMinor: 'monthInterestAccruedMinor',
+  interestAccrualMonth: 'interestAccrualMonth',
   rateAnnual: 'rateAnnual',
   dayCountConvention: 'dayCountConvention',
   rateType: 'rateType',
@@ -390,10 +402,77 @@ exports.Prisma.LoanContractScalarFieldEnum = {
   participationPct: 'participationPct',
   leadBankName: 'leadBankName',
   disbursedAt: 'disbursedAt',
+  accruedInterestMinor: 'accruedInterestMinor',
+  accruedPenaltyMinor: 'accruedPenaltyMinor',
+  lastAccrualDate: 'lastAccrualDate',
+  gracePrincipalMonths: 'gracePrincipalMonths',
+  graceInterestMonths: 'graceInterestMonths',
+  penaltyRateAnnual: 'penaltyRateAnnual',
+  repaymentFrequency: 'repaymentFrequency',
+  firstDueDate: 'firstDueDate',
+  aprPercent: 'aprPercent',
   makerUserId: 'makerUserId',
   pricingExceptionReason: 'pricingExceptionReason',
+  groupId: 'groupId',
+  liabilityType: 'liabilityType',
+  qualityFlagsJson: 'qualityFlagsJson',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CollateralItemScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  ownerId: 'ownerId',
+  type: 'type',
+  valuationMinor: 'valuationMinor',
+  haircutPct: 'haircutPct',
+  registry: 'registry',
+  encumbranceRef: 'encumbranceRef',
+  insuredUntil: 'insuredUntil',
+  currency: 'currency',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LoanCollateralLinkScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  loanId: 'loanId',
+  collateralItemId: 'collateralItemId',
+  sharePct: 'sharePct',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CreditDebtStatusQueueItemScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  loanId: 'loanId',
+  customerId: 'customerId',
+  previousStatus: 'previousStatus',
+  newStatus: 'newStatus',
+  changedAt: 'changedAt',
+  enqueuedAt: 'enqueuedAt',
+  submittedAt: 'submittedAt'
+};
+
+exports.Prisma.CreditRegistrySubmitJournalScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  batchId: 'batchId',
+  recordCount: 'recordCount',
+  valid: 'valid',
+  submittedLive: 'submittedLive',
+  provider: 'provider',
+  errorsJson: 'errorsJson',
+  responseJson: 'responseJson',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.LoanScheduleInstallmentScalarFieldEnum = {
@@ -409,6 +488,73 @@ exports.Prisma.LoanScheduleInstallmentScalarFieldEnum = {
   paidInterestMinor: 'paidInterestMinor',
   status: 'status',
   paidAt: 'paidAt'
+};
+
+exports.Prisma.LeaseAssetScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  description: 'description',
+  serialRef: 'serialRef',
+  catalogValueMinor: 'catalogValueMinor',
+  currency: 'currency',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LeaseContractScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  customerId: 'customerId',
+  assetId: 'assetId',
+  loanContractId: 'loanContractId',
+  advancePct: 'advancePct',
+  residualValueMinor: 'residualValueMinor',
+  termMonths: 'termMonths',
+  rateAnnual: 'rateAnnual',
+  netInvestmentMinor: 'netInvestmentMinor',
+  accruedFinanceIncomeMinor: 'accruedFinanceIncomeMinor',
+  lastFinanceAccrualDate: 'lastFinanceAccrualDate',
+  currency: 'currency',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BorrowerGroupScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  name: 'name',
+  officerId: 'officerId',
+  liabilityType: 'liabilityType',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CollectionSheetScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  groupId: 'groupId',
+  meetingDate: 'meetingDate',
+  status: 'status',
+  linesJson: 'linesJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.GroupMembershipScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  groupId: 'groupId',
+  customerId: 'customerId',
+  role: 'role',
+  joinedAt: 'joinedAt'
 };
 
 exports.Prisma.EclCalculationRunScalarFieldEnum = {
@@ -442,6 +588,51 @@ exports.Prisma.EclResultScalarFieldEnum = {
   pd: 'pd',
   lgd: 'lgd',
   collateralMinor: 'collateralMinor'
+};
+
+exports.Prisma.PrudentialRateTableScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  category: 'category',
+  dpdMin: 'dpdMin',
+  dpdMax: 'dpdMax',
+  provisionRate: 'provisionRate',
+  rateLabel: 'rateLabel',
+  active: 'active',
+  validFrom: 'validFrom',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PrudentialClassificationRunScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  asOfDate: 'asOfDate',
+  status: 'status',
+  totalOutstandingMinor: 'totalOutstandingMinor',
+  totalProvisionMinor: 'totalProvisionMinor',
+  provisionDeltaMinor: 'provisionDeltaMinor',
+  postingTxnId: 'postingTxnId',
+  makerUserId: 'makerUserId',
+  checkerUserId: 'checkerUserId',
+  note: 'note',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+};
+
+exports.Prisma.PrudentialClassificationResultScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  runId: 'runId',
+  loanId: 'loanId',
+  category: 'category',
+  dpd: 'dpd',
+  qualityFlags: 'qualityFlags',
+  rate: 'rate',
+  provisionMinor: 'provisionMinor'
 };
 
 exports.Prisma.RateIndexQuoteScalarFieldEnum = {
@@ -546,11 +737,23 @@ exports.Prisma.FmnReportScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.RegReportTemplateScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  institutionType: 'institutionType',
+  version: 'version',
+  validFrom: 'validFrom',
+  definitionJson: 'definitionJson',
+  outputFormat: 'outputFormat',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.RegReportRunScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
   bankOrgId: 'bankOrgId',
   templateCode: 'templateCode',
+  regReportTemplateId: 'regReportTemplateId',
   periodFrom: 'periodFrom',
   periodTo: 'periodTo',
   status: 'status',
@@ -1316,6 +1519,7 @@ exports.Prisma.OpenBankingConsentScalarFieldEnum = {
   scopes: 'scopes',
   status: 'status',
   expiresAt: 'expiresAt',
+  scaChallengeId: 'scaChallengeId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1561,6 +1765,33 @@ exports.Prisma.DmsDocumentMetaScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WebhookSubscriptionScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  url: 'url',
+  secretEnc: 'secretEnc',
+  eventsJson: 'eventsJson',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WebhookDeliveryOutboxScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  bankOrgId: 'bankOrgId',
+  subscriptionId: 'subscriptionId',
+  eventType: 'eventType',
+  payloadJson: 'payloadJson',
+  status: 'status',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1590,6 +1821,13 @@ exports.Prisma.JsonNullValueFilter = {
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
 };
+exports.InstitutionType = exports.$Enums.InstitutionType = {
+  BANK: 'BANK',
+  BOKT: 'BOKT',
+  LEASING_COMPANY: 'LEASING_COMPANY',
+  CREDIT_UNION: 'CREDIT_UNION'
+};
+
 exports.GlAccountType = exports.$Enums.GlAccountType = {
   ASSET: 'ASSET',
   LIABILITY: 'LIABILITY',
@@ -1746,6 +1984,18 @@ exports.LoanStatus = exports.$Enums.LoanStatus = {
   PENDING_PRICING_APPROVAL: 'PENDING_PRICING_APPROVAL'
 };
 
+exports.LoanRepaymentFrequency = exports.$Enums.LoanRepaymentFrequency = {
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY',
+  BULLET: 'BULLET'
+};
+
+exports.LoanLiabilityType = exports.$Enums.LoanLiabilityType = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  JLG: 'JLG',
+  SOLIDARITY: 'SOLIDARITY'
+};
+
 exports.InstallmentStatus = exports.$Enums.InstallmentStatus = {
   SCHEDULED: 'SCHEDULED',
   DUE: 'DUE',
@@ -1754,7 +2004,54 @@ exports.InstallmentStatus = exports.$Enums.InstallmentStatus = {
   WAIVED: 'WAIVED'
 };
 
+exports.LeaseAssetStatus = exports.$Enums.LeaseAssetStatus = {
+  AVAILABLE: 'AVAILABLE',
+  LEASED: 'LEASED',
+  RETIRED: 'RETIRED'
+};
+
+exports.LeaseContractStatus = exports.$Enums.LeaseContractStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  MATURED: 'MATURED',
+  CLOSED: 'CLOSED',
+  DEFAULTED: 'DEFAULTED'
+};
+
+exports.BorrowerGroupStatus = exports.$Enums.BorrowerGroupStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  CLOSED: 'CLOSED'
+};
+
+exports.CollectionSheetStatus = exports.$Enums.CollectionSheetStatus = {
+  OPEN: 'OPEN',
+  COLLECTED: 'COLLECTED',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.GroupMemberRole = exports.$Enums.GroupMemberRole = {
+  LEADER: 'LEADER',
+  MEMBER: 'MEMBER'
+};
+
 exports.EclRunStatus = exports.$Enums.EclRunStatus = {
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  PENDING_PROVISION_APPROVAL: 'PENDING_PROVISION_APPROVAL'
+};
+
+exports.PrudentialCategory = exports.$Enums.PrudentialCategory = {
+  QENAETBEXS: 'QENAETBEXS',
+  NEZARET: 'NEZARET',
+  ELAVE_RISK: 'ELAVE_RISK',
+  QEYRI_QENAETBEXS: 'QEYRI_QENAETBEXS',
+  TEHLUKELI: 'TEHLUKELI',
+  UMIDSIZ: 'UMIDSIZ'
+};
+
+exports.PrudentialRunStatus = exports.$Enums.PrudentialRunStatus = {
   RUNNING: 'RUNNING',
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
@@ -1778,6 +2075,12 @@ exports.FmnReportStatus = exports.$Enums.FmnReportStatus = {
   DRAFT: 'DRAFT',
   FILED: 'FILED',
   REJECTED: 'REJECTED'
+};
+
+exports.RegReportOutputFormat = exports.$Enums.RegReportOutputFormat = {
+  JSON: 'JSON',
+  CSV: 'CSV',
+  XML: 'XML'
 };
 
 exports.RegReportStatus = exports.$Enums.RegReportStatus = {
@@ -2146,7 +2449,15 @@ exports.DmsDocumentStatus = exports.$Enums.DmsDocumentStatus = {
   ARCHIVED: 'ARCHIVED'
 };
 
+exports.WebhookOutboxStatus = exports.$Enums.WebhookOutboxStatus = {
+  PENDING: 'PENDING',
+  DELIVERED: 'DELIVERED',
+  FAILED: 'FAILED',
+  DEAD: 'DEAD'
+};
+
 exports.Prisma.ModelName = {
+  BankInstitutionConfig: 'BankInstitutionConfig',
   GlAccount: 'GlAccount',
   SystemGlConfig: 'SystemGlConfig',
   Branch: 'Branch',
@@ -2164,9 +2475,21 @@ exports.Prisma.ModelName = {
   PaymentRailMessage: 'PaymentRailMessage',
   DepositContract: 'DepositContract',
   LoanContract: 'LoanContract',
+  CollateralItem: 'CollateralItem',
+  LoanCollateralLink: 'LoanCollateralLink',
+  CreditDebtStatusQueueItem: 'CreditDebtStatusQueueItem',
+  CreditRegistrySubmitJournal: 'CreditRegistrySubmitJournal',
   LoanScheduleInstallment: 'LoanScheduleInstallment',
+  LeaseAsset: 'LeaseAsset',
+  LeaseContract: 'LeaseContract',
+  BorrowerGroup: 'BorrowerGroup',
+  CollectionSheet: 'CollectionSheet',
+  GroupMembership: 'GroupMembership',
   EclCalculationRun: 'EclCalculationRun',
   EclResult: 'EclResult',
+  PrudentialRateTable: 'PrudentialRateTable',
+  PrudentialClassificationRun: 'PrudentialClassificationRun',
+  PrudentialClassificationResult: 'PrudentialClassificationResult',
   RateIndexQuote: 'RateIndexQuote',
   RwaSnapshot: 'RwaSnapshot',
   CapitalAdequacySnapshot: 'CapitalAdequacySnapshot',
@@ -2175,6 +2498,7 @@ exports.Prisma.ModelName = {
   AmlAlert: 'AmlAlert',
   AmlScreeningHit: 'AmlScreeningHit',
   FmnReport: 'FmnReport',
+  RegReportTemplate: 'RegReportTemplate',
   RegReportRun: 'RegReportRun',
   FatcaCrsClassification: 'FatcaCrsClassification',
   DboCustomerCredential: 'DboCustomerCredential',
@@ -2249,7 +2573,9 @@ exports.Prisma.ModelName = {
   AgencyLink: 'AgencyLink',
   MisReportJob: 'MisReportJob',
   BpmProcessStub: 'BpmProcessStub',
-  DmsDocumentMeta: 'DmsDocumentMeta'
+  DmsDocumentMeta: 'DmsDocumentMeta',
+  WebhookSubscription: 'WebhookSubscription',
+  WebhookDeliveryOutbox: 'WebhookDeliveryOutbox'
 };
 
 /**

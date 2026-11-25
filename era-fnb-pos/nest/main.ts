@@ -2,21 +2,15 @@ import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { Module } from "@nestjs/common";
 import express from "express";
-import {
-  createSatelliteApiController,
-  SatelliteMutationAuditInterceptor,
-} from "@era/satellite-kit/nest";
+import { SatelliteMutationAuditInterceptor } from "@era/satellite-kit/nest";
 import { prisma } from "@/lib/prisma";
-import { registerFnbRoutes } from "./generated/register";
-import { registerKitRoutes } from "./kit-routes";
+import { FnbNativeModule } from "./native/fnb-native.module";
+import { KitApiController } from "./kit-api.controller";
 
-const router = express.Router();
-registerFnbRoutes(router);
-registerKitRoutes(router);
-const FnbApiController = createSatelliteApiController(router);
+void KitApiController;
 
 @Module({
-  controllers: [FnbApiController],
+  imports: [FnbNativeModule],
 })
 class FnbNestModule {}
 

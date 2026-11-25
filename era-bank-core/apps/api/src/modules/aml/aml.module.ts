@@ -1,11 +1,12 @@
 import { Module } from "@nestjs/common";
 import { IntegrationModule } from "../../integration/integration.module";
+import { LedgerModule } from "../../kernel/ledger/ledger.module";
 import { AmlController } from "./aml.controller";
 import { AmlMonitoringService } from "./aml-monitoring.service";
 import { AmlService } from "./aml.service";
 
 @Module({
-  imports: [IntegrationModule],
+  imports: [IntegrationModule, LedgerModule],
   controllers: [AmlController],
   providers: [AmlService, AmlMonitoringService],
   exports: [AmlService],

@@ -1,12 +1,26 @@
 import { z } from "zod";
 import { LeadStage } from "@prisma/client";
-import { createPipelineRule, listPipelineRules } from "@/lib/pipeline-rules.service";
+import {
+  createPipelineRule,
+  listPipelineRules,
+  updatePipelineRule,
+} from "@/lib/pipeline-rules.service";
 import { enterCrmStaff, crmNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithCrmTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
 const bodySchema = z.object({
   name: z.string().min(1),
   triggerStage: z.nativeEnum(LeadStage).optional(),
   targetStage: z.nativeEnum(LeadStage),
+  triggerType: z.string().optional(),
+  configJson: z.record(z.unknown()).optional(),
+  actionJson: z.record(z.unknown()).optional(),
+  delayMinutes: z.number().int().nonnegative().optional(),
+});
+
+const patchSchema = z.object({
+  name: z.string().min(1).optional(),
+  actionJson: z.record(z.unknown()).optional(),
+  active: z.boolean().optional(),
 });
 
 export function register(http: { get: Function; post: Function; put: Function; patch: Function; delete: Function }) {
@@ -28,9 +42,33 @@ export function register(http: { get: Function; post: Function; put: Function; p
 
   
     if (!(session)) return sendJson(httpRes, { error: "Unauthorized" }, 401);
-    const rules = await listPipelineRules();
+    if (!session.organizationId) return sendJson(httpRes, { error: "Unauthorized" }, 401);
+    const rules = await listPipelineRules(session.organizationId);
     return sendJson(httpRes, { rules });
   
+        });
+      });
+      if (web instanceof Response) await sendWebResponse(httpRes, web);
+    } catch (err) {
+      await sendRouteError(httpRes, err);
+    }
+  });
+  http.patch("/api/pipeline/rules/:id", async (httpReq, httpRes) => {
+    if (!(await enterCrmStaff(httpReq, httpRes))) return;
+    try {
+      const session = await crmNestSession(httpReq);
+      const web = await runWithCrmTenant(session, async () => {
+        return runWithNestHttp(httpReq, async () => {
+      if (!(session)) return sendJson(httpRes, { error: "Unauthorized" }, 401);
+      if (!session.organizationId) return sendJson(httpRes, { error: "Unauthorized" }, 401);
+      const body = patchSchema.parse(httpReq.body ?? {});
+      const rule = await updatePipelineRule(
+        session.organizationId,
+        String(httpReq.params.id),
+        body,
+      );
+      if (!rule) return sendJson(httpRes, { error: "Not found" }, 404);
+      return sendJson(httpRes, rule);
         });
       });
       if (web instanceof Response) await sendWebResponse(httpRes, web);
@@ -56,8 +94,9 @@ export function register(http: { get: Function; post: Function; put: Function; p
 
   
     if (!(session)) return sendJson(httpRes, { error: "Unauthorized" }, 401);
+    if (!session.organizationId) return sendJson(httpRes, { error: "Unauthorized" }, 401);
     const body = bodySchema.parse(httpReq.body);
-    const rule = await createPipelineRule(body);
+    const rule = await createPipelineRule(session.organizationId, body);
     return sendJson(httpRes, rule, 201);
   
         });

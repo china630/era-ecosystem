@@ -7,6 +7,7 @@ import { RiskService } from "./risk.service";
 import { LiquidityRatioService } from "./liquidity-ratio.service";
 import { CapitalService } from "./capital.service";
 import { IrrbbService, OpRiskService } from "./risk-deep.service";
+import { PrudentialProvisioningService } from "./prudential-provisioning.service";
 
 @Module({
   imports: [LoansModule, PostingEngineModule, LedgerModule],
@@ -17,7 +18,13 @@ import { IrrbbService, OpRiskService } from "./risk-deep.service";
     CapitalService,
     IrrbbService,
     OpRiskService,
+    PrudentialProvisioningService,
   ],
-  exports: [RiskService, LiquidityRatioService, CapitalService],
+  exports: [
+    RiskService,
+    LiquidityRatioService,
+    CapitalService,
+    PrudentialProvisioningService,
+  ],
 })
 export class RiskModule {}

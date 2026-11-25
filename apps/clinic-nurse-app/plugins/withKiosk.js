@@ -1,4 +1,4 @@
-const { withAndroidManifest, withDangerousMod, AndroidConfig } = require("@expo/config-plugins");
+const { withAndroidManifest, withAppBuildGradle, withDangerousMod, AndroidConfig } = require("@expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
@@ -21,12 +21,33 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.util.Log
+import expo.modules.kiosk.KioskBootstrap
 
 class InstallResultReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
     val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-    Log.i("Kiosk", "APK install status=$status message=$message")
+    val apkPath = intent.getStringExtra(KioskBootstrap.EXTRA_APK_PATH)
+    val kind = intent.getStringExtra(KioskBootstrap.EXTRA_INSTALL_KIND)
+      ?: KioskBootstrap.INSTALL_KIND_NURSE
+    Log.i("Kiosk", "APK install status=$status kind=$kind message=$message apk=$apkPath")
+    try {
+      KioskBootstrap.deleteUpdateApk(context, apkPath)
+    } catch (err: Exception) {
+      Log.e("Kiosk", "deleteUpdateApk after install status failed", err)
+    }
+    if (kind == KioskBootstrap.INSTALL_KIND_COVER) {
+      KioskBootstrap.onCoverInstallFinished()
+      Log.i("Kiosk", "cover install finished status=$status — MainActivity not relaunched")
+      return
+    }
+    if (status == PackageInstaller.STATUS_SUCCESS) {
+      try {
+        KioskBootstrap.launchMain(context, "InstallResultReceiver.SUCCESS.nurse")
+      } catch (err: Exception) {
+        Log.e("Kiosk", "InstallResultReceiver relaunch failed", err)
+      }
+    }
   }
 }
 `;
@@ -38,14 +59,25 @@ function replacedReceiverKt() {
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
+import expo.modules.kiosk.KioskBootstrap
 
 class PackageReplacedReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     val action = intent.action
-    if (action != Intent.ACTION_MY_PACKAGE_REPLACED && action != Intent.ACTION_BOOT_COMPLETED) return
-    val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
-    launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-    context.startActivity(launch)
+    Log.i("Kiosk", "PackageReplacedReceiver action=$action")
+    if (action != Intent.ACTION_MY_PACKAGE_REPLACED && action != Intent.ACTION_BOOT_COMPLETED) {
+      return
+    }
+    try {
+      KioskBootstrap.setPausedByAdmin(context, false)
+      KioskBootstrap.scrubUpdateArtifacts(context)
+      KioskBootstrap.dismissCover(context)
+      KioskBootstrap.launchMain(context, "PackageReplacedReceiver.$action")
+    } catch (err: Exception) {
+      Log.e("Kiosk", "PackageReplacedReceiver relaunch failed action=$action", err)
+      throw err
+    }
   }
 }
 `;
@@ -74,12 +106,20 @@ function withKioskManifest(config) {
     ensurePermission(manifest, "android.permission.RECEIVE_BOOT_COMPLETED");
     ensurePermission(manifest, "android.permission.REQUEST_INSTALL_PACKAGES");
     ensurePermission(manifest, "android.permission.INTERNET");
+    ensurePermission(manifest, "android.permission.SCHEDULE_EXACT_ALARM");
+    ensurePermission(manifest, "android.permission.USE_EXACT_ALARM");
 
     const app = AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
+    app.$["android:resizeableActivity"] = "false";
+    app.$["android:supportsPictureInPicture"] = "false";
+    app.$["android:enableOnBackInvokedCallback"] = "false";
     const activity = app.activity?.find((item) => item.$["android:name"] === ".MainActivity");
     if (activity) {
       activity.$["android:lockTaskMode"] = "if_whitelisted";
       activity.$["android:launchMode"] = "singleTask";
+      activity.$["android:resizeableActivity"] = "false";
+      activity.$["android:supportsPictureInPicture"] = "false";
+      activity.$["android:enableOnBackInvokedCallback"] = "false";
       const filters = activity["intent-filter"] ?? [];
       const hasHome = filters.some((filter) =>
         (filter.category ?? []).some((category) => category.$["android:name"] === "android.intent.category.HOME"),
@@ -112,6 +152,7 @@ function withKioskManifest(config) {
         ],
       },
     });
+    // MY_PACKAGE_REPLACED must not declare <data> / scheme — otherwise the replace intent is dropped.
     addReceiver(".PackageReplacedReceiver", {
       attrs: {},
       body: {
@@ -125,7 +166,7 @@ function withKioskManifest(config) {
         ],
       },
     });
-    addReceiver(".InstallResultReceiver", { attrs: {}, body: {} });
+    addReceiver(".InstallResultReceiver", { attrs: { "android:exported": "true" }, body: {} });
     app.receiver = receivers;
     return config;
   });
@@ -149,6 +190,17 @@ function withKioskFiles(config) {
   ]);
 }
 
+function withApkName(config) {
+  return withAppBuildGradle(config, (config) => {
+    let text = config.modResults.contents.replace(/\n\s*archivesBaseName = "Clinic-Nurse"/, "");
+    if (!text.includes('archivesName = "Clinic-Nurse"')) {
+      text += '\nbase {\n    archivesName = "Clinic-Nurse"\n}\n';
+    }
+    config.modResults.contents = text;
+    return config;
+  });
+}
+
 module.exports = function withKiosk(config) {
-  return withKioskFiles(withKioskManifest(config));
+  return withApkName(withKioskFiles(withKioskManifest(config)));
 };

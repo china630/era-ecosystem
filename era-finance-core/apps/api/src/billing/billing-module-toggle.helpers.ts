@@ -53,6 +53,7 @@ export function catalogModuleKeyToPatch(
   compliance_pro?: boolean;
   contract_management_pro?: boolean;
   gov_budget_pro?: boolean;
+  mgmt_budget_pro?: boolean;
   accounting_book_extra?: boolean;
 } {
   if (moduleKey === PRICING_MODULE_CASH_BANK_PRO || isLegacyCashBankModuleKey(moduleKey)) {
@@ -81,6 +82,8 @@ export function catalogModuleKeyToPatch(
       return { contract_management_pro: enabled };
     case "gov_budget_pro":
       return { gov_budget_pro: enabled };
+    case "mgmt_budget_pro":
+      return { mgmt_budget_pro: enabled };
     case "accounting_book_extra":
       return { accounting_book_extra: enabled };
     default:

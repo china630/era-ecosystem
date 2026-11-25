@@ -1,9 +1,13 @@
 import { authenticateIndustryStaffLogin, satelliteRuntimeConfig } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 
-export async function authenticateElektrawebBridgeStaff(request: Request) {
+export async function authenticateElektrawebBridgeStaff(input: {
+  headers: { get(name: string): string | null };
+  body: unknown;
+}) {
   return authenticateIndustryStaffLogin({
-    request,
+    headers: input.headers,
+    body: input.body,
     prisma,
     isShared: satelliteRuntimeConfig().deploymentTopology === 'SHARED',
   });

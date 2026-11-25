@@ -46,6 +46,13 @@ export type Copy = {
   pinTitle: string;
   pinHint: string;
   pinWrong: string;
+  kioskPaused: string;
+  kioskResume: string;
+  adminDesktop: string;
+  adminSettings: string;
+  adminWifi: string;
+  startFailed: string;
+  retry: string;
   status: Record<string, string>;
 };
 
@@ -90,6 +97,13 @@ const az: Copy = {
   pinTitle: "Kilidi aç",
   pinHint: "Xidmət PIN",
   pinWrong: "PIN səhvdir",
+  kioskPaused: "Kiosk dayandırılıb. Parametrlərə keçmək olar.",
+  kioskResume: "Kioska qayıt",
+  adminDesktop: "İş masası",
+  adminSettings: "Parametrlər",
+  adminWifi: "Wi-Fi",
+  startFailed: "Başlanğıc xətası",
+  retry: "Yenidən cəhd",
   status: {
     SCHEDULED: "Planlaşdırılıb",
     CHECKED_IN: "Davam edir",
@@ -141,6 +155,13 @@ const ru: Copy = {
   pinTitle: "Снять киоск",
   pinHint: "Сервисный PIN",
   pinWrong: "Неверный PIN",
+  kioskPaused: "Киоск снят. Можно открыть настройки Android.",
+  kioskResume: "Вернуться в киоск",
+  adminDesktop: "Рабочий стол",
+  adminSettings: "Настройки",
+  adminWifi: "Wi-Fi",
+  startFailed: "Ошибка запуска",
+  retry: "Повторить",
   status: {
     SCHEDULED: "Запланировано",
     CHECKED_IN: "В процессе",
@@ -192,6 +213,13 @@ const en: Copy = {
   pinTitle: "Leave kiosk",
   pinHint: "Service PIN",
   pinWrong: "Wrong PIN",
+  kioskPaused: "Kiosk paused. You can open Android settings.",
+  kioskResume: "Return to kiosk",
+  adminDesktop: "Desktop",
+  adminSettings: "Settings",
+  adminWifi: "Wi-Fi",
+  startFailed: "Startup failed",
+  retry: "Retry",
   status: {
     SCHEDULED: "Scheduled",
     CHECKED_IN: "In progress",

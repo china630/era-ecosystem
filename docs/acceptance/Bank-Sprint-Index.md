@@ -6,6 +6,8 @@
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current **line** rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Pilot lab [x] · Pilot field [ ] · edition `mvp` · Sell: Full commercial CBS (FC/XO lab done; YC-E adapters; field ⏸) · ≠ ga / ≠ pilot_ready  
+**MFI meeting date (2026-11-26):** `/mfi` default is `todayBakuYmd`. SCREEN, not SHOW. AC-BNK-OPS stays Scaffold ✅. Gate / Pilot field / Sell / `bank.yaml` unchanged.  
+**Posting lock (2026-11-26):** `FOR UPDATE` filters `organization_id`. AC-BNK-CORE stays Scaffold ✅. Gate / Pilot field / Sell / `bank.yaml` unchanged.  
 **Module layers SSOT:** [`Bank-Product-Readiness-Matrix.md`](./Bank-Product-Readiness-Matrix.md) § Modules × layers.  
 **Scope boundary:** [`Bank-Capability-Inventory.md`](./Bank-Capability-Inventory.md)
 
@@ -32,6 +34,9 @@ Current **line** rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Pilot lab [
 | YC-F1–F4 hygiene | gate[x] | ✅ | [ ] | COVERAGE / MODULES / orch seed / i18n |
 | YC-E1–E7 cert | gate[ ] | ✅ | [ ] | ⏸ until sandbox creds — CERTIFICATION-TRACK |
 | UI-1…5 ops+DBO | gate[x] | ✅ | [x] lab | Cash/fees/SO; loans-deep/collections; trade; islamic/wealth/AML/3DS; TE+UAT line flip |
+| CBS-gap 2026-11 | gate[x] | 🟡 | [ ] | ADR pack + Inventory honesty; audit diamond + second-pass + **audit-v2 remediations** (concurrency test org lookup, ümidsiz WO, sanctions LAB label, CAP-DBO-OB→PARTIAL). SCREEN leasing/MFI/prudential — not SHOW. Sell unchanged (`mvp`, not ga / not `pilot_ready`). Rails/cards partner BLOCKED. See `BANK-AUDIT-2026-11-25-v2.md`. |
+| Wave 1 P0+P1-7/9/P2-6 | gate[x] | ✅ | [ ] | Code depth only (P2002, institution packs, CBAR loans/portfolio UI, working-day dues, reg/BOKT templates UI, AML T+3 DataHub, WHT registry, collateral stale/`/risk/collateral-items`, DBO schedule + leasing honesty). **No new Scaffold ✅ / no Pilot / sell uplift.** Edition `mvp`, `pilot_ready: false`. Partner rails/cards/XSD BLOCKED. |
+| Waves 2–4 lab | gate[x] | ✅ | [ ] | P1-1…P1-6 + P1-8 honesty + P2-2…P2-5 lab deepen (lease IFRS16, MFI sheets, ECL/CKR/OB SCA, webhook outbox, MIS/YAML/ADIF). **Audit-v3 remediations:** collectSheet atomic; lease day-guard; `mulRateRound`; ümidsiz human SoD; Nest DBO leasing BFF. **No new Scaffold ✅ / no Pilot / sell uplift.** Edition `mvp`, `pilot_ready: false`. Partner rails/cards/ASAN complete/XSD BLOCKED. See `BANK-AUDIT-2026-11-25-v3.md` §7. |
 
 ## Backlog
 

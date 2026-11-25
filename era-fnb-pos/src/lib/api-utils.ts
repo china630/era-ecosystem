@@ -21,77 +21,63 @@ export function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
-export function handleRouteError(err: unknown) {
+export type RouteErrorResult = { status: number; body: Record<string, unknown> };
+
+export function describeRouteError(err: unknown): RouteErrorResult {
   if (isSatelliteBillingBlockedError(err)) {
-    return NextResponse.json(
-      { error: err.message, code: err.code, billingStatus: err.billingStatus },
-      { status: err.status },
-    );
+    return {
+      status: err.status,
+      body: { error: err.message, code: err.code, billingStatus: err.billingStatus },
+    };
   }
   if (err instanceof ZodError) {
-    return jsonError(err.errors.map((e) => e.message).join("; "), 400);
+    return { status: 400, body: { error: err.errors.map((e) => e.message).join("; ") } };
   }
   if (err instanceof IndustryModuleInactiveError) {
-    return jsonError(err.message, 403);
+    return { status: 403, body: { error: err.message } };
   }
   if (err instanceof SatelliteChannelDisabledError) {
-    return NextResponse.json(
-      { error: err.message, code: err.code },
-      { status: 403 },
-    );
+    return { status: 403, body: { error: err.message, code: err.code } };
   }
   if (err instanceof FnbHotelModeError) {
-    return NextResponse.json(
-      { error: err.message, code: err.code },
-      { status: 403 },
-    );
+    return { status: 403, body: { error: err.message, code: err.code } };
   }
   if (err instanceof FnbSubmoduleInactiveError) {
-    return NextResponse.json(
-      { error: err.message, code: err.code, moduleKey: err.moduleKey },
-      { status: 403 },
-    );
+    return { status: 403, body: { error: err.message, code: err.code, moduleKey: err.moduleKey } };
   }
   if (err instanceof FnbQuotaError) {
-    return NextResponse.json(
-      { error: err.message, code: err.code },
-      { status: 429 },
-    );
+    return { status: 429, body: { error: err.message, code: err.code } };
   }
   if (err instanceof FnbSoldOutError) {
-    return NextResponse.json(
-      { error: err.message, code: err.code, plu: err.plu },
-      { status: 409 },
-    );
+    return { status: 409, body: { error: err.message, code: err.code, plu: err.plu } };
   }
   if (err instanceof FnbWaiterNoPayError) {
-    return NextResponse.json(
-      { error: err.message, code: err.code },
-      { status: 403 },
-    );
+    return { status: 403, body: { error: err.message, code: err.code } };
   }
   if (err instanceof ShiftRequiredError || err instanceof ShiftStaleError) {
-    return NextResponse.json(
-      { error: err.message, code: err.code },
-      { status: 409 },
-    );
+    return { status: 409, body: { error: err.message, code: err.code } };
   }
   if (err instanceof Error && err.name === "FiscalError") {
-    return jsonError(err.message, 400);
+    return { status: 400, body: { error: err.message } };
   }
   if (err instanceof Error) {
     if (err.message === "Unauthorized") {
-      return jsonError(err.message, 401);
+      return { status: 401, body: { error: err.message } };
     }
     if (err.message.startsWith("Forbidden")) {
-      return jsonError(err.message, 403);
+      return { status: 403, body: { error: err.message } };
     }
     const codeRaw = (err as unknown as { code?: unknown }).code;
     const code = typeof codeRaw === "string" ? codeRaw : "";
     if (code === "OUTLET_RETIRED" || code === "OUTLET_REQUIRED" || code === "OUTLET_NO_TILL") {
-      return NextResponse.json({ error: err.message, code }, { status: 400 });
+      return { status: 400, body: { error: err.message, code } };
     }
-    return jsonError(err.message, 500);
+    return { status: 500, body: { error: err.message } };
   }
-  return jsonError("Internal error", 500);
+  return { status: 500, body: { error: "Internal error" } };
+}
+
+export function handleRouteError(err: unknown) {
+  const described = describeRouteError(err);
+  return NextResponse.json(described.body, { status: described.status });
 }

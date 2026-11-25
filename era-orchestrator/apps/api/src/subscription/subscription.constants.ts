@@ -49,8 +49,12 @@ export const ModuleEntitlement = {
   COMPLIANCE_PRO: "compliance_pro",
   /** Commercial contract registry and limit gateway. */
   CONTRACT_MANAGEMENT_PRO: "contract_management_pro",
+  CONTRACT_PAYAPP_KS: "contract_payapp_ks",
+  PROCUREMENT_TENDERS_PRO: "procurement_tenders_pro",
   /** Annual budget plan and execution for B2G organizations. */
   GOV_BUDGET_PRO: "gov_budget_pro",
+  /** Commercial management budget (same engine, MANAGEMENT mode). */
+  MGMT_BUDGET_PRO: "mgmt_budget_pro",
   /** Industry Solutions verticals (beta; explicit tenant toggle). */
   INDUSTRY_RETAIL: "industry_retail",
   INDUSTRY_LOGISTICS: "industry_logistics",

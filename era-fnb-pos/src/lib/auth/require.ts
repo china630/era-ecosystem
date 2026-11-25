@@ -43,18 +43,10 @@ export function assertAnyPermission<S extends SatelliteSessionPayload | FnbPermi
 export function denyUnlessPermission(
   session: SatelliteSessionPayload | null,
   permission: Permission,
-): Response | null {
-  if (!session) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+): { status: number; body: unknown } | null {
+  if (!session) return { status: 401, body: { error: "Unauthorized" } };
   if (!sessionHasFnbPermission(toCheckSession(session), permission)) {
-    return new Response(JSON.stringify(roleForbiddenBody("Forbidden: insufficient permissions")), {
-      status: 403,
-      headers: { "Content-Type": "application/json" },
-    });
+    return { status: 403, body: roleForbiddenBody("Forbidden: insufficient permissions") };
   }
   return null;
 }
@@ -62,19 +54,11 @@ export function denyUnlessPermission(
 export function denyUnlessAnyPermission(
   session: SatelliteSessionPayload | null,
   permissions: Permission[],
-): Response | null {
-  if (!session) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+): { status: number; body: unknown } | null {
+  if (!session) return { status: 401, body: { error: "Unauthorized" } };
   const check = toCheckSession(session);
   if (!permissions.some((p) => sessionHasFnbPermission(check, p))) {
-    return new Response(JSON.stringify(roleForbiddenBody("Forbidden: insufficient permissions")), {
-      status: 403,
-      headers: { "Content-Type": "application/json" },
-    });
+    return { status: 403, body: roleForbiddenBody("Forbidden: insufficient permissions") };
   }
   return null;
 }

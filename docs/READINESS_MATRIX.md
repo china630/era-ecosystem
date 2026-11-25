@@ -10,7 +10,9 @@ Living snapshot of **code + DELIVERY** readiness (engineering API levels and che
 
 **R1 re-audit (2026-06-16):** Integration domains A–E **COMPLIANT**; automated strict audit **0 issues**. See [audit-snapshots/r1-delta-2026-06-16.md](./audit-snapshots/r1-delta-2026-06-16.md).
 
-Last updated: 2026-10-31 (Finance FIN-MIG-01 SHIPPED + DELIVERY `[x]`; sell/Pilot/`ga` unchanged — see Finance-Product-Readiness)
+Last updated: 2026-11-25 (CRM sales-agent harden: DELIVERY **31/34 = 91%** `[x]` · inbox honesty `[~]` only · **3 open** MSM/Collabo/P2 tail; no SHIPPED sell move — Crm-Product-Readiness)
+
+> **CRM integrations (2026-11-25):** Waves 0–I-4 foundation + P0–P2 SCREEN/API (E5 payment, bot-lite, PWA, clinic pipeline template; MSM/Collabo blocked). COVERAGE **API**/SCREEN (not SHIPPED). Events MESSAGE/CALL/LEAD_CAPTURED = **Declared**. Sell/Pilot/`ga` unchanged — [Crm-Product-Readiness-Matrix](./acceptance/Crm-Product-Readiness-Matrix.md).
 
 > **Finance migration machine (2026-10-31):** FIN-MIG-01 **SHIPPED** / UI **SHOW** (`/settings/migration`; trial000; AP opening Txn; PARTIAL advances; Evidence VAT; legacy **410**). DELIVERY `[x]`. Sell/Pilot/`ga` unchanged — [Finance-Product-Readiness-Matrix](./acceptance/Finance-Product-Readiness-Matrix.md) (AC-FIN-MIG Scaffold ✅ out of W6 BE rollup). Full §4 consumer % refresh not required.
 
@@ -167,8 +169,13 @@ Commercial API lives on **era-orchestrator**; Finance web proxies via `/cp/*` ([
 | `SATELLITE_RETAIL_SHIFT_CLOSED` | retail | `handleRetailShiftClosed` | Live |
 | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | logistics | `handleLogisticsTrip` | Live |
 | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` | construction | `handleConstructionAct` | Live |
+| `SATELLITE_CONSTRUCTION_ESTIMATE_PACKAGE_APPROVED` | construction | `handleConstructionEstimateApproved` → `seedSovFromEstimatePackage` | Live (SOV seed; no GL) |
+| `SATELLITE_CONSTRUCTION_CHANGE_REQUEST_APPROVED_OPS` | construction | `handleConstructionChangeRequest` | Live (amendment draft) |
 | `SATELLITE_CRM_LEAD_CONVERTED` | crm | `handleCrmLead` | Live |
 | `SATELLITE_CRM_VISIT_LOGGED` | crm | `handleCrmVisitLogged` | Live |
+| `SATELLITE_CRM_MESSAGE_RECEIVED` / `_SENT` | crm | — | Declared (contracts; no Finance consumer yet) |
+| `SATELLITE_CRM_CALL_STARTED` / `_ENDED` | crm | — | Declared |
+| `SATELLITE_CRM_LEAD_CAPTURED` | crm | — | Declared |
 | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | auto-sto | `handleAutoSto` | Live |
 | `SATELLITE_CLINIC_VISIT_COMPLETED` | clinic | `handleClinicVisit` | Live |
 | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | clinic | `handleClinicLabOrder` | Live |
@@ -233,7 +240,7 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 | era-construction | [DELIVERY-CONSTRUCTION.md](../era-construction/doc/DELIVERY-CONSTRUCTION.md) | 21 | 0 | 100% |
 | era-auto-service | [DELIVERY-AUTO.md](../era-auto-service/doc/DELIVERY-AUTO.md) | 22 | 0 | 100% |
 | era-wholesale | [DELIVERY-WHOLESALE.md](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 19 | 0 | 100% |
-| era-crm | [DELIVERY-CRM.md](../era-crm/doc/DELIVERY-CRM.md) | 36 | 0 | 100% |
+| era-crm | [DELIVERY-CRM.md](../era-crm/doc/DELIVERY-CRM.md) | 31 | 3 | 91% |
 | era-logistics | [DELIVERY-LOGISTICS.md](../era-logistics/doc/DELIVERY-LOGISTICS.md) | 30 | 0 | 100% |
 | era-bank | [DELIVERY-BANK.md](../era-bank/doc/DELIVERY-BANK.md) | 37 | 0 | 100% |
 | era-bank-core | [DELIVERY-BANK-CORE.md](../era-bank-core/doc/DELIVERY-BANK-CORE.md) | 38 | 0 | 100% |
@@ -242,7 +249,7 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 | era-finance-core | [DELIVERY-FINANCE.md](../era-finance-core/doc/DELIVERY-FINANCE.md) | 10 | 0 | 100% |
 | era-data-hub | [DELIVERY-DATA-HUB.md](../era-data-hub/doc/DELIVERY-DATA-HUB.md) | 48 | 0 | 100% |
 
-**Aggregate (15 DELIVERY files):** run `node scripts/delivery-readiness.mjs` for current totals. 868/877 (**99%**). Strict SHIPPED-only: `node scripts/readiness-strict-delivery.mjs` (F&B M15 Buffet Planner is `[~]` API — not strict SHIPPED).
+**Aggregate (15 DELIVERY files):** run `node scripts/delivery-readiness.mjs` for current totals. **870/883 (99%)** (2026-11-25). Strict SHIPPED-only: `node scripts/readiness-strict-delivery.mjs` (CRM: 32 `[x]` / 17 `[~]` / 3 open; F&B M15 Buffet Planner is `[~]` API — not strict SHIPPED).
 
 ### ElectraWeb FO product readiness (≠ DELIVERY %)
 

@@ -9,7 +9,9 @@ import { DataHubClient } from "../../integration/data-hub.client";
 import { TreasuryService } from "../../modules/treasury/treasury.service";
 import { DepositsService } from "../../modules/deposits/deposits.service";
 import { LoansService } from "../../modules/loans/loans.service";
+import { CreditRegistryService } from "../../modules/loans/credit-registry.service";
 import { RiskService } from "../../modules/risk/risk.service";
+import { PrudentialProvisioningService } from "../../modules/risk/prudential-provisioning.service";
 import { StandingOrdersService } from "../../modules/payments/standing-orders.service";
 import { CashService } from "../../modules/cash/cash.service";
 import { CollectionsService } from "../../modules/collections/collections.service";
@@ -27,7 +29,9 @@ export class EodService {
     private readonly treasury: TreasuryService,
     private readonly deposits: DepositsService,
     private readonly loans: LoansService,
+    private readonly creditRegistry: CreditRegistryService,
     private readonly risk: RiskService,
+    private readonly prudential: PrudentialProvisioningService,
     private readonly standingOrders: StandingOrdersService,
     private readonly cash: CashService,
     private readonly collections: CollectionsService,
@@ -99,15 +103,27 @@ export class EodService {
 
     const gapSnapshot = await this.treasury.liquidityGap(businessDate, 30, true);
 
-    const expiredHolds = await this.prisma.accountHold.updateMany({
+    // Expire card-auth holds, then recompute available per account (ADR D6 cache).
+    const expiredHoldRows = await this.prisma.accountHold.findMany({
       where: {
         bankOrgId: this.bankOrg.bankOrgId,
         status: "ACTIVE",
         reason: HoldReason.CARD_AUTH,
         expiresAt: { lt: new Date() },
       },
-      data: { status: "RELEASED" },
+      select: { id: true, accountId: true },
     });
+    const expiredHolds = { count: expiredHoldRows.length };
+    if (expiredHoldRows.length > 0) {
+      await this.prisma.accountHold.updateMany({
+        where: { id: { in: expiredHoldRows.map((h) => h.id) } },
+        data: { status: "RELEASED" },
+      });
+      const accountIds = [...new Set(expiredHoldRows.map((h) => h.accountId))];
+      for (const accountId of accountIds) {
+        await this.ledger.recomputeAvailable(accountId);
+      }
+    }
     const cardDay = bakuDayBounds(businessDate.toISOString().slice(0, 10));
     const cardSettlementCount = await this.prisma.cardTransaction.count({
       where: {
@@ -127,6 +143,14 @@ export class EodService {
 
     const depositInterestAccrual =
       await this.deposits.accrueDailyInterest(businessDate);
+    const loanScheduleAdvance =
+      await this.loans.advanceInstallmentStatuses(businessDate);
+    const loanInterestAccrual =
+      await this.loans.accrueDailyInterest(businessDate);
+    const loanPenaltyAccrual =
+      await this.loans.accruePenalties(businessDate);
+    const creditRegistryDebtAlerts =
+      await this.creditRegistry.runEodDebtStatusAlerts(businessDate);
 
     const standingOrders = await this.standingOrders.runDue(
       businessDate,
@@ -193,7 +217,11 @@ export class EodService {
             settledTxnCount: cardSettlementCount,
           },
           floatingRateReset: floatingResets,
+          loanScheduleAdvance,
           depositInterestAccrual,
+          loanInterestAccrual,
+          loanPenaltyAccrual,
+          creditRegistryDebtAlerts,
           standingOrders,
           sdbRent: { dueCount: sdbRent },
           collectionsAging,
@@ -248,7 +276,7 @@ export class EodService {
     return run;
   }
 
-  /** EOM: ECL calc (pending provision approval) + RWA/CAR snapshots. */
+  /** EOM: ECL calc (pending provision approval) + CBAR prudential + RWA/CAR snapshots. */
   async runEom(asOfDate: Date) {
     const ecl = await this.risk.runEcl({
       asOfDate,
@@ -256,15 +284,21 @@ export class EodService {
       methodology: "PD_LGD",
       makerUserId: "eom-system",
     });
+    const prudential = await this.prudential.runClassification({
+      asOfDate,
+      makerUserId: "eom-system",
+    });
     const capital = await this.risk.runCapital(asOfDate);
     return {
       asOfDate: asOfDate.toISOString().slice(0, 10),
       eclRunId: ecl.id,
       eclStatus: ecl.status,
+      prudentialRunId: prudential.id,
+      prudentialStatus: prudential.status,
       rwaId: capital.rwa.id,
       carId: capital.car.id,
       carRatio: capital.car.carRatio,
-      note: "EOM lab batch — ECL provision requires checker approve",
+      note: "EOM lab batch — ECL + CBAR prudential provisions require checker approve",
     };
   }
 }

@@ -1,0 +1,23 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "changes": [
+        {
+          "value": {
+            "contacts": [{ "wa_id": "994501112233", "profile": { "name": "Aygun" } }],
+            "messages": [
+              {
+                "from": "994501112233",
+                "id": "wamid.TEST",
+                "timestamp": "1700000000",
+                "type": "text",
+                "text": { "body": "Salam" }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -6,6 +6,8 @@ import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { createPortalLink, createPaymentLink, createShipment, createBookingAppointment, createPromotion, createCustomDomain } from "@/integration/control-plane-platform.client";
 import { buildConvertPartyPayload, validatePartyForStage } from "@/lib/lead-party";
 import { convertLeadWon, findLeadById } from "@/lib/leads.service";
+import { loadConvertSideEffects } from "@/lib/integrations/convert-settings";
+import { assertLeadInScope } from "@/lib/integrations/lead-scope";
 import { enterCrmStaff, crmNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithCrmTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
 const bodySchema = z.object({
@@ -36,6 +38,13 @@ export function register(http: { get: Function; post: Function; put: Function; p
     const { id } = httpReq.params;
     const body = bodySchema.parse((httpReq.body ?? {}));
 
+    await assertLeadInScope({
+      organizationId: session.organizationId,
+      userId: session.sub,
+      leadId: String(id),
+      permissions: session.permissions ?? [],
+      isOwner: session.isOwner === true,
+    });
     const lead = await findLeadById(id);
     if (!lead) return sendJson(httpRes, { error: "Lead not found" }, 404);
     if (lead.stage === "WON") return sendJson(httpRes, lead);
@@ -45,6 +54,7 @@ export function register(http: { get: Function; post: Function; put: Function; p
 
     const converted = await convertLeadWon(id, lead.stage, {
       counterpartyId: body.counterpartyId ?? lead.counterpartyId,
+      authorId: session.sub,
     });
 
     await dispatchSatelliteEvent({
@@ -61,13 +71,25 @@ export function register(http: { get: Function; post: Function; put: Function; p
       },
     });
 
+    void import("@/lib/integrations/clinic-lead-intent").then(
+      ({ publishClinicLeadAppointmentIntent }) =>
+        publishClinicLeadAppointmentIntent({
+          organizationId: session.organizationId,
+          leadId: converted.id,
+          pipelineId: converted.pipelineId,
+        }),
+    );
+
     const organizationId = requestOrganizationId();
     const amountNet = converted.estimatedAmount
       ? Number(converted.estimatedAmount)
       : 0;
+    const sideEffects = organizationId
+      ? await loadConvertSideEffects(organizationId)
+      : null;
     let payUrl: string | undefined;
-    if (organizationId) {
-      if (amountNet > 0) {
+    if (organizationId && sideEffects) {
+      if (sideEffects.createPaymentLink && amountNet > 0) {
         try {
           const link = (await createPaymentLink(
             {
@@ -83,15 +105,17 @@ export function register(http: { get: Function; post: Function; put: Function; p
           payUrl = undefined;
         }
       }
-      try {
-        await createPortalLink(
-          { entityType: "crm_lead", entityId: converted.id },
-          { organizationId },
-        );
-      } catch {
-        // optional portal
+      if (sideEffects.createPortalLink) {
+        try {
+          await createPortalLink(
+            { entityType: "crm_lead", entityId: converted.id },
+            { organizationId },
+          );
+        } catch {
+          // optional portal
+        }
       }
-      if (body.delivery === true) {
+      if (body.delivery === true && sideEffects.createShipment) {
         try {
           await createShipment(
             {
@@ -105,33 +129,38 @@ export function register(http: { get: Function; post: Function; put: Function; p
           // optional delivery
         }
       }
-      try {
-        await createBookingAppointment(
-          {
-            customerRef: converted.contactRef,
-            customerName: converted.title,
-            scheduledAt: new Date(Date.now() + 86400_000).toISOString(),
-            resourceKey: "crm-follow-up",
-            metadata: { leadId: converted.id },
-          },
-          { organizationId },
-        );
-      } catch {
-        // optional follow-up appointment
+      if (sideEffects.createBooking) {
+        try {
+          const offsetMs = Math.max(0, sideEffects.bookingOffsetDays) * 86400_000;
+          await createBookingAppointment(
+            {
+              customerRef: converted.contactRef,
+              customerName: converted.title,
+              scheduledAt: new Date(Date.now() + offsetMs).toISOString(),
+              resourceKey: "crm-follow-up",
+              metadata: { leadId: converted.id },
+            },
+            { organizationId },
+          );
+        } catch {
+          // optional follow-up appointment
+        }
       }
-      try {
-        await createPromotion(
-          {
-            code: `CRM-WON-${converted.id.slice(0, 8)}`,
-            name: "CRM lead promotion",
-            discountType: "PERCENT",
-            discountValue: 5,
-            metadata: { leadId: converted.id },
-          },
-          { organizationId },
-        );
-      } catch {
-        // optional loyalty
+      if (sideEffects.createPromotion) {
+        try {
+          await createPromotion(
+            {
+              code: `CRM-WON-${converted.id.slice(0, 8)}`,
+              name: "CRM lead promotion",
+              discountType: "PERCENT",
+              discountValue: sideEffects.promotionPercent,
+              metadata: { leadId: converted.id },
+            },
+            { organizationId },
+          );
+        } catch {
+          // optional loyalty
+        }
       }
       if (body.customHostname?.trim()) {
         try {
@@ -158,6 +187,29 @@ export function register(http: { get: Function; post: Function; put: Function; p
       body: `Lead converted: ${converted.title}${payUrl ? ` — ${payUrl}` : ""}`,
       payload: { channel: converted.channel, payUrl },
     });
+
+    // E5: persist payment-link status on lead (no PSP in CRM).
+    if (payUrl) {
+      try {
+        const { prisma } = await import("@/lib/prisma");
+        const prev = JSON.parse(converted.customJson || "{}") as Record<
+          string,
+          unknown
+        >;
+        const next = {
+          ...prev,
+          _paymentLink: payUrl,
+          _paymentStatus: "LINK_ISSUED",
+        };
+        await prisma.lead.update({
+          where: { id: converted.id },
+          data: { customJson: JSON.stringify(next) },
+        });
+        (converted as { customJson?: string }).customJson = JSON.stringify(next);
+      } catch {
+        /* non-fatal */
+      }
+    }
 
     return sendJson(httpRes, converted);
   

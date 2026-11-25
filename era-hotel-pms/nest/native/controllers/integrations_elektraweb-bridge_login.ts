@@ -1,0 +1,91 @@
+/** Lifted from era-hotel-pms/nest/generated/integrations_elektraweb-bridge_login.ts. Domain body unchanged. */
+import { Controller, Get, Post, Put, Patch, Delete, HttpCode, Req, Res } from "@nestjs/common";
+import type { Request, Response } from "express";
+import { signBridgeToken } from "@/lib/integration/elektraweb-bridge/auth";
+import { authenticateElektrawebBridgeStaff, loadActiveUserWithRole } from "@/lib/integration/elektraweb-bridge/login.service";
+import { enterBridgeTenant, getElektrawebBridgePolicy, isElektrawebBridgeEnabled, isPolicyInboundEnabled, requirePolicyHotelId } from "@/lib/integration/elektraweb-bridge/config";
+import { sessionMayUseBridge } from "@/lib/integration/elektraweb-bridge/grants";
+import { effectiveRolePermissions } from "@/lib/auth/permissions";
+import { enterHotelStaff, hotelNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithHotelTenant, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError } from "../../bridge";
+
+/**
+ * Extension login → bridge JWT bound to the chosen ERA hotel org + policy hotel id.
+ */
+
+
+@Controller()
+export class IntegrationsElektrawebBridgeLoginController {
+  @Post("api/integrations/elektraweb-bridge/login")
+  @HttpCode(200)
+  async post_0(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    try {
+      const web = await (async () => {
+        return runWithStaffTenantIfPresent(httpReq, async () => {
+
+  
+    if (!isElektrawebBridgeEnabled()) {
+      return sendJson(httpRes, { error: "Elektraweb bridge is disabled" }, 503);
+    }
+
+    const auth = await authenticateElektrawebBridgeStaff({ headers: { get: (name: string) => nestHeader(httpReq, name) }, body: httpReq.body });
+    if (!auth.ok) {
+      return sendJson(httpRes, { error: auth.error }, auth.status);
+    }
+    const user = await loadActiveUserWithRole(auth.user.id);
+    if (!user || user.status !== "ACTIVE") {
+      return sendJson(httpRes, { error: "Invalid credentials" }, 401);
+    }
+
+    const role = user.role.code;
+    const permissions = effectiveRolePermissions(
+      role,
+      user.role.permissionsJson,
+    );
+    if (
+      !sessionMayUseBridge({
+        login: user.login,
+        email: user.email ?? undefined,
+        role,
+        permissions,
+        isOwner: role === "BUSINESS_OWNER",
+      })
+    ) {
+      return sendJson(httpRes, { error: "Forbidden: missing api:integration.elektraweb_bridge" }, 403);
+    }
+
+    const organizationId = user.organizationId;
+    const policy = await getElektrawebBridgePolicy(organizationId);
+    if (!isPolicyInboundEnabled(policy) || !policy) {
+      return sendJson(httpRes, { error: "Elektraweb bridge inbound is off for this organization" }, 403);
+    }
+    const elektrawebHotelId = requirePolicyHotelId(policy);
+    enterBridgeTenant(organizationId);
+
+    const token = await signBridgeToken({
+      userId: user.id,
+      login: user.login,
+      role,
+      fullName: user.fullName,
+      organizationId,
+      elektrawebHotelId,
+    });
+
+    return sendJson(httpRes, {
+      token,
+      organizationId,
+      elektrawebHotelId,
+      user: {
+        login: user.login,
+        fullName: user.fullName,
+        role,
+      },
+      expiresInHours: 12,
+    });
+  
+        });
+      })();
+    } catch (err) {
+      await sendRouteError(httpRes, err);
+    }
+    }
+}

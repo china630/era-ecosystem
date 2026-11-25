@@ -13,9 +13,25 @@
 **Row rollup** = worst(Gate, Scaffold BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.  
 **Line rollup** = worst across **all** module rows in § Modules × layers.
 
+**Closeout (2026-11-26 MFI meeting date):** `/mfi` default date is the Baku calendar day. Leasing / MFI stays **SCREEN** 🟡 (not SHOW). Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot lab [x] / Pilot field [ ] / Edition `mvp` / Sell unchanged. Rollup unchanged. `bank.yaml` `pilot_ready: false` untouched. `era-readiness-matrix` N/A.
+
+**Closeout (2026-11-26 posting lock org filter):** Account and nostro `FOR UPDATE` filters `organization_id`. No screen change. AC-BNK-CORE stays Scaffold ✅. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot lab [x] / Pilot field [ ] / Edition `mvp` / Sell unchanged. Rollup unchanged. `bank.yaml` `pilot_ready: false` untouched. `era-readiness-matrix` N/A. Not a full commercial CBS claim.
+
 **Closeout (2026-11-10 access denied):** A missing screen grant opens `/access-denied`. AC-BNK-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
 
 **Closeout (2026-11-10 entity grid):** `/admin/access` is an entity × View / Change / Operate / Admin grid. No new permission keys. AC-BNK-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
+
+**Closeout (2026-11-25 CBS-gap + audit diamond):** Engine depth + Inventory honesty + money/stub/ADR fixes + EOD hold recompute. UI: leasing/MFI/prudential/DBO prepay → **SCREEN** (UAT open → not SHOW). **Gate / Scaffold BE rollup / Demo / Pilot lab / Pilot field / Sell unchanged** — still `mvp`, `pilot_ready: false`, ≠ ga; do not sell SCAFFOLD/PARTIAL as full ABS. Live AZIPS/cards/ASAN BLOCKED. Edition [`bank.yaml`](../editions/bank.yaml). ADR [`docs/adr/bank/`](../adr/bank/README.md).
+
+**Second-pass closeout (2026-11-25):** MM open nostro parity; BFF `leasing`/`mfi`→`LOANS_*`. Leasing/MFI stay **SCREEN** 🟡 (not SHOW). **Gate / BE / UI rollup / Demo / Pilot / Sell / edition unchanged** (`mvp`, `pilot_ready: false`).
+
+**Waves 2–4 closeout (2026-11-25):** IFRS16/MFI/ECL/CKR/OB/outbox/MIS/YAML/ADIF lab deepen + ASAN fail-closed honesty. Leasing/MFI stay **SCREEN** 🟡. **Gate / BE / UI rollup / Demo / Pilot / Sell / edition unchanged** (`mvp`, `pilot_ready: false`). No Scaffold ✅ uplift.
+
+**Audit-v2 remediations (2026-11-25):** ümidsiz write-off on prudential SCREEN; CAP-DBO-OB demoted PARTIAL (Inventory). **Gate / BE / UI / Demo / Pilot / Sell / edition unchanged** — still `mvp`, `pilot_ready: false`; rails/cards BLOCKED.
+
+**Wave 1 code closeout (2026-11-25):** P0/P1-7/P1-9/P2-6 engine+ops/DBO depth. CBAR category on loans/portfolio stays **SCREEN** (not SHOW). Second-pass: `/risk/collateral-items` (RISK_READ), CBAR templates from institution pack. **Gate / Scaffold BE / UI / Demo / Pilot / Sell / edition unchanged** — still `mvp`, `pilot_ready: false`; no sell uplift; partner rails/cards/XSD BLOCKED.
+
+**Audit-v3 remediations (2026-11-25):** money/SoD/contract fixes only (`collectSheet`, lease accrue, `mulRateRound`, ümidsiz human SoD, Nest DBO leasing BFF verified). Leasing/MFI/prudential stay **SCREEN** 🟡. **Gate / Scaffold BE / UI / Demo / Pilot / Sell / edition unchanged** (`mvp`, `pilot_ready: false`). ADR [`BANK-AUDIT-2026-11-25-v3.md`](../adr/BANK-AUDIT-2026-11-25-v3.md) §7.
 
 ---
 
@@ -68,7 +84,8 @@ Same columns as the line. Use **this** table when asking readiness of a module �
 |---------|------|-------|
 | Teller / ops | `era-bank` ops | ✅ lab — civil dates on deposits, loans, postings, treasury, and ECL render `дд.мм.гггг`; remaining date fields are `DatePicker`. Does not move Gate, UI ✅, Demo ✅, Pilot field, or edition |
 | Product Factory | `/admin/product-factory` | ✅ lab |
-| Risk capital / ECL | `/risk/capital`, `/risk/ecl` | ✅ lab (`methodology=lab`) |
+| Risk capital / ECL | `/risk/capital`, `/risk/ecl`, `/risk/prudential` | ✅ lab (`methodology=lab`; prudential SCREEN + ümidsiz WO button, not SHOW) |
+| Leasing / MFI | `/leasing`, `/mfi` + DBO `/leasing` schedule | 🟡 SCREEN — IFRS16/MFI collection lab; meeting date default Baku; UAT open → not SHOW |
 | Cash / fees / SDB | `/cash`, `/fees` | ✅ lab |
 | Payments tails | `/payments/extras` | ✅ lab |
 | Collections | `/collections` | ✅ lab |

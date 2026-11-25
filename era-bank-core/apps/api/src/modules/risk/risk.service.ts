@@ -17,8 +17,10 @@ import {
   SystemGlConfigService,
   SystemGlKey,
 } from "../../kernel/ledger/system-gl-config.service";
+import { CollateralService } from "../loans/collateral.service";
 import { LoansService } from "../loans/loans.service";
 import { parseCollateralRef } from "../loans/loan-risk.util";
+import { mulRateRound } from "../../common/money-rate.util";
 import {
   calculateEclBatch,
   type EclMatrices,
@@ -34,6 +36,7 @@ export class RiskService {
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
     private readonly loans: LoansService,
+    private readonly collateralItemsSvc: CollateralService,
     private readonly postingEngine: PostingEngineService,
     private readonly systemGl: SystemGlConfigService,
     private readonly liquidity: LiquidityRatioService,
@@ -112,6 +115,11 @@ export class RiskService {
       }));
   }
 
+  /** CollateralItem register with stale revaluation flags (RISK_READ path). */
+  collateralItems(maxAgeDays = 365) {
+    return this.collateralItemsSvc.listWithStaleFlags(maxAgeDays);
+  }
+
   stagingRun() {
     return this.loans.runStaging();
   }
@@ -163,6 +171,9 @@ export class RiskService {
           ],
         },
       },
+      include: {
+        collateralLinks: { include: { collateralItem: true } },
+      },
     });
 
     const matrices =
@@ -173,15 +184,48 @@ export class RiskService {
       );
     }
 
+    const drawdowns = await this.prisma.creditLineDrawdown.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        loanId: { in: loans.map((l) => l.id) },
+      },
+      include: { creditLine: true },
+    });
+    const undrawnByLoan = new Map<string, bigint>();
+    for (const d of drawdowns) {
+      if (!d.loanId || !d.creditLine) continue;
+      const undrawn = d.creditLine.limitMinor - d.creditLine.drawnMinor;
+      if (undrawn > 0n) undrawnByLoan.set(d.loanId, undrawn);
+    }
+
     const batch = calculateEclBatch(
       loans.map((loan) => {
-        const collateral = parseCollateralRef(loan.collateralRef);
+        let fromLinks = 0n;
+        for (const link of loan.collateralLinks ?? []) {
+          const share = Number(link.sharePct ?? 0);
+          const haircut = Number(link.collateralItem?.haircutPct ?? 0);
+          const valuation = link.collateralItem?.valuationMinor ?? 0n;
+          const effectivePct =
+            Math.max(0, Math.min(1, share)) *
+            Math.max(0, Math.min(1, 1 - haircut));
+          fromLinks += mulRateRound(valuation, effectivePct);
+        }
+        const legacy = parseCollateralRef(loan.collateralRef);
+        const legacyMinor = BigInt(legacy?.amountMinor ?? "0");
+        // Prefer M2M links; fall back to legacy collateralRef snapshot.
+        const collateralAmountMinor = fromLinks > 0n ? fromLinks : legacyMinor;
+        const flags = Array.isArray(loan.qualityFlagsJson)
+          ? (loan.qualityFlagsJson as string[]).map((f) => f.toUpperCase())
+          : [];
         return {
           loanId: loan.id,
           outstandingMinor: loan.outstandingMinor,
           stage: loan.ifrs9Stage,
-          collateralAmountMinor: BigInt(collateral?.amountMinor ?? "0"),
+          collateralAmountMinor,
           akbScore: loan.akbScore,
+          undrawnMinor: undrawnByLoan.get(loan.id),
+          forbearance: flags.some((f) => f.includes("FORBEAR")),
+          watchList: flags.some((f) => f.includes("WATCH")),
         };
       }),
       methodology,
@@ -213,7 +257,7 @@ export class RiskService {
         makerUserId: input?.makerUserId ?? "risk-system",
         note:
           methodology === "PD_LGD"
-            ? "PD×LGD lab matrices — not certified IFRS 9"
+            ? "PD×LGD lifetime/SICR/scenario lab — not certified IFRS 9"
             : "Stage flat-rate ECL MVP — not certified",
         completedAt: needsApproval ? null : new Date(),
         results: {
