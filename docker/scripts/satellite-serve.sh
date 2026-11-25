@@ -18,6 +18,10 @@ PORT="$NEXT_PORT" HOSTNAME=127.0.0.1 node /app/server.js &
 NEXT_PID=$!
 
 cd /opt/nest-runtime/app
+# Next's tsconfig disables parameter decorators. Clinic Nest ships nest/tsconfig.json.
+if [ -f nest/tsconfig.json ]; then
+  export TSX_TSCONFIG_PATH="${PWD}/nest/tsconfig.json"
+fi
 NEST_PORT="$NEST_PORT" node node_modules/tsx/dist/cli.mjs nest/main.ts &
 NEST_PID=$!
 
