@@ -76,7 +76,7 @@ export class DepositsService {
         currency: true,
         status: true,
         taxAccruedMinor: true,
-        interestAccruedMinor: true,
+        monthInterestAccruedMinor: true,
         updatedAt: true,
         openedAt: true,
       },
@@ -88,7 +88,7 @@ export class DepositsService {
       rows: rows.map((r) => ({
         ...r,
         taxAccruedMinor: r.taxAccruedMinor.toString(),
-        interestAccruedMinor: r.interestAccruedMinor.toString(),
+        monthInterestAccruedMinor: r.monthInterestAccruedMinor.toString(),
       })),
     };
   }

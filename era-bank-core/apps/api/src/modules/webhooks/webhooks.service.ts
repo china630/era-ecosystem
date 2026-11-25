@@ -237,7 +237,9 @@ export class WebhooksService {
                 ? WebhookOutboxStatus.DEAD
                 : WebhookOutboxStatus.FAILED,
               attempts,
-              lastError: delivery.error ?? "delivery failed",
+              lastError:
+                ("error" in delivery ? delivery.error : undefined) ??
+                "delivery failed",
               nextAttemptAt: new Date(Date.now() + backoff * 1000),
             },
           });
@@ -245,7 +247,7 @@ export class WebhooksService {
             id: row.id,
             status: dead ? "DEAD" : "FAILED",
             delivered: false,
-            error: delivery.error,
+            error: "error" in delivery ? delivery.error : undefined,
           });
         }
       } catch (err) {
