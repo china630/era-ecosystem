@@ -67,7 +67,7 @@ export class EventsDispatchController {
   return sendJson(httpRes, { ok: true, event });
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

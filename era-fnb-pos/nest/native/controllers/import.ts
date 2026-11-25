@@ -32,7 +32,7 @@ export class ImportController {
   }
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

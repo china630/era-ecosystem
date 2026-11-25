@@ -46,7 +46,7 @@ export class PaymentMethodsController {
   });
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

@@ -29,7 +29,7 @@ export class LocaleController {
   return sendJson(httpRes, { ok: true, locale: body.locale });
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

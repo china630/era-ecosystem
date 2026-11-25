@@ -71,7 +71,7 @@ export class InternalV1KafeBootstrapOwnerController {
   }
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

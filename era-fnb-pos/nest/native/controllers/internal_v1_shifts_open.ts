@@ -62,7 +62,7 @@ export class InternalV1ShiftsOpenController {
   }
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

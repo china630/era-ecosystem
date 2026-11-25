@@ -57,7 +57,7 @@ export class IntegrationStaffProvisionController {
   }
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

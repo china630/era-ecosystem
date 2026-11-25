@@ -94,7 +94,7 @@ export class AuthSsoExchangeController {
     });
   
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

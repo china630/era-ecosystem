@@ -96,7 +96,7 @@ export class ImportEntityController {
   }
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

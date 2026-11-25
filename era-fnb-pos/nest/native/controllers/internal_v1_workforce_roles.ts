@@ -43,7 +43,7 @@ export class InternalV1WorkforceRolesController {
   });
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }

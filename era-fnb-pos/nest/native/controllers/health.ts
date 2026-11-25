@@ -24,7 +24,7 @@ export class HealthController {
   });
 
         });
-      });
+      })();
     } catch (err) {
       await sendRouteError(httpRes, err);
     }
