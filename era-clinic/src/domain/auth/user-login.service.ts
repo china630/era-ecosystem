@@ -8,16 +8,25 @@ export async function findUserIdByLoginAndOrg(login: string, organizationId: str
   });
 }
 
-function clientIp(request: Request): string | null {
-  const fwd = request.headers.get("x-forwarded-for");
+type HeaderSource =
+  | { get(name: string): string | null }
+  | { headers: { get(name: string): string | null } };
+
+function readHeader(source: HeaderSource, name: string): string | null {
+  if ("headers" in source) return source.headers.get(name);
+  return source.get(name);
+}
+
+function clientIp(request: HeaderSource): string | null {
+  const fwd = readHeader(request, "x-forwarded-for");
   if (fwd) return fwd.split(",")[0]?.trim() || null;
-  return request.headers.get("x-real-ip");
+  return readHeader(request, "x-real-ip");
 }
 
 /** Best-effort. Sign-in continues when the journal table is not migrated yet. */
 export async function recordUserLogin(
   user: { id: string; organizationId: string; login: string },
-  request: Request,
+  request: HeaderSource,
 ): Promise<void> {
   try {
     await prisma.userLogin.create({
@@ -26,7 +35,7 @@ export async function recordUserLogin(
         userId: user.id,
         login: user.login,
         ipAddress: clientIp(request),
-        userAgent: request.headers.get("user-agent"),
+        userAgent: readHeader(request, "user-agent"),
       },
     });
   } catch {

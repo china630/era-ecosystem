@@ -336,11 +336,19 @@ async function openWalkInEpisode(patientRefId: string, organizationId: string) {
   if (open) {
     return open;
   }
+  const { addBakuDays, parseBakuDateTime, todayBakuYmd } = await import(
+    "@/lib/baku-day"
+  );
+  const startYmd = todayBakuYmd();
+  const plannedEndsOn = parseBakuDateTime(addBakuDays(startYmd, 1), "09:00");
   const created = await prisma.clinicalEpisode.create({
     data: {
       patientRefId,
       organizationId,
       patientOrigin: "WALK_IN",
+      courseKind: "AMBULATORY",
+      plannedEndsOn,
+      noPackageConfirmedAt: new Date(),
       status: "OPEN",
     },
   });

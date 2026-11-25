@@ -102,6 +102,7 @@ export async function getClinicSettings() {
       tenant.patientCardHistoryPageSize ?? CARD_DEFAULTS.patientCardHistoryPageSize,
     patientCardPlanPageSize:
       tenant.patientCardPlanPageSize ?? CARD_DEFAULTS.patientCardPlanPageSize,
+    patientCardArchiveShowNonExecuted: tenant.patientCardArchiveShowNonExecuted !== false,
     printLogoDataUrl: tenant.printLogoDataUrl ?? null,
     printClinicNameEn: tenant.printClinicNameEn ?? null,
     printClinicNameRu: tenant.printClinicNameRu ?? null,
@@ -185,6 +186,7 @@ export async function updateClinicSettings(input: {
   patientCardPlanPreview?: number;
   patientCardHistoryPageSize?: number;
   patientCardPlanPageSize?: number;
+  patientCardArchiveShowNonExecuted?: boolean;
   printLogoDataUrl?: string | null;
   printClinicNameEn?: string | null;
   printClinicNameRu?: string | null;
@@ -307,6 +309,9 @@ export async function updateClinicSettings(input: {
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),
       ...(historyPage != null ? { patientCardHistoryPageSize: historyPage } : {}),
       ...(planPage != null ? { patientCardPlanPageSize: planPage } : {}),
+      ...(input.patientCardArchiveShowNonExecuted !== undefined
+        ? { patientCardArchiveShowNonExecuted: input.patientCardArchiveShowNonExecuted }
+        : {}),
     },
     update: {
       ...(input.clinicName ? { name: input.clinicName } : {}),
@@ -384,6 +389,9 @@ export async function updateClinicSettings(input: {
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),
       ...(historyPage != null ? { patientCardHistoryPageSize: historyPage } : {}),
       ...(planPage != null ? { patientCardPlanPageSize: planPage } : {}),
+      ...(input.patientCardArchiveShowNonExecuted !== undefined
+        ? { patientCardArchiveShowNonExecuted: input.patientCardArchiveShowNonExecuted }
+        : {}),
       ...(input.printLogoDataUrl !== undefined ? { printLogoDataUrl: input.printLogoDataUrl } : {}),
       ...(input.printClinicNameEn !== undefined ? { printClinicNameEn: input.printClinicNameEn } : {}),
       ...(input.printClinicNameRu !== undefined ? { printClinicNameRu: input.printClinicNameRu } : {}),

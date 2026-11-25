@@ -23,7 +23,7 @@ Clinic pack checklist on disk: `NAFTA-ERA-READY/IMPORT-CHECKLIST.md` (mirror: `N
 
 ## Post-deploy on droplet (after clinic image ship)
 
-Do **not** run full `npm run db:seed` or `db:seed:demo` on the droplet (`CLINIC_RUN_SEED` stays **false**). Satellite ICD + base physio/diagnostic **templates** come from the image migrate/seed once (or Connect copy-if-empty into the org overlay). Org overlay (Nafta aliases, `PKG-NAFTA-INTAKE`, prices, intake blocks) comes from the **import wizard** — not from post-deploy seed scripts. See ADR [clinic-catalog-template-overlay.md](../../docs/adr/clinic-catalog-template-overlay.md).
+Do **not** run full `npm run db:seed` or `db:seed:demo` on the droplet (`CLINIC_RUN_SEED` stays **false**). Satellite ICD + base physio/diagnostic **templates** come from the image migrate/seed once (or Connect copy-if-empty into the org overlay). Org overlay (Nafta aliases, `PKG-NAFTA-INTAKE`, prices, intake blocks) comes from the **import wizard** — not from post-deploy seed scripts. See ADR [clinic-catalog-template-overlay.md](../../docs/adr/clinic/clinic-catalog-template-overlay.md).
 
 Do **not** run full `rebuild-derived` only for a catalog wave. Re-Apply the Excel books below when clock / nahiye / USG need refresh.
 

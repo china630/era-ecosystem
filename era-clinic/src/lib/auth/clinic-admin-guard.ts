@@ -4,11 +4,11 @@ import {
   requireClinicPermission,
 } from "@/lib/api-utils";
 import { adminApiRoutePermissions } from "@/lib/auth/clinic-permissions";
-import type { NextResponse } from "next/server";
+import type { ClinicJson } from "@/lib/clinic-json";
 import type { SatelliteStaffSessionPayload } from "@era/satellite-kit";
 
 type GuardOk = { session: SatelliteStaffSessionPayload; error?: undefined };
-type GuardFail = { session?: undefined; error: NextResponse };
+type GuardFail = { session?: undefined; error: ClinicJson };
 
 /**
  * Permission-mapped admin API gate (Wave 2 — CLINIC_ADMIN matrix applies).
@@ -19,13 +19,13 @@ type GuardFail = { session?: undefined; error: NextResponse };
  * (see `scripts/audit-admin-api-map.mjs` and clinic-permissions.spec).
  */
 export async function assertClinicAdminRoute(
-  req: Request,
+  req: { url: string },
 ): Promise<GuardOk | GuardFail> {
   const session = await getSatelliteSession();
   if (!session) return { error: jsonError("Unauthorized", 401) };
   const permissions = adminApiRoutePermissions(new URL(req.url).pathname);
   if (!permissions || permissions.length === 0) return { error: jsonError("Forbidden", 403, { code: "FORBIDDEN" }) };
-  let denied: NextResponse | null = null;
+  let denied: ClinicJson | null = null;
   for (const permission of permissions) {
     denied = await requireClinicPermission(session, permission);
     if (!denied) return { session };
@@ -35,7 +35,7 @@ export async function assertClinicAdminRoute(
 
 /** Alias of assertClinicAdminRoute — Request required (no binary CLINIC_ADMIN bypass). */
 export async function assertClinicAdminRead(
-  req: Request,
+  req: { url: string },
 ): Promise<GuardOk | GuardFail> {
   return assertClinicAdminRoute(req);
 }

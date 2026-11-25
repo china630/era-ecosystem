@@ -25,7 +25,7 @@
 
 | Область | Почему не v1 |
 |---------|----------------|
-| **Full HIS** (OR, MAR, ward pharmacy, DRG/case billing) | Separate product appendix on same satellite — see [ADR clinic-product-lines](../../docs/adr/clinic-product-lines-and-presets.md) Phase 6 |
+| **Full HIS** (OR, MAR, ward pharmacy, DRG/case billing) | Separate product appendix on same satellite — see [ADR clinic-product-lines](../../docs/adr/clinic/clinic-product-lines-and-presets.md) Phase 6 |
 | HL7/FHIR production, DICOM / PACS | Phase K4+ integrations |
 | Национальный e-recept (Dərman) | Регуляторный контур AZ — Phase 3 |
 | Полная EMR (единая пожизненная история) | Нет longitudinal problem list. Архив — **курсы** `ClinicalEpisode` (CLI-55), не одна вечная карта |
@@ -38,7 +38,7 @@
 
 ## §1.4. Product lines & operation presets
 
-Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-product-lines-and-presets.md) · Implementation plan: [doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md](doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md)
+Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic/clinic-product-lines-and-presets.md) · Implementation plan: [doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md](doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md)
 
 | Product line | `Outlet.preset` | Gate | Notes |
 |--------------|-----------------|------|-------|
@@ -51,9 +51,11 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 
 **Sanatorium business:** orchestrator entitlements `industry_hotel_pms` + `industry_clinic` (+ optional retail), not a standalone sanatorium satellite.
 
-**Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic-doctor-confirmed-fifo-planning.md). Time layers (occupancy vs cabin resource gap vs guest rest vs pair rules): [ADR clinic-scheduling-time-layers](../docs/adr/clinic-scheduling-time-layers.md) — per-type `resourceGapMinutes` / `patientRestMinutes` shipped.
+**Procedure planning:** program/package quotas expand to `PROPOSED` procedure orders on the patient card; the doctor confirms before FIFO placement onto resources (`placeConfirmedProcedures`). See [ADR clinic-doctor-confirmed-fifo-planning](../docs/adr/clinic/clinic-doctor-confirmed-fifo-planning.md). Time layers (occupancy vs cabin resource gap vs guest rest vs pair rules): [ADR clinic-scheduling-time-layers](../docs/adr/clinic/clinic-scheduling-time-layers.md) — per-type `resourceGapMinutes` / `patientRestMinutes` shipped.
 
-**Clinical course (CLI-55, canon — not shipped):** one `ClinicalEpisode` = one stay / walk-in registration. Patient header holds identity (name, age, sex, blood group, identifiers). Anamnesis, contraindications, visits, labs, and procedures belong to the **episode**. Card: episode dropdown (default = latest); closed course is read-only. Empty anamnesis blocks procedure assign/confirm (`ANAMNESIS_REQUIRED`). Walk-in close = reception + weekly cron, refused while live procedures or open labs remain. Hotel checkout unchanged. ADR: [clinic-episode-as-clinical-course.md](../docs/adr/clinic-episode-as-clinical-course.md).
+**Clinical course (CLI-55, canon — not shipped):** one `ClinicalEpisode` = one stay / walk-in registration. Patient header holds identity (name, age, sex, blood group, identifiers). Anamnesis, contraindications, visits, labs, and procedures belong to the **episode**. Card: episode dropdown (default = latest); closed course is read-only. Empty anamnesis blocks procedure assign/confirm (`ANAMNESIS_REQUIRED`). Walk-in close = reception + weekly cron, refused while live procedures or open labs remain. Hotel checkout unchanged. ADR: [clinic-episode-as-clinical-course.md](../docs/adr/clinic/clinic-episode-as-clinical-course.md).
+
+**Courses without a hotel room (CLI-69, SCREEN — not shipped):** `/sanatorium` **New course** menu → Ambulatory (paid extras, N-day `plannedEndsOn`) · Group (CLI-61 parties) · Staff (Workforce picker → free `PKG-STANDART`, `courseKind=STAFF_BENEFIT`). `PatientOrigin` stays `WALK_IN` | `IN_HOUSE` only — no `STAFF` origin; no fake hotel check-in. Card Course end DatePicker → `PATCH …/course-window` when there is no `reservationId`. ADR: [clinic-course-without-room.md](../docs/adr/clinic/clinic-course-without-room.md).
 
 **Physio / sanatorium sites (W2):** doctor picks protocol zones **S** (chips + autocomplete) on the patient card; `ProcedureOrder.sites[]` stores the list; coarse `bodyPart` is derived. Every order still has free-text `note`. Type-gated programs/substances are W3. See [physio-site-canon.md](doc/physio-site-canon.md).
 
@@ -107,13 +109,13 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 | M5 (extend) | **Critical lab result flag** | LIS alert | **DONE** | `enrichResultLines` + `criticalOnly` filter |
 | M6 | Service catalog cache (codes, prices) | **DONE** | `ServiceCatalogCache` + sync API |
 | M7 | Notifications (SMS/email stub) | **DEFERRED** | Использовать `platform_notifications` |
-| M8 | Patient portal (results, booking) | **DONE** | `/portal` + session API |
+| M8 | Patient portal (results, booking) | **PARTIAL** | Lab results only; token + limited UI — not full booking/docs/pay |
 | M9 | Multi-room drag reschedule | **DONE** | Reschedule API |
-| M10 | EHR templates / CPOE lite | **DONE** | ERPs/07 §2 |
-| M11 | LIS analyzer import (HL7/file) | **DONE** | ERPs/07 §3 |
-| M12 | Insurance / DMS eligibility | **DONE** | **Finance** §4.15 |
-| M13 | Inpatient / bed management (ADT-light) | **SHIPPED** | ERPs/07 §7; preset `inpatient_day` |
-| M14 | Telehealth + patient portal | **DONE** | **PLATFORM** portal |
+| M10 | Diagnostic result templates / CPOE-lite | **DONE** | Forms for diagnostic services (USG/ECG…); not visit exam protocols |
+| M11 | LIS analyzer import (file / HL7) | **PARTIAL** | File/CSV import DONE; **HL7 STUB** |
+| M12 | Insurance / DMS eligibility | **PARTIAL** | Finance proxy; UI modal (not full policy/limits product) |
+| M13 | Inpatient / bed management (ADT-light) | **PARTIAL** | Ward-lite census/ADT; not full HIS (MAR/vitals/epicrisis roadmap) |
+| M14 | Telehealth + patient portal | **STUB** | Module key only; no telehealth UI page |
 
 См. [MODULES_CATALOG § roadmap](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 
@@ -153,7 +155,7 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 
 ### Санаторный курс (CLI-55 — канон, не shipped)
 
-Canon: [ADR clinic-episode-as-clinical-course](../docs/adr/clinic-episode-as-clinical-course.md).
+Canon: [ADR clinic-episode-as-clinical-course](../docs/adr/clinic/clinic-episode-as-clinical-course.md).
 
 | ID | История | Критерий приёмки |
 |----|---------|------------------|
@@ -251,7 +253,7 @@ its own working hours, plus date exceptions (day off / extra shift / custom hour
 The `/appointments` matrix blocks off-shift slots and appointment create/reschedule
 reject off-shift bookings. Managed via the **Shifts** modal on `/admin/master-data`.
 Practitioners with no rules stay unrestricted (back-compatible). See ADR
-`docs/adr/clinic-practitioner-shifts.md`.
+`docs/adr/clinic/clinic-practitioner-shifts.md`.
 
 ### 2026-07-22 — CLI-37 UI list/filter standard
 

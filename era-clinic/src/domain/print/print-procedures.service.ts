@@ -203,18 +203,26 @@ export async function buildProceduresPrint(
       });
 
   const showUnpaid = showsUnpaidExtraOnPlan(clinicSettings.extraProcedureRoute);
+  const episodeClosed = episode?.status === "CLOSED";
+  const showNonExecuted = clinicSettings.patientCardArchiveShowNonExecuted !== false;
+  const { archiveProcedureWhere } = await import(
+    "@/domain/patient/closed-course-archive-filter"
+  );
+  const statusWhere = episodeClosed
+    ? archiveProcedureWhere(showNonExecuted)
+    : showUnpaid
+      ? {
+          OR: [
+            { status: { in: [...PRINT_PROCEDURE_STATUSES] } },
+            { status: "PENDING_PAY" as const, inPackage: false },
+          ],
+        }
+      : { status: { in: [...PRINT_PROCEDURE_STATUSES] } };
   const orders = await prisma.procedureOrder.findMany({
     where: {
       patientRefId: patientId,
       ...(episode ? { clinicalEpisodeId: episode.id } : {}),
-      ...(showUnpaid
-        ? {
-            OR: [
-              { status: { in: [...PRINT_PROCEDURE_STATUSES] } },
-              { status: "PENDING_PAY" as const, inPackage: false },
-            ],
-          }
-        : { status: { in: [...PRINT_PROCEDURE_STATUSES] } }),
+      ...statusWhere,
     },
     include: {
       resource: { include: { room: true } },
@@ -303,6 +311,9 @@ export async function buildProceduresPrint(
       room,
       price: `${Number(o.amountNet).toFixed(2)} AZN`,
       note: [
+        episodeClosed || o.status === "CANCELLED" || o.status === "NO_SHOW" || o.status === "COMPLETED"
+          ? printLabel(lang, `procStatus_${o.status}`)
+          : "",
         o.status === "PENDING_PAY" ? printLabel(lang, "unpaidExtra") : "",
         openUnseated ? printLabel(lang, "openAttendance") : "",
         (o.note ?? "").trim(),

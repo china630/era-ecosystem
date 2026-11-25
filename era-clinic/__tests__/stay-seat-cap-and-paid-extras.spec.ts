@@ -4,6 +4,7 @@ import { listPaidExtras } from "@/domain/sanatorium/extras-assign.service";
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     programInstance: { findFirst: jest.fn() },
+    clinicalEpisode: { findUnique: jest.fn() },
     procedureOrder: { findMany: jest.fn(), count: jest.fn() },
   },
 }));
@@ -25,6 +26,7 @@ import { listClinicDays } from "@/domain/planning/clinic-day";
 
 const mocked = prisma as unknown as {
   programInstance: { findFirst: jest.Mock };
+  clinicalEpisode: { findUnique: jest.Mock };
   procedureOrder: { findMany: jest.Mock };
 };
 const mockDays = listClinicDays as jest.Mock;
@@ -35,9 +37,9 @@ describe("stay seat cap", () => {
   });
 
   it("counts free working days today…checkout−1 minus occupied OPEN days", async () => {
-    mocked.programInstance.findFirst.mockResolvedValue({
-      endsOn: new Date("2026-12-06T00:00:00.000Z"),
-      startsOn: new Date("2026-11-22T00:00:00.000Z"),
+    mocked.clinicalEpisode.findUnique.mockResolvedValue({
+      plannedEndsOn: new Date("2026-12-06T00:00:00.000Z"),
+      programInstance: { endsOn: new Date("2026-12-06T00:00:00.000Z") },
     });
     mockDays.mockResolvedValue([
       { ymd: "2026-11-24", working: true },

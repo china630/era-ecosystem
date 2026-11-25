@@ -18,11 +18,13 @@ Tenant → Practitioner → Room → Appointment → Visit → VisitServiceLine
 
 ## Clinical course (CLI-55 canon — not shipped)
 
-SoR: [docs/adr/clinic-episode-as-clinical-course.md](../docs/adr/clinic-episode-as-clinical-course.md).
+SoR: [docs/adr/clinic/clinic-episode-as-clinical-course.md](../docs/adr/clinic/clinic-episode-as-clinical-course.md).
 
 ```text
 PatientRef (identity: name, sex, DOB, blood, identifiers)
-  └── ClinicalEpisode[]  (one stay / walk-in)
+  └── ClinicalEpisode[]  (one stay / walk-in / staff benefit)
+        ├── courseKind? (AMBULATORY | STAFF_BENEFIT)
+        ├── plannedEndsOn? / benefitEmploymentId?
         ├── anamnesisText
         ├── PatientContraindication[]
         ├── ClinicalComplaint / ClinicalDiagnosis
@@ -30,7 +32,20 @@ PatientRef (identity: name, sex, DOB, blood, identifiers)
         └── ProgramInstance?
 ```
 
-Hotel checkout still closes IN_HOUSE. Walk-in close is reception + weekly cron after live procedures and open labs are gone. Implementation waves TBD.
+Hotel checkout still closes IN_HOUSE. Walk-in close is reception + weekly cron after live procedures and open labs are gone.
+
+## Courses without a hotel room (CLI-69 — SCREEN)
+
+SoR: [docs/adr/clinic/clinic-course-without-room.md](../docs/adr/clinic/clinic-course-without-room.md).
+
+| Method | Path | Notes |
+|--------|------|-------|
+| POST | `/api/sanatorium/episodes` | Ambulatory: `courseDays` → `plannedEndsOn` + `AMBULATORY` |
+| GET | `/api/sanatorium/workforce-picker` | CP Workforce S2S proxy |
+| POST | `/api/sanatorium/episodes/staff-course` | Active `cpEmploymentId` → `PKG-STANDART` |
+| PATCH | `/api/sanatorium/episodes/:id/course-window` | No-room end date; `409 HOTEL_OWNED_WINDOW` when `reservationId` set |
+
+UI: `/sanatorium` **New course** menu; patient card Course end DatePicker when editable.
 
 ## API surface (planned)
 
@@ -82,7 +97,7 @@ Event: `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` — `labOrderId`, `visitId?`, `pat
 
 ## Scheduling time layers (sanatorium)
 
-Canon: [docs/adr/clinic-scheduling-time-layers.md](../docs/adr/clinic-scheduling-time-layers.md).
+Canon: [docs/adr/clinic/clinic-scheduling-time-layers.md](../docs/adr/clinic/clinic-scheduling-time-layers.md).
 
 | Layer | Target field | Today |
 |-------|----------------|-------|

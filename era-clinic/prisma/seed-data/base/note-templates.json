@@ -1,0 +1,204 @@
+{
+  "templates": [
+    {
+      "code": "NOTE-GP",
+      "specialty": "GP",
+      "title": {
+        "en": "General practitioner exam",
+        "ru": "Терапевтический осмотр",
+        "az": "Terapevt müayinəsi"
+      },
+      "sections": {
+        "sections": [
+          {
+            "key": "main",
+            "title": { "en": "Exam", "ru": "Осмотр", "az": "Müayinə" },
+            "fields": [
+              {
+                "key": "complaint",
+                "type": "textarea",
+                "label": { "en": "Complaint", "ru": "Жалоба", "az": "Şikayət" },
+                "required": true,
+                "quickAnswers": ["No acute complaints", "Follow-up visit"]
+              },
+              {
+                "key": "anamnesis",
+                "type": "textarea",
+                "label": { "en": "Anamnesis", "ru": "Анамнез", "az": "Anamnez" }
+              },
+              {
+                "key": "exam",
+                "type": "textarea",
+                "label": { "en": "Objective exam", "ru": "Осмотр", "az": "Obyektiv müayinə" },
+                "required": true
+              },
+              {
+                "key": "plan",
+                "type": "textarea",
+                "label": { "en": "Plan", "ru": "План", "az": "Plan" }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "code": "NOTE-CARDIO",
+      "specialty": "CARDIO",
+      "title": {
+        "en": "Cardiology consult",
+        "ru": "Кардиологический осмотр",
+        "az": "Kardioloji məsləhət"
+      },
+      "sections": {
+        "sections": [
+          {
+            "key": "cardio",
+            "title": { "en": "Cardiovascular", "ru": "Сердечно-сосудистая", "az": "Ürək-damar" },
+            "fields": [
+              {
+                "key": "complaint",
+                "type": "textarea",
+                "label": { "en": "Complaint", "ru": "Жалоба", "az": "Şikayət" },
+                "required": true
+              },
+              {
+                "key": "bp",
+                "type": "text",
+                "label": { "en": "Blood pressure", "ru": "АД", "az": "Qan təzyiqi" }
+              },
+              {
+                "key": "heart",
+                "type": "textarea",
+                "label": { "en": "Heart auscultation", "ru": "Тоны сердца", "az": "Ürək tonları" },
+                "required": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "code": "NOTE-PED",
+      "specialty": "PEDIATRIC",
+      "title": {
+        "en": "Pediatric exam",
+        "ru": "Педиатрический осмотр",
+        "az": "Uşaq müayinəsi"
+      },
+      "sections": {
+        "sections": [
+          {
+            "key": "ped",
+            "title": { "en": "Pediatric", "ru": "Педиатрия", "az": "Uşaq" },
+            "fields": [
+              {
+                "key": "complaint",
+                "type": "textarea",
+                "label": { "en": "Complaint", "ru": "Жалоба", "az": "Şikayət" },
+                "required": true
+              },
+              {
+                "key": "development",
+                "type": "textarea",
+                "label": { "en": "Development", "ru": "Развитие", "az": "İnkişaf" }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "code": "NOTE-NEURO",
+      "specialty": "NEURO",
+      "title": {
+        "en": "Neurology exam",
+        "ru": "Неврологический осмотр",
+        "az": "Nevrologiya müayinəsi"
+      },
+      "sections": {
+        "sections": [
+          {
+            "key": "neuro",
+            "title": { "en": "Neurology", "ru": "Неврология", "az": "Nevrologiya" },
+            "fields": [
+              {
+                "key": "complaint",
+                "type": "textarea",
+                "label": { "en": "Complaint", "ru": "Жалоба", "az": "Şikayət" },
+                "required": true
+              },
+              {
+                "key": "neuroStatus",
+                "type": "textarea",
+                "label": { "en": "Neurological status", "ru": "Неврологический статус", "az": "Nevroloji status" },
+                "required": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "code": "NOTE-GYN",
+      "specialty": "GYN",
+      "title": {
+        "en": "Gynecology exam",
+        "ru": "Гинекологический осмотр",
+        "az": "Ginekologiya müayinəsi"
+      },
+      "sections": {
+        "sections": [
+          {
+            "key": "gyn",
+            "title": { "en": "Gynecology", "ru": "Гинекология", "az": "Ginekologiya" },
+            "fields": [
+              {
+                "key": "complaint",
+                "type": "textarea",
+                "label": { "en": "Complaint", "ru": "Жалоба", "az": "Şikayət" },
+                "required": true
+              },
+              {
+                "key": "exam",
+                "type": "textarea",
+                "label": { "en": "Exam", "ru": "Осмотр", "az": "Müayinə" },
+                "required": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "code": "NOTE-ENT",
+      "specialty": "ENT",
+      "title": {
+        "en": "ENT exam",
+        "ru": "ЛОР осмотр",
+        "az": "LOR müayinəsi"
+      },
+      "sections": {
+        "sections": [
+          {
+            "key": "ent",
+            "title": { "en": "ENT", "ru": "ЛОР", "az": "LOR" },
+            "fields": [
+              {
+                "key": "complaint",
+                "type": "textarea",
+                "label": { "en": "Complaint", "ru": "Жалоба", "az": "Şikayət" },
+                "required": true
+              },
+              {
+                "key": "throat",
+                "type": "textarea",
+                "label": { "en": "Throat / nose / ears", "ru": "Глотка / нос / уши", "az": "Boğaz / burun / qulaq" }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

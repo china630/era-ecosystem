@@ -1,6 +1,6 @@
 # ERA Clinic — full implementation plan
 
-Product architecture: [ADR clinic-product-lines-and-presets](../../docs/adr/clinic-product-lines-and-presets.md)  
+Product architecture: [ADR clinic-product-lines-and-presets](../../docs/adr/clinic/clinic-product-lines-and-presets.md)  
 PRD: [../PRD.md](../PRD.md) · Coverage: [../../docs/COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md#era-clinic-cli) · Delivery: [DELIVERY-CLINIC.md](./DELIVERY-CLINIC.md)
 
 **Goal:** one shippable `era-clinic` satellite with honest actor coverage, operation presets, MDM discipline, and a clear path to `inpatient_day` — without a second satellite.
@@ -44,7 +44,7 @@ Implementation: `Tenant` / `Outlet.preset` + `requireClinicPreset()` in middlewa
 
 | ID | Task | Artifacts |
 |----|------|-----------|
-| P0-01 | ADR product lines | `docs/adr/clinic-product-lines-and-presets.md` ✓ |
+| P0-01 | ADR product lines | `docs/adr/clinic/clinic-product-lines-and-presets.md` ✓ |
 | P0-02 | PRD § product lines + scope fix | `era-clinic/PRD.md` |
 | P0-03 | Retag DELIVERY M13 / K1 drift | `doc/DELIVERY-CLINIC.md` |
 | P0-04 | COVERAGE_MATRIX preset rows | `docs/COVERAGE_MATRIX.md` CLI-PRESET-* |
@@ -109,7 +109,7 @@ Depends: orchestrator fan-out (sanatorium-vnext wave 2).
 
 Preset gate: sanatorium nav hidden unless `sanatorium_clinical` or bundle entitled.
 
-**Later overlay (not this 2026-06 phase):** CLI-55 episode-as-course — [ADR](../../docs/adr/clinic-episode-as-clinical-course.md). Wave plan TBD; do not fold into P3 SHIPPED.
+**Later overlay (not this 2026-06 phase):** CLI-55 episode-as-course — [ADR](../../docs/adr/clinic/clinic-episode-as-clinical-course.md). Wave plan TBD; do not fold into P3 SHIPPED.
 
 ---
 

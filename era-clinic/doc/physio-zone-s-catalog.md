@@ -1,6 +1,6 @@
 # Physio / sanatorium site catalog (S) — zone table
 
-**Canon (wins on conflict):** [physio-site-canon.md](./physio-site-canon.md) · **ADR:** [clinic-physio-site-catalog.md](../../docs/adr/clinic-physio-site-catalog.md)
+**Canon (wins on conflict):** [physio-site-canon.md](./physio-site-canon.md) · **ADR:** [clinic-physio-site-catalog.md](../../docs/adr/clinic/clinic-physio-site-catalog.md)
 
 **Status:** W1 seed loaded into `physio_site` (SatAdmin). This file remains the human table; JSON is seed input, not runtime SoR.
 
@@ -10,7 +10,7 @@ Sources: Minzdrav USSR **817/1987**; **Shcherbak** collar+panty; hydro fill. 817
 
 Counts: **31** S codes. 817 §15 and §18 share sites with §14 and §17 — not extra codes.
 
-Data: base `prisma/seed-data/base/physio-zones-s.json` + Nafta overlay `prisma/seed-data/nafta/physio-zones-overlay.json` (merge helper). Unmatched WO: [physio-zone-s-coverage.md](./physio-zone-s-coverage.md). ADR: [clinic-catalog-base-and-org-overlay-seeds.md](../../docs/adr/clinic-catalog-base-and-org-overlay-seeds.md).
+Data: base `prisma/seed-data/base/physio-zones-s.json` + Nafta overlay `prisma/seed-data/nafta/physio-zones-overlay.json` (merge helper). Unmatched WO: [physio-zone-s-coverage.md](./physio-zone-s-coverage.md). ADR: [clinic-catalog-base-and-org-overlay-seeds.md](../../docs/adr/clinic/clinic-catalog-base-and-org-overlay-seeds.md).
 
 ## Closed catalog rules
 

@@ -38,6 +38,7 @@ import {
   showSuccess,
 } from "@era/satellite-kit/ui";
 import { PrintSettingsPanel } from "@/components/print/PrintSettingsPanel";
+import { AuditExemptPanel } from "@/components/admin/AuditExemptPanel";
 
 const PRESET_LABELS: Record<ClinicPresetCode, string> = {
   [CLINIC_PRESET.OUTPATIENT]: "Outpatient",
@@ -86,6 +87,7 @@ type SchedulingDefaults = {
   hotelFolioRevenueCode: string;
   noShowKeepsCharge: boolean;
   noShowBurnsQuota: boolean;
+  patientCardArchiveShowNonExecuted: boolean;
   extraProcedureRoute: "PLAN_BEFORE_PAY" | "HOLD_UNTIL_PAY";
 };
 
@@ -144,6 +146,7 @@ const SCHED_DEFAULTS: SchedulingDefaults = {
   hotelFolioRevenueCode: "",
   noShowKeepsCharge: true,
   noShowBurnsQuota: true,
+  patientCardArchiveShowNonExecuted: true,
   extraProcedureRoute: "PLAN_BEFORE_PAY",
 };
 
@@ -240,6 +243,7 @@ export default function ClinicAdminSettingsPage() {
             row.hotelFolioRevenueCode ?? SCHED_DEFAULTS.hotelFolioRevenueCode,
           noShowKeepsCharge: row.noShowKeepsCharge !== false,
           noShowBurnsQuota: row.noShowBurnsQuota !== false,
+          patientCardArchiveShowNonExecuted: row.patientCardArchiveShowNonExecuted !== false,
           extraProcedureRoute:
             row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
         };
@@ -339,6 +343,7 @@ export default function ClinicAdminSettingsPage() {
           row.hotelFolioRevenueCode ?? draftSched.hotelFolioRevenueCode,
         noShowKeepsCharge: row.noShowKeepsCharge !== false,
         noShowBurnsQuota: row.noShowBurnsQuota !== false,
+        patientCardArchiveShowNonExecuted: row.patientCardArchiveShowNonExecuted !== false,
         extraProcedureRoute:
           row.extraProcedureRoute === "HOLD_UNTIL_PAY" ? "HOLD_UNTIL_PAY" : "PLAN_BEFORE_PAY",
       });
@@ -474,9 +479,17 @@ export default function ClinicAdminSettingsPage() {
             <td className="p-3 font-medium">{t("cardPlanPreview")}</td>
             <td className="p-3">{cardLimits.patientCardPlanPreview}</td>
           </tr>
-          <tr data-chip="card">
+          <tr data-chip="card" className="border-b">
             <td className="p-3 font-medium">{t("cardHistoryPageSize")}</td>
             <td className="p-3">{cardLimits.patientCardHistoryPageSize}</td>
+          </tr>
+          <tr data-chip="card">
+            <td className="p-3 font-medium">{t("patientCardArchiveShowNonExecuted")}</td>
+            <td className="p-3">
+              {schedDefaults.patientCardArchiveShowNonExecuted
+                ? t("settingOn")
+                : t("settingOff")}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -661,6 +674,24 @@ export default function ClinicAdminSettingsPage() {
             />
             {t("noShowBurnsQuota")}
           </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draftSched.patientCardArchiveShowNonExecuted}
+              onChange={(e) =>
+                setDraftSched((prev) => ({
+                  ...prev,
+                  patientCardArchiveShowNonExecuted: e.target.checked,
+                }))
+              }
+            />
+            <span>
+              {t("patientCardArchiveShowNonExecuted")}
+              <span className={`ml-1 block text-[12px] ${TEXT_MUTED_CLASS}`}>
+                {t("patientCardArchiveShowNonExecutedHint")}
+              </span>
+            </span>
+          </label>
           <CatalogField
             kind="CLOSED_SMALL"
             label={t("extraProcedureRoute")}
@@ -800,6 +831,7 @@ export default function ClinicAdminSettingsPage() {
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => void save()} submitLabel={tc("save")} />
       </ModalShell>
       <PrintSettingsPanel />
+      <AuditExemptPanel />
     </>
   );
 }

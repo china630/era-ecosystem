@@ -393,6 +393,9 @@ export async function registerWalkInEpisode(input: {
   issuingCountry?: string;
   globalPersonId?: string | null;
   programCode?: string;
+  /** Ambulatory N-day extras window (CLI-63). Default 1 when omitted. */
+  courseDays?: number;
+  confirmedByUserId?: string;
 }) {
   const key = input.fin?.trim() || input.passport?.trim();
   if (!key) throw new Error("FIN or passport required");
@@ -495,13 +498,26 @@ export async function registerWalkInEpisode(input: {
     globalPersonId: input.globalPersonId,
   });
 
+  const { addBakuDays, parseBakuDateTime, todayBakuYmd } = await import("@/lib/baku-day");
+  const rawDays = input.courseDays != null ? Math.floor(input.courseDays) : 1;
+  const courseDays = Number.isFinite(rawDays) ? Math.min(31, Math.max(1, rawDays)) : 1;
+  const startYmd = todayBakuYmd();
+  const plannedEndsOn = parseBakuDateTime(addBakuDays(startYmd, courseDays), "09:00");
+  const now = new Date();
+
   const episode = await prisma.clinicalEpisode.create({
     data: {
       patientRefId: patient.id,
       globalPersonId: globalPersonId ?? input.globalPersonId ?? patient.globalPersonId,
       organizationId: input.organizationId,
       patientOrigin: "WALK_IN",
+      courseKind: "AMBULATORY",
+      plannedEndsOn,
       programCode: input.programCode ?? null,
+      noPackageConfirmedAt: input.programCode?.trim() ? null : now,
+      noPackageConfirmedByUserId: input.programCode?.trim()
+        ? null
+        : input.confirmedByUserId ?? null,
       status: "OPEN",
     },
     include: { patientRef: true },
@@ -845,6 +861,15 @@ export async function listOpenEpisodes(input?: {
       if (e.patientOrigin !== "WALK_IN" && window?.checkOutDate) {
         const out = bakuDateKey(window.checkOutDate);
         if (out) departureByEpisodeId.set(e.id, out);
+      } else {
+        // CLI-69: ambulatory / staff benefit window (no hotel checkout).
+        const planned = (e as { plannedEndsOn?: Date | string | null }).plannedEndsOn;
+        const progEnd = (e.programInstance as { endsOn?: Date | string } | null)?.endsOn;
+        const endSrc = progEnd ?? planned;
+        if (endSrc) {
+          const out = bakuDateKey(endSrc);
+          if (out) departureByEpisodeId.set(e.id, out);
+        }
       }
       if (window?.checkInDate) {
         const ymd = bakuDateKey(window.checkInDate);

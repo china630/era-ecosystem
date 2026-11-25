@@ -20,7 +20,7 @@ import {
 import { PatientCardCareTeam } from "@/components/patients/PatientCardCareTeam";
 import { PrintLanguageDialog } from "@/components/print/PrintLanguageDialog";
 import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
-import { bakuDateDisplay } from "@/lib/baku-day";
+import { bakuDateDisplay, bakuDateKey } from "@/lib/baku-day";
 import {
   CARD_CONTAINER_CLASS,
   CatalogField,
@@ -96,6 +96,9 @@ type EpisodeOption = {
   programCode: string | null;
   roomNumber: string | null;
   patientOrigin: string;
+  courseKind?: "AMBULATORY" | "STAFF_BENEFIT" | null;
+  reservationId?: string | null;
+  courseWindowEditable?: boolean;
   stayStartsOn?: string | null;
   stayEndsOn?: string | null;
   stayNights?: number | null;
@@ -192,6 +195,8 @@ export function PatientCardBody({
   const [printOpen, setPrintOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
+  const [courseEndsDraft, setCourseEndsDraft] = useState("");
+  const [courseEndsSaving, setCourseEndsSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const locale = useLocale();
   const nationalityOptions = useMemo(
@@ -207,6 +212,45 @@ export function PatientCardBody({
     () => episodes.find((e) => e.id === selectedEpisodeId) ?? null,
     [episodes, selectedEpisodeId],
   );
+
+  useEffect(() => {
+    if (!selectedEpisode?.stayEndsOn) {
+      setCourseEndsDraft("");
+      return;
+    }
+    setCourseEndsDraft(bakuDateKey(selectedEpisode.stayEndsOn) || "");
+  }, [selectedEpisode?.id, selectedEpisode?.stayEndsOn]);
+
+  async function saveCourseWindow() {
+    if (!selectedEpisodeId || !courseEndsDraft) return;
+    setCourseEndsSaving(true);
+    try {
+      const res = await fetch(`/api/sanatorium/episodes/${selectedEpisodeId}/course-window`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endsOn: courseEndsDraft }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showApiError(data, t("courseEndsSaveFailed"));
+        return;
+      }
+      showSuccess(t("courseEndsSaved"));
+      await loadEpisodes();
+      setClinicalRefreshKey((n) => n + 1);
+    } finally {
+      setCourseEndsSaving(false);
+    }
+  }
+
+  function originDisplay(e: EpisodeOption): string {
+    if (e.courseKind === "STAFF_BENEFIT") return t("originStaff");
+    if (e.courseKind === "AMBULATORY" || e.patientOrigin === "WALK_IN") {
+      return t("originAmbulatory");
+    }
+    if (e.patientOrigin === "IN_HOUSE") return t("originInHouse");
+    return e.patientOrigin;
+  }
 
   async function retryPackageApply() {
     if (!selectedEpisodeId) return;
@@ -632,8 +676,38 @@ export function PatientCardBody({
                   <span className="font-semibold text-[#2C3E50]">{formatStayDate(selectedEpisode.stayStartsOn)}</span>
                 </p>
                 <p>
-                  <span className="block text-[11px] font-medium text-slate-500">{t("stayCheckOut")}</span>
-                  <span className="font-semibold text-[#2C3E50]">{formatStayDate(selectedEpisode.stayEndsOn)}</span>
+                  {selectedEpisode.courseWindowEditable && !episodeReadOnly ? null : (
+                    <span className="block text-[11px] font-medium text-slate-500">
+                      {selectedEpisode.courseWindowEditable ? t("courseEndsOn") : t("stayCheckOut")}
+                    </span>
+                  )}
+                  {selectedEpisode.courseWindowEditable && !episodeReadOnly ? (
+                    <span className="mt-1 flex flex-wrap items-end gap-2">
+                      <DatePicker
+                        label={t("courseEndsOn")}
+                        value={courseEndsDraft}
+                        onChange={(ymd) => setCourseEndsDraft(ymd)}
+                        placeholder={tc("datePlaceholder")}
+                        openCalendarLabel={tc("openCalendar")}
+                      />
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        disabled={
+                          courseEndsSaving ||
+                          !courseEndsDraft ||
+                          courseEndsDraft === (bakuDateKey(selectedEpisode.stayEndsOn ?? "") || "")
+                        }
+                        onClick={() => void saveCourseWindow()}
+                      >
+                        {t("courseEndsSave")}
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-[#2C3E50]">
+                      {formatStayDate(selectedEpisode.stayEndsOn)}
+                    </span>
+                  )}
                 </p>
                 <p>
                   <span className="block text-[11px] font-medium text-slate-500">{t("stayNights")}</span>
@@ -641,7 +715,7 @@ export function PatientCardBody({
                 </p>
                 <p>
                   <span className="block text-[11px] font-medium text-slate-500">{t("packageOrigin")}</span>
-                  <span className="font-semibold text-[#2C3E50]">{selectedEpisode.patientOrigin}</span>
+                  <span className="font-semibold text-[#2C3E50]">{originDisplay(selectedEpisode)}</span>
                 </p>
               </div>
             ) : (

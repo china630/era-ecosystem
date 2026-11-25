@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "plugins": []
+  },
+  "include": ["nest/**/*.ts", "src/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
+}
