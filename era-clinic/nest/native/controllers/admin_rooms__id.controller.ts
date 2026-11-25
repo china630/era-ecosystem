@@ -1,4 +1,4 @@
-import { expressKitHeaders } from "@era/satellite-kit";
+import { expressKitHeaders } from "../../express-kit-headers";
 import { Controller, Delete, HttpCode, Patch, Req } from "@nestjs/common";
 import type { Request } from "express";
 import {

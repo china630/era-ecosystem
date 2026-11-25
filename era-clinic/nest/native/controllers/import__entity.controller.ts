@@ -10,7 +10,7 @@ import {
 import { getImportAdapter } from "@/lib/import/adapters";
 import { assertClinicImportAccess } from "@/lib/import/auth";
 import { runImport, runImportBuffers, runFilelessImport } from "@/lib/import/run-import";
-import { expressKitHeaders } from "@era/satellite-kit";
+import { expressKitHeaders } from "../../express-kit-headers";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 
 
