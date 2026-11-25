@@ -5,6 +5,8 @@
 **Not the same as** [`Clinic-Implementation-Matrix.md`](./Clinic-Implementation-Matrix.md) (= Scaffold BE / AC only).  
 **Not** [`READINESS_MATRIX.md`](../READINESS_MATRIX.md) (engineering API/DELIVERY %).
 
+**Closeout (2026-11-26 kit handlers on dev):** `writeFrom` is in the kit on `dev` `f51cf7c`. The live clinic image does not have it until that SHA is deployed and the container is recreated. CLI-54 stays SCREEN. Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Rollup stays 🟡. `clinic.yaml` untouched. `era-readiness-matrix` N/A.
+
 **Closeout (2026-11-25 clinic Sync headers):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-54 stays SCREEN. The stay-reconcile screen did not change. Rollup stays 🟡. `clinic.yaml` untouched. `era-readiness-matrix` N/A. The public URL is still empty on the droplet until Sync and a clinic recreate.
 
 **Closeout (2026-11-25 closed-course Plan archive toggle):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-25 SHIPPED deepen (archive CANCELLED/NO_SHOW + guest prints; setting default on). Does not lift Demo or Pilot. Rollup stays 🟡. `clinic.yaml` untouched. Needs migrate `20261125180000` + clinic image.

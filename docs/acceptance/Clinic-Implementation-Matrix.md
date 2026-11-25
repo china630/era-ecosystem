@@ -4,6 +4,8 @@
 **Not readiness:** for sell/show/UI use [`Clinic-Product-Readiness-Matrix.md`](./Clinic-Product-Readiness-Matrix.md)  
 **Coverage facts:** [`COVERAGE_MATRIX.md`](../COVERAGE_MATRIX.md)
 
+**Closeout (2026-11-26 kit handlers on dev):** No new Scaffold ✅. AC-CLI-SAN-PAX stays 🟡. `writeFrom` is in `dev` `f51cf7c`. The droplet clinic image is still the previous one. Gate/Pilot unchanged. `clinic.yaml` untouched.
+
 **Closeout (2026-11-25 clinic Sync headers):** No new Scaffold ✅. AC-CLI-SAN-PAX stays 🟡. Stay reconcile unit plan is unchanged. The droplet job still fails closed without `publicBaseUrl`. Clinic image `dev-c32960d` can store that URL when Sync succeeds. Gate/Pilot unchanged. `clinic.yaml` untouched.
 
 **Closeout (2026-11-25 MED AuthZ/nav second-pass):** No new Scaffold ✅. AC-CLI-MED-* stay 🟡 out of BE rollup. Admin API map + public telehealth + page permissions + unit `clinic-permissions` MED-P1 routes. Field UAT still open. Gate/Pilot/edition unchanged. `clinic.yaml` untouched.

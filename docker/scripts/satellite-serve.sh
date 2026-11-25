@@ -18,9 +18,12 @@ PORT="$NEXT_PORT" HOSTNAME=127.0.0.1 node /app/server.js &
 NEXT_PID=$!
 
 cd /opt/nest-runtime/app
-# Next's tsconfig disables parameter decorators. Clinic Nest ships nest/tsconfig.json.
+# Next's tsconfig disables parameter decorators. Nest must load a tsconfig that
+# sets experimentalDecorators, or tsx/esbuild crashes on @Req/@Res.
 if [ -f nest/tsconfig.json ]; then
   export TSX_TSCONFIG_PATH="${PWD}/nest/tsconfig.json"
+elif [ -f tsconfig.nest.json ]; then
+  export TSX_TSCONFIG_PATH="${PWD}/tsconfig.nest.json"
 fi
 NEST_PORT="$NEST_PORT" node node_modules/tsx/dist/cli.mjs nest/main.ts &
 NEST_PID=$!

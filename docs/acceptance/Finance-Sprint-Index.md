@@ -6,7 +6,7 @@
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current rollup: Gate ✅ · BE ✅ · UI 🟡 · Demo ❌ · Sell: do not claim GA — many FIN-* API-only  
-**Sync body (2026-11-25):** droplet Finance Nest still rejects `placementFreeze`. AC-FIN-CFG stays Scaffold ✅ on the 401 / short-SSO negatives. Gate / BE / Demo / Pilot / Sell unchanged. The DTO allow-list is not in the finance image.  
+**Sync body (2026-11-26):** `placementFreeze` is on the DTO in `dev` `f51cf7c`. The droplet still rejects it until that image is deployed. AC-FIN-CFG stays Scaffold ✅ on the 401 / short-SSO negatives. Gate / BE / Demo / Pilot / Sell unchanged.  
 **Bank sync (2026-10-31):** hourly poll does not write statements unless the org sets `bankingDirect.syncMode` to `mock` or `rest`. Taxpayer lookup and ASAN/SİMA stubs stay off unless the org settings say so. FIN-ASAN-01 stays API/STUB. VAT-threshold `THRESHOLD_HIT` is hashed; AC-FIN-AUD stays 🟡. The home close prompt offers the earliest unclosed past month. Rejected hotel day documents are under Reports, and the row opens the package lines, with quantity purpose labeled. A rejection notifies the owner and the accountant. The same reason does not notify again. **Migration machine (FIN-MIG-01):** SHOW / SHIPPED; AC-FIN-MIG Scaffold ✅ out of BE rollup — does not change Demo ❌ / Pilot / Sell.
 
 ---

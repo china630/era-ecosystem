@@ -4,6 +4,8 @@
 **Not readiness:** for sell/show/UI use [`Platform-Product-Readiness-Matrix.md`](./Platform-Product-Readiness-Matrix.md)  
 **Coverage facts:** [`COVERAGE_MATRIX.md`](../COVERAGE_MATRIX.md)
 
+**Closeout (2026-11-26 Sync code on dev):** AC-CP-CFG stays Scaffold ✅. Kit `writeFrom` and the finance DTO are in `f51cf7c`. Not a new Scaffold ✅. The droplet still runs the previous images. Gate/edition unchanged. `platform.yaml` untouched.
+
 **Closeout (2026-11-25 clinic Sync headers):** AC-CP-CFG stays Scaffold ✅ (existing negatives). Clinic Nest on `dev-c32960d` reads the Sync POST without a missing kit export. Finance droplet still 400 on `placementFreeze`. Not a new Scaffold ✅. Not Pilot. Gate/edition unchanged. `platform.yaml` untouched. `READINESS_MATRIX` N/A.
 
 **Closeout (2026-11-11 guest app frame):** AC-CP-GUEST-APP 🟡 out of BE rollup. CP-GUEST-APP-01 API/SCREEN. Brand is not letterhead. Phone shell is `apps/guest-app` (empty rows, no guest journey). Gate/Pilot/edition unchanged. `platform.yaml` untouched. `READINESS_MATRIX` N/A. Not Scaffold ✅. Not SHIPPED.
