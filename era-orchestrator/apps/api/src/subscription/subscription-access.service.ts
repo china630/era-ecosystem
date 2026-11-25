@@ -79,6 +79,8 @@ export type OrganizationModuleEntitlements = {
   contractManagementPro: boolean;
   /** Annual budget plan and execution (PRD §4.16). */
   govBudgetPro: boolean;
+  /** Commercial management budget (PRD §4.16 deepen). */
+  mgmtBudgetPro: boolean;
   industryRetail: boolean;
   industryLogistics: boolean;
   industryConstruction: boolean;
@@ -139,6 +141,7 @@ function entitlementsFromConstructorModules(
     compliancePro: has("compliance_pro"),
     contractManagementPro: has("contract_management_pro"),
     govBudgetPro: has("gov_budget_pro"),
+    mgmtBudgetPro: has("mgmt_budget_pro"),
     industryRetail: hasInd("industry_retail"),
     industryLogistics: hasInd("industry_logistics"),
     industryConstruction: has("industry_construction"),
@@ -207,6 +210,7 @@ function emptyOrganizationSnapshot(): {
       compliancePro: false,
       contractManagementPro: false,
       govBudgetPro: false,
+      mgmtBudgetPro: false,
       industryRetail: false,
       industryLogistics: false,
       industryConstruction: false,
@@ -251,6 +255,7 @@ function computeEntitlementsLegacy(sub: {
     compliancePro: has("compliance_pro"),
     contractManagementPro: has("contract_management_pro"),
     govBudgetPro: has("gov_budget_pro"),
+    mgmtBudgetPro: has("mgmt_budget_pro"),
     industryRetail: false,
     industryLogistics: false,
     industryConstruction: false,
@@ -291,6 +296,7 @@ function computeEntitlements(sub: {
       compliancePro: true,
       contractManagementPro: true,
       govBudgetPro: true,
+      mgmtBudgetPro: true,
       industryRetail: false,
       industryLogistics: false,
       industryConstruction: false,
@@ -701,6 +707,7 @@ export class SubscriptionAccessService {
       compliance_pro?: boolean;
       contract_management_pro?: boolean;
       gov_budget_pro?: boolean;
+      mgmt_budget_pro?: boolean;
       recovery_pro?: boolean;
       ifrs_mapping?: boolean;
       accounting_book_extra?: boolean;
@@ -753,6 +760,7 @@ export class SubscriptionAccessService {
     apply("compliance_pro", patch.compliance_pro);
     apply("contract_management_pro", patch.contract_management_pro);
     apply("gov_budget_pro", patch.gov_budget_pro);
+    apply("mgmt_budget_pro", patch.mgmt_budget_pro);
     apply("recovery_pro", patch.recovery_pro);
     apply("ifrs_mapping", patch.ifrs_mapping);
     apply("accounting_book_extra", patch.accounting_book_extra);

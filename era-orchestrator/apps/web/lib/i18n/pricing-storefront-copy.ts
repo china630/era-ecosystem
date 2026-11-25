@@ -215,6 +215,14 @@ const uiRu: PricingStorefrontUiCopy = {
         "Bulk export и guest-приглашения",
       ],
     },
+    mgmt_budget_pro: {
+      description: "Управленческий бюджет для коммерческих организаций.",
+      bullets: [
+        "План года без статей NAS-Gov",
+        "Резерв обязательств soft/hard",
+        "План vs факт на /gov-budget",
+      ],
+    },
   },
   bundles: {
     cash_warehouse: {
@@ -350,6 +358,19 @@ const uiRu: PricingStorefrontUiCopy = {
     clinic_inpatient: "Стационар / койки",
     clinic_telehealth: "Телемедицина",
     clinic_nurse_roster: "Сестринский пост / процедуры",
+    construction_daily_logs: "Дневник / punch list",
+    construction_machinery: "Моточасы техники",
+    construction_boq: "Смета BOQ (ops)",
+    construction_estimate_hierarchy: "Смета 5 уровней (иерархия)",
+    construction_smeta_rate_engine: "Сметный движок расценок",
+    construction_schedule: "График / Gantt",
+    construction_cde: "CDE / чертежи",
+    construction_project_depth: "Глубина объекта (RFI / change / parties)",
+    construction_bim_lite: "BIM lite (ссылки на элементы)",
+    crm_geo_visits: "Гео-визиты",
+    crm_omni_inbox: "Omni inbox",
+    crm_selections: "Selections (после продажи)",
+    crm_warranty: "Гарантийные обращения",
   },
   platformAddonNames: {
     platform_notifications: "Notifications Pack",
@@ -506,6 +527,14 @@ const uiAz: PricingStorefrontUiCopy = {
         "Bulk export və guest dəvətləri",
       ],
     },
+    mgmt_budget_pro: {
+      description: "Kommersiya təşkilatları üçün idarəetmə büdcəsi.",
+      bullets: [
+        "İl planı NAS-Gov məqalələri olmadan",
+        "Öhdəlik rezervi soft/hard",
+        "Plan vs fakt /gov-budget-də",
+      ],
+    },
   },
   bundles: {
     cash_warehouse: {
@@ -641,6 +670,19 @@ const uiAz: PricingStorefrontUiCopy = {
     clinic_inpatient: "Stasionar / çarpayı",
     clinic_telehealth: "Telehealth",
     clinic_nurse_roster: "Tibb bacısı postu / prosedurlar",
+    construction_daily_logs: "Gündəlik / punch list",
+    construction_machinery: "Texnika saatları",
+    construction_boq: "BOQ smeta (ops)",
+    construction_estimate_hierarchy: "Beşsəviyyəli smeta (iyerarxiya)",
+    construction_smeta_rate_engine: "Smeta qiymət mühərriki",
+    construction_schedule: "Qrafik / Gantt",
+    construction_cde: "CDE / çertyojlar",
+    construction_project_depth: "Layihə dərinliyi (RFI / change / parties)",
+    construction_bim_lite: "BIM lite (element istinadları)",
+    crm_geo_visits: "Geo vizitlər",
+    crm_omni_inbox: "Omni inbox",
+    crm_selections: "Selections (satışdan sonra)",
+    crm_warranty: "Zəmanət müraciətləri",
   },
   platformAddonNames: {
     platform_notifications: "Notifications Pack",
