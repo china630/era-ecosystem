@@ -296,6 +296,7 @@ jobs:
           npx prisma generate
           npm test
           npm run build
+          node ../.github/scripts/check-satellite-kit-exports.mjs
           if [ -f .eslintrc.json ] || [ -f eslint.config.mjs ] || [ -f eslint.config.js ]; then
             npm run lint
           fi
