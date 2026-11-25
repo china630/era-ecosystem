@@ -39,7 +39,11 @@ for (const name of apps) {
     console.error(`FAIL ${name}: nest/main.ts does not mount SatelliteMutationAuditInterceptor`);
     failed = true;
   }
-  if (!text.includes("createSatelliteApiController")) {
+  const servesNestApi =
+    text.includes("createSatelliteApiController") ||
+    text.includes("ClinicNativeModule") ||
+    text.includes("KitApiController");
+  if (!servesNestApi) {
     console.error(`FAIL ${name}: nest/main.ts does not serve /api through a Nest controller`);
     failed = true;
   }

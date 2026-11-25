@@ -61,7 +61,8 @@ See [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-
 | `HOTEL_PMS_API_URL` | orchestrator | `http://hotel-pms:3201` |
 | `FNB_POS_API_URL` | orchestrator | `http://fnb-pos:3202` |
 | `RETAIL_API_URL` | orchestrator | `http://retail-pos:3204` |
-| `SATELLITE_BRIDGE_SECRET` | orchestrator + clinic + hotel-pms + fnb-pos + retail-pos | same value; header `x-satellite-bridge-secret` |
+| `CONSTRUCTION_API_URL` | orchestrator | `http://construction:3206` (docker-internal staff fan-out; Nest inside image may be 13206) |
+| `SATELLITE_BRIDGE_SECRET` | orchestrator + clinic + hotel-pms + fnb-pos + retail-pos + construction | same value; header `x-satellite-bridge-secret` |
 | `CLINIC_BRIDGE_SECRET` | clinic (alias for staff-provision) + hotel → clinic lifecycle | may match `SATELLITE_BRIDGE_SECRET` |
 | `ELEKTRAWEB_BRIDGE_ENABLED` | hotel-pms | `1` = process kill switch on (HOT-06); per-org hotel ids are Super-Admin `ElektrawebBridgePolicy`, not env |
 | `HOTEL_DATA_DIR` | hotel-pms | optional; letterhead logo storage (default `./data` in the app dir). Mount a volume in compose |
@@ -70,7 +71,7 @@ See [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-
 
 Public `ERA_CLINIC_ORIGIN` / launcher URLs are **not** the staff fan-out target.
 
-**clinic, hotel-pms, fnb-pos, and retail-pos** consume `STAFF_PROVISIONED`. Logistics / construction / CRM / auto / wholesale grants still do not create satellite logins — see [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) Plan C table.
+**clinic, hotel-pms, fnb-pos, retail-pos, and construction** consume `STAFF_PROVISIONED`. Logistics / CRM / auto / wholesale grants still do not create satellite logins — see [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) Plan C table.
 
 ---
 
@@ -116,7 +117,7 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | 6 | F&B POS | `era-fnb-pos` | `fnb-pos` | `fnb-pos` | 3202 | `https://fnb-pos.era-365.online/` |
 | 7 | Clinic | `era-clinic` | `clinic` | `clinic` | 3203 | `https://clinic.era-365.online/` |
 
-**Clinic nurse tablet:** `apps/clinic-nurse-app`, Android package `online.era365.nurse`. Talks to `https://clinic.era-365.online` (`EXPO_PUBLIC_CLINIC_URL`). Not a separate public host.
+**Clinic nurse tablet:** `apps/clinic-nurse-app`, Android package `online.era365.nurse`. Talks to `https://clinic.era-365.online` (`EXPO_PUBLIC_CLINIC_URL`). Not a separate public host. APK updates: `https://app.era-365.online/tablet-apps/nurse/version.json` (same host, sibling folders `guest` and `hotel-staff`). Files live in `era-orchestrator/apps/web/tablet-apps/<slug>/` or `TABLET_APPS_DIR`. One catalog per app, not per organization.
 
 **Clinic crons** (Bearer `PLATFORM_CRON_SECRET`): `POST /api/cron/procedure-auto-complete`, `POST /api/cron/procedure-no-show-sweep` (no-show, then after `dayEndHour` unpaid extras → `UNPAID_MISSED`: today seated + overdue `scheduledAt` + unseated created before today), `POST /api/cron/episode-walkin-close`, `POST /api/cron/episode-hotel-checkout` (also started by the clinic process at 06:00 and 18:00 Asia/Baku, and once after boot), plus existing inpatient/catalog crons. Tenant flags: `checkInRequiresQr`, `autoNoShowAfterMin` (see ADR clinic-procedure-day-ops / clinic-extra-procedure-route / hotel-clinic-lifecycle-outbox).
 
@@ -286,6 +287,18 @@ See [ADR control-plane-jwt-keys](./adr/control-plane-jwt-keys.md).
 | `LOGISTICS_DB` | `era_logistics` |
 | `CONSTRUCTION_DB` | `era_construction` |
 | `CRM_DB` | `era_crm` |
+
+### CRM integrations (platform ENV only)
+
+| Variable | Purpose |
+|----------|---------|
+| `CRM_INTEGRATIONS_KEK` | AES-256-GCM key (base64 ≥32 bytes) for per-tenant `IntegrationConnection.secretsEnc` — **required** to enable connections (fail-closed; no `JWT_SECRET` fallback) |
+| `NOTIFICATIONS_WEBHOOK_SECRET` / `WHATSAPP_WEBHOOK_SECRET` | HMAC / query token for orch `platform/notifications/v1/webhooks/:provider` |
+| `PUBLIC_BASE_URL` / `CRM_PUBLIC_URL` | Public origin used when rendering webhook URLs in admin integrations |
+| `REDIS_URL` | BullMQ queues `integration-inbound` / `integration-outbound` (workers) |
+| `META_APP_ID` / `META_APP_SECRET` | Meta OAuth for Instagram / Messenger / WA Cloud page tokens (callback `/admin/integrations/oauth/callback`) — platform only; tenant tokens in `IntegrationConnection` |
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Gmail + Google Calendar OAuth (same callback) — platform only |
+| `MICROSOFT_OAUTH_CLIENT_ID` / `MICROSOFT_OAUTH_CLIENT_SECRET` | Graph mail + M365 calendar OAuth — platform only |
 | `AUTO_SERVICE_DB` | `era_auto_service` |
 | `WHOLESALE_DB` | `era_wholesale` |
 | `CLINIC_DB` | `era_clinic` |

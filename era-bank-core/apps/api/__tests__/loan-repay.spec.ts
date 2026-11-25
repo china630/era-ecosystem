@@ -1,5 +1,8 @@
 import { InstallmentStatus } from "@era/bank-core-database";
-import { allocateRepayment } from "../src/modules/loans/loan-repay.util";
+import {
+  allocateRepayment,
+  repayWaterfallFromParams,
+} from "../src/modules/loans/loan-repay.util";
 import { computeDaysPastDue } from "../src/modules/loans/loan-risk.util";
 
 function inst(
@@ -64,6 +67,27 @@ describe("allocateRepayment", () => {
     const result = allocateRepayment([inst({})], 200_000n);
     expect(result.principalTotal + result.interestTotal).toBe(110_000n);
     expect(result.remainingUnallocated).toBe(90_000n);
+  });
+
+  it("takes accrued penalty before interest and principal", () => {
+    const result = allocateRepayment([inst({})], 25_000n, new Date(), {
+      accruedPenaltyMinor: 8_000n,
+    });
+    expect(result.penaltyTotal).toBe(8_000n);
+    expect(result.interestTotal).toBe(10_000n);
+    expect(result.principalTotal).toBe(7_000n);
+    expect(result.remainingUnallocated).toBe(0n);
+  });
+
+  it("honours product repayWaterfall principal-before-interest", () => {
+    const waterfall = repayWaterfallFromParams({
+      repayWaterfall: ["PRINCIPAL", "INTEREST", "PENALTY"],
+    });
+    const result = allocateRepayment([inst({})], 15_000n, new Date(), {
+      waterfall,
+    });
+    expect(result.principalTotal).toBe(15_000n);
+    expect(result.interestTotal).toBe(0n);
   });
 
   it("paid installment excluded from DPD", () => {

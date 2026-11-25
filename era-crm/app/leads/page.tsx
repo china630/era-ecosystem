@@ -31,6 +31,8 @@ type Lead = {
   title: string;
   contactRef: string;
   stage: string;
+  stageId?: string | null;
+  pipelineId?: string | null;
   channel: string;
   partyKind?: string;
   taxId?: string | null;
@@ -41,6 +43,14 @@ type Lead = {
   owner?: { id: string; fullName: string; login: string } | null;
   estimatedAmount?: string | number | null;
   nextContactAt?: string | null;
+};
+
+type PipelineStageCol = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  kind: string;
+  legacyStage?: string | null;
 };
 
 type SessionUser = {
@@ -131,6 +141,9 @@ function LeadsPipelineContent() {
   const [sectorOptions, setSectorOptions] = useState<CatalogOption[]>(FALLBACK_SECTOR);
   const [prospectOptions, setProspectOptions] =
     useState<CatalogOption[]>(FALLBACK_PROSPECT);
+  const [boardStages, setBoardStages] = useState<PipelineStageCol[] | null>(
+    null,
+  );
 
   const canAssign = session
     ? session.isOwner === true ||
@@ -166,6 +179,18 @@ function LeadsPipelineContent() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setSession(data))
       .catch(() => setSession(null));
+    fetch("/api/pipelines")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { items?: Array<{ isDefault: boolean; stages: PipelineStageCol[] }> } | null) => {
+        const items = data?.items ?? [];
+        const def = items.find((p) => p.isDefault) ?? items[0];
+        if (def?.stages?.length) {
+          setBoardStages(
+            [...def.stages].sort((a, b) => a.sortOrder - b.sortOrder),
+          );
+        }
+      })
+      .catch(() => setBoardStages(null));
 
     async function loadLookups() {
       try {
@@ -343,10 +368,42 @@ function LeadsPipelineContent() {
     }
   }
 
-  const grouped = STAGES.map((stage) => ({
-    stage,
-    items: leads.filter((l) => l.stage === stage),
-  }));
+  async function moveToPipelineStage(leadId: string, stageId: string) {
+    setMessage("");
+    try {
+      const res = await fetch(`/api/leads/${leadId}/stage`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stageId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Stage update failed");
+      await loadLeads(myLeadsOnly, prospectFilter);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error");
+    }
+  }
+
+  const grouped = boardStages?.length
+    ? boardStages.map((col) => ({
+        key: col.id,
+        label: col.name,
+        items: leads.filter(
+          (l) =>
+            l.stageId === col.id ||
+            (!l.stageId &&
+              (col.legacyStage
+                ? l.stage === col.legacyStage
+                : false)),
+        ),
+        pipelineStageId: col.id,
+      }))
+    : STAGES.map((stage) => ({
+        key: stage,
+        label: stage,
+        items: leads.filter((l) => l.stage === stage),
+        pipelineStageId: null as string | null,
+      }));
 
   return (
     <>
@@ -541,10 +598,10 @@ function LeadsPipelineContent() {
         </ModalShell>
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {grouped.map(({ stage, items }) => (
-            <div key={stage} className="rounded border p-3">
+          {grouped.map(({ key, label, items, pipelineStageId }) => (
+            <div key={key} className="rounded border p-3">
               <h3 className="text-[12px] font-semibold uppercase text-[#7F8C8D]">
-                {stage} ({items.length})
+                {label} ({items.length})
               </h3>
               <ul className="mt-2 space-y-2">
                 {items.map((lead) => (
@@ -555,6 +612,26 @@ function LeadsPipelineContent() {
                     >
                       {lead.title}
                     </Link>
+                    {boardStages && boardStages.length > 1 ? (
+                      <label className="mt-1 block text-[11px]">
+                        {t("pipelineStage")}
+                        <select
+                          className="mt-0.5 block w-full rounded border px-1 py-0.5"
+                          value={lead.stageId ?? pipelineStageId ?? ""}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              void moveToPipelineStage(lead.id, e.target.value);
+                            }
+                          }}
+                        >
+                          {boardStages.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
                     <div className="text-[#7F8C8D]">{lead.contactRef}</div>
                     {lead.taxId && (
                       <div className="text-[11px] text-[#7F8C8D]">

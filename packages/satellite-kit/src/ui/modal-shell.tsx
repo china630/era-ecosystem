@@ -55,6 +55,8 @@ export function ModalShell({
   closeLabel = "Close",
   /** Overlay stacking. Nested modals (confirm over editor) use a higher value. */
   overlayZClass = "z-[200]",
+  /** Replace default overlay padding (`p-4 pb-6 pt-10`) for near-fullscreen ops. */
+  overlayPaddingClass = "p-4 pb-6 pt-10",
 }: {
   /** When omitted, the shell is open (typical `{show ? <ModalShell>` mounts). */
   open?: boolean;
@@ -70,6 +72,7 @@ export function ModalShell({
   footerClassName?: string;
   closeLabel?: string;
   overlayZClass?: string;
+  overlayPaddingClass?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -81,7 +84,7 @@ export function ModalShell({
 
   return createPortal(
     <div
-      className={`fixed inset-0 ${overlayZClass} flex items-start justify-center overflow-hidden bg-black/40 p-4 pb-6 pt-10`}
+      className={`fixed inset-0 ${overlayZClass} flex items-stretch justify-center overflow-hidden bg-black/40 ${overlayPaddingClass}`}
       style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
       role="presentation"
       aria-hidden="true"

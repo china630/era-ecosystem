@@ -2,6 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { H2hJobStatus, ObConsentStatus, Prisma } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import {
+  validateOpenBankingConsentExpiry,
+  validateOpenBankingScaChallengeId,
+} from "./open-banking-consent.util";
 
 @Injectable()
 export class DboOpsService {
@@ -58,8 +62,12 @@ export class DboOpsService {
   createObConsent(input: {
     customerId: string;
     scopes?: string[];
-    expiresAt?: Date;
+    expiresAt: Date;
+    scaChallengeId?: string;
   }) {
+    const issuedAt = new Date();
+    validateOpenBankingConsentExpiry(issuedAt, input.expiresAt);
+    const sca = validateOpenBankingScaChallengeId(input.scaChallengeId);
     return this.prisma.openBankingConsent.create({
       data: {
         bankOrgId: this.bankOrg.bankOrgId,
@@ -67,6 +75,7 @@ export class DboOpsService {
         scopes: (input.scopes ?? ["accounts:read"]) as Prisma.InputJsonValue,
         status: ObConsentStatus.ACTIVE,
         expiresAt: input.expiresAt,
+        scaChallengeId: sca,
       },
     });
   }

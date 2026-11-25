@@ -133,7 +133,11 @@ export default function ContractsPage() {
                     ) : (
                       rows.map((row) => (
                         <tr key={row.id} className={DATA_TABLE_TR_CLASS}>
-                          <td className={DATA_TABLE_TD_CLASS}>{row.number}</td>
+                          <td className={DATA_TABLE_TD_CLASS}>
+                            <Link href={`/contracts/${row.id}`} className="text-blue-700 hover:underline">
+                              {row.number}
+                            </Link>
+                          </td>
                           <td className={DATA_TABLE_TD_CLASS}>{row.type}</td>
                           <td className={DATA_TABLE_TD_CLASS}>{row.status}</td>
                           <td className={DATA_TABLE_TD_CLASS}>

@@ -8,6 +8,10 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
+**Waves 2–4 (2026-11-25):** DBO leasing schedule read + parent OB SCA on consent. **No new Scaffold ✅**; AC-DBO-OPEN stays 🟡. Sell/`mvp`/`pilot_ready` unchanged.
+
+**Audit-v3 (2026-11-25):** Leasing BFF confirmed on Nest (`nest/generated/leasing_contracts*`, `/api` via `npm run front`) — not Next `app/api`. Engine customer isolation unchanged. **No Scaffold ✅** uplift.
+
 ---
 
 ## AC rollup
@@ -18,7 +22,7 @@
 | AC-DBO-ACC | Accounts + dashboard balances via engine BFF | ✅ | [ ] | BFF → /api/v1/dbo/* | No local ledger |
 | AC-DBO-PAY | Transfers + payment orders + AML preflight | ✅ | [ ] | DELIVERY payments + preflight; insufficient-funds / reject paths in UAT | Live rails E1 |
 | AC-DBO-CORP | Corporate multi-signatory approve queue | ✅ | [ ] | PaymentSignRequest channel DB; dual-sign reject UAT step |  |
-| AC-DBO-OPEN | Open API B2B + API keys | 🟡 | [ ] | engine /dbo/open/* + `/open-api` UI + `dbo-open-negative.spec.ts` | **In BE rollup.** UI class SCREEN (not curl-only). Scaffold still 🟡 until playbook close. [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) |
+| AC-DBO-OPEN | Open API B2B + API keys | 🟡 | [ ] | engine /dbo/open/* + `/open-api` UI + `dbo-open-negative.spec.ts`; parent OB consent SCA lab (Waves 2–4) | **In BE rollup.** UI class SCREEN. Scaffold still 🟡 — not CBAR Manual ready. [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md) |
 | AC-DBO-SO | Standing orders / DD list+create+pause | ✅ | [ ] | dbo/standing-orders; CIF scope; unauth 401 | Corp large SO paused pending dual-control |
 | AC-DBO-LOAN-APP | Loan application draft→submit | ✅ | [ ] | dbo/loans/applications; no book | Book stays ops SoD |
 | AC-DBO-3DS | Card 3DS challenge complete | ✅ | [ ] | dbo/cards/3ds/challenges; card ownership | Ops creates challenge |

@@ -68,6 +68,12 @@ export function routePermissions(pathname: string): Permission[] | null {
   if (pathname === "/loans" || pathname.startsWith("/loans/")) {
     return [PERMISSIONS.SCREEN_LOANS];
   }
+  if (pathname === "/leasing" || pathname.startsWith("/leasing/")) {
+    return [PERMISSIONS.SCREEN_LOANS];
+  }
+  if (pathname === "/mfi" || pathname.startsWith("/mfi/")) {
+    return [PERMISSIONS.SCREEN_LOANS];
+  }
   if (pathname === "/gl" || pathname.startsWith("/gl/")) {
     return [PERMISSIONS.SCREEN_GL];
   }

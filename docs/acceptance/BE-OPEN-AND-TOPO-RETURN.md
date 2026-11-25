@@ -27,7 +27,7 @@ Engine routes exist. Proof is **curl-only stretch**. Canon: no Scaffold ✅ with
 
 - Engine: `era-bank-core` `dbo/open/*` (accounts / orders lab)
 - Channel BFF may proxy; UI for key admin is thin or missing
-- Inventory: `CAP-DBO-OB` **IN** (lab AIS/PIS) — IN ≠ AC Scaffold ✅ ≠ GA
+- Inventory: `CAP-DBO-OB` **PARTIAL** (lab AIS/PIS + consent ≤90d; no CBAR gateway) — PARTIAL ≠ AC Scaffold ✅ ≠ GA
 - Other DBO ACs (AUTH/ACC/PAY/CORP/SO/LOAN-APP/3DS) already Scaffold ✅
 
 ### Do not confuse with

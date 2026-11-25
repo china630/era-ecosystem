@@ -1,6 +1,9 @@
+import { createHash } from "crypto";
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import {
   InstallmentStatus,
+  LoanLiabilityType,
+  LoanRepaymentFrequency,
   LoanStatus,
   ProductKind,
   TxnType,
@@ -8,10 +11,15 @@ import {
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
 import { getProductGlCode } from "../../common/product-gl";
-import { normalizeDayCountConvention } from "../../common/interest-daycount.util";
+import {
+  monthlyRateFactor,
+  normalizeDayCountConvention,
+} from "../../common/interest-daycount.util";
+import { DataHubClient } from "../../integration/data-hub.client";
 import { PostingEngineService } from "../../kernel/posting-engine/posting-engine.service";
 import { ProductFactoryService } from "../../kernel/product-factory/product-factory.service";
 import { RateIndexService } from "../../kernel/rates/rate-index.service";
+import { bumpToWeekday } from "./loan-date.util";
 import {
   addMonthsUtc,
   parseProductParams,
@@ -19,8 +27,19 @@ import {
   type LoanProductParams,
 } from "../../kernel/product-factory/product-params";
 import { createCreditBureauAdapter } from "./bureau.adapter";
-import { buildLoanSchedule } from "./loan-schedule.util";
-import { allocateRepayment } from "./loan-repay.util";
+import { CreditRegistryService } from "./credit-registry.service";
+import { computeAprPercent } from "./apr.util";
+import {
+  businessDateKey,
+  dailyLoanInterestMinor,
+  dailyPenaltyMinor,
+  overdueInstallmentBaseMinor,
+} from "./loan-interest.util";
+import { buildLoanSchedule, type ScheduleRow } from "./loan-schedule.util";
+import {
+  allocateRepayment,
+  repayWaterfallFromParams,
+} from "./loan-repay.util";
 import {
   computeDaysPastDue,
   parseCollateralRef,
@@ -39,7 +58,41 @@ export class LoansService {
     private readonly postingEngine: PostingEngineService,
     private readonly products: ProductFactoryService,
     private readonly rates: RateIndexService,
+    private readonly creditRegistry: CreditRegistryService,
+    private readonly dataHub: DataHubClient,
   ) {}
+
+  /** Bump due dates to the next working day (DataHub calendar; weekend fallback). */
+  private async bumpScheduleWorkingDays(
+    rows: ScheduleRow[],
+  ): Promise<ScheduleRow[]> {
+    const out: ScheduleRow[] = [];
+    for (const row of rows) {
+      let d = bumpToWeekday(new Date(row.dueDate.getTime()));
+      for (let i = 0; i < 14; i += 1) {
+        if (await this.dataHub.isWorkingDay(d)) break;
+        d = bumpToWeekday(new Date(d.getTime() + 86_400_000));
+      }
+      out.push({ ...row, dueDate: d });
+    }
+    return out;
+  }
+
+  private trackDebtStatusChange(
+    loanId: string,
+    customerId: string,
+    previousStatus: LoanStatus | string | null,
+    newStatus: LoanStatus | string,
+  ) {
+    void this.creditRegistry
+      .enqueueDebtStatusChange({
+        loanId,
+        customerId,
+        previousStatus: previousStatus ? String(previousStatus) : null,
+        newStatus: String(newStatus),
+      })
+      .catch(() => undefined);
+  }
 
   async list() {
     const loans = await this.prisma.loanContract.findMany({
@@ -60,9 +113,28 @@ export class LoansService {
     });
     if (!loan) return null;
     const risk = await this.enrichRisk(loan.id, loan.ifrs9Stage);
+    const links = await this.prisma.loanCollateralLink.findMany({
+      where: { loanId: id, bankOrgId: this.bankOrg.bankOrgId },
+      include: { collateralItem: true },
+      orderBy: { createdAt: "asc" },
+    });
+    const staleCutoff = Date.now() - 365 * 86_400_000;
+    const collateralLinks = links.map((link) => ({
+      id: link.id,
+      sharePct: link.sharePct.toString(),
+      collateralItemId: link.collateralItemId,
+      type: link.collateralItem.type,
+      description: link.collateralItem.description,
+      valuationMinor: link.collateralItem.valuationMinor.toString(),
+      haircutPct: link.collateralItem.haircutPct.toString(),
+      currency: link.collateralItem.currency,
+      staleRevaluation: link.collateralItem.updatedAt.getTime() < staleCutoff,
+      valuationAsOf: link.collateralItem.updatedAt.toISOString(),
+    }));
     return {
       ...loan,
       collateral: parseCollateralRef(loan.collateralRef),
+      collateralLinks,
       ...risk,
     };
   }
@@ -76,11 +148,61 @@ export class LoansService {
       installments.map((i) => ({ dueDate: i.dueDate, status: i.status })),
     );
     const suggestedStage = suggestIfrs9StageFromDpd(daysPastDue);
+    const lastCompleted = await this.prisma.prudentialClassificationRun.findFirst({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        status: "COMPLETED",
+      },
+      orderBy: { completedAt: "desc" },
+      select: { id: true },
+    });
+    const prudential = lastCompleted
+      ? await this.prisma.prudentialClassificationResult.findFirst({
+          where: {
+            runId: lastCompleted.id,
+            loanId,
+            bankOrgId: this.bankOrg.bankOrgId,
+          },
+          select: { category: true, provisionMinor: true, dpd: true },
+        })
+      : null;
     return {
       daysPastDue,
       suggestedIfrs9Stage: suggestedStage,
       isNpl: daysPastDue >= 90 || currentStage >= 3,
+      cbarPrudentialCategory: prudential?.category ?? null,
+      cbarProvisionMinor: prudential?.provisionMinor?.toString() ?? null,
+      cbarPrudentialDpd: prudential?.dpd ?? null,
     };
+  }
+
+  /** EOD: SCHEDULED → DUE on value date; past due unpaid → OVERDUE. */
+  async advanceInstallmentStatuses(businessDate: Date) {
+    const dayStart = new Date(
+      Date.UTC(
+        businessDate.getUTCFullYear(),
+        businessDate.getUTCMonth(),
+        businessDate.getUTCDate(),
+      ),
+    );
+    const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+    const due = await this.prisma.loanScheduleInstallment.updateMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        status: "SCHEDULED",
+        dueDate: { gte: dayStart, lt: dayEnd },
+      },
+      data: { status: "DUE" },
+    });
+    const overdue = await this.prisma.loanScheduleInstallment.updateMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        status: { in: ["SCHEDULED", "DUE"] },
+        dueDate: { lt: dayStart },
+      },
+      data: { status: "OVERDUE" },
+    });
+    return { markedDue: due.count, markedOverdue: overdue.count };
   }
 
   private async glByCode(code: string) {
@@ -128,6 +250,8 @@ export class LoansService {
     projectRef?: string;
     participationPct?: number;
     leadBankName?: string;
+    groupId?: string;
+    liabilityType?: LoanLiabilityType;
     makerUserId?: string;
     pricingException?: boolean;
     exceptionReason?: string;
@@ -200,13 +324,31 @@ export class LoansService {
       customerId: input.customerId,
       bankOrgId: this.bankOrg.bankOrgId,
     });
-    const schedule = buildLoanSchedule({
+    const gracePrincipalMonths = params.gracePrincipalMonths ?? 0;
+    const graceInterestMonths = params.graceInterestMonths ?? 0;
+    const repaymentFrequency =
+      params.repaymentFrequency ?? LoanRepaymentFrequency.MONTHLY;
+    const scheduleStart = new Date();
+    const rawSchedule = buildLoanSchedule({
       kind: scheduleKind,
       principalMinor: input.principalMinor,
       termMonths,
       rateAnnual,
       dayCountConvention,
+      gracePrincipalMonths,
+      graceInterestMonths,
+      repaymentFrequency:
+        repaymentFrequency as import("./loan-schedule.util").LoanRepaymentFrequency,
     });
+    const schedule = await this.bumpScheduleWorkingDays(rawSchedule);
+    const aprFlows = [
+      { date: scheduleStart, amountMinor: -Number(input.principalMinor) },
+      ...schedule.map((row) => ({
+        date: row.dueDate,
+        amountMinor: Number(row.principalMinor + row.interestMinor),
+      })),
+    ];
+    const aprPercent = computeAprPercent(aprFlows);
 
     const status = resolved.pricingException
       ? LoanStatus.PENDING_PRICING_APPROVAL
@@ -234,11 +376,19 @@ export class LoansService {
             ? serializeCollateral(input.collateral)
             : null,
           assetRef: input.assetRef ?? null,
+          groupId: input.groupId ?? null,
+          liabilityType: input.liabilityType ?? null,
           invoiceRef: input.invoiceRef ?? null,
           tradeRef: input.tradeRef ?? null,
           projectRef: input.projectRef ?? null,
           participationPct: input.participationPct ?? null,
           leadBankName: input.leadBankName ?? null,
+          gracePrincipalMonths,
+          graceInterestMonths,
+          repaymentFrequency,
+          firstDueDate: schedule[0]?.dueDate ?? null,
+          aprPercent: aprPercent ?? undefined,
+          penaltyRateAnnual: params.penaltyRateAnnual ?? null,
           makerUserId: input.makerUserId ?? "service",
           pricingExceptionReason: resolved.pricingException
             ? input.exceptionReason ?? null
@@ -303,10 +453,17 @@ export class LoansService {
         },
       })
       .catch(() => undefined);
-    return this.prisma.loanContract.update({
+    const updated = await this.prisma.loanContract.update({
       where: { id },
       data: { status: LoanStatus.APPROVED },
     });
+    this.trackDebtStatusChange(
+      id,
+      loan.customerId,
+      loan.status,
+      LoanStatus.APPROVED,
+    );
+    return updated;
   }
 
   async pricingReject(id: string, checkerUserId: string) {
@@ -387,14 +544,17 @@ export class LoansService {
     const startSeq = unpaid[0].sequenceNo;
     const scheduleKind =
       template?.kind === ProductKind.LOAN_DIFF ? "LOAN_DIFF" : "LOAN_ANNUITY";
-    const rebuilt = buildLoanSchedule({
-      kind: scheduleKind,
-      principalMinor: remainingPrincipal > 0n ? remainingPrincipal : loan.outstandingMinor,
-      termMonths: unpaid.length,
-      rateAnnual,
-      startDate: asOfDate,
-      dayCountConvention: loan.dayCountConvention,
-    });
+    const rebuilt = await this.bumpScheduleWorkingDays(
+      buildLoanSchedule({
+        kind: scheduleKind,
+        principalMinor:
+          remainingPrincipal > 0n ? remainingPrincipal : loan.outstandingMinor,
+        termMonths: unpaid.length,
+        rateAnnual,
+        startDate: asOfDate,
+        dayCountConvention: loan.dayCountConvention,
+      }),
+    );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.loanScheduleInstallment.deleteMany({
@@ -468,6 +628,18 @@ export class LoansService {
     return this.getById(id);
   }
 
+  async setQualityFlags(id: string, qualityFlags: string[]) {
+    const loan = await this.prisma.loanContract.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!loan) throw new NotFoundException("Loan not found");
+    const cleaned = [...new Set(qualityFlags.map((f) => f.trim()).filter(Boolean))];
+    return this.prisma.loanContract.update({
+      where: { id },
+      data: { qualityFlagsJson: cleaned },
+    });
+  }
+
   async disburse(id: string, accountId: string, makerUserId = "service") {
     const loan = await this.prisma.loanContract.findFirst({
       where: { id, bankOrgId: this.bankOrg.bankOrgId },
@@ -508,13 +680,28 @@ export class LoansService {
       ],
     });
 
-    return this.prisma.loanContract.update({
+    const updated = await this.prisma.loanContract.update({
       where: { id },
       data: { status: LoanStatus.DISBURSED, accountId, disbursedAt: new Date() },
     });
+    this.trackDebtStatusChange(
+      id,
+      loan.customerId,
+      loan.status,
+      LoanStatus.DISBURSED,
+    );
+    return updated;
   }
 
-  async repay(id: string, amountMinor: bigint, makerUserId = "service") {
+  async repay(
+    id: string,
+    amountMinor: bigint,
+    makerUserId = "service",
+    idempotencyKey?: string,
+  ) {
+    if (amountMinor <= 0n) {
+      throw new BadRequestException("amountMinor must be positive");
+    }
     const loan = await this.prisma.loanContract.findFirst({
       where: { id, bankOrgId: this.bankOrg.bankOrgId },
     });
@@ -537,8 +724,38 @@ export class LoansService {
     });
 
     const asOf = new Date();
-    let { principalTotal, interestTotal, remainingUnallocated, patches } =
-      allocateRepayment(installments, amountMinor, asOf);
+    const unpaidFingerprint = installments
+      .filter(
+        (i) =>
+          i.status !== InstallmentStatus.PAID &&
+          i.status !== InstallmentStatus.WAIVED,
+      )
+      .map(
+        (i) =>
+          `${i.id}:${i.paidPrincipalMinor}:${i.paidInterestMinor}:${i.status}`,
+      )
+      .join("|");
+    const stateHash = createHash("sha256")
+      .update(
+        `${amountMinor}|${loan.accruedPenaltyMinor}|${loan.outstandingMinor}|${unpaidFingerprint}`,
+      )
+      .digest("hex")
+      .slice(0, 24);
+    const stableKey =
+      idempotencyKey?.trim() || `loan-repay-${id}-${stateHash}`;
+
+    const productTpl = await this.prisma.productTemplate.findFirst({
+      where: {
+        id: loan.productTemplateId,
+        bankOrgId: this.bankOrg.bankOrgId,
+      },
+      select: { paramsJson: true },
+    });
+    let { penaltyTotal, principalTotal, interestTotal, remainingUnallocated, patches } =
+      allocateRepayment(installments, amountMinor, asOf, {
+        accruedPenaltyMinor: loan.accruedPenaltyMinor,
+        waterfall: repayWaterfallFromParams(productTpl?.paramsJson),
+      });
 
     // Consume residual overpay: extra principal first, then interest income.
     if (remainingUnallocated > 0n) {
@@ -592,55 +809,71 @@ export class LoansService {
         currency: loan.currency,
       });
     }
+    if (penaltyTotal > 0n) {
+      legs.push({
+        glAccountId: interestGl.id,
+        branchId: account.branchId,
+        debitMinor: 0n,
+        creditMinor: penaltyTotal,
+        currency: loan.currency,
+      });
+    }
 
     await this.postingEngine.post({
-      reference: `LOAN-REPAY-${id}-${Date.now()}`,
-      idempotencyKey: `loan-repay-${id}-${amountMinor}-${Date.now()}`,
+      reference: `LOAN-REPAY-${id}-${stableKey.slice(0, 48)}`,
+      idempotencyKey: stableKey.slice(0, 191),
       valueDate: asOf,
       type: TxnType.INTEREST,
       makerUserId,
       branchId: account.branchId,
       autoApprove: true,
       legs,
+      sideEffectsInTx: async (tx) => {
+        for (const patch of patches) {
+          await tx.loanScheduleInstallment.update({
+            where: { id: patch.id },
+            data: {
+              paidPrincipalMinor: patch.paidPrincipalMinor,
+              paidInterestMinor: patch.paidInterestMinor,
+              status: patch.status,
+              paidAt: patch.paidAt,
+            },
+          });
+        }
+        for (const inst of installments) {
+          const patch = patches.find((p) => p.id === inst.id);
+          const finalStatus = patch?.status ?? inst.status;
+          if (
+            finalStatus === InstallmentStatus.PAID ||
+            finalStatus === InstallmentStatus.WAIVED
+          ) {
+            continue;
+          }
+          if (inst.dueDate.getTime() < asOf.getTime()) {
+            await tx.loanScheduleInstallment.update({
+              where: { id: inst.id },
+              data: { status: InstallmentStatus.OVERDUE },
+            });
+          }
+        }
+        const outstanding = loan.outstandingMinor - principalTotal;
+        const nextPenalty =
+          loan.accruedPenaltyMinor > penaltyTotal
+            ? loan.accruedPenaltyMinor - penaltyTotal
+            : 0n;
+        await tx.loanContract.update({
+          where: { id },
+          data: {
+            outstandingMinor: outstanding < 0n ? 0n : outstanding,
+            accruedPenaltyMinor: nextPenalty,
+            status: outstanding <= 0n ? LoanStatus.CLOSED : LoanStatus.ACTIVE,
+          },
+        });
+      },
     });
 
-    for (const patch of patches) {
-      await this.prisma.loanScheduleInstallment.update({
-        where: { id: patch.id },
-        data: {
-          paidPrincipalMinor: patch.paidPrincipalMinor,
-          paidInterestMinor: patch.paidInterestMinor,
-          status: patch.status,
-          paidAt: patch.paidAt,
-        },
-      });
-    }
-
-    // Mark remaining past-due unpaid installments OVERDUE (MVP: repay path only).
-    for (const inst of installments) {
-      const patch = patches.find((p) => p.id === inst.id);
-      const finalStatus = patch?.status ?? inst.status;
-      if (
-        finalStatus === InstallmentStatus.PAID ||
-        finalStatus === InstallmentStatus.WAIVED
-      ) {
-        continue;
-      }
-      if (inst.dueDate.getTime() < asOf.getTime()) {
-        await this.prisma.loanScheduleInstallment.update({
-          where: { id: inst.id },
-          data: { status: InstallmentStatus.OVERDUE },
-        });
-      }
-    }
-
-    const outstanding = loan.outstandingMinor - principalTotal;
-    return this.prisma.loanContract.update({
-      where: { id },
-      data: {
-        outstandingMinor: outstanding < 0n ? 0n : outstanding,
-        status: outstanding <= 0n ? LoanStatus.CLOSED : LoanStatus.ACTIVE,
-      },
+    return this.prisma.loanContract.findFirstOrThrow({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
     });
   }
 
@@ -709,5 +942,388 @@ export class LoansService {
       }
     }
     return { updated: updates.length, updates };
+  }
+
+  async accrueDailyInterest(businessDate: Date) {
+    const dateKey = businessDateKey(businessDate);
+    const contracts = await this.prisma.loanContract.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        status: {
+          in: [LoanStatus.DISBURSED, LoanStatus.ACTIVE, LoanStatus.OVERDUE],
+        },
+        outstandingMinor: { gt: 0n },
+      },
+    });
+
+    let accruedCount = 0;
+    let skippedCount = 0;
+    let totalDailyMinor = 0n;
+
+    for (const loan of contracts) {
+      if (
+        loan.lastAccrualDate &&
+        businessDateKey(loan.lastAccrualDate) === dateKey
+      ) {
+        skippedCount += 1;
+        continue;
+      }
+
+      const rate = Number(loan.rateAnnual);
+      const daily = dailyLoanInterestMinor(
+        loan.outstandingMinor,
+        rate,
+        loan.dayCountConvention,
+      );
+      if (daily <= 0n) {
+        await this.prisma.loanContract.update({
+          where: { id: loan.id },
+          data: { lastAccrualDate: businessDate },
+        });
+        skippedCount += 1;
+        continue;
+      }
+
+      // Accrual register and journal must stay aligned — no field bump without a posting.
+      if (!loan.accountId) {
+        skippedCount += 1;
+        continue;
+      }
+      const account = await this.prisma.account.findFirst({
+        where: { id: loan.accountId, bankOrgId: this.bankOrg.bankOrgId },
+      });
+      if (!account) {
+        skippedCount += 1;
+        continue;
+      }
+      const { loanGl, interestGl } = await this.productGlCodes(
+        loan.productTemplateId,
+      );
+      const idempotencyKey = `loan-int-accrual-${loan.id}-${dateKey}`;
+      await this.postingEngine.post({
+        reference: `LOAN-INT-ACCRUAL-${loan.id}-${dateKey}`,
+        idempotencyKey,
+        valueDate: businessDate,
+        type: TxnType.INTEREST,
+        makerUserId: "eod-system",
+        branchId: account.branchId,
+        autoApprove: true,
+        allowDuringEod: true,
+        legs: [
+          {
+            glAccountId: loanGl.id,
+            branchId: account.branchId,
+            debitMinor: daily,
+            creditMinor: 0n,
+            currency: loan.currency,
+          },
+          {
+            glAccountId: interestGl.id,
+            branchId: account.branchId,
+            debitMinor: 0n,
+            creditMinor: daily,
+            currency: loan.currency,
+          },
+        ],
+        sideEffectsInTx: async (tx) => {
+          await tx.loanContract.update({
+            where: { id: loan.id },
+            data: {
+              accruedInterestMinor: loan.accruedInterestMinor + daily,
+              lastAccrualDate: businessDate,
+            },
+          });
+        },
+      });
+
+      accruedCount += 1;
+      totalDailyMinor += daily;
+    }
+
+    return {
+      date: dateKey,
+      accruedCount,
+      skippedCount,
+      totalDailyMinor: totalDailyMinor.toString(),
+    };
+  }
+
+  async accruePenalties(businessDate: Date) {
+    const dateKey = businessDateKey(businessDate);
+    const loans = await this.prisma.loanContract.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        status: { in: [LoanStatus.ACTIVE, LoanStatus.OVERDUE] },
+        penaltyRateAnnual: { not: null },
+      },
+    });
+
+    let penalizedCount = 0;
+    let totalPenaltyMinor = 0n;
+
+    for (const loan of loans) {
+      const penaltyRate = loan.penaltyRateAnnual ?? 0;
+      if (penaltyRate <= 0) continue;
+
+      const installments = await this.prisma.loanScheduleInstallment.findMany({
+        where: { loanId: loan.id, bankOrgId: this.bankOrg.bankOrgId },
+      });
+      let overdueBase = 0n;
+      for (const inst of installments) {
+        if (
+          inst.dueDate.getTime() < businessDate.getTime() &&
+          inst.status !== InstallmentStatus.PAID &&
+          inst.status !== InstallmentStatus.WAIVED
+        ) {
+          overdueBase += overdueInstallmentBaseMinor(inst);
+        }
+      }
+      if (overdueBase <= 0n) continue;
+
+      const daily = dailyPenaltyMinor(
+        overdueBase,
+        penaltyRate,
+        loan.dayCountConvention,
+      );
+      if (daily <= 0n) continue;
+
+      await this.prisma.loanContract.update({
+        where: { id: loan.id },
+        data: {
+          accruedPenaltyMinor: loan.accruedPenaltyMinor + daily,
+        },
+      });
+      penalizedCount += 1;
+      totalPenaltyMinor += daily;
+    }
+
+    return {
+      date: dateKey,
+      penalizedCount,
+      totalPenaltyMinor: totalPenaltyMinor.toString(),
+    };
+  }
+
+  private async rebuildUnpaidSchedule(
+    loanId: string,
+    loan: {
+      productTemplateId: string;
+      outstandingMinor: bigint;
+      rateAnnual: { toString(): string } | number;
+      dayCountConvention: string;
+      gracePrincipalMonths: number;
+      graceInterestMonths: number;
+      repaymentFrequency: LoanRepaymentFrequency;
+      firstDueDate: Date | null;
+    },
+    mode: "REDUCE_TERM" | "REDUCE_INSTALLMENT",
+    asOfDate: Date,
+  ) {
+    return this.rebuildUnpaidScheduleInTx(this.prisma, loanId, loan, mode, asOfDate);
+  }
+
+  /** Rebuild unpaid schedule using an outer money tx (prepay atomicity). */
+  private async rebuildUnpaidScheduleInTx(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tx: any,
+    loanId: string,
+    loan: {
+      productTemplateId: string;
+      outstandingMinor: bigint;
+      rateAnnual: { toString(): string } | number;
+      dayCountConvention: string;
+      gracePrincipalMonths: number;
+      graceInterestMonths: number;
+      repaymentFrequency: LoanRepaymentFrequency;
+      firstDueDate: Date | null;
+    },
+    mode: "REDUCE_TERM" | "REDUCE_INSTALLMENT",
+    asOfDate: Date,
+  ) {
+    const installments = await tx.loanScheduleInstallment.findMany({
+      where: { loanId, bankOrgId: this.bankOrg.bankOrgId },
+      orderBy: { sequenceNo: "asc" },
+    });
+    const unpaid = installments.filter(
+      (i: { status: string }) =>
+        i.status !== InstallmentStatus.PAID &&
+        i.status !== InstallmentStatus.WAIVED,
+    );
+    if (unpaid.length === 0) {
+      return { rebuilt: false as const, schedule: [] as ScheduleRow[] };
+    }
+
+    const template = await tx.productTemplate.findFirst({
+      where: { id: loan.productTemplateId, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    const scheduleKind =
+      template?.kind === ProductKind.LOAN_DIFF ? "LOAN_DIFF" : "LOAN_ANNUITY";
+    const rateAnnual = Number(loan.rateAnnual);
+
+    let termMonths = unpaid.length;
+    if (mode === "REDUCE_TERM" && scheduleKind === "LOAN_ANNUITY") {
+      const monthlyRate = monthlyRateFactor(
+        rateAnnual,
+        normalizeDayCountConvention(loan.dayCountConvention),
+      );
+      const headPmt = Number(
+        unpaid[0].principalMinor + unpaid[0].interestMinor,
+      );
+      if (monthlyRate > 0 && headPmt > 0) {
+        const p = Number(loan.outstandingMinor);
+        const nEstimate = Math.ceil(
+          -Math.log(1 - (p * monthlyRate) / headPmt) / Math.log(1 + monthlyRate),
+        );
+        if (Number.isFinite(nEstimate) && nEstimate >= 1) {
+          termMonths = Math.min(unpaid.length, Math.max(1, nEstimate));
+        }
+      }
+    }
+
+    const firstDueDate =
+      loan.firstDueDate && loan.firstDueDate > asOfDate
+        ? loan.firstDueDate
+        : unpaid[0]?.dueDate ?? asOfDate;
+
+    const rebuiltRaw = buildLoanSchedule({
+      kind: scheduleKind,
+      principalMinor: loan.outstandingMinor,
+      termMonths,
+      rateAnnual,
+      startDate: asOfDate,
+      firstDueDate,
+      dayCountConvention: loan.dayCountConvention,
+      gracePrincipalMonths: 0,
+      graceInterestMonths: 0,
+      repaymentFrequency:
+        loan.repaymentFrequency as import("./loan-schedule.util").LoanRepaymentFrequency,
+    });
+    const rebuilt = await this.bumpScheduleWorkingDays(rebuiltRaw);
+
+    const startSeq = unpaid[0].sequenceNo;
+    await tx.loanScheduleInstallment.deleteMany({
+      where: { loanId, id: { in: unpaid.map((u: { id: string }) => u.id) } },
+    });
+    for (const row of rebuilt) {
+      await tx.loanScheduleInstallment.create({
+        data: {
+          bankOrgId: this.bankOrg.bankOrgId,
+          loanId,
+          sequenceNo: startSeq + row.sequenceNo - 1,
+          dueDate: row.dueDate,
+          principalMinor: row.principalMinor,
+          interestMinor: row.interestMinor,
+          status: InstallmentStatus.SCHEDULED,
+        },
+      });
+    }
+
+    return { rebuilt: true as const, schedule: rebuilt, termMonths };
+  }
+
+  async prepay(
+    id: string,
+    input: {
+      amountMinor: bigint;
+      mode: "REDUCE_TERM" | "REDUCE_INSTALLMENT";
+      idempotencyKey?: string;
+    },
+    makerUserId = "service",
+  ) {
+    if (input.amountMinor <= 0n) {
+      throw new BadRequestException("amountMinor must be positive");
+    }
+    const loan = await this.prisma.loanContract.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!loan) throw new NotFoundException("Loan not found");
+    if (!loan.accountId) {
+      throw new BadRequestException("Loan has no disbursement account");
+    }
+    if (input.amountMinor > loan.outstandingMinor) {
+      throw new BadRequestException("Prepay amount exceeds outstanding principal");
+    }
+
+    const account = await this.prisma.account.findFirst({
+      where: { id: loan.accountId, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!account) throw new NotFoundException("Account not found");
+
+    const { loanGl } = await this.productGlCodes(loan.productTemplateId);
+    const asOf = new Date();
+    const stateHash = createHash("sha256")
+      .update(
+        `${input.amountMinor}|${input.mode}|${loan.outstandingMinor}|${loan.updatedAt.toISOString()}`,
+      )
+      .digest("hex")
+      .slice(0, 24);
+    const stableKey =
+      input.idempotencyKey?.trim() || `loan-prepay-${id}-${stateHash}`;
+
+    let scheduleResult: {
+      rebuilt: boolean;
+      schedule?: ScheduleRow[];
+      termMonths?: number;
+    } = { rebuilt: false };
+    const newOutstanding = loan.outstandingMinor - input.amountMinor;
+
+    await this.postingEngine.post({
+      reference: `LOAN-PREPAY-${id}-${stateHash}`,
+      idempotencyKey: stableKey.slice(0, 191),
+      valueDate: asOf,
+      type: TxnType.TRANSFER,
+      makerUserId,
+      branchId: account.branchId,
+      autoApprove: true,
+      legs: [
+        {
+          accountId: account.id,
+          glAccountId: account.glAccountId,
+          branchId: account.branchId,
+          debitMinor: input.amountMinor,
+          creditMinor: 0n,
+          currency: loan.currency,
+        },
+        {
+          glAccountId: loanGl.id,
+          branchId: account.branchId,
+          debitMinor: 0n,
+          creditMinor: input.amountMinor,
+          currency: loan.currency,
+        },
+      ],
+      sideEffectsInTx: async (tx) => {
+        await tx.loanContract.update({
+          where: { id },
+          data: {
+            outstandingMinor: newOutstanding,
+            status:
+              newOutstanding <= 0n
+                ? LoanStatus.CLOSED
+                : loan.status === LoanStatus.DISBURSED
+                  ? LoanStatus.ACTIVE
+                  : loan.status,
+          },
+        });
+        if (newOutstanding > 0n) {
+          scheduleResult = await this.rebuildUnpaidScheduleInTx(
+            tx,
+            id,
+            { ...loan, outstandingMinor: newOutstanding },
+            input.mode,
+            asOf,
+          );
+        }
+      },
+    });
+
+    return {
+      loanId: id,
+      mode: input.mode,
+      principalPrepaidMinor: input.amountMinor.toString(),
+      outstandingMinor: newOutstanding.toString(),
+      schedule: scheduleResult,
+      idempotencyKey: stableKey.slice(0, 191),
+    };
   }
 }

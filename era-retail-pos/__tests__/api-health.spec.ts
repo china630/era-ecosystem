@@ -22,12 +22,14 @@ jest.mock("../nest/bridge", () => ({
   },
 }));
 
-import { invokeNest } from "./nest-invoke";
-import { register } from "../nest/generated/health";
+import { invokeMethod } from "./nest-invoke";
+import { HealthController } from "../nest/native/controllers/health";
 
 describe("GET /api/health", () => {
   it("returns ok payload", async () => {
-    const res = await invokeNest(register, "get", "/api/health");
+    const controller = new HealthController();
+    const res = await invokeMethod((req, httpRes) => controller.get_0(req as never, httpRes as never));
+    if (!res.json) throw new Error("missing");
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);

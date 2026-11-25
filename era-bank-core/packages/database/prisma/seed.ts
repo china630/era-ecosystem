@@ -12,15 +12,18 @@ import {
   CredentialStatus,
   SignatoryRole,
   SignatoryStatus,
+  InstitutionType,
   KycStatus,
   CardStatus,
   CounterpartyType,
   NostroDirection,
   ActiveStatus,
+  PrudentialCategory,
 } from "../generated/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { createSatelliteTenantExtension } from "@era/satellite-kit/tenancy";
+import { REG_REPORT_TEMPLATE_CATALOG } from "./reg-report-template.catalog";
 
 const bankOrgId = (() => {
   const id =
@@ -71,6 +74,8 @@ async function main() {
       { code: "5100101", name: "Interest expense", type: GlAccountType.EXPENSE, currency: "AZN" },
       { code: "5100201", name: "Loan loss expense", type: GlAccountType.EXPENSE, currency: "AZN" },
       { code: "1390101", name: "Loan loss allowance", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "1390201", name: "CBAR prudential loan provision", type: GlAccountType.ASSET, currency: "AZN" },
+      { code: "5100251", name: "CBAR prudential provision expense", type: GlAccountType.EXPENSE, currency: "AZN" },
       { code: "4100201", name: "Fee income", type: GlAccountType.INCOME, currency: "AZN" },
       { code: "1300201", name: "Fee receivable", type: GlAccountType.ASSET, currency: "AZN" },
       { code: "2990201", name: "Fee suspense", type: GlAccountType.LIABILITY, currency: "AZN" },
@@ -99,6 +104,15 @@ async function main() {
         update: { name: gl.name, type: gl.type, currency: gl.currency },
       });
     }
+
+    await prisma.bankInstitutionConfig.upsert({
+      where: { bankOrgId },
+      create: {
+        bankOrgId,
+        institutionType: InstitutionType.BANK,
+      },
+      update: {},
+    });
 
     const hq = await prisma.branch.upsert({
       where: { bankOrgId_code: { bankOrgId, code: "HQ" } },
@@ -220,6 +234,8 @@ async function main() {
       { key: "INTEREST_EXPENSE", glCode: "5100101" },
       { key: "LOAN_LOSS_EXPENSE", glCode: "5100201" },
       { key: "LOAN_LOSS_ALLOWANCE", glCode: "1390101" },
+      { key: "PRUDENTIAL_ALLOWANCE", glCode: "1390201" },
+      { key: "PRUDENTIAL_EXPENSE", glCode: "5100251" },
       { key: "FEE_INCOME", glCode: "4100201" },
       { key: "FEE_RECEIVABLE", glCode: "1300201" },
       { key: "FEE_SUSPENSE", glCode: "2990201" },
@@ -252,6 +268,14 @@ async function main() {
       {
         code: "THRESHOLD_SINGLE_TXN",
         paramsJson: { thresholdMinor: 1500000, currencies: ["AZN"] },
+      },
+      {
+        code: "CASH_THRESHOLD",
+        paramsJson: {
+          thresholdMinor: 2000000,
+          currencies: ["AZN"],
+          filingBusinessDays: 3,
+        },
       },
       {
         code: "VELOCITY_24H",
@@ -503,6 +527,33 @@ async function main() {
       update: { rateAnnual: 0.075, source: "STUB" },
     });
 
+    for (const tpl of REG_REPORT_TEMPLATE_CATALOG) {
+      await prisma.regReportTemplate.upsert({
+        where: {
+          code_institutionType_version: {
+            code: tpl.code,
+            institutionType: tpl.institutionType,
+            version: tpl.version,
+          },
+        },
+        create: {
+          id: tpl.id,
+          code: tpl.code,
+          institutionType: tpl.institutionType,
+          version: tpl.version,
+          validFrom: tpl.validFrom,
+          definitionJson: tpl.definitionJson as Prisma.InputJsonValue,
+          outputFormat: tpl.outputFormat,
+        },
+        update: {
+          validFrom: tpl.validFrom,
+          definitionJson: tpl.definitionJson as Prisma.InputJsonValue,
+          outputFormat: tpl.outputFormat,
+        },
+      });
+    }
+    console.info(`[bank-core:seed] reg report templates: ${REG_REPORT_TEMPLATE_CATALOG.length}`);
+
     await prisma.eclParameterSet.upsert({
       where: { bankOrgId_version: { bankOrgId, version: "lab-v1" } },
       create: {
@@ -527,6 +578,80 @@ async function main() {
         },
       },
     });
+
+    const prudentialRates: Array<{
+      category: PrudentialCategory;
+      dpdMin: number;
+      dpdMax: number | null;
+      provisionRate: number;
+      rateLabel: string;
+    }> = [
+      {
+        category: PrudentialCategory.QENAETBEXS,
+        dpdMin: 0,
+        dpdMax: 0,
+        provisionRate: 0.015,
+        rateLabel: "1-2%",
+      },
+      {
+        category: PrudentialCategory.NEZARET,
+        dpdMin: 1,
+        dpdMax: 34,
+        provisionRate: 0.06,
+        rateLabel: "2-10%",
+      },
+      {
+        category: PrudentialCategory.ELAVE_RISK,
+        dpdMin: 35,
+        dpdMax: 90,
+        provisionRate: 0.15,
+        rateLabel: "10-20%",
+      },
+      {
+        category: PrudentialCategory.QEYRI_QENAETBEXS,
+        dpdMin: 91,
+        dpdMax: 180,
+        provisionRate: 0.25,
+        rateLabel: "25%",
+      },
+      {
+        category: PrudentialCategory.TEHLUKELI,
+        dpdMin: 181,
+        dpdMax: 360,
+        provisionRate: 0.5,
+        rateLabel: "50%",
+      },
+      {
+        category: PrudentialCategory.UMIDSIZ,
+        dpdMin: 361,
+        dpdMax: null,
+        provisionRate: 1.0,
+        rateLabel: "100%",
+      },
+    ];
+    for (const row of prudentialRates) {
+      await prisma.prudentialRateTable.upsert({
+        where: {
+          bankOrgId_category: { bankOrgId, category: row.category },
+        },
+        create: {
+          bankOrgId,
+          ...row,
+          active: true,
+          validFrom: quoteDay,
+        },
+        update: {
+          dpdMin: row.dpdMin,
+          dpdMax: row.dpdMax,
+          provisionRate: row.provisionRate,
+          rateLabel: row.rateLabel,
+          active: true,
+        },
+      });
+    }
+    console.info(
+      `[bank-core:seed] prudential rate table: ${prudentialRates.length} categories`,
+    );
 
     console.info(`[bank-core:seed] done for bankOrgId=${bankOrgId}`);
   } finally {

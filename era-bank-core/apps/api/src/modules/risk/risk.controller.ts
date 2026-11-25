@@ -1,9 +1,20 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { IsBoolean, IsDateString, IsNumber, IsOptional, IsString } from "class-validator";
 import { OpRiskEventStatus } from "@era/bank-core-database";
 import { BankAuthGuard, type BankAuthRequest } from "../../auth/bank-auth.guard";
 import { RiskService } from "./risk.service";
+import { PrudentialProvisioningService } from "./prudential-provisioning.service";
 
 class EclRunDto {
   @IsOptional()
@@ -52,7 +63,10 @@ class OpRiskDto {
 @UseGuards(BankAuthGuard)
 @Controller("risk")
 export class RiskController {
-  constructor(private readonly risk: RiskService) {}
+  constructor(
+    private readonly risk: RiskService,
+    private readonly prudential: PrudentialProvisioningService,
+  ) {}
 
   @Get("dashboard")
   dashboard() {
@@ -67,6 +81,15 @@ export class RiskController {
   @Get("collateral")
   collateral() {
     return this.risk.collateral();
+  }
+
+  /** Static path for item register (stale flags) — RISK_READ, not LOANS_READ. */
+  @Get("collateral-items")
+  collateralItems(@Query("maxAgeDays") maxAgeDays?: string) {
+    const days = maxAgeDays ? Number(maxAgeDays) : 365;
+    return this.risk.collateralItems(
+      Number.isFinite(days) && days > 0 ? days : 365,
+    );
   }
 
   @Post("staging/run")
@@ -187,5 +210,46 @@ export class RiskController {
   @Get("certification-pack")
   certificationPack() {
     return this.risk.certificationPack();
+  }
+
+  @Get("prudential/last")
+  lastPrudential() {
+    return this.prudential.lastRun();
+  }
+
+  @Post("prudential/run")
+  runPrudential(@Body() body: EclRunDto, @Req() req: BankAuthRequest) {
+    return this.prudential.runClassification({
+      asOfDate: body?.asOfDate ? new Date(body.asOfDate) : undefined,
+      makerUserId: req.userId ?? "risk-system",
+    });
+  }
+
+  /** CBAR ümidsiz write-off against allowance (checker ≠ maker). Register before :id. */
+  @Post("prudential/loans/:loanId/write-off")
+  writeOffUmidsiz(
+    @Param("loanId") loanId: string,
+    @Req() req: BankAuthRequest,
+    @Body() body?: { makerUserId?: string },
+  ) {
+    const checkerUserId = req.userId?.trim();
+    if (!checkerUserId) {
+      throw new ForbiddenException(
+        "Authenticated checker required for ümidsiz write-off",
+      );
+    }
+    return this.prudential.writeOffUmidsizLoan({
+      loanId,
+      checkerUserId,
+      makerUserId: body?.makerUserId,
+    });
+  }
+
+  @Post("prudential/:id/provision-approve")
+  prudentialProvisionApprove(
+    @Param("id") id: string,
+    @Req() req: BankAuthRequest,
+  ) {
+    return this.prudential.postProvisionsApprove(id, req.userId ?? "service");
   }
 }

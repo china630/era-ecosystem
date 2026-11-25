@@ -25,6 +25,7 @@ Current rollup: Gate ✅ (scaffold only) · BE 🟡 (AC-DH-POL) · UI n/a · Sel
 |----|------|--------|-------|
 | S-1 | Stage-gate script green + signoff | [x] | `scripts/run-data-hub-stage-gate.mjs` |
 | S-2 | Pilot lab UAT-SMOKE signed | [ ] | `era-data-hub/doc/UAT-SMOKE.md` |
+| S-MAT-CON | Construction materials nomenclature catalog | [~] | Registry + Gateway + seed + kit; AC-DH-MAT-CON 🟡 out of BE rollup — [data-hub-construction-materials.md](../adr/data-hub-construction-materials.md); not Pilot / ga |
 | S-3 | Field / customer sign-off | [ ] | — |
 | S-4 | Green Scaffold BE Wave 8 (VOEN excl.) | [x] | IM + PRM; VOEN stays 🟡 External |
 

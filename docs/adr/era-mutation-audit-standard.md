@@ -8,7 +8,7 @@
 - [satellite-mutation-audit.md](./satellite-mutation-audit.md) — first-wave satellite helper + `SatelliteAuditLog` (still the storage contract for industry satellites)
 - Finance `AuditMutationInterceptor` / TZ §9 — closest live implementation of Layer A
 - [workforce-dual-audit.md](./workforce-dual-audit.md) — CP workforce log vs satellite ops log (orthogonal)
-- [era-bank-risk-and-audit.md](./era-bank-risk-and-audit.md) — bank two-tier pattern (same idea, different tables)
+- [era-bank-risk-and-audit.md](./bank/era-bank-risk-and-audit.md) — bank two-tier pattern (same idea, different tables)
 - [era-common-laws.mdc](../../.cursor/rules/era-common-laws.mdc) — mutations require an audit trail where the app supports it
 - [industry-satellite-api-nest-migration.md](./industry-satellite-api-nest-migration.md) — industry HTTP is Nest as of 2026-11-12; Next remains the UI. Not a sell or Pilot claim.
 
@@ -55,7 +55,7 @@ Do **not** invent a second stay-log / folio-log table where [satellite-mutation-
 | Industry satellites (hotel, F&B, clinic, retail, …) | `SatelliteAuditLog` (per satellite DB, `organizationId` required) | Same table with richer `action` + `changesJson`, or product ADR table |
 | Finance | `AuditLog` (+ archive) | Same + optional Activity Stream (§5.E) — collaboration, not security |
 | Orchestrator | `platform_audit_logs` / product tables | `WorkforceAuditLog`, billing events — keep separate; correlate by ids |
-| Bank | Per [era-bank-risk-and-audit.md](./era-bank-risk-and-audit.md) | Ops action log |
+| Bank | Per [era-bank-risk-and-audit.md](./bank/era-bank-risk-and-audit.md) | Ops action log |
 
 Audit stays **local to the plane** (no mandatory central SIEM in MVP). Export / ship to SIEM is a later NFR, not a blocker for this standard.
 
@@ -162,7 +162,7 @@ Display of IP on stay journal remains permission-gated (hotel already restricts 
 | Concern | Rule |
 |---------|------|
 | Integrity | Per-row content hash required (`integrityHash` / Finance `hash`). Org **hash-chain** is Finance-grade; satellites may add chain later without blocking Layer A rollout |
-| Retention | Hot table for recent ops; archive or cold partition ≥ 12 months (Finance archive job is the reference) |
+| Retention | Hot table for recent ops; archive or cold partition ≥ 12 months (Finance archive job is the reference). **Clinic:** episode journal reads `SatelliteAuditLog` (`entityType=ClinicalEpisode`); hot default **24 months**, then `SatelliteAuditLogArchive` via `archiveClinicAuditOlderThan` / `era-clinic/scripts/archive-clinic-audit.mjs` (ops cron). Do not purge clinical mutations without archive. |
 | Volume | One audit row per mutation (or one Layer B summary per batch import), not per Prisma field write |
 | Forbidden | Prisma middleware that audits **every** `update`/`create`; GET logging; logging high-frequency telemetry/early-access spam |
 | Indexes (today) | `SatelliteAuditLog`: `organizationId`, `createdAt`, `(entityType, entityId)`, plus Wave E compound `(organizationId, createdAt)` on Hotel/Clinic/F&B (org journal lists; tenant extension injects `organizationId`) |
@@ -211,16 +211,11 @@ Implementation PRs must update this ADR’s **Implementation** line and the firs
 
 ## Open debts (planes without full Layer A / Layer B)
 
-### Audit exempt list is not a setting (open)
+### Audit exempt list is an organization setting
 
-`DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES` is hardcoded in `@era/satellite-kit`. These actions are not written to `SatelliteAuditLog` today: login, logout, SSO exchange, agency SSO exchange, register, refresh, health, ready, locale, early-access events. The same class of action on Finance uses the kit deny-list plus Finance extras.
+`Organization.settings.mutationAuditExemptPrefixes` is a string array of `/api/...` prefixes. Orchestrator Sync copies a non-empty list onto runtime-config. The satellite keeps it per organization. When that list is set, it replaces `DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES`. App extras such as refresh-permissions still append. When the setting is missing or empty, the kit default list stays: login, logout, SSO, agency SSO, register, refresh, health, ready, locale, early-access.
 
-Product requirement: whether each of these actions is logged must be a setting, not a code constant. **Where that setting lives is not decided.** Two homes are still open and neither is chosen:
-
-- Orchestrator organization settings (one switch for the org, satellites read it).
-- Each satellite's own admin settings (the org can differ per product).
-
-Do not build either store, screen, or sync until that placement is decided. Until then the kit list stays the behavior.
+There is no settings screen yet. The value is the JSON field on the organization row.
 
 | Plane | Layer A today | Layer B / UI | Debt |
 |-------|---------------|--------------|------|

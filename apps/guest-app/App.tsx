@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { AppState, SafeAreaView, ScrollView } from "react-native";
+import { AppState, ScrollView, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { unlockCachedTripWithBiometrics } from "./src/biometrics";
 import { scheduleLeadAlerts } from "./src/care-alarm";
 import { AppHeader, TabBar } from "./src/chrome";
 import { COPY, type Phase, type TabId } from "./src/copy";
+import { AccountScreen } from "./src/screens/AccountScreen";
 import { BellScreen } from "./src/screens/BellScreen";
 import { CareScreen } from "./src/screens/CareScreen";
 import { HotelScreen } from "./src/screens/HotelScreen";
@@ -18,35 +20,56 @@ import {
   type Brand,
   type CareRow,
   type FolioRow,
+  type LaundryItemRow,
+  type LaundryTicketRow,
   type MsgRow,
   type OrderRow,
+  type TourBookingRow,
+  type TourDepartureRow,
+  type TransferRow,
 } from "./src/types";
 import {
+  clearSession,
   enqueueOrder,
   loadCareSlice,
   loadCatalogSnapshot,
+  loadLocale,
   loadMuteMarketing,
   loadOrderQueue,
   loadSession,
   phaseFromTrip,
   saveCareSlice,
   saveCatalogSnapshot,
+  saveLocale,
   saveOrderQueue,
   saveSession,
   setMuteMarketing,
+  type GuestLocale,
   type QueuedOrder,
   type TripPack,
 } from "./src/trip-store";
 
-const ORG = process.env.EXPO_PUBLIC_ORGANIZATION_ID ?? "";
-const ORCH = process.env.EXPO_PUBLIC_ORCH_URL ?? "http://127.0.0.1:4000";
-const HOTEL = process.env.EXPO_PUBLIC_HOTEL_URL ?? "http://127.0.0.1:13201";
+type Overlay = "none" | "bell" | "account";
+
+const ORG =
+  process.env.EXPO_PUBLIC_ORGANIZATION_ID || "6bb9b75f-bf90-46c6-a4f7-bd5d3464c69b";
+const ORCH = process.env.EXPO_PUBLIC_ORCH_URL || "https://app.era-365.online";
+const HOTEL = process.env.EXPO_PUBLIC_HOTEL_URL || "https://hotel-pms.era-365.online";
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <GuestAppShell />
+    </SafeAreaProvider>
+  );
+}
+
+function GuestAppShell() {
+  const insets = useSafeAreaInsets();
   const [brand, setBrand] = useState<Brand | null>(null);
   const [phase, setPhase] = useState<Phase>("before");
   const [tab, setTab] = useState<TabId>("today");
-  const [bell, setBell] = useState(false);
+  const [overlay, setOverlay] = useState<Overlay>("none");
   const [loadedAt, setLoadedAt] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [trip, setTrip] = useState<TripPack | null>(null);
@@ -88,19 +111,27 @@ export default function App() {
   const [messages, setMessages] = useState<MsgRow[]>([]);
   const [folio, setFolio] = useState<FolioRow[]>([]);
   const [board, setBoard] = useState<BoardInfo | null>(null);
+  const [transfers, setTransfers] = useState<TransferRow[]>([]);
+  const [laundryItems, setLaundryItems] = useState<LaundryItemRow[]>([]);
+  const [laundryTickets, setLaundryTickets] = useState<LaundryTicketRow[]>([]);
+  const [tours, setTours] = useState<TourDepartureRow[]>([]);
+  const [tourBookings, setTourBookings] = useState<TourBookingRow[]>([]);
   const [catalogLoadedAt, setCatalogLoadedAt] = useState<string | null>(null);
   const [queueMsg, setQueueMsg] = useState<string | null>(null);
+  const [localeOverride, setLocaleOverride] = useState<GuestLocale | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const existing = await loadSession();
       const mute = await loadMuteMarketing();
+      const savedLocale = await loadLocale();
       const care = await loadCareSlice();
       const catalog = await loadCatalogSnapshot();
       const q = await loadOrderQueue();
       if (cancelled) return;
       setMuteMarketingState(mute);
+      if (savedLocale) setLocaleOverride(savedLocale);
       setQueued(q);
       if (care) {
         setTimetable(care.timetable);
@@ -143,107 +174,143 @@ export default function App() {
     };
   }, []);
 
-  const lang = brand?.locale ?? "en";
+  const lang: GuestLocale = localeOverride ?? brand?.locale ?? "en";
   const copy = COPY[lang];
   const color = brand?.primaryColor ?? NEUTRAL;
   const title = brand?.displayName ?? copy.brandMissing;
   const leadMinutes = (brand?.leadAlertMinutes === 5 ? 5 : 10) as 5 | 10;
 
+  async function setLang(next: GuestLocale) {
+    setLocaleOverride(next);
+    await saveLocale(next);
+  }
+
   async function exchange() {
     setLinkError(null);
-    const res = await fetch(`${HOTEL}/api/guest-app/exchange`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ organizationId: ORG, code: code.trim() }),
-    });
-    if (!res.ok) {
+    const trimmed = code.trim().replace(/\s+/g, "");
+    if (!trimmed) {
       setLinkError(copy.linkFail);
       return;
     }
-    const data = (await res.json()) as { token: string; trip: TripPack };
-    await saveSession(data.token, data.trip);
-    setUnlocked(true);
-    setToken(data.token);
-    setTrip(data.trip);
-    setLoadedAt(data.trip.loadedAt);
-    setPhase(phaseFromTrip(data.trip));
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/exchange`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ organizationId: ORG, code: trimmed }),
+      });
+      if (!res.ok) {
+        setLinkError(`${copy.linkFail} (${res.status})`);
+        return;
+      }
+      const data = (await res.json()) as { token: string; trip: TripPack };
+      await saveSession(data.token, data.trip);
+      setUnlocked(true);
+      setToken(data.token);
+      setTrip(data.trip);
+      setLoadedAt(data.trip.loadedAt);
+      setPhase(phaseFromTrip(data.trip));
+      setOverlay("none");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "network";
+      setLinkError(`${copy.linkFail} · ${msg}`);
+    }
   }
 
   async function refreshTrip() {
     if (!token) return;
-    const res = await fetch(`${HOTEL}/api/guest-app/trip`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return;
-    const next = (await res.json()) as TripPack;
-    await saveSession(token, next);
-    setTrip(next);
-    setLoadedAt(next.loadedAt);
-    setPhase(phaseFromTrip(next));
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/trip`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const next = (await res.json()) as TripPack;
+      await saveSession(token, next);
+      setTrip(next);
+      setLoadedAt(next.loadedAt);
+      setPhase(phaseFromTrip(next));
+    } catch {
+      /* keep cached trip */
+    }
   }
 
   async function saveQuestionnaire() {
     if (!token) return;
     setQMsg(null);
-    const res = await fetch(`${HOTEL}/api/guest-app/questionnaire`, {
-      method: "PATCH",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        firstName: qFirst,
-        lastName: qLast,
-        passportNo: qPassport,
-        birthDate: qBirth || undefined,
-        nationality: qNationality || undefined,
-        sex: qSex || undefined,
-      }),
-    });
-    setQMsg(res.ok ? copy.qSaved : copy.qFail);
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/questionnaire`, {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          firstName: qFirst,
+          lastName: qLast,
+          passportNo: qPassport,
+          birthDate: qBirth || undefined,
+          nationality: qNationality || undefined,
+          sex: qSex || undefined,
+        }),
+      });
+      setQMsg(res.ok ? copy.qSaved : copy.qFail);
+    } catch {
+      setQMsg(copy.qFail);
+    }
   }
 
   async function sendBooking() {
     setBookMsg(null);
-    const res = await fetch(`${HOTEL}/api/guest-app/booking-requests`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        ...(token ? { authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        organizationId: ORG,
-        checkIn: bookIn,
-        checkOut: bookOut,
-        adults: Number(bookAdults) || 1,
-        children: 0,
-      }),
-    });
-    setBookMsg(res.ok ? copy.bookingOk : copy.bookingFail);
-    if (res.ok) void loadBookings();
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/booking-requests`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          organizationId: ORG,
+          checkIn: bookIn,
+          checkOut: bookOut,
+          adults: Number(bookAdults) || 1,
+          children: 0,
+        }),
+      });
+      setBookMsg(res.ok ? copy.bookingOk : copy.bookingFail);
+      if (res.ok) void loadBookings();
+    } catch {
+      setBookMsg(copy.bookingFail);
+    }
   }
 
   async function loadBookings() {
-    const res = await fetch(
-      `${HOTEL}/api/guest-app/booking-requests?organizationId=${encodeURIComponent(ORG)}`,
-      { headers: token ? { authorization: `Bearer ${token}` } : {} },
-    );
-    if (!res.ok) return;
-    const data = (await res.json()) as { items: BookingRow[] };
-    setBookings(data.items);
+    try {
+      const res = await fetch(
+        `${HOTEL}/api/guest-app/booking-requests?organizationId=${encodeURIComponent(ORG)}`,
+        { headers: token ? { authorization: `Bearer ${token}` } : {} },
+      );
+      if (!res.ok) return;
+      const data = (await res.json()) as { items: BookingRow[] };
+      setBookings(data.items);
+    } catch {
+      /* hotel Nest offline — keep empty list */
+    }
   }
 
   async function placeOrderOnline() {
     if (!token) return;
-    const res = await fetch(`${HOTEL}/api/guest-app/orders`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ kind: orderKind, queuedOffline: false }),
-    });
-    if (res.ok) void loadOrders();
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/orders`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ kind: orderKind, queuedOffline: false }),
+      });
+      if (res.ok) void loadOrders();
+    } catch {
+      setQueueMsg(copy.queueError);
+    }
   }
 
   async function placeOrderQueued() {
@@ -284,59 +351,141 @@ export default function App() {
 
   async function loadOrders() {
     if (!token) return;
-    const res = await fetch(`${HOTEL}/api/guest-app/orders`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return;
-    const data = (await res.json()) as { items: OrderRow[] };
-    setOrders(data.items);
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/orders`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { items: OrderRow[] };
+      setOrders(data.items);
+    } catch {
+      /* offline */
+    }
   }
 
   async function loadFolioBoard() {
     if (!token) return;
-    const headers = { authorization: `Bearer ${token}` };
-    const [f, b] = await Promise.all([
-      fetch(`${HOTEL}/api/guest-app/folio`, { headers }),
-      fetch(`${HOTEL}/api/guest-app/board`, { headers }),
-    ]);
-    if (f.ok) {
-      const data = (await f.json()) as { folios: FolioRow[] };
-      setFolio(data.folios ?? []);
+    try {
+      const headers = { authorization: `Bearer ${token}` };
+      const [f, b] = await Promise.all([
+        fetch(`${HOTEL}/api/guest-app/folio`, { headers }),
+        fetch(`${HOTEL}/api/guest-app/board`, { headers }),
+      ]);
+      if (f.ok) {
+        const data = (await f.json()) as { folios: FolioRow[] };
+        setFolio(data.folios ?? []);
+      }
+      if (b.ok) setBoard((await b.json()) as BoardInfo);
+    } catch {
+      /* offline */
     }
-    if (b.ok) setBoard((await b.json()) as BoardInfo);
+  }
+
+  async function loadStayServices() {
+    if (!token) return;
+    const headers = { authorization: `Bearer ${token}` };
+    try {
+      const [tr, laundry, tour] = await Promise.all([
+        fetch(`${HOTEL}/api/guest-app/transfers`, { headers }),
+        fetch(`${HOTEL}/api/guest-app/laundry`, { headers }),
+        fetch(`${HOTEL}/api/guest-app/tours`, { headers }),
+      ]);
+      if (tr.ok) {
+        const data = (await tr.json()) as { items: TransferRow[] };
+        setTransfers(data.items ?? []);
+      }
+      if (laundry.ok) {
+        const data = (await laundry.json()) as {
+          items: LaundryItemRow[];
+          tickets: LaundryTicketRow[];
+        };
+        setLaundryItems(data.items ?? []);
+        setLaundryTickets(data.tickets ?? []);
+      }
+      if (tour.ok) {
+        const data = (await tour.json()) as {
+          departures: TourDepartureRow[];
+          bookings: TourBookingRow[];
+        };
+        setTours(data.departures ?? []);
+        setTourBookings(data.bookings ?? []);
+      }
+    } catch {
+      /* offline */
+    }
+  }
+
+  async function washOne(itemId: string) {
+    if (!token) return;
+    try {
+      await fetch(`${HOTEL}/api/guest-app/laundry`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ itemId, washQty: 1, ironQty: 0 }),
+      });
+      void loadStayServices();
+    } catch {
+      /* keep list */
+    }
+  }
+
+  async function bookTour(departureId: string) {
+    if (!token) return;
+    try {
+      await fetch(`${HOTEL}/api/guest-app/tours`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ departureId }),
+      });
+      void loadStayServices();
+    } catch {
+      /* keep list */
+    }
   }
 
   async function loadMessages() {
     if (!token) return;
-    const res = await fetch(`${HOTEL}/api/guest-app/messages`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return;
-    const data = (await res.json()) as { items: MsgRow[] };
-    setMessages(data.items);
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/messages`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { items: MsgRow[] };
+      setMessages(data.items);
+    } catch {
+      /* offline */
+    }
   }
 
   async function markRead(id: string) {
     if (!token) return;
-    await fetch(`${HOTEL}/api/guest-app/messages/${id}/read`, {
-      method: "PATCH",
-      headers: { authorization: `Bearer ${token}` },
-    });
-    void loadMessages();
+    try {
+      await fetch(`${HOTEL}/api/guest-app/messages/${id}/read`, {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${token}` },
+      });
+      void loadMessages();
+    } catch {
+      /* offline */
+    }
   }
 
   async function linkFamily(granteeGuestId: string) {
     if (!token) return;
     setFamilyMsg(null);
-    const res = await fetch(`${HOTEL}/api/guest-app/family-grants`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ granteeGuestId }),
-    });
-    setFamilyMsg(res.ok ? copy.familyOk : copy.familyFail);
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/family-grants`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ granteeGuestId }),
+      });
+      setFamilyMsg(res.ok ? copy.familyOk : copy.familyFail);
+    } catch {
+      setFamilyMsg(copy.familyFail);
+    }
   }
 
   async function loadCare() {
@@ -414,79 +563,96 @@ export default function App() {
 
   async function startOtp() {
     setAuthMsg(null);
-    const res = await fetch(`${HOTEL}/api/guest-app/auth/phone/start`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        organizationId: ORG,
-        channel: authChannel,
-        destination: phone,
-      }),
-    });
-    const data = (await res.json().catch(() => ({}))) as { stubCode?: string };
-    if (!res.ok) {
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/auth/phone/start`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          organizationId: ORG,
+          channel: authChannel,
+          destination: phone,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { stubCode?: string };
+      if (!res.ok) {
+        setAuthMsg(copy.linkFail);
+        return;
+      }
+      if (data.stubCode) setOtp(data.stubCode);
+      setAuthMsg(copy.phoneAuthSend);
+    } catch {
       setAuthMsg(copy.linkFail);
-      return;
     }
-    if (data.stubCode) setOtp(data.stubCode);
-    setAuthMsg(copy.phoneAuthSend);
   }
 
   async function verifyOtp() {
-    const res = await fetch(`${HOTEL}/api/guest-app/auth/phone/verify`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        organizationId: ORG,
-        channel: authChannel,
-        destination: phone,
-        code: otp,
-      }),
-    });
-    if (!res.ok) {
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/auth/phone/verify`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          organizationId: ORG,
+          channel: authChannel,
+          destination: phone,
+          code: otp,
+        }),
+      });
+      if (!res.ok) {
+        setAuthMsg(copy.linkFail);
+        return;
+      }
+      const data = (await res.json()) as { token: string };
+      setToken(data.token);
+      setUnlocked(true);
+      const tripRes = await fetch(`${HOTEL}/api/guest-app/trip`, {
+        headers: { authorization: `Bearer ${data.token}` },
+      });
+      if (tripRes.ok) {
+        const next = (await tripRes.json()) as TripPack;
+        await saveSession(data.token, next);
+        setTrip(next);
+        setLoadedAt(next.loadedAt);
+        setPhase(phaseFromTrip(next));
+      }
+      setAuthMsg(copy.phoneAuthOk);
+    } catch {
       setAuthMsg(copy.linkFail);
-      return;
     }
-    const data = (await res.json()) as { token: string };
-    setToken(data.token);
-    setUnlocked(true);
-    const tripRes = await fetch(`${HOTEL}/api/guest-app/trip`, {
-      headers: { authorization: `Bearer ${data.token}` },
-    });
-    if (tripRes.ok) {
-      const next = (await tripRes.json()) as TripPack;
-      await saveSession(data.token, next);
-      setTrip(next);
-      setLoadedAt(next.loadedAt);
-      setPhase(phaseFromTrip(next));
-    }
-    setAuthMsg(copy.phoneAuthOk);
   }
 
   async function openConfirmation() {
-    const res = await fetch(`${HOTEL}/api/guest-app/auth/confirmation`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        organizationId: ORG,
-        confirmation: confNo,
-        surname: confSurname,
-        arrivalYmd: confArrival,
-      }),
-    });
-    if (!res.ok) {
+    try {
+      const res = await fetch(`${HOTEL}/api/guest-app/auth/confirmation`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          organizationId: ORG,
+          confirmation: confNo,
+          surname: confSurname,
+          arrivalYmd: confArrival,
+        }),
+      });
+      if (!res.ok) {
+        setAuthMsg(copy.linkFail);
+        return;
+      }
+      setLimited((await res.json()) as Record<string, unknown>);
+    } catch {
       setAuthMsg(copy.linkFail);
-      return;
     }
-    setLimited((await res.json()) as Record<string, unknown>);
   }
 
   useEffect(() => {
+    if (tab === "today" && token) {
+      void loadFolioBoard();
+      void loadStayServices();
+    }
     if (tab === "trip") {
       void loadBookings();
       if (token) {
         void loadOrders();
         void loadFolioBoard();
+        void loadStayServices();
         void flushOrderQueue();
       }
     }
@@ -494,8 +660,18 @@ export default function App() {
   }, [tab, token]);
 
   useEffect(() => {
-    if (bell && token) void loadMessages();
-  }, [bell, token]);
+    if (overlay === "bell" && token) void loadMessages();
+  }, [overlay, token]);
+
+  async function logout() {
+    await clearSession();
+    setToken(null);
+    setTrip(null);
+    setUnlocked(false);
+    setLoadedAt(null);
+    setLimited(null);
+    setOverlay("account");
+  }
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
@@ -517,28 +693,38 @@ export default function App() {
       .filter((r) => r.scheduledAt && new Date(r.scheduledAt).getTime() >= Date.now())
       .sort((a, b) => String(a.scheduledAt).localeCompare(String(b.scheduledAt)))[0] ?? null;
 
+  const linked = Boolean(trip && unlocked);
+  const unread = visibleMessages.some((m) => !m.readAt);
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BG }}>
+    <View style={{ flex: 1, backgroundColor: BG }}>
       <StatusBar style="light" />
       <AppHeader
-        title={title}
+        title={
+          overlay === "account"
+            ? copy.accountTitle
+            : overlay === "bell"
+              ? copy.bellTitle
+              : title
+        }
         color={color}
         logoUrl={brand?.logoUrl}
-        updatedLabel={copy.updated}
-        loadedAt={loadedAt}
-        bellLabel={copy.bell}
-        onBell={() => setBell((v) => !v)}
+        linked={linked}
+        unread={unread}
+        overlay={overlay}
+        backLabel={copy.back}
+        onBack={() => setOverlay("none")}
+        onAccount={() => setOverlay((v) => (v === "account" ? "none" : "account"))}
+        onBell={() => setOverlay((v) => (v === "bell" ? "none" : "bell"))}
       />
-      <TabBar
-        copy={copy}
-        tab={tab}
-        onChange={(id) => {
-          setTab(id);
-          setBell(false);
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          padding: space.md,
+          paddingBottom: 24,
         }}
-      />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: space.md }}>
-        {bell ? (
+      >
+        {overlay === "bell" ? (
           <BellScreen
             copy={copy}
             color={color}
@@ -552,24 +738,27 @@ export default function App() {
               })();
             }}
             onMarkRead={(id) => void markRead(id)}
-            onBack={() => setBell(false)}
+            onBack={() => setOverlay("none")}
           />
         ) : null}
 
-        {!bell && tab === "today" ? (
-          <TodayScreen
+        {overlay === "account" ? (
+          <AccountScreen
             copy={copy}
             color={color}
-            brand={brand}
-            trip={trip}
-            unlocked={unlocked}
-            phase={phase}
-            offers={offers}
-            nextProcedure={nextProcedure}
-            onOpenTrip={() => setTab("trip")}
-            onOpenCare={() => setTab("care")}
-            onOpenHotel={() => setTab("hotel")}
-            onRefreshTrip={() => void refreshTrip()}
+            linked={linked}
+            locale={lang}
+            onLocale={(next) => void setLang(next)}
+            muteMarketing={muteMarketing}
+            onToggleMute={() => {
+              void (async () => {
+                const next = !muteMarketing;
+                setMuteMarketingState(next);
+                await setMuteMarketing(next);
+              })();
+            }}
+            onLogout={() => void logout()}
+            onBack={() => setOverlay("none")}
             code={code}
             setCode={setCode}
             onExchange={() => void exchange()}
@@ -591,6 +780,27 @@ export default function App() {
             onConfirm={() => void openConfirmation()}
             authMsg={authMsg}
             limited={limited}
+          />
+        ) : null}
+
+        {overlay === "none" && tab === "today" ? (
+          <TodayScreen
+            copy={copy}
+            color={color}
+            brand={brand}
+            trip={trip}
+            unlocked={unlocked}
+            phase={phase}
+            offers={offers}
+            nextProcedure={nextProcedure}
+            board={board}
+            folio={folio}
+            transfers={transfers}
+            onOpenTrip={() => setTab("trip")}
+            onOpenCare={() => setTab("care")}
+            onOpenHotel={() => setTab("hotel")}
+            onOpenAccount={() => setOverlay("account")}
+            onRefreshTrip={() => void refreshTrip()}
             qFirst={qFirst}
             setQFirst={setQFirst}
             qLast={qLast}
@@ -612,7 +822,7 @@ export default function App() {
           />
         ) : null}
 
-        {!bell && tab === "trip" ? (
+        {overlay === "none" && tab === "trip" ? (
           <TripScreen
             copy={copy}
             color={color}
@@ -630,6 +840,12 @@ export default function App() {
             bookings={bookings}
             board={board}
             folio={folio}
+            laundryItems={laundryItems}
+            laundryTickets={laundryTickets}
+            onLaundryWash={(id) => void washOne(id)}
+            tours={tours}
+            tourBookings={tourBookings}
+            onBookTour={(id) => void bookTour(id)}
             orderKind={orderKind}
             setOrderKind={setOrderKind}
             onOrderOnline={() => void placeOrderOnline()}
@@ -641,7 +857,7 @@ export default function App() {
           />
         ) : null}
 
-        {!bell && tab === "care" ? (
+        {overlay === "none" && tab === "care" ? (
           <CareScreen
             copy={copy}
             color={color}
@@ -657,7 +873,7 @@ export default function App() {
           />
         ) : null}
 
-        {!bell && tab === "hotel" ? (
+        {overlay === "none" && tab === "hotel" ? (
           <HotelScreen
             copy={copy}
             brand={brand}
@@ -667,6 +883,14 @@ export default function App() {
           />
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+      <TabBar
+        copy={copy}
+        tab={tab}
+        onChange={(id) => {
+          setTab(id);
+          setOverlay("none");
+        }}
+      />
+    </View>
   );
 }

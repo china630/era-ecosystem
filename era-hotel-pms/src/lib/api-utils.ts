@@ -20,55 +20,48 @@ export function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
-export function handleRouteError(err: unknown) {
+export type RouteErrorResult = { status: number; body: Record<string, unknown> };
+
+export function describeRouteError(err: unknown): RouteErrorResult {
   if (isSatelliteBillingBlockedError(err)) {
-    return NextResponse.json(
-      { error: err.message, code: err.code, billingStatus: err.billingStatus },
-      { status: err.status },
-    );
+    return {
+      status: err.status,
+      body: { error: err.message, code: err.code, billingStatus: err.billingStatus },
+    };
   }
   if (err instanceof ZodError) {
-    return jsonError(err.errors.map((e) => e.message).join('; '), 400);
+    return { status: 400, body: { error: err.errors.map((e) => e.message).join('; ') } };
   }
   if (err instanceof IndustryModuleInactiveError) {
-    return jsonError(err.message, 403);
+    return { status: 403, body: { error: err.message } };
   }
   if (err instanceof Error && err.name === 'SatelliteChannelDisabledError') {
     const code = 'code' in err && typeof err.code === 'string' ? err.code : 'CHANNEL_DISABLED';
-    return NextResponse.json({ error: err.message, code }, { status: 403 });
+    return { status: 403, body: { error: err.message, code } };
   }
   if (err instanceof Error && err.name === 'FiscalError') {
-    return jsonError(err.message, 400);
+    return { status: 400, body: { error: err.message } };
   }
   if (err instanceof Error && err.name === 'FxRateNotFoundError') {
-    return jsonError(err.message, 400);
+    return { status: 400, body: { error: err.message } };
   }
   if (err instanceof GuestMdmRequiredError) {
-    return jsonError(err.message, 400);
+    return { status: 400, body: { error: err.message } };
   }
   if (err instanceof GuestIdentityRequiredError) {
-    return NextResponse.json(
-      { error: err.message, code: 'GUEST_IDENTITY_REQUIRED', fields: err.fields },
-      { status: 400 },
-    );
+    return { status: 400, body: { error: err.message, code: 'GUEST_IDENTITY_REQUIRED', fields: err.fields } };
   }
   if (err instanceof StayCheckInBlockedError) {
-    return NextResponse.json(
-      { error: err.message, code: 'GUEST_CHECK_IN_INCOMPLETE', people: err.people },
-      { status: 400 },
-    );
+    return { status: 400, body: { error: err.message, code: 'GUEST_CHECK_IN_INCOMPLETE', people: err.people } };
   }
   if (err instanceof LaundryOpenError) {
-    return NextResponse.json(
-      { error: err.message, code: err.code, tickets: err.tickets },
-      { status: 409 },
-    );
+    return { status: 409, body: { error: err.message, code: err.code, tickets: err.tickets } };
   }
   if (err instanceof OccupiedHkLockedError) {
-    return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    return { status: err.status, body: { error: err.message, code: err.code } };
   }
   if (err instanceof RoomTypeSettlementRequiredError) {
-    return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    return { status: err.status, body: { error: err.message, code: err.code } };
   }
   if (err instanceof Error) {
     const known = [
@@ -82,22 +75,22 @@ export function handleRouteError(err: unknown) {
       'PAYMENT_ARTICLE_NO_OPEN_DEBT',
     ];
     if (known.includes(err.message)) {
-      return NextResponse.json({ error: err.message, code: err.message }, { status: 409 });
+      return { status: 409, body: { error: err.message, code: err.message } };
     }
   }
   if (err instanceof BusinessDateLagError) {
-    return NextResponse.json(
-      {
+    return {
+      status: 409,
+      body: {
         error: err.message,
         code: err.code,
         businessDate: err.businessDate,
         arrivalDate: err.arrivalDate,
       },
-      { status: 409 },
-    );
+    };
   }
   if (err instanceof TourConflictError) {
-    return jsonError(err.message, 409);
+    return { status: 409, body: { error: err.message } };
   }
   if (err instanceof Error) {
     const status = (err as Error & { status?: number }).status;
@@ -105,23 +98,23 @@ export function handleRouteError(err: unknown) {
     if (typeof status === 'number' && status >= 400 && status < 600) {
       const extra = err as { code?: unknown; from?: unknown; to?: unknown };
       if (typeof extra.code === 'string' && !extra.code.startsWith('P')) {
-        return NextResponse.json(
-          {
+        return {
+          status,
+          body: {
             error: err.message,
             code: extra.code,
             ...(typeof extra.from === 'string' ? { from: extra.from } : {}),
             ...(typeof extra.to === 'string' ? { to: extra.to } : {}),
           },
-          { status },
-        );
+        };
       }
-      return jsonError(err.message, status);
+      return { status, body: { error: err.message } };
     }
     if (lower.includes('unauthorized')) {
-      return jsonError(err.message, 401);
+      return { status: 401, body: { error: err.message } };
     }
     if (lower.includes('forbidden') || lower.includes('insufficient permissions')) {
-      return jsonError(err.message, 403);
+      return { status: 403, body: { error: err.message } };
     }
     if (
       lower.includes('idempotency conflict') ||
@@ -135,7 +128,7 @@ export function handleRouteError(err: unknown) {
       lower.includes('roommate remains') ||
       lower.includes('exclusive stay')
     ) {
-      return jsonError(err.message, 409);
+      return { status: 409, body: { error: err.message } };
     }
     if (err.name === 'PrismaClientKnownRequestError') {
       const code = (err as { code?: string }).code;
@@ -143,10 +136,7 @@ export function handleRouteError(err: unknown) {
       const fields = Array.isArray(target) ? target : target ? [target] : [];
       console.error(err);
       if (code === 'P2002' && fields.includes('reservationId')) {
-        return NextResponse.json(
-          { error: 'This stay already has a check-in record', code: 'STAY_RECORD_EXISTS' },
-          { status: 409 },
-        );
+        return { status: 409, body: { error: 'This stay already has a check-in record', code: 'STAY_RECORD_EXISTS' } };
       }
       const targetText = fields.join(' ');
       const modelName = (err as { meta?: { modelName?: string } }).meta?.modelName;
@@ -155,49 +145,39 @@ export function handleRouteError(err: unknown) {
         (modelName === 'ReservationGroup' ||
           targetText.includes('ReservationGroup_organizationId_code'));
       if (groupCodeTaken) {
-        return NextResponse.json(
-          { error: 'A group with this code already exists', code: 'GROUP_CODE_TAKEN' },
-          { status: 409 },
-        );
+        return { status: 409, body: { error: 'A group with this code already exists', code: 'GROUP_CODE_TAKEN' } };
       }
       if (
         code === 'P2002' &&
         (modelName === 'FolioPaymentAllocation' ||
           (fields.includes('paymentId') && fields.includes('chargeId')))
       ) {
-        return NextResponse.json(
-          { error: 'This payment is already applied to that charge', code: 'ALLOCATION_EXISTS' },
-          { status: 409 },
-        );
+        return { status: 409, body: { error: 'This payment is already applied to that charge', code: 'ALLOCATION_EXISTS' } };
       }
       // Surface the real Prisma code for desk ops (timeouts, unique) — do not
       // mask cash-shift / settle failures as a generic stay-save error.
       if (code === 'P2028' || lower.includes('transaction') || lower.includes('timeout')) {
-        return NextResponse.json(
-          { error: err.message || 'Database timed out', code: code ?? 'STAY_SAVE_FAILED' },
-          { status: 400 },
-        );
+        return { status: 400, body: { error: err.message || 'Database timed out', code: code ?? 'STAY_SAVE_FAILED' } };
       }
-      return NextResponse.json(
-        { error: err.message || 'Could not save this stay', code: code ?? 'STAY_SAVE_FAILED' },
-        { status: 400 },
-      );
+      return { status: 400, body: { error: err.message || 'Could not save this stay', code: code ?? 'STAY_SAVE_FAILED' } };
     }
     if (err.name === 'PrismaClientValidationError') {
       // Never echo the Prisma Request dump (headers/append) to the desk UI.
       console.error(err);
-      return NextResponse.json(
-        { error: 'Could not save this stay', code: 'STAY_SAVE_FAILED' },
-        { status: 400 },
-      );
+      return { status: 400, body: { error: 'Could not save this stay', code: 'STAY_SAVE_FAILED' } };
     }
     const known = ['not found', 'invalid', 'cannot', 'only', 'must'];
     if (known.some((k) => lower.includes(k))) {
-      return jsonError(err.message, 400);
+      return { status: 400, body: { error: err.message } };
     }
     console.error(err);
-    return jsonError(err.message, 500);
+    return { status: 500, body: { error: err.message } };
   }
   console.error(err);
-  return jsonError('Internal server error', 500);
+  return { status: 500, body: { error: 'Internal server error' } };
+}
+
+export function handleRouteError(err: unknown) {
+  const described = describeRouteError(err);
+  return NextResponse.json(described.body, { status: described.status });
 }

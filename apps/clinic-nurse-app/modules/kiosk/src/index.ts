@@ -1,27 +1,40 @@
-import { requireNativeModule } from "expo-modules-core";
+import { NativeModules, TurboModuleRegistry } from "react-native";
 
 type KioskNative = {
   isDeviceOwner(): boolean;
   isInKioskMode(): boolean;
+  isKioskPaused(): boolean;
   startKiosk(): void;
   stopKiosk(): void;
+  resumeKiosk(): void;
+  openDesktop(): void;
+  openSettings(): void;
+  openWifi(): void;
+  nativeLog(tag: string, message: string): void;
   installUpdate(url: string): Promise<void>;
 };
 
 function native(): KioskNative | null {
   try {
-    return requireNativeModule<KioskNative>("Kiosk");
+    const turbo = TurboModuleRegistry.get<KioskNative>("Kiosk");
+    if (turbo) return turbo;
   } catch {
-    return null;
+    // ignore
   }
+  const legacy = NativeModules.Kiosk as KioskNative | undefined;
+  return legacy ?? null;
 }
 
 export function isDeviceOwner(): boolean {
-  return native()?.isDeviceOwner() ?? false;
+  return native()?.isDeviceOwner?.() ?? false;
 }
 
 export function isInKioskMode(): boolean {
-  return native()?.isInKioskMode() ?? false;
+  return native()?.isInKioskMode?.() ?? false;
+}
+
+export function isKioskPaused(): boolean {
+  return native()?.isKioskPaused?.() ?? false;
 }
 
 export function startKiosk(): void {
@@ -35,6 +48,30 @@ export function startKiosk(): void {
 
 export function stopKiosk(): void {
   native()?.stopKiosk();
+}
+
+export function resumeKiosk(): void {
+  native()?.resumeKiosk();
+}
+
+export function openDesktop(): void {
+  native()?.openDesktop();
+}
+
+export function openSettings(): void {
+  native()?.openSettings();
+}
+
+export function openWifi(): void {
+  native()?.openWifi();
+}
+
+export function nativeLog(tag: string, message: string): void {
+  try {
+    native()?.nativeLog(tag, message);
+  } catch {
+    console.log(`[${tag}] ${message}`);
+  }
 }
 
 export async function installUpdate(url: string): Promise<void> {

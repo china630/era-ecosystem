@@ -71,6 +71,17 @@ services:
       timeout: 5s
       retries: 10
 
+  # Public kiosk APK catalog: https://app.era-365.online/tablet-apps/<slug>/...
+  # Drop files under ./data/tablet-apps/<slug>/ (see era-orchestrator/apps/web/tablet-apps/README.md).
+  tablet-apps:
+    image: nginx:1.27-alpine
+    container_name: era-tablet-apps
+    restart: unless-stopped
+    volumes:
+      - ./data/tablet-apps:/usr/share/nginx/html/tablet-apps:ro
+    networks:
+      - era-network
+
   traefik:
     image: traefik:v2.10
     container_name: era-traefik
@@ -140,6 +151,7 @@ services:
       HOTEL_PMS_API_URL: http://hotel-pms:3201
       FNB_POS_API_URL: http://fnb-pos:3202
       RETAIL_API_URL: http://retail-pos:3204
+      CONSTRUCTION_API_URL: http://construction:3206
       SATELLITE_BRIDGE_SECRET: ${SATELLITE_BRIDGE_SECRET:-${CLINIC_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       CLINIC_BRIDGE_SECRET: ${CLINIC_BRIDGE_SECRET:-${SATELLITE_BRIDGE_SECRET:-dev-satellite-bridge-secret}}
       ERA_APP_ORIGIN: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}

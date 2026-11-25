@@ -122,6 +122,7 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | Satellite GL dispatch | API worker | **DONE** | Consumes orchestrator events → journals |
 | Billing meter (Phase 16) | `/admin/config/billing/*` | **DONE** | recordUsage + intraday tier invoice |
 | Trade credit control | `/crm/trade-credit`, `/buyer`, SKU `trade_credit_control` | **MVP** | Phase 0–2 eng (lock + A–D + PWA/enrich/pay/factor lead); not Pilot — [ADR](./adr/finance-trade-credit-control.md) |
+| Org budget (B2G + commercial) | `/gov-budget`, SKU `gov_budget_pro` / `mgmt_budget_pro` | **API** | MANAGEMENT mode + reserve; UAT open — not SHIPPED / not Pilot |
 
 **Billing & platform (2026-05):** subscription, billing, referrals, early-access, public pricing — **orchestrator only**. Finance web proxies via `/cp/*`. Notifications Pack live when `ERA_NOTIFICATIONS_PACK=true`. See [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md).
 
@@ -260,9 +261,19 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 | M9 Subcontractor claims | v1.0 | — | **DONE** |
 | M10 Site equipment hours | v1.1 | equipment hours | **DONE** |
 | M11 CDE drawings | v1.1 | CDE metadata | **DONE** |
-| M12 Labor timesheets | v1.1 | timesheet CSV | **DONE** |
-| Events | — | `PROGRESS_ACT_APPROVED` |
+| M12 Labor timesheets | v1.1 | timesheet CSV → CP SoR | **DONE** |
+| M13 Progress act lines | depth | ops SOV on act → Finance event | **API** (UI/Pilot open; not SHIPPED) |
+| M14 Project parties | Wave 1 | GC/sub/owner/inspector refs | **SCAFFOLD** |
+| M15 RFI ops | Wave 1 | field Q&A stub | **SCAFFOLD** |
+| M16 Change request ops | Wave 1 | site pack stub; money → Finance | **SCAFFOLD** |
+| M17 Submittal | Wave 1 | package status stub | **SCAFFOLD** |
+| M18 Site inspection | Wave 1 | form JSON stub | **SCAFFOLD** |
+| M19 Phases / locations | Wave 1 | project children | **SCAFFOLD** |
+| M20 Estimate hierarchy | Wave | 5-level pack; SKU `construction_estimate_hierarchy` | **API** (SCREEN; not SHIPPED) |
+| M21 Smeta rate engine | Wave | RateBase/RateItem → estimate; SKU `construction_smeta_rate_engine` | **API** (SCREEN; not SHIPPED) |
+| Events | — | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` |
 | Growth | — | Platform on act — DELIVERY C3 |
+| Boundaries | — | [construction-domain-boundaries.md](./adr/construction-domain-boundaries.md) |
 
 ---
 

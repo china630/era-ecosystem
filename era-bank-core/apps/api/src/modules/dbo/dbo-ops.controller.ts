@@ -30,9 +30,12 @@ class ObConsentDto {
   @IsString({ each: true })
   scopes?: string[];
 
-  @IsOptional()
   @IsDateString()
-  expiresAt?: string;
+  expiresAt!: string;
+
+  /** Lab SCA proof (OTP / ASAN challenge id) required before ACTIVE. */
+  @IsString()
+  scaChallengeId!: string;
 }
 
 @ApiTags("dbo")
@@ -67,7 +70,8 @@ export class DboOpsController {
     return this.ops.createObConsent({
       customerId: dto.customerId,
       scopes: dto.scopes,
-      expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
+      expiresAt: new Date(dto.expiresAt),
+      scaChallengeId: dto.scaChallengeId,
     });
   }
 

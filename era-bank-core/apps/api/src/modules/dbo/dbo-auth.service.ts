@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -14,7 +15,10 @@ import {
 } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
-import { AsanSimaStubAdapter } from "../../integration/asan-sima-stub.adapter";
+import {
+  AsanSimaStubAdapter,
+  type AsanSimaAdapter,
+} from "../../integration/asan-sima.adapter";
 import { MdmClient } from "../../integration/mdm.client";
 import {
   hashLoginIdentifier,
@@ -30,7 +34,8 @@ export class DboAuthService {
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
     private readonly config: ConfigService,
-    private readonly asan: AsanSimaStubAdapter,
+    /** Token stays `AsanSimaStubAdapter`; factory may return finance-port impl via BANK_ASAN_MODE. */
+    @Inject(AsanSimaStubAdapter) private readonly asan: AsanSimaAdapter,
     private readonly mdm: MdmClient,
   ) {}
 
@@ -133,8 +138,10 @@ export class DboAuthService {
     return this.issueCustomerJwt(customer.id, input.channel);
   }
 
-  startAsanChallenge(identifier: string, channel: "RETAIL" | "CORPORATE") {
-    return this.asan.startChallenge({ identifier, fin: identifier });
+  async startAsanChallenge(identifier: string, _channel: "RETAIL" | "CORPORATE") {
+    return Promise.resolve(
+      this.asan.startChallenge({ identifier, fin: identifier }),
+    );
   }
 
   async completeAsanCallback(input: {
@@ -142,7 +149,9 @@ export class DboAuthService {
     identifier: string;
     channel: "RETAIL" | "CORPORATE";
   }) {
-    const result = this.asan.completeChallenge(input.transactionId);
+    const result = await Promise.resolve(
+      this.asan.completeChallenge(input.transactionId),
+    );
     if (!result.verified) throw new UnauthorizedException("ASAN verification failed");
 
     const { customer } = await this.resolveCustomerByIdentifier(input.identifier, input.channel);

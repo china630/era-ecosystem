@@ -12,6 +12,14 @@
 
 **Closeout (2026-08-18):** AC-DBO-OPEN is **in** Scaffold BE rollup → **BE 🟡**. Code stretch (curl-only), not vendor. Return checklist: [BE-OPEN-AND-TOPO-RETURN.md](./BE-OPEN-AND-TOPO-RETURN.md). Sell unchanged — ≠ full digital bank; edition `mvp` / `pilot_ready: false`.
 
+**Closeout (2026-11-25 audit-v2):** Inventory `CAP-DBO-OB` **IN→PARTIAL** (consent ≤90d lab ≠ CBAR gateway). Gate / BE 🟡 / UI / Demo / Pilot / Sell / `mvp` unchanged.
+
+**Wave 1 (2026-11-25):** DBO `/loans` full installment schedule + APR/prepay; `/leasing` list + schedule honesty (not in channel yet). **Sell / Gate / Pilot / edition unchanged** (`mvp`, `pilot_ready: false`).
+
+**Waves 2–4 (2026-11-25):** DBO `/leasing` lab schedule read; parent OB SCA. **Sell / Gate / Pilot / edition unchanged** (`mvp`, `pilot_ready: false`).
+
+**Audit-v3 (2026-11-25):** Nest leasing BFF verified (`nest/generated`, `/api` via front). **Gate / BE 🟡 / UI / Demo / Pilot / Sell / edition unchanged** (`mvp`, `pilot_ready: false`).
+
 ---
 
 ## Line summary (SSOT readiness)
@@ -24,13 +32,15 @@
 
 ## UI (short)
 
-**UI class rollup:** SHOW (lab) — Open API keys now **SCREEN** (`/open-api`) — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). This table is sell/show; «is there a screen?» lives on the board.
+**UI class rollup:** SHOW (lab) — Open API keys **SCREEN** (`/open-api`); leasing schedule **SCREEN** (lab) — [UI-COVERAGE-BOARD.md](./UI-COVERAGE-BOARD.md). Line UI ✅ sell claim unchanged (lab channel).
 
 | Surface | Path | Level |
 |---------|------|-------|
 | Retail login / dashboard | `/login`, `/dashboard` | ✅ lab (ASAN stub badge) |
 | Accounts / transfers / payments | `/accounts`, `/transfers`, `/payments` | ✅ lab |
 | Standing orders | `/standing-orders` | ✅ lab |
+| Loans (schedule / APR / prepay) | `/loans` | ✅ lab (full installments) |
+| Leasing | `/leasing` | 🟡 SCREEN — lab schedule read (IFRS 16 not certified) |
 | Loan apply | `/loans/apply` | ✅ lab (submit only) |
 | 3DS challenge | `/cards/3ds` | ✅ lab |
 | Islamic (read-only) | `/islamic` | ✅ lab thin |

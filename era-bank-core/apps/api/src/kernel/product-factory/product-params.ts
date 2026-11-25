@@ -30,6 +30,12 @@ export type DepositProductParams = ProductBandKeys & {
   spreadBps?: number;
   resetFrequencyMonths?: number;
   rateFloor?: number;
+  /** Monthly interest exempt from WHT (minor units, e.g. qepik). */
+  taxExemptMonthlyMinor?: number;
+  /** Annual-style tax rate as fraction on taxable interest (e.g. 0.14). */
+  depositInterestTaxRate?: number;
+  /** Full WHT exempt when contract termMonths >= this value. */
+  exemptIfTermMonths?: number;
 };
 
 export type LoanProductParams = ProductBandKeys & {
@@ -43,6 +49,10 @@ export type LoanProductParams = ProductBandKeys & {
   spreadBps?: number;
   resetFrequencyMonths?: number;
   rateFloor?: number;
+  gracePrincipalMonths?: number;
+  graceInterestMonths?: number;
+  penaltyRateAnnual?: number;
+  repaymentFrequency?: "MONTHLY" | "QUARTERLY" | "BULLET";
 };
 
 export type CardProductParams = {
@@ -235,6 +245,9 @@ function parseDeposit(obj: Record<string, unknown>): DepositProductParams {
     glLiabilityCode: reqString(obj, "glLiabilityCode"),
     glInterestExpenseCode: optString(obj, "glInterestExpenseCode"),
     adifEligible: optBoolean(obj, "adifEligible"),
+    taxExemptMonthlyMinor: optNumber(obj, "taxExemptMonthlyMinor"),
+    depositInterestTaxRate: optNumber(obj, "depositInterestTaxRate"),
+    exemptIfTermMonths: optNumber(obj, "exemptIfTermMonths"),
     ...bands,
     ...floating,
   };
@@ -257,11 +270,46 @@ function parseLoan(obj: Record<string, unknown>): LoanProductParams {
   if (floating.rateType === "FLOATING" && !floating.indexKey) {
     throw new BadRequestException("FLOATING loan requires paramsJson.indexKey");
   }
+  const gracePrincipalMonths = optNumber(obj, "gracePrincipalMonths");
+  const graceInterestMonths = optNumber(obj, "graceInterestMonths");
+  if (
+    gracePrincipalMonths != null &&
+    (!Number.isInteger(gracePrincipalMonths) || gracePrincipalMonths < 0)
+  ) {
+    throw new BadRequestException(
+      "paramsJson.gracePrincipalMonths must be a non-negative integer",
+    );
+  }
+  if (
+    graceInterestMonths != null &&
+    (!Number.isInteger(graceInterestMonths) || graceInterestMonths < 0)
+  ) {
+    throw new BadRequestException(
+      "paramsJson.graceInterestMonths must be a non-negative integer",
+    );
+  }
+  const penaltyRateAnnual = optNumber(obj, "penaltyRateAnnual");
+  const repaymentRaw = optString(obj, "repaymentFrequency");
+  const repaymentFrequency =
+    repaymentRaw === "QUARTERLY" || repaymentRaw === "BULLET"
+      ? repaymentRaw
+      : repaymentRaw === "MONTHLY" || repaymentRaw === undefined
+        ? "MONTHLY"
+        : undefined;
+  if (repaymentRaw && !repaymentFrequency) {
+    throw new BadRequestException(
+      "paramsJson.repaymentFrequency must be MONTHLY, QUARTERLY, or BULLET",
+    );
+  }
   return {
     termMonths,
     rateAnnual,
     glAssetCode: reqString(obj, "glAssetCode"),
     glInterestIncomeCode: reqString(obj, "glInterestIncomeCode"),
+    gracePrincipalMonths,
+    graceInterestMonths,
+    penaltyRateAnnual,
+    repaymentFrequency,
     ...bands,
     ...floating,
   };

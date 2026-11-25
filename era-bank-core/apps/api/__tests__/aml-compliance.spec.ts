@@ -1,5 +1,7 @@
 import { AmlAlertStatus } from "@era/bank-core-database";
 import {
+  CASH_THRESHOLD_DEFAULT_MINOR,
+  evaluateCashThreshold,
   evaluateCrossBorder,
   evaluateHighRiskCustomer,
   evaluateStructuring,
@@ -7,6 +9,10 @@ import {
   evaluateVelocity24h,
   scoreSanctionMatch,
 } from "../src/modules/aml/aml-rules.engine";
+import {
+  FmnReportFormatterV1Stub,
+  resolveFmnFormatter,
+} from "../src/modules/aml/fmn-report-formatter";
 import {
   assertAlertStatusTransition,
   canTransitionAlertStatus,
@@ -52,6 +58,50 @@ describe("aml-rules engine", () => {
       customerRiskRating: "HIGH" as never,
     });
     expect(hit).toBe(true);
+  });
+
+  it("CASH_THRESHOLD default is 20_000 AZN (2_000_000 minor)", () => {
+    expect(CASH_THRESHOLD_DEFAULT_MINOR).toBe(2_000_000);
+  });
+
+  it("CASH_THRESHOLD fires at 20_000 AZN cash teller deposit", () => {
+    const result = evaluateCashThreshold(
+      {
+        transactionId: "tx-cash",
+        txnType: "DEPOSIT",
+        reference: "CASH-IN-demo",
+        legs: [{ debitMinor: 2_000_000n, creditMinor: 0n, currency: "AZN" }],
+      },
+      {},
+    );
+    expect(result.hit).toBe(true);
+    expect(result.amountMinor).toBe(2_000_000n);
+  });
+
+  it("CASH_THRESHOLD does not fire at 19_999 AZN", () => {
+    const result = evaluateCashThreshold(
+      {
+        transactionId: "tx-cash-low",
+        txnType: "DEPOSIT",
+        reference: "CASH-IN-demo",
+        legs: [{ debitMinor: 1_999_900n, creditMinor: 0n, currency: "AZN" }],
+      },
+      {},
+    );
+    expect(result.hit).toBe(false);
+  });
+
+  it("CASH_THRESHOLD ignores non-cash DEPOSIT (e.g. term funding)", () => {
+    const result = evaluateCashThreshold(
+      {
+        transactionId: "tx-dep",
+        txnType: "DEPOSIT",
+        reference: "DEP-OPEN-abc",
+        legs: [{ debitMinor: 5_000_000n, creditMinor: 0n, currency: "AZN" }],
+      },
+      {},
+    );
+    expect(result.hit).toBe(false);
   });
 
   it("CROSS_BORDER detects non-AZ IBAN", () => {
@@ -100,27 +150,40 @@ describe("aml alert workflow", () => {
 });
 
 describe("fmn export payload shape", () => {
-  it("builds FMN test schema fields", () => {
-    const payload = {
-      schemaVersion: "FMN-TEST-1",
+  it("builds FMN test schema fields via formatter", () => {
+    const formatter = resolveFmnFormatter();
+    expect(formatter).toBeInstanceOf(FmnReportFormatterV1Stub);
+
+    const document = formatter.buildDocument({
       institutionMfo: "200001",
-      reportType: "SUSPICIOUS_TRANSACTION",
-      periodFrom: "2026-01-01T00:00:00.000Z",
-      periodTo: "2026-01-31T00:00:00.000Z",
+      periodFrom: new Date("2026-01-01T00:00:00.000Z"),
+      periodTo: new Date("2026-01-31T00:00:00.000Z"),
       suspiciousTransactions: [
         {
           alertId: "alert1",
-          ruleCode: "THRESHOLD_SINGLE_TXN",
+          ruleCode: "CASH_THRESHOLD",
           transactionId: "tx1",
+          customerId: "cust1",
           amountMinor: "2000000",
           currency: "AZN",
-          narrative: "test",
+          narrative: "Large cash",
+          screeningHitCount: 0,
+          filingDeadline: "2026-01-06",
         },
       ],
-    };
-    expect(payload.schemaVersion).toBe("FMN-TEST-1");
-    expect(payload.suspiciousTransactions).toHaveLength(1);
-    expect(payload.suspiciousTransactions[0].ruleCode).toBe("THRESHOLD_SINGLE_TXN");
+      filingQueue: {
+        status: "QUEUED",
+        filingDeadline: "2026-01-06",
+        businessDaysAfterTxn: 3,
+        alertIds: ["alert1"],
+      },
+    });
+
+    expect(document.schemaVersion).toBe("FMN-TEST-1");
+    expect(document.suspiciousTransactions).toHaveLength(1);
+    expect(document.filingQueue?.status).toBe("QUEUED");
+    expect(formatter.formatXml(document)).toContain("<filingQueue>");
+    expect(formatter.formatXml(document)).toContain("CASH_THRESHOLD");
   });
 });
 

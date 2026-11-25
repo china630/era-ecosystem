@@ -27,6 +27,9 @@ import { register as register25 } from "./payments_orders__id";
 import { register as register26 } from "./payments_orders__id_sign";
 import { register as register27 } from "./payments_orders__id_submit";
 import { register as register28 } from "./standing-orders__id_pause";
+import { register as register29 } from "./loans";
+import { register as register30 } from "./leasing_contracts";
+import { register as register31 } from "./leasing_contracts__id_schedule";
 
 export function registerDboRoutes(http: { get: Function; post: Function; put: Function; patch: Function; delete: Function }) {
   register0(http);
@@ -58,4 +61,7 @@ export function registerDboRoutes(http: { get: Function; post: Function; put: Fu
   register26(http);
   register27(http);
   register28(http);
+  register29(http);
+  register30(http);
+  register31(http);
 }

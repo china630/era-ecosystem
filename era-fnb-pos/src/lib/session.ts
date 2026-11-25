@@ -1,4 +1,3 @@
-import { cookies, headers } from "next/headers";
 import { nestHttpFrame } from "@/lib/nest-http-context";
 import {
   readSatelliteStaffSession,
@@ -54,17 +53,26 @@ async function loadFnbStaff(session: SatelliteSessionPayload): Promise<FnbStaffR
  * F&B gate, grants from the DB. No session → null (401); module off →
  * IndustryModuleInactiveError (403). Call once per handler, inside try.
  */
-export async function getSatelliteSession(): Promise<SatelliteStaffSessionPayload | null> {
-  let cookieStore: Awaited<ReturnType<typeof cookies>>;
-  let headerStore: Awaited<ReturnType<typeof headers>>;
-  try {
-    cookieStore = await cookies();
-    headerStore = await headers();
-  } catch {
-    const frame = nestHttpFrame();
-    if (!frame) return null;
-    cookieStore = frame.cookies as Awaited<ReturnType<typeof cookies>>;
-    headerStore = frame.headers as Awaited<ReturnType<typeof headers>>;
+export async function getSatelliteSession(explicit?: {
+  cookies: { get(name: string): { value: string } | undefined };
+  headers: { get(name: string): string | null };
+}): Promise<SatelliteStaffSessionPayload | null> {
+  let cookieStore: { get(name: string): { value: string } | undefined };
+  let headerStore: { get(name: string): string | null };
+  if (explicit) {
+    cookieStore = explicit.cookies;
+    headerStore = explicit.headers;
+  } else {
+    try {
+      const nextHeaders = await import("next/headers");
+      cookieStore = await nextHeaders.cookies();
+      headerStore = await nextHeaders.headers();
+    } catch {
+      const frame = nestHttpFrame();
+      if (!frame) return null;
+      cookieStore = frame.cookies;
+      headerStore = frame.headers;
+    }
   }
   const staff = await readSatelliteStaffSession({
     cookies: cookieStore,

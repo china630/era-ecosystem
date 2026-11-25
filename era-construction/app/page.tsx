@@ -9,21 +9,25 @@ export default async function HomePage() {
     <>
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
       <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-6`}>
-        <p className="text-[13px] text-[#7F8C8D]">MVP operational shell aligned with DESIGN.md.</p>
-<ul className="space-y-2 text-[13px]">
-          <li>
-            <Link href="/api/health" className="font-medium text-[#2980B9] hover:underline">
-              Health API
-            </Link>
-          </li>
+        <ul className="space-y-2 text-[13px]">
           <li>
             <Link href="/projects" className={PRIMARY_BUTTON_CLASS}>
-              Open main screen
+              {t("openProjects")}
             </Link>
           </li>
           <li>
             <Link href="/field-ops" className="font-medium text-[#2980B9] hover:underline">
-              Field ops (W2)
+              {t("openFieldOps")}
+            </Link>
+          </li>
+          <li>
+            <Link href="/material-requisitions" className="font-medium text-[#2980B9] hover:underline">
+              {t("openRequisitions")}
+            </Link>
+          </li>
+          <li>
+            <Link href="/api/health" className="font-medium text-[#2980B9] hover:underline">
+              {t("health")}
             </Link>
           </li>
         </ul>

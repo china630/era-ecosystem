@@ -1,7 +1,7 @@
 # ERA Bank Core — Technical Specification (TZ)
 
 **Scope:** `era-bank-core` — the **headless regulated banking engine** (system of record). Operational UI is the separate **`era-bank`** satellite (ADR D9, [era-bank/TZ.md](../era-bank/TZ.md)).
-**Companion:** [PRD.md](./PRD.md) (product-line lead) · ADR [docs/adr/era-bank-core.md](../docs/adr/era-bank-core.md)
+**Companion:** [PRD.md](./PRD.md) (product-line lead) · ADR index [docs/adr/bank/README.md](../docs/adr/bank/README.md) · [era-bank-core.md](../docs/adr/bank/era-bank-core.md)
 **Stack (canonical with ecosystem):** NestJS API + Prisma + PostgreSQL + Redis; `@era/contracts` (zod) for cross-service contracts. **No web/UI in this app** — UI lives in `era-bank`.
 
 ---
@@ -404,7 +404,7 @@ Anti-double-counting: corporate opex is posted once in finance-core; only **summ
 - **Encryption:** envelope DEK/KEK + blind-index (reuse finance-core security layer); keys held by the bank in on-prem mode.
 - **Maker-checker / SoD:** enforced in posting engine for controlled `TxnType`s; roles from orchestrator RBAC + branch limits.
 - **Immutable audit:** `AuditLogEntry` append-only; postings/CIF changes reconstructable.
-- **AML:** `banking_aml` monitors postings (read side), screens against sanction lists (data-hub shelf C), files FMN reports — worked flow in §13.2.
+- **AML:** `banking_aml` monitors postings (read side), screens against sanction lists (**today:** local `sanctions-seed.json` demo feed; **target:** data-hub shelf C — CAP-AML-FEED BLOCKED until hub ingest), files FMN reports — worked flow in §13.2 (FMN file remains DECLARED stub until P0-6).
 - **Risk:** `banking_risk` (§12) computes IFRS 9 ECL/provisions, RWA/capital adequacy, IRRBB, LCR/NSFR and risk-appetite limits; provisions post through the kernel posting engine (no parallel ledger).
 - **Reg reporting:** `banking_regreporting` produces CBAR prudential templates + FATCA/CRS (consumes `banking_risk` capital/ECL outputs).
 - **Data residency:** on-prem deployment with on-prem reference data (no public data-hub dependency).

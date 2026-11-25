@@ -12,10 +12,12 @@
 
 ## Scope
 
-- **Declared, not this edition:** SHARED multi-tenant pool and automated topology migrate — [deployment-topology.md](../adr/deployment-topology.md). CP-TENANT-01 schema+filter / AC-CON-TENANT 🟡; appliance remains one-org DEDICATED/ONPREM. Do not sell SHARED Construction.
+- **Plane ownership (fixed):** [construction-domain-boundaries.md](../adr/construction-domain-boundaries.md) — site ops in Construction; money in Finance; attendance SoR in CP; pre-sale in CRM. Do not accept ACs that relocate GL/payroll/CRM into this satellite.
 
-- In scope: Projects, BOQ stub, progress acts, material requisitions, plan vs actual, platform hooks
-- Out of scope: Full CDE/partner field certification
+- **Tenancy:** Construction defaults to **SHARED** (many `organizationId` in one deployment). Schema + kit tenant filter (CP-TENANT-01 / AC-CON-TENANT). DEDICATED/ONPREM only when product explicitly requests a placement change — not the default story.
+
+- In scope: Projects, BOQ, five-level estimate pack (dual mode per project; ADR construction-estimate-hierarchy), progress acts (+ ops lines / Forma-2-class pack), material requisitions, plan vs actual, field logs, platform hooks, depth modules per PRD M13+ / M20
+- Out of scope: Full CDE/partner field certification; Finance ledger / PayApp money truth; CRM pipeline UI; payroll SoR; full DESN **content** clone (rate-engine **MVP** is Construction SKU debt — [construction-smeta-rate-engine.md](../adr/construction-smeta-rate-engine.md), not edition `ga`)
 
 ## Definition of Done (soft / scaffold)
 

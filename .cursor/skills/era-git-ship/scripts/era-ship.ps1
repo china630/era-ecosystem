@@ -531,7 +531,7 @@ function Assert-DeployStagingSshApplied {
     $ssh = @($job.steps) | Where-Object { $_.name -eq "Deploy over SSH" } | Select-Object -First 1
     if (-not $ssh) { throw "Deploy staging: missing Deploy over SSH step ($Url)" }
     if ($ssh.conclusion -eq "skipped") {
-        throw ("Deploy staging false-green: Deploy over SSH was skipped — droplet not updated ({0}). " +
+        throw ("Deploy staging false-green: Deploy over SSH was skipped -- droplet not updated ({0}). " +
             "Pass -SkipStaging only for intentional git-only / docs-only ships.") -f $Url
     }
     if ($ssh.conclusion -ne "success") {
@@ -570,7 +570,7 @@ function Assert-StagingPublicSmoke {
         }
         Start-Sleep -Seconds 10
     }
-    throw ("Staging public smoke FAILED after Deploy SSH — droplet not healthy:`n  " + ($failed -join "`n  "))
+    throw ("Staging public smoke FAILED after Deploy SSH -- droplet not healthy:`n  " + ($failed -join "`n  "))
 }
 
 function Complete-DeployStagingRun {

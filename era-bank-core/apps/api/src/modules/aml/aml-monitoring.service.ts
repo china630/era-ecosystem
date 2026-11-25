@@ -2,12 +2,19 @@ import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { AmlSeverity, TxnStatus } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import { DataHubClient } from "../../integration/data-hub.client";
 import { OrchestratorEventsPublisher } from "../../integration/orchestrator-events.publisher";
+import {
+  SystemGlConfigService,
+  SystemGlKey,
+} from "../../kernel/ledger/system-gl-config.service";
 import {
   registerPostingCommittedHandler,
   type PostingCommittedPayload,
 } from "../../kernel/posting-engine/posting-hooks.registry";
 import {
+  computeCashFmnFilingDeadline,
+  evaluateCashThreshold,
   evaluateCrossBorder,
   evaluateHighRiskCustomer,
   evaluateStructuring,
@@ -25,7 +32,21 @@ export class AmlMonitoringService implements OnModuleInit {
     private readonly bankOrg: BankOrgConfig,
     private readonly aml: AmlService,
     private readonly events: OrchestratorEventsPublisher,
+    private readonly systemGl: SystemGlConfigService,
+    private readonly dataHub: DataHubClient,
   ) {}
+
+  /** T+N FMN filing deadline via DataHub working days; weekend fallback. */
+  private async cashFilingDeadline(
+    from: Date,
+    filingBusinessDays: number,
+  ): Promise<Date> {
+    try {
+      return await this.dataHub.addBusinessDays(from, filingBusinessDays);
+    } catch {
+      return computeCashFmnFilingDeadline(from, filingBusinessDays);
+    }
+  }
 
   onModuleInit() {
     registerPostingCommittedHandler((payload) => this.evaluatePostedTransaction(payload));
@@ -74,10 +95,21 @@ export class AmlMonitoringService implements OnModuleInit {
       (e) => e.debitMinor > 0n && e.debitMinor < thresholdMinor,
     ).length;
 
+    let cashVaultGlId: string | undefined;
+    try {
+      const cashGl = await this.systemGl.resolve(SystemGlKey.CASH_VAULT);
+      cashVaultGlId = cashGl.id;
+    } catch {
+      cashVaultGlId = undefined;
+    }
+
     const ctx = {
       transactionId: payload.transactionId,
+      txnType: payload.type,
+      reference: payload.reference,
       legs: payload.entries.map((e) => ({
         accountId: e.accountId,
+        glAccountId: e.glAccountId,
         debitMinor: e.debitMinor,
         creditMinor: e.creditMinor,
         currency: e.currency,
@@ -123,20 +155,51 @@ export class AmlMonitoringService implements OnModuleInit {
           hit = evaluateCrossBorder(ctx);
           narrative = "Cross-border counterparty pattern";
           break;
+        case "CASH_THRESHOLD": {
+          const cashParams: RuleParams = {
+            ...params,
+            cashVaultGlAccountIds: cashVaultGlId
+              ? [...(params.cashVaultGlAccountIds ?? []), cashVaultGlId]
+              : params.cashVaultGlAccountIds,
+          };
+          const r = evaluateCashThreshold(ctx, cashParams);
+          hit = r.hit;
+          amountMinor = r.amountMinor;
+          currency = r.currency;
+          const filingDays = params.filingBusinessDays ?? 3;
+          const filingDeadline = await this.cashFilingDeadline(
+            new Date(),
+            filingDays,
+          );
+          narrative = `Large cash teller transaction at or above FMN threshold (file by ${filingDeadline.toISOString().slice(0, 10)})`;
+          break;
+        }
         default:
           continue;
       }
 
       if (!hit) continue;
 
+      const filingDeadlineAt =
+        rule.code === "CASH_THRESHOLD"
+          ? await this.cashFilingDeadline(
+              new Date(),
+              (params.filingBusinessDays as number | undefined) ?? 3,
+            )
+          : undefined;
+
       const alert = await this.aml.raiseAlert({
         ruleCode: rule.code,
         narrative,
-        severity: rule.code === "HIGH_RISK_CUSTOMER" ? AmlSeverity.HIGH : AmlSeverity.MEDIUM,
+        severity:
+          rule.code === "HIGH_RISK_CUSTOMER" || rule.code === "CASH_THRESHOLD"
+            ? AmlSeverity.HIGH
+            : AmlSeverity.MEDIUM,
         customerId,
         transactionId: payload.transactionId,
         amountMinor,
         currency,
+        filingDeadlineAt,
       });
 
       await this.events.publishAmlAlertRaised({

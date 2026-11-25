@@ -2,7 +2,19 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
-import { LayoutDashboard, Users, MapPin, Inbox, Settings, Upload, ShieldCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  MapPin,
+  Inbox,
+  Settings,
+  Upload,
+  ShieldCheck,
+  Plug,
+  BarChart3,
+  ListFilter,
+  Building2,
+} from "lucide-react";
 import {
   EraAppRouteShell,
   HeaderOrganization,
@@ -16,6 +28,7 @@ import {
   type HeaderProfileMenuItem,
 } from "@era/satellite-kit/ui";
 import { PERMISSIONS as P } from "@/lib/auth/permissions";
+import IncomingCallToast from "@/components/IncomingCallToast";
 
 export default function CrmOpsShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("nav");
@@ -27,11 +40,32 @@ export default function CrmOpsShell({ children }: { children: React.ReactNode })
     [
       { href: "/", label: t("home"), icon: LayoutDashboard, permission: P.SCREEN_HOME },
       { href: "/leads", label: t("leads"), icon: Users, permission: P.SCREEN_LEADS },
+      { href: "/unsorted", label: t("unsorted"), icon: ListFilter, permission: P.SCREEN_LEADS },
+      { href: "/parties", label: t("parties"), icon: Building2, permission: P.SCREEN_LEADS },
       { href: "/visits", label: t("visits"), icon: MapPin, permission: P.SCREEN_VISITS },
       { href: "/inbox", label: t("inbox"), icon: Inbox, permission: P.SCREEN_INBOX },
+      { href: "/reports", label: t("reports"), icon: BarChart3, permission: P.SCREEN_REPORTS },
       { href: "/admin/import", label: t("import"), icon: Upload, permission: P.ADMIN_IMPORT },
       { href: "/admin/settings", label: t("settings"), icon: Settings, permission: P.ADMIN_PIPELINE },
+      {
+        href: "/admin/pipelines",
+        label: t("pipelines"),
+        icon: ListFilter,
+        permission: P.ADMIN_PIPELINE,
+      },
+      {
+        href: "/admin/custom-fields",
+        label: t("customFields"),
+        icon: Settings,
+        permission: P.ADMIN_PIPELINE,
+      },
       { href: "/admin/links", label: t("links"), icon: Settings, permission: P.ADMIN_PIPELINE },
+      {
+        href: "/admin/integrations",
+        label: t("integrations"),
+        icon: Plug,
+        anyPermission: [P.SCREEN_ADMIN_INTEGRATIONS, P.ADMIN_INTEGRATIONS],
+      },
       {
         href: "/admin/access",
         label: t("access"),
@@ -72,6 +106,7 @@ export default function CrmOpsShell({ children }: { children: React.ReactNode })
       locale={<SatelliteHeaderLocale locale={locale} />}
     >
       {children}
+      {status === "ready" && profile ? <IncomingCallToast /> : null}
     </EraAppRouteShell>
   );
 }

@@ -42,6 +42,11 @@ class FatcaClassificationDto {
 export class RegReportingController {
   constructor(private readonly regReporting: RegReportingService) {}
 
+  @Get("cbar/templates")
+  listCbarTemplates() {
+    return this.regReporting.listCbarTemplates();
+  }
+
   @Get("cbar/:template")
   cbarPreview(
     @Param("template") template: string,

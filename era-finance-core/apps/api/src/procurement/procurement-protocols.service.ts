@@ -4,6 +4,9 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
+  ContractRole,
+  ContractStatus,
+  ContractType,
   Decimal,
   ProcurementProtocolStatus,
 } from "@erafinance/database";
@@ -197,6 +200,121 @@ export class ProcurementProtocolsService {
       where: { id },
       data: { status: ProcurementProtocolStatus.REGISTERED },
       include: this.includeDetail,
+    });
+  }
+
+  async open(organizationId: string, id: string) {
+    const existing = await this.get(organizationId, id);
+    if (
+      existing.status !== ProcurementProtocolStatus.DRAFT &&
+      existing.status !== ProcurementProtocolStatus.REGISTERED
+    ) {
+      throw new BadRequestException("Only DRAFT/REGISTERED can open");
+    }
+    return this.prisma.procurementProtocol.update({
+      where: { id },
+      data: { status: ProcurementProtocolStatus.OPEN },
+      include: this.includeDetail,
+    });
+  }
+
+  async cancel(organizationId: string, id: string) {
+    const existing = await this.get(organizationId, id);
+    if (existing.status === ProcurementProtocolStatus.AWARDED) {
+      throw new BadRequestException("AWARDED protocols cannot be cancelled");
+    }
+    if (existing.status === ProcurementProtocolStatus.CANCELLED) {
+      return existing;
+    }
+    return this.prisma.procurementProtocol.update({
+      where: { id },
+      data: { status: ProcurementProtocolStatus.CANCELLED },
+      include: this.includeDetail,
+    });
+  }
+
+  /**
+   * Award winner bid → draft CONSTRUCTION/SUPPLY Contract + optional commitment.
+   */
+  async award(
+    organizationId: string,
+    id: string,
+    opts?: {
+      contractType?: ContractType;
+      reserveCommitment?: boolean;
+      winnerBidId?: string;
+    },
+  ) {
+    const existing = await this.get(organizationId, id);
+    if (existing.status === ProcurementProtocolStatus.AWARDED) {
+      throw new BadRequestException({
+        code: "ALREADY_AWARDED",
+        message: "Protocol already awarded",
+        contractId: existing.contractId,
+      });
+    }
+    if (
+      existing.status !== ProcurementProtocolStatus.OPEN &&
+      existing.status !== ProcurementProtocolStatus.REGISTERED
+    ) {
+      throw new BadRequestException("Only OPEN/REGISTERED protocols can award");
+    }
+    if (!existing.bids.length) {
+      throw new BadRequestException("Cannot award without bids");
+    }
+    let winner = opts?.winnerBidId
+      ? existing.bids.find((b) => b.id === opts.winnerBidId)
+      : undefined;
+    if (!winner) {
+      const winners = existing.bids.filter((b) => b.isWinner);
+      if (winners.length !== 1) {
+        throw new BadRequestException(
+          "Exactly one winning bid is required (set isWinner or pass winnerBidId)",
+        );
+      }
+      winner = winners[0]!;
+    }
+    const contractType = opts?.contractType ?? ContractType.CONSTRUCTION;
+
+    return this.prisma.$transaction(async (tx) => {
+      const contract = await tx.contract.create({
+        data: {
+          organizationId,
+          counterpartyId: winner.counterpartyId,
+          number: `TDR-${existing.number}`,
+          type: contractType,
+          contractRole: ContractRole.COMMITMENT,
+          status: ContractStatus.DRAFT,
+          currency: "AZN",
+          amountLimit: winner.amount,
+          description: `Awarded from tender ${existing.number}: ${existing.title}`,
+        },
+      });
+
+      if (opts?.reserveCommitment !== false) {
+        await tx.contractCommitment.create({
+          data: {
+            contractId: contract.id,
+            amount: winner.amount,
+            referenceType: "procurement_award",
+            referenceId: existing.id,
+          },
+        });
+      }
+
+      await tx.procurementProtocol.update({
+        where: { id },
+        data: {
+          status: ProcurementProtocolStatus.AWARDED,
+          winnerCounterpartyId: winner.counterpartyId,
+          contractId: contract.id,
+        },
+      });
+
+      return tx.procurementProtocol.findFirstOrThrow({
+        where: { id },
+        include: this.includeDetail,
+      });
     });
   }
 }

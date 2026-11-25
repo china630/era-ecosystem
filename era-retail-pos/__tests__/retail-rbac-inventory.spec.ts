@@ -40,21 +40,20 @@ const pageFiles = walk(APP, "page.tsx").filter(
 );
 const pagePaths = pageFiles.map((f) => samplePath(f, APP));
 
-/** Nest owns HTTP. Paths come from the generated handlers and kit mounts, not Next `app/api`. */
+/** Nest owns HTTP. Paths come from native controllers and the kit controller. */
 function nestHandlerFiles(): string[] {
-  const generated = path.join(ROOT, "nest", "generated");
-  const files = fs
-    .readdirSync(generated)
-    .filter((name) => name.endsWith(".ts") && name !== "register.ts")
-    .map((name) => path.join(generated, name));
-  const kit = path.join(ROOT, "nest", "kit-routes.ts");
-  if (fs.existsSync(kit)) files.push(kit);
+  const dir = path.join(ROOT, "nest", "native", "controllers");
+  const files = fs.readdirSync(dir).filter((name) => name.endsWith(".ts")).map((name) => path.join(dir, name));
+  files.push(path.join(ROOT, "nest", "kit-api.controller.ts"));
   return files;
 }
 
 function apiPathsIn(file: string): string[] {
   const src = fs.readFileSync(file, "utf8");
-  return [...src.matchAll(/["'](\/api\/[^"']+)["']/g)].map((m) => m[1]!);
+  return [...src.matchAll(/["'](\/?api\/[^"']+)["']/g)].map((match) => {
+    const value = match[1]!;
+    return value.startsWith("/") ? value : `/${value}`;
+  });
 }
 
 const routeFiles = nestHandlerFiles();

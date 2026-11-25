@@ -589,13 +589,14 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 **Отчёты:** реестр с фильтром по статусу; остаток лимита; исполнение (заказано / оплачено / закрыто).
 
-**Отличие от `era-construction`:** спутник ведёт **объектную смету и акты**; модуль 11 — **юридико-финансовый договор** с контрагентом и лимитом в ERP.
+**Отличие от `era-construction`:** спутник ведёт **объектную смету и акты** (ops pack, включая строки акта и опциональный пятиступенчатый estimate pack); модуль 11 — **юридико-финансовый договор** с контрагентом и лимитом в ERP. Полная карта плоскостей: [construction-domain-boundaries.md](../docs/adr/construction-domain-boundaries.md). События: `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` (опционально `lines[]` / `contractId`); `SATELLITE_CONSTRUCTION_ESTIMATE_PACKAGE_APPROVED` (baseline → optional Contract SOV seed, no auto-GL). Journal reference `construction:{actId}` — idempotent re-delivery.
 
 Техконтракт: [TZ.md](./TZ.md) §25.
 
 ### 4.16. Модуль 12: Годовой бюджет и исполнение (B2G / `OrganizationKind.BUDGET`)
 
-**Status:** [x] **COMPLETED (Phase A, 2026-05-25)** — полный цикл для **государственных и квазибюджетных** организаций: entitlement **`gov_budget_pro`**, REST `/api/gov-budget`, web `/gov-budget`, `GovBudgetService.checkLimit()` gateway on purchases for `OrganizationKind.BUDGET`, demo org **Demo Budget Agency** in seed.
+**Status:** [x] **COMPLETED (Phase A, 2026-05-25)** — полный цикл для **государственных и квазибюджетных** организаций: entitlement **`gov_budget_pro`**, REST `/api/gov-budget`, web `/gov-budget`, `GovBudgetService.checkLimit()` gateway on purchases for `OrganizationKind.BUDGET`, demo org **Demo Budget Agency** in seed.  
+**Commercial deepen (2026-11-20 MVP):** SKU **`mgmt_budget_pro`**, `BudgetYear.mode` `GOV`\|`MANAGEMENT`, soft/hard `POST /gov-budget/commitments/reserve`, UI `/gov-budget` for COMMERCIAL — AC-FIN-BUDGET-COMM 🟡 / UAT open (ADR finance-commercial-budget-execution). NAS-Gov ledger funding/expense still BUDGET-only.
 
 **Проблема:** без годового плана и контроля исполнения по статьям невозможен законный расход; разрозненные лимиты в M2 недостаточны.
 
@@ -613,7 +614,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 **Инварианты:**
 
 - Для `OrganizationKind.BUDGET` модуль **обязателен** к включению перед массовыми расходами (мягкий режим onboarding → жёсткий gateway).
-- Коммерческие организации (`COMMERCIAL`) — опциональный **управленческий бюджет** (без NAS-Gov статей), тот же движок, упрощённые статьи.
+- Коммерческие организации (`COMMERCIAL`) — опциональный **управленческий бюджет** (без NAS-Gov статей), тот же движок, упрощённые статьи; entitlement **`mgmt_budget_pro`** (или `gov_budget_pro` / TIER_3).
 
 **Связь с roadmap §6.7 M6:** модуль 12 **реализует полностью** продуктовый scope **M6 — Budgeting & Treasury** (ранее краткая строка в таблице v3.2+).
 
@@ -829,7 +830,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 |---------------|---------|----------------------|
 | **RETAIL_ECOM** | Магазины, Instagram-продажи | +15 AZN/мес. за точку продаж → [`era-retail-pos`](../era-retail-pos) |
 | **LOGISTICS_CUSTOMS** | Экспедиторы, перевозчики | +25 AZN/мес. за автопарк → [`era-logistics`](../era-logistics) |
-| **CONSTRUCTION** | Сметы, объекты, акты | +20 AZN/мес. за проект → [`era-construction`](../era-construction) |
+| **CONSTRUCTION** | Сметы, объекты, акты | Gate **29** AZN + **29**/объект (capacity); ops add-ons + Finance `contract_payapp_ks` / tenders — [era-commercial-catalog.md](../docs/adr/era-commercial-catalog.md) → [`era-construction`](../era-construction) |
 | **CRM_WHATSAPP** | Pre-sale, визиты (не Finance CRM) | +10 AZN/мес. → [`era-crm`](../era-crm) |
 | **AUTO_STO** | Авто СТО, заказ-наряды | +18 AZN/мес. → [`era-auto-service`](../era-auto-service) |
 | **CLINIC** | Запись, приём | +22 AZN/мес. → [`era-clinic`](../era-clinic) |

@@ -17,7 +17,11 @@ import { DepositsModule } from "./modules/deposits/deposits.module";
 import { DboModule } from "./modules/dbo/dbo.module";
 import { FeeModule } from "./modules/fee/fee.module";
 import { IslamicModule } from "./modules/islamic/islamic.module";
+import { LeasingModule } from "./modules/leasing/leasing.module";
 import { LoansModule } from "./modules/loans/loans.module";
+import { MfiModule } from "./modules/mfi/mfi.module";
+import { MisModule } from "./modules/mis/mis.module";
+import { WebhooksModule } from "./modules/webhooks/webhooks.module";
 import { MarketsModule } from "./modules/markets/markets.module";
 import { MultiEntityModule } from "./modules/multi-entity/multi-entity.module";
 import { PaymentsModule } from "./modules/payments/payments.module";
@@ -46,6 +50,10 @@ import { PrismaModule } from "./prisma/prisma.module";
     PaymentsModule,
     DepositsModule,
     LoansModule,
+    LeasingModule,
+    MfiModule,
+    MisModule,
+    WebhooksModule,
     RiskModule,
     AmlModule,
     RegReportingModule,

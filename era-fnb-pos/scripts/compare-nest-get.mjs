@@ -15,15 +15,17 @@ const sameFile = path.join(os.tmpdir(), "era-fnb-compare-same.json");
 
 const root = path.join(import.meta.dirname, "..");
 const files = [
-  ...fs.readdirSync(path.join(root, "nest", "generated")).map((name) => path.join(root, "nest", "generated", name)),
-  path.join(root, "nest", "kit-routes.ts"),
+  ...fs.readdirSync(path.join(root, "nest", "native", "controllers")).map((name) =>
+    path.join(root, "nest", "native", "controllers", name),
+  ),
+  path.join(root, "nest", "kit-api.controller.ts"),
 ];
 const paths = new Map();
 for (const file of files) {
   if (!file.endsWith(".ts")) continue;
   const text = fs.readFileSync(file, "utf8");
-  for (const match of text.matchAll(/http\.get\(\s*"([^"]+)"/g)) {
-    const original = match[1];
+  for (const match of text.matchAll(/@Get\("([^"]+)"\)/g)) {
+    const original = `/${match[1]}`;
     paths.set(original.replace(/:[A-Za-z0-9_]+/g, nil), original);
   }
 }

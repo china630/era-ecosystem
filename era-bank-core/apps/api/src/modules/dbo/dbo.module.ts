@@ -1,7 +1,10 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "../../auth/auth.module";
-import { AsanSimaStubAdapter } from "../../integration/asan-sima-stub.adapter";
+import {
+  AsanSimaStubAdapter,
+  createAsanSimaAdapter,
+} from "../../integration/asan-sima.adapter";
 import { IntegrationModule } from "../../integration/integration.module";
 import { LedgerModule } from "../../kernel/ledger/ledger.module";
 import { PostingEngineModule } from "../../kernel/posting-engine/posting-engine.module";
@@ -10,6 +13,7 @@ import { CardsModule } from "../cards/cards.module";
 import { IslamicModule } from "../islamic/islamic.module";
 import { DboCardsController } from "./dbo-cards.controller";
 import { LoansModule } from "../loans/loans.module";
+import { LeasingModule } from "../leasing/leasing.module";
 import { PaymentsModule } from "../payments/payments.module";
 import { BankCustomerAuthGuard } from "./bank-customer-auth.guard";
 import { DboAccountsController } from "./dbo-accounts.controller";
@@ -42,6 +46,7 @@ import { OpenApiGuard } from "./open-api.guard";
     PostingEngineModule,
     PaymentsModule,
     LoansModule,
+    LeasingModule,
     AmlModule,
     CardsModule,
     IslamicModule,
@@ -71,7 +76,10 @@ import { OpenApiGuard } from "./open-api.guard";
     DboOpenApiService,
     BankCustomerAuthGuard,
     OpenApiGuard,
-    AsanSimaStubAdapter,
+    {
+      provide: AsanSimaStubAdapter,
+      useFactory: () => createAsanSimaAdapter() as AsanSimaStubAdapter,
+    },
   ],
   exports: [DboService, DboAuthService],
 })

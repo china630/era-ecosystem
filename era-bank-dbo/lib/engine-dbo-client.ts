@@ -147,4 +147,10 @@ export const dboPaths = {
   threeDsComplete: (id: string) =>
     `/api/v1/dbo/cards/3ds/challenges/${id}/complete`,
   islamicContracts: "/api/v1/dbo/islamic/contracts",
+  loans: "/api/v1/dbo/loans",
+  loan: (id: string) => `/api/v1/dbo/loans/${id}`,
+  loanPrepay: (id: string) => `/api/v1/dbo/loans/${id}/prepay`,
+  leasingContracts: "/api/v1/dbo/leasing/contracts",
+  leasingSchedule: (id: string) =>
+    `/api/v1/dbo/leasing/contracts/${id}/schedule`,
 } as const;

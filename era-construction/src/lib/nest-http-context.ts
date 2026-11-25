@@ -15,7 +15,7 @@ type Incoming = {
   url?: string;
 };
 
-/** Keep the Express request visible to code that calls next/headers. */
+/** Bind Express request cookies/headers into ALS for Nest staff session + RBAC. */
 export function runWithNestHttp<T>(req: Incoming, fn: () => Promise<T>): Promise<T> {
   const raw = String(req.headers?.cookie ?? "");
   const jar = new Map<string, string>();

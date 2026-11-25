@@ -2,7 +2,13 @@ import { PERMISSIONS as P, type Permission } from "@/lib/auth/permissions";
 import { firstRouteMatch, matchesAnyRoute, type RouteRule } from "@/lib/auth/route-match";
 
 /** Reachable without a staff session. */
-export const PUBLIC_STAFF_PAGES: readonly string[] = ["/login", "/sso/callback", "/help", "/help/**"];
+export const PUBLIC_STAFF_PAGES: readonly string[] = [
+  "/login",
+  "/sso/callback",
+  "/access-denied",
+  "/help",
+  "/help/**",
+];
 
 /** Any signed-in session; the page enforces its own owner / platform check. */
 export const AUTH_ONLY_PAGES: readonly string[] = [];
@@ -15,6 +21,7 @@ export const PAGE_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/field-ops", [P.SCREEN_FIELD_OPS]],
   ["/material-requisitions", [P.SCREEN_MATERIAL_REQUISITIONS]],
   ["/admin/settings", [P.SCREEN_ADMIN_SETTINGS]],
+  ["/admin/rate-bases", [P.SCREEN_ADMIN_SETTINGS, P.ESTIMATE]],
   ["/admin/links", [P.SCREEN_ADMIN_SETTINGS]],
   ["/admin/access", [P.SCREEN_ADMIN_ACCESS, P.ACCESS_MANAGE]],
 ];

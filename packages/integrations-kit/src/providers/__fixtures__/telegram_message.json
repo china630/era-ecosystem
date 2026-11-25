@@ -1,0 +1,10 @@
+{
+  "update_id": 1001,
+  "message": {
+    "message_id": 42,
+    "date": 1700000000,
+    "chat": { "id": 555001 },
+    "from": { "id": 555001, "first_name": "Test", "username": "tester" },
+    "text": "Hello from fixture"
+  }
+}

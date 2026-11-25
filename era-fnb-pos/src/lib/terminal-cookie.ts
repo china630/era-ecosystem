@@ -57,7 +57,7 @@ export function readTerminalCookie(token: string | null | undefined): TerminalCl
   }
 }
 
-export function terminalCookieHeader(request: Request): string | null {
+export function terminalCookieHeader(request: { headers: { get(name: string): string | null } }): string | null {
   const raw = request.headers.get("cookie") ?? "";
   for (const part of raw.split(";")) {
     const trimmed = part.trim();

@@ -26,13 +26,17 @@ import { CheckBudgetLimitDto } from "./dto/check-budget-limit.dto";
 import { CreateBudgetYearDto } from "./dto/create-budget-year.dto";
 import { RecordBudgetExpenseDto } from "./dto/record-budget-expense.dto";
 import { RecordBudgetFundingDto } from "./dto/record-budget-funding.dto";
+import { ReserveBudgetCommitmentDto } from "./dto/reserve-budget-commitment.dto";
 import { GovBudgetService } from "./gov-budget.service";
 
 @ApiTags("gov-budget")
 @ApiBearerAuth("bearer")
 @Controller("gov-budget")
 @UseGuards(SubscriptionGuard)
-@RequiresModule(ModuleEntitlement.GOV_BUDGET_PRO)
+@RequiresModule([
+  ModuleEntitlement.GOV_BUDGET_PRO,
+  ModuleEntitlement.MGMT_BUDGET_PRO,
+])
 export class GovBudgetController {
   constructor(private readonly govBudget: GovBudgetService) {}
 
@@ -120,6 +124,19 @@ export class GovBudgetController {
     @Body() dto: CheckBudgetLimitDto,
   ) {
     return this.govBudget.checkLimit(organizationId, dto);
+  }
+
+  @Post("commitments/reserve")
+  @Permissions(CP_PERMISSION.API_LEDGER_POST)
+  @ApiOperation({
+    summary:
+      "Soft (or hard) reserve: link contract/payment/act to a budget line for plan–fact",
+  })
+  reserveCommitment(
+    @OrganizationId() organizationId: string,
+    @Body() dto: ReserveBudgetCommitmentDto,
+  ) {
+    return this.govBudget.reserveCommitment(organizationId, dto);
   }
 
   @Get("years/:id/execution")

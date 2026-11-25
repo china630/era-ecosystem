@@ -4,8 +4,10 @@ export type PostingCommittedPayload = {
   transactionId: string;
   bankOrgId: string;
   type: string;
+  reference?: string;
   entries: Array<{
     accountId?: string | null;
+    glAccountId?: string;
     debitMinor: bigint;
     creditMinor: bigint;
     currency: string;

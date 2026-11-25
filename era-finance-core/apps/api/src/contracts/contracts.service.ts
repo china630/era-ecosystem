@@ -6,6 +6,8 @@ import {
 } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import {
+  ContractAmendmentStatus,
+  ContractRole,
   ContractStatus,
   Decimal,
   Prisma,
@@ -19,6 +21,10 @@ import { normalizeListPagination } from "../common/list-pagination";
 import { parseIsoDateOnly } from "../reporting/reporting-period.util";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { PatchContractDto } from "./dto/patch-contract.dto";
+import {
+  CreateAmendmentDto,
+  ReplaceContractLinesDto,
+} from "./dto/create-amendment.dto";
 
 export type ContractLimitCheckResult = {
   allowed: boolean;
@@ -94,6 +100,7 @@ export class ContractsService {
         counterpartyId: dto.counterpartyId,
         number: dto.number.trim(),
         type: dto.type,
+        contractRole: dto.contractRole ?? ContractRole.PRIME,
         currency: dto.currency ?? "AZN",
         amountLimit:
           dto.amountLimit != null ? new Decimal(dto.amountLimit) : null,
@@ -102,8 +109,10 @@ export class ContractsService {
         description: dto.description?.trim() ?? null,
         lines: dto.lines?.length
           ? {
-              create: dto.lines.map((line) => ({
+              create: dto.lines.map((line, idx) => ({
                 description: line.description?.trim() ?? null,
+                code: line.code?.trim() ?? null,
+                sortOrder: line.sortOrder ?? idx,
                 quantity:
                   line.quantity != null ? new Decimal(line.quantity) : null,
                 unitPrice:
@@ -122,8 +131,9 @@ export class ContractsService {
       where: { id, organizationId },
       include: {
         counterparty: { select: { id: true, nameCipher: true, taxIdCipher: true } },
-        lines: true,
+        lines: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
         commitments: { orderBy: { createdAt: "desc" }, take: 50 },
+        amendments: { orderBy: { createdAt: "desc" }, take: 50 },
       },
     });
     if (!row) throw new NotFoundException("Contract not found");
@@ -150,6 +160,7 @@ export class ContractsService {
       where: { id },
       data: {
         ...(dto.type != null ? { type: dto.type } : {}),
+        ...(dto.contractRole != null ? { contractRole: dto.contractRole } : {}),
         ...(dto.status != null ? { status: dto.status } : {}),
         ...(dto.currency != null ? { currency: dto.currency } : {}),
         ...(dto.amountLimit !== undefined
@@ -164,7 +175,296 @@ export class ContractsService {
           ? { description: dto.description?.trim() ?? null }
           : {}),
       },
-      include: { lines: true },
+      include: { lines: true, amendments: true },
+    });
+  }
+
+  async replaceLines(
+    organizationId: string,
+    id: string,
+    lines: ReplaceContractLinesDto[],
+  ) {
+    await this.get(organizationId, id);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.contractLine.deleteMany({ where: { contractId: id } });
+      if (lines.length) {
+        await tx.contractLine.createMany({
+          data: lines.map((line, idx) => ({
+            contractId: id,
+            description: line.description?.trim() ?? null,
+            code: line.code?.trim() ?? null,
+            sortOrder: line.sortOrder ?? idx,
+            quantity: line.quantity != null ? new Decimal(line.quantity) : null,
+            unitPrice:
+              line.unitPrice != null ? new Decimal(line.unitPrice) : null,
+            amount: line.amount != null ? new Decimal(line.amount) : null,
+          })),
+        });
+      }
+      return tx.contract.findFirstOrThrow({
+        where: { id, organizationId },
+        include: {
+          lines: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
+          amendments: { orderBy: { createdAt: "desc" } },
+        },
+      });
+    });
+  }
+
+  async createAmendment(
+    organizationId: string,
+    contractId: string,
+    dto: CreateAmendmentDto,
+  ) {
+    const contract = await this.get(organizationId, contractId);
+    if (contract.status !== ContractStatus.ACTIVE) {
+      throw new BadRequestException("Amendments require an ACTIVE contract");
+    }
+    if (dto.sourceType && dto.sourceId) {
+      const dup = await this.prisma.contractAmendment.findFirst({
+        where: {
+          organizationId,
+          sourceType: dto.sourceType,
+          sourceId: dto.sourceId,
+        },
+      });
+      if (dup) {
+        throw new BadRequestException({
+          code: "AMENDMENT_SOURCE_DUPLICATE",
+          message: "Amendment already exists for this source",
+          amendmentId: dup.id,
+        });
+      }
+    }
+    return this.prisma.contractAmendment.create({
+      data: {
+        organizationId,
+        contractId,
+        number: dto.number.trim(),
+        amountLimitDelta:
+          dto.amountLimitDelta != null
+            ? new Decimal(dto.amountLimitDelta)
+            : null,
+        dateTo: dto.dateTo ? parseIsoDateOnly(dto.dateTo) : null,
+        description: dto.description?.trim() ?? null,
+        sourceType: dto.sourceType?.trim() ?? null,
+        sourceId: dto.sourceId?.trim() ?? null,
+        status: ContractAmendmentStatus.DRAFT,
+      },
+    });
+  }
+
+  /**
+   * Seed Contract SOV from an approved Construction estimate pack (no GL).
+   * Idempotent on commitment `construction_estimate` + packageId.
+   * Skips when SOV already has manual lines (no prior estimate seed).
+   */
+  async seedSovFromEstimatePackage(input: {
+    organizationId: string;
+    contractId: string;
+    packageId: string;
+    version: number;
+    amountNet: number;
+    lines: Array<{
+      itemCode: string;
+      description: string;
+      qty: number;
+      amountNet: number;
+    }>;
+  }) {
+    const REF_TYPE = "construction_estimate";
+    const contract = await this.prisma.contract.findFirst({
+      where: { id: input.contractId, organizationId: input.organizationId },
+      include: {
+        lines: { select: { id: true } },
+        commitments: {
+          where: { referenceType: REF_TYPE },
+          select: { id: true, referenceId: true },
+        },
+      },
+    });
+    if (!contract) {
+      return { seeded: false, idempotent: false, skipped: "CONTRACT_NOT_FOUND" as const };
+    }
+
+    const samePack = contract.commitments.find(
+      (c) => c.referenceId === input.packageId,
+    );
+    if (samePack) {
+      return {
+        seeded: false,
+        idempotent: true,
+        skipped: null,
+        lineCount: contract.lines.length,
+      };
+    }
+
+    const priorEstimateSeed = contract.commitments[0] ?? null;
+    if (contract.lines.length > 0 && !priorEstimateSeed) {
+      return {
+        seeded: false,
+        idempotent: false,
+        skipped: "SOV_NONEMPTY_MANUAL" as const,
+        lineCount: contract.lines.length,
+      };
+    }
+
+    if (!input.lines.length) {
+      return { seeded: false, idempotent: false, skipped: "EMPTY_LINES" as const };
+    }
+
+    const sovLines: ReplaceContractLinesDto[] = input.lines.map((line, idx) => {
+      const qty = Number(line.qty);
+      const amount = Number(line.amountNet);
+      const unitPrice = qty > 0 ? amount / qty : amount;
+      return {
+        code: line.itemCode,
+        description: line.description,
+        sortOrder: idx,
+        quantity: qty,
+        unitPrice,
+        amount,
+      };
+    });
+
+    return this.prisma.$transaction(async (tx) => {
+      if (priorEstimateSeed) {
+        await tx.contractCommitment.deleteMany({
+          where: { contractId: input.contractId, referenceType: REF_TYPE },
+        });
+      }
+      await tx.contractLine.deleteMany({ where: { contractId: input.contractId } });
+      await tx.contractLine.createMany({
+        data: sovLines.map((line, idx) => ({
+          contractId: input.contractId,
+          description: line.description?.trim() ?? null,
+          code: line.code?.trim() ?? null,
+          sortOrder: line.sortOrder ?? idx,
+          quantity: line.quantity != null ? new Decimal(line.quantity) : null,
+          unitPrice: line.unitPrice != null ? new Decimal(line.unitPrice) : null,
+          amount: line.amount != null ? new Decimal(line.amount) : null,
+        })),
+      });
+      await tx.contractCommitment.create({
+        data: {
+          contractId: input.contractId,
+          amount: new Decimal(input.amountNet),
+          referenceType: REF_TYPE,
+          referenceId: input.packageId,
+        },
+      });
+      if (contract.amountLimit == null) {
+        await tx.contract.update({
+          where: { id: input.contractId },
+          data: { amountLimit: new Decimal(input.amountNet) },
+        });
+      }
+      return {
+        seeded: true,
+        idempotent: false,
+        skipped: null,
+        lineCount: sovLines.length,
+        version: input.version,
+      };
+    });
+  }
+
+  /**
+   * Draft amendment from construction change-request event (idempotent on source).
+   */
+  async draftAmendmentFromChangeRequest(input: {
+    organizationId: string;
+    contractId: string;
+    changeRequestId: string;
+    amountLimitDelta?: number | null;
+    description?: string | null;
+  }) {
+    const existing = await this.prisma.contractAmendment.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        sourceType: "change_request",
+        sourceId: input.changeRequestId,
+      },
+    });
+    if (existing) return { amendment: existing, idempotent: true };
+
+    const contract = await this.prisma.contract.findFirst({
+      where: { id: input.contractId, organizationId: input.organizationId },
+    });
+    if (!contract || contract.status !== ContractStatus.ACTIVE) {
+      return { amendment: null, idempotent: false, skipped: "CONTRACT_NOT_ACTIVE" };
+    }
+
+    const amendment = await this.prisma.contractAmendment.create({
+      data: {
+        organizationId: input.organizationId,
+        contractId: input.contractId,
+        number: `CR-${input.changeRequestId.slice(0, 8)}`,
+        amountLimitDelta:
+          input.amountLimitDelta != null
+            ? new Decimal(input.amountLimitDelta)
+            : null,
+        description:
+          input.description?.trim() ??
+          `Ops change request ${input.changeRequestId}`,
+        sourceType: "change_request",
+        sourceId: input.changeRequestId,
+        status: ContractAmendmentStatus.DRAFT,
+      },
+    });
+    return { amendment, idempotent: false };
+  }
+
+  async activateAmendment(organizationId: string, amendmentId: string) {
+    const amd = await this.prisma.contractAmendment.findFirst({
+      where: { id: amendmentId, organizationId },
+      include: { contract: { include: { commitments: true } } },
+    });
+    if (!amd) throw new NotFoundException("Amendment not found");
+    if (amd.status !== ContractAmendmentStatus.DRAFT) {
+      throw new BadRequestException("Only DRAFT amendments can be activated");
+    }
+    if (amd.contract.status !== ContractStatus.ACTIVE) {
+      throw new BadRequestException("Base contract must be ACTIVE");
+    }
+
+    const nextLimit =
+      amd.amountLimitDelta != null
+        ? new Decimal(amd.contract.amountLimit ?? 0).add(amd.amountLimitDelta)
+        : amd.contract.amountLimit;
+
+    if (nextLimit != null) {
+      const committed = amd.contract.commitments.reduce(
+        (sum, c) => sum.add(c.amount),
+        new Decimal(0),
+      );
+      if (new Decimal(nextLimit).lt(committed)) {
+        throw new BadRequestException({
+          code: "AMENDMENT_BELOW_COMMITTED",
+          message: "Activated limit would be below committed amount",
+          committed: committed.toFixed(4),
+          nextLimit: new Decimal(nextLimit).toFixed(4),
+        });
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.contract.update({
+        where: { id: amd.contractId },
+        data: {
+          ...(amd.amountLimitDelta != null
+            ? { amountLimit: nextLimit }
+            : {}),
+          ...(amd.dateTo != null ? { dateTo: amd.dateTo } : {}),
+        },
+      });
+      return tx.contractAmendment.update({
+        where: { id: amd.id },
+        data: {
+          status: ContractAmendmentStatus.ACTIVE,
+          activatedAt: new Date(),
+        },
+      });
     });
   }
 

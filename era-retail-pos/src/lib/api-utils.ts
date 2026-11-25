@@ -24,39 +24,46 @@ export function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
-export function handleRouteError(err: unknown) {
+export type RouteErrorResult = { status: number; body: Record<string, unknown> };
+
+export function describeRouteError(err: unknown): RouteErrorResult {
   if (isSatelliteBillingBlockedError(err)) {
-    return NextResponse.json(
-      { error: err.message, code: err.code, billingStatus: err.billingStatus },
-      { status: err.status },
-    );
+    return {
+      status: err.status,
+      body: { error: err.message, code: err.code, billingStatus: err.billingStatus },
+    };
   }
   if (err && typeof err === "object" && "issues" in err) {
-    return jsonError("Validation failed", 400);
+    return { status: 400, body: { error: "Validation failed" } };
   }
   if (err instanceof IndustryModuleInactiveError) {
-    return jsonError(err.message, 403);
+    return { status: 403, body: { error: err.message } };
   }
   if (err instanceof Error && err.name === "SatelliteChannelDisabledError") {
-    return NextResponse.json(
-      {
+    return {
+      status: 403,
+      body: {
         error: err.message,
         code:
           "code" in err && typeof (err as { code?: string }).code === "string"
             ? (err as { code: string }).code
             : "SATELLITE_CHANNEL_DISABLED",
       },
-      { status: 403 },
-    );
+    };
   }
   if (err instanceof Error && (err.name === "UnauthorizedError" || err.name === "PermissionDeniedError")) {
-    return jsonError(err.message, err.name === "UnauthorizedError" ? 401 : 403);
+    return { status: err.name === "UnauthorizedError" ? 401 : 403, body: { error: err.message } };
   }
   if (err instanceof Error && err.name === "FiscalError") {
-    return jsonError(err.message, 400);
+    return { status: 400, body: { error: err.message } };
   }
   const msg = err instanceof Error ? err.message : "Internal error";
-  return jsonError(msg, 500);
+  return { status: 500, body: { error: msg } };
+}
+
+export function handleRouteError(err: unknown) {
+  const described = describeRouteError(err);
+  return NextResponse.json(described.body, { status: described.status });
 }
 
 export type StaffSession = SatelliteStaffSessionPayload & { permissions: string[] };
@@ -68,17 +75,25 @@ export type StaffSession = SatelliteStaffSessionPayload & { permissions: string[
  * missing grant → PermissionDeniedError (403).
  * Call once per handler, inside try, and pass the session on.
  */
-export async function getSatelliteSession(): Promise<StaffSession | null> {
-  let cookieStore: Awaited<ReturnType<typeof cookies>>;
-  let headerStore: Awaited<ReturnType<typeof headers>>;
-  try {
-    cookieStore = await cookies();
-    headerStore = await headers();
-  } catch {
-    const frame = nestHttpFrame();
-    if (!frame) return null;
-    cookieStore = frame.cookies as Awaited<ReturnType<typeof cookies>>;
-    headerStore = frame.headers as Awaited<ReturnType<typeof headers>>;
+export async function getSatelliteSession(explicit?: {
+  cookies: { get(name: string): { value: string } | undefined };
+  headers: { get(name: string): string | null };
+}): Promise<StaffSession | null> {
+  let cookieStore: { get(name: string): { value: string } | undefined };
+  let headerStore: { get(name: string): string | null };
+  if (explicit) {
+    cookieStore = explicit.cookies;
+    headerStore = explicit.headers;
+  } else {
+    try {
+      cookieStore = await cookies();
+      headerStore = await headers();
+    } catch {
+      const frame = nestHttpFrame();
+      if (!frame) return null;
+      cookieStore = frame.cookies as Awaited<ReturnType<typeof cookies>>;
+      headerStore = frame.headers as Awaited<ReturnType<typeof headers>>;
+    }
   }
   const staff = await readSatelliteStaffSession({
     cookies: cookieStore,

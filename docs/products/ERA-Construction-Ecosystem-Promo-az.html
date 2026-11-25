@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERA Construction — CRM · Finance · Tikinti</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #14201c;
+      --muted: #4a5a54;
+      --line: #d7e0db;
+      --paper: #f7faf8;
+      --card: #ffffff;
+      --brand: #0f6b4c;
+      --brand-deep: #0a4a35;
+      --accent: #c4a35a;
+      --soft: #e8f2ed;
+      --flow: #1f3d34;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #e4ebe7;
+      color: var(--ink);
+      font-family: Manrope, system-ui, sans-serif;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .sheet {
+      width: min(920px, 100%);
+      margin: 28px auto;
+      background: var(--paper);
+      box-shadow: 0 18px 50px rgba(20, 32, 28, 0.12);
+    }
+
+    .page {
+      padding: 48px 52px 56px;
+      border-bottom: 1px solid var(--line);
+      min-height: 100vh;
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page:last-child {
+      border-bottom: 0;
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 6px;
+      background: linear-gradient(90deg, var(--brand-deep), var(--brand) 55%, var(--accent));
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--brand);
+      margin: 0 0 18px;
+    }
+
+    .kicker span {
+      width: 28px;
+      height: 2px;
+      background: var(--accent);
+      display: inline-block;
+    }
+
+    h1, h2, h3 {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 14px;
+      color: var(--ink);
+    }
+
+    h1 { font-size: 42px; line-height: 1.12; max-width: 16ch; }
+    h2 { font-size: 30px; line-height: 1.2; }
+    h3 { font-size: 18px; line-height: 1.3; font-family: Manrope, sans-serif; font-weight: 700; }
+
+    p { margin: 0 0 14px; color: var(--muted); font-size: 16px; }
+    .lead { font-size: 19px; color: var(--ink); max-width: 46ch; }
+
+    .brand-mark {
+      font-family: Manrope, sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--brand-deep);
+      margin-bottom: 28px;
+    }
+
+    .brand-mark em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .quote {
+      margin: 28px 0 0;
+      padding: 20px 22px;
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 600;
+      max-width: 48ch;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      margin-top: 28px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .tile {
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 18px 18px 16px;
+    }
+
+    .tile .label {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--brand);
+      margin-bottom: 8px;
+    }
+
+    .tile p { margin: 0; font-size: 14px; }
+
+    .flow {
+      margin-top: 26px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .flow-step {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 14px;
+      align-items: start;
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 14px 16px;
+    }
+
+    .flow-step strong {
+      color: var(--brand-deep);
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .flow-step span { color: var(--muted); font-size: 14px; }
+
+    .pitch {
+      margin-top: 24px;
+      padding: 18px 20px;
+      background: var(--flow);
+      color: #f4faf7;
+    }
+
+    .pitch strong { display: block; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+    .pitch p { margin: 0; color: #e7f2ec; font-size: 16px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      background: var(--card);
+    }
+
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--soft);
+      color: var(--brand-deep);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    td:first-child { font-weight: 700; color: var(--ink); white-space: nowrap; width: 28%; }
+
+    .compare td:nth-child(2) { color: var(--muted); }
+    .compare td:nth-child(3) { color: var(--ink); font-weight: 600; }
+
+    .footer-note {
+      margin-top: 36px;
+      font-size: 12px;
+      color: #7a8a84;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .hero-aside {
+      background:
+        linear-gradient(160deg, rgba(15, 107, 76, 0.92), rgba(10, 74, 53, 0.96)),
+        repeating-linear-gradient(-35deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 10px);
+      color: #f5fbf8;
+      padding: 28px 24px;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .hero-aside .big {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 28px;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .hero-aside ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .hero-aside li {
+      padding: 8px 0;
+      border-top: 1px solid rgba(255,255,255,0.18);
+      font-size: 14px;
+    }
+
+    .close-box {
+      margin-top: 28px;
+      padding: 28px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+    }
+
+    .close-box p {
+      color: var(--ink);
+      font-size: 18px;
+      max-width: 48ch;
+    }
+
+    @media print {
+      html, body { background: #fff; }
+      .sheet { width: auto; margin: 0; box-shadow: none; }
+      .page {
+        min-height: auto;
+        height: auto;
+        padding: 28mm 18mm 22mm;
+        border: 0;
+      }
+      a { color: inherit; text-decoration: none; }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 32px 22px 40px; min-height: auto; }
+      h1 { font-size: 32px; }
+      .grid-2, .grid-4, .flow-step { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="sheet">
+
+    <!-- 1 -->
+    <section class="page">
+      <div class="brand-mark">ERA <em>365</em> · Construction</div>
+      <p class="kicker"><span></span> Tikinti ekosistemi</p>
+      <div class="grid-2">
+        <div>
+          <h1>Satış, maliyyə və tikinti sahəsi — bir platformada</h1>
+          <p class="lead">
+            <strong>ERA Construction</strong> tikinti obyektinin əməliyyat konturudur:
+            CRM satışları və Finance mühasibatı ilə eyni ekosistemdə işləyir.
+          </p>
+          <div class="quote">
+            Lead → müqavilə və ödənişlər → obyekt, sməta, sahə, akt → mühasibat yazılışları və KS —
+            üç sistem arasında əl ilə köçürmə olmadan.
+          </div>
+        </div>
+        <aside class="hero-aside">
+          <div class="big">Bir zəncir. Üç rol. Bir həqiqət.</div>
+          <ul>
+            <li>CRM — müştəri və satış</li>
+            <li>Finance — müqavilə, KS, pul</li>
+            <li>Construction — obyekt və sahə</li>
+          </ul>
+        </aside>
+      </div>
+      <div class="footer-note">
+        <span>ERA Construction · CRM · Finance</span>
+        <span>1 / 7</span>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="page">
+      <p class="kicker"><span></span> Arxitektura</p>
+      <h2>Niyə bu “daha bir tikinti proqramı” deyil</h2>
+      <p class="lead">
+        Bazar liderləri (Procore, Autodesk, Oracle, Buildertrend, Fieldwire) eyni nüvəni təklif edir,
+        amma CRM, güclü mühasibat və yerli akt formaları bir yerdə nadir hallarda olur.
+      </p>
+      <p>
+        ERA monolit “hər şey bir tətbiqdə” modelini təkrarlamır. Kontur müstəvilərə ayrılır
+        və hadisələrlə birləşir — tətbiq sadə qalır, məlumat isə vahid qalır.
+      </p>
+
+      <div class="grid-4">
+        <div class="tile">
+          <div class="label">CRM</div>
+          <h3>Lead → çevrilmə</h3>
+          <p>Satış və zəmanət dövrü tikintiyə qədər: lead, vizit, convert.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Finance</div>
+          <h3>Müqavilə və pul</h3>
+          <p>Kontragentlər, müqavilələr, satınalma, ödəniş aktları, KS-2 / KS-3, GL / WIP.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Construction</div>
+          <h3>Obyekt və sahə</h3>
+          <p>Layihə, sməta (BOQ), çertyojlar, sahə jurnalları, yerinə yetirmə aktları.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Control Plane</div>
+          <h3>Giriş və kadrlar</h3>
+          <p>Vahid giriş, səlahiyyətlər, tabel, personalın işə qəbulu.</p>
+        </div>
+      </div>
+
+      <p style="margin-top:22px">
+        Pul və CRM tikinti modulunun içində təkrarlanmır: mühasibat Finance-də,
+        satış CRM-də qalır — bu, tətbiqi asanlaşdırır.
+      </p>
+      <div class="footer-note">
+        <span>ERA Construction · CRM · Finance</span>
+        <span>2 / 7</span>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="page">
+      <p class="kicker"><span></span> Uçdan-uca ssenari</p>
+      <h2>Müştəridən akta — bir axın</h2>
+
+      <div class="flow">
+        <div class="flow-step">
+          <strong>CRM</strong>
+          <span>Lead, seçim paketləri (selections), convert — müştəri kommersiya konturuna keçir.</span>
+        </div>
+        <div class="flow-step">
+          <strong>Finance</strong>
+          <span>Müqavilə · SOV · tenderlər · ödəniş ərizələri · KS-2 / KS-3 · WIP.</span>
+        </div>
+        <div class="flow-step">
+          <strong>Construction</strong>
+          <span>Layihə · BOQ · sahə əməliyyatları · sətirli akt · dəyişiklik sorğuları.</span>
+        </div>
+        <div class="flow-step">
+          <strong>Hadisə</strong>
+          <span>Akt təsdiqlənəndə Finance jurnalına avtomatik ötürülür — Excel körpüsü yoxdur.</span>
+        </div>
+        <div class="flow-step">
+          <strong>Kadrlar</strong>
+          <span>Sahə tabeli və personal girişi vahid idarəetmə müstəvisi ilə bağlıdır.</span>
+        </div>
+      </div>
+
+      <div class="pitch">
+        <strong>30 saniyəlik pitch</strong>
+        <p>
+          Müştəri CRM-də yaranır, Finance-də kontragent və müqaviləyə çevrilir,
+          obyekt Construction-da idarə olunur; təsdiqlənmiş akt özü uçota düşür.
+        </p>
+      </div>
+      <div class="footer-note">
+        <span>ERA Construction · CRM · Finance</span>
+        <span>3 / 7</span>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="page">
+      <p class="kicker"><span></span> Construction</p>
+      <h2>Tikinti sahəsində nə bacarır</h2>
+      <p class="lead">Layihə mərkəzi və sahə əməliyyatları — podratçı, smetacı və usta üçün bir iş masası.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Blok</th>
+            <th>İmkanlar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Obyekt</td>
+            <td>Layihələr, iştirakçılar (baş podratçı / subpodrat / sifarişçi), mərhələlər və məkanlar, subpodratçının VÖEN-i</td>
+          </tr>
+          <tr>
+            <td>Sməta və həcm</td>
+            <td>BOQ, plan / fakt müqayisəsi, akt sətirləri, aktın təsdiqi</td>
+          </tr>
+          <tr>
+            <td>Sahə</td>
+            <td>Gündəlik jurnal (tərəflər üzrə insanlar, hava, işlər), qüsur / punch siyahısı çertyoj üzərində, yoxlamalar → qeyd</td>
+          </tr>
+          <tr>
+            <td>Razılaşmalar</td>
+            <td>RFI, submittals (Reject / REVISE daxil), dəyişiklik sorğusu; maliyyə nəticəsi Finance-də</td>
+          </tr>
+          <tr>
+            <td>Sənədlər</td>
+            <td>Çertyoj reviziyaları, “aktual / əvəz olunub” statusu</td>
+          </tr>
+          <tr>
+            <td>Qrafik və resurslar</td>
+            <td>Gantt tapşırıqları, texnika saatları, material sorğuları, subpodrat iddiaları</td>
+          </tr>
+          <tr>
+            <td>BIM lite</td>
+            <td>Punch və RFI üzərində IFC element / xarici viewer istinadları</td>
+          </tr>
+          <tr>
+            <td>Hüquqlar və kadrlar</td>
+            <td>Rol × hüquq matrisi; işə qəbuldan sahə login-inə; tabel → Finance güzgüsü</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="footer-note">
+        <span>ERA Construction · CRM · Finance</span>
+        <span>4 / 7</span>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="page">
+      <p class="kicker"><span></span> Finance + CRM</p>
+      <h2>Pul və satış tikinti ilə yan-yana</h2>
+
+      <h3 style="margin-top:8px">Finance — tikinti üçün</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>İmkan</th>
+            <th>Tikinti üçün məna</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Müqavilə + SOV + dəyişikliklər</td>
+            <td>Kommersiya həqiqəti; sahə dəyişikliyi müqavilə düzəlişinə bağlana bilər</td>
+          </tr>
+          <tr>
+            <td>Ödəniş ərizələri</td>
+            <td>Ödəniş / akt həyat dövrü</td>
+          </tr>
+          <tr>
+            <td>KS-2 / KS-3 çapı</td>
+            <td>Yerli formalar — Qərb platformalarının adətən bağlamadığı nişa</td>
+          </tr>
+          <tr>
+            <td>Tenderlər → müqavilə</td>
+            <td>Satınalma və təkliflərin müqayisəsi kommersiya konturunda</td>
+          </tr>
+          <tr>
+            <td>Akt jurnalı</td>
+            <td>Təsdiqlənmiş yerinə yetirmə aktı avtomatik WIP / gəlir yazılışına düşür</td>
+          </tr>
+          <tr>
+            <td>Satınalma və ödənişlər</td>
+            <td>PO və ödənişlər ustanın Excel-ində yaşamır</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:28px">CRM — tikintiyə qədər və ətrafında</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>İmkan</th>
+            <th>Məna</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Lead → convert</td>
+            <td>Finance-də avtomatik kontragent</td>
+          </tr>
+          <tr>
+            <td>Selection paketi</td>
+            <td>Convert-dən sonra bitirmə / seçim paketi</td>
+          </tr>
+          <tr>
+            <td>Zəmanət işi</td>
+            <td>Lead kartında zəmanət müraciətləri</td>
+          </tr>
+          <tr>
+            <td>Party / VÖEN / import</td>
+            <td>Fiziki və hüquqi şəxs, perspektiv importu, fəaliyyət sektoru</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="footer-note">
+        <span>ERA Construction · CRM · Finance</span>
+        <span>5 / 7</span>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="page">
+      <p class="kicker"><span></span> Rəqabət</p>
+      <h2>ERA-nın fərqi</h2>
+      <p class="lead">Ayrı-ayrı “sahə proqramı + mühasibat + CRM” yığını əvəzinə — bir ekosistem.</p>
+
+      <table class="compare">
+        <thead>
+          <tr>
+            <th>Mövzu</th>
+            <th>Tipik bazar</th>
+            <th>ERA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CRM + tikinti + mühasibat</td>
+            <td>Ya CRM yoxdur, ya zəif GL, ya üç vendor</td>
+            <td>Bir ekosistem, aydın sərhədlər</td>
+          </tr>
+          <tr>
+            <td>Yerli aktlar</td>
+            <td>Zəif / KS yoxdur</td>
+            <td>KS-2 / KS-3 Finance-də + ops akt Construction-da</td>
+          </tr>
+          <tr>
+            <td>Hüquqlar</td>
+            <td>Tez-tez kobud</td>
+            <td>Rol × modul hüquq matrisi</td>
+          </tr>
+          <tr>
+            <td>İnteqrasiya</td>
+            <td>Marketplace / qapalı API</td>
+            <td>Domen hadisələri platforma şinasına</td>
+          </tr>
+          <tr>
+            <td>Qiymət modeli</td>
+            <td>Bahalı / hər yer üçün ödəniş</td>
+            <td>Ekosistem modulları üzrə entitlement</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="footer-note">
+        <span>ERA Construction · CRM · Finance</span>
+        <span>6 / 7</span>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="page">
+      <p class="kicker"><span></span> Nəticə</p>
+      <h2>Excel-i saytda əvəz etmək deyil</h2>
+      <div class="close-box">
+        <p>
+          <strong>ERA Construction</strong> — eyni platformaya quraşdırılmış əməliyyat tikintisidir:
+          CRM sövdələşməni bağlayır, Finance pulu və KS-ni saxlayır,
+          Construction obyekti və sahəni idarə edir — aralarında hadisələrlə.
+        </p>
+      </div>
+
+      <div class="grid-4" style="margin-top:24px">
+        <div class="tile">
+          <div class="label">01</div>
+          <h3>CRM</h3>
+          <p>Lead → convert → kontragent</p>
+        </div>
+        <div class="tile">
+          <div class="label">02</div>
+          <h3>Finance</h3>
+          <p>Müqavilə · KS · ödənişlər</p>
+        </div>
+        <div class="tile">
+          <div class="label">03</div>
+          <h3>Construction</h3>
+          <p>Sməta · sahə · akt</p>
+        </div>
+        <div class="tile">
+          <div class="label">04</div>
+          <h3>Nəticə</h3>
+          <p>Bir axın, bir həqiqət</p>
+        </div>
+      </div>
+
+      <div class="pitch" style="margin-top:28px">
+        <strong>ERA 365</strong>
+        <p>Satışdan sahəyə, sahədən mühasibata — tikinti biznesi üçün vahid kontur.</p>
+      </div>
+      <div class="footer-note">
+        <span>ERA Construction · CRM · Finance</span>
+        <span>7 / 7</span>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

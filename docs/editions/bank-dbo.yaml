@@ -1,4 +1,4 @@
 product: bank-dbo
 status: mvp
 pilot_ready: false
-notes: "DBO channel lab-pilot over Bank CBS; SO/loan-apply/3DS + islamic read-only; ASAN stub; parent CAP-* OUT not included. Live ASAN/rails ⏸. Not ga."
+notes: "DBO channel lab-pilot over Bank CBS; SO/loan-apply/3DS + islamic read-only; full loan schedule/APR/prepay; leasing lab schedule via Nest BFF (IFRS16 not certified); ASAN live completeChallenge fail-closed; parent CAP-* OUT not included. Live ASAN/rails ⏸. Not ga. pilot_ready:false."

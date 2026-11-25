@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { NextResponse } from "next/server";
 import { assertEnvServiceToken } from "../auth/assert-service-token";
 import {
   applySatelliteRuntimeConfig,
@@ -24,6 +23,9 @@ import {
   type LoginHostnameSyncRow,
 } from "./login-hostname-persist";
 import { enterSatelliteTenant } from "./satellite-tenant-context";
+import { kitJson, kitResultToNext, type KitHttpResult } from "./organization-bind";
+import type { KitHeaderSource } from "../http/kit-call";
+import { setOrgAuditExemptPrefixes } from "../audit/audit-exempt-org-cache";
 
 const elektrawebBridgeSchema = z.object({
   inboundEnabled: z.boolean(),
@@ -138,6 +140,11 @@ const runtimeBodySchema = z.object({
     })
     .passthrough()
     .optional(),
+  /**
+   * When non-empty, replaces the kit default audit exempt list for this org.
+   * Empty or omitted keeps DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES.
+   */
+  mutationAuditExemptPrefixes: z.array(z.string().min(1).max(200)).max(50).optional(),
 });
 
 export type ElektrawebBridgeSyncPayload = z.infer<typeof elektrawebBridgeSchema>;
@@ -174,54 +181,59 @@ export type RuntimeConfigHandlerOptions = {
 };
 
 export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = {}) {
-  async function authorize(request: Request) {
+  async function authorize(headers: KitHeaderSource) {
     return assertEnvServiceToken({
       expectedEnvKeys: [
         "SATELLITE_EVENT_SERVICE_TOKEN",
         "CLINIC_INTERNAL_SERVICE_TOKEN",
         "CONTROL_PLANE_SERVICE_TOKEN",
       ],
-      authorization: request.headers.get("authorization"),
-      xServiceToken: request.headers.get("x-service-token"),
+      authorization: headers.get("authorization"),
+      xServiceToken: headers.get("x-service-token"),
     });
   }
 
-  async function GET(request: Request) {
-    const auth = await authorize(request);
-    if (!auth.ok) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
-    }
+  async function readFrom(headers: KitHeaderSource): Promise<KitHttpResult> {
+    const auth = await authorize(headers);
+    if (!auth.ok) return kitJson({ error: auth.error }, auth.status);
     const prisma = opts.getPrisma?.() ?? null;
-    if (prisma) {
-      await hydrateRuntimeConfigFromDb(prisma);
-    }
+    if (prisma) await hydrateRuntimeConfigFromDb(prisma);
     hydrateLoginOrgNoMapFromDisk();
     hydrateLoginHostnameMapFromDisk();
     if (satelliteRuntimeConfig().deploymentTopology === "SHARED") {
       clearProcessOrganizationBind();
     }
-    return NextResponse.json({
+    return kitJson({
       ok: true,
       config: publicRuntimeConfigView(satelliteRuntimeConfig()),
     });
   }
 
-  async function POST(request: Request) {
-    const auth = await authorize(request);
-    if (!auth.ok) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
-    }
+  async function read(request: Request): Promise<KitHttpResult> {
+    return readFrom(request.headers);
+  }
+
+  async function GET(request: Request) {
+    return kitResultToNext(await read(request));
+  }
+
+  async function writeFrom(headers: KitHeaderSource, rawBody: unknown): Promise<KitHttpResult> {
+    const auth = await authorize(headers);
+      if (!auth.ok) return kitJson({ error: auth.error }, auth.status);
     let body: z.infer<typeof runtimeBodySchema>;
     try {
-      body = runtimeBodySchema.parse(await request.json());
+      body = runtimeBodySchema.parse(rawBody);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid body";
-      return NextResponse.json({ error: message }, { status: 400 });
+      return kitJson({ error: message }, 400);
     }
     // Service-token caller: the body org is the config subject. Without it the
     // tenant Prisma extension rejects every query inside this request.
     const subjectOrgId = body.organizationId?.trim();
     if (subjectOrgId) enterSatelliteTenant({ organizationId: subjectOrgId });
+    if (subjectOrgId) {
+      setOrgAuditExemptPrefixes(subjectOrgId, body.mutationAuditExemptPrefixes);
+    }
     const prisma = opts.getPrisma?.() ?? null;
     const topology =
       body.deploymentTopology ?? satelliteRuntimeConfig().deploymentTopology;
@@ -330,11 +342,26 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       prisma,
     });
     if (isShared) clearProcessOrganizationBind();
-    return NextResponse.json({
+    return kitJson({
       ok: true,
       config: publicRuntimeConfigView(cfg),
     });
   }
 
-  return { GET, POST };
+  async function write(request: Request): Promise<KitHttpResult> {
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Invalid body";
+      return kitJson({ error: message }, 400);
+    }
+    return writeFrom(request.headers, raw);
+  }
+
+  async function POST(request: Request) {
+    return kitResultToNext(await write(request));
+  }
+
+  return { GET, POST, read, write, readFrom, writeFrom };
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { assignLeadOwner, findLeadById, findUserById } from "@/lib/leads.service";
 import { assertPermission } from "@/lib/auth/require";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { assertLeadInScope } from "@/lib/integrations/lead-scope";
 import { enterCrmStaff, crmNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithCrmTenant, runWithNestHttp, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError, sendWebResponse } from "../bridge";
 
 const bodySchema = z.object({
@@ -32,11 +33,18 @@ export function register(http: { get: Function; post: Function; put: Function; p
     const { id } = httpReq.params;
     const body = bodySchema.parse(httpReq.body);
 
+    await assertLeadInScope({
+      organizationId: session.organizationId,
+      userId: session.sub,
+      leadId: String(id),
+      permissions: session.permissions ?? [],
+      isOwner: session.isOwner === true,
+    });
     const lead = await findLeadById(id);
     if (!lead) return sendJson(httpRes, { error: "Lead not found" }, 404);
 
     if (body.ownerId) {
-      const owner = await findUserById(body.ownerId);
+      const owner = await findUserById(body.ownerId, session.organizationId);
       if (!owner) return sendJson(httpRes, { error: "Owner user not found" }, 404);
     }
 

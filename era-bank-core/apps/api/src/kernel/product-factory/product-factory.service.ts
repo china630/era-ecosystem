@@ -10,6 +10,8 @@ import {
 } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import { InstitutionConfigService } from "../../common/institution-config.service";
+import { assertInstitutionAllowsProductKind } from "../../common/institution-type.util";
 import {
   isDepositKind,
   isLoanKind,
@@ -18,6 +20,12 @@ import {
   paramHintsForKind,
   validateProductParams,
 } from "./product-params";
+import {
+  diffProductTemplateYaml,
+  exportProductTemplateYaml,
+  parseProductTemplateYaml,
+  stampProductTemplateYamlVersion,
+} from "./product-template-yaml.util";
 
 export type ProductTemplateRow = {
   id: string;
@@ -38,7 +46,13 @@ export class ProductFactoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
+    private readonly institutionConfig: InstitutionConfigService,
   ) {}
+
+  private async assertKindAllowedForInstitution(kind: ProductKind) {
+    const institutionType = await this.institutionConfig.getInstitutionType();
+    assertInstitutionAllowsProductKind(institutionType, kind);
+  }
 
   list(filters?: { kind?: ProductKind; status?: ProductStatus }) {
     return this.prisma.productTemplate.findMany({
@@ -59,7 +73,7 @@ export class ProductFactoryService {
     return row;
   }
 
-  create(data: {
+  async create(data: {
     kind: ProductKind;
     name: string;
     currency: string;
@@ -67,6 +81,7 @@ export class ProductFactoryService {
     effectiveFrom: Date;
     moduleKey?: string;
   }) {
+    await this.assertKindAllowedForInstitution(data.kind);
     validateProductParams(data.kind, data.paramsJson);
     const moduleKey = data.moduleKey?.trim() || moduleKeyForKind(data.kind);
     return this.prisma.productTemplate.create({
@@ -115,6 +130,9 @@ export class ProductFactoryService {
     const nextParams =
       patch.paramsJson ??
       (existing.paramsJson as Record<string, unknown>);
+    if (existing.status === ProductStatus.DRAFT) {
+      await this.assertKindAllowedForInstitution(nextKind);
+    }
     validateProductParams(nextKind, nextParams);
 
     const moduleKey =
@@ -145,6 +163,7 @@ export class ProductFactoryService {
     if (existing.status !== ProductStatus.DRAFT) {
       throw new BadRequestException("Only DRAFT templates can be activated");
     }
+    await this.assertKindAllowedForInstitution(existing.kind);
     validateProductParams(existing.kind, existing.paramsJson);
     return this.prisma.productTemplate.update({
       where: { id },
@@ -228,5 +247,42 @@ export class ProductFactoryService {
 
   paramHints(kind: ProductKind) {
     return paramHintsForKind(kind);
+  }
+
+  exportYaml(id: string) {
+    return this.getById(id).then((row) => {
+      const yaml = exportProductTemplateYaml({
+        kind: row.kind,
+        name: row.name,
+        currency: row.currency,
+        moduleKey: row.moduleKey,
+        paramsJson:
+          row.paramsJson && typeof row.paramsJson === "object"
+            ? (row.paramsJson as Record<string, unknown>)
+            : {},
+      });
+      return {
+        id: row.id,
+        yaml: stampProductTemplateYamlVersion(yaml, "1"),
+      };
+    });
+  }
+
+  /** Dry-run import: parse + validate params, do not persist. */
+  importYamlDryRun(yaml: string) {
+    const parsed = parseProductTemplateYaml(yaml);
+    validateProductParams(
+      parsed.kind as ProductKind,
+      (parsed.paramsJson ?? {}) as Record<string, unknown>,
+    );
+    return {
+      dryRun: true,
+      parsed,
+      note: "YAML import dry-run only — no ProductTemplate write",
+    };
+  }
+
+  diffYaml(leftYaml: string, rightYaml: string) {
+    return diffProductTemplateYaml(leftYaml, rightYaml);
   }
 }

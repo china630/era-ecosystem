@@ -12,11 +12,18 @@ export const PAGE_ROUTE_RULES: readonly RouteRule<readonly Permission[]>[] = [
   ["/", [P.SCREEN_HOME]],
   ["/leads", [P.SCREEN_LEADS]],
   ["/leads/*", [P.SCREEN_LEADS_DETAIL]],
+  ["/unsorted", [P.SCREEN_LEADS]],
+  ["/parties", [P.SCREEN_LEADS]],
   ["/inbox", [P.SCREEN_INBOX]],
   ["/visits", [P.SCREEN_VISITS]],
+  ["/reports", [P.SCREEN_REPORTS]],
   ["/admin/import", [P.ADMIN_IMPORT]],
   ["/admin/settings", [P.ADMIN_PIPELINE]],
+  ["/admin/pipelines", [P.ADMIN_PIPELINE]],
+  ["/admin/custom-fields", [P.ADMIN_PIPELINE]],
   ["/admin/links", [P.ADMIN_PIPELINE]],
+  ["/admin/integrations", [P.SCREEN_ADMIN_INTEGRATIONS, P.ADMIN_INTEGRATIONS]],
+  ["/admin/integrations/**", [P.SCREEN_ADMIN_INTEGRATIONS, P.ADMIN_INTEGRATIONS]],
   ["/admin/access", [P.SCREEN_ADMIN_ACCESS, P.ACCESS_MANAGE]],
 ];
 

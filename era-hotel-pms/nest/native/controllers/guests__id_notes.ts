@@ -1,0 +1,54 @@
+/** Lifted from era-hotel-pms/nest/generated/guests__id_notes.ts. Domain body unchanged. */
+import { Controller, Get, Post, Put, Patch, Delete, HttpCode, Req, Res } from "@nestjs/common";
+import type { Request, Response } from "express";
+import { z } from 'zod';
+import { serialize } from '@/lib/serialize';
+import { assertPermission } from '@/lib/auth/require';
+import { PERMISSIONS } from '@/lib/auth/permissions';
+import { createGuestNote, listGuestNotes } from '@/lib/services/guest-aux.service';
+import { enterHotelStaff, hotelNestSession, nestHeader, nestQuery, readNestForm, rejectMissingAgency, runWithHotelTenant, runWithStaffTenantIfPresent, sendBytes, sendJson, sendRouteError } from "../../bridge";
+
+const schema = z.object({ text: z.string(), noteType: z.string().optional() });
+
+
+@Controller()
+export class GuestsIdNotesController {
+  @Get("api/guests/:id/notes")
+  @HttpCode(200)
+  async get_0(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    if (!(await enterHotelStaff(httpReq, httpRes))) return;
+    try {
+      const session = await hotelNestSession(httpReq);
+      const web = await runWithHotelTenant(session, async () => {
+
+  
+    assertPermission(session, PERMISSIONS.GUESTS_READ);
+    const { id } = httpReq.params;
+    return sendJson(httpRes, serialize(await listGuestNotes(id)));
+  
+      });
+    } catch (err) {
+      await sendRouteError(httpRes, err);
+    }
+    }
+
+  @Post("api/guests/:id/notes")
+  @HttpCode(200)
+  async post_1(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    if (!(await enterHotelStaff(httpReq, httpRes))) return;
+    try {
+      const session = await hotelNestSession(httpReq);
+      const web = await runWithHotelTenant(session, async () => {
+
+  
+    assertPermission(session, PERMISSIONS.GUESTS_WRITE);
+    const { id } = httpReq.params;
+    const body = schema.parse(httpReq.body);
+    return sendJson(httpRes, serialize(await createGuestNote(id, body.text, body.noteType)));
+  
+      });
+    } catch (err) {
+      await sendRouteError(httpRes, err);
+    }
+    }
+}

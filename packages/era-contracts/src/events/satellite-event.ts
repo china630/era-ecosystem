@@ -6,7 +6,11 @@ import {
   isSatelliteClinicProcedureCompleted,
   isSatelliteClinicVisitCompleted,
 } from "./clinic.events";
-import { isSatelliteConstructionProgressActApproved } from "./construction.events";
+import {
+  isSatelliteConstructionChangeRequestApproved,
+  isSatelliteConstructionEstimatePackageApproved,
+  isSatelliteConstructionProgressActApproved,
+} from "./construction.events";
 import {
   isSatelliteCrmLeadConverted,
   isSatelliteCrmVisitLogged,
@@ -82,6 +86,8 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteRetailShiftClosed(data) ||
     isSatelliteLogisticsTripCompleted(data) ||
     isSatelliteConstructionProgressActApproved(data) ||
+    isSatelliteConstructionEstimatePackageApproved(data) ||
+    isSatelliteConstructionChangeRequestApproved(data) ||
     isSatelliteCrmLeadConverted(data) ||
     isSatelliteCrmVisitLogged(data) ||
     isSatelliteAutoWorkOrderCompleted(data) ||

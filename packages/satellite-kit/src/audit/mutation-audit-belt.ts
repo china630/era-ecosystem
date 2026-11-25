@@ -41,9 +41,12 @@ export function isHttpMutationMethod(method: string | null | undefined): boolean
 export function isMutationAuditExemptPath(
   pathname: string,
   extraPrefixes: readonly string[] = [],
+  replaceDefault = false,
 ): boolean {
   const path = pathname.split("?")[0] ?? pathname;
-  const prefixes = [...DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES, ...extraPrefixes];
+  const prefixes = replaceDefault
+    ? [...extraPrefixes]
+    : [...DEFAULT_MUTATION_AUDIT_EXEMPT_PREFIXES, ...extraPrefixes];
   // Exact or child path only — do not treat `/api/health` as a prefix of `/api/healthcare`.
   return prefixes.some((p) => path === p || path.startsWith(`${p}/`));
 }

@@ -11,38 +11,61 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import * as Application from "expo-application";
-import * as Localization from "expo-localization";
+import * as Battery from "expo-battery";
 import * as Updates from "expo-updates";
-import { fetchBoard, fetchMe, login, loginMeta, logout, postCheckIn } from "./src/api";
+import {
+  CLINIC_URL,
+  fetchBoard,
+  fetchMe,
+  login,
+  loginMeta,
+  logout,
+  postCheckIn,
+  shouldAlwaysAskOrgNo,
+} from "./src/api";
 import { bakuDateDisplay, bakuTimeLabel, todayBakuYmd } from "./src/baku";
 import { Board } from "./src/Board";
 import { classifyCheckIn } from "./src/place-order";
-import { copyFor, localeFromTag } from "./src/copy";
+import { copyFor, type Locale } from "./src/copy";
 import {
   clearCardError,
   clearSession,
   enqueueCheckIn,
   loadCardErrors,
+  loadLocale,
   loadOrgNo,
   loadOutbox,
   loadSession,
   loadSnapshot,
   patchOrder,
   removeOutbox,
+  saveLocale,
   saveOrgNo,
   saveSession,
   saveSnapshot,
   setCardError,
 } from "./src/store";
-import { installUpdate, startKiosk, stopKiosk } from "clinic-nurse-kiosk";
+import {
+  installUpdate,
+  isKioskPaused,
+  nativeLog,
+  openDesktop,
+  openSettings,
+  openWifi,
+  resumeKiosk,
+  startKiosk,
+  stopKiosk,
+} from "clinic-nurse-kiosk";
 import type { Proc } from "./src/types";
 
-const UPDATE_URL = (process.env.EXPO_PUBLIC_UPDATE_URL ?? "").replace(/\/$/, "");
-const KIOSK_PIN = process.env.EXPO_PUBLIC_KIOSK_PIN ?? "";
+const UPDATE_URL = (
+  process.env.EXPO_PUBLIC_UPDATE_URL ?? "https://app.era-365.online/tablet-apps/nurse"
+).replace(/\/$/, "");
+const KIOSK_PIN = process.env.EXPO_PUBLIC_KIOSK_PIN || "0000";
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 
 export default function App() {
-  const locale = localeFromTag(Localization.getLocales()[0]?.languageTag);
+  const [locale, setLocale] = useState<Locale>("az");
   const t = copyFor(locale);
   const [ready, setReady] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -50,9 +73,13 @@ export default function App() {
   const [loginName, setLoginName] = useState("");
   const [password, setPassword] = useState("");
   const [orgNo, setOrgNo] = useState("");
-  const [hostBound, setHostBound] = useState(true);
+  // Default false so the org field is visible until loginMeta proves hostBound.
+  const [hostBound, setHostBound] = useState(false);
+  const [forceOrgNo, setForceOrgNo] = useState(shouldAlwaysAskOrgNo());
   const [loginError, setLoginError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [bootNonce, setBootNonce] = useState(0);
   const [orders, setOrders] = useState<Proc[]>([]);
   const [mineUnlinked, setMineUnlinked] = useState(false);
   const [dayEndHour, setDayEndHour] = useState(18);
@@ -66,6 +93,8 @@ export default function App() {
   const [pinOpen, setPinOpen] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
+  const [batteryPct, setBatteryPct] = useState<number | null>(null);
+  const [kioskPaused, setKioskPaused] = useState(false);
   const taps = useRef<number[]>([]);
   const tokenRef = useRef<string | null>(null);
   const loginRef = useRef<string | null>(null);
@@ -182,56 +211,7 @@ export default function App() {
     return run;
   }, [syncBody]);
 
-  useEffect(() => {
-    startKiosk();
-    void (async () => {
-      try {
-        const meta = await loginMeta();
-        setHostBound(meta.hostBound);
-      } catch {
-        setHostBound(true);
-      }
-      setOrgNo(await loadOrgNo());
-      const session = await loadSession();
-      if (session) {
-        tokenRef.current = session.token;
-        loginRef.current = session.login;
-        setToken(session.token);
-        setFullName(session.fullName);
-        await paint();
-      }
-      setReady(true);
-      if (session) {
-        const me = await fetchMe(session.token);
-        if (loginRef.current !== session.login) return;
-        if (me.kind === "unauthorized") {
-          await dropSession();
-        } else if (me.kind === "ok" && me.fullName) {
-          setFullName(me.fullName);
-          await saveSession(session.token, me.fullName, session.login);
-        }
-      }
-    })();
-  }, [dropSession, paint]);
-
-  useEffect(() => {
-    if (!token) return;
-    void sync();
-    const id = setInterval(() => {
-      setNow(Date.now());
-      setClock(bakuTimeLabel(new Date()));
-      void sync();
-    }, 30_000);
-    const clockId = setInterval(() => {
-      setNow(Date.now());
-      setClock(bakuTimeLabel(new Date()));
-    }, 1000);
-    return () => {
-      clearInterval(id);
-      clearInterval(clockId);
-    };
-  }, [token, sync]);
-
+  // APK update check must not wait for login UI / storage / meta.
   useEffect(() => {
     const check = () => {
       void checkUpdates();
@@ -239,28 +219,149 @@ export default function App() {
     check();
     const id = setInterval(check, SIX_HOURS);
     const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        check();
-        void sync();
-      }
+      if (state === "active") check();
     });
     return () => {
       clearInterval(id);
       sub.remove();
     };
-  }, [sync]);
+  }, []);
+
+  // Clock always ticks — even when boot/login is stuck.
+  useEffect(() => {
+    const clockId = setInterval(() => {
+      setNow(Date.now());
+      setClock(bakuTimeLabel(new Date()));
+    }, 1000);
+    return () => clearInterval(clockId);
+  }, []);
+
+  useEffect(() => {
+    setKioskPaused(isKioskPaused());
+    startKiosk();
+    let cancelled = false;
+    void (async () => {
+      setBootError(null);
+      setReady(false);
+      nativeLog("NurseApp", `boot start clinic=${CLINIC_URL} alwaysOrg=${shouldAlwaysAskOrgNo()}`);
+      try {
+        if (shouldAlwaysAskOrgNo()) {
+          setForceOrgNo(true);
+          setHostBound(false);
+        }
+        try {
+          const meta = await loginMeta();
+          if (cancelled) return;
+          if (shouldAlwaysAskOrgNo()) {
+            setHostBound(false);
+            setForceOrgNo(true);
+          } else {
+            setHostBound(meta.hostBound === true);
+          }
+          nativeLog("NurseApp", `loginMeta hostBound=${meta.hostBound}`);
+        } catch (err) {
+          // Meta failed → show orgNo so the nurse can still sign in.
+          setHostBound(false);
+          setForceOrgNo(true);
+          nativeLog(
+            "NurseApp",
+            `loginMeta failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+        const storedLocale = await loadLocale();
+        if (cancelled) return;
+        if (storedLocale === "az" || storedLocale === "ru" || storedLocale === "en") {
+          setLocale(storedLocale);
+        }
+        setOrgNo(await loadOrgNo());
+        const session = await loadSession();
+        if (cancelled) return;
+        if (session) {
+          tokenRef.current = session.token;
+          loginRef.current = session.login;
+          setToken(session.token);
+          setFullName(session.fullName);
+          await paint();
+        }
+        // Always reveal UI — never stay on a spinner because a network call hung.
+        setReady(true);
+        nativeLog("NurseApp", `boot ready session=${Boolean(session)}`);
+        if (session) {
+          const me = await fetchMe(session.token);
+          if (cancelled || loginRef.current !== session.login) return;
+          if (me.kind === "unauthorized") {
+            await dropSession();
+          } else if (me.kind === "ok" && me.fullName) {
+            setFullName(me.fullName);
+            await saveSession(session.token, me.fullName, session.login);
+          }
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        nativeLog("NurseApp", `boot failed: ${message}`);
+        setBootError(message);
+        setHostBound(false);
+        setForceOrgNo(true);
+        setReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bootNonce, dropSession, paint]);
+
+  useEffect(() => {
+    if (!token) return;
+    void sync();
+    const id = setInterval(() => {
+      void sync();
+    }, 30_000);
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") void sync();
+    });
+    return () => {
+      clearInterval(id);
+      sub.remove();
+    };
+  }, [token, sync]);
+
+  useEffect(() => {
+    let alive = true;
+    const read = async () => {
+      try {
+        const level = await Battery.getBatteryLevelAsync();
+        if (!alive || level < 0) return;
+        setBatteryPct(Math.round(level * 100));
+      } catch {
+        // Emulator or permission gap — hide the badge.
+      }
+    };
+    void read();
+    const id = setInterval(() => void read(), 60_000);
+    const sub = Battery.addBatteryLevelListener(({ batteryLevel }) => {
+      if (batteryLevel >= 0) setBatteryPct(Math.round(batteryLevel * 100));
+    });
+    return () => {
+      alive = false;
+      clearInterval(id);
+      sub.remove();
+    };
+  }, []);
+
+  const showOrgNo = forceOrgNo || !hostBound;
 
   async function onLogin() {
     setSigningIn(true);
     setLoginError(null);
     try {
       const who = loginName.trim();
+      const org = showOrgNo ? orgNo.trim() : "";
       const session = await login({
         login: who,
         password,
-        orgNo: hostBound ? undefined : orgNo,
+        orgNo: org || undefined,
       });
-      if (!hostBound && orgNo.trim()) await saveOrgNo(orgNo);
+      if (org) await saveOrgNo(org);
       await saveSession(session.token, session.fullName, session.login || who);
       tokenRef.current = session.token;
       loginRef.current = session.login || who;
@@ -270,7 +371,13 @@ export default function App() {
       setToken(session.token);
       await paint();
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : t.loginFailed);
+      const message = err instanceof Error ? err.message : t.loginFailed;
+      setLoginError(message);
+      if (/orgno/i.test(message) || /organization/i.test(message)) {
+        setForceOrgNo(true);
+        setHostBound(false);
+        nativeLog("NurseApp", `login requires orgNo: ${message}`);
+      }
     } finally {
       setSigningIn(false);
     }
@@ -317,8 +424,16 @@ export default function App() {
       setPinError(t.pinWrong);
       return;
     }
+    nativeLog("Kiosk", "PIN ok — leaveKiosk / adminMode");
     stopKiosk();
+    setKioskPaused(true);
     setPinOpen(false);
+  }
+
+  function onResumeKiosk() {
+    nativeLog("Kiosk", "admin resumeKiosk pressed");
+    resumeKiosk();
+    setKioskPaused(false);
   }
 
   return (
@@ -331,11 +446,35 @@ export default function App() {
         <Text style={styles.headerText} numberOfLines={1}>
           {token ? fullName : ""}
         </Text>
+        <View style={styles.langs}>
+          {(["az", "ru", "en"] as const).map((code) => (
+            <Pressable
+              key={code}
+              onPress={() => {
+                setLocale(code);
+                void saveLocale(code);
+              }}
+              hitSlop={6}
+            >
+              <Text style={code === locale ? styles.langOn : styles.langOff}>{code.toUpperCase()}</Text>
+            </Pressable>
+          ))}
+        </View>
         <Text style={styles.sync}>
           {offline ? `${t.offline} · ` : ""}
           {pending > 0 ? `${t.pending}: ${pending} · ` : ""}
           {t.lastSync}: {syncedAt ? bakuTimeLabel(syncedAt) : t.neverSynced}
         </Text>
+        {batteryPct !== null ? (
+          <Text
+            style={[
+              styles.battery,
+              batteryPct <= 20 ? styles.batteryLow : null,
+            ]}
+          >
+            {batteryPct}%
+          </Text>
+        ) : null}
         {token ? (
           <Pressable onPress={() => void onLogout()} hitSlop={8}>
             <Text style={styles.logout}>{t.logout}</Text>
@@ -345,10 +484,40 @@ export default function App() {
         )}
       </View>
       <Pressable style={styles.secret} onPress={onSecretTap} />
+      {kioskPaused ? (
+        <View style={styles.kioskPausedBar}>
+          <Text style={styles.kioskPausedText}>{t.kioskPaused}</Text>
+          <View style={styles.adminRow}>
+            <Pressable style={styles.adminBtn} onPress={() => openDesktop()}>
+              <Text style={styles.adminBtnText}>{t.adminDesktop}</Text>
+            </Pressable>
+            <Pressable style={styles.adminBtn} onPress={() => openSettings()}>
+              <Text style={styles.adminBtnText}>{t.adminSettings}</Text>
+            </Pressable>
+            <Pressable style={styles.adminBtn} onPress={() => openWifi()}>
+              <Text style={styles.adminBtnText}>{t.adminWifi}</Text>
+            </Pressable>
+          </View>
+          <Pressable style={styles.signIn} onPress={onResumeKiosk}>
+            <Text style={styles.signInText}>{t.kioskResume}</Text>
+          </Pressable>
+        </View>
+      ) : null}
       {!ready ? (
-        <ActivityIndicator style={styles.loader} color="#2980B9" />
+        <View style={styles.login}>
+          <ActivityIndicator color="#2980B9" />
+          {bootError ? <Text style={styles.loginError}>{t.startFailed}: {bootError}</Text> : null}
+        </View>
       ) : !token ? (
         <View style={styles.login}>
+          {bootError ? (
+            <>
+              <Text style={styles.loginError}>{t.startFailed}: {bootError}</Text>
+              <Pressable style={styles.signIn} onPress={() => setBootNonce((n) => n + 1)}>
+                <Text style={styles.signInText}>{t.retry}</Text>
+              </Pressable>
+            </>
+          ) : null}
           <TextInput
             style={styles.input}
             autoCapitalize="none"
@@ -364,7 +533,7 @@ export default function App() {
             value={password}
             onChangeText={setPassword}
           />
-          {hostBound ? null : (
+          {showOrgNo ? (
             <TextInput
               style={styles.input}
               autoCapitalize="none"
@@ -372,7 +541,7 @@ export default function App() {
               value={orgNo}
               onChangeText={setOrgNo}
             />
-          )}
+          ) : null}
           {loginError ? <Text style={styles.loginError}>{loginError}</Text> : null}
           <Pressable style={styles.signIn} disabled={signingIn} onPress={() => void onLogin()}>
             <Text style={styles.signInText}>{t.signIn}</Text>
@@ -421,6 +590,7 @@ export default function App() {
 }
 
 async function checkUpdates() {
+  nativeLog("NurseApp", "checkUpdates begin");
   try {
     if (!__DEV__) {
       const check = await Updates.checkForUpdateAsync();
@@ -434,15 +604,32 @@ async function checkUpdates() {
   }
   if (!UPDATE_URL) return;
   try {
-    const res = await fetch(`${UPDATE_URL}/version.json`);
-    if (!res.ok) return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10_000);
+    const res = await fetch(`${UPDATE_URL}/version.json`, {
+      signal: ctrl.signal,
+      headers: { "Cache-Control": "no-store" },
+    });
+    clearTimeout(timer);
+    if (!res.ok) {
+      nativeLog("NurseApp", `version.json http=${res.status}`);
+      return;
+    }
     const body = (await res.json()) as { versionCode?: number; apkUrl?: string };
     const current = Number(Application.nativeBuildVersion || 0);
+    nativeLog(
+      "NurseApp",
+      `version.json remote=${body.versionCode ?? "?"} local=${current}`,
+    );
     if (body.versionCode && body.apkUrl && body.versionCode > current) {
+      nativeLog("NurseApp", `installUpdate ${body.apkUrl}`);
       await installUpdate(body.apkUrl);
     }
-  } catch {
-    // The next 6-hour pass retries.
+  } catch (err) {
+    nativeLog(
+      "NurseApp",
+      `checkUpdates failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -455,15 +642,44 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingHorizontal: 16,
     paddingVertical: 6,
+    // Keep a small strip for the secret 5-tap exit zone.
     paddingRight: 56,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#D5DADF",
   },
   headerText: { fontSize: 18, fontWeight: "700", color: "#34495E" },
+  langs: { flexDirection: "row", gap: 8 },
+  langOn: { fontSize: 14, fontWeight: "800", color: "#2980B9" },
+  langOff: { fontSize: 14, fontWeight: "600", color: "#94A3B8" },
   sync: { flex: 1, fontSize: 12, color: "#64748B" },
+  battery: { fontSize: 14, fontWeight: "700", color: "#34495E", minWidth: 44, textAlign: "right" },
+  batteryLow: { color: "#C0392B" },
   logout: { color: "#2980B9", fontWeight: "700", fontSize: 14 },
   secret: { position: "absolute", top: 0, right: 0, width: 48, height: 48, zIndex: 5 },
+  kioskPausedBar: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1,
+    borderColor: "#F59E0B",
+    gap: 8,
+  },
+  kioskPausedText: { color: "#92400E", fontWeight: "600", fontSize: 14 },
+  adminRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  adminBtn: {
+    flexGrow: 1,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#F59E0B",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  adminBtnText: { color: "#92400E", fontWeight: "700", fontSize: 14 },
   loader: { marginTop: 48 },
   login: { maxWidth: 420, alignSelf: "center", width: "100%", padding: 24, gap: 12 },
   input: {
