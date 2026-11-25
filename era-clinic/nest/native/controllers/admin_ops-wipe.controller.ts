@@ -8,7 +8,7 @@ import { ClinicApiGuard, readClinicSession } from "../clinic-api.guard";
 import { z } from "zod";
 import { jsonError, handleRouteError, getSatelliteSession } from "@/lib/api-utils";
 import { isPlatformSuperAdminUser } from "@/lib/auth/platform-super-admin";
-import { expressKitHeaders } from "@era/satellite-kit";
+import { expressKitHeaders } from "../../express-kit-headers";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 import { countClinicOpsWipe, runClinicOpsWipe } from "@/domain/ops/ops-wipe.service";
 

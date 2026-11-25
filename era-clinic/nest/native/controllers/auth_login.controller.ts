@@ -4,7 +4,8 @@ import {
   sendJson,
   withClinicHttp,
 } from "../../bridge";
-import { authCookieName, authenticateIndustryStaffLogin, describeLoginHostBinding, expressKitHeaders, runWithSatelliteTenant, satelliteRuntimeConfig, signSatelliteSession } from "@era/satellite-kit";
+import { authCookieName, authenticateIndustryStaffLogin, describeLoginHostBinding, runWithSatelliteTenant, satelliteRuntimeConfig, signSatelliteSession } from "@era/satellite-kit";
+import { expressKitHeaders } from "../../express-kit-headers";
 import { jsonOk } from "@/lib/api-utils";
 import { permissionsForUser } from "@/lib/auth/clinic-permission.service";
 import { getEnabledPresets } from "@/domain/settings/settings.service";

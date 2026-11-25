@@ -1,4 +1,4 @@
-import { expressKitHeaders } from "@era/satellite-kit";
+import { expressKitHeaders } from "../../express-kit-headers";
 import { Controller, Get, HttpCode, Post, Put, Req, UseGuards } from "@nestjs/common";
 import { ClinicApiGuard, readClinicSession } from "../clinic-api.guard";
 import type { Request } from "express";

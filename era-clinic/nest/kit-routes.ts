@@ -1,11 +1,7 @@
 import type { Request as ExpressRequest, Response as ExpressResponse } from "express";
 import { Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
-import {
-  createOrganizationBindHandlers,
-  createRuntimeConfigHandlers,
-  expressKitHeaders,
-  type KitHttpResult,
-} from "@era/satellite-kit";
+import { createOrganizationBindHandlers, createRuntimeConfigHandlers, type KitHttpResult } from "@era/satellite-kit";
+import { expressKitHeaders } from "./express-kit-headers";
 import { readBillingStatusFrom } from "@era/satellite-kit/billing/status-route";
 import { prisma } from "@/lib/prisma";
 import { upsertClinicCutoverPolicy } from "@/domain/physio/clinic-cutover.service";

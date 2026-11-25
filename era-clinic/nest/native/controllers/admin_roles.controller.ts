@@ -6,7 +6,8 @@ import {
   clinicRoute,
 } from "../../bridge";
 import { z } from "zod";
-import { expressKitHeaders, publishSatelliteRole, publishSatelliteRoleSnapshot } from "@era/satellite-kit";
+import { publishSatelliteRole, publishSatelliteRoleSnapshot } from "@era/satellite-kit";
+import { expressKitHeaders } from "../../express-kit-headers";
 import { requireClinicPermission } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
 import { CLINIC_PERMISSION, effectiveRolePermissions, rolePermissionsAreCustomized, serializeRolePermissions } from "@/lib/auth/clinic-permissions";
