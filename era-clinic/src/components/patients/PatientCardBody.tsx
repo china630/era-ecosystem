@@ -676,12 +676,15 @@ export function PatientCardBody({
                   <span className="font-semibold text-[#2C3E50]">{formatStayDate(selectedEpisode.stayStartsOn)}</span>
                 </p>
                 <p>
-                  <span className="block text-[11px] font-medium text-slate-500">
-                    {selectedEpisode.courseWindowEditable ? t("courseEndsOn") : t("stayCheckOut")}
-                  </span>
+                  {selectedEpisode.courseWindowEditable && !episodeReadOnly ? null : (
+                    <span className="block text-[11px] font-medium text-slate-500">
+                      {selectedEpisode.courseWindowEditable ? t("courseEndsOn") : t("stayCheckOut")}
+                    </span>
+                  )}
                   {selectedEpisode.courseWindowEditable && !episodeReadOnly ? (
-                    <span className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="mt-1 flex flex-wrap items-end gap-2">
                       <DatePicker
+                        label={t("courseEndsOn")}
                         value={courseEndsDraft}
                         onChange={(ymd) => setCourseEndsDraft(ymd)}
                         placeholder={tc("datePlaceholder")}

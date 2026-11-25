@@ -163,7 +163,7 @@ export function VisitClinicalNotesPanel({ visitId }: Props) {
         label={t("clinicalNotesTemplate")}
         value={templateId}
         options={options}
-        onChange={setTemplateId}
+        onChange={(next) => setTemplateId(Array.isArray(next) ? (next[0] ?? "") : next)}
       />
       {flatFields.map((field) => (
         <label key={field.key} className="block space-y-1 text-sm">

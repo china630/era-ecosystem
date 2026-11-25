@@ -8,6 +8,7 @@ import {
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DatePicker,
+  EraListFilterBar,
   EraListWorkspace,
   LIST_PAGE_SHELL_CLASS,
   PageHeader,
@@ -27,6 +28,7 @@ type InsuranceReportItem = {
 
 export default function InsuranceReportPage() {
   const t = useTranslations("insuranceReport");
+  const tc = useTranslations("common");
   const [from, setFrom] = useState(addBakuDays(todayBakuYmd(), -30));
   const [to, setTo] = useState(todayBakuYmd());
   const [items, setItems] = useState<InsuranceReportItem[]>([]);
@@ -58,12 +60,28 @@ export default function InsuranceReportPage() {
   }, [url, t]);
 
   return (
-    <EraListWorkspace className={LIST_PAGE_SHELL_CLASS}>
+    <div className={LIST_PAGE_SHELL_CLASS}>
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className="mb-4 flex flex-wrap gap-3">
-        <DatePicker label={t("from")} value={from} onChange={setFrom} />
-        <DatePicker label={t("to")} value={to} onChange={setTo} />
-      </div>
+      <EraListWorkspace
+        filter={
+          <EraListFilterBar>
+            <DatePicker
+              label={t("from")}
+              value={from}
+              onChange={setFrom}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+            <DatePicker
+              label={t("to")}
+              value={to}
+              onChange={setTo}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+          </EraListFilterBar>
+        }
+        table={
       <table className={DATA_TABLE_CLASS}>
         <thead>
           <tr>
@@ -94,6 +112,8 @@ export default function InsuranceReportPage() {
           ) : null}
         </tbody>
       </table>
-    </EraListWorkspace>
+        }
+      />
+    </div>
   );
 }

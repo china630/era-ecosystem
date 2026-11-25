@@ -4,6 +4,13 @@
  * with status labels; package_assign_adjust cancellations stay hidden.
  */
 
+import type {
+  LabOrderStatus,
+  Prisma,
+  ProcedureOrderStatus,
+  VisitStatus,
+} from "@prisma/client";
+
 export const PACKAGE_ASSIGN_ADJUST_REASON = "package_assign_adjust";
 
 export const ARCHIVE_EXECUTED_PROCEDURE_STATUSES = ["CHECKED_IN", "COMPLETED"] as const;
@@ -23,15 +30,17 @@ export const ARCHIVE_EPISODE_SUMMARY_LAB_STATUSES = [
 ] as const;
 
 /** Prisma where for ProcedureOrder on a CLOSED episode. */
-export function archiveProcedureWhere(showNonExecuted: boolean) {
+export function archiveProcedureWhere(showNonExecuted: boolean): Prisma.ProcedureOrderWhereInput {
   if (!showNonExecuted) {
-    return { status: { in: [...ARCHIVE_EXECUTED_PROCEDURE_STATUSES] } };
+    const statuses: ProcedureOrderStatus[] = [...ARCHIVE_EXECUTED_PROCEDURE_STATUSES];
+    return { status: { in: statuses } };
   }
+  const open: ProcedureOrderStatus[] = ["CHECKED_IN", "COMPLETED", "NO_SHOW"];
   return {
     OR: [
-      { status: { in: ["CHECKED_IN", "COMPLETED", "NO_SHOW"] as const } },
+      { status: { in: open } },
       {
-        status: "CANCELLED" as const,
+        status: "CANCELLED",
         NOT: { cancelReason: PACKAGE_ASSIGN_ADJUST_REASON },
       },
     ],
@@ -39,31 +48,30 @@ export function archiveProcedureWhere(showNonExecuted: boolean) {
 }
 
 /** Prisma where for LabOrder on a CLOSED episode (Plan + studies print). */
-export function archiveLabWhere(showNonExecuted: boolean) {
-  if (!showNonExecuted) {
-    return { status: { in: [...ARCHIVE_LAB_LIVE_STATUSES] } };
-  }
-  return {
-    status: { in: [...ARCHIVE_LAB_LIVE_STATUSES, "CANCELLED"] },
-  };
+export function archiveLabWhere(showNonExecuted: boolean): Prisma.LabOrderWhereInput {
+  const statuses: LabOrderStatus[] = showNonExecuted
+    ? [...ARCHIVE_LAB_LIVE_STATUSES, "CANCELLED"]
+    : [...ARCHIVE_LAB_LIVE_STATUSES];
+  return { status: { in: statuses } };
 }
 
 /** Episode summary labs: result-bearing rows; ON also lists CANCELLED without results. */
-export function archiveEpisodeSummaryLabStatusWhere(showNonExecuted: boolean) {
-  if (!showNonExecuted) {
-    return { status: { in: [...ARCHIVE_EPISODE_SUMMARY_LAB_STATUSES] } };
-  }
-  return {
-    status: { in: [...ARCHIVE_EPISODE_SUMMARY_LAB_STATUSES, "CANCELLED"] },
-  };
+export function archiveEpisodeSummaryLabStatusWhere(
+  showNonExecuted: boolean,
+): Prisma.LabOrderWhereInput {
+  const statuses: LabOrderStatus[] = showNonExecuted
+    ? [...ARCHIVE_EPISODE_SUMMARY_LAB_STATUSES, "CANCELLED"]
+    : [...ARCHIVE_EPISODE_SUMMARY_LAB_STATUSES];
+  return { status: { in: statuses } };
 }
 
 /** Prisma where for Visit on a CLOSED episode. */
-export function archiveVisitWhere(showNonExecuted: boolean) {
+export function archiveVisitWhere(showNonExecuted: boolean): Prisma.VisitWhereInput {
   if (!showNonExecuted) {
-    return { status: "COMPLETED" as const };
+    return { status: "COMPLETED" };
   }
-  return { status: { in: ["COMPLETED", "CANCELLED"] as const } };
+  const statuses: VisitStatus[] = ["COMPLETED", "CANCELLED"];
+  return { status: { in: statuses } };
 }
 
 /** Pure predicate for unit tests / client tones. */

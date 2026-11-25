@@ -1,4 +1,5 @@
 import type { SatelliteSessionPayload } from "@era/satellite-kit";
+import type { LabOrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { bakuDayBounds, bakuDateKey } from "@/lib/baku-day";
 import { resolveClinicDataScope } from "@/lib/auth/clinic-data-scope";
@@ -6,7 +7,7 @@ import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 import { labOrderVisibleToLabWhere } from "@/domain/lab/lab-order-pay-gate";
 
-const READY_LAB_STATUSES = new Set(["RESULT_READY", "PUBLISHED", "COMPLETED"]);
+const READY_LAB_STATUSES: LabOrderStatus[] = ["RESULT_READY", "PUBLISHED", "COMPLETED"];
 
 function parseResultLines(resultJson: string | null): ResultLineInput[] {
   if (!resultJson) return [];
@@ -128,7 +129,7 @@ export async function getDoctorDayBoard(
     const labs = await prisma.labOrder.findMany({
       where: {
         patientRefId: { in: patientIds },
-        status: { in: [...READY_LAB_STATUSES] },
+        status: { in: READY_LAB_STATUSES },
         AND: [labOrderVisibleToLabWhere()],
         OR: [
           { items: { some: { results: { some: {} } } } },
@@ -141,7 +142,7 @@ export async function getDoctorDayBoard(
     });
     for (const lab of labs) {
       const lines = parseResultLines(lab.resultJson);
-      const critical = lines.some((line) => hasCriticalFlag(line));
+      const critical = hasCriticalFlag(lines);
       const cur = labByPatient.get(lab.patientRefId) ?? {
         hasReady: false,
         hasCritical: false,

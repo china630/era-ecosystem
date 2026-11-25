@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   DatePicker,
@@ -22,7 +22,7 @@ type AvailabilitySlot = {
 
 export default function BookingWidgetPage() {
   const t = useTranslations("booking");
-  const locale = useLocale();
+  const tc = useTranslations("common");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [dayYmd, setDayYmd] = useState(todayBakuYmd());
@@ -122,8 +122,9 @@ export default function BookingWidgetPage() {
         <DatePicker
           label={t("pickDay")}
           value={dayYmd}
-          locale={locale}
           onChange={(v) => setDayYmd(v || todayBakuYmd())}
+          placeholder={tc("datePlaceholder")}
+          openCalendarLabel={tc("openCalendar")}
         />
         <section>
           <p className="mb-2 text-sm font-medium">{t("pickSlot")}</p>

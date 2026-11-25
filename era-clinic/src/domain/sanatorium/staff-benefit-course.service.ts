@@ -122,6 +122,9 @@ export async function openStaffBenefitCourse(input: {
       });
     });
   }
+  if (!patient) {
+    throw new StaffBenefitCourseError("Patient record was not created", "PATIENT_MISSING", 500);
+  }
 
   const existingOpen = await prisma.clinicalEpisode.findFirst({
     where: { patientRefId: patient.id, status: "OPEN" },

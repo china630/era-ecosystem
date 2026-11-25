@@ -47,6 +47,27 @@ export const noteTemplateUpsertSchema = z.object({
 
 export type NoteTemplateUpsertInput = z.infer<typeof noteTemplateUpsertSchema>;
 
+function toL10n(value: { en: string; ru?: string; az?: string }): L10n {
+  return { en: value.en, ru: value.ru ?? value.en, az: value.az ?? value.en };
+}
+
+function toSectionsDoc(doc: NoteTemplateUpsertInput["sections"]): NoteTemplateSectionsDoc {
+  return {
+    sections: doc.sections.map((section) => ({
+      key: section.key,
+      title: toL10n(section.title),
+      fields: section.fields.map((field) => ({
+        key: field.key,
+        type: field.type,
+        label: toL10n(field.label),
+        required: field.required,
+        options: field.options,
+        quickAnswers: field.quickAnswers,
+      })),
+    })),
+  };
+}
+
 function titleToJson(title: L10n): string {
   return JSON.stringify({
     en: title.en,
@@ -104,11 +125,11 @@ export async function createNoteTemplateAdmin(
   if (existing) {
     throw Object.assign(new Error("Template code already exists"), { status: 409, code: "CODE_EXISTS" });
   }
-  const sectionsJson = JSON.stringify(input.sections satisfies NoteTemplateSectionsDoc);
+  const sectionsJson = JSON.stringify(toSectionsDoc(input.sections));
   const row = await prisma.clinicalNoteTemplate.create({
     data: {
       code: input.code,
-      titleJson: titleToJson(input.title),
+      titleJson: titleToJson(toL10n(input.title)),
       specialty: input.specialty ?? null,
       sectionsJson,
       isActive: input.isActive ?? true,
@@ -140,7 +161,7 @@ export async function updateNoteTemplateAdmin(
   const row = await prisma.clinicalNoteTemplate.update({
     where: { id },
     data: {
-      titleJson: input.title ? titleToJson(input.title) : undefined,
+      titleJson: input.title ? titleToJson(toL10n(input.title)) : undefined,
       specialty: input.specialty === undefined ? undefined : input.specialty,
       sectionsJson,
       isActive: input.isActive ?? undefined,

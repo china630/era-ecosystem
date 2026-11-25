@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { DatePicker } from "@era/satellite-kit/ui";
 import { todayBakuYmd } from "@/lib/baku-day";
 
 type PortionTable = {
@@ -12,6 +13,7 @@ type PortionTable = {
 
 export default function PrintDietPortionsPage() {
   const t = useTranslations("diet");
+  const tc = useTranslations("common");
   const locale = useLocale();
   const [dateYmd, setDateYmd] = useState(todayBakuYmd());
   const [tables, setTables] = useState<PortionTable[]>([]);
@@ -28,12 +30,15 @@ export default function PrintDietPortionsPage() {
       <p className="mb-4 text-slate-600">
         {t("portionDate")}: {dateYmd}
       </p>
-      <input
-        type="date"
-        className="mb-4 border px-2 py-1 print:hidden"
-        value={dateYmd}
-        onChange={(e) => setDateYmd(e.target.value)}
-      />
+      <div className="mb-4 print:hidden">
+        <DatePicker
+          label={t("portionDate")}
+          value={dateYmd}
+          onChange={(v) => setDateYmd(v || todayBakuYmd())}
+          placeholder={tc("datePlaceholder")}
+          openCalendarLabel={tc("openCalendar")}
+        />
+      </div>
       {tables.length === 0 ? (
         <p>{t("portionEmpty")}</p>
       ) : (

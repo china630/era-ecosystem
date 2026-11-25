@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { bakuDateDisplay, bakuDateKey, bakuDateTimeDisplay, todayBakuYmd } from "@/lib/baku-day";
 import { getClinicSettings } from "@/domain/settings/settings.service";
@@ -112,7 +113,7 @@ export async function buildEpisodeSummaryPrint(
   const summaryLabStatus = archiveEpisodeSummaryLabStatusWhere(
     episodeClosed ? showNonExecuted : false,
   );
-  const labResultOrCancelled =
+  const labResultOrCancelled: Prisma.LabOrderWhereInput =
     episodeClosed && showNonExecuted
       ? {
           OR: [

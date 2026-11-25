@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, FlaskConical, FileWarning, Phone } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   DatePicker,
@@ -73,7 +73,7 @@ const POLL_MS = 30_000;
 
 export default function DoctorPage() {
   const t = useTranslations("doctor");
-  const locale = useLocale();
+  const tc = useTranslations("common");
   const [dateYmd, setDateYmd] = useState(todayBakuYmd());
   const [board, setBoard] = useState<DoctorDayBoard | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -175,8 +175,9 @@ export default function DoctorPage() {
         <DatePicker
           label={t("filterDate")}
           value={dateYmd}
-          locale={locale}
           onChange={(v) => setDateYmd(v || todayBakuYmd())}
+          placeholder={tc("datePlaceholder")}
+          openCalendarLabel={tc("openCalendar")}
         />
         <span className={`text-sm ${TEXT_MUTED_CLASS}`}>
           {t("entryCount", { count: board?.entries.length ?? 0 })}

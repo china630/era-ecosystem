@@ -1,8 +1,20 @@
+import type {
+  BedStatus,
+  InpatientAdmissionKind,
+  InpatientAdmissionSource,
+  Prisma,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { recordClinicAudit } from "@/lib/satellite-audit";
-import type { InpatientAdmissionKind, InpatientAdmissionSource } from "@prisma/client";
-import { nextInpatientCaseNumber } from "./case-number.service";
 import { requestOrganizationId } from "@/lib/request-organization";
+import { nextInpatientCaseNumber } from "./case-number.service";
+
+const BED_STATUSES: BedStatus[] = ["AVAILABLE", "OCCUPIED", "CLEANING", "BLOCKED"];
+
+function asBedStatus(status: string | undefined): BedStatus | undefined {
+  if (!status) return undefined;
+  return BED_STATUSES.find((value) => value === status);
+}
 
 export async function listWards() {
   return prisma.ward.findMany({
@@ -52,7 +64,7 @@ export async function createBed(data: {
     data: {
       wardId: data.wardId,
       code: data.code,
-      status: data.status ?? "AVAILABLE",
+      status: asBedStatus(data.status) ?? "AVAILABLE",
     },
   });
 }
@@ -61,7 +73,10 @@ export async function updateBed(
   id: string,
   data: { status?: string; code?: string },
 ) {
-  return prisma.bed.update({ where: { id }, data });
+  const patch: Prisma.BedUpdateInput = {};
+  if (data.code !== undefined) patch.code = data.code;
+  if (data.status !== undefined) patch.status = asBedStatus(data.status) ?? "AVAILABLE";
+  return prisma.bed.update({ where: { id }, data: patch });
 }
 
 export async function deleteBed(id: string) {
