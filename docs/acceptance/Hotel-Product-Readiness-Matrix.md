@@ -10,6 +10,8 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-26 Nest query URL):** Reservation list and the other hotel Nest handlers that read `requestUrl` build it from the Express URL. No new screen. Gate / BE / UI / Demo / Pilot / Edition `mvp` / Sell unchanged. Not on the droplet until the next hotel image. `hotel.yaml` untouched. `era-readiness-matrix` N/A.
+
 **Closeout (2026-11-15 Opera inventory + Avl matrix + second-pass):** HOT-FO-01/02 SHIPPED deepen / SHOW. Avl may be negative vs base; Sold/Phys; last-slot assign OK; sell still base+overbook. Create-fail copy no longer says «Avl > 0». AC-HOT-FO stays ✅. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index honesty note only; `hotel.yaml` untouched. Needs hotel image. `era-readiness-matrix` N/A.
 
 **Closeout (2026-11-14 FO list/Status Giriş·Çıxış = business stamps):** HOT-UI-01 SHIPPED deepen / SHOW. Columns on reservations + in-house + FO Status prefer business stamps when present. AC-HOT-FO stays ✅. Gate ✅ / BE ✅ / UI ✅ / Demo ✅ / Pilot [ ] / Edition `mvp` / Sell unchanged. Sprint-Index and `hotel.yaml` untouched. Needs hotel image. `era-readiness-matrix` N/A.

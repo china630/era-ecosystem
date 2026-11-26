@@ -40,6 +40,7 @@ export class CashShiftsController {
   @Post("api/cash/shifts")
   @HttpCode(200)
   async post_1(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
     if (!(await enterHotelStaff(httpReq, httpRes))) return;
     try {
       const session = await hotelNestSession(httpReq);

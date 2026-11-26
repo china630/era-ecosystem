@@ -4,6 +4,8 @@
 **Not readiness:** for sell/show/UI use [`Hotel-Product-Readiness-Matrix.md`](./Hotel-Product-Readiness-Matrix.md)  
 **Coverage facts:** [`COVERAGE_MATRIX.md`](../COVERAGE_MATRIX.md)
 
+**Closeout (2026-11-26 Nest query URL):** No new Scaffold ✅. Handlers that read `requestUrl` define it. AC rows stay as they are. Not on the droplet until the next hotel image. `hotel.yaml` untouched. `era-readiness-matrix` N/A.
+
 **Closeout (2026-11-15 Opera inventory + Avl matrix + second-pass):** No new Scaffold ✅. HOT-FO-01/02 SHIPPED deepen. AC-HOT-FO stays ✅ and is not reopened. Unassigned burns charged type only; assigned burns door type; matrix Avl = base−inventory (negative into overbook) + Sold/Phys; one-pass load; `oversellReasonAfterAdd` allows `used === cap`. Second-pass: ADR sellable ≠ matrix Avl; `noSellableInventory` trio; Sold≠Phys upgrade in `__tests__/stay-slice-align.spec.ts`. Unit: `__tests__/inventory-caps.spec.ts`, `__tests__/stay-slice-align.spec.ts`. ADR hotel-fo-screen-chain. Gate/Pilot unchanged. `hotel.yaml` untouched. Needs hotel image. `era-readiness-matrix` N/A.
 
 **Closeout (2026-11-14 FO list/Status Giriş·Çıxış = business stamps):** No new Scaffold ✅. HOT-UI-01 SHIPPED deepen. AC-HOT-FO stays ✅ and is not reopened. Grid API exposes `checkInBusinessDate`/`checkOutBusinessDate`; list columns + sort, `/fo/in-house`, and FO Status `toRow` prefer stamps when present else planned. Unit: `__tests__/list-reservations-grid-pagination.spec.ts`, `__tests__/fo-status-dashboard.spec.ts`. ADR hotel-fo-business-day-checkin-out (UI columns). Gate/Pilot unchanged. `hotel.yaml` untouched. Needs hotel image. `era-readiness-matrix` N/A.
