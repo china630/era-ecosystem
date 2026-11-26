@@ -46,7 +46,7 @@ function markFor(code: string, existing: Member[]): string {
 
 export function DaySeriesPanel({ procedureOptions }: { procedureOptions: Array<{ value: string; label: string }> }) {
   const t = useTranslations("procedureRules");
-  const ts = useTranslations("settings");
+  const ts = useTranslations("adminSettings");
   const tc = useTranslations("common");
   const [rows, setRows] = useState<Series[]>([]);
   const [modes, setModes] = useState<ModeOpt[]>(DEFAULT_MODES);

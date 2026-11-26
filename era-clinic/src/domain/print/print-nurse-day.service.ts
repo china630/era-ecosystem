@@ -16,6 +16,7 @@ import {
   compareOpenUnseatedFirst,
   isOpenUnseatedOrder,
 } from "@/domain/procedure/open-attendance-order";
+import { boardOccupancyDisplay } from "@/domain/procedure/board-display-time";
 
 export type NurseDayPrintRow = {
   no: number;
@@ -197,12 +198,25 @@ export async function buildNurseDayPrint(input: {
     });
     const room = order.clinicalEpisode?.roomNumber?.trim() || "";
     const patient = order.patientRef.fullName?.trim() || "—";
-    const ends = !openUnseated && order.endsAt ? `-${bakuTimeLabel(order.endsAt)}` : "";
+    const clock = boardOccupancyDisplay({
+      status: order.status,
+      schedulingMode: order.schedulingMode,
+      resourceId: order.resourceId,
+      hasResource: Boolean(order.resourceId),
+      scheduledAt: order.scheduledAt.toISOString(),
+      endsAt: order.endsAt?.toISOString() ?? null,
+      actualStartsAt: order.actualStartsAt?.toISOString() ?? null,
+      actualEndsAt: order.actualEndsAt?.toISOString() ?? null,
+    });
+    const time =
+      clock.kind === "open" || openUnseated
+        ? printLabel(input.lang, "openAttendance")
+        : clock.endIso
+          ? `${bakuTimeLabel(clock.startIso)}-${bakuTimeLabel(clock.endIso)}`
+          : bakuTimeLabel(clock.startIso);
     return {
       no: index + 1,
-      time: openUnseated
-        ? printLabel(input.lang, "openAttendance")
-        : `${bakuTimeLabel(order.scheduledAt)}${ends}`,
+      time,
       name: resolveOrderDisplayName(order, catalogNames),
       patient,
       room,

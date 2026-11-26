@@ -12,6 +12,8 @@ export type Proc = {
   procedureCode: string;
   scheduledAt: string;
   endsAt?: string | null;
+  actualStartsAt?: string | null;
+  actualEndsAt?: string | null;
   effectiveEndsAt?: string;
   checkInOpen?: boolean;
   checkInDeadline?: string;
