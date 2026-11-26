@@ -32,7 +32,7 @@ AC-CLI-TENANT stays out of BE rollup (schema+filter only). HL7 CLI-23 + fiscal C
 
 AC-CLI-EPISODE (CLI-55) negatives: `__tests__/cli-episode-negative.spec.ts` + `__tests__/cli-episode-gates.spec.ts` (anamnesis / walk-in close / CLOSED read-only). Field UAT still open → AC stays 🟡.
 
-AC-CLI-WALKIN-PARTY (CLI-61): unit `__tests__/walk-in-party.spec.ts` (placeholders/status). UI path UAT-SMOKE §11a open → AC stays 🟡; not Scaffold ✅.
+AC-CLI-WALKIN-PARTY (CLI-61): unit `__tests__/walk-in-party.spec.ts` (placeholders/status). **2026-11-26** Nest guard deny must not surface as `"Http Exception"` (`fail()` rethrow + `cli-ops-negative` HttpException preserve). UI path UAT-SMOKE §11a open → AC stays 🟡; not Scaffold ✅.
 
 AC-CLI-OPEN-ATTEND (CLI-62): unit `__tests__/open-attendance.spec.ts` (mode/quota/window helpers + `orderCountsForWallClockRest`) + `procedure-slot-scan` OPEN restGap / compat. Code also refuses matrix DnD of unseated OPEN, plan reschedule for OPEN, and SAME_DAY check-in without a cabin; 2026-10-30 OPEN unpaid extras day-bucket pin + Pay/settlement keeps pin. 2026-11-02 picker: different codes share a day, same code next working day, package block cap kept, extra past stay not stored; OPEN unseated day-anchor excluded from FIXED restGap / overlap / compatibility — still **no field negative path**. 2026-11-06 resource matrix draws that queue as morning/afternoon cabin bands (`summarizeOpenAttendanceBands`). 2026-11-07 the band type is larger and only the first cabin shows the full counts. UI path UAT-SMOKE §11b open → AC stays 🟡; not Scaffold ✅.
 

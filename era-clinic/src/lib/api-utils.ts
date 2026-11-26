@@ -50,7 +50,33 @@ function isCodeUniqueViolation(err: unknown): boolean {
   return tokens.includes("code");
 }
 
+/** Nest HttpException (or duck-typed) — keep status/body; never collapse to "Http Exception". */
+function clinicJsonFromHttpException(err: unknown): ClinicJson | null {
+  if (!err || typeof err !== "object") return null;
+  const candidate = err as {
+    getStatus?: () => number;
+    getResponse?: () => string | Record<string, unknown>;
+  };
+  if (typeof candidate.getStatus !== "function" || typeof candidate.getResponse !== "function") {
+    return null;
+  }
+  const status = candidate.getStatus();
+  if (typeof status !== "number" || status < 400) return null;
+  const body = candidate.getResponse();
+  if (typeof body === "string") return jsonError(body, status);
+  if (body && typeof body === "object") {
+    const record = body as Record<string, unknown>;
+    if (typeof record.error === "string" || typeof record.message === "string") {
+      return new ClinicJson(status, record);
+    }
+    return new ClinicJson(status, { error: "Request failed", ...record });
+  }
+  return jsonError("Request failed", status);
+}
+
 export function handleRouteError(err: unknown) {
+  const fromHttp = clinicJsonFromHttpException(err);
+  if (fromHttp) return fromHttp;
   if (isSatelliteBillingBlockedError(err)) {
     return new ClinicJson(
       err.status,

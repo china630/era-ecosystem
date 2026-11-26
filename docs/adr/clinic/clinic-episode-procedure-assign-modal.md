@@ -375,3 +375,11 @@ Unified PackageAssign card:
 
 1. **Size:** `MODAL_FULL_FILL_CLASS` + tight overlay (`p-2`) — visual near-fullscreen fill. Do not equate size with hotel `MODAL_FULL_CLASS` classname alone (`min-h-0` on the dialog base collapses FULL).
 2. **Trash:** visible when the lane has an unlocked package row **or** unpaid extras (`extraDraft` / `PENDING_PAY` pending). Trash clears unpaid draft and cuts all pending for that code+regime (Saxla `removals`); unlocked package also goes through `pendingCancel`. Hidden only when there is nothing removable (no unlocked package and unpaid qty = 0) — locked package **with** unpaid still shows trash for the unpaid half. Paid not-COMPLETED reverse stays Extra tickets (D8). Stepper − still peels qty one-by-one.
+
+## Amendment 2026-11-26 — regime key, Cancel draft, paid badge, done ring
+
+1. **Regime fingerprint:** after dropping seating-only keys (`dayBlock`, `seatMiss`, `restYmds`, `bathSequence`) and null values, an empty physio object equals missing physio (`null` / `{}` / `{bathSequence:null}` → one card). Do not stamp `bathSequence: null` on write — omit the key.
+2. **Cancel / discard:** gray close on the save-ask dialog **clears** `sessionStorage` package-assign draft (matches D2 Cancel discards). Do not persist draft on abandon. Draft key is `…:v2:…` (legacy `…:draft:` ignored/cleared so empty-physio sticky keys do not resurface).
+3. **Card (one ±):** stepper always shown; `N` is editable only (package goal + unpaid). Static amber disc = paid qty (same color as stay «paid extra»); no duplicate «Ödənilib: N» text. Paketdən / unpaid qty discs use package blue / unpaid red (legend sync).
+4. **Stay marks:** money fill stays (package / unpaid / paid); **done** is a green ring overlay, not a green replace. Same-day package+extra: strongest money tone + tooltip lists both lanes.
+5. **Money invariant:** unpaid extras must not remain `SCHEDULED` without `paidAt`. `repairUnpaidScheduledExtras` runs on package-assign snapshot and pending-extras list (flip to `PENDING_PAY`).

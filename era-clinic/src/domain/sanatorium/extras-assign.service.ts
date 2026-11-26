@@ -658,7 +658,25 @@ const extraRegimeInclude = {
   sites: { select: { siteId: true, laterality: true } },
 } as const;
 
+/**
+ * Money invariant: unpaid extras must not sit as SCHEDULED without paidAt.
+ * Repairs legacy/leaked rows so the package modal and pay basket see them.
+ */
+export async function repairUnpaidScheduledExtras(episodeId?: string): Promise<number> {
+  const result = await prisma.procedureOrder.updateMany({
+    where: {
+      ...(episodeId ? { clinicalEpisodeId: episodeId } : {}),
+      inPackage: false,
+      status: "SCHEDULED",
+      paidAt: null,
+    },
+    data: { status: "PENDING_PAY" },
+  });
+  return result.count;
+}
+
 export async function listPendingExtras(episodeId: string) {
+  await repairUnpaidScheduledExtras(episodeId);
   return prisma.procedureOrder.findMany({
     where: { clinicalEpisodeId: episodeId, status: "PENDING_PAY" },
     orderBy: { createdAt: "asc" },
