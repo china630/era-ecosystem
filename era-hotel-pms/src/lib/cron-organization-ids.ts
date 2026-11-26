@@ -5,7 +5,8 @@ export function hotelPublicBaseUrl(): string {
   return (
     process.env.ERA_PUBLIC_BASE_URL?.trim() ||
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    "https://hotel.era-365.online"
+    // SatelliteEndpoint.baseUrl on orch for Nafta (not hotel.era-365.online).
+    "https://hotel-pms.era-365.online"
   ).replace(/\/$/, "");
 }
 
