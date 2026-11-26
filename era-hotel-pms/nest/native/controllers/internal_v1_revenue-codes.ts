@@ -21,6 +21,7 @@ export class InternalV1RevenueCodesController {
   @Get("api/internal/v1/revenue-codes")
   @HttpCode(200)
   async get_0(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
     try {
       const web = await (async () => {
         return runWithStaffTenantIfPresent(httpReq, async () => {

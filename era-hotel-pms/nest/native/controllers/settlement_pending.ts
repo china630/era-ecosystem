@@ -86,6 +86,7 @@ export class SettlementPendingController {
   @Get("api/settlement/pending")
   @HttpCode(200)
   async get_1(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
     try {
       const web = await (async () => {
         return runWithStaffTenantIfPresent(httpReq, async () => {
