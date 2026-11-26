@@ -130,11 +130,20 @@ async function resolveLifecycleDrainOrgIds(): Promise<string[]> {
       err instanceof Error && err.name === "SatelliteOrganizationUnboundError";
     const cronList = err instanceof CronOrganizationListError;
     if (!unbound && !cronList) throw err;
-    const fromOrch = await fetchHotelPoolOrganizationIds();
-    const ids = [
-      ...new Set(fromOrch.map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean)),
-    ];
-    if (ids.length) return ids;
+    try {
+      const fromOrch = await fetchHotelPoolOrganizationIds();
+      const ids = [
+        ...new Set(
+          fromOrch.map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean),
+        ),
+      ];
+      if (ids.length) return ids;
+    } catch (poolErr) {
+      console.warn(
+        "clinic lifecycle drain: orch pool fallback failed",
+        poolErr instanceof Error ? poolErr.message : poolErr,
+      );
+    }
     console.warn(
       "clinic lifecycle drain: org list unavailable",
       cronList ? err.reason : err instanceof Error ? err.message : err,
