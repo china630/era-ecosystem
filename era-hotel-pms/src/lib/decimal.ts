@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { stayNights } from '@/lib/hotel-calendar';
 
 export function toDecimal(value: number | string): Prisma.Decimal {
   return new Prisma.Decimal(value);
@@ -10,7 +11,7 @@ export function decimalToNumber(value: Prisma.Decimal | { toNumber(): number } |
   return value.toNumber();
 }
 
+/** Tariff night count. Same Baku civil nights as the reservation card. */
 export function countNights(checkIn: Date, checkOut: Date): number {
-  const ms = checkOut.getTime() - checkIn.getTime();
-  return Math.max(1, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+  return stayNights(checkIn, checkOut);
 }

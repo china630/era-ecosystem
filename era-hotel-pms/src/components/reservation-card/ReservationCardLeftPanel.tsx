@@ -26,7 +26,7 @@ import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/Res
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
 import { NightsCountField } from '@/components/reservation-card/NightsCountField';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
-import { addHotelDays } from '@/lib/hotel-calendar';
+import { addHotelDays, stayNights } from '@/lib/hotel-calendar';
 import { resolveStayWindowPlane } from '@/lib/stay-window-plane';
 import type { AgencyOption, RatePlanOption, SelectOption, SourceOption } from './types';
 
@@ -163,7 +163,8 @@ function nightsBetween(checkIn: string, checkOut: string): number {
   if (!checkIn || !checkOut) return 0;
   const a = new Date(checkIn);
   const b = new Date(checkOut);
-  return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
+  return stayNights(a, b);
 }
 
 /** One plane under Gecələr. Same command as the footer stay button. */

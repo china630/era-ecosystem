@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { safePct, safeDiv } from '@/lib/reports/ratio';
 import { bakuDateKey, bakuDayBounds } from '@era/satellite-kit/time';
+import { stayNights } from '@/lib/hotel-calendar';
 
 function toIso(d: Date): string {
   return bakuDateKey(d);
@@ -247,7 +248,7 @@ export async function queryManagerView(from: Date, to: Date): Promise<ManagerVie
   const departures = reservations.filter((r) => r.checkOutDate >= windowStart && r.checkOutDate < windowEnd).length;
 
   const totalLos = reservations.reduce((s, r) => {
-    return s + Math.round((r.checkOutDate.getTime() - r.checkInDate.getTime()) / 86_400_000);
+    return s + stayNights(r.checkInDate, r.checkOutDate);
   }, 0);
 
   return {

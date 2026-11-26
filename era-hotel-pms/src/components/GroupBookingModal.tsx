@@ -29,7 +29,7 @@ import {
   persistCounterpartyIds,
 } from '@/lib/booking-source-kind';
 import { guestListItems } from '@/lib/guest-list-identity';
-import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey, stayNights } from '@/lib/hotel-calendar';
 import {
   ratePlanRequiresGuestPackage,
   stayProductFamilyRank,
@@ -93,9 +93,10 @@ function addDaysIso(iso: string, days: number): string {
 
 function nightsBetween(checkIn: string, checkOut: string): number {
   if (!checkIn || !checkOut) return 0;
-  const a = new Date(`${checkIn}T12:00:00`);
-  const b = new Date(`${checkOut}T12:00:00`);
-  return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
+  const a = new Date(`${checkIn.slice(0, 10)}T08:00:00.000Z`);
+  const b = new Date(`${checkOut.slice(0, 10)}T08:00:00.000Z`);
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
+  return stayNights(a, b);
 }
 
 function ratePlanFitsRoomType(rp: RatePlanOpt, roomTypeId: string): boolean {

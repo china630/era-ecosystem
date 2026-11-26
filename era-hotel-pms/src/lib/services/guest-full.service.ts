@@ -1,3 +1,4 @@
+import { stayNights } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import {
@@ -27,12 +28,7 @@ export async function getGuestStats(id: string) {
   let totalNights = 0;
   let totalRevenue = 0;
   for (const r of reservations) {
-    const nights = Math.max(
-      1,
-      Math.round(
-        (r.checkOutDate.getTime() - r.checkInDate.getTime()) / 86400000,
-      ),
-    );
+    const nights = stayNights(r.checkInDate, r.checkOutDate);
     totalNights += nights;
     totalRevenue += decimalToNumber(r.totalAmount);
   }
