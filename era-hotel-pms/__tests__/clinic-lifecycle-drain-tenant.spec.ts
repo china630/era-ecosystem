@@ -30,8 +30,10 @@ jest.mock("@era/satellite-kit", () => ({
   },
 }));
 
+const mockFetchPool = jest.fn(async () => [ORG_A, ORG_B]);
+
 jest.mock("@/lib/cron-organization-ids", () => ({
-  fetchHotelPoolOrganizationIds: jest.fn(async () => [ORG_A, ORG_B]),
+  fetchHotelPoolOrganizationIds: (...args: unknown[]) => mockFetchPool(...(args as [])),
 }));
 
 jest.mock("@/lib/prisma", () => ({
@@ -61,10 +63,12 @@ describe("clinic lifecycle drain tenant", () => {
   beforeEach(() => {
     mockAls.organizationId = undefined;
     mockListOrgs.mockReset();
+    mockFetchPool.mockReset();
     mockFindMany.mockReset();
     mockUpdate.mockReset();
     mockPublish.mockReset();
     mockListOrgs.mockResolvedValue([ORG_A, ORG_B]);
+    mockFetchPool.mockResolvedValue([ORG_A, ORG_B]);
     mockFindMany.mockImplementation(async () => {
       if (!mockAls.organizationId) {
         throw new Error("SatelliteOrganizationUnboundError");
@@ -103,10 +107,22 @@ describe("clinic lifecycle drain tenant", () => {
     );
   });
 
-  it("returns 0 when the pool registry is unavailable", async () => {
+  it("falls back to orch pool when listCron throws unbound before Sync stamps SHARED", async () => {
+    const unbound = new Error("Satellite organizationId is not bound");
+    unbound.name = "SatelliteOrganizationUnboundError";
+    mockListOrgs.mockRejectedValue(unbound);
+    mockFetchPool.mockResolvedValue([ORG_A]);
+    const sent = await drainClinicLifecycleOutbox(20);
+    expect(sent).toBe(1);
+    expect(mockFetchPool).toHaveBeenCalled();
+    expect(mockFindMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 0 when both listCron and orch pool are empty", async () => {
     mockListOrgs.mockRejectedValue(
       new MockCronOrganizationListError("pool_registry_empty"),
     );
+    mockFetchPool.mockResolvedValue([]);
     const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     try {
       await expect(drainClinicLifecycleOutbox()).resolves.toBe(0);

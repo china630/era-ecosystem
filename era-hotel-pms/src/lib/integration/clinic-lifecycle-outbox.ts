@@ -118,6 +118,32 @@ async function drainDueForOrganization(
 }
 
 /**
+ * Pool org ids for the in-process drain. Prefer cron helper (SHARED vs bind).
+ * Before Sync stamps deploymentTopology=SHARED, listCron treats missing topology
+ * as dedicated and throws unbound — fall back to orch registry for Nafta SHARED.
+ */
+async function resolveLifecycleDrainOrgIds(): Promise<string[]> {
+  try {
+    return await listCronOrganizationIds(fetchHotelPoolOrganizationIds);
+  } catch (err) {
+    const unbound =
+      err instanceof Error && err.name === "SatelliteOrganizationUnboundError";
+    const cronList = err instanceof CronOrganizationListError;
+    if (!unbound && !cronList) throw err;
+    const fromOrch = await fetchHotelPoolOrganizationIds();
+    const ids = [
+      ...new Set(fromOrch.map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean)),
+    ];
+    if (ids.length) return ids;
+    console.warn(
+      "clinic lifecycle drain: org list unavailable",
+      cronList ? err.reason : err instanceof Error ? err.message : err,
+    );
+    return [];
+  }
+}
+
+/**
  * SHARED: poll each pool org under tenant ALS (unscoped findMany throws
  * SatelliteOrganizationUnboundError). DEDICATED/ONPREM: one bound org.
  */
@@ -126,22 +152,7 @@ export async function drainClinicLifecycleOutbox(limit = 20): Promise<number> {
   draining = true;
   let sent = 0;
   try {
-    let orgIds: string[];
-    try {
-      orgIds = await listCronOrganizationIds(fetchHotelPoolOrganizationIds);
-    } catch (err) {
-      if (
-        err instanceof CronOrganizationListError ||
-        (err instanceof Error && err.name === "SatelliteOrganizationUnboundError")
-      ) {
-        console.warn(
-          "clinic lifecycle drain: org list unavailable",
-          err instanceof CronOrganizationListError ? err.reason : err.message,
-        );
-        return 0;
-      }
-      throw err;
-    }
+    const orgIds = await resolveLifecycleDrainOrgIds();
     if (!orgIds.length) return 0;
     const perOrg = Math.max(1, Math.ceil(limit / orgIds.length));
     for (const organizationId of orgIds) {
