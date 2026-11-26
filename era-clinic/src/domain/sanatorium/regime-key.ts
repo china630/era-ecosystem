@@ -13,14 +13,20 @@ export type RegimeKeyInput = {
 /** Seating bookkeeping. One chosen regime stays one card when these differ. */
 const REGIME_KEY_IGNORED = new Set(["dayBlock", "seatMiss", "restYmds", "bathSequence"]);
 
-function fieldsForRegimeKey(fields: unknown): unknown {
-  if (!fields || typeof fields !== "object" || Array.isArray(fields)) return fields;
+/**
+ * Clinical physio fields that identify a regime card.
+ * Ignored keys dropped; null/undefined values dropped.
+ * Empty after clean → null (same fingerprint as missing physioFields).
+ */
+function fieldsForRegimeKey(fields: unknown): Record<string, unknown> | null {
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) return null;
   const copy: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(fields as Record<string, unknown>)) {
     if (REGIME_KEY_IGNORED.has(key)) continue;
+    if (value == null) continue;
     copy[key] = value;
   }
-  return copy;
+  return Object.keys(copy).length > 0 ? copy : null;
 }
 
 function stableJson(value: unknown): string {
@@ -39,10 +45,8 @@ export function regimeFingerprint(input: RegimeKeyInput): string {
     return `${id}:${side ?? ""}`;
   });
   const mode = input.siteApplyMode ?? "";
-  const fields =
-    input.physioFields && typeof input.physioFields === "object" && !Array.isArray(input.physioFields)
-      ? stableJson(fieldsForRegimeKey(input.physioFields))
-      : "";
+  const cleaned = fieldsForRegimeKey(input.physioFields);
+  const fields = cleaned ? stableJson(cleaned) : "";
   return `${sites.join(",")}|${mode}|${fields}`;
 }
 

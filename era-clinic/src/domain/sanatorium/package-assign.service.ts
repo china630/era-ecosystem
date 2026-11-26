@@ -650,6 +650,12 @@ export async function getPackageAssignSnapshot(
   /** Working days left for OPEN pin (today…checkout−1). Caps Miqdar / Say / stepper. */
   staySeatMax: number;
 }> {
+  // Heal leaked unpaid SCHEDULED extras before board/stay marks (dynamic import: avoid cycle).
+  const { repairUnpaidScheduledExtras } = await import(
+    "@/domain/sanatorium/extras-assign.service"
+  );
+  await repairUnpaidScheduledExtras(episodeId);
+
   let episode = await loadEpisodeForAssign(episodeId, {
     requireClinicalGates: false,
     requireProgram: false,

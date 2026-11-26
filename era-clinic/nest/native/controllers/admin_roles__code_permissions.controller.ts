@@ -9,7 +9,7 @@ import {
 import { z } from "zod";
 import { requireClinicPermission } from "@/lib/api-utils";
 import { assertClinicAdminRoute } from "@/lib/auth/clinic-admin-guard";
-import { CLINIC_PERMISSION, DEFAULT_ROLE_PERMISSIONS, effectiveRolePermissions, isClinicPermission, parseRolePermissions, rolePermissionsAreCustomized, serializeRolePermissions, type ClinicPermission } from "@/lib/auth/clinic-permissions";
+import { CLINIC_PERMISSION, DEFAULT_ROLE_PERMISSIONS, effectiveRolePermissions, expandClinicCatalog, isClinicPermission, parseRolePermissions, rolePermissionsAreCustomized, serializeRolePermissions, type ClinicPermission } from "@/lib/auth/clinic-permissions";
 import { isSystemClinicRoleCode } from "@/lib/clinic-roles";
 import { findOrgRoleByCode, findOrgRoleForAdmin, updateOrgRolePermissions } from "@/domain/auth/clinic-rbac.service";
 import { recordClinicAudit } from "@/lib/satellite-audit";
@@ -97,6 +97,7 @@ export class AdminRolesCodePermissionsController {
       throw new HttpException({ error: "permissions or resetToDefaults required" }, 400);
     }
 
+    next = expandClinicCatalog(next);
     const before = parseRolePermissions(role.permissionsJson);
     const updated = await updateOrgRolePermissions(
       role.id,

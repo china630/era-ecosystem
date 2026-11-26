@@ -149,7 +149,7 @@ Roadmap plans: `.cursor/plans/managed-lists-roadmap.plan.md`.
 3. **Delete** — confirm in modal footer (`ModalFooter`)
 4. **No full-page create** for admin entities (ops flows like POS floor, Room Rack may stay full-screen)
 5. **Large reservation modal (hotel):** `MODAL_FULL_CLASS` + `ModalShell` — single title/`subtitle`; `headerActions` + `footer` (`ReservationCardActions`); underline tabs via `TAB_*` tokens; folio lines on `HotelDataGrid` / `CHIP_*` subtabs. No nested second Close/title bar. Create and edit share one editor; post-save actions stay visible but disabled until saved.
-6. **Modal dismiss (kit):** backdrop click and Esc do **not** close; exit only via Close / Cancel / footer. Body scroll is locked while open. `ModalShell` and `ViewportOverlay` portal to `document.body` so they paint above the fixed header (`z-80`) and sidebar (`z-40`). Page content stays in the shell's `z-0` column.
+6. **Modal dismiss (kit):** backdrop click and Esc do **not** close; exit only via Close / Cancel / footer. Body scroll is locked while open. `ModalShell` and `ViewportOverlay` portal to `document.body` so they paint above the fixed header (`z-80`) and sidebar (`z-40`). Page content stays in the shell's `z-0` column. Overlay uses `items-center` so content-sized dialogs hug their body; tall ops cards set height via `MODAL_WIDE` / `MODAL_FULL` / `MODAL_FULL_FILL` `min-h`/`h` on `maxWidthClass` — do not stretch the overlay with `items-stretch`.
 
 ## Reference implementations
 

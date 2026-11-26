@@ -21,7 +21,10 @@ import { ChevronDown, Info, Minus, Plus, Trash2 } from "lucide-react";
 /** Near-viewport package card. Published kit UI barrel does not export this yet. */
 const MODAL_FULL_FILL_CLASS =
   "max-w-[min(99vw,1680px)] w-full !min-h-[min(92vh,56rem)] h-[min(92vh,56rem)] max-h-[96vh]";
-import { STAY_PLAN_MARK_DOT_CLASS } from "@/components/sanatorium/stay-plan-mark-tone";
+import {
+  STAY_PLAN_DONE_RING_CLASS,
+  STAY_PLAN_MONEY_DOT_CLASS,
+} from "@/components/sanatorium/stay-plan-mark-tone";
 import {
   PhysioSiteChips,
   type PhysioCatalogListItem,
@@ -195,7 +198,12 @@ type PackageAssignDraftSnapshot = {
   masseurByCode: Record<string, string>;
 };
 
+/** v2 drops sticky drafts keyed under empty-physio `||{}` splits (2026-11-26). */
 function packageAssignDraftKey(episodeId: string): string {
+  return `era-clinic:package-assign-draft:v2:${episodeId}`;
+}
+
+function packageAssignDraftKeyLegacy(episodeId: string): string {
   return `era-clinic:package-assign-draft:${episodeId}`;
 }
 
@@ -225,6 +233,7 @@ function clearPackageAssignDraft(episodeId: string): void {
   if (typeof sessionStorage === "undefined") return;
   try {
     sessionStorage.removeItem(packageAssignDraftKey(episodeId));
+    sessionStorage.removeItem(packageAssignDraftKeyLegacy(episodeId));
   } catch {
     /* ignore */
   }
@@ -281,7 +290,15 @@ function regimeOf(row: {
   physioFields?: Record<string, unknown> | null;
   regimeKey?: string;
 }): string {
-  return row.regimeKey || regimeFingerprint(row);
+  // Prefer live fingerprint when order shape is present (pending/draft/assigned).
+  // Paid list may carry only regimeKey from the API.
+  const hasShape =
+    row.physioFields !== undefined ||
+    row.siteIds !== undefined ||
+    row.siteApplyMode !== undefined ||
+    row.siteLaterality !== undefined;
+  if (hasShape) return regimeFingerprint(row);
+  return row.regimeKey || "";
 }
 
 function paramLinesOf(label?: string, lines?: string[]): string[] {
@@ -383,6 +400,10 @@ export function PackageAssignModal({
       procedureName: string;
       amountNet: number;
       regimeKey?: string;
+      physioFields?: Record<string, unknown> | null;
+      siteIds?: string[];
+      siteApplyMode?: "TURN" | "TOGETHER" | null;
+      siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
     }>
   >([]);
   const [openDepts, setOpenDepts] = useState<Set<string>>(new Set());
@@ -647,12 +668,20 @@ export function PackageAssignModal({
                 procedureName?: string;
                 amountNet?: number;
                 regimeKey?: string;
+                physioFields?: Record<string, unknown> | null;
+                siteIds?: string[];
+                siteApplyMode?: "TURN" | "TOGETHER" | null;
+                siteLaterality?: Record<string, "LEFT" | "RIGHT" | "BOTH" | null>;
               }) => ({
                 id: row.id,
                 procedureCode: row.procedureCode || "",
                 procedureName: row.procedureName || row.id,
                 amountNet: Number(row.amountNet || 0),
                 regimeKey: row.regimeKey ?? "",
+                physioFields: row.physioFields ?? null,
+                siteIds: row.siteIds,
+                siteApplyMode: row.siteApplyMode ?? null,
+                siteLaterality: row.siteLaterality,
               }),
             ),
           );
@@ -762,7 +791,7 @@ export function PackageAssignModal({
     return sum + stored;
   }, 0) - Object.entries(extraPendingCut).reduce((sum, [key, qty]) => {
     if (qty < 1) return sum;
-    const sample = extraPending.find((row) => extraCutKey(row.procedureCode, row.regimeKey ?? "") === key);
+    const sample = extraPending.find((row) => extraCutKey(row.procedureCode, regimeOf(row)) === key);
     const unit = sample && sample.amountNet > 0 ? sample.amountNet : unitOf(sample?.procedureCode || key);
     return sum + unit * qty;
   }, 0);
@@ -1057,10 +1086,11 @@ export function PackageAssignModal({
         : formPhysio.siteIds;
     return {
       note: formPhysio.note ?? "",
-      physioFields: {
-        ...formPhysio.physioFields,
-        ...(formQty <= 1 ? { bathSequence: null } : {}),
-      } as Record<string, unknown>,
+      physioFields: (() => {
+        const base = { ...(formPhysio.physioFields ?? {}) } as Record<string, unknown>;
+        if (formQty <= 1) delete base.bathSequence;
+        return base;
+      })(),
       siteIds,
       siteApplyMode: (formPhysio.hideSitePicker
         ? "TOGETHER"
@@ -1112,10 +1142,11 @@ export function PackageAssignModal({
         qty,
         amountNet: unit,
         note: formPhysio.note ?? "",
-        physioFields: {
-          ...formPhysio.physioFields,
-          ...(qty <= 1 ? { bathSequence: null } : {}),
-        } as Record<string, unknown>,
+        physioFields: (() => {
+          const base = { ...(formPhysio.physioFields ?? {}) } as Record<string, unknown>;
+          if (qty <= 1) delete base.bathSequence;
+          return base;
+        })(),
         siteIds: occupancy,
         siteApplyMode: formPhysio.hideSitePicker ? "TOGETHER" : formPhysio.siteApplyMode,
         siteLaterality: formPhysio.siteLaterality,
@@ -1494,7 +1525,7 @@ export function PackageAssignModal({
       .filter(([, qty]) => qty > 0)
       .map(([key, qty]) => {
         const matches = extraPending
-          .filter((row) => extraCutKey(row.procedureCode, row.regimeKey ?? "") === key)
+          .filter((row) => extraCutKey(row.procedureCode, regimeOf(row)) === key)
           .sort((a, b) => (b.scheduledAt ?? "").localeCompare(a.scheduledAt ?? ""));
         const sample = matches[0];
         return {
@@ -1976,7 +2007,7 @@ export function PackageAssignModal({
     if (unpaidQty > 0) {
       setExtraDraft((prev) => clearExtraDraftForLane(prev, lane.code, lane.regimeKey, regimeOf));
       const pendingCount = extraPending.filter(
-        (row) => extraCutKey(row.procedureCode, row.regimeKey ?? "") === extraCutKey(lane.code, lane.regimeKey),
+        (row) => extraCutKey(row.procedureCode, regimeOf(row)) === extraCutKey(lane.code, lane.regimeKey),
       ).length;
       setExtraPendingCut((prev) => cutAllPendingForLane(prev, lane.code, lane.regimeKey, pendingCount));
     }
@@ -2066,10 +2097,14 @@ export function PackageAssignModal({
                 procedureCode: replaceTo,
                 qty: replaceQty,
                 note: replacePhysio.note || reason,
-                physioFields: {
-                  ...replacePhysio.physioFields,
-                  ...(replaceQty <= 1 ? { bathSequence: null } : {}),
-                },
+                physioFields: (() => {
+                  const base = { ...(replacePhysio.physioFields ?? {}) } as Record<
+                    string,
+                    unknown
+                  >;
+                  if (replaceQty <= 1) delete base.bathSequence;
+                  return base;
+                })(),
                 siteIds: occupancy,
                 siteApplyMode: replacePhysio.hideSitePicker
                   ? "TOGETHER"
@@ -2107,7 +2142,7 @@ export function PackageAssignModal({
     if (peelPaid(code, regimeKey)) return;
     const key = extraCutKey(code, regimeKey);
     const pendingCount = extraPending.filter(
-      (row) => extraCutKey(row.procedureCode, row.regimeKey ?? "") === key,
+      (row) => extraCutKey(row.procedureCode, regimeOf(row)) === key,
     ).length;
     const cut = extraPendingCut[key] ?? 0;
     if (cut >= pendingCount) return;
@@ -2454,7 +2489,7 @@ export function PackageAssignModal({
               const rows = extraPending.filter(
                 (row) =>
                   row.procedureCode === code &&
-                  (row.regimeKey ?? "") === regimeKey &&
+                  regimeOf(row) === regimeKey &&
                   !usedPending.has(row.id),
               );
               const cut = extraPendingCut[extraCutKey(code, regimeKey)] ?? 0;
@@ -2464,7 +2499,7 @@ export function PackageAssignModal({
             };
             const takePaid = (code: string, regimeKey: string) =>
               paidExtras.filter((row) => {
-                if (row.procedureCode !== code || (row.regimeKey ?? "") !== regimeKey || usedPaid.has(row.id)) {
+                if (row.procedureCode !== code || regimeOf(row) !== regimeKey || usedPaid.has(row.id)) {
                   return false;
                 }
                 usedPaid.add(row.id);
@@ -2572,7 +2607,7 @@ export function PackageAssignModal({
             }
             for (const row of [...extraPending, ...paidExtras]) {
               if (usedPending.has(row.id) || usedPaid.has(row.id)) continue;
-              const regimeKey = "regimeKey" in row ? row.regimeKey ?? "" : "";
+              const regimeKey = regimeOf(row);
               if (lanes.some((lane) => lane.code === row.procedureCode && lane.regimeKey === regimeKey)) continue;
               pushLane(
                 row.procedureCode,
@@ -2640,12 +2675,6 @@ export function PackageAssignModal({
                   const targetMinusDisabled =
                     lane.pkgLocked || totalGoal <= minusFloor;
                   const targetPlusDisabled = lane.pkgLocked;
-                  const showPackageRows =
-                    lane.factQty > 0 ||
-                    lane.targetQty > 0 ||
-                    lane.extraQty > 0 ||
-                    Boolean(lane.assigned) ||
-                    Boolean(lane.pkgDraft);
                   return (
                     <li
                       key={lane.key}
@@ -2702,22 +2731,30 @@ export function PackageAssignModal({
                           ) : null}
                         </div>
                       </div>
-                      {showPackageRows ? (
-                        <div className="flex items-center justify-end gap-2 py-1">
-                          {stepper(
-                            totalGoal,
-                            () => bumpLaneMinus(lane),
-                            () => bumpLanePlus(lane),
-                            targetPlusDisabled,
-                            targetMinusDisabled,
-                          )}
-                        </div>
-                      ) : null}
+                      <div className="flex items-center justify-end gap-2 py-1">
+                        {stepper(
+                          totalGoal,
+                          () => bumpLaneMinus(lane),
+                          () => bumpLanePlus(lane),
+                          targetPlusDisabled,
+                          targetMinusDisabled,
+                        )}
+                        {lane.paidQty > 0 ? (
+                          <span
+                            className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#D4A017] px-1.5 text-[11px] font-semibold tabular-nums text-[#1A1A1A] ring-1 ring-[#1F4E79]/40"
+                            title={tPhysio("stayPlanPaid")}
+                            aria-label={`${tPhysio("paidLine")}: ${lane.paidQty}`}
+                          >
+                            {lane.paidQty}
+                          </span>
+                        ) : null}
+                      </div>
                       <div className={`flex items-center justify-between gap-2 py-0.5 text-[12px] ${TEXT_MUTED_CLASS}`}>
                         <span>{tPhysio("fromPackage")}</span>
                         <span
-                          className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#E8EEF4] px-1.5 text-[11px] font-semibold tabular-nums"
-                          title={tPhysio("fromPackage")}
+                          className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#1F4E79] px-1.5 text-[11px] font-semibold tabular-nums text-white ring-1 ring-white"
+                          title={tPhysio("stayPlanPackage")}
+                          aria-label={`${tPhysio("fromPackage")}: ${lane.targetQty}`}
                         >
                           {lane.targetQty}
                         </span>
@@ -2730,7 +2767,11 @@ export function PackageAssignModal({
                             <span className={TEXT_MUTED_CLASS}> · </span>
                             {(lane.extraUnit * lane.extraQty).toFixed(2)}
                           </span>
-                          <span className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#F5E6D3] px-1.5 text-[11px] font-semibold tabular-nums text-[#8B5A2B]">
+                          <span
+                            className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#C0392B] px-1.5 text-[11px] font-semibold tabular-nums text-white ring-1 ring-white"
+                            title={tPhysio("stayPlanUnpaidExtra")}
+                            aria-label={`${tPhysio("extraLine")}: ${lane.extraQty}`}
+                          >
                             {lane.extraQty}
                           </span>
                         </div>
@@ -2757,11 +2798,6 @@ export function PackageAssignModal({
                             widthPreset="select"
                           />
                         </div>
-                      ) : null}
-                      {lane.paidQty > 0 ? (
-                        <p className="pt-1 text-[13px] font-semibold text-[#1F4E79]">
-                          {tPhysio("paidLine")}: {lane.paidQty}
-                        </p>
                       ) : null}
                     </li>
                   );
@@ -2799,10 +2835,11 @@ export function PackageAssignModal({
                         const n = Math.min(cap, Math.max(1, raw));
                         setFormQty(n);
                         if (n <= 1) {
-                          setFormPhysio((prev) => ({
-                            ...prev,
-                            physioFields: { ...prev.physioFields, bathSequence: null },
-                          }));
+                          setFormPhysio((prev) => {
+                            const physioFields = { ...(prev.physioFields ?? {}) };
+                            delete physioFields.bathSequence;
+                            return { ...prev, physioFields };
+                          });
                         }
                       }}
                     />
@@ -3103,8 +3140,8 @@ export function PackageAssignModal({
                 />
               )}
             </div>
-            <div className={`mt-2 flex shrink-0 flex-col gap-1.5 text-[12px] ${TEXT_MUTED_CLASS}`}>
-              <div className="flex items-center gap-2 text-[11px] tabular-nums">
+            <div className="mt-2 flex shrink-0 flex-col gap-1.5 text-[12px] text-[#1E293B]">
+              <div className={`flex items-center gap-2 text-[11px] tabular-nums ${TEXT_MUTED_CLASS}`}>
                 <span>{tPhysio("procedureLoadLow")}</span>
                 <div className="flex h-2 flex-1 overflow-hidden rounded">
                   {Array.from({ length: 10 }, (_, i) => (
@@ -3120,25 +3157,25 @@ export function PackageAssignModal({
               <p className="m-0 flex flex-wrap gap-3">
                 <span className="inline-flex items-center gap-1">
                   <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.package}`}
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MONEY_DOT_CLASS.package}`}
                   />
                   {tPhysio("stayPlanPackage")}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.unpaidExtra}`}
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MONEY_DOT_CLASS.unpaidExtra}`}
                   />
                   {tPhysio("stayPlanUnpaidExtra")}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.paid}`}
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MONEY_DOT_CLASS.paid}`}
                   />
                   {tPhysio("stayPlanPaid")}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.done}`}
+                    className={`inline-block h-2.5 w-2.5 rounded-full bg-[#1F4E79] ring-1 ring-white ${STAY_PLAN_DONE_RING_CLASS}`}
                   />
                   {tPhysio("stayPlanDone")}
                 </span>
@@ -3234,7 +3271,7 @@ export function PackageAssignModal({
             className={SECONDARY_BUTTON_CLASS}
             onClick={() => {
               setDiscardOpen(false);
-              persistDraftIfAny();
+              clearPackageAssignDraft(episodeId);
               setSaveOutcome(null);
               onClose();
             }}

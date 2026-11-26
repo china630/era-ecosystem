@@ -68,6 +68,20 @@ describe("Clinic OPS negative paths (AC-CLI-OPS)", () => {
       const body = await res.json();
       expect(body.error).toMatch(/industry_clinic/);
     });
+
+    it("handleRouteError keeps Nest HttpException status/body (no Http Exception mask)", async () => {
+      const { handleRouteError } = await import("@/lib/api-utils");
+      const nestLike = {
+        message: "Http Exception",
+        getStatus: () => 403,
+        getResponse: () => ({ error: "Forbidden", code: "FORBIDDEN" }),
+      };
+      const res = handleRouteError(nestLike);
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body).toEqual({ error: "Forbidden", code: "FORBIDDEN" });
+      expect(body.error).not.toBe("Http Exception");
+    });
   });
 
   describe("domain deny", () => {

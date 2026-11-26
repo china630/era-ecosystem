@@ -6,9 +6,11 @@ import { todayBakuYmd } from "@/lib/baku-day";
 import type { StayPlan, StayPlanMark } from "@/domain/sanatorium/package-assign.service";
 import { stripLatinParamEcho } from "@/components/physio/physio-params-label";
 import {
-  STAY_PLAN_MARK_DOT_CLASS,
+  STAY_PLAN_DONE_RING_CLASS,
+  STAY_PLAN_MONEY_DOT_CLASS,
   pickStayPlanMarkForDay,
-  stayPlanMarkTone,
+  stayPlanDotClass,
+  stayPlanMarksForDay,
 } from "@/components/sanatorium/stay-plan-mark-tone";
 import {
   STAY_DAY_SLOTS,
@@ -158,15 +160,31 @@ export function StayDayGrid({
                   ) : null}
                 </th>
                 {days.map((ymd) => {
+                  const dayMarks = stayPlanMarksForDay(row.marks, ymd);
                   const mark = pickStayPlanMarkForDay(row.marks, ymd);
                   const tone = dayTone(ymd, checkIn, checkout, today);
+                  const laneLabel = (m: StayPlanMark) => {
+                    if (m.done && m.paid) return `${legendPaid} · ${legendDone}`;
+                    if (m.done && m.inPackage) return `${legendPackage} · ${legendDone}`;
+                    if (m.done) return `${legendUnpaidExtra} · ${legendDone}`;
+                    if (m.paid) return legendPaid;
+                    if (!m.inPackage) return legendUnpaidExtra;
+                    return legendPackage;
+                  };
                   const place = mark
                     ? mark.open
                       ? openLabel
                       : [mark.time, mark.cabin].filter(Boolean).join(" · ")
                     : "";
+                  const multi =
+                    dayMarks.length > 1
+                      ? dayMarks.map((m) => laneLabel(m)).join(" + ")
+                      : mark
+                        ? laneLabel(mark)
+                        : "";
                   const hint = mark
                     ? [
+                        multi,
                         stripLatinParamEcho(mark.paramsLabel ?? ""),
                         place,
                         ymd === checkout && !mark.open ? noonLabel : "",
@@ -188,9 +206,7 @@ export function StayDayGrid({
                     >
                       {mark ? (
                         <span
-                          className={`mx-auto block h-2.5 w-2.5 rounded-full ${
-                            STAY_PLAN_MARK_DOT_CLASS[stayPlanMarkTone(mark)]
-                          }`}
+                          className={`mx-auto block h-2.5 w-2.5 rounded-full ${stayPlanDotClass(mark)}`}
                         />
                       ) : null}
                     </td>
@@ -211,23 +227,25 @@ export function StayDayGrid({
     <div className={ownScroll ? "flex h-full min-h-0 flex-col" : "flex flex-col"}>
       {ownScroll ? <div className="min-h-0 flex-1 overflow-auto">{tableBlock}</div> : tableBlock}
       {showLegend ? (
-        <p className={`mt-2 flex shrink-0 flex-wrap gap-3 text-[12px] ${TEXT_MUTED_CLASS}`}>
+        <p className={`mt-2 flex shrink-0 flex-wrap gap-3 text-[12px] text-[#1E293B]`}>
           <span className="inline-flex items-center gap-1">
-            <span className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.package}`} />
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MONEY_DOT_CLASS.package}`} />
             {legendPackage}
           </span>
           <span className="inline-flex items-center gap-1">
             <span
-              className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.unpaidExtra}`}
+              className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MONEY_DOT_CLASS.unpaidExtra}`}
             />
             {legendUnpaidExtra}
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.paid}`} />
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MONEY_DOT_CLASS.paid}`} />
             {legendPaid}
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className={`inline-block h-2.5 w-2.5 rounded-full ${STAY_PLAN_MARK_DOT_CLASS.done}`} />
+            <span
+              className={`inline-block h-2.5 w-2.5 rounded-full bg-[#1F4E79] ring-1 ring-white ${STAY_PLAN_DONE_RING_CLASS}`}
+            />
             {legendDone}
           </span>
         </p>

@@ -224,10 +224,11 @@ export function ExtrasAssignModal({
         qty: Math.max(1, qty),
         amountNet: unit,
         note: formPhysio.note ?? "",
-        physioFields: {
-          ...formPhysio.physioFields,
-          ...(qty <= 1 ? { bathSequence: null } : {}),
-        } as Record<string, unknown>,
+        physioFields: (() => {
+          const base = { ...(formPhysio.physioFields ?? {}) } as Record<string, unknown>;
+          if (qty <= 1) delete base.bathSequence;
+          return base;
+        })(),
         siteIds: occupancy,
         siteApplyMode: formPhysio.hideSitePicker ? "TOGETHER" : formPhysio.siteApplyMode,
         siteLaterality: formPhysio.siteLaterality,
@@ -403,10 +404,11 @@ export function ExtrasAssignModal({
                     const n = Number(e.target.value) || 1;
                     setQty(n);
                     if (n <= 1) {
-                      setFormPhysio((prev) => ({
-                        ...prev,
-                        physioFields: { ...prev.physioFields, bathSequence: null },
-                      }));
+                      setFormPhysio((prev) => {
+                        const physioFields = { ...(prev.physioFields ?? {}) };
+                        delete physioFields.bathSequence;
+                        return { ...prev, physioFields };
+                      });
                     }
                   }}
                 />

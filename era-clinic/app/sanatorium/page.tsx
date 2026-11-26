@@ -11,7 +11,6 @@ import {
   TestTube2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuCivilUtcDate, bakuDateDisplay, todayBakuYmd } from "@/lib/baku-day";
 import {
@@ -46,6 +45,7 @@ import { composeFullName } from "@/domain/patient/patient-ref-code";
 import { ageYearsFromBirthDate } from "@/domain/patient/patient-demographics";
 import { PatientCardModal } from "@/components/patients/PatientCardModal";
 import { StaffBenefitCourseModal } from "@/components/sanatorium/StaffBenefitCourseModal";
+import { WalkInPartyWorkspace } from "@/components/sanatorium/WalkInPartyWorkspace";
 
 type CourseMark = "ready" | "attention" | "blocked";
 
@@ -206,10 +206,10 @@ export default function SanatoriumPage() {
   const [cardPanel, setCardPanel] = useState<string | null>(null);
   const [cardEpisodeId, setCardEpisodeId] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const router = useRouter();
   const deepLinkHandled = useRef(false);
   const [newCourseMenuOpen, setNewCourseMenuOpen] = useState(false);
   const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+  const [groupPartyCreateOpen, setGroupPartyCreateOpen] = useState(false);
   const [staffModalOpen, setStaffModalOpen] = useState(false);
   const [walkIn, setWalkIn] = useState<WalkInForm>(emptyWalkIn);
   const [busy, setBusy] = useState(false);
@@ -696,7 +696,7 @@ export default function SanatoriumPage() {
                 </EraMenuItem>
                 <EraMenuItem
                   onSelect={() => {
-                    router.push("/sanatorium/walk-in-parties");
+                    setGroupPartyCreateOpen(true);
                   }}
                 >
                   {t("newCourseGroup")}
@@ -958,6 +958,12 @@ export default function SanatoriumPage() {
           setSelectedId(episodeId);
           if (patientId) openPatientCard(patientId, episodeId, "package");
         }}
+      />
+
+      <WalkInPartyWorkspace
+        showList={false}
+        createOpen={groupPartyCreateOpen}
+        onCreateOpenChange={setGroupPartyCreateOpen}
       />
 
       <PatientCardModal
