@@ -2319,6 +2319,9 @@ model ProcedureOrder {
   procedureName              String
   scheduledAt                DateTime
   endsAt                     DateTime?
+  /// Factual cabin window after check-in. Plan clock stays on scheduledAt/endsAt.
+  actualStartsAt             DateTime?                @map("actual_starts_at")
+  actualEndsAt               DateTime?                @map("actual_ends_at")
   /// FIXED timed cabin vs OPEN day-bucket (copied from ProcedureType.openAttendance).
   schedulingMode             ProcedureSchedulingMode  @default(FIXED) @map("scheduling_mode")
   sequenceIndex              Int?
@@ -2391,6 +2394,7 @@ model ProcedureOrder {
 
   @@unique([organizationId, accessCode])
   @@index([scheduledAt, status])
+  @@index([actualStartsAt])
   @@index([patientRefId])
   @@index([clinicalEpisodeId])
   @@index([resourceId, scheduledAt])

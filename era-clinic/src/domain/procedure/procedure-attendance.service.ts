@@ -416,17 +416,22 @@ export async function checkInProcedureOrder(
       await seatOpenAttendanceNow(orderId, now);
     } else {
       const window = await resolveCheckInWindowSettings(now);
-      if (window.sameDayActive && orderIsTodayBaku(order.scheduledAt, now)) {
-        if (!order.resourceId) {
-          throw new ProcedureAttendanceError(
-            "Same-day check-in requires a seated cabin — assign on the resource matrix first",
-            "RESOURCE_BUSY",
-          );
-        }
-        await rebaseFixedOccupancyToNow(orderId, order.resourceId, now);
+      const sameDay =
+        window.sameDayActive && orderIsTodayBaku(order.scheduledAt, now);
+      // Plan cabin required for same-day late check-in; on-time FIXED also stamps actual.
+      const cabinId = order.resourceId;
+      if (sameDay && !cabinId) {
+        throw new ProcedureAttendanceError(
+          "Same-day check-in requires a seated cabin — assign on the resource matrix first",
+          "RESOURCE_BUSY",
+        );
+      }
+      if (cabinId) {
+        await rebaseFixedOccupancyToNow(orderId, cabinId, now);
       }
     }
   } catch (err) {
+    if (err instanceof ProcedureAttendanceError) throw err;
     throw new ProcedureAttendanceError(
       err instanceof Error ? err.message : "Unable to seat procedure for check-in",
       "RESOURCE_BUSY",
@@ -453,6 +458,21 @@ export async function checkInProcedureOrder(
     );
   }
 
+  let durationMin = 30;
+  if (seated.procedureTypeId) {
+    const pt = await prisma.procedureType.findUnique({
+      where: { id: seated.procedureTypeId },
+      select: { durationMin: true },
+    });
+    if (pt?.durationMin) durationMin = pt.durationMin;
+  } else if (seated.endsAt) {
+    durationMin = Math.max(
+      5,
+      Math.round((seated.endsAt.getTime() - seated.scheduledAt.getTime()) / 60_000),
+    );
+  }
+  const actualEndsFallback = new Date(now.getTime() + durationMin * 60_000);
+
   const updated = await prisma.procedureOrder.update({
     where: { id: orderId },
     data: {
@@ -461,6 +481,9 @@ export async function checkInProcedureOrder(
       checkedInByUserId: actor.userId,
       checkInChannel: channel,
       checkInOverrideReason: overrideReason,
+      // If seating path did not stamp actual (no cabin), still record fact clock.
+      actualStartsAt: seated.actualStartsAt ?? now,
+      actualEndsAt: seated.actualEndsAt ?? actualEndsFallback,
     },
     include: { patientRef: true },
   });

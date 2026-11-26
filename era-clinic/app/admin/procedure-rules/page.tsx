@@ -103,17 +103,33 @@ export default function ProcedureRulesPage() {
   });
 
   const load = useCallback(async () => {
-    const [c, s, rot, sub] = await Promise.all([
-      fetch('/api/admin/procedure-compatibility-rules').then((r) => r.json()),
-      fetch('/api/admin/procedure-rules').then((r) => r.json()),
-      fetch('/api/admin/procedure-rotation-rules').then((r) => r.json()),
-      fetch('/api/admin/procedure-substitution-rules').then((r) => r.json()),
+    const asList = <T,>(payload: unknown): T[] => {
+      if (Array.isArray(payload)) return payload as T[];
+      if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown }).data)) {
+        return (payload as { data: T[] }).data;
+      }
+      return [];
+    };
+    const [cRes, sRes, rotRes, subRes] = await Promise.all([
+      fetch('/api/admin/procedure-compatibility-rules'),
+      fetch('/api/admin/procedure-rules'),
+      fetch('/api/admin/procedure-rotation-rules'),
+      fetch('/api/admin/procedure-substitution-rules'),
     ]);
-    setCompatRules((c.data ?? c) as CompatRule[]);
-    setSeqRules((s.data ?? s) as SeqRule[]);
-    setRotationRules((rot.data ?? rot) as RotationRule[]);
-    setSubstitutionRules((sub.data ?? sub) as SubstitutionRule[]);
-  }, []);
+    const [c, s, rot, sub] = await Promise.all([
+      cRes.json().catch(() => ({})),
+      sRes.json().catch(() => ({})),
+      rotRes.json().catch(() => ({})),
+      subRes.json().catch(() => ({})),
+    ]);
+    if (!cRes.ok || !sRes.ok || !rotRes.ok || !subRes.ok) {
+      showApiError(cRes.ok ? (sRes.ok ? (rotRes.ok ? sub : rot) : s) : c, tc('loadingFailed'));
+    }
+    setCompatRules(asList<CompatRule>(c));
+    setSeqRules(asList<SeqRule>(s));
+    setRotationRules(asList<RotationRule>(rot));
+    setSubstitutionRules(asList<SubstitutionRule>(sub));
+  }, [tc]);
 
   useEffect(() => {
     void load();

@@ -13,6 +13,7 @@ import {
 } from "@/lib/api-utils";
 import { runWithSatelliteTenant, agencyAuthCookieName, getBearerOrCookieToken } from "@era/satellite-kit";
 import { runWithBoundClinicSession } from "@/lib/api-utils";
+import { runWithNestHttp } from "@/lib/nest-http-context";
 import { ClinicJson } from "@/lib/clinic-json";
 
 type StaffRequest = SatelliteNestRequest & {
@@ -74,7 +75,8 @@ export async function runWithStaffTenantIfPresent<T>(req: StaffRequest, fn: () =
   } catch {
     return fn();
   }
-  return runWithClinicTenant(await clinicNestSession(req), fn);
+  const session = await clinicNestSession(req);
+  return runWithClinicTenant(session, () => runWithBoundClinicSession(session as never, fn));
 }
 
 export function nestQuery(req: StaffRequest): URLSearchParams {
@@ -188,7 +190,9 @@ export function withClinicStaff<T>(
 
 /** Public route: Nest frame, staff tenant when a session cookie is present. */
 export function withClinicHttp<T>(req: StaffRequest, fn: () => Promise<T>): Promise<T> {
-  return runWithStaffTenantIfPresent(req, fn);
+  // Nest has no next/headers — getSatelliteSession() needs the Express cookie jar
+  // via nestHttpFrame (same pattern as CRM/logistics bridges).
+  return runWithNestHttp(req, () => runWithStaffTenantIfPresent(req, fn));
 }
 
 /** Turn a ClinicJson into a Nest return or HttpException. Status 200 yields the body. */

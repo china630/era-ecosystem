@@ -28,6 +28,7 @@ import {
 } from "@era/satellite-kit/ui";
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
+import { boardOccupancyDisplay } from "@/domain/procedure/board-display-time";
 import {
   compareOpenUnseatedFirst,
   isOpenUnseatedOrder,
@@ -47,6 +48,8 @@ type Proc = {
   procedureCode: string;
   scheduledAt: string;
   endsAt?: string | null;
+  actualStartsAt?: string | null;
+  actualEndsAt?: string | null;
   effectiveEndsAt?: string;
   checkInOpen?: boolean;
   checkInDeadline?: string;
@@ -341,14 +344,22 @@ export default function NursePage() {
   }
 
   function timeRange(order: Proc) {
-    const openUnseated =
-      order.schedulingMode === "OPEN" && !order.resourceId && !order.resource;
-    if (openUnseated) {
+    const view = boardOccupancyDisplay({
+      status: order.status,
+      schedulingMode: order.schedulingMode,
+      resourceId: order.resourceId,
+      hasResource: Boolean(order.resource),
+      scheduledAt: order.scheduledAt,
+      endsAt: order.endsAt,
+      actualStartsAt: order.actualStartsAt,
+      actualEndsAt: order.actualEndsAt,
+      effectiveEndsAt: order.effectiveEndsAt,
+    });
+    if (view.kind === "open") {
       return t("openAttendance", { defaultValue: "Open attendance" });
     }
-    const start = bakuTimeLabel(order.scheduledAt);
-    const endSrc = order.endsAt || order.effectiveEndsAt;
-    return endSrc ? `${start}–${bakuTimeLabel(endSrc)}` : start;
+    const start = bakuTimeLabel(view.startIso);
+    return view.endIso ? `${start}–${bakuTimeLabel(view.endIso)}` : start;
   }
 
   function patientLine(order: Proc) {

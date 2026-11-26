@@ -178,7 +178,9 @@ export async function completeProcedureOrder(
 }
 
 /**
- * Auto-complete CHECKED_IN orders whose scheduled end has passed.
+ * Auto-complete CHECKED_IN orders whose factual cabin end has passed.
+ * Prefer `actualEndsAt` (written on check-in); plan `endsAt` is only a
+ * fallback for rows that never got a factual stamp.
  * Triggers: nurse board lazy load + cron catch-all.
  */
 export async function autoCompleteElapsedCheckedIn(now = new Date()): Promise<{
@@ -202,7 +204,9 @@ export async function autoCompleteElapsedCheckedIn(now = new Date()): Promise<{
   for (const order of candidates) {
     const durationMin = order.procedureType?.durationMin ?? 15;
     const endsAt =
-      order.endsAt ?? new Date(order.scheduledAt.getTime() + durationMin * 60_000);
+      order.actualEndsAt ??
+      order.endsAt ??
+      new Date(order.scheduledAt.getTime() + durationMin * 60_000);
     if (endsAt.getTime() > now.getTime()) continue;
 
     try {

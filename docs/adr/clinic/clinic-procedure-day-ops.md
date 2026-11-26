@@ -10,7 +10,8 @@ Amended 2026-08-21 — turnover vs patient rest: [clinic-scheduling-time-layers.
 Related: [sanatorium-vnext.md](./sanatorium-vnext.md) · [clinic-product-lines-and-presets.md](./clinic-product-lines-and-presets.md) · [clinic-multi-resource-scheduling.md](./clinic-multi-resource-scheduling.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [clinic-open-attendance.md](./clinic-open-attendance.md) · [satellite-mutation-audit.md](./satellite-mutation-audit.md)
 
 Amended 2026-10-28 — OPEN day-buckets and SAME_DAY check-in window: see [clinic-open-attendance.md](./clinic-open-attendance.md) (CLI-62).  
-Amended 2026-10-29 — optional reception check-in from resource matrix (`receptionProcedureCheckIn`, Nafta default on); matrix bars drop inline move/cancel (modal only); nurse board ages `PENDING_PAY` into Late after deadline like `SCHEDULED`.
+Amended 2026-10-29 — optional reception check-in from resource matrix (`receptionProcedureCheckIn`, Nafta default on); matrix bars drop inline move/cancel (modal only); nurse board ages `PENDING_PAY` into Late after deadline like `SCHEDULED`.  
+Amended 2026-11-26 — plan vs actual occupancy: auto-complete waits on `actualEndsAt` after check-in; see [clinic-open-attendance.md](./clinic-open-attendance.md).
 
 ## Context
 
@@ -61,8 +62,8 @@ CHECKED_IN
 
 ### Happy path
 
-1. Guest arrives → nurse check-in → `CHECKED_IN` (`checkedInAt` set). Resource stays occupied for `[scheduledAt, endsAt)`.
-2. When `endsAt` passes → system auto-completes → `COMPLETED` (billing, quota decrement, stock write-off, `clinic.procedure.completed` event).
+1. Guest arrives → nurse check-in → `CHECKED_IN` (`checkedInAt` set). Plan clock stays on `scheduledAt`/`endsAt`; factual cabin window is `actualStartsAt`/`actualEndsAt` (bookings/allocations follow the fact). Resource stays occupied for that factual window.
+2. When **`actualEndsAt`** passes (fallback: plan `endsAt`) → system auto-completes → `COMPLETED` (billing, quota decrement, stock write-off, `clinic.procedure.completed` event).
 3. Never arrived by EOD (or `autoNoShowAfterMin`) → `NO_SHOW` (quota burn + folio penalty when applicable; no stock write-off).
 
 Manual `POST …/complete` remains only as admin/fallback for stuck `CHECKED_IN` rows (e.g. `BLOCK` over-quota policy edge).
@@ -89,7 +90,7 @@ Nurse board shows **Check-in** only on a today row whose window is open (no disa
 
 | Endpoint | Action |
 |----------|--------|
-| `POST /api/cron/procedure-auto-complete` | `CHECKED_IN` with effective end `< now` → `COMPLETED` |
+| `POST /api/cron/procedure-auto-complete` | `CHECKED_IN` with `actualEndsAt` (else plan `endsAt`) `< now` → `COMPLETED` |
 | `POST /api/cron/procedure-no-show-sweep` | stale `SCHEDULED` → `NO_SHOW`, then after `dayEndHour` unpaid extras → `UNPAID_MISSED` (today seated + overdue + unseated before today; see ADR clinic-extra-procedure-route) |
 | `POST /api/cron/episode-walkin-close` | idle `WALK_IN`+`OPEN` → `CLOSED` (CLI-55) |
 | `GET /api/procedures` (nurse board) | lazy `autoCompleteElapsedCheckedIn` before list |
@@ -148,7 +149,7 @@ Legacy `POST …/start` remains an alias of check-in.
 ## Consequences
 
 - Ops UAT covers attendance via audit fields; nurse board verifies MANUAL/QR check-in and auto-complete.
-- Event `clinic.procedure.completed` fires at **auto-complete time** (`endsAt`), not at check-in.
+- Event `clinic.procedure.completed` fires at **auto-complete time** (`actualEndsAt`, else plan `endsAt`), not at check-in.
 - Seeds/UI use `CHECKED_IN` as “in progress”, not “stuck”.
 
 ## Out of scope
