@@ -1,11 +1,7 @@
 import { randomUUID } from "node:crypto";
-import {
-  CronOrganizationListError,
-  listCronOrganizationIds,
-  runWithSatelliteTenant,
-} from "@era/satellite-kit";
+import { PrismaClient } from "@prisma/client";
+import { runWithSatelliteTenant } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
-import { fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { enterRequestTenant, requestOrganizationId } from "@/lib/request-organization";
 import { publishLifecycle } from "@/lib/integration/guest-lifecycle-events";
 import {
@@ -14,6 +10,16 @@ import {
 } from "@/lib/integration/clinic-lifecycle-key";
 
 let draining = false;
+
+/** Bare client — no tenant extension — so due-org discovery does not unbound. */
+let discoverPrisma: PrismaClient | undefined;
+
+function outboxDiscoverPrisma(): PrismaClient {
+  if (!discoverPrisma) {
+    discoverPrisma = new PrismaClient({ log: ["error"] });
+  }
+  return discoverPrisma;
+}
 
 export async function rememberClinicLifecycle(input: {
   kind: string;
@@ -118,43 +124,25 @@ async function drainDueForOrganization(
 }
 
 /**
- * Pool org ids for the in-process drain. Prefer cron helper (SHARED vs bind).
- * Before Sync stamps deploymentTopology=SHARED, listCron treats missing topology
- * as dedicated and throws unbound — fall back to orch registry for Nafta SHARED.
+ * Orgs that actually have due outbox rows. Uses an unscoped Prisma client —
+ * the tenant extension would throw SatelliteOrganizationUnboundError on SHARED
+ * before Sync stamps topology, and orch pool lookup needs a matching baseUrl.
  */
-async function resolveLifecycleDrainOrgIds(): Promise<string[]> {
-  try {
-    return await listCronOrganizationIds(fetchHotelPoolOrganizationIds);
-  } catch (err) {
-    const unbound =
-      err instanceof Error && err.name === "SatelliteOrganizationUnboundError";
-    const cronList = err instanceof CronOrganizationListError;
-    if (!unbound && !cronList) throw err;
-    try {
-      const fromOrch = await fetchHotelPoolOrganizationIds();
-      const ids = [
-        ...new Set(
-          fromOrch.map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean),
-        ),
-      ];
-      if (ids.length) return ids;
-    } catch (poolErr) {
-      console.warn(
-        "clinic lifecycle drain: orch pool fallback failed",
-        poolErr instanceof Error ? poolErr.message : poolErr,
-      );
-    }
-    console.warn(
-      "clinic lifecycle drain: org list unavailable",
-      cronList ? err.reason : err instanceof Error ? err.message : err,
-    );
-    return [];
-  }
+export async function resolveLifecycleDrainOrgIds(): Promise<string[]> {
+  const rows = await outboxDiscoverPrisma().clinicLifecycleOutbox.findMany({
+    where: { ackedAt: null, nextAttemptAt: { lte: new Date() } },
+    select: { organizationId: true },
+    distinct: ["organizationId"],
+    take: 100,
+  });
+  return [
+    ...new Set(rows.map((r) => r.organizationId.trim()).filter(Boolean)),
+  ];
 }
 
 /**
- * SHARED: poll each pool org under tenant ALS (unscoped findMany throws
- * SatelliteOrganizationUnboundError). DEDICATED/ONPREM: one bound org.
+ * SHARED: poll each due org under tenant ALS. No due rows → quiet no-op
+ * (do not spam orch/unbound warnings every 15s).
  */
 export async function drainClinicLifecycleOutbox(limit = 20): Promise<number> {
   if (draining) return 0;
