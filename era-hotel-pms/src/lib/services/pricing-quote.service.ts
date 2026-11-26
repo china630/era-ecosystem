@@ -1,4 +1,5 @@
 import { decimalToNumber } from '@/lib/decimal';
+import { addHotelDays } from '@/lib/hotel-calendar';
 import {
   NightlyPriceMissingError,
   slicePlanOverridesHeader,
@@ -127,11 +128,10 @@ export async function quoteReservationStay(
       agencyId: input.agencyId,
     });
 
-    const nightlyRates = Array.from({ length: legacy.nights }, (_, i) => {
-      const d = new Date(input.checkInDate);
-      d.setUTCDate(d.getUTCDate() + i);
-      return { date: d.toISOString().slice(0, 10), amount: legacy.adjustedNightly };
-    });
+    const nightlyRates = Array.from({ length: legacy.nights }, (_, i) => ({
+      date: addHotelDays(input.checkInDate, i),
+      amount: legacy.adjustedNightly,
+    }));
 
     return {
       source: 'LEGACY',

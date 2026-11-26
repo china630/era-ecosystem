@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { safePct, safeDiv } from '@/lib/reports/ratio';
 import { bakuDateKey, bakuDayBounds } from '@era/satellite-kit/time';
+import { stayNights } from '@/lib/hotel-calendar';
 
 function toIso(d: Date): string {
   return bakuDateKey(d);
@@ -52,7 +53,7 @@ export async function queryReservationSales(from: Date, to: Date): Promise<Reser
   for (const r of reservations) {
     const dateStr = toIso(r.checkInDate);
     const e = map.get(dateStr) ?? { count: 0, nights: 0, revenue: 0 };
-    const nights = Math.round((r.checkOutDate.getTime() - r.checkInDate.getTime()) / 86_400_000);
+    const nights = stayNights(r.checkInDate, r.checkOutDate);
     e.count++;
     e.nights += nights;
     e.revenue += Number(r.totalAmount);
@@ -271,7 +272,7 @@ export async function queryDefiniteReservation(from: Date, to: Date): Promise<De
   });
 
   const rows: DefiniteReservationRow[] = reservations.map((r) => {
-    const nights = Math.round((r.checkOutDate.getTime() - r.checkInDate.getTime()) / 86_400_000);
+    const nights = stayNights(r.checkInDate, r.checkOutDate);
     return {
       guestName: r.guest.fullName,
       roomType: r.roomType.name,

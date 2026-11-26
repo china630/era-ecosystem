@@ -1,3 +1,4 @@
+import { stayNights } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { computeUtilizationPercent } from '@/lib/services/contract-allotment-core';
 import { assertSalesContractStatusTransition } from '@/lib/services/sales-contract-status';
@@ -312,10 +313,7 @@ export async function getContractUtilization(contractId: string) {
 
   let consumedNights = 0;
   for (const r of reservations) {
-    const nights = Math.max(
-      1,
-      Math.ceil((r.checkOutDate.getTime() - r.checkInDate.getTime()) / 86400000),
-    );
+    const nights = stayNights(r.checkInDate, r.checkOutDate);
     consumedNights += nights;
   }
 

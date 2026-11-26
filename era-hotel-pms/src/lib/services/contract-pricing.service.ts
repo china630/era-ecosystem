@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import { stayNights } from '@/lib/hotel-calendar';
 import type { ContractPricingRule, ContractPricingRuleType } from '@prisma/client';
 
 export async function listContractPricingRules() {
@@ -115,12 +116,7 @@ export async function quoteBookingRate(input: {
   );
   const baseNightly = decimalToNumber(ratePlan.pricePerNight);
   const { nightly, ruleId, ruleName } = applyContractRuleToNightly(baseNightly, rule);
-  const nights = Math.max(
-    1,
-    Math.ceil(
-      (input.checkOutDate.getTime() - input.checkInDate.getTime()) / 86400000,
-    ),
-  );
+  const nights = stayNights(input.checkInDate, input.checkOutDate);
 
   return {
     ratePlanCode: ratePlan.code,

@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
+import {
+  CronOrganizationListError,
+  listCronOrganizationIds,
+  runWithSatelliteTenant,
+} from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
+import { fetchHotelPoolOrganizationIds } from "@/lib/cron-organization-ids";
 import { enterRequestTenant, requestOrganizationId } from "@/lib/request-organization";
 import { publishLifecycle } from "@/lib/integration/guest-lifecycle-events";
 import {
@@ -70,11 +76,12 @@ function nextDelayMs(attempts: number): number {
   return seconds * 1000;
 }
 
-export async function drainClinicLifecycleOutbox(limit = 20): Promise<number> {
-  if (draining) return 0;
-  draining = true;
-  let sent = 0;
-  try {
+async function drainDueForOrganization(
+  organizationId: string,
+  limit: number,
+): Promise<number> {
+  return runWithSatelliteTenant({ organizationId }, async () => {
+    let sent = 0;
     const due = await prisma.clinicLifecycleOutbox.findMany({
       where: { ackedAt: null, nextAttemptAt: { lte: new Date() } },
       orderBy: { nextAttemptAt: "asc" },
@@ -105,6 +112,40 @@ export async function drainClinicLifecycleOutbox(limit = 20): Promise<number> {
           },
         });
       }
+    }
+    return sent;
+  });
+}
+
+/**
+ * SHARED: poll each pool org under tenant ALS (unscoped findMany throws
+ * SatelliteOrganizationUnboundError). DEDICATED/ONPREM: one bound org.
+ */
+export async function drainClinicLifecycleOutbox(limit = 20): Promise<number> {
+  if (draining) return 0;
+  draining = true;
+  let sent = 0;
+  try {
+    let orgIds: string[];
+    try {
+      orgIds = await listCronOrganizationIds(fetchHotelPoolOrganizationIds);
+    } catch (err) {
+      if (
+        err instanceof CronOrganizationListError ||
+        (err instanceof Error && err.name === "SatelliteOrganizationUnboundError")
+      ) {
+        console.warn(
+          "clinic lifecycle drain: org list unavailable",
+          err instanceof CronOrganizationListError ? err.reason : err.message,
+        );
+        return 0;
+      }
+      throw err;
+    }
+    if (!orgIds.length) return 0;
+    const perOrg = Math.max(1, Math.ceil(limit / orgIds.length));
+    for (const organizationId of orgIds) {
+      sent += await drainDueForOrganization(organizationId, perOrg);
     }
     return sent;
   } finally {
