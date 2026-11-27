@@ -6,7 +6,7 @@ import {
   clinicBody,
 } from "../../bridge";
 import { z } from "zod";
-import { requireClinicPermission } from "@/lib/api-utils";
+import { handleRouteError, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { EXTRA_LIST_SCOPES, type ExtraListScope } from "@/domain/procedure/extra-ticket";
 import { issueExtraTickets, listExtrasAwaitingTicket } from "@/domain/procedure/extra-ticket.service";

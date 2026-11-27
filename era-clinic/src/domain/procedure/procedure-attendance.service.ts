@@ -20,6 +20,9 @@ import {
   extraNeedsPaperTicket,
   isClinicElektrawebDualRun,
 } from "@/domain/procedure/extra-ticket";
+import type { ResourceBusyDetails } from "@/domain/procedure/resource-busy-message";
+
+export type { ResourceBusyDetails } from "@/domain/procedure/resource-busy-message";
 
 async function stampHotelFolioReceived(externalRef: string) {
   const {
@@ -79,10 +82,24 @@ export class ProcedureAttendanceError extends Error {
       | "OVERRIDE_FORBIDDEN"
       | "TICKET_REQUIRED"
       | "MIXED_PATIENT",
+    public details?: ResourceBusyDetails,
   ) {
     super(message);
     this.name = "ProcedureAttendanceError";
   }
+}
+
+/** Nest / BFF body for attendance errors (includes RESOURCE_BUSY details). */
+export function attendanceErrorBody(err: ProcedureAttendanceError): {
+  error: string;
+  code: ProcedureAttendanceError["code"];
+  details?: ResourceBusyDetails;
+} {
+  return {
+    error: err.message,
+    code: err.code,
+    ...(err.details ? { details: err.details } : {}),
+  };
 }
 
 export type AttendanceActor = {
@@ -313,23 +330,146 @@ async function resolvePatientFromQr(qrToken: string): Promise<string> {
   return patient.id;
 }
 
-async function assertResourceFreeForCheckIn(order: ProcedureOrder) {
-  if (!order.resourceId) return;
-  const resource = await prisma.resource.findUnique({ where: { id: order.resourceId } });
-  const capacity = resource?.capacity ?? 1;
-  const busy = await prisma.procedureOrder.count({
+/**
+ * Who holds the cabin for check-in capacity.
+ * Counts CHECKED_IN, plus SCHEDULED that already stamped actual_* (in-flight seat /
+ * race), so two concurrent check-ins cannot both win a capacity-1 cabin.
+ */
+export async function findCabinCheckInBlocker(
+  resourceId: string,
+  excludeOrderId: string,
+  now = new Date(),
+): Promise<ResourceBusyDetails | null> {
+  const resource = await prisma.resource.findUnique({
+    where: { id: resourceId },
+    select: { id: true, name: true, capacity: true },
+  });
+  if (!resource) return null;
+  const capacity = resource.capacity ?? 1;
+  const blockers = await prisma.procedureOrder.findMany({
     where: {
-      resourceId: order.resourceId,
-      status: "CHECKED_IN",
-      id: { not: order.id },
+      resourceId,
+      id: { not: excludeOrderId },
+      OR: [
+        { status: "CHECKED_IN" },
+        {
+          status: "SCHEDULED",
+          actualStartsAt: { not: null },
+          OR: [{ actualEndsAt: null }, { actualEndsAt: { gt: now } }],
+        },
+      ],
+    },
+    select: {
+      id: true,
+      status: true,
+      actualEndsAt: true,
+      endsAt: true,
+      checkedInAt: true,
+      patientRef: { select: { fullName: true } },
+    },
+    orderBy: [{ checkedInAt: "asc" }, { actualStartsAt: "asc" }],
+    take: capacity,
+  });
+  if (blockers.length < capacity) return null;
+  const first = blockers[0]!;
+  const end = first.actualEndsAt ?? first.endsAt;
+  return {
+    resourceId: resource.id,
+    resourceName: resource.name,
+    blockingOrderId: first.id,
+    blockingGuestName: first.patientRef?.fullName?.trim() || null,
+    blockingActualEndsAt: end ? end.toISOString() : null,
+  };
+}
+
+async function assertCabinFreeForCheckIn(resourceId: string, excludeOrderId: string) {
+  const details = await findCabinCheckInBlocker(resourceId, excludeOrderId);
+  if (!details) return;
+  throw new ProcedureAttendanceError(
+    "Resource already has a checked-in procedure",
+    "RESOURCE_BUSY",
+    details,
+  );
+}
+
+/**
+ * Failed check-in used to stamp actual_* before assert. Clear residue on SCHEDULED
+ * rows that never reached checked_in_at, and restore plan occupancy window.
+ */
+export async function clearFailedCheckInResidue(orderId: string): Promise<boolean> {
+  const order = await prisma.procedureOrder.findUnique({
+    where: { id: orderId },
+    include: {
+      procedureType: {
+        select: {
+          durationMin: true,
+          resourceKind: true,
+          requirements: { select: { role: true } },
+        },
+      },
+      allocations: {
+        where: { role: "STAFF", practitionerId: { not: null } },
+        select: { practitionerId: true },
+        take: 1,
+      },
     },
   });
-  if (busy >= capacity) {
-    throw new ProcedureAttendanceError(
-      "Resource already has a checked-in procedure",
-      "RESOURCE_BUSY",
+  if (!order) return false;
+  if (order.status !== "SCHEDULED") return false;
+  if (!order.actualStartsAt || order.checkedInAt) return false;
+
+  const durationMin =
+    order.procedureType?.durationMin ??
+    (order.endsAt
+      ? Math.max(
+          5,
+          Math.round((order.endsAt.getTime() - order.scheduledAt.getTime()) / 60_000),
+        )
+      : 30);
+  const planEnds =
+    order.endsAt ?? new Date(order.scheduledAt.getTime() + durationMin * 60_000);
+
+  await prisma.procedureOrder.update({
+    where: { id: orderId },
+    data: { actualStartsAt: null, actualEndsAt: null },
+  });
+
+  if (order.resourceId) {
+    const { replaceProcedureAllocations } = await import(
+      "@/domain/procedure/procedure-allocation.service"
     );
+    const physicalReq = order.procedureType?.requirements?.find(
+      (req) => req.role === "LOCATION" || req.role === "EQUIPMENT",
+    );
+    const physicalRole: "LOCATION" | "EQUIPMENT" =
+      physicalReq?.role === "LOCATION"
+        ? "LOCATION"
+        : physicalReq?.role === "EQUIPMENT"
+          ? "EQUIPMENT"
+          : order.procedureType?.resourceKind === "ROOM"
+            ? "LOCATION"
+            : "EQUIPMENT";
+    const staffId = order.allocations[0]?.practitionerId ?? null;
+    await replaceProcedureAllocations(orderId, [
+      {
+        role: physicalRole,
+        resourceId: order.resourceId,
+        startsAt: order.scheduledAt,
+        endsAt: planEnds,
+      },
+      ...(staffId
+        ? [
+            {
+              role: "STAFF" as const,
+              practitionerId: staffId,
+              startsAt: order.scheduledAt,
+              endsAt: planEnds,
+            },
+          ]
+        : []),
+    ]);
   }
+  return true;
 }
 
 export async function checkInProcedureOrder(
@@ -403,6 +543,9 @@ export async function checkInProcedureOrder(
 
   await assertCheckInWindow(order, channel);
 
+  // Undo residue from a prior failed check-in (actual stamped before assert).
+  await clearFailedCheckInResidue(orderId);
+
   const now = new Date();
   const {
     isOpenSchedulingMode,
@@ -411,15 +554,25 @@ export async function checkInProcedureOrder(
     seatOpenAttendanceNow,
     rebaseFixedOccupancyToNow,
   } = await import("@/domain/procedure/open-attendance");
+
+  const fresh = await prisma.procedureOrder.findUniqueOrThrow({ where: { id: orderId } });
+
   try {
-    if (isOpenSchedulingMode(order.schedulingMode)) {
+    if (isOpenSchedulingMode(fresh.schedulingMode)) {
+      // OPEN picks a free cabin internally; re-assert after stamp (race).
       await seatOpenAttendanceNow(orderId, now);
+      const afterSeat = await prisma.procedureOrder.findUniqueOrThrow({
+        where: { id: orderId },
+      });
+      if (afterSeat.resourceId) {
+        await assertCabinFreeForCheckIn(afterSeat.resourceId, orderId);
+      }
     } else {
       const window = await resolveCheckInWindowSettings(now);
       const sameDay =
-        window.sameDayActive && orderIsTodayBaku(order.scheduledAt, now);
-      // Plan cabin required for same-day late check-in; on-time FIXED also stamps actual.
-      const cabinId = order.resourceId;
+        window.sameDayActive && orderIsTodayBaku(fresh.scheduledAt, now);
+      // Plan cabin required for same-day; on-time FIXED also stamps actual on that cabin.
+      const cabinId = fresh.resourceId;
       if (sameDay && !cabinId) {
         throw new ProcedureAttendanceError(
           "Same-day check-in requires a seated cabin — assign on the resource matrix first",
@@ -427,10 +580,15 @@ export async function checkInProcedureOrder(
         );
       }
       if (cabinId) {
+        // Assert BEFORE writing fact occupancy (no dirty SCHEDULED+actual on busy).
+        await assertCabinFreeForCheckIn(cabinId, orderId);
         await rebaseFixedOccupancyToNow(orderId, cabinId, now);
+        // Race: another check-in won the cabin between assert and write.
+        await assertCabinFreeForCheckIn(cabinId, orderId);
       }
     }
   } catch (err) {
+    await clearFailedCheckInResidue(orderId).catch(() => false);
     if (err instanceof ProcedureAttendanceError) throw err;
     throw new ProcedureAttendanceError(
       err instanceof Error ? err.message : "Unable to seat procedure for check-in",
@@ -441,7 +599,6 @@ export async function checkInProcedureOrder(
   const seated = await prisma.procedureOrder.findUniqueOrThrow({
     where: { id: orderId },
   });
-  await assertResourceFreeForCheckIn(seated);
 
   const charge = await resolveProcedureCharge(seated, { burnQuota: false });
   if (
@@ -452,6 +609,7 @@ export async function checkInProcedureOrder(
     }) &&
     !seated.extraTicketIssuedAt
   ) {
+    await clearFailedCheckInResidue(orderId).catch(() => false);
     throw new ProcedureAttendanceError(
       "Extra procedure requires an issued ticket (3 copies) before check-in",
       "TICKET_REQUIRED",

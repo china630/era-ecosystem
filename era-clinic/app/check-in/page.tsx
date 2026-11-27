@@ -6,6 +6,7 @@ import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { useTranslations } from "next-intl";
 import { showApiError, showSuccess } from "@era/satellite-kit/ui";
 import { bakuTimeLabel } from "@/lib/baku-day";
+import { formatCheckInBusyMessage } from "@/lib/check-in-busy-ui";
 
 type ProcOrder = {
   id: string;
@@ -78,7 +79,8 @@ export default function CheckInPage() {
       );
       if (d2?.orders) setOrders(d2.orders as ProcOrder[]);
     } else {
-      showApiError(d, t("failed"));
+      const busyMsg = formatCheckInBusyMessage(d, t);
+      showApiError(busyMsg ? { ...d, error: busyMsg } : d, t("checkInFailed"));
     }
   }
 

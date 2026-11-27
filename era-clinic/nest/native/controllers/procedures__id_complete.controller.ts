@@ -5,7 +5,7 @@ import {
   withClinicStaff,
   clinicBody,
 } from "../../bridge";
-import { requireClinicPermission } from "@/lib/api-utils";
+import { handleRouteError, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { completeProcedureOrder } from "@/domain/procedure/procedure-completion.service";
 import { mapAttendanceHttpStatus, ProcedureAttendanceError } from "@/domain/procedure/procedure-attendance.service";

@@ -39,10 +39,11 @@ Not the same as `PatientOrigin.WALK_IN`, walk-in party (CLI-61), `PROPOSED`, or 
 When SAME_DAY is active for today:
 
 - Timed (`FIXED`) `SCHEDULED` rows may check in any time during clinic open hours that day (not only `scheduledAt ± grace`).
-- On check-in: **rebase occupancy** to `[now, now+duration)` on the same cabin. Keep plan `scheduledAt`/`endsAt`. Write `actualStartsAt`/`actualEndsAt` and bookings/allocations on the factual window; keep plan STAFF when allocated. Cabin must be free **now**.
+- On check-in: assert plan cabin free **now** (capacity vs `CHECKED_IN` / in-flight actual), **then** rebase occupancy to `[now, now+duration)` on that **same** cabin. Keep plan `scheduledAt`/`endsAt`. Write `actualStartsAt`/`actualEndsAt` and bookings/allocations on the factual window; keep plan STAFF when allocated. If busy → `RESOURCE_BUSY` with guest + end; **no** FIXED fallthrough to another cabin.
 - `checkedInAt` remains the attendance audit stamp; board / nurse-day print in-cabin time uses `actualStartsAt`/`actualEndsAt`.
 - Auto-complete of `CHECKED_IN` waits on `actualEndsAt` (not the plan `endsAt`), so a late same-day check-in is not closed immediately.
 - Mid-day `autoNoShowAfterMin` from the planned slot is skipped while SAME_DAY is active for that day; EOD sweep after `dayEndHour` still applies to FIXED.
+- Cutover end: `/admin/settings` — switch to `STRICT`, or set `procedureCheckInSameDayUntil` to the last free day (next Baku day behaves as STRICT).
 
 ### Open foresight (not CLI-27)
 
