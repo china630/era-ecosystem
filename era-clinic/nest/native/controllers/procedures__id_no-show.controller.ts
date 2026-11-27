@@ -6,7 +6,7 @@ import {
   clinicBody,
 } from "../../bridge";
 import { z } from "zod";
-import { requireClinicPermission } from "@/lib/api-utils";
+import { handleRouteError, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { markProcedureNoShow, mapAttendanceHttpStatus, ProcedureAttendanceError } from "@/domain/procedure/procedure-attendance.service";
 import { evaluateAndPublishCapacity } from "@/lib/capacity.service";

@@ -579,7 +579,18 @@ export async function seatOpenAttendanceNow(orderId: string, now = new Date()) {
 
   async function cabinFreeNow(resourceId: string, capacity: number): Promise<boolean> {
     const busy = await prisma.procedureOrder.count({
-      where: { resourceId, status: "CHECKED_IN" },
+      where: {
+        resourceId,
+        id: { not: orderId },
+        OR: [
+          { status: "CHECKED_IN" },
+          {
+            status: "SCHEDULED",
+            actualStartsAt: { not: null },
+            OR: [{ actualEndsAt: null }, { actualEndsAt: { gt: now } }],
+          },
+        ],
+      },
     });
     if (busy >= capacity) return false;
     const overlap = await prisma.resourceBooking.findFirst({

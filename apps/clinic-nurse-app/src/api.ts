@@ -146,10 +146,23 @@ export async function fetchBoard(
   };
 }
 
+export type CheckInBusyDetails = {
+  resourceId?: string;
+  resourceName?: string | null;
+  blockingOrderId?: string;
+  blockingGuestName?: string | null;
+  blockingActualEndsAt?: string | null;
+};
+
 export async function postCheckIn(
   token: string,
   procedureId: string,
-): Promise<{ status: number; code?: string; error?: string }> {
+): Promise<{
+  status: number;
+  code?: string;
+  error?: string;
+  details?: CheckInBusyDetails;
+}> {
   try {
     const res = await fetch(`${CLINIC_URL}/api/procedures/${encodeURIComponent(procedureId)}/check-in`, {
       method: "POST",
@@ -162,8 +175,36 @@ export async function postCheckIn(
       signal: withTimeout(),
     });
     const body = await readJson(res);
-    const data = (body.data ?? body) as { code?: string; error?: string };
-    return { status: res.status, code: data.code, error: data.error };
+    let data = (body.data ?? body) as {
+      code?: string;
+      error?: string;
+      details?: CheckInBusyDetails;
+      message?: unknown;
+    };
+    // Nest may nest the thrown object under `message`.
+    if (data.message && typeof data.message === "object" && !Array.isArray(data.message)) {
+      const nested = data.message as {
+        code?: string;
+        error?: string;
+        details?: CheckInBusyDetails;
+      };
+      data = {
+        code: nested.code ?? data.code,
+        error:
+          typeof nested.error === "string"
+            ? nested.error
+            : typeof data.error === "string"
+              ? data.error
+              : undefined,
+        details: nested.details ?? data.details,
+      };
+    }
+    return {
+      status: res.status,
+      code: data.code,
+      error: typeof data.error === "string" ? data.error : undefined,
+      details: data.details,
+    };
   } catch {
     return { status: 0 };
   }

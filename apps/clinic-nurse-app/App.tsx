@@ -22,11 +22,30 @@ import {
   logout,
   postCheckIn,
   shouldAlwaysAskOrgNo,
+  type CheckInBusyDetails,
 } from "./src/api";
 import { bakuDateDisplay, bakuTimeLabel, todayBakuYmd } from "./src/baku";
 import { Board } from "./src/Board";
 import { classifyCheckIn } from "./src/place-order";
-import { copyFor, type Locale } from "./src/copy";
+import { copyFor, type Copy, type Locale } from "./src/copy";
+
+function formatTabletBusyMessage(
+  result: { code?: string; details?: CheckInBusyDetails },
+  t: Copy,
+): string | null {
+  if (result.code !== "RESOURCE_BUSY" && !result.details) return null;
+  const d = result.details;
+  if (!d) return t.resourceBusyGeneric;
+  const cabin = d.resourceName?.trim() || "—";
+  const guest = d.blockingGuestName?.trim() || "—";
+  if (d.blockingActualEndsAt) {
+    return t.resourceBusy
+      .replace("{cabin}", cabin)
+      .replace("{guest}", guest)
+      .replace("{time}", bakuTimeLabel(d.blockingActualEndsAt));
+  }
+  return t.resourceBusyNoTime.replace("{cabin}", cabin).replace("{guest}", guest);
+}
 import {
   clearCardError,
   clearSession,
@@ -173,7 +192,11 @@ export default function App() {
       await removeOutbox(row.id);
       if (outcome === "terminal") {
         await patchOrder(who, row.procedureId, { status: "SCHEDULED" });
-        await setCardError(who, row.procedureId, result.error || t.checkInFailed);
+        await setCardError(
+          who,
+          row.procedureId,
+          formatTabletBusyMessage(result, t) || result.error || t.checkInFailed,
+        );
       } else {
         await clearCardError(who, row.procedureId);
       }

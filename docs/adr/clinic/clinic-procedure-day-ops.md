@@ -11,7 +11,8 @@ Related: [sanatorium-vnext.md](./sanatorium-vnext.md) · [clinic-product-lines-a
 
 Amended 2026-10-28 — OPEN day-buckets and SAME_DAY check-in window: see [clinic-open-attendance.md](./clinic-open-attendance.md) (CLI-62).  
 Amended 2026-10-29 — optional reception check-in from resource matrix (`receptionProcedureCheckIn`, Nafta default on); matrix bars drop inline move/cancel (modal only); nurse board ages `PENDING_PAY` into Late after deadline like `SCHEDULED`.  
-Amended 2026-11-26 — plan vs actual occupancy: auto-complete waits on `actualEndsAt` after check-in; see [clinic-open-attendance.md](./clinic-open-attendance.md).
+Amended 2026-11-26 — plan vs actual occupancy: auto-complete waits on `actualEndsAt` after check-in; see [clinic-open-attendance.md](./clinic-open-attendance.md).  
+Amended 2026-11-27 — check-in asserts cabin free **before** writing `actual_*`/bookings; `RESOURCE_BUSY` returns blocking guest + end; failed check-in leaves no residue; FIXED does **not** fall through to another cabin.
 
 ## Context
 
@@ -76,7 +77,7 @@ Manual `POST …/complete` remains only as admin/fallback for stuck `CHECKED_IN`
 2. **MANUAL** (when `checkInRequiresQr = false`): nurse one-click without QR.
 3. **OVERRIDE:** `overrideReason` required; `DOCTOR` / clinic admin; audited.
 4. **Unified time window (all channels):** `scheduledAt − graceBefore` … `endsAt`. Optional grace to `endsAt + resourceGap` **only when the next turnover slot on the resource is free** (no active booking overlapping `(endsAt, endsAt+gap]`). `resourceGap` is the occupying procedure’s `ProcedureType.resourceGapMinutes` ([time layers](./clinic-scheduling-time-layers.md)). If the next slot is occupied, hard stop at `endsAt` — late guests are **rescheduled by reception** (never slide the rest of the day).
-5. **Resource occupancy:** at most `capacity` concurrent `CHECKED_IN` orders per `resourceId`.
+5. **Resource occupancy:** at most `capacity` concurrent occupying orders per `resourceId` (`CHECKED_IN`, plus in-flight `SCHEDULED` that already stamped `actual_*`). Check-in asserts free **before** writing fact occupancy; on failure it clears any residue. Busy response names the guest and factual end. FIXED stays on the plan cabin (wait if busy) — no auto-move to another cabin.
 6. Audit: `checkedInAt/By`, `checkInChannel`, `completedAt/By`, `noShowAt/By`, `cancelledAt/By`, `cancelReason`, `manuallyAdjusted`.
 
 Nurse board shows **Check-in** only on a today row whose window is open (no disabled control). Past-deadline `SCHEDULED` and `NO_SHOW` share the Late column. On today's live board, `NO_SHOW` stays there until `dayEndHour`, then drops off. Status stays `SCHEDULED` until the EOD sweep. Another selected date still lists that day's no-shows in Late.

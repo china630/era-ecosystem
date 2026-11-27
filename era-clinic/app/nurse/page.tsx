@@ -29,6 +29,7 @@ import {
 import { useClinicAuth } from "@/hooks/useClinicAuth";
 import { bakuTimeLabel, parseBakuDateTime, todayBakuYmd } from "@/lib/baku-day";
 import { boardOccupancyDisplay } from "@/domain/procedure/board-display-time";
+import { formatCheckInBusyMessage } from "@/lib/check-in-busy-ui";
 import {
   compareOpenUnseatedFirst,
   isOpenUnseatedOrder,
@@ -137,6 +138,7 @@ export default function NursePage() {
   const [fourCols, setFourCols] = useState(false);
   const [info, setInfo] = useState<Proc | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
   const boardRef = useRef<HTMLDivElement | null>(null);
   const loadSeq = useRef(0);
   const loadRef = useRef<(opts?: { silent?: boolean }) => Promise<void>>(async () => {});
@@ -222,6 +224,13 @@ export default function NursePage() {
         };
         const rows = Array.isArray(body) ? (body as Proc[]) : (body.orders ?? []);
         setOrders(rows);
+        setCardErrors((prev) => {
+          const next: Record<string, string> = {};
+          for (const row of rows) {
+            if (row.status === "SCHEDULED" && prev[row.id]) next[row.id] = prev[row.id]!;
+          }
+          return next;
+        });
         setAppliedKey(requestKey);
         setMineUnlinked(body && !Array.isArray(body) ? body.mineUnlinked === true : false);
         if (body && !Array.isArray(body) && typeof body.dayEndHour === "number") {
@@ -431,9 +440,24 @@ export default function NursePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showApiError(data, t("checkInFailed"));
+        const busyMsg = formatCheckInBusyMessage(data, t);
+        if (busyMsg) {
+          setCardErrors((prev) => ({ ...prev, [id]: busyMsg }));
+          showApiError({ ...data, error: busyMsg }, t("checkInFailed"));
+        } else {
+          setCardErrors((prev) => ({
+            ...prev,
+            [id]: typeof data?.error === "string" ? data.error : t("checkInFailed"),
+          }));
+          showApiError(data, t("checkInFailed"));
+        }
         return;
       }
+      setCardErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       showSuccess(t("checkInOk"));
       await load();
     } finally {
@@ -505,6 +529,9 @@ export default function NursePage() {
           <p className="rounded-lg bg-[#E74C3C] px-2 py-1.5 text-center text-[12px] font-semibold text-white">
             {t("unpaidBlock")}
           </p>
+        ) : null}
+        {cardErrors[order.id] && order.status === "SCHEDULED" ? (
+          <p className="text-[12px] font-medium leading-snug text-[#C0392B]">{cardErrors[order.id]}</p>
         ) : null}
         {showCheckIn ? (
           <button
