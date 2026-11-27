@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { PlatformLinksBody } from "../platform/platform-links";
+
+/** Mirrors server `buildPlatformLinks` — kept here so the UI barrel stays Edge/client-safe. */
+export type PlatformLinksBody = {
+  appOrigin: string | null;
+  registerUrl: string | null;
+  registerOrgUrl: string | null;
+  pricingUrl: string | null;
+  helpUrl: string | null;
+  termsUrl: string | null;
+};
 
 export type PlatformLinksState = {
   links: PlatformLinksBody | null;

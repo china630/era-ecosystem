@@ -1,15 +1,9 @@
 import { kitJson, kitResultToNext, type KitHttpResult } from "../tenancy/organization-bind";
 import { getRuntimeConfigMemory } from "../tenancy/runtime-config-memory";
-import { orchPublicHref, resolveOrchestratorPublicBaseUrl } from "./orch-web-url";
+import { resolveOrchestratorPublicBaseUrl } from "./orch-web-url";
+import type { PlatformLinksBody } from "../ui/use-platform-links";
 
-export type PlatformLinksBody = {
-  appOrigin: string | null;
-  registerUrl: string | null;
-  registerOrgUrl: string | null;
-  pricingUrl: string | null;
-  helpUrl: string | null;
-  termsUrl: string | null;
-};
+export type { PlatformLinksBody };
 
 function resolveAppOrigin(): string {
   const fromMem = getRuntimeConfigMemory().orchestratorPublicBaseUrl?.trim();
@@ -54,6 +48,3 @@ export function readPlatformLinks(): KitHttpResult {
 export async function platformLinksGet(_request?: Request): Promise<Response> {
   return kitResultToNext(readPlatformLinks());
 }
-
-// Keep orchPublicHref available for callers that already imported from this module path.
-export { orchPublicHref };
