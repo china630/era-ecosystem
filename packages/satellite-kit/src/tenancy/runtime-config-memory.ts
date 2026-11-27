@@ -4,6 +4,11 @@ import { isFolkloreS2sToken } from "./folklore-s2s-token";
 export type SatelliteRuntimeConfig = {
   organizationId?: string;
   orchestratorEventUrl?: string;
+  /**
+   * Browser app origin (`https://app.era-365.online`) for register/pricing/help.
+   * Not the API / event URL — that is `orchestratorEventUrl`.
+   */
+  orchestratorPublicBaseUrl?: string;
   publicBaseUrl?: string;
   platformSuperAdminEmails?: string[];
   /** Pushed SSO shared secret (same value as orch ERA_SSO_SHARED_SECRET). */
@@ -68,6 +73,10 @@ export function applyEnvSideEffects(cfg: SatelliteRuntimeConfig): void {
     const orch = preferInClusterOrchestratorUrl(cfg.orchestratorEventUrl.trim());
     process.env.ORCHESTRATOR_EVENT_URL = orch;
     process.env.ORCHESTRATOR_URL = orch;
+  }
+  if (cfg.orchestratorPublicBaseUrl?.trim()) {
+    // Server-only bootstrap for links; do not set NEXT_PUBLIC_* (build-time only).
+    process.env.ERA_APP_ORIGIN = cfg.orchestratorPublicBaseUrl.trim().replace(/\/$/, "");
   }
   if (cfg.publicBaseUrl?.trim()) {
     process.env.ERA_PUBLIC_BASE_URL = cfg.publicBaseUrl.trim();

@@ -1,6 +1,11 @@
 import type { Request as ExpressRequest, Response as ExpressResponse } from "express";
 import { Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
-import { createOrganizationBindHandlers, createRuntimeConfigHandlers, type KitHttpResult } from "@era/satellite-kit";
+import {
+  createOrganizationBindHandlers,
+  createRuntimeConfigHandlers,
+  readPlatformLinks,
+  type KitHttpResult,
+} from "@era/satellite-kit";
 import { expressKitHeaders } from "./express-kit-headers";
 import { readBillingStatusFrom } from "@era/satellite-kit/billing/status-route";
 import { prisma } from "@/lib/prisma";
@@ -38,6 +43,12 @@ async function bindWrite(req: ExpressRequest): Promise<KitHttpResult> {
 
 @Controller()
 export class ClinicKitController {
+  @Get("api/public/platform-links")
+  @HttpCode(200)
+  platformLinks(@Req() req: ExpressRequest, @Res({ passthrough: false }) res: ExpressResponse) {
+    return this.send(req, res, async () => readPlatformLinks());
+  }
+
   @Get("api/platform/billing-status")
   @HttpCode(200)
   billing(@Req() req: ExpressRequest, @Res({ passthrough: false }) res: ExpressResponse) {

@@ -88,7 +88,7 @@ Do not call this table «product readiness».
 | AC-CP-HOME | Control Home + Structure + Comms inbox (CP-HOME/STRUCTURE/OUTLET/COMMS) | Code | **Out of BE rollup as separate AC** — API+SCREEN; `cp-structure-negative.spec.ts` + `comms-negative.spec.ts` (empty recipients 400; cross-org 403); Comms persist+notify + IN_APP bell scoped to JWT user 2026-11-06; stand `comms_*` migrated (orch image next ship); structure lab [`reports/platform-structure-owner-ux-signoff.md`](../../reports/platform-structure-owner-ux-signoff.md); Comms UAT open → not Scaffold ✅ / not SHIPPED |
 | AC-CP-CHANNELS | UAT-SMOKE SA Channels + `/admin/links` + bridge off on hotel | Code | Out of BE rollup; AC 🟡; not Scaffold ✅ |
 | AC-CP-PAY-METHODS | Negative suite (disabled/unknown code refuse; PARENT inherit; Finance 410) + UAT org-hub CRUD + satellite desk pick | Code | Out of BE rollup; AC 🟡; COVERAGE API; not Scaffold ✅ |
-| AC-CP-SITE | Negative suite (unknown commercial key 400; HIDDEN not in public catalog; invent-SKU refuse) + UAT SuperAdmin `/site-catalog` + public `/{locale}` mega-menu | Code | Out of BE rollup; AC 🟡; COVERAGE API / UI SCREEN; not Scaffold ✅ / not SHIPPED |
+| AC-CP-SITE | Negative suite (unknown commercial key 400; HIDDEN not in public catalog; invent-SKU refuse) + UAT SuperAdmin `/site-catalog` + public `/{locale}` mega-menu | Code | Out of BE rollup; AC 🟡; COVERAGE API / UI SCREEN; code on staging (PR #484); not Scaffold ✅ / not SHIPPED |
 | AC-CP-INT | Integration audit residual shrink (ongoing) | Code | Gate G1 + negative suite |
 | AC-CP-BIND | UAT bind smoke / field isolation | Code | Out of Scaffold ✅ (Pilot) |
 | AC-CP-CFG | UAT runtime-config signoff | Code | Out of Scaffold ✅ (Pilot) |

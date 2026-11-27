@@ -354,6 +354,7 @@ export function redirectReferralToOrchestratorRegister(request: {
   const ref = searchParams?.get("ref")?.trim();
   if (!ref) return null;
   const orch = orchWebUrl();
+  if (!orch) return null;
   let orchOrigin = orch;
   try {
     orchOrigin = new URL(orch).origin;

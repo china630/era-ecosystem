@@ -109,6 +109,9 @@ function processWideConfigFromPayload(
   if (typeof raw.orchestratorEventUrl === "string") {
     next.orchestratorEventUrl = raw.orchestratorEventUrl;
   }
+  if (typeof raw.orchestratorPublicBaseUrl === "string" && raw.orchestratorPublicBaseUrl.trim()) {
+    next.orchestratorPublicBaseUrl = raw.orchestratorPublicBaseUrl.trim().replace(/\/$/, "");
+  }
   // Prefer explicit self URL; never treat orch public as this process identity.
   const selfUrl =
     (typeof raw.satellitePublicBaseUrl === "string" &&

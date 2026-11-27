@@ -11,7 +11,7 @@ import {
 import { PublicLegalFooter } from "./legal-footer";
 import { SatelliteLocaleToggle } from "./satellite-locale-toggle";
 import { AuthPageHeader } from "./auth-page-header";
-import { orchPublicHref } from "../platform/orch-web-url";
+import { usePlatformLinks } from "./use-platform-links";
 
 /** Auth-only: label without mb-* so gap comes from the field stack. */
 export const AUTH_FIELD_LABEL_CLASS = "block text-[13px] font-semibold text-[#34495E]";
@@ -94,11 +94,18 @@ export function AuthLoginCard({
   showAccountLinks = true,
   legalAppPrefix = "ERA",
 }: AuthLoginCardProps) {
-  const registerUrl = registerHref ?? orchPublicHref("/register");
-  const registerOrgUrl = registerOrgHref ?? orchPublicHref("/register-org");
-  const pricingUrl = pricingHref ?? orchPublicHref("/pricing");
-  const faqUrl = faqHref ?? orchPublicHref("/help");
-  const termsUrl = termsHref ?? orchPublicHref("/terms");
+  const { links } = usePlatformLinks();
+  const registerUrl = registerHref ?? links?.registerUrl ?? "";
+  const registerOrgUrl = registerOrgHref ?? links?.registerOrgUrl ?? "";
+  const pricingUrl = pricingHref ?? links?.pricingUrl ?? "";
+  const faqUrl = faqHref ?? links?.helpUrl ?? "";
+  const termsUrl = termsHref ?? links?.termsUrl ?? "";
+  const hasAccountLinks =
+    Boolean(registerUrl) ||
+    Boolean(registerOrgUrl) ||
+    Boolean(pricingUrl) ||
+    Boolean(faqUrl) ||
+    Boolean(termsUrl);
 
   const localeToggle =
     localeControl ?? (
@@ -159,35 +166,47 @@ export function AuthLoginCard({
             {busy ? labels.submitBusy : labels.submitLogin}
           </button>
         </form>
-        {showAccountLinks ? (
+        {showAccountLinks && hasAccountLinks ? (
           <>
-            <p className="mt-6 text-sm">
-              <a href={registerUrl} className={LINK_ACCENT_CLASS}>
-                {labels.needAccount}
-              </a>
-            </p>
-            <p className="mt-3 rounded-lg border border-[#D5DADF] bg-[#EBEDF0] px-3 py-2.5 text-center text-sm">
-              <a href={registerOrgUrl} className={LINK_ACCENT_CLASS}>
-                {labels.registerOrgLink}
-              </a>
-            </p>
-            <div className="mt-4 space-y-2 rounded-lg border border-[#D5DADF] bg-white px-3 py-2.5 text-center text-sm">
-              <p>
-                <a href={pricingUrl} className={LINK_ACCENT_CLASS}>
-                  {labels.viewPricing}
+            {registerUrl ? (
+              <p className="mt-6 text-sm">
+                <a href={registerUrl} className={LINK_ACCENT_CLASS}>
+                  {labels.needAccount}
                 </a>
               </p>
-              <p>
-                <a href={faqUrl} className={LINK_ACCENT_CLASS}>
-                  {labels.footerFaq}
+            ) : null}
+            {registerOrgUrl ? (
+              <p className="mt-3 rounded-lg border border-[#D5DADF] bg-[#EBEDF0] px-3 py-2.5 text-center text-sm">
+                <a href={registerOrgUrl} className={LINK_ACCENT_CLASS}>
+                  {labels.registerOrgLink}
                 </a>
               </p>
-              <p>
-                <a href={termsUrl} className={LINK_ACCENT_CLASS}>
-                  {labels.userAgreement}
-                </a>
-              </p>
-            </div>
+            ) : null}
+            {pricingUrl || faqUrl || termsUrl ? (
+              <div className="mt-4 space-y-2 rounded-lg border border-[#D5DADF] bg-white px-3 py-2.5 text-center text-sm">
+                {pricingUrl ? (
+                  <p>
+                    <a href={pricingUrl} className={LINK_ACCENT_CLASS}>
+                      {labels.viewPricing}
+                    </a>
+                  </p>
+                ) : null}
+                {faqUrl ? (
+                  <p>
+                    <a href={faqUrl} className={LINK_ACCENT_CLASS}>
+                      {labels.footerFaq}
+                    </a>
+                  </p>
+                ) : null}
+                {termsUrl ? (
+                  <p>
+                    <a href={termsUrl} className={LINK_ACCENT_CLASS}>
+                      {labels.userAgreement}
+                    </a>
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </>
         ) : null}
         {extraLinks ? <div className="mt-4 text-center text-sm">{extraLinks}</div> : null}
