@@ -40,6 +40,7 @@ async function main() {
     "/api/locale",
     "/api/internal",
     "/api/integration/staff-provision",
+    "/api/public/platform-links",
   ];
   http.use((req: { originalUrl?: string; url?: string; headers: Record<string, unknown> }, res: { status: (code: number) => { json: (body: unknown) => void } }, next: () => void) => {
     const pathname = String(req.originalUrl ?? req.url ?? "").split("?")[0];

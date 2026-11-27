@@ -34,6 +34,7 @@ async function main() {
     "/api/integration/staff-provision",
     "/api/integration/settlement-confirmed",
     "/api/public/menu",
+    "/api/public/platform-links",
     "/api/auth/pin",
     "/api/auth/terminal",
   ];

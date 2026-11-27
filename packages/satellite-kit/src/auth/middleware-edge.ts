@@ -19,6 +19,7 @@ export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/locale",
   "/api/internal",
   "/api/integration/staff-provision",
+  "/api/public/platform-links",
 ];
 
 /**
