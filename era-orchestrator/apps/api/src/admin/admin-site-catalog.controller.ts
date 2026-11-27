@@ -68,4 +68,14 @@ export class AdminSiteCatalogController {
   ) {
     return this.catalog.patchIndustry(slug, body as never);
   }
+
+  @Get("edges")
+  listEdges() {
+    return this.catalog.listAdminEdges();
+  }
+
+  @Patch("edges/:id")
+  patchEdge(@Param("id") id: string, @Body() body: Record<string, unknown>) {
+    return this.catalog.patchEdge(id, body as never);
+  }
 }

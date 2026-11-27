@@ -18,7 +18,10 @@ async function fetchSiteCatalogRaw(locale: string): Promise<SiteCatalogResponse>
     if (!res.ok) return emptySiteCatalog();
     const body = (await res.json()) as SiteCatalogResponse;
     if (body.unavailable) return { ...emptySiteCatalog(), ...body, unavailable: true };
-    return body;
+    return {
+      ...body,
+      edges: body.edges ?? [],
+    };
   } catch {
     return emptySiteCatalog();
   }

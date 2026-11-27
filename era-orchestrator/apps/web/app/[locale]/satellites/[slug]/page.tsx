@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isLocale, type Locale } from "@era/i18n-common";
+import { ArchitectureMap } from "../../../../components/site/architecture-map/ArchitectureMap";
 import { PilotBadge } from "../../../../components/site/pilot-badge";
 import { SitePublicShell } from "../../../../components/site/site-public-shell";
 import { getSiteNavCopy } from "../../../../lib/i18n/site-nav-copy";
@@ -94,6 +95,15 @@ export default async function LocaleSatellitePage({
       ) : !product.tagline ? (
         <p className="mt-3 max-w-3xl text-sm text-[#7F8C8D]">{labels.minCardHint}</p>
       ) : null}
+
+      <div className="mt-8">
+        <ArchitectureMap
+          catalog={catalog}
+          locale={locale}
+          variant="product"
+          highlightKeys={[product.satelliteKey]}
+        />
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Link

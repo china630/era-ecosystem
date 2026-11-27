@@ -6,6 +6,8 @@ import {
 import {
   Prisma,
   seedSiteCatalog,
+  seedSiteArchitectureEdges,
+  ensureAutoArchitectureEdges,
   type SiteCatalogMaturity,
   type SiteCatalogVisibility,
   type SiteIndustryItemRole,
@@ -44,6 +46,12 @@ export class SiteCatalogService {
     const n = await this.prisma.satellitePublicProfile.count();
     if (n === 0) {
       await seedSiteCatalog(this.prisma);
+      return;
+    }
+    const edges = await this.prisma.siteArchitectureEdge.count();
+    if (edges === 0) {
+      await seedSiteArchitectureEdges(this.prisma);
+      await ensureAutoArchitectureEdges(this.prisma);
     }
   }
 
@@ -81,7 +89,8 @@ export class SiteCatalogService {
 
   async getPublicCatalog(locale?: string) {
     await this.ensureSeeded();
-    const [profiles, modules, industries, moduleProfiles] = await Promise.all([
+    const [profiles, modules, industries, moduleProfiles, edgeRows] =
+      await Promise.all([
       this.prisma.satellitePublicProfile.findMany({
         where: { visibility: "VISIBLE", showOnSite: true },
         include: { satellite: { select: { key: true, name: true } } },
@@ -114,6 +123,10 @@ export class SiteCatalogService {
       }),
       this.prisma.pricingModulePublicProfile.findMany({
         select: { moduleKey: true, maturity: true },
+      }),
+      this.prisma.siteArchitectureEdge.findMany({
+        where: { visibility: "VISIBLE" },
+        orderBy: [{ sortOrder: "asc" }, { fromKey: "asc" }, { toKey: "asc" }],
       }),
     ]);
 
@@ -193,15 +206,96 @@ export class SiteCatalogService {
       };
     });
 
+    const edges = edgeRows.map((e) => {
+      const labels = asLocaleMap(e.labels);
+      return {
+        fromKey: e.fromKey,
+        toKey: e.toKey,
+        kind: e.kind,
+        realizationStatus: e.realizationStatus,
+        sortOrder: e.sortOrder,
+        label: pickLocale(labels, locale),
+        labels,
+      };
+    });
+
     const cacheVersion = await this.systemConfig.getJson(
       "site.catalog_cache_version",
     );
+
+    const asStr = async (key: string, fallback = "") => {
+      const raw = await this.systemConfig.getJson(key);
+      return typeof raw === "string" && raw.trim() ? raw.trim() : fallback;
+    };
+    const contactPhone = await asStr("site.contact_phone", "+994 77 350 70 70");
+    const contactPhoneE164 = await asStr(
+      "site.contact_phone_e164",
+      "+994773507070",
+    );
+    const contactEmail = await asStr(
+      "site.contact_email",
+      "chingiz@era-365.online",
+    );
+    const contactAddress = await asStr("site.contact_address");
+    const legalName = await asStr("site.legal_name");
+    const voen = await asStr("site.voen");
 
     return {
       cacheVersion: typeof cacheVersion === "number" ? cacheVersion : 0,
       satellites,
       industries: industryItems,
+      edges,
+      contact: {
+        phoneDisplay: contactPhone,
+        phoneE164: contactPhoneE164,
+        whatsappUrl: `https://wa.me/${contactPhoneE164.replace(/\D/g, "")}`,
+        email: contactEmail,
+        address: contactAddress.trim() || null,
+        legalName: legalName.trim() || null,
+        voen: voen.trim() || null,
+      },
     };
+  }
+
+  async listAdminEdges() {
+    await this.ensureSeeded();
+    return this.prisma.siteArchitectureEdge.findMany({
+      orderBy: [{ sortOrder: "asc" }, { fromKey: "asc" }],
+    });
+  }
+
+  async patchEdge(
+    id: string,
+    dto: {
+      realizationStatus?: "live" | "partial" | "planned";
+      visibility?: SiteCatalogVisibility;
+      labels?: LocaleMap;
+      sortOrder?: number;
+      autoManaged?: boolean;
+    },
+  ) {
+    const existing = await this.prisma.siteArchitectureEdge.findUnique({
+      where: { id },
+    });
+    if (!existing) throw new NotFoundException(`edge ${id}`);
+    const row = await this.prisma.siteArchitectureEdge.update({
+      where: { id },
+      data: {
+        ...(dto.realizationStatus !== undefined
+          ? { realizationStatus: dto.realizationStatus }
+          : {}),
+        ...(dto.visibility !== undefined ? { visibility: dto.visibility } : {}),
+        ...(dto.labels !== undefined
+          ? { labels: dto.labels as Prisma.InputJsonValue }
+          : {}),
+        ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
+        ...(dto.autoManaged !== undefined
+          ? { autoManaged: dto.autoManaged }
+          : {}),
+      },
+    });
+    await this.bumpCatalogCache();
+    return row;
   }
 
   private serializeModule(

@@ -52,7 +52,7 @@ export default async function LocaleHomePage({
     <LandingPageShell>
       <SiteJsonLd data={jsonLdOrganization(contacts)} />
       <SiteHeader locale={locale} catalog={catalog} labels={labels} />
-      <LandingPageView initialLocale={locale} hideChrome />
+      <LandingPageView initialLocale={locale} hideChrome catalog={catalog} />
       <SiteFooter locale={locale} catalog={catalog} labels={labels} />
     </LandingPageShell>
   );

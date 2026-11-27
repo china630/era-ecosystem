@@ -346,6 +346,20 @@ exports.Prisma.SiteIndustryItemScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SiteArchitectureEdgeScalarFieldEnum = {
+  id: 'id',
+  fromKey: 'fromKey',
+  toKey: 'toKey',
+  kind: 'kind',
+  realizationStatus: 'realizationStatus',
+  labels: 'labels',
+  visibility: 'visibility',
+  sortOrder: 'sortOrder',
+  autoManaged: 'autoManaged',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.OrganizationSatelliteEntitlementScalarFieldEnum = {
   organizationId: 'organizationId',
   satelliteKey: 'satelliteKey',
@@ -1920,13 +1934,35 @@ exports.SiteCatalogVisibility = exports.$Enums.SiteCatalogVisibility = {
 
 exports.SiteCatalogMaturity = exports.$Enums.SiteCatalogMaturity = {
   prod: 'prod',
-  pilot: 'pilot'
+  pilot: 'pilot',
+  in_development: 'in_development'
 };
 
 exports.SiteIndustryItemRole = exports.$Enums.SiteIndustryItemRole = {
   C: 'C',
   I: 'I',
   O: 'O'
+};
+
+exports.SiteArchitectureEdgeKind = exports.$Enums.SiteArchitectureEdgeKind = {
+  REVENUE_EVENT: 'REVENUE_EVENT',
+  FOLIO_POST: 'FOLIO_POST',
+  SETTLEMENT: 'SETTLEMENT',
+  LIFECYCLE: 'LIFECYCLE',
+  OPS_HANDOFF: 'OPS_HANDOFF',
+  STAFF_PROVISION: 'STAFF_PROVISION',
+  CRM_PARTY: 'CRM_PARTY',
+  REFERENCE_DATA: 'REFERENCE_DATA',
+  ANALYTICS: 'ANALYTICS',
+  READ_STATUS: 'READ_STATUS',
+  PLATFORM_IDENTITY: 'PLATFORM_IDENTITY',
+  BANK_CHANNEL: 'BANK_CHANNEL'
+};
+
+exports.SiteArchitectureRealizationStatus = exports.$Enums.SiteArchitectureRealizationStatus = {
+  live: 'live',
+  partial: 'partial',
+  planned: 'planned'
 };
 
 exports.DeploymentTopology = exports.$Enums.DeploymentTopology = {
@@ -2440,6 +2476,7 @@ exports.Prisma.ModelName = {
   PricingModulePublicProfile: 'PricingModulePublicProfile',
   SiteIndustry: 'SiteIndustry',
   SiteIndustryItem: 'SiteIndustryItem',
+  SiteArchitectureEdge: 'SiteArchitectureEdge',
   OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
   SatelliteEndpoint: 'SatelliteEndpoint',
   PlacementBatch: 'PlacementBatch',

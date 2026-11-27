@@ -23,7 +23,16 @@ export async function SitePublicShell({
     <LandingPageShell>
       <SiteHeader locale={locale} catalog={catalog} labels={labels} />
       <main className="mx-auto max-w-6xl px-4 py-10">{children}</main>
-      <SiteFooter locale={locale} catalog={catalog} labels={labels} />
+      <SiteFooter
+        locale={locale}
+        catalog={catalog}
+        labels={labels}
+        contactExtras={{
+          address: catalog.contact?.address,
+          legalName: catalog.contact?.legalName,
+          voen: catalog.contact?.voen,
+        }}
+      />
     </LandingPageShell>
   );
 }

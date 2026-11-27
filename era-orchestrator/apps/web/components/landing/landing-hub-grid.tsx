@@ -111,7 +111,7 @@ export function LandingHubGrid({
             <p className="mt-1 m-0 max-w-2xl text-[13px] leading-relaxed text-[#7F8C8D]">{hub.addonsBody}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href={addonsHref} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 no-underline hover:bg-slate-50">
+            <Link href={addonsHref} className="rounded-xl border border-[#D5DADF] bg-white px-4 py-2 text-sm font-semibold text-[#34495E] no-underline hover:bg-[#EBEDF0]">
               {hub.addonsCta}
             </Link>
             <Link href={pricingHref} className="rounded-xl bg-[#2980B9] px-4 py-2 text-sm font-semibold text-white no-underline hover:bg-[#2471A3]">

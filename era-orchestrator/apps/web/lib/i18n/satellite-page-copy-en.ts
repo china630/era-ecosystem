@@ -2,9 +2,9 @@ import type { SatelliteCopyPack } from "./satellite-page-copy";
 
 export const satelliteCopyEn: SatelliteCopyPack = {
   index: {
-    title: "ERA 365 satellites",
+    title: "ERA 365 products",
     intro:
-      "Each satellite is an industry workspace. Gate opens the app and base capacity; cores and meters are in the full catalog.",
+      "Each product is an industry workspace. Gate opens the app and base capacity; cores and meters are in the full catalog.",
     coreLabel: "Accounting",
     industryLabel: "Industry",
     platformLabel: "Platform",
@@ -30,7 +30,7 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     hotel: {
-      kicker: "Satellite",
+      kicker: "Product",
       title: "Hotel PMS",
       tagline: "Front office, HK, channel, SPA. Gate opens the app and 5 rooms.",
       gateTitle: "Gate vs core",
@@ -48,7 +48,7 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     clinic: {
-      kicker: "Satellite",
+      kicker: "Product",
       title: "Clinic",
       tagline: "Schedule, visits, and POS on Gate. EMR, lab, and sanatorium — separate SKUs.",
       gateTitle: "Gate vs core",
@@ -65,7 +65,7 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     fnb: {
-      kicker: "Satellite",
+      kicker: "Product",
       title: "F&B POS",
       tagline: "Floor, kitchen KDS, and waiter PIN. 1 POS in Gate.",
       gateTitle: "Gate vs capacity",
@@ -82,7 +82,7 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     retail: {
-      kicker: "Satellite",
+      kicker: "Product",
       title: "Retail POS",
       tagline: "Store POS and omni. 1 POS in Gate.",
       gateTitle: "Gate vs capacity",
@@ -98,13 +98,13 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     auto: {
-      kicker: "Satellite",
-      title: "Auto STO",
+      kicker: "Product",
+      title: "Auto Service",
       tagline: "Bays, work orders, B2B parts.",
       gateTitle: "Gate vs capacity",
       gateBullets: [
         "Gate 29 AZN — app + 1 bay, then 19 AZN / bay",
-        "B2B parts and TecDoc norms are satellite modules",
+        "B2B parts and TecDoc norms are product modules",
       ],
       catalogNote: "Oryantir. Kanon — /pricing#auto.",
       pricingCta: "Auto pricing",
@@ -114,7 +114,7 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     logistics: {
-      kicker: "Satellite",
+      kicker: "Product",
       title: "Logistics",
       tagline: "Trip sheet, fuel, driver POD.",
       gateTitle: "Gate vs capacity",
@@ -130,7 +130,7 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     construction: {
-      kicker: "Satellite",
+      kicker: "Product",
       title: "Construction",
       tagline: "Sites, estimates, acts, subcontractors.",
       gateTitle: "Gate vs capacity",
@@ -146,7 +146,7 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     wholesale: {
-      kicker: "Satellite",
+      kicker: "Product",
       title: "Wholesale",
       tagline: "Distribution and wholesale on one VÖEN.",
       gateTitle: "Gate vs capacity",
@@ -162,8 +162,8 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       bankNote: null,
     },
     crm: {
-      kicker: "Satellite",
-      title: "CRM Field",
+      kicker: "Product",
+      title: "CRM",
       tagline: "Field sales. 1 seat in Gate, then 5 AZN.",
       gateTitle: "Gate vs seat",
       gateBullets: [
@@ -202,7 +202,7 @@ export const satelliteCopyEn: SatelliteCopyPack = {
       gateTitle: "Bronze / Silver / Gold",
       gateBullets: [
         "XOR: Bronze · Silver · Gold — only one SKU at a time",
-        "Not an industry satellite: listed under platform add-ons",
+        "Not an industry product: listed under platform add-ons",
       ],
       catalogNote: "Oryantir. Kanon — /pricing#addons.",
       pricingCta: "Add-on catalog",

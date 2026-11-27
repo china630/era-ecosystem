@@ -83,7 +83,7 @@ export type PricingStorefrontUiCopy = {
 const uiRu: PricingStorefrontUiCopy = {
   heroTitle: "ERA: конструктор модулей 19 / 29 / 39 / 99 AZN",
   heroSubtitle:
-    "Foundation 29 AZN + отраслевые спутники (Gate) и модули. Банк CBS в списке — Sandbox / Pilot; промышленный контур — Custom Quote.",
+    "Foundation 29 AZN + отраслевые продукты (Gate) и модули. Банк CBS в списке — Sandbox / Pilot; промышленный контур — Custom Quote.",
   ctaRegister: "Начать 3 месяца бесплатно",
   ctaLogin: "Войти",
   coreSuiteTitle: "ERA Core",
@@ -263,7 +263,7 @@ const uiRu: PricingStorefrontUiCopy = {
   },
   hospitalityTitle: "Hotel PMS — гостеприимство",
   hospitalityIntro:
-    "Отраслевой спутник и модули hotel_* (не путать с platform add-ons).",
+    "Отраслевой продукт и модули hotel_* (не путать с platform add-ons).",
   hospitalityGateLabel: "Hotel PMS (доступ к приложению)",
   hospitalityBundleSelect: "Выберите пакет",
   hospitalityModuleNames: {
@@ -279,7 +279,7 @@ const uiRu: PricingStorefrontUiCopy = {
     hotel_medical_sanatorium: "Medical & Sanatorium",
     hotel_setup_advanced: "Advanced master data",
   },
-  industriesTitle: "Отраслевые спутники",
+  industriesTitle: "Отраслевые продукты",
   industriesIntro:
     "Gate 29 AZN (банк — 99) открывает приложение. У большинства вертикалей 1 единица ёмкости в Gate. Клиника считает кабинеты и койки на модулях EMR / санаторий / стационар.",
   industryCapacityTemplate: "В Gate: {{included}} {{unit}}, далее {{price}} за единицу.",
@@ -317,7 +317,7 @@ const uiRu: PricingStorefrontUiCopy = {
       capacityUnit: "касса",
     },
     industry_auto_service: {
-      title: "Auto STO",
+      title: "Auto Service",
       intro: "Запчасти B2B и нормы/TecDoc.",
       gateLabel: "Auto Gate (1 пост)",
       capacityUnit: "пост",
@@ -341,7 +341,7 @@ const uiRu: PricingStorefrontUiCopy = {
       capacityUnit: "склад",
     },
     industry_crm: {
-      title: "CRM Field",
+      title: "CRM",
       intro: "Полевые продажи. Место CRM 5 AZN сверх 1 в Gate.",
       gateLabel: "CRM Gate (1 место)",
       capacityUnit: "место",
@@ -395,7 +395,7 @@ const uiRu: PricingStorefrontUiCopy = {
 const uiAz: PricingStorefrontUiCopy = {
   heroTitle: "ERA: modul konstruktoru 19 / 29 / 39 / 99 AZN",
   heroSubtitle:
-    "Foundation 29 AZN + sənaye peykləri (Gate) və modullar. Bank CBS siyahıda Sandbox / Pilot-dur; istehsal konturu — Custom Quote.",
+    "Foundation 29 AZN + sənaye məhsulları (Gate) və modullar. Bank CBS siyahıda Sandbox / Pilot-dur; istehsal konturu — Custom Quote.",
   ctaRegister: "3 ay tam pulsuz başla",
   ctaLogin: "Daxil ol",
   coreSuiteTitle: "ERA Core",
@@ -575,7 +575,7 @@ const uiAz: PricingStorefrontUiCopy = {
   },
   hospitalityTitle: "Hotel PMS — Hospitality",
   hospitalityIntro:
-    "Sənaye peyk tətbiqi və hotel_* modulları (platform add-ons deyil).",
+    "Sənaye məhsul tətbiqi və hotel_* modulları (platform add-ons deyil).",
   hospitalityGateLabel: "Hotel PMS (tətbiq girişi)",
   hospitalityBundleSelect: "Paket seçin",
   hospitalityModuleNames: {
@@ -591,7 +591,7 @@ const uiAz: PricingStorefrontUiCopy = {
     hotel_medical_sanatorium: "Medical & Sanatorium",
     hotel_setup_advanced: "Advanced master data",
   },
-  industriesTitle: "Sənaye peykləri",
+  industriesTitle: "Sənaye məhsulları",
   industriesIntro:
     "Gate 29 AZN (bank — 99) tətbiqi açır. Əksər vertikallarda Gate-də 1 tutum vahidi var. Klinika kabinet və çarpayıları EMR / sanatoriya / stasionar modullarında sayır.",
   industryCapacityTemplate: "Gate-də: {{included}} {{unit}}, sonra vahid {{price}}.",
@@ -629,7 +629,7 @@ const uiAz: PricingStorefrontUiCopy = {
       capacityUnit: "kassa",
     },
     industry_auto_service: {
-      title: "Auto STO",
+      title: "Auto Service",
       intro: "B2B ehtiyat hissələri və TecDoc normaları.",
       gateLabel: "Auto Gate (1 post)",
       capacityUnit: "post",
@@ -653,7 +653,7 @@ const uiAz: PricingStorefrontUiCopy = {
       capacityUnit: "anbar",
     },
     industry_crm: {
-      title: "CRM Field",
+      title: "CRM",
       intro: "Sahə satışları. CRM yeri Gate-dən sonra 5 AZN.",
       gateLabel: "CRM Gate (1 yer)",
       capacityUnit: "yer",

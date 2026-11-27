@@ -32,7 +32,7 @@ const ru: PricingMetersCopy = {
   tocTitle: "Содержание",
   tocCore: "ERA Core",
   tocBundles: "Пакеты",
-  tocIndustries: "Спутники",
+  tocIndustries: "Продукты",
   tocAddons: "Add-on",
   tocPremium: "Premium",
   tocMeters: "Метры",
@@ -47,7 +47,7 @@ const ru: PricingMetersCopy = {
   spendHint:
     "Spend tier — страховка постоплаты, не продукт. SKU и метры выше важнее T0–T3.",
   unavailableBanner: "Живой список SKU временно недоступен. Ниже — канон метров; конструктор модулей появится, когда API ответит.",
-  unavailableSkuNote: "Секции Core / спутники / add-on скрыты, пока GET /v1/public/pricing не вернёт каталог.",
+  unavailableSkuNote: "Секции Core / продукты / add-on скрыты, пока GET /v1/public/pricing не вернёт каталог.",
   rows: [
     { id: "ocr", label: "OCR", included: "50 стр. в Foundation", overage: "0.02 AZN / стр." },
     { id: "docs", label: "Документы (вкл. счета)", included: "1000 / мес в NAS", overage: "5 AZN / 1000" },
@@ -75,7 +75,7 @@ const az: PricingMetersCopy = {
   tocTitle: "Mündəricat",
   tocCore: "ERA Core",
   tocBundles: "Paketlər",
-  tocIndustries: "Peyklər",
+  tocIndustries: "Məhsullar",
   tocAddons: "Add-on",
   tocPremium: "Premium",
   tocMeters: "Metrlər",
@@ -90,7 +90,7 @@ const az: PricingMetersCopy = {
   spendHint: "Spend tier post-ödəniş sığortasıdır, məhsul deyil. SKU və metrlər T0–T3-dən vacibdir.",
   unavailableBanner:
     "Canlı SKU siyahısı müvəqqəti əlçatan deyil. Aşağıda metr kanonu var; API cavab verəndə konstruktor görünəcək.",
-  unavailableSkuNote: "Core / peyk / add-on bölmələri GET /v1/public/pricing kataloqu qaytarana qədər gizlidir.",
+  unavailableSkuNote: "Core / məhsul / add-on bölmələri GET /v1/public/pricing kataloqu qaytarana qədər gizlidir.",
   rows: [
     { id: "ocr", label: "OCR", included: "Foundation-da 50 səhifə", overage: "0.02 AZN / səh." },
     { id: "docs", label: "Sənədlər (qaimələr daxil)", included: "NAS-da 1000 / ay", overage: "5 AZN / 1000" },
@@ -118,7 +118,7 @@ const en: PricingMetersCopy = {
   tocTitle: "Contents",
   tocCore: "ERA Core",
   tocBundles: "Bundles",
-  tocIndustries: "Satellites",
+  tocIndustries: "Products",
   tocAddons: "Add-on",
   tocPremium: "Premium",
   tocMeters: "Meters",

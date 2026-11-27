@@ -82,7 +82,19 @@ type SiteConfigRow = {
   effectiveValue: unknown;
 };
 
-type Tab = "products" | "modules" | "industries" | "settings";
+type EdgeRow = {
+  id: string;
+  fromKey: string;
+  toKey: string;
+  kind: string;
+  realizationStatus: "live" | "partial" | "planned";
+  visibility: string;
+  sortOrder: number;
+  autoManaged: boolean;
+  labels: LocaleMap;
+};
+
+type Tab = "products" | "modules" | "industries" | "edges" | "settings";
 
 function asMap(v: unknown): LocaleMap {
   if (!v || typeof v !== "object") return {};
@@ -97,13 +109,25 @@ export default function SiteCatalogAdminPage() {
   const [industries, setIndustries] = useState<IndustryRow[]>([]);
   const [keys, setKeys] = useState<CommercialKeys>({ satellites: [], modules: [] });
   const [settings, setSettings] = useState<SiteConfigRow[]>([]);
+  const [edges, setEdges] = useState<EdgeRow[]>([]);
   const [selectedSat, setSelectedSat] = useState("");
   const [selectedMod, setSelectedMod] = useState("");
   const [selectedInd, setSelectedInd] = useState("");
+  const [selectedEdge, setSelectedEdge] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+
+  const [edgeStatus, setEdgeStatus] = useState<"live" | "partial" | "planned">(
+    "planned",
+  );
+  const [edgeVis, setEdgeVis] = useState("VISIBLE");
+  const [edgeSort, setEdgeSort] = useState("0");
+  const [edgeLabelAz, setEdgeLabelAz] = useState("");
+  const [edgeLabelRu, setEdgeLabelRu] = useState("");
+  const [edgeLabelEn, setEdgeLabelEn] = useState("");
+  const [edgeAuto, setEdgeAuto] = useState(false);
 
   // Product form
   const [publicSlug, setPublicSlug] = useState("");
@@ -150,12 +174,13 @@ export default function SiteCatalogAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const [sRes, mRes, iRes, kRes, cRes] = await Promise.all([
+      const [sRes, mRes, iRes, kRes, cRes, eRes] = await Promise.all([
         cpAdminFetch("site-catalog/satellites"),
         cpAdminFetch("site-catalog/modules"),
         cpAdminFetch("site-catalog/industries"),
         cpAdminFetch("site-catalog/commercial-keys"),
         cpAdminFetch("system-config"),
+        cpAdminFetch("site-catalog/edges"),
       ]);
       if (!sRes.ok || !mRes.ok || !iRes.ok) {
         setError(t("loadFailed"));
@@ -168,6 +193,7 @@ export default function SiteCatalogAdminPage() {
         ? ((await kRes.json()) as CommercialKeys)
         : { satellites: [], modules: [] };
       const cData = cRes.ok ? ((await cRes.json()) as SiteConfigRow[]) : [];
+      const eData = eRes.ok ? ((await eRes.json()) as EdgeRow[]) : [];
       setSats(Array.isArray(sData) ? sData : []);
       setMods(Array.isArray(mData) ? mData : []);
       setIndustries(Array.isArray(iData) ? iData : []);
@@ -177,6 +203,7 @@ export default function SiteCatalogAdminPage() {
           ? cData.filter((r) => r.key.startsWith("site."))
           : [],
       );
+      setEdges(Array.isArray(eData) ? eData : []);
     } finally {
       setLoading(false);
     }
@@ -198,6 +225,57 @@ export default function SiteCatalogAdminPage() {
     () => industries.find((i) => i.slug === selectedInd) ?? null,
     [industries, selectedInd],
   );
+  const edge = useMemo(
+    () => edges.find((e) => e.id === selectedEdge) ?? null,
+    [edges, selectedEdge],
+  );
+
+  function selectEdge(row: EdgeRow) {
+    setSelectedEdge(row.id);
+    setEdgeStatus(row.realizationStatus);
+    setEdgeVis(row.visibility);
+    setEdgeSort(String(row.sortOrder ?? 0));
+    const labels = asMap(row.labels);
+    setEdgeLabelAz(labels.az ?? "");
+    setEdgeLabelRu(labels.ru ?? "");
+    setEdgeLabelEn(labels.en ?? "");
+    setEdgeAuto(Boolean(row.autoManaged));
+  }
+
+  async function saveEdge(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedEdge) return;
+    setBusy(true);
+    setError(null);
+    setMsg(null);
+    try {
+      const res = await cpAdminFetch(
+        `site-catalog/edges/${encodeURIComponent(selectedEdge)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            realizationStatus: edgeStatus,
+            visibility: edgeVis,
+            sortOrder: Number(edgeSort) || 0,
+            autoManaged: edgeAuto,
+            labels: {
+              az: edgeLabelAz.trim() || undefined,
+              ru: edgeLabelRu.trim() || undefined,
+              en: edgeLabelEn.trim() || undefined,
+            },
+          }),
+        },
+      );
+      if (!res.ok) {
+        setError(t("saveFailed"));
+        return;
+      }
+      setMsg(t("saveOk"));
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function selectSat(row: SatRow) {
     setSelectedSat(row.satelliteKey);
@@ -418,6 +496,7 @@ export default function SiteCatalogAdminPage() {
     { id: "products", label: t("tabProducts") },
     { id: "modules", label: t("tabModules") },
     { id: "industries", label: t("tabIndustries") },
+    { id: "edges", label: t("tabEdges") },
     { id: "settings", label: t("tabSettings") },
   ];
 
@@ -889,6 +968,135 @@ export default function SiteCatalogAdminPage() {
             </form>
           ) : (
             <p className="text-sm text-[#7F8C8D]">{t("selectIndustry")}</p>
+          )}
+        </div>
+      ) : null}
+
+      {tab === "edges" ? (
+        <div className="grid gap-4 lg:grid-cols-[22rem_1fr]">
+          <div className={CARD_CONTAINER_CLASS}>
+            <p className="border-b border-[#EBEDF0] px-3 py-2 text-xs text-[#7F8C8D]">
+              {t("edgesHint")}
+            </p>
+            <ul className="max-h-[70vh] divide-y divide-[#EBEDF0] overflow-auto">
+              {edges.map((row) => (
+                <li key={row.id}>
+                  <button
+                    type="button"
+                    className={`w-full px-3 py-2 text-left text-sm ${
+                      selectedEdge === row.id
+                        ? "bg-[#EBF5FB] font-medium text-[#2980B9]"
+                        : "text-[#34495E]"
+                    }`}
+                    onClick={() => selectEdge(row)}
+                  >
+                    <span className="block truncate">
+                      {row.fromKey} → {row.toKey}
+                    </span>
+                    <span className="block text-xs text-[#7F8C8D]">
+                      {row.kind} · {row.realizationStatus}
+                      {row.autoManaged ? ` · ${t("edgeAuto")}` : ""}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {edges.length === 0 ? (
+              <p className="p-3 text-sm text-[#7F8C8D]">{t("emptyEdges")}</p>
+            ) : null}
+          </div>
+          {edge ? (
+            <form
+              onSubmit={(e) => void saveEdge(e)}
+              className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}
+            >
+              <p className="text-sm font-medium text-[#34495E]">
+                {edge.fromKey} → {edge.toKey}
+              </p>
+              <p className="text-xs text-[#7F8C8D]">
+                {edge.kind} · id {edge.id}
+              </p>
+              <label className="block text-xs text-[#7F8C8D]">
+                {t("edgeStatus")}
+                <select
+                  className={`${MODAL_INPUT_CLASS} mt-1`}
+                  value={edgeStatus}
+                  onChange={(e) =>
+                    setEdgeStatus(
+                      e.target.value as "live" | "partial" | "planned",
+                    )
+                  }
+                >
+                  <option value="live">live</option>
+                  <option value="partial">partial</option>
+                  <option value="planned">planned</option>
+                </select>
+              </label>
+              <label className="block text-xs text-[#7F8C8D]">
+                {t("visibility")}
+                <select
+                  className={`${MODAL_INPUT_CLASS} mt-1`}
+                  value={edgeVis}
+                  onChange={(e) => setEdgeVis(e.target.value)}
+                >
+                  <option value="VISIBLE">VISIBLE</option>
+                  <option value="DRAFT">DRAFT</option>
+                  <option value="HIDDEN">HIDDEN</option>
+                </select>
+              </label>
+              <label className="block text-xs text-[#7F8C8D]">
+                {t("sortOrder")}
+                <input
+                  className={`${MODAL_INPUT_CLASS} mt-1`}
+                  value={edgeSort}
+                  onChange={(e) => setEdgeSort(e.target.value)}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-sm text-[#34495E]">
+                <input
+                  type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
+                  checked={edgeAuto}
+                  onChange={(e) => setEdgeAuto(e.target.checked)}
+                />
+                {t("edgeAuto")}
+              </label>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <label className="block text-xs text-[#7F8C8D]">
+                  {t("edgeLabel")} az
+                  <input
+                    className={`${MODAL_INPUT_CLASS} mt-1`}
+                    value={edgeLabelAz}
+                    onChange={(e) => setEdgeLabelAz(e.target.value)}
+                  />
+                </label>
+                <label className="block text-xs text-[#7F8C8D]">
+                  {t("edgeLabel")} ru
+                  <input
+                    className={`${MODAL_INPUT_CLASS} mt-1`}
+                    value={edgeLabelRu}
+                    onChange={(e) => setEdgeLabelRu(e.target.value)}
+                  />
+                </label>
+                <label className="block text-xs text-[#7F8C8D]">
+                  {t("edgeLabel")} en
+                  <input
+                    className={`${MODAL_INPUT_CLASS} mt-1`}
+                    value={edgeLabelEn}
+                    onChange={(e) => setEdgeLabelEn(e.target.value)}
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={busy}
+              >
+                {t("save")}
+              </button>
+            </form>
+          ) : (
+            <p className="text-sm text-[#7F8C8D]">{t("selectEdge")}</p>
           )}
         </div>
       ) : null}

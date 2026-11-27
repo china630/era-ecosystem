@@ -472,6 +472,28 @@ enum SiteCatalogVisibility {
 enum SiteCatalogMaturity {
   prod
   pilot
+  in_development
+}
+
+enum SiteArchitectureEdgeKind {
+  REVENUE_EVENT
+  FOLIO_POST
+  SETTLEMENT
+  LIFECYCLE
+  OPS_HANDOFF
+  STAFF_PROVISION
+  CRM_PARTY
+  REFERENCE_DATA
+  ANALYTICS
+  READ_STATUS
+  PLATFORM_IDENTITY
+  BANK_CHANNEL
+}
+
+enum SiteArchitectureRealizationStatus {
+  live
+  partial
+  planned
 }
 
 /**
@@ -576,6 +598,28 @@ model SiteIndustryItem {
   @@unique([industrySlug, satelliteKey, moduleKey])
   @@index([industrySlug, sortOrder])
   @@map("site_industry_items")
+}
+
+/**
+ * Public architecture diagram edge (integration map on marketing site).
+ */
+model SiteArchitectureEdge {
+  id                String                            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  fromKey           String                            @map("from_key")
+  toKey             String                            @map("to_key")
+  kind              SiteArchitectureEdgeKind
+  realizationStatus SiteArchitectureRealizationStatus @map("realization_status")
+  /// Localized short edge labels `{az,ru,en}`.
+  labels            Json                              @default("{}")
+  visibility        SiteCatalogVisibility             @default(VISIBLE)
+  sortOrder         Int                               @default(0) @map("sort_order")
+  autoManaged       Boolean                           @default(false) @map("auto_managed")
+  createdAt         DateTime                          @default(now()) @map("created_at")
+  updatedAt         DateTime                          @updatedAt @map("updated_at")
+
+  @@unique([fromKey, toKey, kind])
+  @@index([visibility, sortOrder])
+  @@map("satellite_links")
 }
 
 /// Owner-connected satellite trial row (materialized on Connect).

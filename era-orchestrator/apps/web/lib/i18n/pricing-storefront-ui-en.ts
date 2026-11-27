@@ -3,7 +3,7 @@ import type { PricingStorefrontUiCopy } from "./pricing-storefront-copy";
 export const uiEn: PricingStorefrontUiCopy = {
   heroTitle: "ERA: module builder 19 / 29 / 39 / 99 AZN",
   heroSubtitle:
-    "Foundation 29 AZN + industry satellites (Gate) and modules. Bank CBS in the list is Sandbox / Pilot; production — Custom Quote.",
+    "Foundation 29 AZN + industry products (Gate) and modules. Bank CBS in the list is Sandbox / Pilot; production — Custom Quote.",
   ctaRegister: "Start 3 months free",
   ctaLogin: "Sign in",
   coreSuiteTitle: "ERA Core",
@@ -199,7 +199,7 @@ export const uiEn: PricingStorefrontUiCopy = {
     hotel_medical_sanatorium: "Medical & Sanatorium",
     hotel_setup_advanced: "Advanced master data",
   },
-  industriesTitle: "Industry satellites",
+  industriesTitle: "Industry products",
   industriesIntro:
     "Gate 29 AZN (bank — 99) opens the app. Most verticals include 1 capacity unit in Gate. Clinic counts cabinets and beds on EMR / sanatorium / inpatient modules.",
   industryCapacityTemplate: "In Gate: {{included}} {{unit}}, then {{price}} per unit.",
@@ -237,7 +237,7 @@ export const uiEn: PricingStorefrontUiCopy = {
       capacityUnit: "POS",
     },
     industry_auto_service: {
-      title: "Auto STO",
+      title: "Auto Service",
       intro: "B2B parts and TecDoc norms.",
       gateLabel: "Auto Gate (1 bay)",
       capacityUnit: "bay",
@@ -261,7 +261,7 @@ export const uiEn: PricingStorefrontUiCopy = {
       capacityUnit: "warehouse",
     },
     industry_crm: {
-      title: "CRM Field",
+      title: "CRM",
       intro: "Field sales. CRM seat 5 AZN above 1 in Gate.",
       gateLabel: "CRM Gate (1 seat)",
       capacityUnit: "seat",
