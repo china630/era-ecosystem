@@ -4,11 +4,11 @@ import { landingEcosystemEn } from "./landing-ecosystem-data";
 export const landingMarketingEn: LandingMarketingCopy = {
   chrome: {
     login: "Sign in",
-    navSatellites: "Satellites",
+    navSatellites: "Products",
   },
-  footer: "ERA 365 — accounting and industry satellites platform for Azerbaijan",
+  footer: "ERA 365 — accounting and industry products platform for Azerbaijan",
   hero: {
-    title: "Accounting and industry satellites — one platform",
+    title: "Accounting and industry solutions — one platform",
     subtitle:
       "ERA Core, hotel, clinic, POS, and Data HUB. Palette 19 / 29 / 39 / 99 AZN. 3-month trial, no card required.",
     ctaPrimary: "Start 3 months free",
@@ -20,8 +20,8 @@ export const landingMarketingEn: LandingMarketingCopy = {
     coreTitle: "ERA Core",
     coreBody: "NAS/MMUS accounting: GL, cash, warehouse, manufacturing, FA, HR. Foundation 29 AZN.",
     coreCta: "About Finance core",
-    satellitesTitle: "Industry satellites",
-    satellitesIntro: "Gate — workspace and base capacity. Cores and bundles — on the satellite page and in the catalog.",
+    satellitesTitle: "Industry products",
+    satellitesIntro: "Gate — workspace and base capacity. Cores and bundles — on the product page and in the catalog.",
     dataHubTitle: "Data HUB",
     dataHubBody: "Reference data and exchange. Bronze / Silver / Gold — only one tier.",
     dataHubCta: "Data HUB",
@@ -38,7 +38,7 @@ export const landingMarketingEn: LandingMarketingCopy = {
     checklist: [
       "NAS / MMUS and IFRS / MHBS — double entry",
       "Cash, warehouse, manufacturing, FA, and HR",
-      "Satellites: Hotel, Clinic, F&B, Retail… (Gate)",
+      "Products: Hotel, Clinic, F&B, Retail… (Gate)",
       "Documents 1000/mo in NAS; OCR 50 pages",
     ],
     disclaimer:
@@ -132,13 +132,13 @@ export const landingMarketingEn: LandingMarketingCopy = {
         id: "what",
         question: "What is ERA 365?",
         answer:
-          "Accounting (ERA Core) and industry satellites for Azerbaijan: hotel, clinic, POS, logistics, and other workspaces in one contour with MDM and subscription.",
+          "Accounting (ERA Core) and industry products for Azerbaijan: hotel, clinic, POS, logistics, and other workspaces in one contour with MDM and subscription.",
       },
       {
         id: "pricing",
         question: "How is pricing structured?",
         answer:
-          "SKU palette 19 / 29 / 39 / 99 AZN. Foundation 29. Gate opens the satellite and base capacity. Documents, OCR, SMS, and storage are meters. Full builder — on the pricing page.",
+          "SKU palette 19 / 29 / 39 / 99 AZN. Foundation 29. Gate opens the product and base capacity. Documents, OCR, SMS, and storage are meters. Full builder — on the pricing page.",
       },
       {
         id: "xor",
@@ -162,7 +162,7 @@ export const landingMarketingEn: LandingMarketingCopy = {
         id: "register",
         question: "Where do I register?",
         answer:
-          "At app.era-365.online: account, VÖEN, and modules. After sign-in, satellites open from the launcher. Registration is not on /industry pages — those are for signed-in users only.",
+          "At app.era-365.online: account, VÖEN, and modules. After sign-in, products open from the launcher. Registration is not on /industry pages — those are for signed-in users only.",
       },
     ],
   },

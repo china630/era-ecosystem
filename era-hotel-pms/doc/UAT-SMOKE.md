@@ -632,12 +632,13 @@ Record result in signoff **Live pool smoke** section. Live smoke ≠ field; stil
 
 1. Import Notes dump or FO-with-Notes: Extra Req `ERA-PKG STANDART` (one line, no guest names) → every pax `medicalPackageCode` stamped. Named Extra lines only when packages differ.
 1b. Live dual-run: EW **Reservation Notes** (`/app/grid/allresnotes`) Extra Request `ERA-PKG DERMO` → ERA Extra Req + `PKG-DERMA` (bridge v0.3.10 + hotel ingest). FOCP list does not carry Extra Req.
-2. Agency `Premium paket Walkin` without Extra → all pax `PKG-PREMIUM`. Elektra import of `Walkin leisure` with a non-medical tariff stays leisure and does not emit a sanatorium lifecycle. A medical `PKG-*` SKU (Standart / Premium / Derma / Detoks) on that import still resolves the package; Infotur (`PKG-INFOTUR`) does not. Front office does not use the agency name to skip clinic: check-in emits one event per guest who has an explicit package.
-3. Həmkarlar without Extra → `PKG-STANDART`; Extra `ERA-PKG PREMIUM` overrides.
-4. Front-office check-in sends `programCode` only for a guest who has an explicit package. An Elektra medical `PKG-*` SKU can still fill the package on import. Infotur and a non-PKG Elektra rate code do not.
-5. Travel agency form: medical package CatalogField. Stored `Agency.medicalPackageCode` wins; empty means the name tokens (`Premium` / `Dermo` / `Detoks` / Həmkarlar / standart).
-6. FO Guests tab: **Medical Rates** / `PKG-STANDART|PREMIUM|DERMA|DETOKS` shows a package Select per guest (those four SKUs only). **Infotur** (`PKG-INFOTUR`) and BAR hide that column — Infotur is the stay tariff, not mixed with medical SKUs. Save on a medical plan with an empty package is refused. A filled package refreshes `dailyRates` / folio `packageCompose`.
-7. FO cheat-sheet: [`nafta/ERA-PKG-FO-CHEATSHEET.md`](./nafta/ERA-PKG-FO-CHEATSHEET.md).
+2. **Retired:** agency display-name / `Agency.medicalPackageCode` as package SoR. Live FO uses `/settings/sanatorium-packages` catalog only (gate `hotel_medical_sanatorium`).
+3. Import may stamp an **explicit** catalog `PKG-*` code from Extra Req / rate; Infotur stay tariff does not fill Guests package column.
+4. Front-office check-in sends `programCode` only for a guest who has an explicit MEDICAL package (or stay INFOTUR tariff program stamp per catalog rules).
+5. FO Guests tab: MEDICAL catalog with **≥2** active → package Select; **1** active → auto-stamp, no column; **0** + gate ON → Medical Rates blocked (misconfig). Infotur (+ variants) = left stay tariff only.
+6. Room no. lists doors of `givenRoomTypeId || roomTypeId` only; upgrade settlement unchanged.
+7. Corp contract (e.g. Foton) stamps Infotur rate plan; missing sell-grid cell → explicit price error (room type × meal × occupancy × date).
+8. FO cheat-sheet: [`nafta/ERA-PKG-FO-CHEATSHEET.md`](./nafta/ERA-PKG-FO-CHEATSHEET.md) (historical Extra Req notes).
 
 ## 39. Stay date amend → clinic quota nights (CLI-51 / Wave B)
 

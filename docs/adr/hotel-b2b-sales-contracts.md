@@ -53,6 +53,7 @@ Documented in [era-hotel-pms/doc/nafta/B2B-GATE.md](../era-hotel-pms/doc/nafta/B
 ## Consequences
 
 - Reservations tagged with `salesContractId` run allotment checks. Default create stamps the contract `ratePlanId`, except when FO already chose a medical guest package (Volkin/Merikl…) that differs from the contract Infotur/leisure tariff — that FO package is kept and the contract still tags payer/allotment. Missing `ContractAllotment` row for the charged type falls back to hotel inventory (`NO_ALLOTMENT_BAR`); an exhausted quota row still hard-blocks.
+- **Contract is not a price list.** Nightly amounts come from the stamped rate plan’s sell grid (Infotur / package prices). A missing grid cell is an explicit FO/night-audit error — see [hotel-sanatorium-sellable-packages.md](./hotel-sanatorium-sellable-packages.md).
 - Finance AR screens are not duplicated in hotel; agency profitability reports remain in hotel + Finance events.
 - Full seating-plan JSON deferred; phase 1 uses pax zones / line items only.
 - Decorative restriction/deposit checkboxes must not return to the contract form without SC-REST-01 / SC-DEP-01.

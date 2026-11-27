@@ -77,14 +77,16 @@ export type StayProductFamily = "medical" | "infotur" | "bar";
 const INFOTUR_RE = /INFOTUR/i;
 const MEDICAL_PARENT_RE = /^MEDICAL\b/i;
 
-/** Desk product family from the stay tariff code. Infotur is not a medical SKU. */
+/** Desk product family from the stay tariff code. Infotur is not a guest MEDICAL mix SKU. */
 export function stayProductFamily(plan: {
   code?: string | null;
 }): StayProductFamily {
   const code = (plan.code ?? "").trim().toUpperCase();
   if (!code) return "bar";
   if (INFOTUR_RE.test(code)) return "infotur";
-  if (CODE_SET.has(code) || MEDICAL_PARENT_RE.test(code)) return "medical";
+  if (MEDICAL_PARENT_RE.test(code)) return "medical";
+  // Catalog MEDICAL packages and legacy PKG-* (non-Infotur) stay tariffs
+  if (code.startsWith("PKG-")) return "medical";
   return "bar";
 }
 
@@ -112,6 +114,16 @@ export function ratePlanRequiresGuestPackage(plan: {
   return stayProductFamily(plan) === "medical";
 }
 
+/**
+ * Guest MEDICAL stamp that compose / nightly sell may use.
+ * Not Infotur and not BAR — catalog may add codes beyond the legacy four.
+ */
+export function isMedicalGuestPackageCode(code: string | null | undefined): boolean {
+  const c = (code ?? "").trim().toUpperCase();
+  if (!c) return false;
+  return stayProductFamily({ code: c }) === "medical";
+}
+
 /** Mixed-package nightly compose (Standart/Premium/Derma/Detoks). Not Infotur. */
 export function usesMedicalPackageCompose(plan: {
   code?: string | null;
@@ -136,10 +148,13 @@ export function packageSkipPostsRoom(plan: { code?: string | null }): boolean {
   return stayProductFamily(plan) === "infotur";
 }
 
-/** Guest-column options. `clinicCodes` is the current clinic template list; the four SKUs are only the fallback when that list has not loaded. */
+/**
+ * Guest-column options from the hotel sellable catalog (MEDICAL family).
+ * Pass active catalog rows — never invent a hardcoded SKU list.
+ */
 export function medicalPackageChoices(
   plans: Array<{ code?: string | null; label?: string | null }>,
-  clinicCodes?: readonly string[],
+  catalogCodes?: readonly string[],
 ): Array<{ value: string; label: string }> {
   const labels = new Map<string, string>();
   for (const plan of plans) {
@@ -147,7 +162,9 @@ export function medicalPackageChoices(
     const label = (plan.label ?? "").trim();
     if (code && label && !labels.has(code)) labels.set(code, label);
   }
-  const codes = clinicCodes?.length ? clinicCodes : MEDICAL_PACKAGE_CODES;
+  const codes = (catalogCodes ?? [])
+    .map((c) => c.trim().toUpperCase())
+    .filter(Boolean);
   return codes.map((code) => ({
     value: code,
     label: labels.get(code) ?? code,
@@ -358,64 +375,14 @@ function parseUnstructuredPhrases(text: string): MedicalPackageCode | null {
 }
 
 /**
- * Agency name starts with Premium/Dermo/Detox or known walk-in labels → SKU for all pax.
- * Walkin leisure / Walkin medical without prefix → not a medical SKU.
- * Optional `rules` are an in-memory override (tests). Import stores the package on Agency.
- *
- * Token match (anywhere): `\bpremium\b`, `\bdermo\b`, `\bdetoks?\b`, Həmkarlar —
- * covers «Premium Naftalan Kamel», «Dermo Nafdan travel», etc.
+ * @deprecated Agency display-name / token package SoR is retired
+ * ([hotel-sanatorium-sellable-packages.md](../../../../docs/adr/hotel-sanatorium-sellable-packages.md)).
+ * Always returns null. Kept for call-site compatibility during cutover.
  */
 export function resolveAgencyPackageCode(
-  agencyName: string | null | undefined,
-  rules?: AgencySkuRuleInput[] | null,
+  _agencyName?: string | null,
+  _rules?: AgencySkuRuleInput[] | null,
 ): MedicalPackageCode | null {
-  if (!agencyName?.trim()) return null;
-  const raw = agencyName.trim();
-  const lower = raw.toLowerCase();
-
-  // Explicit non-medical leisure (do not invent SKU from tokens in leisure-only names)
-  if (isLeisureAgency(raw)) return null;
-  if (/^walkin\s+medical$/i.test(raw) || /^walk[\s-]?in\s+medical$/i.test(raw)) return null;
-  // Agency labelled leisure (suffix) without Premium/Dermo/Detoks token
-  if (/\bleisure\b/i.test(raw) && !/\b(premium|dermo|detoks|detox)\b/i.test(raw)) {
-    return null;
-  }
-
-  // Editable DB rules (longest prefix first)
-  if (rules?.length) {
-    const sorted = [...rules].sort(
-      (a, b) => b.agencyNamePrefix.length - a.agencyNamePrefix.length,
-    );
-    for (const rule of sorted) {
-      const pref = rule.agencyNamePrefix.trim().toLowerCase();
-      if (!pref) continue;
-      if (lower.startsWith(pref) || lower.includes(pref)) {
-        const code = normalizeMedicalPackageCode(rule.packageCode);
-        if (code) return code;
-      }
-    }
-  }
-
-  // Həmkarlar / confederation → Standart (before generic medical default elsewhere)
-  if (/h[əe]mkarlar|hemkarlar|həmkərlar/i.test(lower)) {
-    return "PKG-STANDART";
-  }
-
-  // Token anywhere (Premium Naftalan…, Fecebook Dermo paket, Detox paket Walkin)
-  if (/\bpremium\b/i.test(raw)) return "PKG-PREMIUM";
-  if (/\bdermo\b/i.test(raw) || /fecebook\s+dermo|facebook\s+dermo/i.test(raw)) {
-    return "PKG-DERMA";
-  }
-  if (/\bdetoks\b/i.test(raw) || /\bdetox\b/i.test(raw)) return "PKG-DETOKS";
-
-  // Standart paket walk-in / standart medical label
-  if (
-    /\bstandart\b/i.test(raw) &&
-    /paket|walkin|walk[\s-]?in|medical/i.test(raw)
-  ) {
-    return "PKG-STANDART";
-  }
-
   return null;
 }
 
@@ -503,18 +470,9 @@ export function resolveMedicalSku(
     }
   }
 
-  // 3–4. Agency prefix / Həmkarlar — all pax when Extra did not set codes
-  if (perGuestCodes.every((c): boolean => c == null)) {
-    const agencyCode =
-      normalizeMedicalPackageCode(input.agencyPackageCode ?? null) ??
-      resolveAgencyPackageCode(input.agencyName, input.agencyRules);
-    if (agencyCode) {
-      anyHit = true;
-      perGuestCodes.fill(agencyCode);
-    }
-  }
+  // Agency name / Agency.medicalPackageCode are not package SoR (ADR hotel-sanatorium-sellable-packages).
 
-  // 5. Elektra / import only. Front office does not invent a package from the tariff.
+  // Elektra / import only. Front office does not invent a package from the tariff.
   if (input.inheritRatePlanPackage !== false && perGuestCodes.every((c): boolean => c == null)) {
     const planCode = normalizeMedicalPackageCode(input.ratePlanCode ?? null);
     if (planCode) {

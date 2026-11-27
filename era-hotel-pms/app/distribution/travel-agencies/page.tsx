@@ -74,8 +74,6 @@ export default function TravelAgenciesPage() {
   const [settlementMode, setSettlementMode] = useState<'PREPAID' | 'POSTPAID'>('POSTPAID');
   const [creditLimitAzn, setCreditLimitAzn] = useState('');
   const [paymentTermsDays, setPaymentTermsDays] = useState('');
-  const [medicalPackageCode, setMedicalPackageCode] = useState('');
-
   const [inviteAgency, setInviteAgency] = useState<AgencyRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [issuedPassword, setIssuedPassword] = useState<string | null>(null);
@@ -138,7 +136,6 @@ export default function TravelAgenciesPage() {
     setSettlementMode('POSTPAID');
     setCreditLimitAzn('');
     setPaymentTermsDays('');
-    setMedicalPackageCode('');
     setModalOpen(true);
   }
 
@@ -161,7 +158,8 @@ export default function TravelAgenciesPage() {
           creditLimitAzn: moneyOrNull(row.creditLimitAzn),
           paymentTermsDays: row.paymentTermsDays ?? null,
           active,
-          medicalPackageCode: row.medicalPackageCode ?? null,
+          // Agency medicalPackageCode is not package SoR — clear on write.
+          medicalPackageCode: null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -185,7 +183,6 @@ export default function TravelAgenciesPage() {
     setSettlementMode(row.settlementMode === 'PREPAID' ? 'PREPAID' : 'POSTPAID');
     setCreditLimitAzn(row.creditLimitAzn != null && row.creditLimitAzn !== '' ? String(row.creditLimitAzn) : '');
     setPaymentTermsDays(row.paymentTermsDays != null ? String(row.paymentTermsDays) : '');
-    setMedicalPackageCode(row.medicalPackageCode ?? '');
     setModalOpen(true);
   }
 
@@ -461,7 +458,7 @@ export default function TravelAgenciesPage() {
                   paymentTermsDays:
                     paymentTermsDays.trim() === '' ? null : Number(paymentTermsDays),
                   active: fd.get('active') === 'on',
-                  medicalPackageCode: medicalPackageCode || null,
+                  medicalPackageCode: null,
                 }),
               });
               setBusy(false);
@@ -529,19 +526,6 @@ export default function TravelAgenciesPage() {
             type="number"
             step="0.01"
             defaultValue={editRow?.commissionPercent ?? ''}
-          />
-          <CatalogField
-            kind="CLOSED_SMALL"
-            label={t('medicalPackage')}
-            value={medicalPackageCode}
-            onChange={(v) => setMedicalPackageCode(catalogStr(v))}
-            options={[
-              { value: 'PKG-STANDART', label: 'PKG-STANDART' },
-              { value: 'PKG-PREMIUM', label: 'PKG-PREMIUM' },
-              { value: 'PKG-DERMA', label: 'PKG-DERMA' },
-              { value: 'PKG-DETOKS', label: 'PKG-DETOKS' },
-            ]}
-            emptyLabel={t('medicalPackageNone')}
           />
           <CatalogField
             kind="CLOSED_SMALL"

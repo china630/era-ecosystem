@@ -21,6 +21,14 @@ export type PricingFeaturePolicy = {
   loadBasedPricingEnabled: boolean;
   /** Prefer ChildPricingMatrix.amountOverride when set (else % discount). */
   childAbsolutePricingEnabled: boolean;
+  /** When yield is on, also adjust package nightly sell (default false). */
+  yieldAppliesToPackages: boolean;
+  /** FO may lock nightly amounts on the Pricing tab (default true). */
+  manualNightOverrideEnabled: boolean;
+  /** Use BAR calendar for BASE / derived walk-in rates (default true). */
+  barPricingEnabled: boolean;
+  /** Use daily-prices table for walk-in tariffs (default true). */
+  dailyRatesEnabled: boolean;
 };
 
 /** Channel / OTA distribution feature flags (default OFF). */
@@ -80,6 +88,10 @@ export const DEFAULT_HOTEL_POLICY: HotelPolicy = {
   occupancyPricingEnabled: false,
   loadBasedPricingEnabled: false,
   childAbsolutePricingEnabled: false,
+  yieldAppliesToPackages: false,
+  manualNightOverrideEnabled: true,
+  barPricingEnabled: true,
+  dailyRatesEnabled: true,
   channelAutoPushEnabled: false,
   agencyPortalAutoConfirm: false,
   agencyPortalOptionHoldHours: 48,

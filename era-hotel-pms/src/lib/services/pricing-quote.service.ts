@@ -207,7 +207,7 @@ export async function getNightlyRoomChargeForDate(
     '@/lib/services/nafta-package-compose-apply.service'
   );
   const { paxCodesForCompose } = await import('@/lib/services/nafta-package-compose.service');
-  const { MEDICAL_PACKAGE_CODES, usesMedicalPackageCompose, stayProductFamily } = await import(
+  const { isMedicalGuestPackageCode, usesMedicalPackageCompose, stayProductFamily } = await import(
     '@/lib/services/medical-package-resolve.service'
   );
   const packageCodes = (
@@ -216,7 +216,7 @@ export async function getNightlyRoomChargeForDate(
       : [res.medicalPackageCode]
   )
     .map((c) => (c ?? '').trim().toUpperCase())
-    .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
+    .filter((c) => isMedicalGuestPackageCode(c));
   if (usesMedicalPackageCompose(res.ratePlan)) {
     const roomTypeId = slice?.roomTypeId ?? res.roomTypeId;
     const nightly = roomTypeId

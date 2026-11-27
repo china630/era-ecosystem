@@ -10,6 +10,8 @@
 **Legend:** ✅ · 🟡 · ❌/`[ ]` · ⏸ external · `n/a`  
 **Row rollup** = worst(Gate, BE, UI, Demo/TE, Pilot lab, Pilot field) — not BE alone.
 
+**Closeout (2026-11-26 Nest query URL):** Product search, import, fiscal devices, offline sync, login journal, open shifts, prescription queue, and settlement confirmation build the missing request URL inside the Nest handler. No new screen. AC rows stay as they are. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched. Not on the droplet until the next retail image. `era-readiness-matrix` N/A.
+
 **Closeout (2026-11-10 access denied):** A missing screen grant opens `/access-denied`. AC-RET-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.
 
 **Closeout (2026-11-10 marketplace key):** Catalog v2. `admin:marketplace` is copied once from `admin:settings`. Links stay on settings. AC-RET-RBAC stays 🟡. Gate / BE / UI / Demo / Pilot / Sell unchanged. Edition yaml untouched.

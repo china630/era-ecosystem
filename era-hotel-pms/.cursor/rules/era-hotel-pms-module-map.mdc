@@ -221,8 +221,9 @@ See also: `doc/BACKLOG-PRODUCTION.md` § P5 · `docs/COVERAGE_MATRIX.md` HOT-CAS
 | `/settings/pricing-components` | `GET /api/admin/pricing-components`, `POST …/[code]/versions` | Versioned service fee, meals, COGS (+ history/audit) |
 | `/settings/seasons` | `GET /api/admin/price-seasons`, `PATCH …/[id]` | High/low season dates. Saving rewrites `effectiveFrom`/`effectiveTo` on sell cells of that season |
 | `/settings/package-prices` | `GET/POST /api/admin/rate-plans/[id]/sell-versions` | Package sell grid by season, room type, meal, adults |
-| `/settings/daily-prices` | same sell-versions API | Daily grid for `WALKIN` (opens on that plan; `DAILY RATES` stays in the filter). Card meal plan selects the cell. Infotur and BAR hide the guest package column and do not open a clinic episode |
-| `/distribution/travel-agencies` | travel-agencies API | Medical package is `Agency.medicalPackageCode` (CatalogField). Import stamps it from the name. `/settings/agency-medical-sku` redirects here |
+| `/settings/sanatorium-packages` | `GET/PATCH /api/admin/sanatorium-packages`, `POST …/sync`; FO `GET /api/fo/sellable-packages` | Hotel `HotelSellablePackage` catalog (gate `hotel_medical_sanatorium`); sync min/max from clinic |
+| `/settings/daily-prices` | same sell-versions API | Daily grid for `WALKIN` (opens on that plan; `DAILY RATES` stays in the filter). Guest MEDICAL column from hotel catalog (≥2 active); Infotur = stay tariff |
+| `/distribution/travel-agencies` | travel-agencies API | Agency name / `medicalPackageCode` are **not** package SoR (retired). `/settings/agency-medical-sku` redirects here |
 | `/settings/bar-calendar` | BAR rates API | Accounting BAR grid + recommended extra-adult from components |
 | `/settings/child-matrix` | `GET/POST /api/admin/child-matrix`, `PATCH/DELETE …/[id]` | Child age bands (% / absolute / freeCount); legacy `/distribution/child-matrix` redirects |
 | `/settings/yield-rules` | yield-rules API | Load-based % (applied only if policy flag ON); legacy `/distribution/yield-rules` redirects |

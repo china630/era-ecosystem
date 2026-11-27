@@ -27,7 +27,7 @@ export type LandingEcosystemCopy = {
 
 export const landingEcosystemRu: LandingEcosystemCopy = {
   statusTrial: "Включено в trial",
-  statusBeta: "Спутник",
+  statusBeta: "Продукт",
   statusPremium: "Premium plug-in",
   premiumGlowBadge: "AI / RPA",
   disclaimer:
@@ -143,7 +143,7 @@ export const landingEcosystemRu: LandingEcosystemCopy = {
           slug: "auto",
           pricingKey: "industry_auto_service",
           priceLabel: "Gate 29 AZN",
-          title: "Auto STO",
+          title: "Auto Service",
           status: "beta",
           tasks: ["1 пост в Gate", "B2B запчасти", "Нормы / TecDoc"],
         },
@@ -175,7 +175,7 @@ export const landingEcosystemRu: LandingEcosystemCopy = {
           slug: "crm",
           pricingKey: "industry_crm",
           priceLabel: "Gate 29 AZN",
-          title: "CRM Field",
+          title: "CRM",
           status: "beta",
           tasks: ["1 место в Gate, далее 5 AZN", "Полевые продажи", "Не путать с Notifications Pack"],
         },
@@ -228,7 +228,7 @@ export const landingEcosystemRu: LandingEcosystemCopy = {
 
 export const landingEcosystemAz: LandingEcosystemCopy = {
   statusTrial: "Trial-da daxildir",
-  statusBeta: "Peyk",
+  statusBeta: "Məhsul",
   statusPremium: "Premium plug-in",
   premiumGlowBadge: "AI / RPA",
   disclaimer:
@@ -294,7 +294,7 @@ export const landingEcosystemAz: LandingEcosystemCopy = {
     },
     {
       id: "vertical",
-      title: "Sənaye peykləri (Gate + nüvə)",
+      title: "Sənaye məhsulları (Gate + nüvə)",
       modules: [
         {
           slug: "hotel",
@@ -340,7 +340,7 @@ export const landingEcosystemAz: LandingEcosystemCopy = {
           slug: "auto",
           pricingKey: "industry_auto_service",
           priceLabel: "Gate 29 AZN",
-          title: "Auto STO",
+          title: "Auto Service",
           status: "beta",
           tasks: ["Gate-də 1 post", "B2B ehtiyat hissələri", "TecDoc normaları"],
         },
@@ -372,7 +372,7 @@ export const landingEcosystemAz: LandingEcosystemCopy = {
           slug: "crm",
           pricingKey: "industry_crm",
           priceLabel: "Gate 29 AZN",
-          title: "CRM Field",
+          title: "CRM",
           status: "beta",
           tasks: ["Gate-də 1 yer, sonra 5 AZN", "Sahə satışları", "Notifications Pack deyil"],
         },
@@ -425,7 +425,7 @@ export const landingEcosystemAz: LandingEcosystemCopy = {
 
 export const landingEcosystemEn: LandingEcosystemCopy = {
   statusTrial: "Included in trial",
-  statusBeta: "Satellite",
+  statusBeta: "Product",
   statusPremium: "Premium plug-in",
   premiumGlowBadge: "AI / RPA",
   disclaimer:
@@ -491,7 +491,7 @@ export const landingEcosystemEn: LandingEcosystemCopy = {
     },
     {
       id: "vertical",
-      title: "Industry satellites (Gate + cores)",
+      title: "Industry products (Gate + cores)",
       modules: [
         {
           slug: "hotel",
@@ -537,7 +537,7 @@ export const landingEcosystemEn: LandingEcosystemCopy = {
           slug: "auto",
           pricingKey: "industry_auto_service",
           priceLabel: "Gate 29 AZN",
-          title: "Auto STO",
+          title: "Auto Service",
           status: "beta",
           tasks: ["1 bay in Gate", "B2B parts", "TecDoc norms"],
         },
@@ -569,7 +569,7 @@ export const landingEcosystemEn: LandingEcosystemCopy = {
           slug: "crm",
           pricingKey: "industry_crm",
           priceLabel: "Gate 29 AZN",
-          title: "CRM Field",
+          title: "CRM",
           status: "beta",
           tasks: ["1 seat in Gate, then 5 AZN", "Field sales", "Not the Notifications Pack"],
         },

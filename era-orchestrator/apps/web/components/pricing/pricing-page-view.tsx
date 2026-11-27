@@ -90,7 +90,7 @@ export function PricingPageView({
                 href="/satellites"
                 className="hidden text-sm font-medium text-slate-600 no-underline hover:text-slate-900 sm:inline"
               >
-                {locale === "ru" ? "Спутники" : locale === "en" ? "Satellites" : "Peyklər"}
+                {locale === "ru" ? "Продукты" : locale === "en" ? "Products" : "Məhsullar"}
               </Link>
               <Link
                 href="/calc"

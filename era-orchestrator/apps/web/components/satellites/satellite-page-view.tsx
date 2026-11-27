@@ -15,7 +15,6 @@ import {
   type PublicSatelliteSlug,
 } from "../../lib/satellites/public-satellite-catalog";
 import { calcNavLabel } from "../../lib/i18n/calc-copy";
-import { LandingChrome } from "../landing/landing-chrome";
 import { LandingEcosystemGrid } from "../landing/landing-ecosystem-grid";
 import { LandingFeatureSplits } from "../landing/landing-feature-splits";
 import { LandingLegacyCompare } from "../landing/landing-legacy-compare";
@@ -127,13 +126,6 @@ export function SatellitePageView({
 
   return (
     <LandingPageShell>
-      <LandingChrome
-        hero={landing.hero}
-        loginLabel={landing.chrome.login}
-        satellitesLabel={landing.chrome.navSatellites}
-        locale={locale}
-        onLocaleChange={setLocale}
-      />
       <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
         <p className="m-0 text-[12px] font-semibold uppercase tracking-wider text-[#2980B9]">{copy.kicker}</p>
         <h1 className="mt-2 m-0 text-3xl font-bold tracking-tight text-[#34495E] md:text-4xl">{copy.title}</h1>
@@ -206,13 +198,6 @@ export function SatellitesIndexView({ initialLocale }: { initialLocale: Locale }
 
   return (
     <LandingPageShell>
-      <LandingChrome
-        hero={landing.hero}
-        loginLabel={landing.chrome.login}
-        satellitesLabel={landing.chrome.navSatellites}
-        locale={locale}
-        onLocaleChange={setLocale}
-      />
       <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
         <h1 className="m-0 text-3xl font-bold tracking-tight text-[#34495E] md:text-4xl">{index.title}</h1>
         <p className="mt-3 m-0 max-w-3xl text-[16px] leading-relaxed text-[#7F8C8D]">{index.intro}</p>

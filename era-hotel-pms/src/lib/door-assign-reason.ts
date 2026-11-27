@@ -49,6 +49,14 @@ export function doorAssignBlock(
   if (opts.booked) return { code: 'BOOKED' };
   const gate = opts.inHouse ? canAssignDoor : canBookDoor;
   if (!gate(asRoom(room), false)) return { code: 'DIRTY' };
+  const need = (opts.needTypeId ?? '').trim();
+  if (need && room.roomTypeId && room.roomTypeId !== need) {
+    return {
+      code: 'WRONG_TYPE',
+      doorType: room.roomTypeCode ?? undefined,
+      needType: opts.needTypeCode ?? undefined,
+    };
+  }
   return null;
 }
 

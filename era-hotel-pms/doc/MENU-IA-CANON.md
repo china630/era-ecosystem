@@ -162,6 +162,7 @@ Legacy: `/channel` → `/distribution/channel`, `/admin/contracts` → `/distrib
 | Yield rules | `/settings/yield-rules` | Load-based % uplift (only if policy flag ON; not stop-sell) |
 | Pricing components | `/settings/pricing-components` | Versioned service fee / meals / COGS (BAR floor inputs) |
 | Package prices | `/settings/package-prices` | Package sell + cost floor |
+| Sanatorium packages | `/settings/sanatorium-packages` | Hotel sellable MEDICAL/INFOTUR catalog (gate `hotel_medical_sanatorium`); sync min/max nights from clinic |
 
 Legacy: `/distribution/child-matrix` → `/settings/child-matrix`, `/distribution/yield-rules` → `/settings/yield-rules`, `/admin/*` same.
 

@@ -9,6 +9,8 @@ import { fetchSiteCatalog } from "../../../../lib/site/fetch-site-catalog";
 import { siteLocalePath } from "../../../../lib/site/locale-path";
 import { calcHrefForIndustry } from "../../../../lib/site/calc-href-for-industry";
 import { getSiteNavCopy } from "../../../../lib/i18n/site-nav-copy";
+import { ArchitectureMap } from "../../../../components/site/architecture-map/ArchitectureMap";
+import { industryBundleKeys } from "../../../../components/site/architecture-map/architecture-map-layout";
 import { PilotBadge } from "../../../../components/site/pilot-badge";
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { siteUrl } from "../../../../lib/site/site-origins";
@@ -79,6 +81,13 @@ export default async function IndustryDetailPage({
       {industry.description ? (
         <p className="mt-3 max-w-2xl text-sm text-[#7F8C8D]">{industry.description}</p>
       ) : null}
+
+      <ArchitectureMap
+        catalog={catalog}
+        locale={locale}
+        variant="industry"
+        highlightKeys={industryBundleKeys(industry.slug, industry.items)}
+      />
 
       <section className="mt-10">
         <h2 className="m-0 text-lg font-semibold text-[#34495E]">{nav.includes}</h2>

@@ -1,4 +1,8 @@
 import type { PrismaClient } from "../../../generated/client";
+import {
+  ensureAutoArchitectureEdges,
+  seedSiteArchitectureEdges,
+} from "./site-architecture-edges-seed";
 
 type LocaleMap = { az?: string; ru?: string; en?: string };
 
@@ -707,5 +711,14 @@ export async function seedSiteCatalog(prisma: PrismaClient): Promise<void> {
   await seedSatellitePublicProfiles(prisma);
   await seedModulePublicProfiles(prisma);
   await seedSiteIndustries(prisma);
+  await seedSiteArchitectureEdges(prisma);
+  await ensureAutoArchitectureEdges(prisma);
   await seedSiteSystemConfigDefaults(prisma);
+}
+
+/** Idempotent site catalog + architecture edges (safe on running envs). */
+export async function ensureSiteCatalogSeeded(
+  prisma: PrismaClient,
+): Promise<void> {
+  await seedSiteCatalog(prisma);
 }

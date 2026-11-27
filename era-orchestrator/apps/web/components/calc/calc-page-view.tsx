@@ -134,22 +134,19 @@ export function CalcPageView({
       <style>{`@media print { header, #calc-form, #calc-mobile-bar, footer { display: none !important; } #calc-quote { position: static !important; } }`}</style>
       {!hideChrome ? (
         <header className="sticky top-0 z-20 border-b border-[#D5DADF]/80 bg-white/90 backdrop-blur-md print:hidden">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
             <Link href="/" className="text-lg font-bold tracking-tight text-[#34495E] no-underline">
               ERA 365
             </Link>
-            <nav className="flex flex-wrap items-center gap-2 md:gap-3">
+            <nav className="flex items-center gap-2 md:gap-3">
               <LandingLanguageToggle locale={locale} onLocaleChange={setLocale} />
-              <Link href="/satellites" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
-                {satellitesLabel}
-              </Link>
-              <Link href="/pricing" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
+              <Link href="/pricing" className="text-sm font-medium text-[#34495E] no-underline">
                 {pricingLabel}
               </Link>
               <Link href="/calc" className={`${SECONDARY_BUTTON_CLASS} text-xs text-[#2980B9] no-underline`} aria-current="page">
                 {copy.nav}
               </Link>
-              <a href={appUrl("/login")} className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
+              <a href={appUrl("/login")} className="text-sm font-medium text-[#34495E] no-underline">
                 {loginLabel}
               </a>
               <a href={appUrl("/register-org")} className={`${PRIMARY_BUTTON_CLASS} text-xs no-underline`}>

@@ -3,7 +3,7 @@ import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import {
-  MEDICAL_PACKAGE_CODES,
+  isMedicalGuestPackageCode,
   packageSkipPostsRoom,
   postsStayAsPackage,
   stayProductFamily,
@@ -103,8 +103,6 @@ function eachNight(from: Date, to: Date): Date[] {
   return nights;
 }
 
-const PACKAGE_CODE_SET = new Set<string>(MEDICAL_PACKAGE_CODES);
-
 function stayPackageCodes(input: {
   medicalPackageCode: string | null;
   ratePlan?: { code: string | null } | null;
@@ -121,7 +119,7 @@ function stayPackageCodes(input: {
       : [input.medicalPackageCode];
   return raw
     .map((c) => (c ?? '').trim().toUpperCase())
-    .filter((c) => PACKAGE_CODE_SET.has(c));
+    .filter((c) => isMedicalGuestPackageCode(c));
 }
 
 async function writeOwnerNightly(

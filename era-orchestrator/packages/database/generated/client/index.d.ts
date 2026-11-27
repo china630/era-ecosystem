@@ -99,6 +99,11 @@ export type SiteIndustry = $Result.DefaultSelection<Prisma.$SiteIndustryPayload>
  */
 export type SiteIndustryItem = $Result.DefaultSelection<Prisma.$SiteIndustryItemPayload>
 /**
+ * Model SiteArchitectureEdge
+ * * Public architecture diagram edge (integration map on marketing site).
+ */
+export type SiteArchitectureEdge = $Result.DefaultSelection<Prisma.$SiteArchitectureEdgePayload>
+/**
  * Model OrganizationSatelliteEntitlement
  * Owner-connected satellite trial row (materialized on Connect).
  */
@@ -975,10 +980,38 @@ export type SiteCatalogVisibility = (typeof SiteCatalogVisibility)[keyof typeof 
 
 export const SiteCatalogMaturity: {
   prod: 'prod',
-  pilot: 'pilot'
+  pilot: 'pilot',
+  in_development: 'in_development'
 };
 
 export type SiteCatalogMaturity = (typeof SiteCatalogMaturity)[keyof typeof SiteCatalogMaturity]
+
+
+export const SiteArchitectureEdgeKind: {
+  REVENUE_EVENT: 'REVENUE_EVENT',
+  FOLIO_POST: 'FOLIO_POST',
+  SETTLEMENT: 'SETTLEMENT',
+  LIFECYCLE: 'LIFECYCLE',
+  OPS_HANDOFF: 'OPS_HANDOFF',
+  STAFF_PROVISION: 'STAFF_PROVISION',
+  CRM_PARTY: 'CRM_PARTY',
+  REFERENCE_DATA: 'REFERENCE_DATA',
+  ANALYTICS: 'ANALYTICS',
+  READ_STATUS: 'READ_STATUS',
+  PLATFORM_IDENTITY: 'PLATFORM_IDENTITY',
+  BANK_CHANNEL: 'BANK_CHANNEL'
+};
+
+export type SiteArchitectureEdgeKind = (typeof SiteArchitectureEdgeKind)[keyof typeof SiteArchitectureEdgeKind]
+
+
+export const SiteArchitectureRealizationStatus: {
+  live: 'live',
+  partial: 'partial',
+  planned: 'planned'
+};
+
+export type SiteArchitectureRealizationStatus = (typeof SiteArchitectureRealizationStatus)[keyof typeof SiteArchitectureRealizationStatus]
 
 
 export const SiteIndustryItemRole: {
@@ -1619,6 +1652,14 @@ export type SiteCatalogMaturity = $Enums.SiteCatalogMaturity
 
 export const SiteCatalogMaturity: typeof $Enums.SiteCatalogMaturity
 
+export type SiteArchitectureEdgeKind = $Enums.SiteArchitectureEdgeKind
+
+export const SiteArchitectureEdgeKind: typeof $Enums.SiteArchitectureEdgeKind
+
+export type SiteArchitectureRealizationStatus = $Enums.SiteArchitectureRealizationStatus
+
+export const SiteArchitectureRealizationStatus: typeof $Enums.SiteArchitectureRealizationStatus
+
 export type SiteIndustryItemRole = $Enums.SiteIndustryItemRole
 
 export const SiteIndustryItemRole: typeof $Enums.SiteIndustryItemRole
@@ -2117,6 +2158,16 @@ export class PrismaClient<
     * ```
     */
   get siteIndustryItem(): Prisma.SiteIndustryItemDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.siteArchitectureEdge`: Exposes CRUD operations for the **SiteArchitectureEdge** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SiteArchitectureEdges
+    * const siteArchitectureEdges = await prisma.siteArchitectureEdge.findMany()
+    * ```
+    */
+  get siteArchitectureEdge(): Prisma.SiteArchitectureEdgeDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.organizationSatelliteEntitlement`: Exposes CRUD operations for the **OrganizationSatelliteEntitlement** model.
@@ -3698,6 +3749,7 @@ export namespace Prisma {
     PricingModulePublicProfile: 'PricingModulePublicProfile',
     SiteIndustry: 'SiteIndustry',
     SiteIndustryItem: 'SiteIndustryItem',
+    SiteArchitectureEdge: 'SiteArchitectureEdge',
     OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
     SatelliteEndpoint: 'SatelliteEndpoint',
     PlacementBatch: 'PlacementBatch',
@@ -3826,7 +3878,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "organizationSatelliteChannel" | "billingInvoiceItem" | "organizationModuleGrace" | "commercialOutlet" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "satellitePublicProfile" | "pricingModulePublicProfile" | "siteIndustry" | "siteIndustryItem" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementBatch" | "placementJob" | "placementProcessLog" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationAccessCredential" | "organizationProfile" | "organizationGuestApp" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "orgPaymentMethod" | "user" | "commsThread" | "commsMessage" | "commsParticipant" | "docLocation" | "docRouteTemplate" | "docRouteStep" | "docRouteEdge" | "docCase" | "docFile" | "docRouteInstance" | "docRouteTask" | "docRouteDecision" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "organizationSatelliteChannel" | "billingInvoiceItem" | "organizationModuleGrace" | "commercialOutlet" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "satellitePublicProfile" | "pricingModulePublicProfile" | "siteIndustry" | "siteIndustryItem" | "siteArchitectureEdge" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementBatch" | "placementJob" | "placementProcessLog" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationAccessCredential" | "organizationProfile" | "organizationGuestApp" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "orgPaymentMethod" | "user" | "commsThread" | "commsMessage" | "commsParticipant" | "docLocation" | "docRouteTemplate" | "docRouteStep" | "docRouteEdge" | "docCase" | "docFile" | "docRouteInstance" | "docRouteTask" | "docRouteDecision" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -5085,6 +5137,80 @@ export namespace Prisma {
           count: {
             args: Prisma.SiteIndustryItemCountArgs<ExtArgs>
             result: $Utils.Optional<SiteIndustryItemCountAggregateOutputType> | number
+          }
+        }
+      }
+      SiteArchitectureEdge: {
+        payload: Prisma.$SiteArchitectureEdgePayload<ExtArgs>
+        fields: Prisma.SiteArchitectureEdgeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SiteArchitectureEdgeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SiteArchitectureEdgeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>
+          }
+          findFirst: {
+            args: Prisma.SiteArchitectureEdgeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SiteArchitectureEdgeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>
+          }
+          findMany: {
+            args: Prisma.SiteArchitectureEdgeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>[]
+          }
+          create: {
+            args: Prisma.SiteArchitectureEdgeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>
+          }
+          createMany: {
+            args: Prisma.SiteArchitectureEdgeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SiteArchitectureEdgeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>[]
+          }
+          delete: {
+            args: Prisma.SiteArchitectureEdgeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>
+          }
+          update: {
+            args: Prisma.SiteArchitectureEdgeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>
+          }
+          deleteMany: {
+            args: Prisma.SiteArchitectureEdgeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SiteArchitectureEdgeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SiteArchitectureEdgeUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>[]
+          }
+          upsert: {
+            args: Prisma.SiteArchitectureEdgeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteArchitectureEdgePayload>
+          }
+          aggregate: {
+            args: Prisma.SiteArchitectureEdgeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSiteArchitectureEdge>
+          }
+          groupBy: {
+            args: Prisma.SiteArchitectureEdgeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SiteArchitectureEdgeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SiteArchitectureEdgeCountArgs<ExtArgs>
+            result: $Utils.Optional<SiteArchitectureEdgeCountAggregateOutputType> | number
           }
         }
       }
@@ -13575,6 +13701,7 @@ export namespace Prisma {
     pricingModulePublicProfile?: PricingModulePublicProfileOmit
     siteIndustry?: SiteIndustryOmit
     siteIndustryItem?: SiteIndustryItemOmit
+    siteArchitectureEdge?: SiteArchitectureEdgeOmit
     organizationSatelliteEntitlement?: OrganizationSatelliteEntitlementOmit
     satelliteEndpoint?: SatelliteEndpointOmit
     placementBatch?: PlacementBatchOmit
@@ -36068,6 +36195,1117 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SiteIndustryItemInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SiteArchitectureEdge
+   */
+
+  export type AggregateSiteArchitectureEdge = {
+    _count: SiteArchitectureEdgeCountAggregateOutputType | null
+    _avg: SiteArchitectureEdgeAvgAggregateOutputType | null
+    _sum: SiteArchitectureEdgeSumAggregateOutputType | null
+    _min: SiteArchitectureEdgeMinAggregateOutputType | null
+    _max: SiteArchitectureEdgeMaxAggregateOutputType | null
+  }
+
+  export type SiteArchitectureEdgeAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SiteArchitectureEdgeSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SiteArchitectureEdgeMinAggregateOutputType = {
+    id: string | null
+    fromKey: string | null
+    toKey: string | null
+    kind: $Enums.SiteArchitectureEdgeKind | null
+    realizationStatus: $Enums.SiteArchitectureRealizationStatus | null
+    visibility: $Enums.SiteCatalogVisibility | null
+    sortOrder: number | null
+    autoManaged: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SiteArchitectureEdgeMaxAggregateOutputType = {
+    id: string | null
+    fromKey: string | null
+    toKey: string | null
+    kind: $Enums.SiteArchitectureEdgeKind | null
+    realizationStatus: $Enums.SiteArchitectureRealizationStatus | null
+    visibility: $Enums.SiteCatalogVisibility | null
+    sortOrder: number | null
+    autoManaged: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SiteArchitectureEdgeCountAggregateOutputType = {
+    id: number
+    fromKey: number
+    toKey: number
+    kind: number
+    realizationStatus: number
+    labels: number
+    visibility: number
+    sortOrder: number
+    autoManaged: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SiteArchitectureEdgeAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SiteArchitectureEdgeSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SiteArchitectureEdgeMinAggregateInputType = {
+    id?: true
+    fromKey?: true
+    toKey?: true
+    kind?: true
+    realizationStatus?: true
+    visibility?: true
+    sortOrder?: true
+    autoManaged?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SiteArchitectureEdgeMaxAggregateInputType = {
+    id?: true
+    fromKey?: true
+    toKey?: true
+    kind?: true
+    realizationStatus?: true
+    visibility?: true
+    sortOrder?: true
+    autoManaged?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SiteArchitectureEdgeCountAggregateInputType = {
+    id?: true
+    fromKey?: true
+    toKey?: true
+    kind?: true
+    realizationStatus?: true
+    labels?: true
+    visibility?: true
+    sortOrder?: true
+    autoManaged?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SiteArchitectureEdgeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SiteArchitectureEdge to aggregate.
+     */
+    where?: SiteArchitectureEdgeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteArchitectureEdges to fetch.
+     */
+    orderBy?: SiteArchitectureEdgeOrderByWithRelationInput | SiteArchitectureEdgeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SiteArchitectureEdgeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteArchitectureEdges from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteArchitectureEdges.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SiteArchitectureEdges
+    **/
+    _count?: true | SiteArchitectureEdgeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SiteArchitectureEdgeAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SiteArchitectureEdgeSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SiteArchitectureEdgeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SiteArchitectureEdgeMaxAggregateInputType
+  }
+
+  export type GetSiteArchitectureEdgeAggregateType<T extends SiteArchitectureEdgeAggregateArgs> = {
+        [P in keyof T & keyof AggregateSiteArchitectureEdge]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSiteArchitectureEdge[P]>
+      : GetScalarType<T[P], AggregateSiteArchitectureEdge[P]>
+  }
+
+
+
+
+  export type SiteArchitectureEdgeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SiteArchitectureEdgeWhereInput
+    orderBy?: SiteArchitectureEdgeOrderByWithAggregationInput | SiteArchitectureEdgeOrderByWithAggregationInput[]
+    by: SiteArchitectureEdgeScalarFieldEnum[] | SiteArchitectureEdgeScalarFieldEnum
+    having?: SiteArchitectureEdgeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SiteArchitectureEdgeCountAggregateInputType | true
+    _avg?: SiteArchitectureEdgeAvgAggregateInputType
+    _sum?: SiteArchitectureEdgeSumAggregateInputType
+    _min?: SiteArchitectureEdgeMinAggregateInputType
+    _max?: SiteArchitectureEdgeMaxAggregateInputType
+  }
+
+  export type SiteArchitectureEdgeGroupByOutputType = {
+    id: string
+    fromKey: string
+    toKey: string
+    kind: $Enums.SiteArchitectureEdgeKind
+    realizationStatus: $Enums.SiteArchitectureRealizationStatus
+    labels: JsonValue
+    visibility: $Enums.SiteCatalogVisibility
+    sortOrder: number
+    autoManaged: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: SiteArchitectureEdgeCountAggregateOutputType | null
+    _avg: SiteArchitectureEdgeAvgAggregateOutputType | null
+    _sum: SiteArchitectureEdgeSumAggregateOutputType | null
+    _min: SiteArchitectureEdgeMinAggregateOutputType | null
+    _max: SiteArchitectureEdgeMaxAggregateOutputType | null
+  }
+
+  type GetSiteArchitectureEdgeGroupByPayload<T extends SiteArchitectureEdgeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SiteArchitectureEdgeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SiteArchitectureEdgeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SiteArchitectureEdgeGroupByOutputType[P]>
+            : GetScalarType<T[P], SiteArchitectureEdgeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SiteArchitectureEdgeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    fromKey?: boolean
+    toKey?: boolean
+    kind?: boolean
+    realizationStatus?: boolean
+    labels?: boolean
+    visibility?: boolean
+    sortOrder?: boolean
+    autoManaged?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["siteArchitectureEdge"]>
+
+  export type SiteArchitectureEdgeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    fromKey?: boolean
+    toKey?: boolean
+    kind?: boolean
+    realizationStatus?: boolean
+    labels?: boolean
+    visibility?: boolean
+    sortOrder?: boolean
+    autoManaged?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["siteArchitectureEdge"]>
+
+  export type SiteArchitectureEdgeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    fromKey?: boolean
+    toKey?: boolean
+    kind?: boolean
+    realizationStatus?: boolean
+    labels?: boolean
+    visibility?: boolean
+    sortOrder?: boolean
+    autoManaged?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["siteArchitectureEdge"]>
+
+  export type SiteArchitectureEdgeSelectScalar = {
+    id?: boolean
+    fromKey?: boolean
+    toKey?: boolean
+    kind?: boolean
+    realizationStatus?: boolean
+    labels?: boolean
+    visibility?: boolean
+    sortOrder?: boolean
+    autoManaged?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SiteArchitectureEdgeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "fromKey" | "toKey" | "kind" | "realizationStatus" | "labels" | "visibility" | "sortOrder" | "autoManaged" | "createdAt" | "updatedAt", ExtArgs["result"]["siteArchitectureEdge"]>
+
+  export type $SiteArchitectureEdgePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SiteArchitectureEdge"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      fromKey: string
+      toKey: string
+      kind: $Enums.SiteArchitectureEdgeKind
+      realizationStatus: $Enums.SiteArchitectureRealizationStatus
+      /**
+       * Localized short edge labels `{az,ru,en}`.
+       */
+      labels: Prisma.JsonValue
+      visibility: $Enums.SiteCatalogVisibility
+      sortOrder: number
+      autoManaged: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["siteArchitectureEdge"]>
+    composites: {}
+  }
+
+  type SiteArchitectureEdgeGetPayload<S extends boolean | null | undefined | SiteArchitectureEdgeDefaultArgs> = $Result.GetResult<Prisma.$SiteArchitectureEdgePayload, S>
+
+  type SiteArchitectureEdgeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SiteArchitectureEdgeFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SiteArchitectureEdgeCountAggregateInputType | true
+    }
+
+  export interface SiteArchitectureEdgeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SiteArchitectureEdge'], meta: { name: 'SiteArchitectureEdge' } }
+    /**
+     * Find zero or one SiteArchitectureEdge that matches the filter.
+     * @param {SiteArchitectureEdgeFindUniqueArgs} args - Arguments to find a SiteArchitectureEdge
+     * @example
+     * // Get one SiteArchitectureEdge
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SiteArchitectureEdgeFindUniqueArgs>(args: SelectSubset<T, SiteArchitectureEdgeFindUniqueArgs<ExtArgs>>): Prisma__SiteArchitectureEdgeClient<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SiteArchitectureEdge that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SiteArchitectureEdgeFindUniqueOrThrowArgs} args - Arguments to find a SiteArchitectureEdge
+     * @example
+     * // Get one SiteArchitectureEdge
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SiteArchitectureEdgeFindUniqueOrThrowArgs>(args: SelectSubset<T, SiteArchitectureEdgeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SiteArchitectureEdgeClient<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SiteArchitectureEdge that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteArchitectureEdgeFindFirstArgs} args - Arguments to find a SiteArchitectureEdge
+     * @example
+     * // Get one SiteArchitectureEdge
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SiteArchitectureEdgeFindFirstArgs>(args?: SelectSubset<T, SiteArchitectureEdgeFindFirstArgs<ExtArgs>>): Prisma__SiteArchitectureEdgeClient<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SiteArchitectureEdge that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteArchitectureEdgeFindFirstOrThrowArgs} args - Arguments to find a SiteArchitectureEdge
+     * @example
+     * // Get one SiteArchitectureEdge
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SiteArchitectureEdgeFindFirstOrThrowArgs>(args?: SelectSubset<T, SiteArchitectureEdgeFindFirstOrThrowArgs<ExtArgs>>): Prisma__SiteArchitectureEdgeClient<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SiteArchitectureEdges that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteArchitectureEdgeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SiteArchitectureEdges
+     * const siteArchitectureEdges = await prisma.siteArchitectureEdge.findMany()
+     * 
+     * // Get first 10 SiteArchitectureEdges
+     * const siteArchitectureEdges = await prisma.siteArchitectureEdge.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const siteArchitectureEdgeWithIdOnly = await prisma.siteArchitectureEdge.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SiteArchitectureEdgeFindManyArgs>(args?: SelectSubset<T, SiteArchitectureEdgeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SiteArchitectureEdge.
+     * @param {SiteArchitectureEdgeCreateArgs} args - Arguments to create a SiteArchitectureEdge.
+     * @example
+     * // Create one SiteArchitectureEdge
+     * const SiteArchitectureEdge = await prisma.siteArchitectureEdge.create({
+     *   data: {
+     *     // ... data to create a SiteArchitectureEdge
+     *   }
+     * })
+     * 
+     */
+    create<T extends SiteArchitectureEdgeCreateArgs>(args: SelectSubset<T, SiteArchitectureEdgeCreateArgs<ExtArgs>>): Prisma__SiteArchitectureEdgeClient<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SiteArchitectureEdges.
+     * @param {SiteArchitectureEdgeCreateManyArgs} args - Arguments to create many SiteArchitectureEdges.
+     * @example
+     * // Create many SiteArchitectureEdges
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SiteArchitectureEdgeCreateManyArgs>(args?: SelectSubset<T, SiteArchitectureEdgeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SiteArchitectureEdges and returns the data saved in the database.
+     * @param {SiteArchitectureEdgeCreateManyAndReturnArgs} args - Arguments to create many SiteArchitectureEdges.
+     * @example
+     * // Create many SiteArchitectureEdges
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SiteArchitectureEdges and only return the `id`
+     * const siteArchitectureEdgeWithIdOnly = await prisma.siteArchitectureEdge.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SiteArchitectureEdgeCreateManyAndReturnArgs>(args?: SelectSubset<T, SiteArchitectureEdgeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SiteArchitectureEdge.
+     * @param {SiteArchitectureEdgeDeleteArgs} args - Arguments to delete one SiteArchitectureEdge.
+     * @example
+     * // Delete one SiteArchitectureEdge
+     * const SiteArchitectureEdge = await prisma.siteArchitectureEdge.delete({
+     *   where: {
+     *     // ... filter to delete one SiteArchitectureEdge
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SiteArchitectureEdgeDeleteArgs>(args: SelectSubset<T, SiteArchitectureEdgeDeleteArgs<ExtArgs>>): Prisma__SiteArchitectureEdgeClient<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SiteArchitectureEdge.
+     * @param {SiteArchitectureEdgeUpdateArgs} args - Arguments to update one SiteArchitectureEdge.
+     * @example
+     * // Update one SiteArchitectureEdge
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SiteArchitectureEdgeUpdateArgs>(args: SelectSubset<T, SiteArchitectureEdgeUpdateArgs<ExtArgs>>): Prisma__SiteArchitectureEdgeClient<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SiteArchitectureEdges.
+     * @param {SiteArchitectureEdgeDeleteManyArgs} args - Arguments to filter SiteArchitectureEdges to delete.
+     * @example
+     * // Delete a few SiteArchitectureEdges
+     * const { count } = await prisma.siteArchitectureEdge.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SiteArchitectureEdgeDeleteManyArgs>(args?: SelectSubset<T, SiteArchitectureEdgeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SiteArchitectureEdges.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteArchitectureEdgeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SiteArchitectureEdges
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SiteArchitectureEdgeUpdateManyArgs>(args: SelectSubset<T, SiteArchitectureEdgeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SiteArchitectureEdges and returns the data updated in the database.
+     * @param {SiteArchitectureEdgeUpdateManyAndReturnArgs} args - Arguments to update many SiteArchitectureEdges.
+     * @example
+     * // Update many SiteArchitectureEdges
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SiteArchitectureEdges and only return the `id`
+     * const siteArchitectureEdgeWithIdOnly = await prisma.siteArchitectureEdge.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SiteArchitectureEdgeUpdateManyAndReturnArgs>(args: SelectSubset<T, SiteArchitectureEdgeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SiteArchitectureEdge.
+     * @param {SiteArchitectureEdgeUpsertArgs} args - Arguments to update or create a SiteArchitectureEdge.
+     * @example
+     * // Update or create a SiteArchitectureEdge
+     * const siteArchitectureEdge = await prisma.siteArchitectureEdge.upsert({
+     *   create: {
+     *     // ... data to create a SiteArchitectureEdge
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SiteArchitectureEdge we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SiteArchitectureEdgeUpsertArgs>(args: SelectSubset<T, SiteArchitectureEdgeUpsertArgs<ExtArgs>>): Prisma__SiteArchitectureEdgeClient<$Result.GetResult<Prisma.$SiteArchitectureEdgePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SiteArchitectureEdges.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteArchitectureEdgeCountArgs} args - Arguments to filter SiteArchitectureEdges to count.
+     * @example
+     * // Count the number of SiteArchitectureEdges
+     * const count = await prisma.siteArchitectureEdge.count({
+     *   where: {
+     *     // ... the filter for the SiteArchitectureEdges we want to count
+     *   }
+     * })
+    **/
+    count<T extends SiteArchitectureEdgeCountArgs>(
+      args?: Subset<T, SiteArchitectureEdgeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SiteArchitectureEdgeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SiteArchitectureEdge.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteArchitectureEdgeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SiteArchitectureEdgeAggregateArgs>(args: Subset<T, SiteArchitectureEdgeAggregateArgs>): Prisma.PrismaPromise<GetSiteArchitectureEdgeAggregateType<T>>
+
+    /**
+     * Group by SiteArchitectureEdge.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteArchitectureEdgeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SiteArchitectureEdgeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SiteArchitectureEdgeGroupByArgs['orderBy'] }
+        : { orderBy?: SiteArchitectureEdgeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SiteArchitectureEdgeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSiteArchitectureEdgeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SiteArchitectureEdge model
+   */
+  readonly fields: SiteArchitectureEdgeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SiteArchitectureEdge.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SiteArchitectureEdgeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SiteArchitectureEdge model
+   */
+  interface SiteArchitectureEdgeFieldRefs {
+    readonly id: FieldRef<"SiteArchitectureEdge", 'String'>
+    readonly fromKey: FieldRef<"SiteArchitectureEdge", 'String'>
+    readonly toKey: FieldRef<"SiteArchitectureEdge", 'String'>
+    readonly kind: FieldRef<"SiteArchitectureEdge", 'SiteArchitectureEdgeKind'>
+    readonly realizationStatus: FieldRef<"SiteArchitectureEdge", 'SiteArchitectureRealizationStatus'>
+    readonly labels: FieldRef<"SiteArchitectureEdge", 'Json'>
+    readonly visibility: FieldRef<"SiteArchitectureEdge", 'SiteCatalogVisibility'>
+    readonly sortOrder: FieldRef<"SiteArchitectureEdge", 'Int'>
+    readonly autoManaged: FieldRef<"SiteArchitectureEdge", 'Boolean'>
+    readonly createdAt: FieldRef<"SiteArchitectureEdge", 'DateTime'>
+    readonly updatedAt: FieldRef<"SiteArchitectureEdge", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SiteArchitectureEdge findUnique
+   */
+  export type SiteArchitectureEdgeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * Filter, which SiteArchitectureEdge to fetch.
+     */
+    where: SiteArchitectureEdgeWhereUniqueInput
+  }
+
+  /**
+   * SiteArchitectureEdge findUniqueOrThrow
+   */
+  export type SiteArchitectureEdgeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * Filter, which SiteArchitectureEdge to fetch.
+     */
+    where: SiteArchitectureEdgeWhereUniqueInput
+  }
+
+  /**
+   * SiteArchitectureEdge findFirst
+   */
+  export type SiteArchitectureEdgeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * Filter, which SiteArchitectureEdge to fetch.
+     */
+    where?: SiteArchitectureEdgeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteArchitectureEdges to fetch.
+     */
+    orderBy?: SiteArchitectureEdgeOrderByWithRelationInput | SiteArchitectureEdgeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SiteArchitectureEdges.
+     */
+    cursor?: SiteArchitectureEdgeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteArchitectureEdges from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteArchitectureEdges.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteArchitectureEdges.
+     */
+    distinct?: SiteArchitectureEdgeScalarFieldEnum | SiteArchitectureEdgeScalarFieldEnum[]
+  }
+
+  /**
+   * SiteArchitectureEdge findFirstOrThrow
+   */
+  export type SiteArchitectureEdgeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * Filter, which SiteArchitectureEdge to fetch.
+     */
+    where?: SiteArchitectureEdgeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteArchitectureEdges to fetch.
+     */
+    orderBy?: SiteArchitectureEdgeOrderByWithRelationInput | SiteArchitectureEdgeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SiteArchitectureEdges.
+     */
+    cursor?: SiteArchitectureEdgeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteArchitectureEdges from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteArchitectureEdges.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteArchitectureEdges.
+     */
+    distinct?: SiteArchitectureEdgeScalarFieldEnum | SiteArchitectureEdgeScalarFieldEnum[]
+  }
+
+  /**
+   * SiteArchitectureEdge findMany
+   */
+  export type SiteArchitectureEdgeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * Filter, which SiteArchitectureEdges to fetch.
+     */
+    where?: SiteArchitectureEdgeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteArchitectureEdges to fetch.
+     */
+    orderBy?: SiteArchitectureEdgeOrderByWithRelationInput | SiteArchitectureEdgeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SiteArchitectureEdges.
+     */
+    cursor?: SiteArchitectureEdgeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteArchitectureEdges from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteArchitectureEdges.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteArchitectureEdges.
+     */
+    distinct?: SiteArchitectureEdgeScalarFieldEnum | SiteArchitectureEdgeScalarFieldEnum[]
+  }
+
+  /**
+   * SiteArchitectureEdge create
+   */
+  export type SiteArchitectureEdgeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * The data needed to create a SiteArchitectureEdge.
+     */
+    data: XOR<SiteArchitectureEdgeCreateInput, SiteArchitectureEdgeUncheckedCreateInput>
+  }
+
+  /**
+   * SiteArchitectureEdge createMany
+   */
+  export type SiteArchitectureEdgeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SiteArchitectureEdges.
+     */
+    data: SiteArchitectureEdgeCreateManyInput | SiteArchitectureEdgeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SiteArchitectureEdge createManyAndReturn
+   */
+  export type SiteArchitectureEdgeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * The data used to create many SiteArchitectureEdges.
+     */
+    data: SiteArchitectureEdgeCreateManyInput | SiteArchitectureEdgeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SiteArchitectureEdge update
+   */
+  export type SiteArchitectureEdgeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * The data needed to update a SiteArchitectureEdge.
+     */
+    data: XOR<SiteArchitectureEdgeUpdateInput, SiteArchitectureEdgeUncheckedUpdateInput>
+    /**
+     * Choose, which SiteArchitectureEdge to update.
+     */
+    where: SiteArchitectureEdgeWhereUniqueInput
+  }
+
+  /**
+   * SiteArchitectureEdge updateMany
+   */
+  export type SiteArchitectureEdgeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SiteArchitectureEdges.
+     */
+    data: XOR<SiteArchitectureEdgeUpdateManyMutationInput, SiteArchitectureEdgeUncheckedUpdateManyInput>
+    /**
+     * Filter which SiteArchitectureEdges to update
+     */
+    where?: SiteArchitectureEdgeWhereInput
+    /**
+     * Limit how many SiteArchitectureEdges to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SiteArchitectureEdge updateManyAndReturn
+   */
+  export type SiteArchitectureEdgeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * The data used to update SiteArchitectureEdges.
+     */
+    data: XOR<SiteArchitectureEdgeUpdateManyMutationInput, SiteArchitectureEdgeUncheckedUpdateManyInput>
+    /**
+     * Filter which SiteArchitectureEdges to update
+     */
+    where?: SiteArchitectureEdgeWhereInput
+    /**
+     * Limit how many SiteArchitectureEdges to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SiteArchitectureEdge upsert
+   */
+  export type SiteArchitectureEdgeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * The filter to search for the SiteArchitectureEdge to update in case it exists.
+     */
+    where: SiteArchitectureEdgeWhereUniqueInput
+    /**
+     * In case the SiteArchitectureEdge found by the `where` argument doesn't exist, create a new SiteArchitectureEdge with this data.
+     */
+    create: XOR<SiteArchitectureEdgeCreateInput, SiteArchitectureEdgeUncheckedCreateInput>
+    /**
+     * In case the SiteArchitectureEdge was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SiteArchitectureEdgeUpdateInput, SiteArchitectureEdgeUncheckedUpdateInput>
+  }
+
+  /**
+   * SiteArchitectureEdge delete
+   */
+  export type SiteArchitectureEdgeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
+    /**
+     * Filter which SiteArchitectureEdge to delete.
+     */
+    where: SiteArchitectureEdgeWhereUniqueInput
+  }
+
+  /**
+   * SiteArchitectureEdge deleteMany
+   */
+  export type SiteArchitectureEdgeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SiteArchitectureEdges to delete
+     */
+    where?: SiteArchitectureEdgeWhereInput
+    /**
+     * Limit how many SiteArchitectureEdges to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SiteArchitectureEdge without action
+   */
+  export type SiteArchitectureEdgeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteArchitectureEdge
+     */
+    select?: SiteArchitectureEdgeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteArchitectureEdge
+     */
+    omit?: SiteArchitectureEdgeOmit<ExtArgs> | null
   }
 
 
@@ -171151,6 +172389,23 @@ export namespace Prisma {
   export type SiteIndustryItemScalarFieldEnum = (typeof SiteIndustryItemScalarFieldEnum)[keyof typeof SiteIndustryItemScalarFieldEnum]
 
 
+  export const SiteArchitectureEdgeScalarFieldEnum: {
+    id: 'id',
+    fromKey: 'fromKey',
+    toKey: 'toKey',
+    kind: 'kind',
+    realizationStatus: 'realizationStatus',
+    labels: 'labels',
+    visibility: 'visibility',
+    sortOrder: 'sortOrder',
+    autoManaged: 'autoManaged',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SiteArchitectureEdgeScalarFieldEnum = (typeof SiteArchitectureEdgeScalarFieldEnum)[keyof typeof SiteArchitectureEdgeScalarFieldEnum]
+
+
   export const OrganizationSatelliteEntitlementScalarFieldEnum: {
     organizationId: 'organizationId',
     satelliteKey: 'satelliteKey',
@@ -173262,6 +174517,34 @@ export namespace Prisma {
    * Reference to a field of type 'SiteIndustryItemRole[]'
    */
   export type ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteIndustryItemRole[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteArchitectureEdgeKind'
+   */
+  export type EnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteArchitectureEdgeKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteArchitectureEdgeKind[]'
+   */
+  export type ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteArchitectureEdgeKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteArchitectureRealizationStatus'
+   */
+  export type EnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteArchitectureRealizationStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteArchitectureRealizationStatus[]'
+   */
+  export type ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteArchitectureRealizationStatus[]'>
     
 
 
@@ -175712,6 +176995,91 @@ export namespace Prisma {
     sortOrder?: IntWithAggregatesFilter<"SiteIndustryItem"> | number
     createdAt?: DateTimeWithAggregatesFilter<"SiteIndustryItem"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SiteIndustryItem"> | Date | string
+  }
+
+  export type SiteArchitectureEdgeWhereInput = {
+    AND?: SiteArchitectureEdgeWhereInput | SiteArchitectureEdgeWhereInput[]
+    OR?: SiteArchitectureEdgeWhereInput[]
+    NOT?: SiteArchitectureEdgeWhereInput | SiteArchitectureEdgeWhereInput[]
+    id?: UuidFilter<"SiteArchitectureEdge"> | string
+    fromKey?: StringFilter<"SiteArchitectureEdge"> | string
+    toKey?: StringFilter<"SiteArchitectureEdge"> | string
+    kind?: EnumSiteArchitectureEdgeKindFilter<"SiteArchitectureEdge"> | $Enums.SiteArchitectureEdgeKind
+    realizationStatus?: EnumSiteArchitectureRealizationStatusFilter<"SiteArchitectureEdge"> | $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonFilter<"SiteArchitectureEdge">
+    visibility?: EnumSiteCatalogVisibilityFilter<"SiteArchitectureEdge"> | $Enums.SiteCatalogVisibility
+    sortOrder?: IntFilter<"SiteArchitectureEdge"> | number
+    autoManaged?: BoolFilter<"SiteArchitectureEdge"> | boolean
+    createdAt?: DateTimeFilter<"SiteArchitectureEdge"> | Date | string
+    updatedAt?: DateTimeFilter<"SiteArchitectureEdge"> | Date | string
+  }
+
+  export type SiteArchitectureEdgeOrderByWithRelationInput = {
+    id?: SortOrder
+    fromKey?: SortOrder
+    toKey?: SortOrder
+    kind?: SortOrder
+    realizationStatus?: SortOrder
+    labels?: SortOrder
+    visibility?: SortOrder
+    sortOrder?: SortOrder
+    autoManaged?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteArchitectureEdgeWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    fromKey_toKey_kind?: SiteArchitectureEdgeFromKeyToKeyKindCompoundUniqueInput
+    AND?: SiteArchitectureEdgeWhereInput | SiteArchitectureEdgeWhereInput[]
+    OR?: SiteArchitectureEdgeWhereInput[]
+    NOT?: SiteArchitectureEdgeWhereInput | SiteArchitectureEdgeWhereInput[]
+    fromKey?: StringFilter<"SiteArchitectureEdge"> | string
+    toKey?: StringFilter<"SiteArchitectureEdge"> | string
+    kind?: EnumSiteArchitectureEdgeKindFilter<"SiteArchitectureEdge"> | $Enums.SiteArchitectureEdgeKind
+    realizationStatus?: EnumSiteArchitectureRealizationStatusFilter<"SiteArchitectureEdge"> | $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonFilter<"SiteArchitectureEdge">
+    visibility?: EnumSiteCatalogVisibilityFilter<"SiteArchitectureEdge"> | $Enums.SiteCatalogVisibility
+    sortOrder?: IntFilter<"SiteArchitectureEdge"> | number
+    autoManaged?: BoolFilter<"SiteArchitectureEdge"> | boolean
+    createdAt?: DateTimeFilter<"SiteArchitectureEdge"> | Date | string
+    updatedAt?: DateTimeFilter<"SiteArchitectureEdge"> | Date | string
+  }, "id" | "fromKey_toKey_kind">
+
+  export type SiteArchitectureEdgeOrderByWithAggregationInput = {
+    id?: SortOrder
+    fromKey?: SortOrder
+    toKey?: SortOrder
+    kind?: SortOrder
+    realizationStatus?: SortOrder
+    labels?: SortOrder
+    visibility?: SortOrder
+    sortOrder?: SortOrder
+    autoManaged?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SiteArchitectureEdgeCountOrderByAggregateInput
+    _avg?: SiteArchitectureEdgeAvgOrderByAggregateInput
+    _max?: SiteArchitectureEdgeMaxOrderByAggregateInput
+    _min?: SiteArchitectureEdgeMinOrderByAggregateInput
+    _sum?: SiteArchitectureEdgeSumOrderByAggregateInput
+  }
+
+  export type SiteArchitectureEdgeScalarWhereWithAggregatesInput = {
+    AND?: SiteArchitectureEdgeScalarWhereWithAggregatesInput | SiteArchitectureEdgeScalarWhereWithAggregatesInput[]
+    OR?: SiteArchitectureEdgeScalarWhereWithAggregatesInput[]
+    NOT?: SiteArchitectureEdgeScalarWhereWithAggregatesInput | SiteArchitectureEdgeScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"SiteArchitectureEdge"> | string
+    fromKey?: StringWithAggregatesFilter<"SiteArchitectureEdge"> | string
+    toKey?: StringWithAggregatesFilter<"SiteArchitectureEdge"> | string
+    kind?: EnumSiteArchitectureEdgeKindWithAggregatesFilter<"SiteArchitectureEdge"> | $Enums.SiteArchitectureEdgeKind
+    realizationStatus?: EnumSiteArchitectureRealizationStatusWithAggregatesFilter<"SiteArchitectureEdge"> | $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonWithAggregatesFilter<"SiteArchitectureEdge">
+    visibility?: EnumSiteCatalogVisibilityWithAggregatesFilter<"SiteArchitectureEdge"> | $Enums.SiteCatalogVisibility
+    sortOrder?: IntWithAggregatesFilter<"SiteArchitectureEdge"> | number
+    autoManaged?: BoolWithAggregatesFilter<"SiteArchitectureEdge"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"SiteArchitectureEdge"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SiteArchitectureEdge"> | Date | string
   }
 
   export type OrganizationSatelliteEntitlementWhereInput = {
@@ -187215,6 +188583,104 @@ export namespace Prisma {
     role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
     assumed?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteArchitectureEdgeCreateInput = {
+    id?: string
+    fromKey: string
+    toKey: string
+    kind: $Enums.SiteArchitectureEdgeKind
+    realizationStatus: $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonNullValueInput | InputJsonValue
+    visibility?: $Enums.SiteCatalogVisibility
+    sortOrder?: number
+    autoManaged?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteArchitectureEdgeUncheckedCreateInput = {
+    id?: string
+    fromKey: string
+    toKey: string
+    kind: $Enums.SiteArchitectureEdgeKind
+    realizationStatus: $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonNullValueInput | InputJsonValue
+    visibility?: $Enums.SiteCatalogVisibility
+    sortOrder?: number
+    autoManaged?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteArchitectureEdgeUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fromKey?: StringFieldUpdateOperationsInput | string
+    toKey?: StringFieldUpdateOperationsInput | string
+    kind?: EnumSiteArchitectureEdgeKindFieldUpdateOperationsInput | $Enums.SiteArchitectureEdgeKind
+    realizationStatus?: EnumSiteArchitectureRealizationStatusFieldUpdateOperationsInput | $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonNullValueInput | InputJsonValue
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    autoManaged?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteArchitectureEdgeUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fromKey?: StringFieldUpdateOperationsInput | string
+    toKey?: StringFieldUpdateOperationsInput | string
+    kind?: EnumSiteArchitectureEdgeKindFieldUpdateOperationsInput | $Enums.SiteArchitectureEdgeKind
+    realizationStatus?: EnumSiteArchitectureRealizationStatusFieldUpdateOperationsInput | $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonNullValueInput | InputJsonValue
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    autoManaged?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteArchitectureEdgeCreateManyInput = {
+    id?: string
+    fromKey: string
+    toKey: string
+    kind: $Enums.SiteArchitectureEdgeKind
+    realizationStatus: $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonNullValueInput | InputJsonValue
+    visibility?: $Enums.SiteCatalogVisibility
+    sortOrder?: number
+    autoManaged?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteArchitectureEdgeUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fromKey?: StringFieldUpdateOperationsInput | string
+    toKey?: StringFieldUpdateOperationsInput | string
+    kind?: EnumSiteArchitectureEdgeKindFieldUpdateOperationsInput | $Enums.SiteArchitectureEdgeKind
+    realizationStatus?: EnumSiteArchitectureRealizationStatusFieldUpdateOperationsInput | $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonNullValueInput | InputJsonValue
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    autoManaged?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteArchitectureEdgeUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fromKey?: StringFieldUpdateOperationsInput | string
+    toKey?: StringFieldUpdateOperationsInput | string
+    kind?: EnumSiteArchitectureEdgeKindFieldUpdateOperationsInput | $Enums.SiteArchitectureEdgeKind
+    realizationStatus?: EnumSiteArchitectureRealizationStatusFieldUpdateOperationsInput | $Enums.SiteArchitectureRealizationStatus
+    labels?: JsonNullValueInput | InputJsonValue
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    autoManaged?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -199637,6 +201103,94 @@ export namespace Prisma {
     _max?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel>
   }
 
+  export type EnumSiteArchitectureEdgeKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteArchitectureEdgeKind | EnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteArchitectureEdgeKind[] | ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteArchitectureEdgeKind[] | ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteArchitectureEdgeKindFilter<$PrismaModel> | $Enums.SiteArchitectureEdgeKind
+  }
+
+  export type EnumSiteArchitectureRealizationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteArchitectureRealizationStatus | EnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteArchitectureRealizationStatus[] | ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteArchitectureRealizationStatus[] | ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteArchitectureRealizationStatusFilter<$PrismaModel> | $Enums.SiteArchitectureRealizationStatus
+  }
+
+  export type SiteArchitectureEdgeFromKeyToKeyKindCompoundUniqueInput = {
+    fromKey: string
+    toKey: string
+    kind: $Enums.SiteArchitectureEdgeKind
+  }
+
+  export type SiteArchitectureEdgeCountOrderByAggregateInput = {
+    id?: SortOrder
+    fromKey?: SortOrder
+    toKey?: SortOrder
+    kind?: SortOrder
+    realizationStatus?: SortOrder
+    labels?: SortOrder
+    visibility?: SortOrder
+    sortOrder?: SortOrder
+    autoManaged?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteArchitectureEdgeAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type SiteArchitectureEdgeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    fromKey?: SortOrder
+    toKey?: SortOrder
+    kind?: SortOrder
+    realizationStatus?: SortOrder
+    visibility?: SortOrder
+    sortOrder?: SortOrder
+    autoManaged?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteArchitectureEdgeMinOrderByAggregateInput = {
+    id?: SortOrder
+    fromKey?: SortOrder
+    toKey?: SortOrder
+    kind?: SortOrder
+    realizationStatus?: SortOrder
+    visibility?: SortOrder
+    sortOrder?: SortOrder
+    autoManaged?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteArchitectureEdgeSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type EnumSiteArchitectureEdgeKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteArchitectureEdgeKind | EnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteArchitectureEdgeKind[] | ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteArchitectureEdgeKind[] | ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteArchitectureEdgeKindWithAggregatesFilter<$PrismaModel> | $Enums.SiteArchitectureEdgeKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteArchitectureEdgeKindFilter<$PrismaModel>
+    _max?: NestedEnumSiteArchitectureEdgeKindFilter<$PrismaModel>
+  }
+
+  export type EnumSiteArchitectureRealizationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteArchitectureRealizationStatus | EnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteArchitectureRealizationStatus[] | ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteArchitectureRealizationStatus[] | ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteArchitectureRealizationStatusWithAggregatesFilter<$PrismaModel> | $Enums.SiteArchitectureRealizationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteArchitectureRealizationStatusFilter<$PrismaModel>
+    _max?: NestedEnumSiteArchitectureRealizationStatusFilter<$PrismaModel>
+  }
+
   export type OrganizationSatelliteEntitlementOrganizationIdSatelliteKeyCompoundUniqueInput = {
     organizationId: string
     satelliteKey: string
@@ -207892,6 +209446,14 @@ export namespace Prisma {
     upsert?: SatelliteUpsertWithoutIndustryItemsInput
     connect?: SatelliteWhereUniqueInput
     update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutIndustryItemsInput, SatelliteUpdateWithoutIndustryItemsInput>, SatelliteUncheckedUpdateWithoutIndustryItemsInput>
+  }
+
+  export type EnumSiteArchitectureEdgeKindFieldUpdateOperationsInput = {
+    set?: $Enums.SiteArchitectureEdgeKind
+  }
+
+  export type EnumSiteArchitectureRealizationStatusFieldUpdateOperationsInput = {
+    set?: $Enums.SiteArchitectureRealizationStatus
   }
 
   export type OrganizationCreateNestedOneWithoutSatelliteEntitlementsInput = {
@@ -218475,6 +220037,40 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel>
     _max?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSiteArchitectureEdgeKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteArchitectureEdgeKind | EnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteArchitectureEdgeKind[] | ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteArchitectureEdgeKind[] | ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteArchitectureEdgeKindFilter<$PrismaModel> | $Enums.SiteArchitectureEdgeKind
+  }
+
+  export type NestedEnumSiteArchitectureRealizationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteArchitectureRealizationStatus | EnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteArchitectureRealizationStatus[] | ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteArchitectureRealizationStatus[] | ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteArchitectureRealizationStatusFilter<$PrismaModel> | $Enums.SiteArchitectureRealizationStatus
+  }
+
+  export type NestedEnumSiteArchitectureEdgeKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteArchitectureEdgeKind | EnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteArchitectureEdgeKind[] | ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteArchitectureEdgeKind[] | ListEnumSiteArchitectureEdgeKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteArchitectureEdgeKindWithAggregatesFilter<$PrismaModel> | $Enums.SiteArchitectureEdgeKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteArchitectureEdgeKindFilter<$PrismaModel>
+    _max?: NestedEnumSiteArchitectureEdgeKindFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSiteArchitectureRealizationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteArchitectureRealizationStatus | EnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteArchitectureRealizationStatus[] | ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteArchitectureRealizationStatus[] | ListEnumSiteArchitectureRealizationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteArchitectureRealizationStatusWithAggregatesFilter<$PrismaModel> | $Enums.SiteArchitectureRealizationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteArchitectureRealizationStatusFilter<$PrismaModel>
+    _max?: NestedEnumSiteArchitectureRealizationStatusFilter<$PrismaModel>
   }
 
   export type NestedEnumDeploymentTopologyFilter<$PrismaModel = never> = {

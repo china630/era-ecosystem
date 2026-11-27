@@ -156,11 +156,11 @@ export type LandingMarketingCopy = {
 const landingMarketingRu: LandingMarketingCopy = {
   chrome: {
     login: "Войти",
-    navSatellites: "Спутники",
+    navSatellites: "Продукты",
   },
-  footer: "ERA 365 — платформа учёта и отраслевых спутников в Азербайджане",
+  footer: "ERA 365 — платформа учёта и отраслевых решений в Азербайджане",
   hero: {
-    title: "Учёт и отраслевые спутники — одна платформа",
+    title: "Учёт и отраслевые решения — одна платформа",
     subtitle:
       "ERA Core, гостиница, клиника, касса и Data HUB. Палитра 19 / 29 / 39 / 99 AZN. 3 месяца trial без карты.",
     ctaPrimary: "Начать 3 месяца бесплатно",
@@ -172,8 +172,8 @@ const landingMarketingRu: LandingMarketingCopy = {
     coreTitle: "ERA Core",
     coreBody: "Учёт NAS/MMUS: книга, касса, склад, производство, ОС, кадры. Foundation 29 AZN.",
     coreCta: "О ядре Finance",
-    satellitesTitle: "Отраслевые спутники",
-    satellitesIntro: "Gate — рабочее место и базовая ёмкость. Ядра и пакеты — на странице спутника и в каталоге.",
+    satellitesTitle: "Отраслевые продукты",
+    satellitesIntro: "Gate — рабочее место и базовая ёмкость. Ядра и пакеты — на странице продукта и в каталоге.",
     dataHubTitle: "Data HUB",
     dataHubBody: "Справочники и обмен. Bronze / Silver / Gold — только один тариф.",
     dataHubCta: "Data HUB",
@@ -190,7 +190,7 @@ const landingMarketingRu: LandingMarketingCopy = {
     checklist: [
       "NAS / MMUS и IFRS / MHBS — двойная запись",
       "Касса, склад, производство, ОС и кадры",
-      "Спутники: Hotel, Clinic, F&B, Retail… (Gate)",
+      "Продукты: Hotel, Clinic, F&B, Retail… (Gate)",
       "Документы 1000/мес в NAS; OCR 50 стр.",
     ],
     disclaimer:
@@ -208,7 +208,7 @@ const landingMarketingRu: LandingMarketingCopy = {
       {
         title: "Нулевой доступ",
         detail:
-          "Сотрудники ERA технически не могут просматривать ваши данные: ни учёт, ни спутники.",
+          "Сотрудники ERA технически не могут просматривать ваши данные: ни учёт, ни отраслевые продукты.",
       },
       {
         title: "Государственный якорь безопасности",
@@ -284,13 +284,13 @@ const landingMarketingRu: LandingMarketingCopy = {
         id: "what",
         question: "Что такое ERA 365?",
         answer:
-          "Платформа учёта (ERA Core) и отраслевых спутников для Азербайджана: гостиница, клиника, касса, логистика и другие рабочие места в одном контуре с MDM и подпиской.",
+          "Платформа учёта (ERA Core) и отраслевых продуктов для Азербайджана: гостиница, клиника, касса, логистика и другие рабочие места в одном контуре с MDM и подпиской.",
       },
       {
         id: "pricing",
         question: "Как устроены цены?",
         answer:
-          "SKU — палитра 19 / 29 / 39 / 99 AZN. Foundation 29. Gate открывает спутник и базовую ёмкость. Документы, OCR, SMS и хранение считаются метрами. Полный конструктор — на странице тарифов.",
+          "SKU — палитра 19 / 29 / 39 / 99 AZN. Foundation 29. Gate открывает продукт и базовую ёмкость. Документы, OCR, SMS и хранение считаются метрами. Полный конструктор — на странице тарифов.",
       },
       {
         id: "xor",
@@ -314,7 +314,7 @@ const landingMarketingRu: LandingMarketingCopy = {
         id: "register",
         question: "Где зарегистрироваться?",
         answer:
-          "На app.era-365.online: аккаунт, VÖEN и модули. После входа спутники открываются из launcher. Регистрация не на страницах /industry — они только для авторизованных.",
+          "На app.era-365.online: аккаунт, VÖEN и модули. После входа продукты открываются из launcher. Регистрация не на страницах /industry — они только для авторизованных.",
       },
     ],
   },
@@ -430,11 +430,11 @@ const landingMarketingRu: LandingMarketingCopy = {
 const landingMarketingAz: LandingMarketingCopy = {
   chrome: {
     login: "Daxil ol",
-    navSatellites: "Peyklər",
+    navSatellites: "Həllər",
   },
-  footer: "ERA 365 — Azərbaycanda uçot və sənaye peykləri platforması",
+  footer: "ERA 365 — Azərbaycanda uçot və sənaye həlləri platforması",
   hero: {
-    title: "Uçot və sənaye peykləri — bir platforma",
+    title: "Uçot və sənaye həlləri — bir platforma",
     subtitle:
       "ERA Core, otel, klinika, kassa və Data HUB. Palitra 19 / 29 / 39 / 99 AZN. 3 ay trial, kart tələb olunmur.",
     ctaPrimary: "3 ay tam pulsuz başla",
@@ -446,8 +446,8 @@ const landingMarketingAz: LandingMarketingCopy = {
     coreTitle: "ERA Core",
     coreBody: "NAS/MMUS uçotu: kitab, kassa, anbar, istehsalat, ƏV, kadrlar. Foundation 29 AZN.",
     coreCta: "Finance nüvəsi",
-    satellitesTitle: "Sənaye peykləri",
-    satellitesIntro: "Gate — iş yeri və baza tutumu. Nüvə və paketlər peyk səhifəsində və kataloqdadır.",
+    satellitesTitle: "Sənaye məhsulları",
+    satellitesIntro: "Gate — iş yeri və baza tutumu. Nüvə və paketlər məhsul səhifəsində və kataloqdadır.",
     dataHubTitle: "Data HUB",
     dataHubBody: "Soraqçalar və mübadilə. Bronze / Silver / Gold — yalnız bir tarif.",
     dataHubCta: "Data HUB",
@@ -464,7 +464,7 @@ const landingMarketingAz: LandingMarketingCopy = {
     checklist: [
       "NAS / MMUS və IFRS / MHBS — ikiqat yazılış",
       "Kassa, anbar, istehsalat, ƏV və kadrlar",
-      "Peyklər: Hotel, Clinic, F&B, Retail… (Gate)",
+      "Məhsullar: Hotel, Clinic, F&B, Retail… (Gate)",
       "NAS-da 1000 sənəd/ay; 50 OCR səhifə",
     ],
     disclaimer:
@@ -482,7 +482,7 @@ const landingMarketingAz: LandingMarketingCopy = {
       {
         title: "Sıfır giriş",
         detail:
-          "ERA işçiləri texniki olaraq sizin məlumatlarınıza baxa bilməz: nə uçot, nə peyklər.",
+          "ERA işçiləri texniki olaraq sizin məlumatlarınıza baxa bilməz: nə uçot, nə sənaye məhsulları.",
       },
       {
         title: "Dövlət təhlükəsizlik lövbəri",
@@ -558,13 +558,13 @@ const landingMarketingAz: LandingMarketingCopy = {
         id: "what",
         question: "ERA 365 nədir?",
         answer:
-          "Azərbaycan üçün uçot (ERA Core) və sənaye peykləri platforması: otel, klinika, kassa, logistika və digər iş yerləri MDM və abunə ilə eyni konturdə.",
+          "Azərbaycan üçün uçot (ERA Core) və sənaye həlləri platforması: otel, klinika, kassa, logistika və digər iş yerləri MDM və abunə ilə eyni konturdə.",
       },
       {
         id: "pricing",
         question: "Qiymətlər necə qurulub?",
         answer:
-          "SKU palitrası 19 / 29 / 39 / 99 AZN. Foundation 29. Gate peyki və baza tutumunu açır. Sənəd, OCR, SMS və yaddaş metrlərdir. Tam konstruktor tarif səhifəsindədir.",
+          "SKU palitrası 19 / 29 / 39 / 99 AZN. Foundation 29. Gate məhsulu və baza tutumunu açır. Sənəd, OCR, SMS və yaddaş metrlərdir. Tam konstruktor tarif səhifəsindədir.",
       },
       {
         id: "xor",
@@ -588,7 +588,7 @@ const landingMarketingAz: LandingMarketingCopy = {
         id: "register",
         question: "Harada qeydiyyatdan keçmək olar?",
         answer:
-          "app.era-365.online: hesab, VÖEN və modullar. Daxil olduqdan sonra peyklər launcher-dən açılır. /industry səhifələri yalnız avtorizasiya olunmuşlar üçündür.",
+          "app.era-365.online: hesab, VÖEN və modullar. Daxil olduqdan sonra məhsullar launcher-dən açılır. /industry səhifələri yalnız avtorizasiya olunmuşlar üçündür.",
       },
     ],
   },

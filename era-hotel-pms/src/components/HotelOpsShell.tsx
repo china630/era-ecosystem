@@ -977,6 +977,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
                   permission: PERMISSIONS.SCREEN_SETTINGS,
                 },
                 {
+                  id: 'sanatorium-packages',
+                  href: '/settings/sanatorium-packages',
+                  labelKey: 'sanatoriumPackages',
+                  icon: Banknote,
+                  permission: PERMISSIONS.SCREEN_SETTINGS,
+                },
+                {
                   id: 'price-daily',
                   href: '/settings/daily-prices',
                   labelKey: 'dailyPrices',

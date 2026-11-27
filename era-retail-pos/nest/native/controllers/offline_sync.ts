@@ -36,6 +36,7 @@ export class OfflineSyncController {
   @Get("api/offline/sync")
   @HttpCode(200)
   async get_1(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
     if (!(await enterRetailStaff(httpReq, httpRes))) return;
     try {
       const session = await retailNestSession(httpReq);

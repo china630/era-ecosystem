@@ -7,6 +7,8 @@
 **Legend:** Scaffold ✅ / 🟡 / `[ ]` · Pilot-ready `[x]` / `[ ]` / ⏸  
 **Scaffold ✅** only with PRD wording + negative path + no Critical residual + not field-intent.
 
+**Closeout (2026-11-26 Nest query URL):** No new Scaffold ✅. Handlers that read `requestUrl` or a missing `request` define them. AC rows stay as they are. `retail.yaml` untouched. `era-readiness-matrix` N/A.
+
 **BE deepen (2026-08-17):** Green Scaffold BE wave 2 — `__tests__/ret-pos-negative.spec.ts`, `ret-stock-negative.spec.ts`.  
 **Wave 8 (2026-08-18):** AC-RET-FISCAL excluded from Scaffold BE rollup (Hotel INT pattern); stays Scaffold 🟡 / External ⏸.
 
