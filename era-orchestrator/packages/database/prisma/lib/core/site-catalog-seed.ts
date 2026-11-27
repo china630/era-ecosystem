@@ -2,6 +2,9 @@ import type { PrismaClient } from "../../../generated/client";
 
 type LocaleMap = { az?: string; ru?: string; en?: string };
 
+/** Prisma JSON-safe capacity bag for public calculator prefill. */
+type CalcCapacity = { [key: string]: string | number | boolean | null };
+
 type SatelliteProfileSeed = {
   satelliteKey: string;
   publicSlug: string;
@@ -35,7 +38,7 @@ type IndustrySeed = {
   maturityOverride?: "prod" | "pilot";
   names: LocaleMap;
   descriptions?: LocaleMap;
-  calcPrefill?: { moduleKeys: string[]; capacity?: Record<string, unknown> };
+  calcPrefill?: { moduleKeys: string[]; capacity?: CalcCapacity };
   items: IndustryItemSeed[];
 };
 
