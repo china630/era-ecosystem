@@ -14,7 +14,6 @@ export class AdminUserLoginsController {
   @Get("api/admin/user-logins")
   @HttpCode(200)
   async get_0(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
-    const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
     if (!(await enterRetailStaff(httpReq, httpRes))) return;
     try {
       const session = await retailNestSession(httpReq);
