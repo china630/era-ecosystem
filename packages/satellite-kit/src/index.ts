@@ -92,6 +92,17 @@ export {
   isRunningInsideDocker,
 } from "./tenancy/resolve-orchestrator-url";
 export {
+  orchPublicHref,
+  orchWebUrl,
+  resolveOrchestratorPublicBaseUrl,
+} from "./platform/orch-web-url";
+export {
+  buildPlatformLinks,
+  readPlatformLinks,
+  platformLinksGet,
+  type PlatformLinksBody,
+} from "./platform/platform-links";
+export {
   resolvePeerSatelliteBaseUrl,
   peerSatelliteBaseUrl,
   clearPeerSatelliteUrlCache,

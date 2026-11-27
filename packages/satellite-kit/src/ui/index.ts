@@ -3,7 +3,18 @@
  * Staff orgNo localStorage helpers live in staff-login-org-storage.ts so this
  * graph stays browser-safe (prod crash: util.promisify(scrypt) on app.era-365.online).
  */
-export { orchPublicHref, orchWebUrl } from "../platform/orch-web-url";
+export {
+  orchPublicHref,
+  orchWebUrl,
+  resolveOrchestratorPublicBaseUrl,
+} from "../platform/orch-web-url";
+export {
+  buildPlatformLinks,
+  readPlatformLinks,
+  platformLinksGet,
+  type PlatformLinksBody,
+} from "../platform/platform-links";
+export { usePlatformLinks, type PlatformLinksState } from "./use-platform-links";
 export * from "./design-system";
 export { FIELD_WIDTH, fieldWidthClass, type FieldWidthPreset } from "./field-presets";
 export { Field, FieldSelect, FieldTextarea, FieldRow, type FieldProps, type FieldSelectProps, type FieldTextareaProps } from "./field";
