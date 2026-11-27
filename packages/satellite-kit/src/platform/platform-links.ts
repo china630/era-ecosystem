@@ -1,4 +1,5 @@
 import { kitJson, kitResultToNext, type KitHttpResult } from "../tenancy/organization-bind";
+import { getRuntimeConfigMemory } from "../tenancy/runtime-config-memory";
 import { orchPublicHref, resolveOrchestratorPublicBaseUrl } from "./orch-web-url";
 
 export type PlatformLinksBody = {
@@ -10,9 +11,15 @@ export type PlatformLinksBody = {
   termsUrl: string | null;
 };
 
+function resolveAppOrigin(): string {
+  const fromMem = getRuntimeConfigMemory().orchestratorPublicBaseUrl?.trim();
+  if (fromMem) return fromMem.replace(/\/$/, "");
+  return resolveOrchestratorPublicBaseUrl();
+}
+
 /** Build public cabinet links from Sync/bootstrap app origin (no auth). */
 export function buildPlatformLinks(): PlatformLinksBody {
-  const appOrigin = resolveOrchestratorPublicBaseUrl() || null;
+  const appOrigin = resolveAppOrigin() || null;
   if (!appOrigin) {
     return {
       appOrigin: null,
@@ -23,13 +30,14 @@ export function buildPlatformLinks(): PlatformLinksBody {
       termsUrl: null,
     };
   }
+  const href = (path: string) => `${appOrigin}${path.startsWith("/") ? path : `/${path}`}`;
   return {
     appOrigin,
-    registerUrl: orchPublicHref("/register") || null,
-    registerOrgUrl: orchPublicHref("/register-org") || null,
-    pricingUrl: orchPublicHref("/pricing") || null,
-    helpUrl: orchPublicHref("/help") || null,
-    termsUrl: orchPublicHref("/terms") || null,
+    registerUrl: href("/register"),
+    registerOrgUrl: href("/register-org"),
+    pricingUrl: href("/pricing"),
+    helpUrl: href("/help"),
+    termsUrl: href("/terms"),
   };
 }
 
@@ -46,3 +54,6 @@ export function readPlatformLinks(): KitHttpResult {
 export async function platformLinksGet(_request?: Request): Promise<Response> {
   return kitResultToNext(readPlatformLinks());
 }
+
+// Keep orchPublicHref available for callers that already imported from this module path.
+export { orchPublicHref };

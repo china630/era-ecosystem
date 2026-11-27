@@ -1,5 +1,3 @@
-import { getRuntimeConfigMemory } from "../tenancy/runtime-config-memory";
-
 function readEnv(name: string): string | undefined {
   if (typeof process === "undefined" || !process.env) return undefined;
   const v = process.env[name]?.trim();
@@ -12,13 +10,12 @@ function trimSlash(url: string): string {
 
 /**
  * Browser app origin for register / pricing / help (not the API / event URL).
- * Prefer Sync `orchestratorPublicBaseUrl`; install env is bootstrap only.
- * Never falls back to localhost in production.
+ * Edge-safe: env / Sync side-effect `ERA_APP_ORIGIN` only (no runtime-config-memory import).
+ * Server handlers should prefer `resolveOrchestratorPublicBaseUrl()` in platform-links
+ * which also reads Sync memory.
+ * Never falls back to localhost in production / Docker.
  */
 export function resolveOrchestratorPublicBaseUrl(): string {
-  const fromMem = getRuntimeConfigMemory().orchestratorPublicBaseUrl?.trim();
-  if (fromMem) return trimSlash(fromMem);
-
   const fromEnv =
     readEnv("ERA_APP_ORIGIN") ??
     readEnv("NEXT_PUBLIC_ORCH_WEB_URL") ??
@@ -31,7 +28,7 @@ export function resolveOrchestratorPublicBaseUrl(): string {
   return "http://127.0.0.1:3000";
 }
 
-/** @deprecated Prefer resolveOrchestratorPublicBaseUrl — same resolver. */
+/** @deprecated Prefer resolveOrchestratorPublicBaseUrl — same resolver (env/bootstrap). */
 export function orchWebUrl(): string {
   return resolveOrchestratorPublicBaseUrl();
 }
