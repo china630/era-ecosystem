@@ -287,6 +287,65 @@ exports.Prisma.SatelliteScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SatellitePublicProfileScalarFieldEnum = {
+  satelliteKey: 'satelliteKey',
+  publicSlug: 'publicSlug',
+  visibility: 'visibility',
+  maturity: 'maturity',
+  sortOrder: 'sortOrder',
+  names: 'names',
+  descriptions: 'descriptions',
+  tagline: 'tagline',
+  body: 'body',
+  imageUrl: 'imageUrl',
+  showOnSite: 'showOnSite',
+  kind: 'kind',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PricingModulePublicProfileScalarFieldEnum = {
+  moduleKey: 'moduleKey',
+  visibility: 'visibility',
+  maturity: 'maturity',
+  sortOrder: 'sortOrder',
+  names: 'names',
+  descriptions: 'descriptions',
+  tagline: 'tagline',
+  body: 'body',
+  imageUrl: 'imageUrl',
+  showAsSubsection: 'showAsSubsection',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SiteIndustryScalarFieldEnum = {
+  slug: 'slug',
+  visibility: 'visibility',
+  maturityOverride: 'maturityOverride',
+  sortOrder: 'sortOrder',
+  names: 'names',
+  descriptions: 'descriptions',
+  tagline: 'tagline',
+  body: 'body',
+  imageUrl: 'imageUrl',
+  calcPrefill: 'calcPrefill',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SiteIndustryItemScalarFieldEnum = {
+  id: 'id',
+  industrySlug: 'industrySlug',
+  satelliteKey: 'satelliteKey',
+  moduleKey: 'moduleKey',
+  role: 'role',
+  assumed: 'assumed',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.OrganizationSatelliteEntitlementScalarFieldEnum = {
   organizationId: 'organizationId',
   satelliteKey: 'satelliteKey',
@@ -1853,6 +1912,23 @@ exports.PricingCatalogKind = exports.$Enums.PricingCatalogKind = {
   ADDON: 'ADDON'
 };
 
+exports.SiteCatalogVisibility = exports.$Enums.SiteCatalogVisibility = {
+  VISIBLE: 'VISIBLE',
+  HIDDEN: 'HIDDEN',
+  DRAFT: 'DRAFT'
+};
+
+exports.SiteCatalogMaturity = exports.$Enums.SiteCatalogMaturity = {
+  prod: 'prod',
+  pilot: 'pilot'
+};
+
+exports.SiteIndustryItemRole = exports.$Enums.SiteIndustryItemRole = {
+  C: 'C',
+  I: 'I',
+  O: 'O'
+};
+
 exports.DeploymentTopology = exports.$Enums.DeploymentTopology = {
   SHARED: 'SHARED',
   DEDICATED: 'DEDICATED',
@@ -2360,6 +2436,10 @@ exports.Prisma.ModelName = {
   Pricing: 'Pricing',
   PricingModule: 'PricingModule',
   Satellite: 'Satellite',
+  SatellitePublicProfile: 'SatellitePublicProfile',
+  PricingModulePublicProfile: 'PricingModulePublicProfile',
+  SiteIndustry: 'SiteIndustry',
+  SiteIndustryItem: 'SiteIndustryItem',
   OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
   SatelliteEndpoint: 'SatelliteEndpoint',
   PlacementBatch: 'PlacementBatch',

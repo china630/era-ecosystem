@@ -8,6 +8,10 @@ import {
   RETIRED_CONSTRUCTION_MODULE_KEYS,
   rewriteCatalogActiveModules,
 } from "./pricing-catalog-canon";
+import {
+  ensurePlatformSiteSatellites,
+  seedSiteCatalog,
+} from "./site-catalog-seed";
 
 export type PricingModuleSeedRow = {
   key: string;
@@ -100,6 +104,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     name: "Workforce Hub (CP)",
     pricePerMonth: 0,
     sortOrder: 3,
+    satelliteKey: "platform_workforce",
     trialEligibleInTrial: true,
   },
   {
@@ -107,6 +112,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     name: "Workforce Essential (2 AZN / person)",
     pricePerMonth: 0,
     sortOrder: 31,
+    satelliteKey: "platform_workforce",
     trialEligibleInTrial: true,
   },
   {
@@ -114,6 +120,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     name: "Workforce Professional (4 AZN / person)",
     pricePerMonth: 0,
     sortOrder: 32,
+    satelliteKey: "platform_workforce",
     trialEligibleInTrial: true,
   },
   {
@@ -121,6 +128,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     name: "Workforce Premium (6 AZN / person)",
     pricePerMonth: 0,
     sortOrder: 33,
+    satelliteKey: "platform_workforce",
     trialEligibleInTrial: true,
   },
   {
@@ -235,6 +243,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     pricePerMonth: 29,
     sortOrder: 23,
     isPremium: false,
+    satelliteKey: "platform_datahub",
   },
   {
     key: "platform_datahub_silver",
@@ -242,6 +251,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     pricePerMonth: 39,
     sortOrder: 24,
     isPremium: false,
+    satelliteKey: "platform_datahub",
   },
   {
     key: "platform_datahub_gold",
@@ -249,6 +259,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     pricePerMonth: 99,
     sortOrder: 25,
     isPremium: false,
+    satelliteKey: "platform_datahub",
   },
   {
     key: "platform_booking",
@@ -892,6 +903,9 @@ async function ensureSatellites(prisma: PrismaClient): Promise<void> {
       update: { name: s.name },
     });
   }
+
+  // Site-only product rows (Workforce / Data HUB). Not in INDUSTRY_SATELLITE_KEYS.
+  await ensurePlatformSiteSatellites(prisma);
 }
 
 function moduleSeedData(m: PricingModuleSeedRow) {
@@ -1069,4 +1083,6 @@ export async function syncPricingModuleCatalog(prisma: PrismaClient): Promise<vo
       },
     },
   });
+  // Public marketing profiles / industries — idempotent; never wipes human texts.
+  await seedSiteCatalog(prisma);
 }

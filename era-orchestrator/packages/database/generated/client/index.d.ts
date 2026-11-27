@@ -79,6 +79,26 @@ export type PricingModule = $Result.DefaultSelection<Prisma.$PricingModulePayloa
  */
 export type Satellite = $Result.DefaultSelection<Prisma.$SatellitePayload>
 /**
+ * Model SatellitePublicProfile
+ * * Public product page / mega-menu profile (separate from billing Satellite row).
+ */
+export type SatellitePublicProfile = $Result.DefaultSelection<Prisma.$SatellitePublicProfilePayload>
+/**
+ * Model PricingModulePublicProfile
+ * * Optional public override for a pricing module (texts, Pilot badge, visibility).
+ */
+export type PricingModulePublicProfile = $Result.DefaultSelection<Prisma.$PricingModulePublicProfilePayload>
+/**
+ * Model SiteIndustry
+ * * Industry = bundle of 5–6 products for the public site (not PricingBundle).
+ */
+export type SiteIndustry = $Result.DefaultSelection<Prisma.$SiteIndustryPayload>
+/**
+ * Model SiteIndustryItem
+ * 
+ */
+export type SiteIndustryItem = $Result.DefaultSelection<Prisma.$SiteIndustryItemPayload>
+/**
  * Model OrganizationSatelliteEntitlement
  * Owner-connected satellite trial row (materialized on Connect).
  */
@@ -944,6 +964,32 @@ export const SatelliteChannelManagedBy: {
 export type SatelliteChannelManagedBy = (typeof SatelliteChannelManagedBy)[keyof typeof SatelliteChannelManagedBy]
 
 
+export const SiteCatalogVisibility: {
+  VISIBLE: 'VISIBLE',
+  HIDDEN: 'HIDDEN',
+  DRAFT: 'DRAFT'
+};
+
+export type SiteCatalogVisibility = (typeof SiteCatalogVisibility)[keyof typeof SiteCatalogVisibility]
+
+
+export const SiteCatalogMaturity: {
+  prod: 'prod',
+  pilot: 'pilot'
+};
+
+export type SiteCatalogMaturity = (typeof SiteCatalogMaturity)[keyof typeof SiteCatalogMaturity]
+
+
+export const SiteIndustryItemRole: {
+  C: 'C',
+  I: 'I',
+  O: 'O'
+};
+
+export type SiteIndustryItemRole = (typeof SiteIndustryItemRole)[keyof typeof SiteIndustryItemRole]
+
+
 export const PlacementJobStatus: {
   PENDING: 'PENDING',
   FREEZE: 'FREEZE',
@@ -1565,6 +1611,18 @@ export type SatelliteChannelManagedBy = $Enums.SatelliteChannelManagedBy
 
 export const SatelliteChannelManagedBy: typeof $Enums.SatelliteChannelManagedBy
 
+export type SiteCatalogVisibility = $Enums.SiteCatalogVisibility
+
+export const SiteCatalogVisibility: typeof $Enums.SiteCatalogVisibility
+
+export type SiteCatalogMaturity = $Enums.SiteCatalogMaturity
+
+export const SiteCatalogMaturity: typeof $Enums.SiteCatalogMaturity
+
+export type SiteIndustryItemRole = $Enums.SiteIndustryItemRole
+
+export const SiteIndustryItemRole: typeof $Enums.SiteIndustryItemRole
+
 export type PlacementJobStatus = $Enums.PlacementJobStatus
 
 export const PlacementJobStatus: typeof $Enums.PlacementJobStatus
@@ -2019,6 +2077,46 @@ export class PrismaClient<
     * ```
     */
   get satellite(): Prisma.SatelliteDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.satellitePublicProfile`: Exposes CRUD operations for the **SatellitePublicProfile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SatellitePublicProfiles
+    * const satellitePublicProfiles = await prisma.satellitePublicProfile.findMany()
+    * ```
+    */
+  get satellitePublicProfile(): Prisma.SatellitePublicProfileDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.pricingModulePublicProfile`: Exposes CRUD operations for the **PricingModulePublicProfile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PricingModulePublicProfiles
+    * const pricingModulePublicProfiles = await prisma.pricingModulePublicProfile.findMany()
+    * ```
+    */
+  get pricingModulePublicProfile(): Prisma.PricingModulePublicProfileDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.siteIndustry`: Exposes CRUD operations for the **SiteIndustry** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SiteIndustries
+    * const siteIndustries = await prisma.siteIndustry.findMany()
+    * ```
+    */
+  get siteIndustry(): Prisma.SiteIndustryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.siteIndustryItem`: Exposes CRUD operations for the **SiteIndustryItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SiteIndustryItems
+    * const siteIndustryItems = await prisma.siteIndustryItem.findMany()
+    * ```
+    */
+  get siteIndustryItem(): Prisma.SiteIndustryItemDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.organizationSatelliteEntitlement`: Exposes CRUD operations for the **OrganizationSatelliteEntitlement** model.
@@ -3596,6 +3694,10 @@ export namespace Prisma {
     Pricing: 'Pricing',
     PricingModule: 'PricingModule',
     Satellite: 'Satellite',
+    SatellitePublicProfile: 'SatellitePublicProfile',
+    PricingModulePublicProfile: 'PricingModulePublicProfile',
+    SiteIndustry: 'SiteIndustry',
+    SiteIndustryItem: 'SiteIndustryItem',
     OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
     SatelliteEndpoint: 'SatelliteEndpoint',
     PlacementBatch: 'PlacementBatch',
@@ -3724,7 +3826,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "organizationSatelliteChannel" | "billingInvoiceItem" | "organizationModuleGrace" | "commercialOutlet" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementBatch" | "placementJob" | "placementProcessLog" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationAccessCredential" | "organizationProfile" | "organizationGuestApp" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "orgPaymentMethod" | "user" | "commsThread" | "commsMessage" | "commsParticipant" | "docLocation" | "docRouteTemplate" | "docRouteStep" | "docRouteEdge" | "docCase" | "docFile" | "docRouteInstance" | "docRouteTask" | "docRouteDecision" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "organizationSatelliteChannel" | "billingInvoiceItem" | "organizationModuleGrace" | "commercialOutlet" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "satellitePublicProfile" | "pricingModulePublicProfile" | "siteIndustry" | "siteIndustryItem" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "placementBatch" | "placementJob" | "placementProcessLog" | "workforceAssignment" | "workforceScope" | "workforceGrade" | "workforceJob" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "satelliteRoleCatalog" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheet" | "workforceTimesheetEntry" | "workforcePlace" | "workforceAttendanceDevice" | "workforceAttendanceIdentity" | "workforceAttendancePunch" | "workforceAttendancePunchJournal" | "workforceHourlyLeaveRequest" | "workforceAdvanceRequest" | "workforceAnnouncement" | "workforceAnnouncementRead" | "workforceFitnessRecord" | "workforceShiftType" | "workforceShiftCycle" | "workforceShiftCycleSlot" | "workforceBrigade" | "workforceBrigadeMember" | "workforceShiftAssignment" | "workforceDayOverride" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrderTemplate" | "workforcePersonnelOrder" | "workforceMigrationStep" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "workforceOrgSettings" | "workforceApprovalRoute" | "workforceApprovalStep" | "workforceApprovalDecision" | "workforceVacationPlanRevision" | "organization" | "organizationAccessCredential" | "organizationProfile" | "organizationGuestApp" | "organizationContactChannel" | "organizationAddress" | "elektrawebBridgePolicy" | "clinicCutoverPolicy" | "fiscalHardwareDevice" | "orgPaymentMethod" | "user" | "commsThread" | "commsMessage" | "commsParticipant" | "docLocation" | "docRouteTemplate" | "docRouteStep" | "docRouteEdge" | "docCase" | "docFile" | "docRouteInstance" | "docRouteTask" | "docRouteDecision" | "holding" | "holdingMembership" | "organizationRole" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger" | "agencyPortalAccount" | "agencyPropertyGrant" | "buyerPortalAccount" | "buyerOrgGrant"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4687,6 +4789,302 @@ export namespace Prisma {
           count: {
             args: Prisma.SatelliteCountArgs<ExtArgs>
             result: $Utils.Optional<SatelliteCountAggregateOutputType> | number
+          }
+        }
+      }
+      SatellitePublicProfile: {
+        payload: Prisma.$SatellitePublicProfilePayload<ExtArgs>
+        fields: Prisma.SatellitePublicProfileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SatellitePublicProfileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SatellitePublicProfileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>
+          }
+          findFirst: {
+            args: Prisma.SatellitePublicProfileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SatellitePublicProfileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>
+          }
+          findMany: {
+            args: Prisma.SatellitePublicProfileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>[]
+          }
+          create: {
+            args: Prisma.SatellitePublicProfileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>
+          }
+          createMany: {
+            args: Prisma.SatellitePublicProfileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SatellitePublicProfileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>[]
+          }
+          delete: {
+            args: Prisma.SatellitePublicProfileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>
+          }
+          update: {
+            args: Prisma.SatellitePublicProfileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>
+          }
+          deleteMany: {
+            args: Prisma.SatellitePublicProfileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SatellitePublicProfileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SatellitePublicProfileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>[]
+          }
+          upsert: {
+            args: Prisma.SatellitePublicProfileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatellitePublicProfilePayload>
+          }
+          aggregate: {
+            args: Prisma.SatellitePublicProfileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSatellitePublicProfile>
+          }
+          groupBy: {
+            args: Prisma.SatellitePublicProfileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SatellitePublicProfileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SatellitePublicProfileCountArgs<ExtArgs>
+            result: $Utils.Optional<SatellitePublicProfileCountAggregateOutputType> | number
+          }
+        }
+      }
+      PricingModulePublicProfile: {
+        payload: Prisma.$PricingModulePublicProfilePayload<ExtArgs>
+        fields: Prisma.PricingModulePublicProfileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PricingModulePublicProfileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PricingModulePublicProfileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>
+          }
+          findFirst: {
+            args: Prisma.PricingModulePublicProfileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PricingModulePublicProfileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>
+          }
+          findMany: {
+            args: Prisma.PricingModulePublicProfileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>[]
+          }
+          create: {
+            args: Prisma.PricingModulePublicProfileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>
+          }
+          createMany: {
+            args: Prisma.PricingModulePublicProfileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PricingModulePublicProfileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>[]
+          }
+          delete: {
+            args: Prisma.PricingModulePublicProfileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>
+          }
+          update: {
+            args: Prisma.PricingModulePublicProfileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>
+          }
+          deleteMany: {
+            args: Prisma.PricingModulePublicProfileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PricingModulePublicProfileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PricingModulePublicProfileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>[]
+          }
+          upsert: {
+            args: Prisma.PricingModulePublicProfileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingModulePublicProfilePayload>
+          }
+          aggregate: {
+            args: Prisma.PricingModulePublicProfileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePricingModulePublicProfile>
+          }
+          groupBy: {
+            args: Prisma.PricingModulePublicProfileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PricingModulePublicProfileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PricingModulePublicProfileCountArgs<ExtArgs>
+            result: $Utils.Optional<PricingModulePublicProfileCountAggregateOutputType> | number
+          }
+        }
+      }
+      SiteIndustry: {
+        payload: Prisma.$SiteIndustryPayload<ExtArgs>
+        fields: Prisma.SiteIndustryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SiteIndustryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SiteIndustryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>
+          }
+          findFirst: {
+            args: Prisma.SiteIndustryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SiteIndustryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>
+          }
+          findMany: {
+            args: Prisma.SiteIndustryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>[]
+          }
+          create: {
+            args: Prisma.SiteIndustryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>
+          }
+          createMany: {
+            args: Prisma.SiteIndustryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SiteIndustryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>[]
+          }
+          delete: {
+            args: Prisma.SiteIndustryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>
+          }
+          update: {
+            args: Prisma.SiteIndustryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>
+          }
+          deleteMany: {
+            args: Prisma.SiteIndustryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SiteIndustryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SiteIndustryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>[]
+          }
+          upsert: {
+            args: Prisma.SiteIndustryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryPayload>
+          }
+          aggregate: {
+            args: Prisma.SiteIndustryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSiteIndustry>
+          }
+          groupBy: {
+            args: Prisma.SiteIndustryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SiteIndustryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SiteIndustryCountArgs<ExtArgs>
+            result: $Utils.Optional<SiteIndustryCountAggregateOutputType> | number
+          }
+        }
+      }
+      SiteIndustryItem: {
+        payload: Prisma.$SiteIndustryItemPayload<ExtArgs>
+        fields: Prisma.SiteIndustryItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SiteIndustryItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SiteIndustryItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>
+          }
+          findFirst: {
+            args: Prisma.SiteIndustryItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SiteIndustryItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>
+          }
+          findMany: {
+            args: Prisma.SiteIndustryItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>[]
+          }
+          create: {
+            args: Prisma.SiteIndustryItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>
+          }
+          createMany: {
+            args: Prisma.SiteIndustryItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SiteIndustryItemCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>[]
+          }
+          delete: {
+            args: Prisma.SiteIndustryItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>
+          }
+          update: {
+            args: Prisma.SiteIndustryItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.SiteIndustryItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SiteIndustryItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SiteIndustryItemUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>[]
+          }
+          upsert: {
+            args: Prisma.SiteIndustryItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SiteIndustryItemPayload>
+          }
+          aggregate: {
+            args: Prisma.SiteIndustryItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSiteIndustryItem>
+          }
+          groupBy: {
+            args: Prisma.SiteIndustryItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SiteIndustryItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SiteIndustryItemCountArgs<ExtArgs>
+            result: $Utils.Optional<SiteIndustryItemCountAggregateOutputType> | number
           }
         }
       }
@@ -13173,6 +13571,10 @@ export namespace Prisma {
     pricing?: PricingOmit
     pricingModule?: PricingModuleOmit
     satellite?: SatelliteOmit
+    satellitePublicProfile?: SatellitePublicProfileOmit
+    pricingModulePublicProfile?: PricingModulePublicProfileOmit
+    siteIndustry?: SiteIndustryOmit
+    siteIndustryItem?: SiteIndustryItemOmit
     organizationSatelliteEntitlement?: OrganizationSatelliteEntitlementOmit
     satelliteEndpoint?: SatelliteEndpointOmit
     placementBatch?: PlacementBatchOmit
@@ -13409,12 +13811,14 @@ export namespace Prisma {
     modules: number
     endpoints: number
     entitlements: number
+    industryItems: number
   }
 
   export type SatelliteCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     modules?: boolean | SatelliteCountOutputTypeCountModulesArgs
     endpoints?: boolean | SatelliteCountOutputTypeCountEndpointsArgs
     entitlements?: boolean | SatelliteCountOutputTypeCountEntitlementsArgs
+    industryItems?: boolean | SatelliteCountOutputTypeCountIndustryItemsArgs
   }
 
   // Custom InputTypes
@@ -13447,6 +13851,44 @@ export namespace Prisma {
    */
   export type SatelliteCountOutputTypeCountEntitlementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrganizationSatelliteEntitlementWhereInput
+  }
+
+  /**
+   * SatelliteCountOutputType without action
+   */
+  export type SatelliteCountOutputTypeCountIndustryItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SiteIndustryItemWhereInput
+  }
+
+
+  /**
+   * Count Type SiteIndustryCountOutputType
+   */
+
+  export type SiteIndustryCountOutputType = {
+    items: number
+  }
+
+  export type SiteIndustryCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    items?: boolean | SiteIndustryCountOutputTypeCountItemsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SiteIndustryCountOutputType without action
+   */
+  export type SiteIndustryCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryCountOutputType
+     */
+    select?: SiteIndustryCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SiteIndustryCountOutputType without action
+   */
+  export type SiteIndustryCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SiteIndustryItemWhereInput
   }
 
 
@@ -28696,6 +29138,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     satellite?: boolean | PricingModule$satelliteArgs<ExtArgs>
+    publicProfile?: boolean | PricingModule$publicProfileArgs<ExtArgs>
   }, ExtArgs["result"]["pricingModule"]>
 
   export type PricingModuleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -28745,6 +29188,7 @@ export namespace Prisma {
   export type PricingModuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "key" | "name" | "pricePerMonth" | "isPremium" | "sortOrder" | "catalogKind" | "satelliteKey" | "trialEligibleInTrial" | "createdAt" | "updatedAt", ExtArgs["result"]["pricingModule"]>
   export type PricingModuleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     satellite?: boolean | PricingModule$satelliteArgs<ExtArgs>
+    publicProfile?: boolean | PricingModule$publicProfileArgs<ExtArgs>
   }
   export type PricingModuleIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     satellite?: boolean | PricingModule$satelliteArgs<ExtArgs>
@@ -28757,6 +29201,7 @@ export namespace Prisma {
     name: "PricingModule"
     objects: {
       satellite: Prisma.$SatellitePayload<ExtArgs> | null
+      publicProfile: Prisma.$PricingModulePublicProfilePayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -29165,6 +29610,7 @@ export namespace Prisma {
   export interface Prisma__PricingModuleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     satellite<T extends PricingModule$satelliteArgs<ExtArgs> = {}>(args?: Subset<T, PricingModule$satelliteArgs<ExtArgs>>): Prisma__SatelliteClient<$Result.GetResult<Prisma.$SatellitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    publicProfile<T extends PricingModule$publicProfileArgs<ExtArgs> = {}>(args?: Subset<T, PricingModule$publicProfileArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -29625,6 +30071,25 @@ export namespace Prisma {
   }
 
   /**
+   * PricingModule.publicProfile
+   */
+  export type PricingModule$publicProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    where?: PricingModulePublicProfileWhereInput
+  }
+
+  /**
    * PricingModule without action
    */
   export type PricingModuleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -29852,6 +30317,8 @@ export namespace Prisma {
     modules?: boolean | Satellite$modulesArgs<ExtArgs>
     endpoints?: boolean | Satellite$endpointsArgs<ExtArgs>
     entitlements?: boolean | Satellite$entitlementsArgs<ExtArgs>
+    publicProfile?: boolean | Satellite$publicProfileArgs<ExtArgs>
+    industryItems?: boolean | Satellite$industryItemsArgs<ExtArgs>
     _count?: boolean | SatelliteCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["satellite"]>
 
@@ -29887,6 +30354,8 @@ export namespace Prisma {
     modules?: boolean | Satellite$modulesArgs<ExtArgs>
     endpoints?: boolean | Satellite$endpointsArgs<ExtArgs>
     entitlements?: boolean | Satellite$entitlementsArgs<ExtArgs>
+    publicProfile?: boolean | Satellite$publicProfileArgs<ExtArgs>
+    industryItems?: boolean | Satellite$industryItemsArgs<ExtArgs>
     _count?: boolean | SatelliteCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type SatelliteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -29898,6 +30367,8 @@ export namespace Prisma {
       modules: Prisma.$PricingModulePayload<ExtArgs>[]
       endpoints: Prisma.$SatelliteEndpointPayload<ExtArgs>[]
       entitlements: Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>[]
+      publicProfile: Prisma.$SatellitePublicProfilePayload<ExtArgs> | null
+      industryItems: Prisma.$SiteIndustryItemPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       key: string
@@ -30303,6 +30774,8 @@ export namespace Prisma {
     modules<T extends Satellite$modulesArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$modulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PricingModulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     endpoints<T extends Satellite$endpointsArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$endpointsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     entitlements<T extends Satellite$entitlementsArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$entitlementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    publicProfile<T extends Satellite$publicProfileArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$publicProfileArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    industryItems<T extends Satellite$industryItemsArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$industryItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -30803,6 +31276,49 @@ export namespace Prisma {
   }
 
   /**
+   * Satellite.publicProfile
+   */
+  export type Satellite$publicProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    where?: SatellitePublicProfileWhereInput
+  }
+
+  /**
+   * Satellite.industryItems
+   */
+  export type Satellite$industryItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    where?: SiteIndustryItemWhereInput
+    orderBy?: SiteIndustryItemOrderByWithRelationInput | SiteIndustryItemOrderByWithRelationInput[]
+    cursor?: SiteIndustryItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SiteIndustryItemScalarFieldEnum | SiteIndustryItemScalarFieldEnum[]
+  }
+
+  /**
    * Satellite without action
    */
   export type SatelliteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -30818,6 +31334,4740 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SatelliteInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SatellitePublicProfile
+   */
+
+  export type AggregateSatellitePublicProfile = {
+    _count: SatellitePublicProfileCountAggregateOutputType | null
+    _avg: SatellitePublicProfileAvgAggregateOutputType | null
+    _sum: SatellitePublicProfileSumAggregateOutputType | null
+    _min: SatellitePublicProfileMinAggregateOutputType | null
+    _max: SatellitePublicProfileMaxAggregateOutputType | null
+  }
+
+  export type SatellitePublicProfileAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SatellitePublicProfileSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SatellitePublicProfileMinAggregateOutputType = {
+    satelliteKey: string | null
+    publicSlug: string | null
+    visibility: $Enums.SiteCatalogVisibility | null
+    maturity: $Enums.SiteCatalogMaturity | null
+    sortOrder: number | null
+    imageUrl: string | null
+    showOnSite: boolean | null
+    kind: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SatellitePublicProfileMaxAggregateOutputType = {
+    satelliteKey: string | null
+    publicSlug: string | null
+    visibility: $Enums.SiteCatalogVisibility | null
+    maturity: $Enums.SiteCatalogMaturity | null
+    sortOrder: number | null
+    imageUrl: string | null
+    showOnSite: boolean | null
+    kind: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SatellitePublicProfileCountAggregateOutputType = {
+    satelliteKey: number
+    publicSlug: number
+    visibility: number
+    maturity: number
+    sortOrder: number
+    names: number
+    descriptions: number
+    tagline: number
+    body: number
+    imageUrl: number
+    showOnSite: number
+    kind: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SatellitePublicProfileAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SatellitePublicProfileSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SatellitePublicProfileMinAggregateInputType = {
+    satelliteKey?: true
+    publicSlug?: true
+    visibility?: true
+    maturity?: true
+    sortOrder?: true
+    imageUrl?: true
+    showOnSite?: true
+    kind?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SatellitePublicProfileMaxAggregateInputType = {
+    satelliteKey?: true
+    publicSlug?: true
+    visibility?: true
+    maturity?: true
+    sortOrder?: true
+    imageUrl?: true
+    showOnSite?: true
+    kind?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SatellitePublicProfileCountAggregateInputType = {
+    satelliteKey?: true
+    publicSlug?: true
+    visibility?: true
+    maturity?: true
+    sortOrder?: true
+    names?: true
+    descriptions?: true
+    tagline?: true
+    body?: true
+    imageUrl?: true
+    showOnSite?: true
+    kind?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SatellitePublicProfileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SatellitePublicProfile to aggregate.
+     */
+    where?: SatellitePublicProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatellitePublicProfiles to fetch.
+     */
+    orderBy?: SatellitePublicProfileOrderByWithRelationInput | SatellitePublicProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SatellitePublicProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatellitePublicProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatellitePublicProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SatellitePublicProfiles
+    **/
+    _count?: true | SatellitePublicProfileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SatellitePublicProfileAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SatellitePublicProfileSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SatellitePublicProfileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SatellitePublicProfileMaxAggregateInputType
+  }
+
+  export type GetSatellitePublicProfileAggregateType<T extends SatellitePublicProfileAggregateArgs> = {
+        [P in keyof T & keyof AggregateSatellitePublicProfile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSatellitePublicProfile[P]>
+      : GetScalarType<T[P], AggregateSatellitePublicProfile[P]>
+  }
+
+
+
+
+  export type SatellitePublicProfileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SatellitePublicProfileWhereInput
+    orderBy?: SatellitePublicProfileOrderByWithAggregationInput | SatellitePublicProfileOrderByWithAggregationInput[]
+    by: SatellitePublicProfileScalarFieldEnum[] | SatellitePublicProfileScalarFieldEnum
+    having?: SatellitePublicProfileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SatellitePublicProfileCountAggregateInputType | true
+    _avg?: SatellitePublicProfileAvgAggregateInputType
+    _sum?: SatellitePublicProfileSumAggregateInputType
+    _min?: SatellitePublicProfileMinAggregateInputType
+    _max?: SatellitePublicProfileMaxAggregateInputType
+  }
+
+  export type SatellitePublicProfileGroupByOutputType = {
+    satelliteKey: string
+    publicSlug: string
+    visibility: $Enums.SiteCatalogVisibility
+    maturity: $Enums.SiteCatalogMaturity
+    sortOrder: number
+    names: JsonValue
+    descriptions: JsonValue
+    tagline: JsonValue
+    body: JsonValue
+    imageUrl: string | null
+    showOnSite: boolean
+    kind: string
+    createdAt: Date
+    updatedAt: Date
+    _count: SatellitePublicProfileCountAggregateOutputType | null
+    _avg: SatellitePublicProfileAvgAggregateOutputType | null
+    _sum: SatellitePublicProfileSumAggregateOutputType | null
+    _min: SatellitePublicProfileMinAggregateOutputType | null
+    _max: SatellitePublicProfileMaxAggregateOutputType | null
+  }
+
+  type GetSatellitePublicProfileGroupByPayload<T extends SatellitePublicProfileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SatellitePublicProfileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SatellitePublicProfileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SatellitePublicProfileGroupByOutputType[P]>
+            : GetScalarType<T[P], SatellitePublicProfileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SatellitePublicProfileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    satelliteKey?: boolean
+    publicSlug?: boolean
+    visibility?: boolean
+    maturity?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    showOnSite?: boolean
+    kind?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["satellitePublicProfile"]>
+
+  export type SatellitePublicProfileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    satelliteKey?: boolean
+    publicSlug?: boolean
+    visibility?: boolean
+    maturity?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    showOnSite?: boolean
+    kind?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["satellitePublicProfile"]>
+
+  export type SatellitePublicProfileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    satelliteKey?: boolean
+    publicSlug?: boolean
+    visibility?: boolean
+    maturity?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    showOnSite?: boolean
+    kind?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["satellitePublicProfile"]>
+
+  export type SatellitePublicProfileSelectScalar = {
+    satelliteKey?: boolean
+    publicSlug?: boolean
+    visibility?: boolean
+    maturity?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    showOnSite?: boolean
+    kind?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SatellitePublicProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"satelliteKey" | "publicSlug" | "visibility" | "maturity" | "sortOrder" | "names" | "descriptions" | "tagline" | "body" | "imageUrl" | "showOnSite" | "kind" | "createdAt" | "updatedAt", ExtArgs["result"]["satellitePublicProfile"]>
+  export type SatellitePublicProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+  export type SatellitePublicProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+  export type SatellitePublicProfileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+
+  export type $SatellitePublicProfilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SatellitePublicProfile"
+    objects: {
+      satellite: Prisma.$SatellitePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      satelliteKey: string
+      publicSlug: string
+      visibility: $Enums.SiteCatalogVisibility
+      maturity: $Enums.SiteCatalogMaturity
+      sortOrder: number
+      /**
+       * Localized display names `{az,ru,en}`.
+       */
+      names: Prisma.JsonValue
+      /**
+       * Localized short descriptions `{az,ru,en}`.
+       */
+      descriptions: Prisma.JsonValue
+      /**
+       * Localized taglines `{az,ru,en}`.
+       */
+      tagline: Prisma.JsonValue
+      /**
+       * Localized long body / HTML-safe markdown `{az,ru,en}`.
+       */
+      body: Prisma.JsonValue
+      imageUrl: string | null
+      showOnSite: boolean
+      /**
+       * core | industry | platform — mega-menu grouping.
+       */
+      kind: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["satellitePublicProfile"]>
+    composites: {}
+  }
+
+  type SatellitePublicProfileGetPayload<S extends boolean | null | undefined | SatellitePublicProfileDefaultArgs> = $Result.GetResult<Prisma.$SatellitePublicProfilePayload, S>
+
+  type SatellitePublicProfileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SatellitePublicProfileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SatellitePublicProfileCountAggregateInputType | true
+    }
+
+  export interface SatellitePublicProfileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SatellitePublicProfile'], meta: { name: 'SatellitePublicProfile' } }
+    /**
+     * Find zero or one SatellitePublicProfile that matches the filter.
+     * @param {SatellitePublicProfileFindUniqueArgs} args - Arguments to find a SatellitePublicProfile
+     * @example
+     * // Get one SatellitePublicProfile
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SatellitePublicProfileFindUniqueArgs>(args: SelectSubset<T, SatellitePublicProfileFindUniqueArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SatellitePublicProfile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SatellitePublicProfileFindUniqueOrThrowArgs} args - Arguments to find a SatellitePublicProfile
+     * @example
+     * // Get one SatellitePublicProfile
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SatellitePublicProfileFindUniqueOrThrowArgs>(args: SelectSubset<T, SatellitePublicProfileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SatellitePublicProfile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatellitePublicProfileFindFirstArgs} args - Arguments to find a SatellitePublicProfile
+     * @example
+     * // Get one SatellitePublicProfile
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SatellitePublicProfileFindFirstArgs>(args?: SelectSubset<T, SatellitePublicProfileFindFirstArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SatellitePublicProfile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatellitePublicProfileFindFirstOrThrowArgs} args - Arguments to find a SatellitePublicProfile
+     * @example
+     * // Get one SatellitePublicProfile
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SatellitePublicProfileFindFirstOrThrowArgs>(args?: SelectSubset<T, SatellitePublicProfileFindFirstOrThrowArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SatellitePublicProfiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatellitePublicProfileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SatellitePublicProfiles
+     * const satellitePublicProfiles = await prisma.satellitePublicProfile.findMany()
+     * 
+     * // Get first 10 SatellitePublicProfiles
+     * const satellitePublicProfiles = await prisma.satellitePublicProfile.findMany({ take: 10 })
+     * 
+     * // Only select the `satelliteKey`
+     * const satellitePublicProfileWithSatelliteKeyOnly = await prisma.satellitePublicProfile.findMany({ select: { satelliteKey: true } })
+     * 
+     */
+    findMany<T extends SatellitePublicProfileFindManyArgs>(args?: SelectSubset<T, SatellitePublicProfileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SatellitePublicProfile.
+     * @param {SatellitePublicProfileCreateArgs} args - Arguments to create a SatellitePublicProfile.
+     * @example
+     * // Create one SatellitePublicProfile
+     * const SatellitePublicProfile = await prisma.satellitePublicProfile.create({
+     *   data: {
+     *     // ... data to create a SatellitePublicProfile
+     *   }
+     * })
+     * 
+     */
+    create<T extends SatellitePublicProfileCreateArgs>(args: SelectSubset<T, SatellitePublicProfileCreateArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SatellitePublicProfiles.
+     * @param {SatellitePublicProfileCreateManyArgs} args - Arguments to create many SatellitePublicProfiles.
+     * @example
+     * // Create many SatellitePublicProfiles
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SatellitePublicProfileCreateManyArgs>(args?: SelectSubset<T, SatellitePublicProfileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SatellitePublicProfiles and returns the data saved in the database.
+     * @param {SatellitePublicProfileCreateManyAndReturnArgs} args - Arguments to create many SatellitePublicProfiles.
+     * @example
+     * // Create many SatellitePublicProfiles
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SatellitePublicProfiles and only return the `satelliteKey`
+     * const satellitePublicProfileWithSatelliteKeyOnly = await prisma.satellitePublicProfile.createManyAndReturn({
+     *   select: { satelliteKey: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SatellitePublicProfileCreateManyAndReturnArgs>(args?: SelectSubset<T, SatellitePublicProfileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SatellitePublicProfile.
+     * @param {SatellitePublicProfileDeleteArgs} args - Arguments to delete one SatellitePublicProfile.
+     * @example
+     * // Delete one SatellitePublicProfile
+     * const SatellitePublicProfile = await prisma.satellitePublicProfile.delete({
+     *   where: {
+     *     // ... filter to delete one SatellitePublicProfile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SatellitePublicProfileDeleteArgs>(args: SelectSubset<T, SatellitePublicProfileDeleteArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SatellitePublicProfile.
+     * @param {SatellitePublicProfileUpdateArgs} args - Arguments to update one SatellitePublicProfile.
+     * @example
+     * // Update one SatellitePublicProfile
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SatellitePublicProfileUpdateArgs>(args: SelectSubset<T, SatellitePublicProfileUpdateArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SatellitePublicProfiles.
+     * @param {SatellitePublicProfileDeleteManyArgs} args - Arguments to filter SatellitePublicProfiles to delete.
+     * @example
+     * // Delete a few SatellitePublicProfiles
+     * const { count } = await prisma.satellitePublicProfile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SatellitePublicProfileDeleteManyArgs>(args?: SelectSubset<T, SatellitePublicProfileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SatellitePublicProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatellitePublicProfileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SatellitePublicProfiles
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SatellitePublicProfileUpdateManyArgs>(args: SelectSubset<T, SatellitePublicProfileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SatellitePublicProfiles and returns the data updated in the database.
+     * @param {SatellitePublicProfileUpdateManyAndReturnArgs} args - Arguments to update many SatellitePublicProfiles.
+     * @example
+     * // Update many SatellitePublicProfiles
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SatellitePublicProfiles and only return the `satelliteKey`
+     * const satellitePublicProfileWithSatelliteKeyOnly = await prisma.satellitePublicProfile.updateManyAndReturn({
+     *   select: { satelliteKey: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SatellitePublicProfileUpdateManyAndReturnArgs>(args: SelectSubset<T, SatellitePublicProfileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SatellitePublicProfile.
+     * @param {SatellitePublicProfileUpsertArgs} args - Arguments to update or create a SatellitePublicProfile.
+     * @example
+     * // Update or create a SatellitePublicProfile
+     * const satellitePublicProfile = await prisma.satellitePublicProfile.upsert({
+     *   create: {
+     *     // ... data to create a SatellitePublicProfile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SatellitePublicProfile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SatellitePublicProfileUpsertArgs>(args: SelectSubset<T, SatellitePublicProfileUpsertArgs<ExtArgs>>): Prisma__SatellitePublicProfileClient<$Result.GetResult<Prisma.$SatellitePublicProfilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SatellitePublicProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatellitePublicProfileCountArgs} args - Arguments to filter SatellitePublicProfiles to count.
+     * @example
+     * // Count the number of SatellitePublicProfiles
+     * const count = await prisma.satellitePublicProfile.count({
+     *   where: {
+     *     // ... the filter for the SatellitePublicProfiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends SatellitePublicProfileCountArgs>(
+      args?: Subset<T, SatellitePublicProfileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SatellitePublicProfileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SatellitePublicProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatellitePublicProfileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SatellitePublicProfileAggregateArgs>(args: Subset<T, SatellitePublicProfileAggregateArgs>): Prisma.PrismaPromise<GetSatellitePublicProfileAggregateType<T>>
+
+    /**
+     * Group by SatellitePublicProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatellitePublicProfileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SatellitePublicProfileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SatellitePublicProfileGroupByArgs['orderBy'] }
+        : { orderBy?: SatellitePublicProfileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SatellitePublicProfileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSatellitePublicProfileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SatellitePublicProfile model
+   */
+  readonly fields: SatellitePublicProfileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SatellitePublicProfile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SatellitePublicProfileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    satellite<T extends SatelliteDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SatelliteDefaultArgs<ExtArgs>>): Prisma__SatelliteClient<$Result.GetResult<Prisma.$SatellitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SatellitePublicProfile model
+   */
+  interface SatellitePublicProfileFieldRefs {
+    readonly satelliteKey: FieldRef<"SatellitePublicProfile", 'String'>
+    readonly publicSlug: FieldRef<"SatellitePublicProfile", 'String'>
+    readonly visibility: FieldRef<"SatellitePublicProfile", 'SiteCatalogVisibility'>
+    readonly maturity: FieldRef<"SatellitePublicProfile", 'SiteCatalogMaturity'>
+    readonly sortOrder: FieldRef<"SatellitePublicProfile", 'Int'>
+    readonly names: FieldRef<"SatellitePublicProfile", 'Json'>
+    readonly descriptions: FieldRef<"SatellitePublicProfile", 'Json'>
+    readonly tagline: FieldRef<"SatellitePublicProfile", 'Json'>
+    readonly body: FieldRef<"SatellitePublicProfile", 'Json'>
+    readonly imageUrl: FieldRef<"SatellitePublicProfile", 'String'>
+    readonly showOnSite: FieldRef<"SatellitePublicProfile", 'Boolean'>
+    readonly kind: FieldRef<"SatellitePublicProfile", 'String'>
+    readonly createdAt: FieldRef<"SatellitePublicProfile", 'DateTime'>
+    readonly updatedAt: FieldRef<"SatellitePublicProfile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SatellitePublicProfile findUnique
+   */
+  export type SatellitePublicProfileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which SatellitePublicProfile to fetch.
+     */
+    where: SatellitePublicProfileWhereUniqueInput
+  }
+
+  /**
+   * SatellitePublicProfile findUniqueOrThrow
+   */
+  export type SatellitePublicProfileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which SatellitePublicProfile to fetch.
+     */
+    where: SatellitePublicProfileWhereUniqueInput
+  }
+
+  /**
+   * SatellitePublicProfile findFirst
+   */
+  export type SatellitePublicProfileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which SatellitePublicProfile to fetch.
+     */
+    where?: SatellitePublicProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatellitePublicProfiles to fetch.
+     */
+    orderBy?: SatellitePublicProfileOrderByWithRelationInput | SatellitePublicProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SatellitePublicProfiles.
+     */
+    cursor?: SatellitePublicProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatellitePublicProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatellitePublicProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatellitePublicProfiles.
+     */
+    distinct?: SatellitePublicProfileScalarFieldEnum | SatellitePublicProfileScalarFieldEnum[]
+  }
+
+  /**
+   * SatellitePublicProfile findFirstOrThrow
+   */
+  export type SatellitePublicProfileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which SatellitePublicProfile to fetch.
+     */
+    where?: SatellitePublicProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatellitePublicProfiles to fetch.
+     */
+    orderBy?: SatellitePublicProfileOrderByWithRelationInput | SatellitePublicProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SatellitePublicProfiles.
+     */
+    cursor?: SatellitePublicProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatellitePublicProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatellitePublicProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatellitePublicProfiles.
+     */
+    distinct?: SatellitePublicProfileScalarFieldEnum | SatellitePublicProfileScalarFieldEnum[]
+  }
+
+  /**
+   * SatellitePublicProfile findMany
+   */
+  export type SatellitePublicProfileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which SatellitePublicProfiles to fetch.
+     */
+    where?: SatellitePublicProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatellitePublicProfiles to fetch.
+     */
+    orderBy?: SatellitePublicProfileOrderByWithRelationInput | SatellitePublicProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SatellitePublicProfiles.
+     */
+    cursor?: SatellitePublicProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatellitePublicProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatellitePublicProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatellitePublicProfiles.
+     */
+    distinct?: SatellitePublicProfileScalarFieldEnum | SatellitePublicProfileScalarFieldEnum[]
+  }
+
+  /**
+   * SatellitePublicProfile create
+   */
+  export type SatellitePublicProfileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SatellitePublicProfile.
+     */
+    data: XOR<SatellitePublicProfileCreateInput, SatellitePublicProfileUncheckedCreateInput>
+  }
+
+  /**
+   * SatellitePublicProfile createMany
+   */
+  export type SatellitePublicProfileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SatellitePublicProfiles.
+     */
+    data: SatellitePublicProfileCreateManyInput | SatellitePublicProfileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SatellitePublicProfile createManyAndReturn
+   */
+  export type SatellitePublicProfileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * The data used to create many SatellitePublicProfiles.
+     */
+    data: SatellitePublicProfileCreateManyInput | SatellitePublicProfileCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SatellitePublicProfile update
+   */
+  export type SatellitePublicProfileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SatellitePublicProfile.
+     */
+    data: XOR<SatellitePublicProfileUpdateInput, SatellitePublicProfileUncheckedUpdateInput>
+    /**
+     * Choose, which SatellitePublicProfile to update.
+     */
+    where: SatellitePublicProfileWhereUniqueInput
+  }
+
+  /**
+   * SatellitePublicProfile updateMany
+   */
+  export type SatellitePublicProfileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SatellitePublicProfiles.
+     */
+    data: XOR<SatellitePublicProfileUpdateManyMutationInput, SatellitePublicProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which SatellitePublicProfiles to update
+     */
+    where?: SatellitePublicProfileWhereInput
+    /**
+     * Limit how many SatellitePublicProfiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SatellitePublicProfile updateManyAndReturn
+   */
+  export type SatellitePublicProfileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * The data used to update SatellitePublicProfiles.
+     */
+    data: XOR<SatellitePublicProfileUpdateManyMutationInput, SatellitePublicProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which SatellitePublicProfiles to update
+     */
+    where?: SatellitePublicProfileWhereInput
+    /**
+     * Limit how many SatellitePublicProfiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SatellitePublicProfile upsert
+   */
+  export type SatellitePublicProfileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SatellitePublicProfile to update in case it exists.
+     */
+    where: SatellitePublicProfileWhereUniqueInput
+    /**
+     * In case the SatellitePublicProfile found by the `where` argument doesn't exist, create a new SatellitePublicProfile with this data.
+     */
+    create: XOR<SatellitePublicProfileCreateInput, SatellitePublicProfileUncheckedCreateInput>
+    /**
+     * In case the SatellitePublicProfile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SatellitePublicProfileUpdateInput, SatellitePublicProfileUncheckedUpdateInput>
+  }
+
+  /**
+   * SatellitePublicProfile delete
+   */
+  export type SatellitePublicProfileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter which SatellitePublicProfile to delete.
+     */
+    where: SatellitePublicProfileWhereUniqueInput
+  }
+
+  /**
+   * SatellitePublicProfile deleteMany
+   */
+  export type SatellitePublicProfileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SatellitePublicProfiles to delete
+     */
+    where?: SatellitePublicProfileWhereInput
+    /**
+     * Limit how many SatellitePublicProfiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SatellitePublicProfile without action
+   */
+  export type SatellitePublicProfileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatellitePublicProfile
+     */
+    select?: SatellitePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatellitePublicProfile
+     */
+    omit?: SatellitePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatellitePublicProfileInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PricingModulePublicProfile
+   */
+
+  export type AggregatePricingModulePublicProfile = {
+    _count: PricingModulePublicProfileCountAggregateOutputType | null
+    _avg: PricingModulePublicProfileAvgAggregateOutputType | null
+    _sum: PricingModulePublicProfileSumAggregateOutputType | null
+    _min: PricingModulePublicProfileMinAggregateOutputType | null
+    _max: PricingModulePublicProfileMaxAggregateOutputType | null
+  }
+
+  export type PricingModulePublicProfileAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type PricingModulePublicProfileSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type PricingModulePublicProfileMinAggregateOutputType = {
+    moduleKey: string | null
+    visibility: $Enums.SiteCatalogVisibility | null
+    maturity: $Enums.SiteCatalogMaturity | null
+    sortOrder: number | null
+    imageUrl: string | null
+    showAsSubsection: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PricingModulePublicProfileMaxAggregateOutputType = {
+    moduleKey: string | null
+    visibility: $Enums.SiteCatalogVisibility | null
+    maturity: $Enums.SiteCatalogMaturity | null
+    sortOrder: number | null
+    imageUrl: string | null
+    showAsSubsection: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PricingModulePublicProfileCountAggregateOutputType = {
+    moduleKey: number
+    visibility: number
+    maturity: number
+    sortOrder: number
+    names: number
+    descriptions: number
+    tagline: number
+    body: number
+    imageUrl: number
+    showAsSubsection: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PricingModulePublicProfileAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type PricingModulePublicProfileSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type PricingModulePublicProfileMinAggregateInputType = {
+    moduleKey?: true
+    visibility?: true
+    maturity?: true
+    sortOrder?: true
+    imageUrl?: true
+    showAsSubsection?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PricingModulePublicProfileMaxAggregateInputType = {
+    moduleKey?: true
+    visibility?: true
+    maturity?: true
+    sortOrder?: true
+    imageUrl?: true
+    showAsSubsection?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PricingModulePublicProfileCountAggregateInputType = {
+    moduleKey?: true
+    visibility?: true
+    maturity?: true
+    sortOrder?: true
+    names?: true
+    descriptions?: true
+    tagline?: true
+    body?: true
+    imageUrl?: true
+    showAsSubsection?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PricingModulePublicProfileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PricingModulePublicProfile to aggregate.
+     */
+    where?: PricingModulePublicProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PricingModulePublicProfiles to fetch.
+     */
+    orderBy?: PricingModulePublicProfileOrderByWithRelationInput | PricingModulePublicProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PricingModulePublicProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PricingModulePublicProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PricingModulePublicProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PricingModulePublicProfiles
+    **/
+    _count?: true | PricingModulePublicProfileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PricingModulePublicProfileAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PricingModulePublicProfileSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PricingModulePublicProfileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PricingModulePublicProfileMaxAggregateInputType
+  }
+
+  export type GetPricingModulePublicProfileAggregateType<T extends PricingModulePublicProfileAggregateArgs> = {
+        [P in keyof T & keyof AggregatePricingModulePublicProfile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePricingModulePublicProfile[P]>
+      : GetScalarType<T[P], AggregatePricingModulePublicProfile[P]>
+  }
+
+
+
+
+  export type PricingModulePublicProfileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PricingModulePublicProfileWhereInput
+    orderBy?: PricingModulePublicProfileOrderByWithAggregationInput | PricingModulePublicProfileOrderByWithAggregationInput[]
+    by: PricingModulePublicProfileScalarFieldEnum[] | PricingModulePublicProfileScalarFieldEnum
+    having?: PricingModulePublicProfileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PricingModulePublicProfileCountAggregateInputType | true
+    _avg?: PricingModulePublicProfileAvgAggregateInputType
+    _sum?: PricingModulePublicProfileSumAggregateInputType
+    _min?: PricingModulePublicProfileMinAggregateInputType
+    _max?: PricingModulePublicProfileMaxAggregateInputType
+  }
+
+  export type PricingModulePublicProfileGroupByOutputType = {
+    moduleKey: string
+    visibility: $Enums.SiteCatalogVisibility
+    maturity: $Enums.SiteCatalogMaturity | null
+    sortOrder: number
+    names: JsonValue
+    descriptions: JsonValue
+    tagline: JsonValue
+    body: JsonValue
+    imageUrl: string | null
+    showAsSubsection: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: PricingModulePublicProfileCountAggregateOutputType | null
+    _avg: PricingModulePublicProfileAvgAggregateOutputType | null
+    _sum: PricingModulePublicProfileSumAggregateOutputType | null
+    _min: PricingModulePublicProfileMinAggregateOutputType | null
+    _max: PricingModulePublicProfileMaxAggregateOutputType | null
+  }
+
+  type GetPricingModulePublicProfileGroupByPayload<T extends PricingModulePublicProfileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PricingModulePublicProfileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PricingModulePublicProfileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PricingModulePublicProfileGroupByOutputType[P]>
+            : GetScalarType<T[P], PricingModulePublicProfileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PricingModulePublicProfileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    moduleKey?: boolean
+    visibility?: boolean
+    maturity?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    showAsSubsection?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    module?: boolean | PricingModuleDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pricingModulePublicProfile"]>
+
+  export type PricingModulePublicProfileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    moduleKey?: boolean
+    visibility?: boolean
+    maturity?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    showAsSubsection?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    module?: boolean | PricingModuleDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pricingModulePublicProfile"]>
+
+  export type PricingModulePublicProfileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    moduleKey?: boolean
+    visibility?: boolean
+    maturity?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    showAsSubsection?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    module?: boolean | PricingModuleDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pricingModulePublicProfile"]>
+
+  export type PricingModulePublicProfileSelectScalar = {
+    moduleKey?: boolean
+    visibility?: boolean
+    maturity?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    showAsSubsection?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PricingModulePublicProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"moduleKey" | "visibility" | "maturity" | "sortOrder" | "names" | "descriptions" | "tagline" | "body" | "imageUrl" | "showAsSubsection" | "createdAt" | "updatedAt", ExtArgs["result"]["pricingModulePublicProfile"]>
+  export type PricingModulePublicProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    module?: boolean | PricingModuleDefaultArgs<ExtArgs>
+  }
+  export type PricingModulePublicProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    module?: boolean | PricingModuleDefaultArgs<ExtArgs>
+  }
+  export type PricingModulePublicProfileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    module?: boolean | PricingModuleDefaultArgs<ExtArgs>
+  }
+
+  export type $PricingModulePublicProfilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PricingModulePublicProfile"
+    objects: {
+      module: Prisma.$PricingModulePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      moduleKey: string
+      visibility: $Enums.SiteCatalogVisibility
+      /**
+       * Null = inherit satellite maturity.
+       */
+      maturity: $Enums.SiteCatalogMaturity | null
+      sortOrder: number
+      names: Prisma.JsonValue
+      descriptions: Prisma.JsonValue
+      tagline: Prisma.JsonValue
+      body: Prisma.JsonValue
+      imageUrl: string | null
+      showAsSubsection: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["pricingModulePublicProfile"]>
+    composites: {}
+  }
+
+  type PricingModulePublicProfileGetPayload<S extends boolean | null | undefined | PricingModulePublicProfileDefaultArgs> = $Result.GetResult<Prisma.$PricingModulePublicProfilePayload, S>
+
+  type PricingModulePublicProfileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PricingModulePublicProfileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PricingModulePublicProfileCountAggregateInputType | true
+    }
+
+  export interface PricingModulePublicProfileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PricingModulePublicProfile'], meta: { name: 'PricingModulePublicProfile' } }
+    /**
+     * Find zero or one PricingModulePublicProfile that matches the filter.
+     * @param {PricingModulePublicProfileFindUniqueArgs} args - Arguments to find a PricingModulePublicProfile
+     * @example
+     * // Get one PricingModulePublicProfile
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PricingModulePublicProfileFindUniqueArgs>(args: SelectSubset<T, PricingModulePublicProfileFindUniqueArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PricingModulePublicProfile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PricingModulePublicProfileFindUniqueOrThrowArgs} args - Arguments to find a PricingModulePublicProfile
+     * @example
+     * // Get one PricingModulePublicProfile
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PricingModulePublicProfileFindUniqueOrThrowArgs>(args: SelectSubset<T, PricingModulePublicProfileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PricingModulePublicProfile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingModulePublicProfileFindFirstArgs} args - Arguments to find a PricingModulePublicProfile
+     * @example
+     * // Get one PricingModulePublicProfile
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PricingModulePublicProfileFindFirstArgs>(args?: SelectSubset<T, PricingModulePublicProfileFindFirstArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PricingModulePublicProfile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingModulePublicProfileFindFirstOrThrowArgs} args - Arguments to find a PricingModulePublicProfile
+     * @example
+     * // Get one PricingModulePublicProfile
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PricingModulePublicProfileFindFirstOrThrowArgs>(args?: SelectSubset<T, PricingModulePublicProfileFindFirstOrThrowArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PricingModulePublicProfiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingModulePublicProfileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PricingModulePublicProfiles
+     * const pricingModulePublicProfiles = await prisma.pricingModulePublicProfile.findMany()
+     * 
+     * // Get first 10 PricingModulePublicProfiles
+     * const pricingModulePublicProfiles = await prisma.pricingModulePublicProfile.findMany({ take: 10 })
+     * 
+     * // Only select the `moduleKey`
+     * const pricingModulePublicProfileWithModuleKeyOnly = await prisma.pricingModulePublicProfile.findMany({ select: { moduleKey: true } })
+     * 
+     */
+    findMany<T extends PricingModulePublicProfileFindManyArgs>(args?: SelectSubset<T, PricingModulePublicProfileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PricingModulePublicProfile.
+     * @param {PricingModulePublicProfileCreateArgs} args - Arguments to create a PricingModulePublicProfile.
+     * @example
+     * // Create one PricingModulePublicProfile
+     * const PricingModulePublicProfile = await prisma.pricingModulePublicProfile.create({
+     *   data: {
+     *     // ... data to create a PricingModulePublicProfile
+     *   }
+     * })
+     * 
+     */
+    create<T extends PricingModulePublicProfileCreateArgs>(args: SelectSubset<T, PricingModulePublicProfileCreateArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PricingModulePublicProfiles.
+     * @param {PricingModulePublicProfileCreateManyArgs} args - Arguments to create many PricingModulePublicProfiles.
+     * @example
+     * // Create many PricingModulePublicProfiles
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PricingModulePublicProfileCreateManyArgs>(args?: SelectSubset<T, PricingModulePublicProfileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PricingModulePublicProfiles and returns the data saved in the database.
+     * @param {PricingModulePublicProfileCreateManyAndReturnArgs} args - Arguments to create many PricingModulePublicProfiles.
+     * @example
+     * // Create many PricingModulePublicProfiles
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PricingModulePublicProfiles and only return the `moduleKey`
+     * const pricingModulePublicProfileWithModuleKeyOnly = await prisma.pricingModulePublicProfile.createManyAndReturn({
+     *   select: { moduleKey: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PricingModulePublicProfileCreateManyAndReturnArgs>(args?: SelectSubset<T, PricingModulePublicProfileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PricingModulePublicProfile.
+     * @param {PricingModulePublicProfileDeleteArgs} args - Arguments to delete one PricingModulePublicProfile.
+     * @example
+     * // Delete one PricingModulePublicProfile
+     * const PricingModulePublicProfile = await prisma.pricingModulePublicProfile.delete({
+     *   where: {
+     *     // ... filter to delete one PricingModulePublicProfile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PricingModulePublicProfileDeleteArgs>(args: SelectSubset<T, PricingModulePublicProfileDeleteArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PricingModulePublicProfile.
+     * @param {PricingModulePublicProfileUpdateArgs} args - Arguments to update one PricingModulePublicProfile.
+     * @example
+     * // Update one PricingModulePublicProfile
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PricingModulePublicProfileUpdateArgs>(args: SelectSubset<T, PricingModulePublicProfileUpdateArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PricingModulePublicProfiles.
+     * @param {PricingModulePublicProfileDeleteManyArgs} args - Arguments to filter PricingModulePublicProfiles to delete.
+     * @example
+     * // Delete a few PricingModulePublicProfiles
+     * const { count } = await prisma.pricingModulePublicProfile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PricingModulePublicProfileDeleteManyArgs>(args?: SelectSubset<T, PricingModulePublicProfileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PricingModulePublicProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingModulePublicProfileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PricingModulePublicProfiles
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PricingModulePublicProfileUpdateManyArgs>(args: SelectSubset<T, PricingModulePublicProfileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PricingModulePublicProfiles and returns the data updated in the database.
+     * @param {PricingModulePublicProfileUpdateManyAndReturnArgs} args - Arguments to update many PricingModulePublicProfiles.
+     * @example
+     * // Update many PricingModulePublicProfiles
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PricingModulePublicProfiles and only return the `moduleKey`
+     * const pricingModulePublicProfileWithModuleKeyOnly = await prisma.pricingModulePublicProfile.updateManyAndReturn({
+     *   select: { moduleKey: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PricingModulePublicProfileUpdateManyAndReturnArgs>(args: SelectSubset<T, PricingModulePublicProfileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PricingModulePublicProfile.
+     * @param {PricingModulePublicProfileUpsertArgs} args - Arguments to update or create a PricingModulePublicProfile.
+     * @example
+     * // Update or create a PricingModulePublicProfile
+     * const pricingModulePublicProfile = await prisma.pricingModulePublicProfile.upsert({
+     *   create: {
+     *     // ... data to create a PricingModulePublicProfile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PricingModulePublicProfile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PricingModulePublicProfileUpsertArgs>(args: SelectSubset<T, PricingModulePublicProfileUpsertArgs<ExtArgs>>): Prisma__PricingModulePublicProfileClient<$Result.GetResult<Prisma.$PricingModulePublicProfilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PricingModulePublicProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingModulePublicProfileCountArgs} args - Arguments to filter PricingModulePublicProfiles to count.
+     * @example
+     * // Count the number of PricingModulePublicProfiles
+     * const count = await prisma.pricingModulePublicProfile.count({
+     *   where: {
+     *     // ... the filter for the PricingModulePublicProfiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends PricingModulePublicProfileCountArgs>(
+      args?: Subset<T, PricingModulePublicProfileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PricingModulePublicProfileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PricingModulePublicProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingModulePublicProfileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PricingModulePublicProfileAggregateArgs>(args: Subset<T, PricingModulePublicProfileAggregateArgs>): Prisma.PrismaPromise<GetPricingModulePublicProfileAggregateType<T>>
+
+    /**
+     * Group by PricingModulePublicProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingModulePublicProfileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PricingModulePublicProfileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PricingModulePublicProfileGroupByArgs['orderBy'] }
+        : { orderBy?: PricingModulePublicProfileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PricingModulePublicProfileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPricingModulePublicProfileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PricingModulePublicProfile model
+   */
+  readonly fields: PricingModulePublicProfileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PricingModulePublicProfile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PricingModulePublicProfileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    module<T extends PricingModuleDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PricingModuleDefaultArgs<ExtArgs>>): Prisma__PricingModuleClient<$Result.GetResult<Prisma.$PricingModulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PricingModulePublicProfile model
+   */
+  interface PricingModulePublicProfileFieldRefs {
+    readonly moduleKey: FieldRef<"PricingModulePublicProfile", 'String'>
+    readonly visibility: FieldRef<"PricingModulePublicProfile", 'SiteCatalogVisibility'>
+    readonly maturity: FieldRef<"PricingModulePublicProfile", 'SiteCatalogMaturity'>
+    readonly sortOrder: FieldRef<"PricingModulePublicProfile", 'Int'>
+    readonly names: FieldRef<"PricingModulePublicProfile", 'Json'>
+    readonly descriptions: FieldRef<"PricingModulePublicProfile", 'Json'>
+    readonly tagline: FieldRef<"PricingModulePublicProfile", 'Json'>
+    readonly body: FieldRef<"PricingModulePublicProfile", 'Json'>
+    readonly imageUrl: FieldRef<"PricingModulePublicProfile", 'String'>
+    readonly showAsSubsection: FieldRef<"PricingModulePublicProfile", 'Boolean'>
+    readonly createdAt: FieldRef<"PricingModulePublicProfile", 'DateTime'>
+    readonly updatedAt: FieldRef<"PricingModulePublicProfile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PricingModulePublicProfile findUnique
+   */
+  export type PricingModulePublicProfileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PricingModulePublicProfile to fetch.
+     */
+    where: PricingModulePublicProfileWhereUniqueInput
+  }
+
+  /**
+   * PricingModulePublicProfile findUniqueOrThrow
+   */
+  export type PricingModulePublicProfileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PricingModulePublicProfile to fetch.
+     */
+    where: PricingModulePublicProfileWhereUniqueInput
+  }
+
+  /**
+   * PricingModulePublicProfile findFirst
+   */
+  export type PricingModulePublicProfileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PricingModulePublicProfile to fetch.
+     */
+    where?: PricingModulePublicProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PricingModulePublicProfiles to fetch.
+     */
+    orderBy?: PricingModulePublicProfileOrderByWithRelationInput | PricingModulePublicProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PricingModulePublicProfiles.
+     */
+    cursor?: PricingModulePublicProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PricingModulePublicProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PricingModulePublicProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PricingModulePublicProfiles.
+     */
+    distinct?: PricingModulePublicProfileScalarFieldEnum | PricingModulePublicProfileScalarFieldEnum[]
+  }
+
+  /**
+   * PricingModulePublicProfile findFirstOrThrow
+   */
+  export type PricingModulePublicProfileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PricingModulePublicProfile to fetch.
+     */
+    where?: PricingModulePublicProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PricingModulePublicProfiles to fetch.
+     */
+    orderBy?: PricingModulePublicProfileOrderByWithRelationInput | PricingModulePublicProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PricingModulePublicProfiles.
+     */
+    cursor?: PricingModulePublicProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PricingModulePublicProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PricingModulePublicProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PricingModulePublicProfiles.
+     */
+    distinct?: PricingModulePublicProfileScalarFieldEnum | PricingModulePublicProfileScalarFieldEnum[]
+  }
+
+  /**
+   * PricingModulePublicProfile findMany
+   */
+  export type PricingModulePublicProfileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PricingModulePublicProfiles to fetch.
+     */
+    where?: PricingModulePublicProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PricingModulePublicProfiles to fetch.
+     */
+    orderBy?: PricingModulePublicProfileOrderByWithRelationInput | PricingModulePublicProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PricingModulePublicProfiles.
+     */
+    cursor?: PricingModulePublicProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PricingModulePublicProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PricingModulePublicProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PricingModulePublicProfiles.
+     */
+    distinct?: PricingModulePublicProfileScalarFieldEnum | PricingModulePublicProfileScalarFieldEnum[]
+  }
+
+  /**
+   * PricingModulePublicProfile create
+   */
+  export type PricingModulePublicProfileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PricingModulePublicProfile.
+     */
+    data: XOR<PricingModulePublicProfileCreateInput, PricingModulePublicProfileUncheckedCreateInput>
+  }
+
+  /**
+   * PricingModulePublicProfile createMany
+   */
+  export type PricingModulePublicProfileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PricingModulePublicProfiles.
+     */
+    data: PricingModulePublicProfileCreateManyInput | PricingModulePublicProfileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PricingModulePublicProfile createManyAndReturn
+   */
+  export type PricingModulePublicProfileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * The data used to create many PricingModulePublicProfiles.
+     */
+    data: PricingModulePublicProfileCreateManyInput | PricingModulePublicProfileCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PricingModulePublicProfile update
+   */
+  export type PricingModulePublicProfileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PricingModulePublicProfile.
+     */
+    data: XOR<PricingModulePublicProfileUpdateInput, PricingModulePublicProfileUncheckedUpdateInput>
+    /**
+     * Choose, which PricingModulePublicProfile to update.
+     */
+    where: PricingModulePublicProfileWhereUniqueInput
+  }
+
+  /**
+   * PricingModulePublicProfile updateMany
+   */
+  export type PricingModulePublicProfileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PricingModulePublicProfiles.
+     */
+    data: XOR<PricingModulePublicProfileUpdateManyMutationInput, PricingModulePublicProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which PricingModulePublicProfiles to update
+     */
+    where?: PricingModulePublicProfileWhereInput
+    /**
+     * Limit how many PricingModulePublicProfiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PricingModulePublicProfile updateManyAndReturn
+   */
+  export type PricingModulePublicProfileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * The data used to update PricingModulePublicProfiles.
+     */
+    data: XOR<PricingModulePublicProfileUpdateManyMutationInput, PricingModulePublicProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which PricingModulePublicProfiles to update
+     */
+    where?: PricingModulePublicProfileWhereInput
+    /**
+     * Limit how many PricingModulePublicProfiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PricingModulePublicProfile upsert
+   */
+  export type PricingModulePublicProfileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PricingModulePublicProfile to update in case it exists.
+     */
+    where: PricingModulePublicProfileWhereUniqueInput
+    /**
+     * In case the PricingModulePublicProfile found by the `where` argument doesn't exist, create a new PricingModulePublicProfile with this data.
+     */
+    create: XOR<PricingModulePublicProfileCreateInput, PricingModulePublicProfileUncheckedCreateInput>
+    /**
+     * In case the PricingModulePublicProfile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PricingModulePublicProfileUpdateInput, PricingModulePublicProfileUncheckedUpdateInput>
+  }
+
+  /**
+   * PricingModulePublicProfile delete
+   */
+  export type PricingModulePublicProfileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+    /**
+     * Filter which PricingModulePublicProfile to delete.
+     */
+    where: PricingModulePublicProfileWhereUniqueInput
+  }
+
+  /**
+   * PricingModulePublicProfile deleteMany
+   */
+  export type PricingModulePublicProfileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PricingModulePublicProfiles to delete
+     */
+    where?: PricingModulePublicProfileWhereInput
+    /**
+     * Limit how many PricingModulePublicProfiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PricingModulePublicProfile without action
+   */
+  export type PricingModulePublicProfileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingModulePublicProfile
+     */
+    select?: PricingModulePublicProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PricingModulePublicProfile
+     */
+    omit?: PricingModulePublicProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PricingModulePublicProfileInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SiteIndustry
+   */
+
+  export type AggregateSiteIndustry = {
+    _count: SiteIndustryCountAggregateOutputType | null
+    _avg: SiteIndustryAvgAggregateOutputType | null
+    _sum: SiteIndustrySumAggregateOutputType | null
+    _min: SiteIndustryMinAggregateOutputType | null
+    _max: SiteIndustryMaxAggregateOutputType | null
+  }
+
+  export type SiteIndustryAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SiteIndustrySumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SiteIndustryMinAggregateOutputType = {
+    slug: string | null
+    visibility: $Enums.SiteCatalogVisibility | null
+    maturityOverride: $Enums.SiteCatalogMaturity | null
+    sortOrder: number | null
+    imageUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SiteIndustryMaxAggregateOutputType = {
+    slug: string | null
+    visibility: $Enums.SiteCatalogVisibility | null
+    maturityOverride: $Enums.SiteCatalogMaturity | null
+    sortOrder: number | null
+    imageUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SiteIndustryCountAggregateOutputType = {
+    slug: number
+    visibility: number
+    maturityOverride: number
+    sortOrder: number
+    names: number
+    descriptions: number
+    tagline: number
+    body: number
+    imageUrl: number
+    calcPrefill: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SiteIndustryAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SiteIndustrySumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SiteIndustryMinAggregateInputType = {
+    slug?: true
+    visibility?: true
+    maturityOverride?: true
+    sortOrder?: true
+    imageUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SiteIndustryMaxAggregateInputType = {
+    slug?: true
+    visibility?: true
+    maturityOverride?: true
+    sortOrder?: true
+    imageUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SiteIndustryCountAggregateInputType = {
+    slug?: true
+    visibility?: true
+    maturityOverride?: true
+    sortOrder?: true
+    names?: true
+    descriptions?: true
+    tagline?: true
+    body?: true
+    imageUrl?: true
+    calcPrefill?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SiteIndustryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SiteIndustry to aggregate.
+     */
+    where?: SiteIndustryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteIndustries to fetch.
+     */
+    orderBy?: SiteIndustryOrderByWithRelationInput | SiteIndustryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SiteIndustryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteIndustries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteIndustries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SiteIndustries
+    **/
+    _count?: true | SiteIndustryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SiteIndustryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SiteIndustrySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SiteIndustryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SiteIndustryMaxAggregateInputType
+  }
+
+  export type GetSiteIndustryAggregateType<T extends SiteIndustryAggregateArgs> = {
+        [P in keyof T & keyof AggregateSiteIndustry]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSiteIndustry[P]>
+      : GetScalarType<T[P], AggregateSiteIndustry[P]>
+  }
+
+
+
+
+  export type SiteIndustryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SiteIndustryWhereInput
+    orderBy?: SiteIndustryOrderByWithAggregationInput | SiteIndustryOrderByWithAggregationInput[]
+    by: SiteIndustryScalarFieldEnum[] | SiteIndustryScalarFieldEnum
+    having?: SiteIndustryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SiteIndustryCountAggregateInputType | true
+    _avg?: SiteIndustryAvgAggregateInputType
+    _sum?: SiteIndustrySumAggregateInputType
+    _min?: SiteIndustryMinAggregateInputType
+    _max?: SiteIndustryMaxAggregateInputType
+  }
+
+  export type SiteIndustryGroupByOutputType = {
+    slug: string
+    visibility: $Enums.SiteCatalogVisibility
+    maturityOverride: $Enums.SiteCatalogMaturity | null
+    sortOrder: number
+    names: JsonValue
+    descriptions: JsonValue
+    tagline: JsonValue
+    body: JsonValue
+    imageUrl: string | null
+    calcPrefill: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    _count: SiteIndustryCountAggregateOutputType | null
+    _avg: SiteIndustryAvgAggregateOutputType | null
+    _sum: SiteIndustrySumAggregateOutputType | null
+    _min: SiteIndustryMinAggregateOutputType | null
+    _max: SiteIndustryMaxAggregateOutputType | null
+  }
+
+  type GetSiteIndustryGroupByPayload<T extends SiteIndustryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SiteIndustryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SiteIndustryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SiteIndustryGroupByOutputType[P]>
+            : GetScalarType<T[P], SiteIndustryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SiteIndustrySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    slug?: boolean
+    visibility?: boolean
+    maturityOverride?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    calcPrefill?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    items?: boolean | SiteIndustry$itemsArgs<ExtArgs>
+    _count?: boolean | SiteIndustryCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["siteIndustry"]>
+
+  export type SiteIndustrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    slug?: boolean
+    visibility?: boolean
+    maturityOverride?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    calcPrefill?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["siteIndustry"]>
+
+  export type SiteIndustrySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    slug?: boolean
+    visibility?: boolean
+    maturityOverride?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    calcPrefill?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["siteIndustry"]>
+
+  export type SiteIndustrySelectScalar = {
+    slug?: boolean
+    visibility?: boolean
+    maturityOverride?: boolean
+    sortOrder?: boolean
+    names?: boolean
+    descriptions?: boolean
+    tagline?: boolean
+    body?: boolean
+    imageUrl?: boolean
+    calcPrefill?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SiteIndustryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"slug" | "visibility" | "maturityOverride" | "sortOrder" | "names" | "descriptions" | "tagline" | "body" | "imageUrl" | "calcPrefill" | "createdAt" | "updatedAt", ExtArgs["result"]["siteIndustry"]>
+  export type SiteIndustryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    items?: boolean | SiteIndustry$itemsArgs<ExtArgs>
+    _count?: boolean | SiteIndustryCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SiteIndustryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type SiteIndustryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $SiteIndustryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SiteIndustry"
+    objects: {
+      items: Prisma.$SiteIndustryItemPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      slug: string
+      visibility: $Enums.SiteCatalogVisibility
+      /**
+       * Optional override; else Pilot if any role-C item product is pilot.
+       */
+      maturityOverride: $Enums.SiteCatalogMaturity | null
+      sortOrder: number
+      names: Prisma.JsonValue
+      descriptions: Prisma.JsonValue
+      tagline: Prisma.JsonValue
+      body: Prisma.JsonValue
+      imageUrl: string | null
+      /**
+       * Calc deep-link payload `{ moduleKeys: string[], capacity?: object }`.
+       */
+      calcPrefill: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["siteIndustry"]>
+    composites: {}
+  }
+
+  type SiteIndustryGetPayload<S extends boolean | null | undefined | SiteIndustryDefaultArgs> = $Result.GetResult<Prisma.$SiteIndustryPayload, S>
+
+  type SiteIndustryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SiteIndustryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SiteIndustryCountAggregateInputType | true
+    }
+
+  export interface SiteIndustryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SiteIndustry'], meta: { name: 'SiteIndustry' } }
+    /**
+     * Find zero or one SiteIndustry that matches the filter.
+     * @param {SiteIndustryFindUniqueArgs} args - Arguments to find a SiteIndustry
+     * @example
+     * // Get one SiteIndustry
+     * const siteIndustry = await prisma.siteIndustry.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SiteIndustryFindUniqueArgs>(args: SelectSubset<T, SiteIndustryFindUniqueArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SiteIndustry that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SiteIndustryFindUniqueOrThrowArgs} args - Arguments to find a SiteIndustry
+     * @example
+     * // Get one SiteIndustry
+     * const siteIndustry = await prisma.siteIndustry.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SiteIndustryFindUniqueOrThrowArgs>(args: SelectSubset<T, SiteIndustryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SiteIndustry that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryFindFirstArgs} args - Arguments to find a SiteIndustry
+     * @example
+     * // Get one SiteIndustry
+     * const siteIndustry = await prisma.siteIndustry.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SiteIndustryFindFirstArgs>(args?: SelectSubset<T, SiteIndustryFindFirstArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SiteIndustry that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryFindFirstOrThrowArgs} args - Arguments to find a SiteIndustry
+     * @example
+     * // Get one SiteIndustry
+     * const siteIndustry = await prisma.siteIndustry.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SiteIndustryFindFirstOrThrowArgs>(args?: SelectSubset<T, SiteIndustryFindFirstOrThrowArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SiteIndustries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SiteIndustries
+     * const siteIndustries = await prisma.siteIndustry.findMany()
+     * 
+     * // Get first 10 SiteIndustries
+     * const siteIndustries = await prisma.siteIndustry.findMany({ take: 10 })
+     * 
+     * // Only select the `slug`
+     * const siteIndustryWithSlugOnly = await prisma.siteIndustry.findMany({ select: { slug: true } })
+     * 
+     */
+    findMany<T extends SiteIndustryFindManyArgs>(args?: SelectSubset<T, SiteIndustryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SiteIndustry.
+     * @param {SiteIndustryCreateArgs} args - Arguments to create a SiteIndustry.
+     * @example
+     * // Create one SiteIndustry
+     * const SiteIndustry = await prisma.siteIndustry.create({
+     *   data: {
+     *     // ... data to create a SiteIndustry
+     *   }
+     * })
+     * 
+     */
+    create<T extends SiteIndustryCreateArgs>(args: SelectSubset<T, SiteIndustryCreateArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SiteIndustries.
+     * @param {SiteIndustryCreateManyArgs} args - Arguments to create many SiteIndustries.
+     * @example
+     * // Create many SiteIndustries
+     * const siteIndustry = await prisma.siteIndustry.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SiteIndustryCreateManyArgs>(args?: SelectSubset<T, SiteIndustryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SiteIndustries and returns the data saved in the database.
+     * @param {SiteIndustryCreateManyAndReturnArgs} args - Arguments to create many SiteIndustries.
+     * @example
+     * // Create many SiteIndustries
+     * const siteIndustry = await prisma.siteIndustry.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SiteIndustries and only return the `slug`
+     * const siteIndustryWithSlugOnly = await prisma.siteIndustry.createManyAndReturn({
+     *   select: { slug: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SiteIndustryCreateManyAndReturnArgs>(args?: SelectSubset<T, SiteIndustryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SiteIndustry.
+     * @param {SiteIndustryDeleteArgs} args - Arguments to delete one SiteIndustry.
+     * @example
+     * // Delete one SiteIndustry
+     * const SiteIndustry = await prisma.siteIndustry.delete({
+     *   where: {
+     *     // ... filter to delete one SiteIndustry
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SiteIndustryDeleteArgs>(args: SelectSubset<T, SiteIndustryDeleteArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SiteIndustry.
+     * @param {SiteIndustryUpdateArgs} args - Arguments to update one SiteIndustry.
+     * @example
+     * // Update one SiteIndustry
+     * const siteIndustry = await prisma.siteIndustry.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SiteIndustryUpdateArgs>(args: SelectSubset<T, SiteIndustryUpdateArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SiteIndustries.
+     * @param {SiteIndustryDeleteManyArgs} args - Arguments to filter SiteIndustries to delete.
+     * @example
+     * // Delete a few SiteIndustries
+     * const { count } = await prisma.siteIndustry.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SiteIndustryDeleteManyArgs>(args?: SelectSubset<T, SiteIndustryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SiteIndustries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SiteIndustries
+     * const siteIndustry = await prisma.siteIndustry.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SiteIndustryUpdateManyArgs>(args: SelectSubset<T, SiteIndustryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SiteIndustries and returns the data updated in the database.
+     * @param {SiteIndustryUpdateManyAndReturnArgs} args - Arguments to update many SiteIndustries.
+     * @example
+     * // Update many SiteIndustries
+     * const siteIndustry = await prisma.siteIndustry.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SiteIndustries and only return the `slug`
+     * const siteIndustryWithSlugOnly = await prisma.siteIndustry.updateManyAndReturn({
+     *   select: { slug: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SiteIndustryUpdateManyAndReturnArgs>(args: SelectSubset<T, SiteIndustryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SiteIndustry.
+     * @param {SiteIndustryUpsertArgs} args - Arguments to update or create a SiteIndustry.
+     * @example
+     * // Update or create a SiteIndustry
+     * const siteIndustry = await prisma.siteIndustry.upsert({
+     *   create: {
+     *     // ... data to create a SiteIndustry
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SiteIndustry we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SiteIndustryUpsertArgs>(args: SelectSubset<T, SiteIndustryUpsertArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SiteIndustries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryCountArgs} args - Arguments to filter SiteIndustries to count.
+     * @example
+     * // Count the number of SiteIndustries
+     * const count = await prisma.siteIndustry.count({
+     *   where: {
+     *     // ... the filter for the SiteIndustries we want to count
+     *   }
+     * })
+    **/
+    count<T extends SiteIndustryCountArgs>(
+      args?: Subset<T, SiteIndustryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SiteIndustryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SiteIndustry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SiteIndustryAggregateArgs>(args: Subset<T, SiteIndustryAggregateArgs>): Prisma.PrismaPromise<GetSiteIndustryAggregateType<T>>
+
+    /**
+     * Group by SiteIndustry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SiteIndustryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SiteIndustryGroupByArgs['orderBy'] }
+        : { orderBy?: SiteIndustryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SiteIndustryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSiteIndustryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SiteIndustry model
+   */
+  readonly fields: SiteIndustryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SiteIndustry.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SiteIndustryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    items<T extends SiteIndustry$itemsArgs<ExtArgs> = {}>(args?: Subset<T, SiteIndustry$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SiteIndustry model
+   */
+  interface SiteIndustryFieldRefs {
+    readonly slug: FieldRef<"SiteIndustry", 'String'>
+    readonly visibility: FieldRef<"SiteIndustry", 'SiteCatalogVisibility'>
+    readonly maturityOverride: FieldRef<"SiteIndustry", 'SiteCatalogMaturity'>
+    readonly sortOrder: FieldRef<"SiteIndustry", 'Int'>
+    readonly names: FieldRef<"SiteIndustry", 'Json'>
+    readonly descriptions: FieldRef<"SiteIndustry", 'Json'>
+    readonly tagline: FieldRef<"SiteIndustry", 'Json'>
+    readonly body: FieldRef<"SiteIndustry", 'Json'>
+    readonly imageUrl: FieldRef<"SiteIndustry", 'String'>
+    readonly calcPrefill: FieldRef<"SiteIndustry", 'Json'>
+    readonly createdAt: FieldRef<"SiteIndustry", 'DateTime'>
+    readonly updatedAt: FieldRef<"SiteIndustry", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SiteIndustry findUnique
+   */
+  export type SiteIndustryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustry to fetch.
+     */
+    where: SiteIndustryWhereUniqueInput
+  }
+
+  /**
+   * SiteIndustry findUniqueOrThrow
+   */
+  export type SiteIndustryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustry to fetch.
+     */
+    where: SiteIndustryWhereUniqueInput
+  }
+
+  /**
+   * SiteIndustry findFirst
+   */
+  export type SiteIndustryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustry to fetch.
+     */
+    where?: SiteIndustryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteIndustries to fetch.
+     */
+    orderBy?: SiteIndustryOrderByWithRelationInput | SiteIndustryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SiteIndustries.
+     */
+    cursor?: SiteIndustryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteIndustries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteIndustries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteIndustries.
+     */
+    distinct?: SiteIndustryScalarFieldEnum | SiteIndustryScalarFieldEnum[]
+  }
+
+  /**
+   * SiteIndustry findFirstOrThrow
+   */
+  export type SiteIndustryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustry to fetch.
+     */
+    where?: SiteIndustryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteIndustries to fetch.
+     */
+    orderBy?: SiteIndustryOrderByWithRelationInput | SiteIndustryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SiteIndustries.
+     */
+    cursor?: SiteIndustryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteIndustries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteIndustries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteIndustries.
+     */
+    distinct?: SiteIndustryScalarFieldEnum | SiteIndustryScalarFieldEnum[]
+  }
+
+  /**
+   * SiteIndustry findMany
+   */
+  export type SiteIndustryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustries to fetch.
+     */
+    where?: SiteIndustryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteIndustries to fetch.
+     */
+    orderBy?: SiteIndustryOrderByWithRelationInput | SiteIndustryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SiteIndustries.
+     */
+    cursor?: SiteIndustryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteIndustries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteIndustries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteIndustries.
+     */
+    distinct?: SiteIndustryScalarFieldEnum | SiteIndustryScalarFieldEnum[]
+  }
+
+  /**
+   * SiteIndustry create
+   */
+  export type SiteIndustryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SiteIndustry.
+     */
+    data: XOR<SiteIndustryCreateInput, SiteIndustryUncheckedCreateInput>
+  }
+
+  /**
+   * SiteIndustry createMany
+   */
+  export type SiteIndustryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SiteIndustries.
+     */
+    data: SiteIndustryCreateManyInput | SiteIndustryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SiteIndustry createManyAndReturn
+   */
+  export type SiteIndustryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * The data used to create many SiteIndustries.
+     */
+    data: SiteIndustryCreateManyInput | SiteIndustryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SiteIndustry update
+   */
+  export type SiteIndustryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SiteIndustry.
+     */
+    data: XOR<SiteIndustryUpdateInput, SiteIndustryUncheckedUpdateInput>
+    /**
+     * Choose, which SiteIndustry to update.
+     */
+    where: SiteIndustryWhereUniqueInput
+  }
+
+  /**
+   * SiteIndustry updateMany
+   */
+  export type SiteIndustryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SiteIndustries.
+     */
+    data: XOR<SiteIndustryUpdateManyMutationInput, SiteIndustryUncheckedUpdateManyInput>
+    /**
+     * Filter which SiteIndustries to update
+     */
+    where?: SiteIndustryWhereInput
+    /**
+     * Limit how many SiteIndustries to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SiteIndustry updateManyAndReturn
+   */
+  export type SiteIndustryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * The data used to update SiteIndustries.
+     */
+    data: XOR<SiteIndustryUpdateManyMutationInput, SiteIndustryUncheckedUpdateManyInput>
+    /**
+     * Filter which SiteIndustries to update
+     */
+    where?: SiteIndustryWhereInput
+    /**
+     * Limit how many SiteIndustries to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SiteIndustry upsert
+   */
+  export type SiteIndustryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SiteIndustry to update in case it exists.
+     */
+    where: SiteIndustryWhereUniqueInput
+    /**
+     * In case the SiteIndustry found by the `where` argument doesn't exist, create a new SiteIndustry with this data.
+     */
+    create: XOR<SiteIndustryCreateInput, SiteIndustryUncheckedCreateInput>
+    /**
+     * In case the SiteIndustry was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SiteIndustryUpdateInput, SiteIndustryUncheckedUpdateInput>
+  }
+
+  /**
+   * SiteIndustry delete
+   */
+  export type SiteIndustryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+    /**
+     * Filter which SiteIndustry to delete.
+     */
+    where: SiteIndustryWhereUniqueInput
+  }
+
+  /**
+   * SiteIndustry deleteMany
+   */
+  export type SiteIndustryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SiteIndustries to delete
+     */
+    where?: SiteIndustryWhereInput
+    /**
+     * Limit how many SiteIndustries to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SiteIndustry.items
+   */
+  export type SiteIndustry$itemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    where?: SiteIndustryItemWhereInput
+    orderBy?: SiteIndustryItemOrderByWithRelationInput | SiteIndustryItemOrderByWithRelationInput[]
+    cursor?: SiteIndustryItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SiteIndustryItemScalarFieldEnum | SiteIndustryItemScalarFieldEnum[]
+  }
+
+  /**
+   * SiteIndustry without action
+   */
+  export type SiteIndustryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustry
+     */
+    select?: SiteIndustrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustry
+     */
+    omit?: SiteIndustryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SiteIndustryItem
+   */
+
+  export type AggregateSiteIndustryItem = {
+    _count: SiteIndustryItemCountAggregateOutputType | null
+    _avg: SiteIndustryItemAvgAggregateOutputType | null
+    _sum: SiteIndustryItemSumAggregateOutputType | null
+    _min: SiteIndustryItemMinAggregateOutputType | null
+    _max: SiteIndustryItemMaxAggregateOutputType | null
+  }
+
+  export type SiteIndustryItemAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SiteIndustryItemSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SiteIndustryItemMinAggregateOutputType = {
+    id: string | null
+    industrySlug: string | null
+    satelliteKey: string | null
+    moduleKey: string | null
+    role: $Enums.SiteIndustryItemRole | null
+    assumed: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SiteIndustryItemMaxAggregateOutputType = {
+    id: string | null
+    industrySlug: string | null
+    satelliteKey: string | null
+    moduleKey: string | null
+    role: $Enums.SiteIndustryItemRole | null
+    assumed: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SiteIndustryItemCountAggregateOutputType = {
+    id: number
+    industrySlug: number
+    satelliteKey: number
+    moduleKey: number
+    role: number
+    assumed: number
+    sortOrder: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SiteIndustryItemAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SiteIndustryItemSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SiteIndustryItemMinAggregateInputType = {
+    id?: true
+    industrySlug?: true
+    satelliteKey?: true
+    moduleKey?: true
+    role?: true
+    assumed?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SiteIndustryItemMaxAggregateInputType = {
+    id?: true
+    industrySlug?: true
+    satelliteKey?: true
+    moduleKey?: true
+    role?: true
+    assumed?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SiteIndustryItemCountAggregateInputType = {
+    id?: true
+    industrySlug?: true
+    satelliteKey?: true
+    moduleKey?: true
+    role?: true
+    assumed?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SiteIndustryItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SiteIndustryItem to aggregate.
+     */
+    where?: SiteIndustryItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteIndustryItems to fetch.
+     */
+    orderBy?: SiteIndustryItemOrderByWithRelationInput | SiteIndustryItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SiteIndustryItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteIndustryItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteIndustryItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SiteIndustryItems
+    **/
+    _count?: true | SiteIndustryItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SiteIndustryItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SiteIndustryItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SiteIndustryItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SiteIndustryItemMaxAggregateInputType
+  }
+
+  export type GetSiteIndustryItemAggregateType<T extends SiteIndustryItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateSiteIndustryItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSiteIndustryItem[P]>
+      : GetScalarType<T[P], AggregateSiteIndustryItem[P]>
+  }
+
+
+
+
+  export type SiteIndustryItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SiteIndustryItemWhereInput
+    orderBy?: SiteIndustryItemOrderByWithAggregationInput | SiteIndustryItemOrderByWithAggregationInput[]
+    by: SiteIndustryItemScalarFieldEnum[] | SiteIndustryItemScalarFieldEnum
+    having?: SiteIndustryItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SiteIndustryItemCountAggregateInputType | true
+    _avg?: SiteIndustryItemAvgAggregateInputType
+    _sum?: SiteIndustryItemSumAggregateInputType
+    _min?: SiteIndustryItemMinAggregateInputType
+    _max?: SiteIndustryItemMaxAggregateInputType
+  }
+
+  export type SiteIndustryItemGroupByOutputType = {
+    id: string
+    industrySlug: string
+    satelliteKey: string
+    moduleKey: string
+    role: $Enums.SiteIndustryItemRole
+    assumed: boolean
+    sortOrder: number
+    createdAt: Date
+    updatedAt: Date
+    _count: SiteIndustryItemCountAggregateOutputType | null
+    _avg: SiteIndustryItemAvgAggregateOutputType | null
+    _sum: SiteIndustryItemSumAggregateOutputType | null
+    _min: SiteIndustryItemMinAggregateOutputType | null
+    _max: SiteIndustryItemMaxAggregateOutputType | null
+  }
+
+  type GetSiteIndustryItemGroupByPayload<T extends SiteIndustryItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SiteIndustryItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SiteIndustryItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SiteIndustryItemGroupByOutputType[P]>
+            : GetScalarType<T[P], SiteIndustryItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SiteIndustryItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    industrySlug?: boolean
+    satelliteKey?: boolean
+    moduleKey?: boolean
+    role?: boolean
+    assumed?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    industry?: boolean | SiteIndustryDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["siteIndustryItem"]>
+
+  export type SiteIndustryItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    industrySlug?: boolean
+    satelliteKey?: boolean
+    moduleKey?: boolean
+    role?: boolean
+    assumed?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    industry?: boolean | SiteIndustryDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["siteIndustryItem"]>
+
+  export type SiteIndustryItemSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    industrySlug?: boolean
+    satelliteKey?: boolean
+    moduleKey?: boolean
+    role?: boolean
+    assumed?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    industry?: boolean | SiteIndustryDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["siteIndustryItem"]>
+
+  export type SiteIndustryItemSelectScalar = {
+    id?: boolean
+    industrySlug?: boolean
+    satelliteKey?: boolean
+    moduleKey?: boolean
+    role?: boolean
+    assumed?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SiteIndustryItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "industrySlug" | "satelliteKey" | "moduleKey" | "role" | "assumed" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["siteIndustryItem"]>
+  export type SiteIndustryItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    industry?: boolean | SiteIndustryDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+  export type SiteIndustryItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    industry?: boolean | SiteIndustryDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+  export type SiteIndustryItemIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    industry?: boolean | SiteIndustryDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+
+  export type $SiteIndustryItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SiteIndustryItem"
+    objects: {
+      industry: Prisma.$SiteIndustryPayload<ExtArgs>
+      satellite: Prisma.$SatellitePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      industrySlug: string
+      satelliteKey: string
+      /**
+       * Optional module key when the slot is a specific module (e.g. banking_dbo). Empty string = whole product.
+       */
+      moduleKey: string
+      role: $Enums.SiteIndustryItemRole
+      assumed: boolean
+      sortOrder: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["siteIndustryItem"]>
+    composites: {}
+  }
+
+  type SiteIndustryItemGetPayload<S extends boolean | null | undefined | SiteIndustryItemDefaultArgs> = $Result.GetResult<Prisma.$SiteIndustryItemPayload, S>
+
+  type SiteIndustryItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SiteIndustryItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SiteIndustryItemCountAggregateInputType | true
+    }
+
+  export interface SiteIndustryItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SiteIndustryItem'], meta: { name: 'SiteIndustryItem' } }
+    /**
+     * Find zero or one SiteIndustryItem that matches the filter.
+     * @param {SiteIndustryItemFindUniqueArgs} args - Arguments to find a SiteIndustryItem
+     * @example
+     * // Get one SiteIndustryItem
+     * const siteIndustryItem = await prisma.siteIndustryItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SiteIndustryItemFindUniqueArgs>(args: SelectSubset<T, SiteIndustryItemFindUniqueArgs<ExtArgs>>): Prisma__SiteIndustryItemClient<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SiteIndustryItem that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SiteIndustryItemFindUniqueOrThrowArgs} args - Arguments to find a SiteIndustryItem
+     * @example
+     * // Get one SiteIndustryItem
+     * const siteIndustryItem = await prisma.siteIndustryItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SiteIndustryItemFindUniqueOrThrowArgs>(args: SelectSubset<T, SiteIndustryItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SiteIndustryItemClient<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SiteIndustryItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryItemFindFirstArgs} args - Arguments to find a SiteIndustryItem
+     * @example
+     * // Get one SiteIndustryItem
+     * const siteIndustryItem = await prisma.siteIndustryItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SiteIndustryItemFindFirstArgs>(args?: SelectSubset<T, SiteIndustryItemFindFirstArgs<ExtArgs>>): Prisma__SiteIndustryItemClient<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SiteIndustryItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryItemFindFirstOrThrowArgs} args - Arguments to find a SiteIndustryItem
+     * @example
+     * // Get one SiteIndustryItem
+     * const siteIndustryItem = await prisma.siteIndustryItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SiteIndustryItemFindFirstOrThrowArgs>(args?: SelectSubset<T, SiteIndustryItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__SiteIndustryItemClient<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SiteIndustryItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SiteIndustryItems
+     * const siteIndustryItems = await prisma.siteIndustryItem.findMany()
+     * 
+     * // Get first 10 SiteIndustryItems
+     * const siteIndustryItems = await prisma.siteIndustryItem.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const siteIndustryItemWithIdOnly = await prisma.siteIndustryItem.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SiteIndustryItemFindManyArgs>(args?: SelectSubset<T, SiteIndustryItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SiteIndustryItem.
+     * @param {SiteIndustryItemCreateArgs} args - Arguments to create a SiteIndustryItem.
+     * @example
+     * // Create one SiteIndustryItem
+     * const SiteIndustryItem = await prisma.siteIndustryItem.create({
+     *   data: {
+     *     // ... data to create a SiteIndustryItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends SiteIndustryItemCreateArgs>(args: SelectSubset<T, SiteIndustryItemCreateArgs<ExtArgs>>): Prisma__SiteIndustryItemClient<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SiteIndustryItems.
+     * @param {SiteIndustryItemCreateManyArgs} args - Arguments to create many SiteIndustryItems.
+     * @example
+     * // Create many SiteIndustryItems
+     * const siteIndustryItem = await prisma.siteIndustryItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SiteIndustryItemCreateManyArgs>(args?: SelectSubset<T, SiteIndustryItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SiteIndustryItems and returns the data saved in the database.
+     * @param {SiteIndustryItemCreateManyAndReturnArgs} args - Arguments to create many SiteIndustryItems.
+     * @example
+     * // Create many SiteIndustryItems
+     * const siteIndustryItem = await prisma.siteIndustryItem.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SiteIndustryItems and only return the `id`
+     * const siteIndustryItemWithIdOnly = await prisma.siteIndustryItem.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SiteIndustryItemCreateManyAndReturnArgs>(args?: SelectSubset<T, SiteIndustryItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SiteIndustryItem.
+     * @param {SiteIndustryItemDeleteArgs} args - Arguments to delete one SiteIndustryItem.
+     * @example
+     * // Delete one SiteIndustryItem
+     * const SiteIndustryItem = await prisma.siteIndustryItem.delete({
+     *   where: {
+     *     // ... filter to delete one SiteIndustryItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SiteIndustryItemDeleteArgs>(args: SelectSubset<T, SiteIndustryItemDeleteArgs<ExtArgs>>): Prisma__SiteIndustryItemClient<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SiteIndustryItem.
+     * @param {SiteIndustryItemUpdateArgs} args - Arguments to update one SiteIndustryItem.
+     * @example
+     * // Update one SiteIndustryItem
+     * const siteIndustryItem = await prisma.siteIndustryItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SiteIndustryItemUpdateArgs>(args: SelectSubset<T, SiteIndustryItemUpdateArgs<ExtArgs>>): Prisma__SiteIndustryItemClient<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SiteIndustryItems.
+     * @param {SiteIndustryItemDeleteManyArgs} args - Arguments to filter SiteIndustryItems to delete.
+     * @example
+     * // Delete a few SiteIndustryItems
+     * const { count } = await prisma.siteIndustryItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SiteIndustryItemDeleteManyArgs>(args?: SelectSubset<T, SiteIndustryItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SiteIndustryItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SiteIndustryItems
+     * const siteIndustryItem = await prisma.siteIndustryItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SiteIndustryItemUpdateManyArgs>(args: SelectSubset<T, SiteIndustryItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SiteIndustryItems and returns the data updated in the database.
+     * @param {SiteIndustryItemUpdateManyAndReturnArgs} args - Arguments to update many SiteIndustryItems.
+     * @example
+     * // Update many SiteIndustryItems
+     * const siteIndustryItem = await prisma.siteIndustryItem.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SiteIndustryItems and only return the `id`
+     * const siteIndustryItemWithIdOnly = await prisma.siteIndustryItem.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SiteIndustryItemUpdateManyAndReturnArgs>(args: SelectSubset<T, SiteIndustryItemUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SiteIndustryItem.
+     * @param {SiteIndustryItemUpsertArgs} args - Arguments to update or create a SiteIndustryItem.
+     * @example
+     * // Update or create a SiteIndustryItem
+     * const siteIndustryItem = await prisma.siteIndustryItem.upsert({
+     *   create: {
+     *     // ... data to create a SiteIndustryItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SiteIndustryItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SiteIndustryItemUpsertArgs>(args: SelectSubset<T, SiteIndustryItemUpsertArgs<ExtArgs>>): Prisma__SiteIndustryItemClient<$Result.GetResult<Prisma.$SiteIndustryItemPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SiteIndustryItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryItemCountArgs} args - Arguments to filter SiteIndustryItems to count.
+     * @example
+     * // Count the number of SiteIndustryItems
+     * const count = await prisma.siteIndustryItem.count({
+     *   where: {
+     *     // ... the filter for the SiteIndustryItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends SiteIndustryItemCountArgs>(
+      args?: Subset<T, SiteIndustryItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SiteIndustryItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SiteIndustryItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SiteIndustryItemAggregateArgs>(args: Subset<T, SiteIndustryItemAggregateArgs>): Prisma.PrismaPromise<GetSiteIndustryItemAggregateType<T>>
+
+    /**
+     * Group by SiteIndustryItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SiteIndustryItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SiteIndustryItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SiteIndustryItemGroupByArgs['orderBy'] }
+        : { orderBy?: SiteIndustryItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SiteIndustryItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSiteIndustryItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SiteIndustryItem model
+   */
+  readonly fields: SiteIndustryItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SiteIndustryItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SiteIndustryItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    industry<T extends SiteIndustryDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SiteIndustryDefaultArgs<ExtArgs>>): Prisma__SiteIndustryClient<$Result.GetResult<Prisma.$SiteIndustryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    satellite<T extends SatelliteDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SatelliteDefaultArgs<ExtArgs>>): Prisma__SatelliteClient<$Result.GetResult<Prisma.$SatellitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SiteIndustryItem model
+   */
+  interface SiteIndustryItemFieldRefs {
+    readonly id: FieldRef<"SiteIndustryItem", 'String'>
+    readonly industrySlug: FieldRef<"SiteIndustryItem", 'String'>
+    readonly satelliteKey: FieldRef<"SiteIndustryItem", 'String'>
+    readonly moduleKey: FieldRef<"SiteIndustryItem", 'String'>
+    readonly role: FieldRef<"SiteIndustryItem", 'SiteIndustryItemRole'>
+    readonly assumed: FieldRef<"SiteIndustryItem", 'Boolean'>
+    readonly sortOrder: FieldRef<"SiteIndustryItem", 'Int'>
+    readonly createdAt: FieldRef<"SiteIndustryItem", 'DateTime'>
+    readonly updatedAt: FieldRef<"SiteIndustryItem", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SiteIndustryItem findUnique
+   */
+  export type SiteIndustryItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustryItem to fetch.
+     */
+    where: SiteIndustryItemWhereUniqueInput
+  }
+
+  /**
+   * SiteIndustryItem findUniqueOrThrow
+   */
+  export type SiteIndustryItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustryItem to fetch.
+     */
+    where: SiteIndustryItemWhereUniqueInput
+  }
+
+  /**
+   * SiteIndustryItem findFirst
+   */
+  export type SiteIndustryItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustryItem to fetch.
+     */
+    where?: SiteIndustryItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteIndustryItems to fetch.
+     */
+    orderBy?: SiteIndustryItemOrderByWithRelationInput | SiteIndustryItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SiteIndustryItems.
+     */
+    cursor?: SiteIndustryItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteIndustryItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteIndustryItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteIndustryItems.
+     */
+    distinct?: SiteIndustryItemScalarFieldEnum | SiteIndustryItemScalarFieldEnum[]
+  }
+
+  /**
+   * SiteIndustryItem findFirstOrThrow
+   */
+  export type SiteIndustryItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustryItem to fetch.
+     */
+    where?: SiteIndustryItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteIndustryItems to fetch.
+     */
+    orderBy?: SiteIndustryItemOrderByWithRelationInput | SiteIndustryItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SiteIndustryItems.
+     */
+    cursor?: SiteIndustryItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteIndustryItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteIndustryItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteIndustryItems.
+     */
+    distinct?: SiteIndustryItemScalarFieldEnum | SiteIndustryItemScalarFieldEnum[]
+  }
+
+  /**
+   * SiteIndustryItem findMany
+   */
+  export type SiteIndustryItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * Filter, which SiteIndustryItems to fetch.
+     */
+    where?: SiteIndustryItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SiteIndustryItems to fetch.
+     */
+    orderBy?: SiteIndustryItemOrderByWithRelationInput | SiteIndustryItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SiteIndustryItems.
+     */
+    cursor?: SiteIndustryItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SiteIndustryItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SiteIndustryItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteIndustryItems.
+     */
+    distinct?: SiteIndustryItemScalarFieldEnum | SiteIndustryItemScalarFieldEnum[]
+  }
+
+  /**
+   * SiteIndustryItem create
+   */
+  export type SiteIndustryItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SiteIndustryItem.
+     */
+    data: XOR<SiteIndustryItemCreateInput, SiteIndustryItemUncheckedCreateInput>
+  }
+
+  /**
+   * SiteIndustryItem createMany
+   */
+  export type SiteIndustryItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SiteIndustryItems.
+     */
+    data: SiteIndustryItemCreateManyInput | SiteIndustryItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SiteIndustryItem createManyAndReturn
+   */
+  export type SiteIndustryItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * The data used to create many SiteIndustryItems.
+     */
+    data: SiteIndustryItemCreateManyInput | SiteIndustryItemCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SiteIndustryItem update
+   */
+  export type SiteIndustryItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SiteIndustryItem.
+     */
+    data: XOR<SiteIndustryItemUpdateInput, SiteIndustryItemUncheckedUpdateInput>
+    /**
+     * Choose, which SiteIndustryItem to update.
+     */
+    where: SiteIndustryItemWhereUniqueInput
+  }
+
+  /**
+   * SiteIndustryItem updateMany
+   */
+  export type SiteIndustryItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SiteIndustryItems.
+     */
+    data: XOR<SiteIndustryItemUpdateManyMutationInput, SiteIndustryItemUncheckedUpdateManyInput>
+    /**
+     * Filter which SiteIndustryItems to update
+     */
+    where?: SiteIndustryItemWhereInput
+    /**
+     * Limit how many SiteIndustryItems to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SiteIndustryItem updateManyAndReturn
+   */
+  export type SiteIndustryItemUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * The data used to update SiteIndustryItems.
+     */
+    data: XOR<SiteIndustryItemUpdateManyMutationInput, SiteIndustryItemUncheckedUpdateManyInput>
+    /**
+     * Filter which SiteIndustryItems to update
+     */
+    where?: SiteIndustryItemWhereInput
+    /**
+     * Limit how many SiteIndustryItems to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SiteIndustryItem upsert
+   */
+  export type SiteIndustryItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SiteIndustryItem to update in case it exists.
+     */
+    where: SiteIndustryItemWhereUniqueInput
+    /**
+     * In case the SiteIndustryItem found by the `where` argument doesn't exist, create a new SiteIndustryItem with this data.
+     */
+    create: XOR<SiteIndustryItemCreateInput, SiteIndustryItemUncheckedCreateInput>
+    /**
+     * In case the SiteIndustryItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SiteIndustryItemUpdateInput, SiteIndustryItemUncheckedUpdateInput>
+  }
+
+  /**
+   * SiteIndustryItem delete
+   */
+  export type SiteIndustryItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
+    /**
+     * Filter which SiteIndustryItem to delete.
+     */
+    where: SiteIndustryItemWhereUniqueInput
+  }
+
+  /**
+   * SiteIndustryItem deleteMany
+   */
+  export type SiteIndustryItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SiteIndustryItems to delete
+     */
+    where?: SiteIndustryItemWhereInput
+    /**
+     * Limit how many SiteIndustryItems to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SiteIndustryItem without action
+   */
+  export type SiteIndustryItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SiteIndustryItem
+     */
+    select?: SiteIndustryItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SiteIndustryItem
+     */
+    omit?: SiteIndustryItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SiteIndustryItemInclude<ExtArgs> | null
   }
 
 
@@ -165830,6 +171080,77 @@ export namespace Prisma {
   export type SatelliteScalarFieldEnum = (typeof SatelliteScalarFieldEnum)[keyof typeof SatelliteScalarFieldEnum]
 
 
+  export const SatellitePublicProfileScalarFieldEnum: {
+    satelliteKey: 'satelliteKey',
+    publicSlug: 'publicSlug',
+    visibility: 'visibility',
+    maturity: 'maturity',
+    sortOrder: 'sortOrder',
+    names: 'names',
+    descriptions: 'descriptions',
+    tagline: 'tagline',
+    body: 'body',
+    imageUrl: 'imageUrl',
+    showOnSite: 'showOnSite',
+    kind: 'kind',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SatellitePublicProfileScalarFieldEnum = (typeof SatellitePublicProfileScalarFieldEnum)[keyof typeof SatellitePublicProfileScalarFieldEnum]
+
+
+  export const PricingModulePublicProfileScalarFieldEnum: {
+    moduleKey: 'moduleKey',
+    visibility: 'visibility',
+    maturity: 'maturity',
+    sortOrder: 'sortOrder',
+    names: 'names',
+    descriptions: 'descriptions',
+    tagline: 'tagline',
+    body: 'body',
+    imageUrl: 'imageUrl',
+    showAsSubsection: 'showAsSubsection',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PricingModulePublicProfileScalarFieldEnum = (typeof PricingModulePublicProfileScalarFieldEnum)[keyof typeof PricingModulePublicProfileScalarFieldEnum]
+
+
+  export const SiteIndustryScalarFieldEnum: {
+    slug: 'slug',
+    visibility: 'visibility',
+    maturityOverride: 'maturityOverride',
+    sortOrder: 'sortOrder',
+    names: 'names',
+    descriptions: 'descriptions',
+    tagline: 'tagline',
+    body: 'body',
+    imageUrl: 'imageUrl',
+    calcPrefill: 'calcPrefill',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SiteIndustryScalarFieldEnum = (typeof SiteIndustryScalarFieldEnum)[keyof typeof SiteIndustryScalarFieldEnum]
+
+
+  export const SiteIndustryItemScalarFieldEnum: {
+    id: 'id',
+    industrySlug: 'industrySlug',
+    satelliteKey: 'satelliteKey',
+    moduleKey: 'moduleKey',
+    role: 'role',
+    assumed: 'assumed',
+    sortOrder: 'sortOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SiteIndustryItemScalarFieldEnum = (typeof SiteIndustryItemScalarFieldEnum)[keyof typeof SiteIndustryItemScalarFieldEnum]
+
+
   export const OrganizationSatelliteEntitlementScalarFieldEnum: {
     organizationId: 'organizationId',
     satelliteKey: 'satelliteKey',
@@ -167903,6 +173224,48 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'SiteCatalogVisibility'
+   */
+  export type EnumSiteCatalogVisibilityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteCatalogVisibility'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteCatalogVisibility[]'
+   */
+  export type ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteCatalogVisibility[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteCatalogMaturity'
+   */
+  export type EnumSiteCatalogMaturityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteCatalogMaturity'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteCatalogMaturity[]'
+   */
+  export type ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteCatalogMaturity[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteIndustryItemRole'
+   */
+  export type EnumSiteIndustryItemRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteIndustryItemRole'>
+    
+
+
+  /**
+   * Reference to a field of type 'SiteIndustryItemRole[]'
+   */
+  export type ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SiteIndustryItemRole[]'>
+    
+
+
+  /**
    * Reference to a field of type 'DeploymentTopology'
    */
   export type EnumDeploymentTopologyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DeploymentTopology'>
@@ -169836,6 +175199,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PricingModule"> | Date | string
     updatedAt?: DateTimeFilter<"PricingModule"> | Date | string
     satellite?: XOR<SatelliteNullableScalarRelationFilter, SatelliteWhereInput> | null
+    publicProfile?: XOR<PricingModulePublicProfileNullableScalarRelationFilter, PricingModulePublicProfileWhereInput> | null
   }
 
   export type PricingModuleOrderByWithRelationInput = {
@@ -169851,6 +175215,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     satellite?: SatelliteOrderByWithRelationInput
+    publicProfile?: PricingModulePublicProfileOrderByWithRelationInput
   }
 
   export type PricingModuleWhereUniqueInput = Prisma.AtLeast<{
@@ -169869,6 +175234,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PricingModule"> | Date | string
     updatedAt?: DateTimeFilter<"PricingModule"> | Date | string
     satellite?: XOR<SatelliteNullableScalarRelationFilter, SatelliteWhereInput> | null
+    publicProfile?: XOR<PricingModulePublicProfileNullableScalarRelationFilter, PricingModulePublicProfileWhereInput> | null
   }, "id" | "key">
 
   export type PricingModuleOrderByWithAggregationInput = {
@@ -169920,6 +175286,8 @@ export namespace Prisma {
     modules?: PricingModuleListRelationFilter
     endpoints?: SatelliteEndpointListRelationFilter
     entitlements?: OrganizationSatelliteEntitlementListRelationFilter
+    publicProfile?: XOR<SatellitePublicProfileNullableScalarRelationFilter, SatellitePublicProfileWhereInput> | null
+    industryItems?: SiteIndustryItemListRelationFilter
   }
 
   export type SatelliteOrderByWithRelationInput = {
@@ -169932,6 +175300,8 @@ export namespace Prisma {
     modules?: PricingModuleOrderByRelationAggregateInput
     endpoints?: SatelliteEndpointOrderByRelationAggregateInput
     entitlements?: OrganizationSatelliteEntitlementOrderByRelationAggregateInput
+    publicProfile?: SatellitePublicProfileOrderByWithRelationInput
+    industryItems?: SiteIndustryItemOrderByRelationAggregateInput
   }
 
   export type SatelliteWhereUniqueInput = Prisma.AtLeast<{
@@ -169947,6 +175317,8 @@ export namespace Prisma {
     modules?: PricingModuleListRelationFilter
     endpoints?: SatelliteEndpointListRelationFilter
     entitlements?: OrganizationSatelliteEntitlementListRelationFilter
+    publicProfile?: XOR<SatellitePublicProfileNullableScalarRelationFilter, SatellitePublicProfileWhereInput> | null
+    industryItems?: SiteIndustryItemListRelationFilter
   }, "key">
 
   export type SatelliteOrderByWithAggregationInput = {
@@ -169973,6 +175345,373 @@ export namespace Prisma {
     sortOrder?: IntWithAggregatesFilter<"Satellite"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Satellite"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Satellite"> | Date | string
+  }
+
+  export type SatellitePublicProfileWhereInput = {
+    AND?: SatellitePublicProfileWhereInput | SatellitePublicProfileWhereInput[]
+    OR?: SatellitePublicProfileWhereInput[]
+    NOT?: SatellitePublicProfileWhereInput | SatellitePublicProfileWhereInput[]
+    satelliteKey?: StringFilter<"SatellitePublicProfile"> | string
+    publicSlug?: StringFilter<"SatellitePublicProfile"> | string
+    visibility?: EnumSiteCatalogVisibilityFilter<"SatellitePublicProfile"> | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityFilter<"SatellitePublicProfile"> | $Enums.SiteCatalogMaturity
+    sortOrder?: IntFilter<"SatellitePublicProfile"> | number
+    names?: JsonFilter<"SatellitePublicProfile">
+    descriptions?: JsonFilter<"SatellitePublicProfile">
+    tagline?: JsonFilter<"SatellitePublicProfile">
+    body?: JsonFilter<"SatellitePublicProfile">
+    imageUrl?: StringNullableFilter<"SatellitePublicProfile"> | string | null
+    showOnSite?: BoolFilter<"SatellitePublicProfile"> | boolean
+    kind?: StringFilter<"SatellitePublicProfile"> | string
+    createdAt?: DateTimeFilter<"SatellitePublicProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"SatellitePublicProfile"> | Date | string
+    satellite?: XOR<SatelliteScalarRelationFilter, SatelliteWhereInput>
+  }
+
+  export type SatellitePublicProfileOrderByWithRelationInput = {
+    satelliteKey?: SortOrder
+    publicSlug?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrderInput | SortOrder
+    showOnSite?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    satellite?: SatelliteOrderByWithRelationInput
+  }
+
+  export type SatellitePublicProfileWhereUniqueInput = Prisma.AtLeast<{
+    satelliteKey?: string
+    publicSlug?: string
+    AND?: SatellitePublicProfileWhereInput | SatellitePublicProfileWhereInput[]
+    OR?: SatellitePublicProfileWhereInput[]
+    NOT?: SatellitePublicProfileWhereInput | SatellitePublicProfileWhereInput[]
+    visibility?: EnumSiteCatalogVisibilityFilter<"SatellitePublicProfile"> | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityFilter<"SatellitePublicProfile"> | $Enums.SiteCatalogMaturity
+    sortOrder?: IntFilter<"SatellitePublicProfile"> | number
+    names?: JsonFilter<"SatellitePublicProfile">
+    descriptions?: JsonFilter<"SatellitePublicProfile">
+    tagline?: JsonFilter<"SatellitePublicProfile">
+    body?: JsonFilter<"SatellitePublicProfile">
+    imageUrl?: StringNullableFilter<"SatellitePublicProfile"> | string | null
+    showOnSite?: BoolFilter<"SatellitePublicProfile"> | boolean
+    kind?: StringFilter<"SatellitePublicProfile"> | string
+    createdAt?: DateTimeFilter<"SatellitePublicProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"SatellitePublicProfile"> | Date | string
+    satellite?: XOR<SatelliteScalarRelationFilter, SatelliteWhereInput>
+  }, "satelliteKey" | "publicSlug">
+
+  export type SatellitePublicProfileOrderByWithAggregationInput = {
+    satelliteKey?: SortOrder
+    publicSlug?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrderInput | SortOrder
+    showOnSite?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SatellitePublicProfileCountOrderByAggregateInput
+    _avg?: SatellitePublicProfileAvgOrderByAggregateInput
+    _max?: SatellitePublicProfileMaxOrderByAggregateInput
+    _min?: SatellitePublicProfileMinOrderByAggregateInput
+    _sum?: SatellitePublicProfileSumOrderByAggregateInput
+  }
+
+  export type SatellitePublicProfileScalarWhereWithAggregatesInput = {
+    AND?: SatellitePublicProfileScalarWhereWithAggregatesInput | SatellitePublicProfileScalarWhereWithAggregatesInput[]
+    OR?: SatellitePublicProfileScalarWhereWithAggregatesInput[]
+    NOT?: SatellitePublicProfileScalarWhereWithAggregatesInput | SatellitePublicProfileScalarWhereWithAggregatesInput[]
+    satelliteKey?: StringWithAggregatesFilter<"SatellitePublicProfile"> | string
+    publicSlug?: StringWithAggregatesFilter<"SatellitePublicProfile"> | string
+    visibility?: EnumSiteCatalogVisibilityWithAggregatesFilter<"SatellitePublicProfile"> | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityWithAggregatesFilter<"SatellitePublicProfile"> | $Enums.SiteCatalogMaturity
+    sortOrder?: IntWithAggregatesFilter<"SatellitePublicProfile"> | number
+    names?: JsonWithAggregatesFilter<"SatellitePublicProfile">
+    descriptions?: JsonWithAggregatesFilter<"SatellitePublicProfile">
+    tagline?: JsonWithAggregatesFilter<"SatellitePublicProfile">
+    body?: JsonWithAggregatesFilter<"SatellitePublicProfile">
+    imageUrl?: StringNullableWithAggregatesFilter<"SatellitePublicProfile"> | string | null
+    showOnSite?: BoolWithAggregatesFilter<"SatellitePublicProfile"> | boolean
+    kind?: StringWithAggregatesFilter<"SatellitePublicProfile"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"SatellitePublicProfile"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SatellitePublicProfile"> | Date | string
+  }
+
+  export type PricingModulePublicProfileWhereInput = {
+    AND?: PricingModulePublicProfileWhereInput | PricingModulePublicProfileWhereInput[]
+    OR?: PricingModulePublicProfileWhereInput[]
+    NOT?: PricingModulePublicProfileWhereInput | PricingModulePublicProfileWhereInput[]
+    moduleKey?: StringFilter<"PricingModulePublicProfile"> | string
+    visibility?: EnumSiteCatalogVisibilityFilter<"PricingModulePublicProfile"> | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityNullableFilter<"PricingModulePublicProfile"> | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFilter<"PricingModulePublicProfile"> | number
+    names?: JsonFilter<"PricingModulePublicProfile">
+    descriptions?: JsonFilter<"PricingModulePublicProfile">
+    tagline?: JsonFilter<"PricingModulePublicProfile">
+    body?: JsonFilter<"PricingModulePublicProfile">
+    imageUrl?: StringNullableFilter<"PricingModulePublicProfile"> | string | null
+    showAsSubsection?: BoolFilter<"PricingModulePublicProfile"> | boolean
+    createdAt?: DateTimeFilter<"PricingModulePublicProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"PricingModulePublicProfile"> | Date | string
+    module?: XOR<PricingModuleScalarRelationFilter, PricingModuleWhereInput>
+  }
+
+  export type PricingModulePublicProfileOrderByWithRelationInput = {
+    moduleKey?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrderInput | SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrderInput | SortOrder
+    showAsSubsection?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    module?: PricingModuleOrderByWithRelationInput
+  }
+
+  export type PricingModulePublicProfileWhereUniqueInput = Prisma.AtLeast<{
+    moduleKey?: string
+    AND?: PricingModulePublicProfileWhereInput | PricingModulePublicProfileWhereInput[]
+    OR?: PricingModulePublicProfileWhereInput[]
+    NOT?: PricingModulePublicProfileWhereInput | PricingModulePublicProfileWhereInput[]
+    visibility?: EnumSiteCatalogVisibilityFilter<"PricingModulePublicProfile"> | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityNullableFilter<"PricingModulePublicProfile"> | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFilter<"PricingModulePublicProfile"> | number
+    names?: JsonFilter<"PricingModulePublicProfile">
+    descriptions?: JsonFilter<"PricingModulePublicProfile">
+    tagline?: JsonFilter<"PricingModulePublicProfile">
+    body?: JsonFilter<"PricingModulePublicProfile">
+    imageUrl?: StringNullableFilter<"PricingModulePublicProfile"> | string | null
+    showAsSubsection?: BoolFilter<"PricingModulePublicProfile"> | boolean
+    createdAt?: DateTimeFilter<"PricingModulePublicProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"PricingModulePublicProfile"> | Date | string
+    module?: XOR<PricingModuleScalarRelationFilter, PricingModuleWhereInput>
+  }, "moduleKey">
+
+  export type PricingModulePublicProfileOrderByWithAggregationInput = {
+    moduleKey?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrderInput | SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrderInput | SortOrder
+    showAsSubsection?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PricingModulePublicProfileCountOrderByAggregateInput
+    _avg?: PricingModulePublicProfileAvgOrderByAggregateInput
+    _max?: PricingModulePublicProfileMaxOrderByAggregateInput
+    _min?: PricingModulePublicProfileMinOrderByAggregateInput
+    _sum?: PricingModulePublicProfileSumOrderByAggregateInput
+  }
+
+  export type PricingModulePublicProfileScalarWhereWithAggregatesInput = {
+    AND?: PricingModulePublicProfileScalarWhereWithAggregatesInput | PricingModulePublicProfileScalarWhereWithAggregatesInput[]
+    OR?: PricingModulePublicProfileScalarWhereWithAggregatesInput[]
+    NOT?: PricingModulePublicProfileScalarWhereWithAggregatesInput | PricingModulePublicProfileScalarWhereWithAggregatesInput[]
+    moduleKey?: StringWithAggregatesFilter<"PricingModulePublicProfile"> | string
+    visibility?: EnumSiteCatalogVisibilityWithAggregatesFilter<"PricingModulePublicProfile"> | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityNullableWithAggregatesFilter<"PricingModulePublicProfile"> | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntWithAggregatesFilter<"PricingModulePublicProfile"> | number
+    names?: JsonWithAggregatesFilter<"PricingModulePublicProfile">
+    descriptions?: JsonWithAggregatesFilter<"PricingModulePublicProfile">
+    tagline?: JsonWithAggregatesFilter<"PricingModulePublicProfile">
+    body?: JsonWithAggregatesFilter<"PricingModulePublicProfile">
+    imageUrl?: StringNullableWithAggregatesFilter<"PricingModulePublicProfile"> | string | null
+    showAsSubsection?: BoolWithAggregatesFilter<"PricingModulePublicProfile"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"PricingModulePublicProfile"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PricingModulePublicProfile"> | Date | string
+  }
+
+  export type SiteIndustryWhereInput = {
+    AND?: SiteIndustryWhereInput | SiteIndustryWhereInput[]
+    OR?: SiteIndustryWhereInput[]
+    NOT?: SiteIndustryWhereInput | SiteIndustryWhereInput[]
+    slug?: StringFilter<"SiteIndustry"> | string
+    visibility?: EnumSiteCatalogVisibilityFilter<"SiteIndustry"> | $Enums.SiteCatalogVisibility
+    maturityOverride?: EnumSiteCatalogMaturityNullableFilter<"SiteIndustry"> | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFilter<"SiteIndustry"> | number
+    names?: JsonFilter<"SiteIndustry">
+    descriptions?: JsonFilter<"SiteIndustry">
+    tagline?: JsonFilter<"SiteIndustry">
+    body?: JsonFilter<"SiteIndustry">
+    imageUrl?: StringNullableFilter<"SiteIndustry"> | string | null
+    calcPrefill?: JsonNullableFilter<"SiteIndustry">
+    createdAt?: DateTimeFilter<"SiteIndustry"> | Date | string
+    updatedAt?: DateTimeFilter<"SiteIndustry"> | Date | string
+    items?: SiteIndustryItemListRelationFilter
+  }
+
+  export type SiteIndustryOrderByWithRelationInput = {
+    slug?: SortOrder
+    visibility?: SortOrder
+    maturityOverride?: SortOrderInput | SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrderInput | SortOrder
+    calcPrefill?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    items?: SiteIndustryItemOrderByRelationAggregateInput
+  }
+
+  export type SiteIndustryWhereUniqueInput = Prisma.AtLeast<{
+    slug?: string
+    AND?: SiteIndustryWhereInput | SiteIndustryWhereInput[]
+    OR?: SiteIndustryWhereInput[]
+    NOT?: SiteIndustryWhereInput | SiteIndustryWhereInput[]
+    visibility?: EnumSiteCatalogVisibilityFilter<"SiteIndustry"> | $Enums.SiteCatalogVisibility
+    maturityOverride?: EnumSiteCatalogMaturityNullableFilter<"SiteIndustry"> | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFilter<"SiteIndustry"> | number
+    names?: JsonFilter<"SiteIndustry">
+    descriptions?: JsonFilter<"SiteIndustry">
+    tagline?: JsonFilter<"SiteIndustry">
+    body?: JsonFilter<"SiteIndustry">
+    imageUrl?: StringNullableFilter<"SiteIndustry"> | string | null
+    calcPrefill?: JsonNullableFilter<"SiteIndustry">
+    createdAt?: DateTimeFilter<"SiteIndustry"> | Date | string
+    updatedAt?: DateTimeFilter<"SiteIndustry"> | Date | string
+    items?: SiteIndustryItemListRelationFilter
+  }, "slug">
+
+  export type SiteIndustryOrderByWithAggregationInput = {
+    slug?: SortOrder
+    visibility?: SortOrder
+    maturityOverride?: SortOrderInput | SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrderInput | SortOrder
+    calcPrefill?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SiteIndustryCountOrderByAggregateInput
+    _avg?: SiteIndustryAvgOrderByAggregateInput
+    _max?: SiteIndustryMaxOrderByAggregateInput
+    _min?: SiteIndustryMinOrderByAggregateInput
+    _sum?: SiteIndustrySumOrderByAggregateInput
+  }
+
+  export type SiteIndustryScalarWhereWithAggregatesInput = {
+    AND?: SiteIndustryScalarWhereWithAggregatesInput | SiteIndustryScalarWhereWithAggregatesInput[]
+    OR?: SiteIndustryScalarWhereWithAggregatesInput[]
+    NOT?: SiteIndustryScalarWhereWithAggregatesInput | SiteIndustryScalarWhereWithAggregatesInput[]
+    slug?: StringWithAggregatesFilter<"SiteIndustry"> | string
+    visibility?: EnumSiteCatalogVisibilityWithAggregatesFilter<"SiteIndustry"> | $Enums.SiteCatalogVisibility
+    maturityOverride?: EnumSiteCatalogMaturityNullableWithAggregatesFilter<"SiteIndustry"> | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntWithAggregatesFilter<"SiteIndustry"> | number
+    names?: JsonWithAggregatesFilter<"SiteIndustry">
+    descriptions?: JsonWithAggregatesFilter<"SiteIndustry">
+    tagline?: JsonWithAggregatesFilter<"SiteIndustry">
+    body?: JsonWithAggregatesFilter<"SiteIndustry">
+    imageUrl?: StringNullableWithAggregatesFilter<"SiteIndustry"> | string | null
+    calcPrefill?: JsonNullableWithAggregatesFilter<"SiteIndustry">
+    createdAt?: DateTimeWithAggregatesFilter<"SiteIndustry"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SiteIndustry"> | Date | string
+  }
+
+  export type SiteIndustryItemWhereInput = {
+    AND?: SiteIndustryItemWhereInput | SiteIndustryItemWhereInput[]
+    OR?: SiteIndustryItemWhereInput[]
+    NOT?: SiteIndustryItemWhereInput | SiteIndustryItemWhereInput[]
+    id?: UuidFilter<"SiteIndustryItem"> | string
+    industrySlug?: StringFilter<"SiteIndustryItem"> | string
+    satelliteKey?: StringFilter<"SiteIndustryItem"> | string
+    moduleKey?: StringFilter<"SiteIndustryItem"> | string
+    role?: EnumSiteIndustryItemRoleFilter<"SiteIndustryItem"> | $Enums.SiteIndustryItemRole
+    assumed?: BoolFilter<"SiteIndustryItem"> | boolean
+    sortOrder?: IntFilter<"SiteIndustryItem"> | number
+    createdAt?: DateTimeFilter<"SiteIndustryItem"> | Date | string
+    updatedAt?: DateTimeFilter<"SiteIndustryItem"> | Date | string
+    industry?: XOR<SiteIndustryScalarRelationFilter, SiteIndustryWhereInput>
+    satellite?: XOR<SatelliteScalarRelationFilter, SatelliteWhereInput>
+  }
+
+  export type SiteIndustryItemOrderByWithRelationInput = {
+    id?: SortOrder
+    industrySlug?: SortOrder
+    satelliteKey?: SortOrder
+    moduleKey?: SortOrder
+    role?: SortOrder
+    assumed?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    industry?: SiteIndustryOrderByWithRelationInput
+    satellite?: SatelliteOrderByWithRelationInput
+  }
+
+  export type SiteIndustryItemWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    industrySlug_satelliteKey_moduleKey?: SiteIndustryItemIndustrySlugSatelliteKeyModuleKeyCompoundUniqueInput
+    AND?: SiteIndustryItemWhereInput | SiteIndustryItemWhereInput[]
+    OR?: SiteIndustryItemWhereInput[]
+    NOT?: SiteIndustryItemWhereInput | SiteIndustryItemWhereInput[]
+    industrySlug?: StringFilter<"SiteIndustryItem"> | string
+    satelliteKey?: StringFilter<"SiteIndustryItem"> | string
+    moduleKey?: StringFilter<"SiteIndustryItem"> | string
+    role?: EnumSiteIndustryItemRoleFilter<"SiteIndustryItem"> | $Enums.SiteIndustryItemRole
+    assumed?: BoolFilter<"SiteIndustryItem"> | boolean
+    sortOrder?: IntFilter<"SiteIndustryItem"> | number
+    createdAt?: DateTimeFilter<"SiteIndustryItem"> | Date | string
+    updatedAt?: DateTimeFilter<"SiteIndustryItem"> | Date | string
+    industry?: XOR<SiteIndustryScalarRelationFilter, SiteIndustryWhereInput>
+    satellite?: XOR<SatelliteScalarRelationFilter, SatelliteWhereInput>
+  }, "id" | "industrySlug_satelliteKey_moduleKey">
+
+  export type SiteIndustryItemOrderByWithAggregationInput = {
+    id?: SortOrder
+    industrySlug?: SortOrder
+    satelliteKey?: SortOrder
+    moduleKey?: SortOrder
+    role?: SortOrder
+    assumed?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SiteIndustryItemCountOrderByAggregateInput
+    _avg?: SiteIndustryItemAvgOrderByAggregateInput
+    _max?: SiteIndustryItemMaxOrderByAggregateInput
+    _min?: SiteIndustryItemMinOrderByAggregateInput
+    _sum?: SiteIndustryItemSumOrderByAggregateInput
+  }
+
+  export type SiteIndustryItemScalarWhereWithAggregatesInput = {
+    AND?: SiteIndustryItemScalarWhereWithAggregatesInput | SiteIndustryItemScalarWhereWithAggregatesInput[]
+    OR?: SiteIndustryItemScalarWhereWithAggregatesInput[]
+    NOT?: SiteIndustryItemScalarWhereWithAggregatesInput | SiteIndustryItemScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"SiteIndustryItem"> | string
+    industrySlug?: StringWithAggregatesFilter<"SiteIndustryItem"> | string
+    satelliteKey?: StringWithAggregatesFilter<"SiteIndustryItem"> | string
+    moduleKey?: StringWithAggregatesFilter<"SiteIndustryItem"> | string
+    role?: EnumSiteIndustryItemRoleWithAggregatesFilter<"SiteIndustryItem"> | $Enums.SiteIndustryItemRole
+    assumed?: BoolWithAggregatesFilter<"SiteIndustryItem"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"SiteIndustryItem"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"SiteIndustryItem"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SiteIndustryItem"> | Date | string
   }
 
   export type OrganizationSatelliteEntitlementWhereInput = {
@@ -180895,6 +186634,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     satellite?: SatelliteCreateNestedOneWithoutModulesInput
+    publicProfile?: PricingModulePublicProfileCreateNestedOneWithoutModuleInput
   }
 
   export type PricingModuleUncheckedCreateInput = {
@@ -180909,6 +186649,7 @@ export namespace Prisma {
     trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    publicProfile?: PricingModulePublicProfileUncheckedCreateNestedOneWithoutModuleInput
   }
 
   export type PricingModuleUpdateInput = {
@@ -180923,6 +186664,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     satellite?: SatelliteUpdateOneWithoutModulesNestedInput
+    publicProfile?: PricingModulePublicProfileUpdateOneWithoutModuleNestedInput
   }
 
   export type PricingModuleUncheckedUpdateInput = {
@@ -180937,6 +186679,7 @@ export namespace Prisma {
     trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    publicProfile?: PricingModulePublicProfileUncheckedUpdateOneWithoutModuleNestedInput
   }
 
   export type PricingModuleCreateManyInput = {
@@ -180990,6 +186733,8 @@ export namespace Prisma {
     modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
     endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
     entitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileCreateNestedOneWithoutSatelliteInput
+    industryItems?: SiteIndustryItemCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateInput = {
@@ -181002,6 +186747,8 @@ export namespace Prisma {
     modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
     endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
     entitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileUncheckedCreateNestedOneWithoutSatelliteInput
+    industryItems?: SiteIndustryItemUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUpdateInput = {
@@ -181014,6 +186761,8 @@ export namespace Prisma {
     modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
     endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
     entitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUpdateOneWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateInput = {
@@ -181026,6 +186775,8 @@ export namespace Prisma {
     modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
     endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
     entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUncheckedUpdateOneWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteCreateManyInput = {
@@ -181050,6 +186801,419 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatellitePublicProfileCreateInput = {
+    publicSlug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showOnSite?: boolean
+    kind?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    satellite: SatelliteCreateNestedOneWithoutPublicProfileInput
+  }
+
+  export type SatellitePublicProfileUncheckedCreateInput = {
+    satelliteKey: string
+    publicSlug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showOnSite?: boolean
+    kind?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatellitePublicProfileUpdateInput = {
+    publicSlug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showOnSite?: BoolFieldUpdateOperationsInput | boolean
+    kind?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    satellite?: SatelliteUpdateOneRequiredWithoutPublicProfileNestedInput
+  }
+
+  export type SatellitePublicProfileUncheckedUpdateInput = {
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    publicSlug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showOnSite?: BoolFieldUpdateOperationsInput | boolean
+    kind?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatellitePublicProfileCreateManyInput = {
+    satelliteKey: string
+    publicSlug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showOnSite?: boolean
+    kind?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatellitePublicProfileUpdateManyMutationInput = {
+    publicSlug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showOnSite?: BoolFieldUpdateOperationsInput | boolean
+    kind?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatellitePublicProfileUncheckedUpdateManyInput = {
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    publicSlug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showOnSite?: BoolFieldUpdateOperationsInput | boolean
+    kind?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PricingModulePublicProfileCreateInput = {
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showAsSubsection?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    module: PricingModuleCreateNestedOneWithoutPublicProfileInput
+  }
+
+  export type PricingModulePublicProfileUncheckedCreateInput = {
+    moduleKey: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showAsSubsection?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PricingModulePublicProfileUpdateInput = {
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showAsSubsection?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    module?: PricingModuleUpdateOneRequiredWithoutPublicProfileNestedInput
+  }
+
+  export type PricingModulePublicProfileUncheckedUpdateInput = {
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showAsSubsection?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PricingModulePublicProfileCreateManyInput = {
+    moduleKey: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showAsSubsection?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PricingModulePublicProfileUpdateManyMutationInput = {
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showAsSubsection?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PricingModulePublicProfileUncheckedUpdateManyInput = {
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showAsSubsection?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryCreateInput = {
+    slug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturityOverride?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: SiteIndustryItemCreateNestedManyWithoutIndustryInput
+  }
+
+  export type SiteIndustryUncheckedCreateInput = {
+    slug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturityOverride?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: SiteIndustryItemUncheckedCreateNestedManyWithoutIndustryInput
+  }
+
+  export type SiteIndustryUpdateInput = {
+    slug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturityOverride?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: SiteIndustryItemUpdateManyWithoutIndustryNestedInput
+  }
+
+  export type SiteIndustryUncheckedUpdateInput = {
+    slug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturityOverride?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: SiteIndustryItemUncheckedUpdateManyWithoutIndustryNestedInput
+  }
+
+  export type SiteIndustryCreateManyInput = {
+    slug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturityOverride?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteIndustryUpdateManyMutationInput = {
+    slug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturityOverride?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryUncheckedUpdateManyInput = {
+    slug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturityOverride?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryItemCreateInput = {
+    id?: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    industry: SiteIndustryCreateNestedOneWithoutItemsInput
+    satellite: SatelliteCreateNestedOneWithoutIndustryItemsInput
+  }
+
+  export type SiteIndustryItemUncheckedCreateInput = {
+    id?: string
+    industrySlug: string
+    satelliteKey: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteIndustryItemUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    industry?: SiteIndustryUpdateOneRequiredWithoutItemsNestedInput
+    satellite?: SatelliteUpdateOneRequiredWithoutIndustryItemsNestedInput
+  }
+
+  export type SiteIndustryItemUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    industrySlug?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryItemCreateManyInput = {
+    id?: string
+    industrySlug: string
+    satelliteKey: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteIndustryItemUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryItemUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    industrySlug?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -193005,6 +199169,11 @@ export namespace Prisma {
     isNot?: SatelliteWhereInput | null
   }
 
+  export type PricingModulePublicProfileNullableScalarRelationFilter = {
+    is?: PricingModulePublicProfileWhereInput | null
+    isNot?: PricingModulePublicProfileWhereInput | null
+  }
+
   export type PricingModuleCountOrderByAggregateInput = {
     id?: SortOrder
     key?: SortOrder
@@ -193085,6 +199254,17 @@ export namespace Prisma {
     none?: OrganizationSatelliteEntitlementWhereInput
   }
 
+  export type SatellitePublicProfileNullableScalarRelationFilter = {
+    is?: SatellitePublicProfileWhereInput | null
+    isNot?: SatellitePublicProfileWhereInput | null
+  }
+
+  export type SiteIndustryItemListRelationFilter = {
+    every?: SiteIndustryItemWhereInput
+    some?: SiteIndustryItemWhereInput
+    none?: SiteIndustryItemWhereInput
+  }
+
   export type PricingModuleOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -193094,6 +199274,10 @@ export namespace Prisma {
   }
 
   export type OrganizationSatelliteEntitlementOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SiteIndustryItemOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -193132,9 +199316,325 @@ export namespace Prisma {
     sortOrder?: SortOrder
   }
 
+  export type EnumSiteCatalogVisibilityFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogVisibility | EnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteCatalogVisibility[] | ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteCatalogVisibility[] | ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteCatalogVisibilityFilter<$PrismaModel> | $Enums.SiteCatalogVisibility
+  }
+
+  export type EnumSiteCatalogMaturityFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogMaturity | EnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteCatalogMaturityFilter<$PrismaModel> | $Enums.SiteCatalogMaturity
+  }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
   export type SatelliteScalarRelationFilter = {
     is?: SatelliteWhereInput
     isNot?: SatelliteWhereInput
+  }
+
+  export type SatellitePublicProfileCountOrderByAggregateInput = {
+    satelliteKey?: SortOrder
+    publicSlug?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrder
+    showOnSite?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatellitePublicProfileAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type SatellitePublicProfileMaxOrderByAggregateInput = {
+    satelliteKey?: SortOrder
+    publicSlug?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrder
+    sortOrder?: SortOrder
+    imageUrl?: SortOrder
+    showOnSite?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatellitePublicProfileMinOrderByAggregateInput = {
+    satelliteKey?: SortOrder
+    publicSlug?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrder
+    sortOrder?: SortOrder
+    imageUrl?: SortOrder
+    showOnSite?: SortOrder
+    kind?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatellitePublicProfileSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type EnumSiteCatalogVisibilityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogVisibility | EnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteCatalogVisibility[] | ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteCatalogVisibility[] | ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteCatalogVisibilityWithAggregatesFilter<$PrismaModel> | $Enums.SiteCatalogVisibility
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteCatalogVisibilityFilter<$PrismaModel>
+    _max?: NestedEnumSiteCatalogVisibilityFilter<$PrismaModel>
+  }
+
+  export type EnumSiteCatalogMaturityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogMaturity | EnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteCatalogMaturityWithAggregatesFilter<$PrismaModel> | $Enums.SiteCatalogMaturity
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteCatalogMaturityFilter<$PrismaModel>
+    _max?: NestedEnumSiteCatalogMaturityFilter<$PrismaModel>
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
+  export type EnumSiteCatalogMaturityNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogMaturity | EnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSiteCatalogMaturityNullableFilter<$PrismaModel> | $Enums.SiteCatalogMaturity | null
+  }
+
+  export type PricingModuleScalarRelationFilter = {
+    is?: PricingModuleWhereInput
+    isNot?: PricingModuleWhereInput
+  }
+
+  export type PricingModulePublicProfileCountOrderByAggregateInput = {
+    moduleKey?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrder
+    showAsSubsection?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PricingModulePublicProfileAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type PricingModulePublicProfileMaxOrderByAggregateInput = {
+    moduleKey?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrder
+    sortOrder?: SortOrder
+    imageUrl?: SortOrder
+    showAsSubsection?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PricingModulePublicProfileMinOrderByAggregateInput = {
+    moduleKey?: SortOrder
+    visibility?: SortOrder
+    maturity?: SortOrder
+    sortOrder?: SortOrder
+    imageUrl?: SortOrder
+    showAsSubsection?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PricingModulePublicProfileSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type EnumSiteCatalogMaturityNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogMaturity | EnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSiteCatalogMaturityNullableWithAggregatesFilter<$PrismaModel> | $Enums.SiteCatalogMaturity | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumSiteCatalogMaturityNullableFilter<$PrismaModel>
+    _max?: NestedEnumSiteCatalogMaturityNullableFilter<$PrismaModel>
+  }
+
+  export type SiteIndustryCountOrderByAggregateInput = {
+    slug?: SortOrder
+    visibility?: SortOrder
+    maturityOverride?: SortOrder
+    sortOrder?: SortOrder
+    names?: SortOrder
+    descriptions?: SortOrder
+    tagline?: SortOrder
+    body?: SortOrder
+    imageUrl?: SortOrder
+    calcPrefill?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteIndustryAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type SiteIndustryMaxOrderByAggregateInput = {
+    slug?: SortOrder
+    visibility?: SortOrder
+    maturityOverride?: SortOrder
+    sortOrder?: SortOrder
+    imageUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteIndustryMinOrderByAggregateInput = {
+    slug?: SortOrder
+    visibility?: SortOrder
+    maturityOverride?: SortOrder
+    sortOrder?: SortOrder
+    imageUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteIndustrySumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type EnumSiteIndustryItemRoleFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteIndustryItemRole | EnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteIndustryItemRole[] | ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteIndustryItemRole[] | ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel> | $Enums.SiteIndustryItemRole
+  }
+
+  export type SiteIndustryScalarRelationFilter = {
+    is?: SiteIndustryWhereInput
+    isNot?: SiteIndustryWhereInput
+  }
+
+  export type SiteIndustryItemIndustrySlugSatelliteKeyModuleKeyCompoundUniqueInput = {
+    industrySlug: string
+    satelliteKey: string
+    moduleKey: string
+  }
+
+  export type SiteIndustryItemCountOrderByAggregateInput = {
+    id?: SortOrder
+    industrySlug?: SortOrder
+    satelliteKey?: SortOrder
+    moduleKey?: SortOrder
+    role?: SortOrder
+    assumed?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteIndustryItemAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type SiteIndustryItemMaxOrderByAggregateInput = {
+    id?: SortOrder
+    industrySlug?: SortOrder
+    satelliteKey?: SortOrder
+    moduleKey?: SortOrder
+    role?: SortOrder
+    assumed?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteIndustryItemMinOrderByAggregateInput = {
+    id?: SortOrder
+    industrySlug?: SortOrder
+    satelliteKey?: SortOrder
+    moduleKey?: SortOrder
+    role?: SortOrder
+    assumed?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SiteIndustryItemSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type EnumSiteIndustryItemRoleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteIndustryItemRole | EnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteIndustryItemRole[] | ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteIndustryItemRole[] | ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteIndustryItemRoleWithAggregatesFilter<$PrismaModel> | $Enums.SiteIndustryItemRole
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel>
+    _max?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel>
   }
 
   export type OrganizationSatelliteEntitlementOrganizationIdSatelliteKeyCompoundUniqueInput = {
@@ -195998,29 +202498,6 @@ export namespace Prisma {
     notIn?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
     not?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderType
   }
-  export type JsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type WorkforcePersonnelOrderTemplateCountOrderByAggregateInput = {
     id?: SortOrder
@@ -196067,32 +202544,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel>
     _max?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel>
-  }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type EnumWorkforcePersonnelOrderStatusFilter<$PrismaModel = never> = {
@@ -201083,6 +207534,18 @@ export namespace Prisma {
     connect?: SatelliteWhereUniqueInput
   }
 
+  export type PricingModulePublicProfileCreateNestedOneWithoutModuleInput = {
+    create?: XOR<PricingModulePublicProfileCreateWithoutModuleInput, PricingModulePublicProfileUncheckedCreateWithoutModuleInput>
+    connectOrCreate?: PricingModulePublicProfileCreateOrConnectWithoutModuleInput
+    connect?: PricingModulePublicProfileWhereUniqueInput
+  }
+
+  export type PricingModulePublicProfileUncheckedCreateNestedOneWithoutModuleInput = {
+    create?: XOR<PricingModulePublicProfileCreateWithoutModuleInput, PricingModulePublicProfileUncheckedCreateWithoutModuleInput>
+    connectOrCreate?: PricingModulePublicProfileCreateOrConnectWithoutModuleInput
+    connect?: PricingModulePublicProfileWhereUniqueInput
+  }
+
   export type EnumPricingCatalogKindFieldUpdateOperationsInput = {
     set?: $Enums.PricingCatalogKind
   }
@@ -201095,6 +207558,26 @@ export namespace Prisma {
     delete?: SatelliteWhereInput | boolean
     connect?: SatelliteWhereUniqueInput
     update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutModulesInput, SatelliteUpdateWithoutModulesInput>, SatelliteUncheckedUpdateWithoutModulesInput>
+  }
+
+  export type PricingModulePublicProfileUpdateOneWithoutModuleNestedInput = {
+    create?: XOR<PricingModulePublicProfileCreateWithoutModuleInput, PricingModulePublicProfileUncheckedCreateWithoutModuleInput>
+    connectOrCreate?: PricingModulePublicProfileCreateOrConnectWithoutModuleInput
+    upsert?: PricingModulePublicProfileUpsertWithoutModuleInput
+    disconnect?: PricingModulePublicProfileWhereInput | boolean
+    delete?: PricingModulePublicProfileWhereInput | boolean
+    connect?: PricingModulePublicProfileWhereUniqueInput
+    update?: XOR<XOR<PricingModulePublicProfileUpdateToOneWithWhereWithoutModuleInput, PricingModulePublicProfileUpdateWithoutModuleInput>, PricingModulePublicProfileUncheckedUpdateWithoutModuleInput>
+  }
+
+  export type PricingModulePublicProfileUncheckedUpdateOneWithoutModuleNestedInput = {
+    create?: XOR<PricingModulePublicProfileCreateWithoutModuleInput, PricingModulePublicProfileUncheckedCreateWithoutModuleInput>
+    connectOrCreate?: PricingModulePublicProfileCreateOrConnectWithoutModuleInput
+    upsert?: PricingModulePublicProfileUpsertWithoutModuleInput
+    disconnect?: PricingModulePublicProfileWhereInput | boolean
+    delete?: PricingModulePublicProfileWhereInput | boolean
+    connect?: PricingModulePublicProfileWhereUniqueInput
+    update?: XOR<XOR<PricingModulePublicProfileUpdateToOneWithWhereWithoutModuleInput, PricingModulePublicProfileUpdateWithoutModuleInput>, PricingModulePublicProfileUncheckedUpdateWithoutModuleInput>
   }
 
   export type PricingModuleCreateNestedManyWithoutSatelliteInput = {
@@ -201118,6 +207601,19 @@ export namespace Prisma {
     connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
   }
 
+  export type SatellitePublicProfileCreateNestedOneWithoutSatelliteInput = {
+    create?: XOR<SatellitePublicProfileCreateWithoutSatelliteInput, SatellitePublicProfileUncheckedCreateWithoutSatelliteInput>
+    connectOrCreate?: SatellitePublicProfileCreateOrConnectWithoutSatelliteInput
+    connect?: SatellitePublicProfileWhereUniqueInput
+  }
+
+  export type SiteIndustryItemCreateNestedManyWithoutSatelliteInput = {
+    create?: XOR<SiteIndustryItemCreateWithoutSatelliteInput, SiteIndustryItemUncheckedCreateWithoutSatelliteInput> | SiteIndustryItemCreateWithoutSatelliteInput[] | SiteIndustryItemUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: SiteIndustryItemCreateOrConnectWithoutSatelliteInput | SiteIndustryItemCreateOrConnectWithoutSatelliteInput[]
+    createMany?: SiteIndustryItemCreateManySatelliteInputEnvelope
+    connect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+  }
+
   export type PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput = {
     create?: XOR<PricingModuleCreateWithoutSatelliteInput, PricingModuleUncheckedCreateWithoutSatelliteInput> | PricingModuleCreateWithoutSatelliteInput[] | PricingModuleUncheckedCreateWithoutSatelliteInput[]
     connectOrCreate?: PricingModuleCreateOrConnectWithoutSatelliteInput | PricingModuleCreateOrConnectWithoutSatelliteInput[]
@@ -201137,6 +207633,19 @@ export namespace Prisma {
     connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput[]
     createMany?: OrganizationSatelliteEntitlementCreateManySatelliteInputEnvelope
     connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+  }
+
+  export type SatellitePublicProfileUncheckedCreateNestedOneWithoutSatelliteInput = {
+    create?: XOR<SatellitePublicProfileCreateWithoutSatelliteInput, SatellitePublicProfileUncheckedCreateWithoutSatelliteInput>
+    connectOrCreate?: SatellitePublicProfileCreateOrConnectWithoutSatelliteInput
+    connect?: SatellitePublicProfileWhereUniqueInput
+  }
+
+  export type SiteIndustryItemUncheckedCreateNestedManyWithoutSatelliteInput = {
+    create?: XOR<SiteIndustryItemCreateWithoutSatelliteInput, SiteIndustryItemUncheckedCreateWithoutSatelliteInput> | SiteIndustryItemCreateWithoutSatelliteInput[] | SiteIndustryItemUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: SiteIndustryItemCreateOrConnectWithoutSatelliteInput | SiteIndustryItemCreateOrConnectWithoutSatelliteInput[]
+    createMany?: SiteIndustryItemCreateManySatelliteInputEnvelope
+    connect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
   }
 
   export type PricingModuleUpdateManyWithoutSatelliteNestedInput = {
@@ -201181,6 +207690,30 @@ export namespace Prisma {
     deleteMany?: OrganizationSatelliteEntitlementScalarWhereInput | OrganizationSatelliteEntitlementScalarWhereInput[]
   }
 
+  export type SatellitePublicProfileUpdateOneWithoutSatelliteNestedInput = {
+    create?: XOR<SatellitePublicProfileCreateWithoutSatelliteInput, SatellitePublicProfileUncheckedCreateWithoutSatelliteInput>
+    connectOrCreate?: SatellitePublicProfileCreateOrConnectWithoutSatelliteInput
+    upsert?: SatellitePublicProfileUpsertWithoutSatelliteInput
+    disconnect?: SatellitePublicProfileWhereInput | boolean
+    delete?: SatellitePublicProfileWhereInput | boolean
+    connect?: SatellitePublicProfileWhereUniqueInput
+    update?: XOR<XOR<SatellitePublicProfileUpdateToOneWithWhereWithoutSatelliteInput, SatellitePublicProfileUpdateWithoutSatelliteInput>, SatellitePublicProfileUncheckedUpdateWithoutSatelliteInput>
+  }
+
+  export type SiteIndustryItemUpdateManyWithoutSatelliteNestedInput = {
+    create?: XOR<SiteIndustryItemCreateWithoutSatelliteInput, SiteIndustryItemUncheckedCreateWithoutSatelliteInput> | SiteIndustryItemCreateWithoutSatelliteInput[] | SiteIndustryItemUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: SiteIndustryItemCreateOrConnectWithoutSatelliteInput | SiteIndustryItemCreateOrConnectWithoutSatelliteInput[]
+    upsert?: SiteIndustryItemUpsertWithWhereUniqueWithoutSatelliteInput | SiteIndustryItemUpsertWithWhereUniqueWithoutSatelliteInput[]
+    createMany?: SiteIndustryItemCreateManySatelliteInputEnvelope
+    set?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    disconnect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    delete?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    connect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    update?: SiteIndustryItemUpdateWithWhereUniqueWithoutSatelliteInput | SiteIndustryItemUpdateWithWhereUniqueWithoutSatelliteInput[]
+    updateMany?: SiteIndustryItemUpdateManyWithWhereWithoutSatelliteInput | SiteIndustryItemUpdateManyWithWhereWithoutSatelliteInput[]
+    deleteMany?: SiteIndustryItemScalarWhereInput | SiteIndustryItemScalarWhereInput[]
+  }
+
   export type PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput = {
     create?: XOR<PricingModuleCreateWithoutSatelliteInput, PricingModuleUncheckedCreateWithoutSatelliteInput> | PricingModuleCreateWithoutSatelliteInput[] | PricingModuleUncheckedCreateWithoutSatelliteInput[]
     connectOrCreate?: PricingModuleCreateOrConnectWithoutSatelliteInput | PricingModuleCreateOrConnectWithoutSatelliteInput[]
@@ -201221,6 +207754,144 @@ export namespace Prisma {
     update?: OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutSatelliteInput | OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutSatelliteInput[]
     updateMany?: OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutSatelliteInput | OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutSatelliteInput[]
     deleteMany?: OrganizationSatelliteEntitlementScalarWhereInput | OrganizationSatelliteEntitlementScalarWhereInput[]
+  }
+
+  export type SatellitePublicProfileUncheckedUpdateOneWithoutSatelliteNestedInput = {
+    create?: XOR<SatellitePublicProfileCreateWithoutSatelliteInput, SatellitePublicProfileUncheckedCreateWithoutSatelliteInput>
+    connectOrCreate?: SatellitePublicProfileCreateOrConnectWithoutSatelliteInput
+    upsert?: SatellitePublicProfileUpsertWithoutSatelliteInput
+    disconnect?: SatellitePublicProfileWhereInput | boolean
+    delete?: SatellitePublicProfileWhereInput | boolean
+    connect?: SatellitePublicProfileWhereUniqueInput
+    update?: XOR<XOR<SatellitePublicProfileUpdateToOneWithWhereWithoutSatelliteInput, SatellitePublicProfileUpdateWithoutSatelliteInput>, SatellitePublicProfileUncheckedUpdateWithoutSatelliteInput>
+  }
+
+  export type SiteIndustryItemUncheckedUpdateManyWithoutSatelliteNestedInput = {
+    create?: XOR<SiteIndustryItemCreateWithoutSatelliteInput, SiteIndustryItemUncheckedCreateWithoutSatelliteInput> | SiteIndustryItemCreateWithoutSatelliteInput[] | SiteIndustryItemUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: SiteIndustryItemCreateOrConnectWithoutSatelliteInput | SiteIndustryItemCreateOrConnectWithoutSatelliteInput[]
+    upsert?: SiteIndustryItemUpsertWithWhereUniqueWithoutSatelliteInput | SiteIndustryItemUpsertWithWhereUniqueWithoutSatelliteInput[]
+    createMany?: SiteIndustryItemCreateManySatelliteInputEnvelope
+    set?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    disconnect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    delete?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    connect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    update?: SiteIndustryItemUpdateWithWhereUniqueWithoutSatelliteInput | SiteIndustryItemUpdateWithWhereUniqueWithoutSatelliteInput[]
+    updateMany?: SiteIndustryItemUpdateManyWithWhereWithoutSatelliteInput | SiteIndustryItemUpdateManyWithWhereWithoutSatelliteInput[]
+    deleteMany?: SiteIndustryItemScalarWhereInput | SiteIndustryItemScalarWhereInput[]
+  }
+
+  export type SatelliteCreateNestedOneWithoutPublicProfileInput = {
+    create?: XOR<SatelliteCreateWithoutPublicProfileInput, SatelliteUncheckedCreateWithoutPublicProfileInput>
+    connectOrCreate?: SatelliteCreateOrConnectWithoutPublicProfileInput
+    connect?: SatelliteWhereUniqueInput
+  }
+
+  export type EnumSiteCatalogVisibilityFieldUpdateOperationsInput = {
+    set?: $Enums.SiteCatalogVisibility
+  }
+
+  export type EnumSiteCatalogMaturityFieldUpdateOperationsInput = {
+    set?: $Enums.SiteCatalogMaturity
+  }
+
+  export type SatelliteUpdateOneRequiredWithoutPublicProfileNestedInput = {
+    create?: XOR<SatelliteCreateWithoutPublicProfileInput, SatelliteUncheckedCreateWithoutPublicProfileInput>
+    connectOrCreate?: SatelliteCreateOrConnectWithoutPublicProfileInput
+    upsert?: SatelliteUpsertWithoutPublicProfileInput
+    connect?: SatelliteWhereUniqueInput
+    update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutPublicProfileInput, SatelliteUpdateWithoutPublicProfileInput>, SatelliteUncheckedUpdateWithoutPublicProfileInput>
+  }
+
+  export type PricingModuleCreateNestedOneWithoutPublicProfileInput = {
+    create?: XOR<PricingModuleCreateWithoutPublicProfileInput, PricingModuleUncheckedCreateWithoutPublicProfileInput>
+    connectOrCreate?: PricingModuleCreateOrConnectWithoutPublicProfileInput
+    connect?: PricingModuleWhereUniqueInput
+  }
+
+  export type NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput = {
+    set?: $Enums.SiteCatalogMaturity | null
+  }
+
+  export type PricingModuleUpdateOneRequiredWithoutPublicProfileNestedInput = {
+    create?: XOR<PricingModuleCreateWithoutPublicProfileInput, PricingModuleUncheckedCreateWithoutPublicProfileInput>
+    connectOrCreate?: PricingModuleCreateOrConnectWithoutPublicProfileInput
+    upsert?: PricingModuleUpsertWithoutPublicProfileInput
+    connect?: PricingModuleWhereUniqueInput
+    update?: XOR<XOR<PricingModuleUpdateToOneWithWhereWithoutPublicProfileInput, PricingModuleUpdateWithoutPublicProfileInput>, PricingModuleUncheckedUpdateWithoutPublicProfileInput>
+  }
+
+  export type SiteIndustryItemCreateNestedManyWithoutIndustryInput = {
+    create?: XOR<SiteIndustryItemCreateWithoutIndustryInput, SiteIndustryItemUncheckedCreateWithoutIndustryInput> | SiteIndustryItemCreateWithoutIndustryInput[] | SiteIndustryItemUncheckedCreateWithoutIndustryInput[]
+    connectOrCreate?: SiteIndustryItemCreateOrConnectWithoutIndustryInput | SiteIndustryItemCreateOrConnectWithoutIndustryInput[]
+    createMany?: SiteIndustryItemCreateManyIndustryInputEnvelope
+    connect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+  }
+
+  export type SiteIndustryItemUncheckedCreateNestedManyWithoutIndustryInput = {
+    create?: XOR<SiteIndustryItemCreateWithoutIndustryInput, SiteIndustryItemUncheckedCreateWithoutIndustryInput> | SiteIndustryItemCreateWithoutIndustryInput[] | SiteIndustryItemUncheckedCreateWithoutIndustryInput[]
+    connectOrCreate?: SiteIndustryItemCreateOrConnectWithoutIndustryInput | SiteIndustryItemCreateOrConnectWithoutIndustryInput[]
+    createMany?: SiteIndustryItemCreateManyIndustryInputEnvelope
+    connect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+  }
+
+  export type SiteIndustryItemUpdateManyWithoutIndustryNestedInput = {
+    create?: XOR<SiteIndustryItemCreateWithoutIndustryInput, SiteIndustryItemUncheckedCreateWithoutIndustryInput> | SiteIndustryItemCreateWithoutIndustryInput[] | SiteIndustryItemUncheckedCreateWithoutIndustryInput[]
+    connectOrCreate?: SiteIndustryItemCreateOrConnectWithoutIndustryInput | SiteIndustryItemCreateOrConnectWithoutIndustryInput[]
+    upsert?: SiteIndustryItemUpsertWithWhereUniqueWithoutIndustryInput | SiteIndustryItemUpsertWithWhereUniqueWithoutIndustryInput[]
+    createMany?: SiteIndustryItemCreateManyIndustryInputEnvelope
+    set?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    disconnect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    delete?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    connect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    update?: SiteIndustryItemUpdateWithWhereUniqueWithoutIndustryInput | SiteIndustryItemUpdateWithWhereUniqueWithoutIndustryInput[]
+    updateMany?: SiteIndustryItemUpdateManyWithWhereWithoutIndustryInput | SiteIndustryItemUpdateManyWithWhereWithoutIndustryInput[]
+    deleteMany?: SiteIndustryItemScalarWhereInput | SiteIndustryItemScalarWhereInput[]
+  }
+
+  export type SiteIndustryItemUncheckedUpdateManyWithoutIndustryNestedInput = {
+    create?: XOR<SiteIndustryItemCreateWithoutIndustryInput, SiteIndustryItemUncheckedCreateWithoutIndustryInput> | SiteIndustryItemCreateWithoutIndustryInput[] | SiteIndustryItemUncheckedCreateWithoutIndustryInput[]
+    connectOrCreate?: SiteIndustryItemCreateOrConnectWithoutIndustryInput | SiteIndustryItemCreateOrConnectWithoutIndustryInput[]
+    upsert?: SiteIndustryItemUpsertWithWhereUniqueWithoutIndustryInput | SiteIndustryItemUpsertWithWhereUniqueWithoutIndustryInput[]
+    createMany?: SiteIndustryItemCreateManyIndustryInputEnvelope
+    set?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    disconnect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    delete?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    connect?: SiteIndustryItemWhereUniqueInput | SiteIndustryItemWhereUniqueInput[]
+    update?: SiteIndustryItemUpdateWithWhereUniqueWithoutIndustryInput | SiteIndustryItemUpdateWithWhereUniqueWithoutIndustryInput[]
+    updateMany?: SiteIndustryItemUpdateManyWithWhereWithoutIndustryInput | SiteIndustryItemUpdateManyWithWhereWithoutIndustryInput[]
+    deleteMany?: SiteIndustryItemScalarWhereInput | SiteIndustryItemScalarWhereInput[]
+  }
+
+  export type SiteIndustryCreateNestedOneWithoutItemsInput = {
+    create?: XOR<SiteIndustryCreateWithoutItemsInput, SiteIndustryUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: SiteIndustryCreateOrConnectWithoutItemsInput
+    connect?: SiteIndustryWhereUniqueInput
+  }
+
+  export type SatelliteCreateNestedOneWithoutIndustryItemsInput = {
+    create?: XOR<SatelliteCreateWithoutIndustryItemsInput, SatelliteUncheckedCreateWithoutIndustryItemsInput>
+    connectOrCreate?: SatelliteCreateOrConnectWithoutIndustryItemsInput
+    connect?: SatelliteWhereUniqueInput
+  }
+
+  export type EnumSiteIndustryItemRoleFieldUpdateOperationsInput = {
+    set?: $Enums.SiteIndustryItemRole
+  }
+
+  export type SiteIndustryUpdateOneRequiredWithoutItemsNestedInput = {
+    create?: XOR<SiteIndustryCreateWithoutItemsInput, SiteIndustryUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: SiteIndustryCreateOrConnectWithoutItemsInput
+    upsert?: SiteIndustryUpsertWithoutItemsInput
+    connect?: SiteIndustryWhereUniqueInput
+    update?: XOR<XOR<SiteIndustryUpdateToOneWithWhereWithoutItemsInput, SiteIndustryUpdateWithoutItemsInput>, SiteIndustryUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type SatelliteUpdateOneRequiredWithoutIndustryItemsNestedInput = {
+    create?: XOR<SatelliteCreateWithoutIndustryItemsInput, SatelliteUncheckedCreateWithoutIndustryItemsInput>
+    connectOrCreate?: SatelliteCreateOrConnectWithoutIndustryItemsInput
+    upsert?: SatelliteUpsertWithoutIndustryItemsInput
+    connect?: SatelliteWhereUniqueInput
+    update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutIndustryItemsInput, SatelliteUpdateWithoutIndustryItemsInput>, SatelliteUncheckedUpdateWithoutIndustryItemsInput>
   }
 
   export type OrganizationCreateNestedOneWithoutSatelliteEntitlementsInput = {
@@ -211715,6 +218386,97 @@ export namespace Prisma {
     _max?: NestedEnumPricingCatalogKindFilter<$PrismaModel>
   }
 
+  export type NestedEnumSiteCatalogVisibilityFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogVisibility | EnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteCatalogVisibility[] | ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteCatalogVisibility[] | ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteCatalogVisibilityFilter<$PrismaModel> | $Enums.SiteCatalogVisibility
+  }
+
+  export type NestedEnumSiteCatalogMaturityFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogMaturity | EnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteCatalogMaturityFilter<$PrismaModel> | $Enums.SiteCatalogMaturity
+  }
+
+  export type NestedEnumSiteCatalogVisibilityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogVisibility | EnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteCatalogVisibility[] | ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteCatalogVisibility[] | ListEnumSiteCatalogVisibilityFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteCatalogVisibilityWithAggregatesFilter<$PrismaModel> | $Enums.SiteCatalogVisibility
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteCatalogVisibilityFilter<$PrismaModel>
+    _max?: NestedEnumSiteCatalogVisibilityFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSiteCatalogMaturityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogMaturity | EnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteCatalogMaturityWithAggregatesFilter<$PrismaModel> | $Enums.SiteCatalogMaturity
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteCatalogMaturityFilter<$PrismaModel>
+    _max?: NestedEnumSiteCatalogMaturityFilter<$PrismaModel>
+  }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedEnumSiteCatalogMaturityNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogMaturity | EnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSiteCatalogMaturityNullableFilter<$PrismaModel> | $Enums.SiteCatalogMaturity | null
+  }
+
+  export type NestedEnumSiteCatalogMaturityNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteCatalogMaturity | EnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SiteCatalogMaturity[] | ListEnumSiteCatalogMaturityFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSiteCatalogMaturityNullableWithAggregatesFilter<$PrismaModel> | $Enums.SiteCatalogMaturity | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumSiteCatalogMaturityNullableFilter<$PrismaModel>
+    _max?: NestedEnumSiteCatalogMaturityNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSiteIndustryItemRoleFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteIndustryItemRole | EnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteIndustryItemRole[] | ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteIndustryItemRole[] | ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel> | $Enums.SiteIndustryItemRole
+  }
+
+  export type NestedEnumSiteIndustryItemRoleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SiteIndustryItemRole | EnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.SiteIndustryItemRole[] | ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SiteIndustryItemRole[] | ListEnumSiteIndustryItemRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumSiteIndustryItemRoleWithAggregatesFilter<$PrismaModel> | $Enums.SiteIndustryItemRole
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel>
+    _max?: NestedEnumSiteIndustryItemRoleFilter<$PrismaModel>
+  }
+
   export type NestedEnumDeploymentTopologyFilter<$PrismaModel = never> = {
     equals?: $Enums.DeploymentTopology | EnumDeploymentTopologyFieldRefInput<$PrismaModel>
     in?: $Enums.DeploymentTopology[] | ListEnumDeploymentTopologyFieldRefInput<$PrismaModel>
@@ -212189,29 +218951,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel>
     _max?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel>
-  }
-  export type NestedJsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel = never> = {
@@ -216229,6 +222968,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
     entitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileCreateNestedOneWithoutSatelliteInput
+    industryItems?: SiteIndustryItemCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateWithoutModulesInput = {
@@ -216240,11 +222981,46 @@ export namespace Prisma {
     updatedAt?: Date | string
     endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
     entitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileUncheckedCreateNestedOneWithoutSatelliteInput
+    industryItems?: SiteIndustryItemUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteCreateOrConnectWithoutModulesInput = {
     where: SatelliteWhereUniqueInput
     create: XOR<SatelliteCreateWithoutModulesInput, SatelliteUncheckedCreateWithoutModulesInput>
+  }
+
+  export type PricingModulePublicProfileCreateWithoutModuleInput = {
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showAsSubsection?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PricingModulePublicProfileUncheckedCreateWithoutModuleInput = {
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showAsSubsection?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PricingModulePublicProfileCreateOrConnectWithoutModuleInput = {
+    where: PricingModulePublicProfileWhereUniqueInput
+    create: XOR<PricingModulePublicProfileCreateWithoutModuleInput, PricingModulePublicProfileUncheckedCreateWithoutModuleInput>
   }
 
   export type SatelliteUpsertWithoutModulesInput = {
@@ -216267,6 +223043,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
     entitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUpdateOneWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateWithoutModulesInput = {
@@ -216278,6 +223056,47 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
     entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUncheckedUpdateOneWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUncheckedUpdateManyWithoutSatelliteNestedInput
+  }
+
+  export type PricingModulePublicProfileUpsertWithoutModuleInput = {
+    update: XOR<PricingModulePublicProfileUpdateWithoutModuleInput, PricingModulePublicProfileUncheckedUpdateWithoutModuleInput>
+    create: XOR<PricingModulePublicProfileCreateWithoutModuleInput, PricingModulePublicProfileUncheckedCreateWithoutModuleInput>
+    where?: PricingModulePublicProfileWhereInput
+  }
+
+  export type PricingModulePublicProfileUpdateToOneWithWhereWithoutModuleInput = {
+    where?: PricingModulePublicProfileWhereInput
+    data: XOR<PricingModulePublicProfileUpdateWithoutModuleInput, PricingModulePublicProfileUncheckedUpdateWithoutModuleInput>
+  }
+
+  export type PricingModulePublicProfileUpdateWithoutModuleInput = {
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showAsSubsection?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PricingModulePublicProfileUncheckedUpdateWithoutModuleInput = {
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showAsSubsection?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PricingModuleCreateWithoutSatelliteInput = {
@@ -216291,6 +223110,7 @@ export namespace Prisma {
     trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    publicProfile?: PricingModulePublicProfileCreateNestedOneWithoutModuleInput
   }
 
   export type PricingModuleUncheckedCreateWithoutSatelliteInput = {
@@ -216304,6 +223124,7 @@ export namespace Prisma {
     trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    publicProfile?: PricingModulePublicProfileUncheckedCreateNestedOneWithoutModuleInput
   }
 
   export type PricingModuleCreateOrConnectWithoutSatelliteInput = {
@@ -216371,6 +223192,75 @@ export namespace Prisma {
 
   export type OrganizationSatelliteEntitlementCreateManySatelliteInputEnvelope = {
     data: OrganizationSatelliteEntitlementCreateManySatelliteInput | OrganizationSatelliteEntitlementCreateManySatelliteInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SatellitePublicProfileCreateWithoutSatelliteInput = {
+    publicSlug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showOnSite?: boolean
+    kind?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatellitePublicProfileUncheckedCreateWithoutSatelliteInput = {
+    publicSlug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturity?: $Enums.SiteCatalogMaturity
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    showOnSite?: boolean
+    kind?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatellitePublicProfileCreateOrConnectWithoutSatelliteInput = {
+    where: SatellitePublicProfileWhereUniqueInput
+    create: XOR<SatellitePublicProfileCreateWithoutSatelliteInput, SatellitePublicProfileUncheckedCreateWithoutSatelliteInput>
+  }
+
+  export type SiteIndustryItemCreateWithoutSatelliteInput = {
+    id?: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    industry: SiteIndustryCreateNestedOneWithoutItemsInput
+  }
+
+  export type SiteIndustryItemUncheckedCreateWithoutSatelliteInput = {
+    id?: string
+    industrySlug: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteIndustryItemCreateOrConnectWithoutSatelliteInput = {
+    where: SiteIndustryItemWhereUniqueInput
+    create: XOR<SiteIndustryItemCreateWithoutSatelliteInput, SiteIndustryItemUncheckedCreateWithoutSatelliteInput>
+  }
+
+  export type SiteIndustryItemCreateManySatelliteInputEnvelope = {
+    data: SiteIndustryItemCreateManySatelliteInput | SiteIndustryItemCreateManySatelliteInput[]
     skipDuplicates?: boolean
   }
 
@@ -216464,6 +223354,412 @@ export namespace Prisma {
     connectedAt?: DateTimeFilter<"OrganizationSatelliteEntitlement"> | Date | string
     isTrial?: BoolFilter<"OrganizationSatelliteEntitlement"> | boolean
     suspendedAt?: DateTimeNullableFilter<"OrganizationSatelliteEntitlement"> | Date | string | null
+  }
+
+  export type SatellitePublicProfileUpsertWithoutSatelliteInput = {
+    update: XOR<SatellitePublicProfileUpdateWithoutSatelliteInput, SatellitePublicProfileUncheckedUpdateWithoutSatelliteInput>
+    create: XOR<SatellitePublicProfileCreateWithoutSatelliteInput, SatellitePublicProfileUncheckedCreateWithoutSatelliteInput>
+    where?: SatellitePublicProfileWhereInput
+  }
+
+  export type SatellitePublicProfileUpdateToOneWithWhereWithoutSatelliteInput = {
+    where?: SatellitePublicProfileWhereInput
+    data: XOR<SatellitePublicProfileUpdateWithoutSatelliteInput, SatellitePublicProfileUncheckedUpdateWithoutSatelliteInput>
+  }
+
+  export type SatellitePublicProfileUpdateWithoutSatelliteInput = {
+    publicSlug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showOnSite?: BoolFieldUpdateOperationsInput | boolean
+    kind?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatellitePublicProfileUncheckedUpdateWithoutSatelliteInput = {
+    publicSlug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturity?: EnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    showOnSite?: BoolFieldUpdateOperationsInput | boolean
+    kind?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryItemUpsertWithWhereUniqueWithoutSatelliteInput = {
+    where: SiteIndustryItemWhereUniqueInput
+    update: XOR<SiteIndustryItemUpdateWithoutSatelliteInput, SiteIndustryItemUncheckedUpdateWithoutSatelliteInput>
+    create: XOR<SiteIndustryItemCreateWithoutSatelliteInput, SiteIndustryItemUncheckedCreateWithoutSatelliteInput>
+  }
+
+  export type SiteIndustryItemUpdateWithWhereUniqueWithoutSatelliteInput = {
+    where: SiteIndustryItemWhereUniqueInput
+    data: XOR<SiteIndustryItemUpdateWithoutSatelliteInput, SiteIndustryItemUncheckedUpdateWithoutSatelliteInput>
+  }
+
+  export type SiteIndustryItemUpdateManyWithWhereWithoutSatelliteInput = {
+    where: SiteIndustryItemScalarWhereInput
+    data: XOR<SiteIndustryItemUpdateManyMutationInput, SiteIndustryItemUncheckedUpdateManyWithoutSatelliteInput>
+  }
+
+  export type SiteIndustryItemScalarWhereInput = {
+    AND?: SiteIndustryItemScalarWhereInput | SiteIndustryItemScalarWhereInput[]
+    OR?: SiteIndustryItemScalarWhereInput[]
+    NOT?: SiteIndustryItemScalarWhereInput | SiteIndustryItemScalarWhereInput[]
+    id?: UuidFilter<"SiteIndustryItem"> | string
+    industrySlug?: StringFilter<"SiteIndustryItem"> | string
+    satelliteKey?: StringFilter<"SiteIndustryItem"> | string
+    moduleKey?: StringFilter<"SiteIndustryItem"> | string
+    role?: EnumSiteIndustryItemRoleFilter<"SiteIndustryItem"> | $Enums.SiteIndustryItemRole
+    assumed?: BoolFilter<"SiteIndustryItem"> | boolean
+    sortOrder?: IntFilter<"SiteIndustryItem"> | number
+    createdAt?: DateTimeFilter<"SiteIndustryItem"> | Date | string
+    updatedAt?: DateTimeFilter<"SiteIndustryItem"> | Date | string
+  }
+
+  export type SatelliteCreateWithoutPublicProfileInput = {
+    key: string
+    name: string
+    verticalSlug: string
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
+    endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput
+    industryItems?: SiteIndustryItemCreateNestedManyWithoutSatelliteInput
+  }
+
+  export type SatelliteUncheckedCreateWithoutPublicProfileInput = {
+    key: string
+    name: string
+    verticalSlug: string
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
+    endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput
+    industryItems?: SiteIndustryItemUncheckedCreateNestedManyWithoutSatelliteInput
+  }
+
+  export type SatelliteCreateOrConnectWithoutPublicProfileInput = {
+    where: SatelliteWhereUniqueInput
+    create: XOR<SatelliteCreateWithoutPublicProfileInput, SatelliteUncheckedCreateWithoutPublicProfileInput>
+  }
+
+  export type SatelliteUpsertWithoutPublicProfileInput = {
+    update: XOR<SatelliteUpdateWithoutPublicProfileInput, SatelliteUncheckedUpdateWithoutPublicProfileInput>
+    create: XOR<SatelliteCreateWithoutPublicProfileInput, SatelliteUncheckedCreateWithoutPublicProfileInput>
+    where?: SatelliteWhereInput
+  }
+
+  export type SatelliteUpdateToOneWithWhereWithoutPublicProfileInput = {
+    where?: SatelliteWhereInput
+    data: XOR<SatelliteUpdateWithoutPublicProfileInput, SatelliteUncheckedUpdateWithoutPublicProfileInput>
+  }
+
+  export type SatelliteUpdateWithoutPublicProfileInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
+    endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUpdateManyWithoutSatelliteNestedInput
+  }
+
+  export type SatelliteUncheckedUpdateWithoutPublicProfileInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
+    endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUncheckedUpdateManyWithoutSatelliteNestedInput
+  }
+
+  export type PricingModuleCreateWithoutPublicProfileInput = {
+    id?: string
+    key: string
+    name: string
+    pricePerMonth: Decimal | DecimalJsLike | number | string
+    isPremium?: boolean
+    sortOrder?: number
+    catalogKind?: $Enums.PricingCatalogKind
+    trialEligibleInTrial?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    satellite?: SatelliteCreateNestedOneWithoutModulesInput
+  }
+
+  export type PricingModuleUncheckedCreateWithoutPublicProfileInput = {
+    id?: string
+    key: string
+    name: string
+    pricePerMonth: Decimal | DecimalJsLike | number | string
+    isPremium?: boolean
+    sortOrder?: number
+    catalogKind?: $Enums.PricingCatalogKind
+    satelliteKey?: string | null
+    trialEligibleInTrial?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PricingModuleCreateOrConnectWithoutPublicProfileInput = {
+    where: PricingModuleWhereUniqueInput
+    create: XOR<PricingModuleCreateWithoutPublicProfileInput, PricingModuleUncheckedCreateWithoutPublicProfileInput>
+  }
+
+  export type PricingModuleUpsertWithoutPublicProfileInput = {
+    update: XOR<PricingModuleUpdateWithoutPublicProfileInput, PricingModuleUncheckedUpdateWithoutPublicProfileInput>
+    create: XOR<PricingModuleCreateWithoutPublicProfileInput, PricingModuleUncheckedCreateWithoutPublicProfileInput>
+    where?: PricingModuleWhereInput
+  }
+
+  export type PricingModuleUpdateToOneWithWhereWithoutPublicProfileInput = {
+    where?: PricingModuleWhereInput
+    data: XOR<PricingModuleUpdateWithoutPublicProfileInput, PricingModuleUncheckedUpdateWithoutPublicProfileInput>
+  }
+
+  export type PricingModuleUpdateWithoutPublicProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pricePerMonth?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    isPremium?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    satellite?: SatelliteUpdateOneWithoutModulesNestedInput
+  }
+
+  export type PricingModuleUncheckedUpdateWithoutPublicProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pricePerMonth?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    isPremium?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
+    satelliteKey?: NullableStringFieldUpdateOperationsInput | string | null
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryItemCreateWithoutIndustryInput = {
+    id?: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    satellite: SatelliteCreateNestedOneWithoutIndustryItemsInput
+  }
+
+  export type SiteIndustryItemUncheckedCreateWithoutIndustryInput = {
+    id?: string
+    satelliteKey: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteIndustryItemCreateOrConnectWithoutIndustryInput = {
+    where: SiteIndustryItemWhereUniqueInput
+    create: XOR<SiteIndustryItemCreateWithoutIndustryInput, SiteIndustryItemUncheckedCreateWithoutIndustryInput>
+  }
+
+  export type SiteIndustryItemCreateManyIndustryInputEnvelope = {
+    data: SiteIndustryItemCreateManyIndustryInput | SiteIndustryItemCreateManyIndustryInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SiteIndustryItemUpsertWithWhereUniqueWithoutIndustryInput = {
+    where: SiteIndustryItemWhereUniqueInput
+    update: XOR<SiteIndustryItemUpdateWithoutIndustryInput, SiteIndustryItemUncheckedUpdateWithoutIndustryInput>
+    create: XOR<SiteIndustryItemCreateWithoutIndustryInput, SiteIndustryItemUncheckedCreateWithoutIndustryInput>
+  }
+
+  export type SiteIndustryItemUpdateWithWhereUniqueWithoutIndustryInput = {
+    where: SiteIndustryItemWhereUniqueInput
+    data: XOR<SiteIndustryItemUpdateWithoutIndustryInput, SiteIndustryItemUncheckedUpdateWithoutIndustryInput>
+  }
+
+  export type SiteIndustryItemUpdateManyWithWhereWithoutIndustryInput = {
+    where: SiteIndustryItemScalarWhereInput
+    data: XOR<SiteIndustryItemUpdateManyMutationInput, SiteIndustryItemUncheckedUpdateManyWithoutIndustryInput>
+  }
+
+  export type SiteIndustryCreateWithoutItemsInput = {
+    slug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturityOverride?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteIndustryUncheckedCreateWithoutItemsInput = {
+    slug: string
+    visibility?: $Enums.SiteCatalogVisibility
+    maturityOverride?: $Enums.SiteCatalogMaturity | null
+    sortOrder?: number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteIndustryCreateOrConnectWithoutItemsInput = {
+    where: SiteIndustryWhereUniqueInput
+    create: XOR<SiteIndustryCreateWithoutItemsInput, SiteIndustryUncheckedCreateWithoutItemsInput>
+  }
+
+  export type SatelliteCreateWithoutIndustryItemsInput = {
+    key: string
+    name: string
+    verticalSlug: string
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
+    endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileCreateNestedOneWithoutSatelliteInput
+  }
+
+  export type SatelliteUncheckedCreateWithoutIndustryItemsInput = {
+    key: string
+    name: string
+    verticalSlug: string
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
+    endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileUncheckedCreateNestedOneWithoutSatelliteInput
+  }
+
+  export type SatelliteCreateOrConnectWithoutIndustryItemsInput = {
+    where: SatelliteWhereUniqueInput
+    create: XOR<SatelliteCreateWithoutIndustryItemsInput, SatelliteUncheckedCreateWithoutIndustryItemsInput>
+  }
+
+  export type SiteIndustryUpsertWithoutItemsInput = {
+    update: XOR<SiteIndustryUpdateWithoutItemsInput, SiteIndustryUncheckedUpdateWithoutItemsInput>
+    create: XOR<SiteIndustryCreateWithoutItemsInput, SiteIndustryUncheckedCreateWithoutItemsInput>
+    where?: SiteIndustryWhereInput
+  }
+
+  export type SiteIndustryUpdateToOneWithWhereWithoutItemsInput = {
+    where?: SiteIndustryWhereInput
+    data: XOR<SiteIndustryUpdateWithoutItemsInput, SiteIndustryUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type SiteIndustryUpdateWithoutItemsInput = {
+    slug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturityOverride?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryUncheckedUpdateWithoutItemsInput = {
+    slug?: StringFieldUpdateOperationsInput | string
+    visibility?: EnumSiteCatalogVisibilityFieldUpdateOperationsInput | $Enums.SiteCatalogVisibility
+    maturityOverride?: NullableEnumSiteCatalogMaturityFieldUpdateOperationsInput | $Enums.SiteCatalogMaturity | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    names?: JsonNullValueInput | InputJsonValue
+    descriptions?: JsonNullValueInput | InputJsonValue
+    tagline?: JsonNullValueInput | InputJsonValue
+    body?: JsonNullValueInput | InputJsonValue
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    calcPrefill?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteUpsertWithoutIndustryItemsInput = {
+    update: XOR<SatelliteUpdateWithoutIndustryItemsInput, SatelliteUncheckedUpdateWithoutIndustryItemsInput>
+    create: XOR<SatelliteCreateWithoutIndustryItemsInput, SatelliteUncheckedCreateWithoutIndustryItemsInput>
+    where?: SatelliteWhereInput
+  }
+
+  export type SatelliteUpdateToOneWithWhereWithoutIndustryItemsInput = {
+    where?: SatelliteWhereInput
+    data: XOR<SatelliteUpdateWithoutIndustryItemsInput, SatelliteUncheckedUpdateWithoutIndustryItemsInput>
+  }
+
+  export type SatelliteUpdateWithoutIndustryItemsInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
+    endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUpdateOneWithoutSatelliteNestedInput
+  }
+
+  export type SatelliteUncheckedUpdateWithoutIndustryItemsInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
+    endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUncheckedUpdateOneWithoutSatelliteNestedInput
   }
 
   export type OrganizationCreateWithoutSatelliteEntitlementsInput = {
@@ -216674,6 +223970,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
     endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileCreateNestedOneWithoutSatelliteInput
+    industryItems?: SiteIndustryItemCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateWithoutEntitlementsInput = {
@@ -216685,6 +223983,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
     endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileUncheckedCreateNestedOneWithoutSatelliteInput
+    industryItems?: SiteIndustryItemUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteCreateOrConnectWithoutEntitlementsInput = {
@@ -216917,6 +224217,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
     endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUpdateOneWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateWithoutEntitlementsInput = {
@@ -216928,6 +224230,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
     endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUncheckedUpdateOneWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type OrganizationCreateWithoutSatelliteEndpointsInput = {
@@ -217138,6 +224442,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
     entitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileCreateNestedOneWithoutSatelliteInput
+    industryItems?: SiteIndustryItemCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateWithoutEndpointsInput = {
@@ -217149,6 +224455,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
     entitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput
+    publicProfile?: SatellitePublicProfileUncheckedCreateNestedOneWithoutSatelliteInput
+    industryItems?: SiteIndustryItemUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteCreateOrConnectWithoutEndpointsInput = {
@@ -217381,6 +224689,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
     entitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUpdateOneWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateWithoutEndpointsInput = {
@@ -217392,6 +224702,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
     entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
+    publicProfile?: SatellitePublicProfileUncheckedUpdateOneWithoutSatelliteNestedInput
+    industryItems?: SiteIndustryItemUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type OrganizationCreateWithoutPlacementBatchesInput = {
@@ -263164,6 +270476,17 @@ export namespace Prisma {
     suspendedAt?: Date | string | null
   }
 
+  export type SiteIndustryItemCreateManySatelliteInput = {
+    id?: string
+    industrySlug: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type PricingModuleUpdateWithoutSatelliteInput = {
     id?: StringFieldUpdateOperationsInput | string
     key?: StringFieldUpdateOperationsInput | string
@@ -263175,6 +270498,7 @@ export namespace Prisma {
     trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    publicProfile?: PricingModulePublicProfileUpdateOneWithoutModuleNestedInput
   }
 
   export type PricingModuleUncheckedUpdateWithoutSatelliteInput = {
@@ -263188,6 +270512,7 @@ export namespace Prisma {
     trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    publicProfile?: PricingModulePublicProfileUncheckedUpdateOneWithoutModuleNestedInput
   }
 
   export type PricingModuleUncheckedUpdateManyWithoutSatelliteInput = {
@@ -263258,6 +270583,83 @@ export namespace Prisma {
     connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isTrial?: BoolFieldUpdateOperationsInput | boolean
     suspendedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SiteIndustryItemUpdateWithoutSatelliteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    industry?: SiteIndustryUpdateOneRequiredWithoutItemsNestedInput
+  }
+
+  export type SiteIndustryItemUncheckedUpdateWithoutSatelliteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    industrySlug?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryItemUncheckedUpdateManyWithoutSatelliteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    industrySlug?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryItemCreateManyIndustryInput = {
+    id?: string
+    satelliteKey: string
+    moduleKey?: string
+    role?: $Enums.SiteIndustryItemRole
+    assumed?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SiteIndustryItemUpdateWithoutIndustryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    satellite?: SatelliteUpdateOneRequiredWithoutIndustryItemsNestedInput
+  }
+
+  export type SiteIndustryItemUncheckedUpdateWithoutIndustryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SiteIndustryItemUncheckedUpdateManyWithoutIndustryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    role?: EnumSiteIndustryItemRoleFieldUpdateOperationsInput | $Enums.SiteIndustryItemRole
+    assumed?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PlacementJobCreateManyBatchInput = {

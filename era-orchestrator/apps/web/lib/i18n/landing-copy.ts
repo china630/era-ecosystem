@@ -2,6 +2,7 @@
 
 import type { Locale } from "@era/i18n-common";
 import { landingEcosystemAz, landingEcosystemRu, type LandingEcosystemCopy } from "./landing-ecosystem-data";
+import { landingMarketingEn } from "./landing-marketing-en";
 
 export type {
   EcosystemModuleCopy,
@@ -703,7 +704,8 @@ const landingMarketingAz: LandingMarketingCopy = {
 export const landingMarketingCopyByLocale = {
   az: landingMarketingAz,
   ru: landingMarketingRu,
-} as const satisfies Record<"az" | "ru", LandingMarketingCopy>;
+  en: landingMarketingEn,
+} as const satisfies Record<"az" | "ru" | "en", LandingMarketingCopy>;
 
 function toFlatLandingCopy(m: LandingMarketingCopy): LandingPageCopy {
   return {
@@ -719,14 +721,18 @@ function toFlatLandingCopy(m: LandingMarketingCopy): LandingPageCopy {
 export const landingPageCopyByLocale = {
   ru: toFlatLandingCopy(landingMarketingRu),
   az: toFlatLandingCopy(landingMarketingAz),
-} as const satisfies Record<"ru" | "az", LandingPageCopy>;
+  en: toFlatLandingCopy(landingMarketingEn),
+} as const satisfies Record<"ru" | "az" | "en", LandingPageCopy>;
 
-export function getLandingPageCopy(locale: "ru" | "az"): LandingPageCopy {
-  return landingPageCopyByLocale[locale];
+export function getLandingPageCopy(locale: Locale): LandingPageCopy {
+  if (locale === "ru") return landingPageCopyByLocale.ru;
+  if (locale === "en") return landingPageCopyByLocale.en;
+  return landingPageCopyByLocale.az;
 }
 
 /** Static branches so Next/webpack retain full copy trees (dynamic `[locale]` was tree-shaken in dev). */
 export function getLandingMarketingCopy(locale: Locale): LandingMarketingCopy {
   if (locale === "ru") return landingMarketingCopyByLocale.ru;
+  if (locale === "en") return landingMarketingCopyByLocale.en;
   return landingMarketingCopyByLocale.az;
 }

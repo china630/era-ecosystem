@@ -11,7 +11,7 @@ Canonical reference for domains, ports, repo folders, billing slugs, and environ
 
 | # | Display | Repo folder | Docker service | Subdomain | Port | Public URL |
 |---|---------|-------------|----------------|-----------|------|------------|
-| 0 | ERA (apex) | — | traefik | `era-365.online` | 80/443 | redirect → `app` |
+| 0 | ERA (apex) | — | traefik + orchestrator-web | `era-365.online` | 80/443 | public marketing site; `www` → apex; cabinet on `app` |
 | 1 | ERA Platform | `era-orchestrator` | `orchestrator` | `app` | 3000 (web), 4000 (api) | `https://app.era-365.online/` |
 | — | ERA Platform Console | `era-orchestrator` (`apps/platform-web`) | `orchestrator` | `platform` | 3001 | `https://platform.era-365.online/` |
 | 2 | Finance ERP | `era-finance-core` | `finance-web` | `finance-core` | 3100 | `https://finance-core.era-365.online/` |

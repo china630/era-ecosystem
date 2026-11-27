@@ -727,6 +727,15 @@ model CrmOrgSettings {
   updatedAt                DateTime @updatedAt @map("updated_at")
 }
 
+/// Platform-wide CRM KV (KEK, etc.) — not per-org.
+model CrmSystemConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("crm_system_config")
+}
+
 /// P1-3 scaffold: Contact / Company separate from deal (Lead). MDM/Finance remain SoR for legal identity.
 model Company {
   id             String    @id @default(cuid())

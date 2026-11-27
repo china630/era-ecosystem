@@ -4,6 +4,10 @@ export function platformConsoleOrigin(): string {
   if (fromEnv) return fromEnv.replace(/\/$/, "");
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
+    // Apex marketing host is not the platform console.
+    if (host === "era-365.online" || host === "www.era-365.online") {
+      return "https://platform.era-365.online";
+    }
     if (host === "app.era-365.online" || host.endsWith(".era-365.online")) {
       return "https://platform.era-365.online";
     }

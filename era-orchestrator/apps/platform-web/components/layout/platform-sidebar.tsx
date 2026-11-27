@@ -224,6 +224,13 @@ export function PlatformSidebar({
           onNavClick={onNavClick}
         />
         <SideNavItem
+          href="/site-catalog"
+          label={t("platformSiteCatalog")}
+          isActive={pathname.startsWith("/site-catalog")}
+          icon={Tags}
+          onNavClick={onNavClick}
+        />
+        <SideNavItem
           href="/security"
           label={t("platformSecurity")}
           isActive={pathname.startsWith("/security")}

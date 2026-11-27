@@ -680,7 +680,11 @@
       "secretKeep": "Оставьте пустым, чтобы не менять",
       "secretSet": "Секрет задан",
       "inactive": "Адаптера ещё нет — ввод закрыт",
-      "group": { "bank": "Банки", "gov": "Госслужбы", "other": "Свои базы и кабинеты" },
+      "group": {
+        "bank": "Банки",
+        "gov": "Госслужбы",
+        "other": "Свои базы и кабинеты"
+      },
       "field": {
         "clientId": "ID клиента",
         "login": "Логин",
@@ -794,6 +798,49 @@
       "packaging": "Упаковка",
       "targetHost": "Целевой хост",
       "cancel": "Отмена"
+    },
+    "siteCatalog": {
+      "title": "Каталог сайта",
+      "hint": "Витрина только поверх задеплоенных сателлитов и модулей. Новые коммерческие ключи появляются после деплоя.",
+      "loadFailed": "Не удалось загрузить",
+      "saveFailed": "Не сохранено",
+      "saveOk": "Сохранено",
+      "loading": "Загрузка…",
+      "tabProducts": "Продукты",
+      "tabModules": "Модули",
+      "tabIndustries": "Отрасли",
+      "tabSettings": "Настройки сайта",
+      "onVitrine": "на сайте",
+      "configured": "настроено",
+      "needsSetup": "нужна настройка",
+      "pickOnlyHint": "Ключ из коммерческого каталога. Здесь только публичный профиль.",
+      "publicSlug": "Публичный slug",
+      "visibility": "Видимость",
+      "maturity": "Зрелость",
+      "sortOrder": "Порядок",
+      "showOnSite": "Показывать в меню сайта",
+      "kind": "Тип",
+      "name": "Название",
+      "description": "Описание",
+      "save": "Сохранить",
+      "selectProduct": "Выберите продукт из списка",
+      "selectModule": "Выберите модуль из списка",
+      "selectIndustry": "Выберите отрасль",
+      "inherit": "Наследовать",
+      "newIndustryHint": "Slug новой отрасли. Состав — только существующие сателлиты.",
+      "createIndustry": "Создать отрасль",
+      "bundlePickHint": "Состав бандла: только ключи, уже существующие после деплоя.",
+      "bundleItems": "Состав",
+      "wholeProduct": "Весь продукт",
+      "remove": "Убрать",
+      "addItem": "Добавить",
+      "settingsHint": "Origins, контакты, id демо-формы. Секреты маскируются.",
+      "emptySettings": "Ключей site.* ещё нет — выполните сид каталога.",
+      "tagline": "Слоган",
+      "body": "Текст (длинный)",
+      "imageUrl": "URL картинки",
+      "showAsSubsection": "Показывать как подраздел",
+      "modDescriptions": "Описания"
     }
   },
   "auth": {
@@ -989,7 +1036,8 @@
     "wfJobArchitecture": "Архитектура должностей",
     "wfOrgChart": "Оргсхема",
     "platformConsoleBrand": "ERA Platform",
-    "platformConsoleSubtitle": "Консоль оператора"
+    "platformConsoleSubtitle": "Консоль оператора",
+    "platformSiteCatalog": "Каталог сайта"
   },
   "headerStrip": {
     "trialUntil": "Пробный период до {date}",

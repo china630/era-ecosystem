@@ -13,15 +13,26 @@ http:
       service: noop
       priority: 1
 
-    apex-redirect:
+    # Public marketing site on apex (no redirect to app).
+    site-apex:
       rule: Host(`era-365.online`)
       entryPoints:
         - websecure
       tls:
         certResolver: letsencrypt
-      middlewares:
-        - apex-to-app
       service: orchestrator-web
+      priority: 100
+
+    # www → apex (canonical marketing host).
+    site-www:
+      rule: Host(`www.era-365.online`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - www-to-apex
+      service: noop
       priority: 100
 
     # APK + version.json for kiosk auto-update (static tree under data/tablet-apps).
@@ -177,10 +188,10 @@ http:
         scheme: https
         permanent: true
 
-    apex-to-app:
+    www-to-apex:
       redirectRegex:
-        regex: "^https?://era-365\\.online/(.*)"
-        replacement: "https://app.era-365.online/${1}"
+        regex: "^https?://www\\.era-365\\.online/(.*)"
+        replacement: "https://era-365.online/${1}"
         permanent: true
 
   services:

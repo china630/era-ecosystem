@@ -419,18 +419,19 @@ model Pricing {
 }
 
 model PricingModule {
-  id                   String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  key                  String             @unique
+  id                   String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key                  String                      @unique
   name                 String
-  pricePerMonth        Decimal            @map("price_per_month") @db.Decimal(12, 2)
-  isPremium            Boolean            @default(false) @map("is_premium")
-  sortOrder            Int                @default(0) @map("sort_order")
-  catalogKind          PricingCatalogKind @default(MODULE) @map("catalog_kind")
-  satelliteKey         String?            @map("satellite_key")
-  trialEligibleInTrial Boolean            @default(false) @map("trial_eligible_in_trial")
-  satellite            Satellite?         @relation(fields: [satelliteKey], references: [key], onDelete: SetNull)
-  createdAt            DateTime           @default(now()) @map("created_at")
-  updatedAt            DateTime           @updatedAt @map("updated_at")
+  pricePerMonth        Decimal                     @map("price_per_month") @db.Decimal(12, 2)
+  isPremium            Boolean                     @default(false) @map("is_premium")
+  sortOrder            Int                         @default(0) @map("sort_order")
+  catalogKind          PricingCatalogKind          @default(MODULE) @map("catalog_kind")
+  satelliteKey         String?                     @map("satellite_key")
+  trialEligibleInTrial Boolean                     @default(false) @map("trial_eligible_in_trial")
+  satellite            Satellite?                  @relation(fields: [satelliteKey], references: [key], onDelete: SetNull)
+  publicProfile        PricingModulePublicProfile?
+  createdAt            DateTime                    @default(now()) @map("created_at")
+  updatedAt            DateTime                    @updatedAt @map("updated_at")
 
   @@index([catalogKind])
   @@index([satelliteKey])
@@ -441,17 +442,140 @@ model PricingModule {
  * Industry satellite metadata (app gate keys `industry_*`).
  */
 model Satellite {
-  key          String                             @id
-  name         String
-  verticalSlug String                             @map("vertical_slug")
-  sortOrder    Int                                @default(0) @map("sort_order")
-  createdAt    DateTime                           @default(now()) @map("created_at")
-  updatedAt    DateTime                           @updatedAt @map("updated_at")
-  modules      PricingModule[]
-  endpoints    SatelliteEndpoint[]
-  entitlements OrganizationSatelliteEntitlement[]
+  key           String                             @id
+  name          String
+  verticalSlug  String                             @map("vertical_slug")
+  sortOrder     Int                                @default(0) @map("sort_order")
+  createdAt     DateTime                           @default(now()) @map("created_at")
+  updatedAt     DateTime                           @updatedAt @map("updated_at")
+  modules       PricingModule[]
+  endpoints     SatelliteEndpoint[]
+  entitlements  OrganizationSatelliteEntitlement[]
+  publicProfile SatellitePublicProfile?
+  industryItems SiteIndustryItem[]
 
   @@map("satellites")
+}
+
+/**
+ * Public marketing visibility for site catalog (not billing).
+ */
+enum SiteCatalogVisibility {
+  VISIBLE
+  HIDDEN
+  DRAFT
+}
+
+/**
+ * Public maturity badge for site catalog.
+ */
+enum SiteCatalogMaturity {
+  prod
+  pilot
+}
+
+/**
+ * Role of a product inside an industry bundle.
+ */
+enum SiteIndustryItemRole {
+  C
+  I
+  O
+}
+
+/**
+ * Public product page / mega-menu profile (separate from billing Satellite row).
+ */
+model SatellitePublicProfile {
+  satelliteKey String                @id @map("satellite_key")
+  satellite    Satellite             @relation(fields: [satelliteKey], references: [key], onDelete: Cascade)
+  publicSlug   String                @unique @map("public_slug")
+  visibility   SiteCatalogVisibility @default(VISIBLE)
+  maturity     SiteCatalogMaturity   @default(prod)
+  sortOrder    Int                   @default(0) @map("sort_order")
+  /// Localized display names `{az,ru,en}`.
+  names        Json                  @default("{}")
+  /// Localized short descriptions `{az,ru,en}`.
+  descriptions Json                  @default("{}")
+  /// Localized taglines `{az,ru,en}`.
+  tagline      Json                  @default("{}")
+  /// Localized long body / HTML-safe markdown `{az,ru,en}`.
+  body         Json                  @default("{}")
+  imageUrl     String?               @map("image_url")
+  showOnSite   Boolean               @default(true) @map("show_on_site")
+  /// core | industry | platform — mega-menu grouping.
+  kind         String                @default("industry")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  @@index([visibility, sortOrder])
+  @@map("satellite_public_profiles")
+}
+
+/**
+ * Optional public override for a pricing module (texts, Pilot badge, visibility).
+ */
+model PricingModulePublicProfile {
+  moduleKey        String                @id @map("module_key")
+  module           PricingModule         @relation(fields: [moduleKey], references: [key], onDelete: Cascade)
+  visibility       SiteCatalogVisibility @default(VISIBLE)
+  /// Null = inherit satellite maturity.
+  maturity         SiteCatalogMaturity?
+  sortOrder        Int                   @default(0) @map("sort_order")
+  names            Json                  @default("{}")
+  descriptions     Json                  @default("{}")
+  tagline          Json                  @default("{}")
+  body             Json                  @default("{}")
+  imageUrl         String?               @map("image_url")
+  showAsSubsection Boolean               @default(true) @map("show_as_subsection")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
+
+  @@index([visibility, sortOrder])
+  @@map("pricing_module_public_profiles")
+}
+
+/**
+ * Industry = bundle of 5–6 products for the public site (not PricingBundle).
+ */
+model SiteIndustry {
+  slug             String                @id
+  visibility       SiteCatalogVisibility @default(VISIBLE)
+  /// Optional override; else Pilot if any role-C item product is pilot.
+  maturityOverride SiteCatalogMaturity?  @map("maturity_override")
+  sortOrder        Int                   @default(0) @map("sort_order")
+  names            Json                  @default("{}")
+  descriptions     Json                  @default("{}")
+  tagline          Json                  @default("{}")
+  body             Json                  @default("{}")
+  imageUrl         String?               @map("image_url")
+  /// Calc deep-link payload `{ moduleKeys: string[], capacity?: object }`.
+  calcPrefill      Json?                 @map("calc_prefill")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
+  items            SiteIndustryItem[]
+
+  @@index([visibility, sortOrder])
+  @@map("site_industries")
+}
+
+model SiteIndustryItem {
+  id           String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  industrySlug String               @map("industry_slug")
+  industry     SiteIndustry         @relation(fields: [industrySlug], references: [slug], onDelete: Cascade)
+  satelliteKey String               @map("satellite_key")
+  satellite    Satellite            @relation(fields: [satelliteKey], references: [key], onDelete: Restrict)
+  /// Optional module key when the slot is a specific module (e.g. banking_dbo). Empty string = whole product.
+  moduleKey    String               @default("") @map("module_key")
+  role         SiteIndustryItemRole @default(I)
+  assumed      Boolean              @default(false)
+  sortOrder    Int                  @default(0) @map("sort_order")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  @@unique([industrySlug, satelliteKey, moduleKey])
+  @@index([industrySlug, sortOrder])
+  @@map("site_industry_items")
 }
 
 /// Owner-connected satellite trial row (materialized on Connect).

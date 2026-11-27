@@ -204,10 +204,15 @@ export async function setEnabled(
     where: { id, organizationId },
   });
   if (!row) throw Object.assign(new Error("Not found"), { status: 404 });
-  if (enabled && !process.env.CRM_INTEGRATIONS_KEK) {
-    throw Object.assign(new Error("CRM_INTEGRATIONS_KEK required to enable"), {
-      status: 503,
-    });
+  if (enabled) {
+    const { ensureCrmIntegrationsKek } = await import("./crm-kek");
+    try {
+      await ensureCrmIntegrationsKek();
+    } catch {
+      throw Object.assign(new Error("CRM_INTEGRATIONS_KEK required to enable"), {
+        status: 503,
+      });
+    }
   }
   const adapter = getAdapter(row.providerKey);
   const secrets = resolveSecrets(row);

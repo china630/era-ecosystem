@@ -243,6 +243,8 @@ Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readine
 | Org catalog | `/super-admin/orgs` | search + open hub |
 | Referrals | `/super-admin/referrals` | list |
 | Landing | `/super-admin/landing` | list |
+| Site catalog | `platform…/site-catalog` | **Open** — Products/Modules list from deployed commercial keys only; configure profile (slug/visibility/Pilot/texts); Industries items Select-only; Site settings `site.*` (secrets masked). Invented key must be impossible. Not Demo/SHIPPED |
+| Public marketing site | `era-365.online/{az\|ru\|en}` (+ `/satellites`, `/industries`, `/pricing`, `/calc`, `/demo`, `/contact`) | **Open** — mega-menu Solutions/Industries from DB; SiteHeader on calc/pricing; mobile menu; EN copy; unique title/hreflang. Not Demo/SHIPPED |
 | Owner billing | `/settings/subscription`, `/settings/invoices`, `/settings/orders` | pages load for owner |
 | Placement hop | `platform…/orgs/{id}/placement` (legacy `/super-admin/…/placement`) | Start batch (targetHost required) → PROVISION + recipe; after agent → CONFIGURE + process log; Start SHARED→ONPREM → REJECTED (Wave 2) |
 | Integration channels | `platform…/orgs/{id}` Channels + sat `/admin/links` | Resync; inbound disable; shared `SatelliteAdminLinksPage`. **Open** — harden lab partial; not Demo/SHIPPED |

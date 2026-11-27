@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import type { Locale } from "@era/i18n-common";
 import type { LandingMarketingCopy } from "../../lib/i18n/landing-marketing-copy";
 import { SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { siteLocalePath } from "../../lib/site/locale-path";
+import { appUrl } from "../../lib/site/site-origins";
 
 const HERO_CTA_CLASS =
   "relative inline-flex h-11 min-h-11 items-center justify-center gap-2 rounded-lg bg-[#2980B9] px-6 text-sm font-semibold text-white shadow-lg shadow-[#2980B9]/35 no-underline transition hover:bg-[#2471A3] focus:outline-none focus:ring-2 focus:ring-[#2980B9] focus:ring-offset-2";
@@ -9,9 +12,11 @@ const HERO_CTA_CLASS =
 export function LandingHero({
   copy,
   calcLabel,
+  locale,
 }: {
   copy: LandingMarketingCopy["hero"];
   calcLabel?: string;
+  locale: Locale;
 }) {
   return (
     <section className="relative px-4 pb-4 pt-6 md:pb-6 md:pt-10">
@@ -26,7 +31,7 @@ export function LandingHero({
         </p>
         <div className="mt-7 flex flex-col items-center gap-3">
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link href="/register-org" className={`${HERO_CTA_CLASS} group`}>
+            <a href={appUrl("/register-org")} className={`${HERO_CTA_CLASS} group`}>
               <span
                 aria-hidden
                 className="absolute -inset-1 rounded-lg bg-[#2980B9]/40 opacity-75 blur-md motion-safe:animate-pulse"
@@ -35,8 +40,8 @@ export function LandingHero({
                 {copy.ctaPrimary}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
               </span>
-            </Link>
-            <Link href="/pricing" className={`${SECONDARY_BUTTON_CLASS} h-11 px-5 text-sm no-underline`}>
+            </a>
+            <Link href={siteLocalePath(locale, "/pricing")} className={`${SECONDARY_BUTTON_CLASS} h-11 px-5 text-sm no-underline`}>
               {copy.ctaSecondary}
             </Link>
             {calcLabel ? (
