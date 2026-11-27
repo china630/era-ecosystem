@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  MODAL_CHECKBOX_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -526,6 +527,7 @@ export default function SiteCatalogAdminPage() {
               <label className="flex items-center gap-2 text-xs text-[#34495E]">
                 <input
                   type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
                   checked={showOnSite}
                   onChange={(e) => setShowOnSite(e.target.checked)}
                 />
@@ -664,6 +666,7 @@ export default function SiteCatalogAdminPage() {
               <label className="flex items-center gap-2 text-xs text-[#34495E]">
                 <input
                   type="checkbox"
+                  className={MODAL_CHECKBOX_CLASS}
                   checked={modSubsection}
                   onChange={(e) => setModSubsection(e.target.checked)}
                 />
