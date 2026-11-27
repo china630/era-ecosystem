@@ -114,6 +114,56 @@ const az: PricingMetersCopy = {
   ],
 };
 
+const en: PricingMetersCopy = {
+  tocTitle: "Contents",
+  tocCore: "ERA Core",
+  tocBundles: "Bundles",
+  tocIndustries: "Satellites",
+  tocAddons: "Add-on",
+  tocPremium: "Premium",
+  tocMeters: "Meters",
+  tocSpend: "Spend ceiling",
+  metersTitle: "Meters and capacity",
+  metersHint:
+    "After the included limit — postpaid. Invoices count as documents. Workforce 2/4/6 AZN is XOR; do not mix with Foundation ERP login.",
+  metersCanonNote: "Catalog canon table. Live module SKUs appear in sections above when the API responds.",
+  includedCol: "Included",
+  overageCol: "Above limit",
+  spendTitle: "Spend ceiling (secondary)",
+  spendHint: "Spend tier is postpaid insurance, not a product. SKUs and meters above matter more than T0–T3.",
+  unavailableBanner:
+    "Live SKU list is temporarily unavailable. Meter canon below; the module builder appears when the API responds.",
+  unavailableSkuNote: "Core / satellite / add-on sections are hidden until GET /v1/public/pricing returns the catalog.",
+  rows: [
+    { id: "ocr", label: "OCR", included: "50 pages in Foundation", overage: "0.02 AZN / page" },
+    { id: "docs", label: "Documents (incl. invoices)", included: "1000 / mo in NAS", overage: "5 AZN / 1000" },
+    { id: "storage", label: "Storage", included: "20 GB in Storage SKU 19 AZN", overage: "0.50 AZN / GB" },
+    { id: "sms", label: "SMS", included: "Carrier + platform", overage: "carrier + 0.01 AZN" },
+    { id: "wa", label: "WhatsApp", included: "As used", overage: "0.05 AZN / message" },
+    { id: "erp", label: "Foundation ERP login", included: "1 in Foundation", overage: "2 AZN / login" },
+    { id: "legal", label: "Legal entity", included: "1 in Foundation", overage: "19 AZN / VÖEN" },
+    {
+      id: "headcount",
+      label: "Workforce headcount",
+      included: "none (XOR Essential/Pro/Premium)",
+      overage: "2 / 4 / 6 AZN per person",
+    },
+    { id: "rooms", label: "Room (Hotel)", included: "5 in Gate", overage: "4 AZN / room" },
+    { id: "cabinet", label: "Cabinet (Clinic)", included: "5 in EMR or sanatorium", overage: "19 AZN / cabinet" },
+    { id: "bed", label: "Bed (Clinic)", included: "5 in inpatient", overage: "19 AZN / bed" },
+    { id: "pos", label: "POS / register / bay", included: "1 in Gate (F&B, Retail, Auto)", overage: "19 AZN / unit" },
+    { id: "vehicle", label: "Vehicle (Logistics)", included: "2 in Gate", overage: "5 AZN / vehicle" },
+    { id: "site", label: "Site (Construction)", included: "1 in Gate", overage: "29 AZN / site" },
+    { id: "wh", label: "Warehouse (Wholesale)", included: "1 in Gate", overage: "19 AZN / warehouse" },
+    { id: "crm", label: "CRM seat", included: "1 in Gate", overage: "5 AZN / seat" },
+    { id: "branch", label: "Branch (Bank)", included: "1 in Gate", overage: "39 AZN / branch" },
+    { id: "outlet", label: "Outlet (generic)", included: "per vertical Gate", overage: "19 AZN" },
+    { id: "acq", label: "Acquiring", included: "—", overage: "1.5%" },
+  ],
+};
+
 export function getPricingMetersCopy(locale: Locale): PricingMetersCopy {
-  return locale === "ru" ? ru : az;
+  if (locale === "ru") return ru;
+  if (locale === "en") return en;
+  return az;
 }

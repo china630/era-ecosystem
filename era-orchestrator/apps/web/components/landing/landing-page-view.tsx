@@ -12,6 +12,7 @@ import {
   type PublicSatelliteSlug,
 } from "../../lib/satellites/public-satellite-catalog";
 import { calcNavLabel } from "../../lib/i18n/calc-copy";
+import { siteLocalePath } from "../../lib/site/locale-path";
 import { LandingChrome } from "./landing-chrome";
 import { LandingFaq } from "./landing-faq";
 import { LandingHero } from "./landing-hero";
@@ -28,7 +29,7 @@ const FAQ_LABELS = {
 } as const;
 
 function fmtPrice(n: number, locale: Locale): string {
-  const suffix = locale === "ru" ? "/ мес" : "/ ay";
+  const suffix = locale === "ru" ? "/ мес" : locale === "en" ? "/ mo" : "/ ay";
   return `${n.toFixed(n % 1 === 0 ? 0 : 2)} AZN ${suffix}`;
 }
 
@@ -50,13 +51,20 @@ function hubCards(locale: Locale, snapshot: PublicPricingResponse | null) {
       slug: page.slug as PublicSatelliteSlug,
       title: copy.title.split("—")[0]?.trim() || copy.title,
       body: copy.tagline,
-      href: `/satellites/${page.slug}`,
+      href: siteLocalePath(locale, `/satellites/${page.slug}`),
       priceLabel,
     };
   });
 }
 
-export function LandingPageView({ initialLocale }: { initialLocale: Locale }) {
+export function LandingPageView({
+  initialLocale,
+  hideChrome,
+}: {
+  initialLocale: Locale;
+  /** When true, render only main landing blocks (used under SiteHeader/SiteFooter). */
+  hideChrome?: boolean;
+}) {
   const [locale, setLocale] = useState(initialLocale);
   const [pricing, setPricing] = useState<PublicPricingResponse | null>(null);
   const copy = useMemo(() => getLandingMarketingCopy(locale), [locale]);
@@ -71,6 +79,29 @@ export function LandingPageView({ initialLocale }: { initialLocale: Locale }) {
     void fetchPublicPricingSnapshot().then(setPricing);
   }, []);
 
+  const main = (
+    <main id="landing-main">
+      <div className="mx-auto max-w-6xl">
+        <LandingHero copy={copy.hero} calcLabel={calcNavLabel(locale)} locale={locale} />
+        <LandingTrialBanner copy={copy.trial} />
+      </div>
+      <LandingHubGrid
+        hub={copy.hub}
+        satellites={cards}
+        calcLabel={calcNavLabel(locale)}
+        pricingHref={siteLocalePath(locale, "/pricing")}
+        addonsHref={`${siteLocalePath(locale, "/pricing")}#addons`}
+      />
+      <LandingZeroKnowledge copy={copy.zeroKnowledge} />
+      <div className="mx-auto max-w-6xl px-4 py-8 md:py-12">
+        <LandingFaq faq={copy.faq} />
+      </div>
+      <LandingBottomCta copy={copy.bottomCta} calcLabel={calcNavLabel(locale)} />
+    </main>
+  );
+
+  if (hideChrome) return main;
+
   return (
     <LandingPageShell>
       <LandingChrome
@@ -80,18 +111,7 @@ export function LandingPageView({ initialLocale }: { initialLocale: Locale }) {
         locale={locale}
         onLocaleChange={setLocale}
       />
-      <main id="landing-main">
-        <div className="mx-auto max-w-6xl">
-          <LandingHero copy={copy.hero} calcLabel={calcNavLabel(locale)} />
-          <LandingTrialBanner copy={copy.trial} />
-        </div>
-        <LandingHubGrid hub={copy.hub} satellites={cards} calcLabel={calcNavLabel(locale)} />
-        <LandingZeroKnowledge copy={copy.zeroKnowledge} />
-        <div className="mx-auto max-w-6xl px-4 py-8 md:py-12">
-          <LandingFaq faq={copy.faq} />
-        </div>
-        <LandingBottomCta copy={copy.bottomCta} calcLabel={calcNavLabel(locale)} />
-      </main>
+      {main}
       <footer className="border-t border-[#D5DADF]/80 px-4 py-8">
         <p className="text-center text-[12px] text-[#7F8C8D]">
           © {new Date().getFullYear()} {copy.footer}

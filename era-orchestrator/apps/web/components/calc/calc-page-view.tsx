@@ -7,6 +7,7 @@ import { PRIMARY_BUTTON_CLASS, PublicLegalFooter, SECONDARY_BUTTON_CLASS } from 
 import { getCalcCopy, type CalcCopy } from "../../lib/i18n/calc-copy";
 import { getLandingMarketingCopy } from "../../lib/i18n/landing-marketing-copy";
 import { getPricingStorefrontUiCopy, type PricingStorefrontUiCopy } from "../../lib/i18n/pricing-storefront-copy";
+import { appUrl } from "../../lib/site/site-origins";
 import { LandingLanguageToggle } from "../landing/landing-language-toggle";
 import { LandingPageShell } from "../landing/landing-page-shell";
 import type { PublicPricingResponse } from "../../lib/public-pricing-types";
@@ -64,25 +65,27 @@ function skuName(key: string, fallback: string, ui: PricingStorefrontUiCopy): st
 export function CalcPageView({
   initialLocale,
   snapshot,
+  hideChrome = false,
 }: {
   initialLocale: Locale;
   snapshot: PublicPricingResponse;
+  /** When true, omit LandingPageShell / local header / footer (parent renders SiteHeader). */
+  hideChrome?: boolean;
 }) {
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [state, setState] = useState<CalcState>(emptyCalcState);
   const [ready, setReady] = useState(false);
   const [copied, setCopied] = useState(false);
   const copy = useMemo(() => getCalcCopy(locale), [locale]);
-  const uiLocale = locale === "ru" ? "ru" : "az";
-  const ui = useMemo(() => getPricingStorefrontUiCopy(uiLocale), [uiLocale]);
+  const ui = useMemo(() => getPricingStorefrontUiCopy(locale), [locale]);
   const catalog = useMemo(() => catalogFromSnapshot(snapshot), [snapshot]);
   const blocked = snapshot.unavailable === true || (snapshot.pricingModules ?? []).length === 0;
   const quote = useMemo(() => (blocked ? null : quoteMonthly(catalog, state)), [blocked, catalog, state]);
-  const landing = getLandingMarketingCopy(locale === "ru" ? "ru" : "az");
-  const loginLabel = locale === "en" ? "Sign in" : landing.chrome.login;
-  const satellitesLabel = locale === "en" ? "Satellites" : landing.chrome.navSatellites;
-  const pricingLabel = locale === "en" ? "Pricing" : landing.hero.navPricing;
-  const registerLabel = locale === "en" ? "Start free" : landing.hero.ctaPrimary;
+  const landing = getLandingMarketingCopy(locale);
+  const loginLabel = landing.chrome.login;
+  const satellitesLabel = landing.chrome.navSatellites;
+  const pricingLabel = landing.hero.navPricing;
+  const registerLabel = landing.hero.ctaPrimary;
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -126,34 +129,36 @@ export function CalcPageView({
     }
   }
 
-  return (
-    <LandingPageShell>
+  const body = (
+    <>
       <style>{`@media print { header, #calc-form, #calc-mobile-bar, footer { display: none !important; } #calc-quote { position: static !important; } }`}</style>
-      <header className="sticky top-0 z-20 border-b border-[#D5DADF]/80 bg-white/90 backdrop-blur-md print:hidden">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-          <Link href="/" className="text-lg font-bold tracking-tight text-[#34495E] no-underline">
-            ERA 365
-          </Link>
-          <nav className="flex flex-wrap items-center gap-2 md:gap-3">
-            <LandingLanguageToggle locale={locale} onLocaleChange={setLocale} />
-            <Link href="/satellites" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
-              {satellitesLabel}
+      {!hideChrome ? (
+        <header className="sticky top-0 z-20 border-b border-[#D5DADF]/80 bg-white/90 backdrop-blur-md print:hidden">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+            <Link href="/" className="text-lg font-bold tracking-tight text-[#34495E] no-underline">
+              ERA 365
             </Link>
-            <Link href="/pricing" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
-              {pricingLabel}
-            </Link>
-            <Link href="/calc" className={`${SECONDARY_BUTTON_CLASS} text-xs text-[#2980B9] no-underline`} aria-current="page">
-              {copy.nav}
-            </Link>
-            <Link href="/login" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
-              {loginLabel}
-            </Link>
-            <Link href="/register-org" className={`${PRIMARY_BUTTON_CLASS} text-xs no-underline`}>
-              {registerLabel}
-            </Link>
-          </nav>
-        </div>
-      </header>
+            <nav className="flex flex-wrap items-center gap-2 md:gap-3">
+              <LandingLanguageToggle locale={locale} onLocaleChange={setLocale} />
+              <Link href="/satellites" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
+                {satellitesLabel}
+              </Link>
+              <Link href="/pricing" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
+                {pricingLabel}
+              </Link>
+              <Link href="/calc" className={`${SECONDARY_BUTTON_CLASS} text-xs text-[#2980B9] no-underline`} aria-current="page">
+                {copy.nav}
+              </Link>
+              <a href={appUrl("/login")} className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
+                {loginLabel}
+              </a>
+              <a href={appUrl("/register-org")} className={`${PRIMARY_BUTTON_CLASS} text-xs no-underline`}>
+                {registerLabel}
+              </a>
+            </nav>
+          </div>
+        </header>
+      ) : null}
 
       <main className="mx-auto max-w-6xl px-4 py-8 pb-24 md:py-12 lg:pb-12">
         <p className="m-0 text-[12px] font-semibold uppercase tracking-wider text-[#2980B9]">ERA 365</p>
@@ -239,11 +244,16 @@ export function CalcPageView({
         </div>
       ) : null}
 
-      <footer className="border-t border-[#D5DADF]/80 px-4 py-8">
-        <PublicLegalFooter locale={locale} faqHref="/#faq" appPrefix="ERA365" labels={FAQ_LABELS[locale] ?? FAQ_LABELS.az} />
-      </footer>
-    </LandingPageShell>
+      {!hideChrome ? (
+        <footer className="border-t border-[#D5DADF]/80 px-4 py-8">
+          <PublicLegalFooter locale={locale} faqHref="/#faq" appPrefix="ERA365" labels={FAQ_LABELS[locale] ?? FAQ_LABELS.az} />
+        </footer>
+      ) : null}
+    </>
   );
+
+  if (hideChrome) return body;
+  return <LandingPageShell>{body}</LandingPageShell>;
 }
 
 function CoreSection({
@@ -698,9 +708,9 @@ function QuoteCard({
       <p className="mt-3 text-[12px] leading-snug text-[#7F8C8D]">{copy.trialNote}</p>
       <p className="mt-1 text-[12px] leading-snug text-[#7F8C8D]">{copy.bakuNote}</p>
       <div className="mt-4 flex flex-col gap-2">
-        <Link href="/register-org" className={`${PRIMARY_BUTTON_CLASS} h-11 text-sm no-underline`}>
+        <a href={appUrl("/register-org")} className={`${PRIMARY_BUTTON_CLASS} h-11 text-sm no-underline`}>
           {copy.register}
-        </Link>
+        </a>
         <button type="button" className={`${SECONDARY_BUTTON_CLASS} h-10 text-sm`} onClick={onShare}>
           {copied ? copy.copied : copy.share}
         </button>

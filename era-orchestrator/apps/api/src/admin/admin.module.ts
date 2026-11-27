@@ -8,8 +8,13 @@ import { AdminBillingService } from "./admin-billing.service";
 import { AdminLandingController } from "./admin-landing.controller";
 import { PublicPricingController } from "./public-pricing.controller";
 import { PublicLandingController } from "./public-landing.controller";
+import { PublicSiteCatalogController } from "./public-site-catalog.controller";
+import { AdminSiteCatalogController } from "./admin-site-catalog.controller";
+import { AdminSystemConfigController } from "./admin-system-config.controller";
+import { InternalSiteConfigController } from "./internal-site-config.controller";
 import { PricingService } from "./pricing.service";
 import { LandingMarketingService } from "./landing-marketing.service";
+import { SiteCatalogService } from "./site-catalog.service";
 import { OrgOperatingModeController } from "./org-operating-mode.controller";
 import { OrgOperatingModeService } from "./org-operating-mode.service";
 import { OrgDepartmentsController } from "./org-departments.controller";
@@ -43,8 +48,12 @@ import { ChannelsModule } from "../channels/channels.module";
   controllers: [
     AdminBillingController,
     AdminLandingController,
+    AdminSiteCatalogController,
+    AdminSystemConfigController,
+    InternalSiteConfigController,
     PublicPricingController,
     PublicLandingController,
+    PublicSiteCatalogController,
     OrgOperatingModeController,
     OrgDepartmentsController,
     AdminOrganizationsController,
@@ -57,6 +66,7 @@ import { ChannelsModule } from "../channels/channels.module";
   providers: [
     AdminBillingService,
     LandingMarketingService,
+    SiteCatalogService,
     PricingService,
     OrgOperatingModeService,
     OrgDepartmentsService,
@@ -71,6 +81,7 @@ import { ChannelsModule } from "../channels/channels.module";
   exports: [
     AdminBillingService,
     LandingMarketingService,
+    SiteCatalogService,
     PricingService,
     OrgOperatingModeService,
     OrgDepartmentsService,

@@ -2,6 +2,9 @@
  * Localized chrome for /pricing storefront (module prices come from API).
  */
 
+import type { Locale } from "@era/i18n-common";
+import { uiEn } from "./pricing-storefront-ui-en";
+
 export type PricingStorefrontUiCopy = {
   heroTitle: string;
   heroSubtitle: string;
@@ -701,6 +704,8 @@ const uiAz: PricingStorefrontUiCopy = {
   industryAfterSignup: "ayrıca modullar girişdən sonra Billing → Modullar bölməsindədir.",
 };
 
-export function getPricingStorefrontUiCopy(locale: "ru" | "az"): PricingStorefrontUiCopy {
-  return locale === "ru" ? uiRu : uiAz;
+export function getPricingStorefrontUiCopy(locale: Locale): PricingStorefrontUiCopy {
+  if (locale === "ru") return uiRu;
+  if (locale === "en") return uiEn;
+  return uiAz;
 }

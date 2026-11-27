@@ -3,6 +3,47 @@
     "title": "ERA 365 Orchestrator",
     "description": "İdarəetmə planı — identiklik, billing, sənaye launcher"
   },
+  "site": {
+    "nav": {
+      "brand": "ERA 365"
+    },
+    "home": {
+      "seoTitle": "ERA 365 — Azərbaycan üçün biznes platforması",
+      "seoDescription": "Uçot, sənaye məhsulları və abunə — bir platformada."
+    },
+    "satellites": {
+      "seoTitle": "Həllər",
+      "seoDescription": "ERA 365 məhsulları — uçot və sənaye həlləri bir platformada."
+    },
+    "pricing": {
+      "seoTitle": "Tariflər",
+      "seoDescription": "Finance Core, sənaye peykləri və platforma add-onları üçün abunə planları."
+    },
+    "industries": {
+      "title": "Sənayələr",
+      "intro": "Sektorunuz üçün hazır məhsul dəstləri.",
+      "kicker": "Sənaye həlli",
+      "stubNote": "Tam sənaye səhifəsi məzmunu növbəti mərhələdə gəlir."
+    },
+    "demo": {
+      "title": "Demo sifariş et",
+      "intro": "Təşkilatınız haqqında yazın — demo təqdimatı planlayaq.",
+      "formStub": "Demo formanın era-crm inteqrasiyası planlaşdırılıb — hələlik əlaqə vasitələrindən istifadə edin."
+    },
+    "contact": {
+      "title": "Əlaqə",
+      "intro": "ERA 365 komandası ilə əlaqə saxlayın.",
+      "stub": "Əlaqə blokunda telefon, WhatsApp və korporativ e-mail göstəriləcək."
+    },
+    "calculator": {
+      "title": "Abunə kalkulyatoru",
+      "intro": "Qeydiyyatdan əvvəl aylıq abunəni təxmin edin.",
+      "step1": "Sənaye seçin və ya tam kalkulyatoru açın.",
+      "step2": "Modullar, tutum və platforma add-onları tənzimləyin.",
+      "step3": "Keçidi paylaşın və ya pulsuz trial başlayın.",
+      "byIndustry": "Sənayədən başla"
+    }
+  },
   "login": {
     "title": "Giriş",
     "subtitle": "",

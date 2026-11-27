@@ -1,5 +1,6 @@
 import type { Locale } from "@era/i18n-common";
 import type { PublicSatelliteSlug } from "../satellites/public-satellite-catalog";
+import { satelliteCopyEn } from "./satellite-page-copy-en";
 
 export type SatellitePageCopy = {
   kicker: string;
@@ -23,7 +24,7 @@ export type SatellitesIndexCopy = {
   platformLabel: string;
 };
 
-type SatelliteCopyPack = {
+export type SatelliteCopyPack = {
   index: SatellitesIndexCopy;
   pages: Record<PublicSatelliteSlug, SatellitePageCopy>;
 };
@@ -457,9 +458,12 @@ const az: SatelliteCopyPack = {
 };
 
 export function getSatellitesIndexCopy(locale: Locale): SatellitesIndexCopy {
-  return locale === "ru" ? ru.index : az.index;
+  if (locale === "ru") return ru.index;
+  if (locale === "en") return satelliteCopyEn.index;
+  return az.index;
 }
 
 export function getSatellitePageCopy(locale: Locale, slug: PublicSatelliteSlug): SatellitePageCopy {
-  return (locale === "ru" ? ru : az).pages[slug];
+  const pack = locale === "ru" ? ru : locale === "en" ? satelliteCopyEn : az;
+  return pack.pages[slug];
 }

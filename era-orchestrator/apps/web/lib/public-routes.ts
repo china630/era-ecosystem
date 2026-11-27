@@ -1,3 +1,5 @@
+import { stripLocalePrefix } from "./site/locale-path";
+
 const BARE_PUBLIC_PREFIXES = [
   "/login",
   "/sso/callback",
@@ -6,7 +8,11 @@ const BARE_PUBLIC_PREFIXES = [
   "/register-org",
   "/pricing",
   "/calc",
+  "/calculator",
   "/satellites",
+  "/industries",
+  "/demo",
+  "/contact",
   "/terms",
   "/partner",
   "/kafe",
@@ -14,8 +20,9 @@ const BARE_PUBLIC_PREFIXES = [
 
 /** Guest marketing + auth pages render without the logged-in app shell. */
 export function isBarePublicWebPath(pathname: string): boolean {
-  if (pathname === "/" || pathname === "") return true;
+  const bare = stripLocalePrefix(pathname);
+  if (bare === "/" || bare === "") return true;
   return BARE_PUBLIC_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
+    (p) => bare === p || bare.startsWith(`${p}/`),
   );
 }

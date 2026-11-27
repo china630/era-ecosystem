@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { Locale } from "@era/i18n-common";
 import { useAuth } from "../../lib/auth-context";
-import { LandingPageView } from "./landing-page-view";
-
 /**
- * Hub home: guests see marketing landing; authenticated users go to workspace / orgs.
+ * Dual-purpose orch web `/`: authed → workspace/orgs; guests → `/{locale}` marketing shell.
+ * Apex hosts redirect `/` in middleware; this page is for local/app hosts.
  */
 export function HomePageClient({ initialLocale }: { initialLocale: Locale }) {
   const { ready, token, user } = useAuth();
@@ -17,17 +16,16 @@ export function HomePageClient({ initialLocale }: { initialLocale: Locale }) {
 
   useEffect(() => {
     if (!ready) return;
-    if (!token) return;
-    if (!user?.organizationId && !user?.isSuperAdmin) {
-      router.replace("/organizations");
+    if (token) {
+      if (!user?.organizationId && !user?.isSuperAdmin) {
+        router.replace("/organizations");
+        return;
+      }
+      router.replace("/workspace");
       return;
     }
-    router.replace("/workspace");
-  }, [ready, token, user?.organizationId, user?.isSuperAdmin, router]);
+    router.replace(`/${initialLocale}`);
+  }, [ready, token, user?.organizationId, user?.isSuperAdmin, initialLocale, router]);
 
-  if (!ready || token) {
-    return <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>;
-  }
-
-  return <LandingPageView initialLocale={initialLocale} />;
+  return <p className="text-sm text-[#7F8C8D]">{t("loading")}</p>;
 }
