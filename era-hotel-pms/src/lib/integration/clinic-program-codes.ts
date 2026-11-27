@@ -40,6 +40,11 @@ export async function clinicProgramCodeForEvent(
 export async function acceptGuestPackageCode(
   raw: string | null | undefined,
 ): Promise<string | null> {
-  const codes = await loadClinicProgramCodes();
-  return resolveClinicProgramCode(raw, codes);
+  const { acceptCatalogPackageCode } = await import(
+    '@/lib/services/hotel-sellable-package.service'
+  );
+  const fromCatalog = await acceptCatalogPackageCode(raw);
+  if (fromCatalog) return fromCatalog;
+  // Catalog empty / misconfig: do not invent SKUs from clinic live dump or hardcode.
+  return null;
 }

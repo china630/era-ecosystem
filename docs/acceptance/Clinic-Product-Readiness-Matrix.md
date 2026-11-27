@@ -11,9 +11,9 @@
 
 **Closeout (2026-11-26 package+extras shared staySeatMax + second-pass):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CLI-57 stays SCREEN (shared stay headcount; confirm first paid +; extras multi-line preflight; form/replace stay room) — **do not** lift Demo/Pilot/sell. Rollup stays 🟡. `clinic.yaml` untouched. Staging clinic image `24196f4b` (PR #482). UAT-SMOKE §6b/§6d. `era-readiness-matrix` N/A.
 
-**Closeout (2026-11-27 check-in cabin atomic + busy UX second-pass):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CODE `/check-in` busy + Nest unwrap + non-busy toast honesty — **do not** lift Demo/Pilot/sell. Rollup stays 🟡. `clinic.yaml` untouched. Needs Nest/web (+ APK) deploy. `era-readiness-matrix` N/A.
+**Closeout (2026-11-27 check-in cabin atomic + busy UX second-pass):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. CODE `/check-in` busy + Nest unwrap + non-busy toast honesty — **do not** lift Demo/Pilot/sell. Rollup stays 🟡. `clinic.yaml` untouched. Staging clinic image `b1cbba14` (PR #483). Nurse APK is not rebuilt. `era-readiness-matrix` N/A.
 
-**Closeout (2026-11-27 check-in cabin atomic + busy UX):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Assert-before-actual; busy guest/time on nurse/matrix/tablet; FIXED wait (no fallthrough); droplet residue 70→0 — **do not** lift Demo/Pilot/sell. Rollup stays 🟡. `clinic.yaml` untouched. Needs Nest/web (+ APK) deploy. `era-readiness-matrix` N/A.
+**Closeout (2026-11-27 check-in cabin atomic + busy UX):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Assert-before-actual; busy guest/time on nurse/matrix/tablet; FIXED wait (no fallthrough); droplet residue 70→0 — **do not** lift Demo/Pilot/sell. Rollup stays 🟡. `clinic.yaml` untouched. Staging clinic image `b1cbba14` (PR #483). Nurse APK is not rebuilt. `era-readiness-matrix` N/A.
 
 **Closeout (2026-11-26 plan vs actual second-pass):** Gate ✅ / BE ✅ / UI 🟡 / Demo 🟡 / Pilot [ ] / Edition `mvp` / Sell unchanged. Auto-complete on `actualEndsAt`; nurse-day print plan/actual; OPEN cabin free-now fallthrough — **do not** lift Demo/Pilot/sell. Rollup stays 🟡. `clinic.yaml` untouched. `era-readiness-matrix` N/A.
 

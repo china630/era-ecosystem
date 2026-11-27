@@ -95,40 +95,38 @@ describe("medical-package-resolve", () => {
     expect(programCodeForLifecycle(r)).toBeUndefined();
   });
 
-  it("agency Premium prefix applies to all pax", () => {
+  it("agency Premium prefix is not package SoR", () => {
     const r = resolveMedicalSku({
       notes: [],
       agencyName: "Premium paket Walkin",
       guests: [{ fullName: "A" }, { fullName: "B" }],
     });
-    expect(r.unanimousCode).toBe("PKG-PREMIUM");
+    expect(r.unanimousCode).toBeNull();
   });
 
-  it("agency Dermo / Detox walk-in labels", () => {
-    expect(resolveAgencyPackageCode("Dermo paket Walkin")).toBe("PKG-DERMA");
-    expect(resolveAgencyPackageCode("Detox paket Walkin")).toBe("PKG-DETOKS");
-    expect(resolveAgencyPackageCode("Fecebook Dermo paket")).toBe("PKG-DERMA");
-    expect(resolveAgencyPackageCode("Premium Facebook")).toBe("PKG-PREMIUM");
+  it("agency Dermo / Detox walk-in labels retired", () => {
+    expect(resolveAgencyPackageCode("Dermo paket Walkin")).toBeNull();
+    expect(resolveAgencyPackageCode("Detox paket Walkin")).toBeNull();
+    expect(resolveAgencyPackageCode("Fecebook Dermo paket")).toBeNull();
+    expect(resolveAgencyPackageCode("Premium Facebook")).toBeNull();
   });
 
-  it("agency token anywhere: Premium/Dermo mid-name", () => {
-    expect(resolveAgencyPackageCode("Premium Naftalan Kamel")).toBe("PKG-PREMIUM");
-    expect(resolveAgencyPackageCode("Premium Sultan Travel medical")).toBe(
-      "PKG-PREMIUM",
-    );
-    expect(resolveAgencyPackageCode("Dermo Nafdan travel")).toBe("PKG-DERMA");
-    expect(resolveAgencyPackageCode("Dermo Naftalanium medical")).toBe("PKG-DERMA");
+  it("agency token anywhere retired", () => {
+    expect(resolveAgencyPackageCode("Premium Naftalan Kamel")).toBeNull();
+    expect(resolveAgencyPackageCode("Premium Sultan Travel medical")).toBeNull();
+    expect(resolveAgencyPackageCode("Dermo Nafdan travel")).toBeNull();
+    expect(resolveAgencyPackageCode("Dermo Naftalanium medical")).toBeNull();
     expect(resolveAgencyPackageCode("Sanatoriums booking leisure")).toBeNull();
     expect(resolveAgencyPackageCode("Walkin medical")).toBeNull();
   });
 
-  it("Həmkarlar falls back to STANDART when no Extra Req", () => {
+  it("Həmkarlar name does not invent STANDART", () => {
     const r = resolveMedicalSku({
       notes: [],
       agencyName: "Həmkarlar Ittifaqi",
       guests: [{ fullName: "Guest" }],
     });
-    expect(r.unanimousCode).toBe("PKG-STANDART");
+    expect(r.unanimousCode).toBeNull();
   });
 
   it("Extra Req ERA-PKG overrides Həmkarlar", () => {
@@ -253,12 +251,16 @@ describe("medical-package-resolve", () => {
       clinicProgramCodeFromTariff({ code: "MEDICAL RATES (MEDIKAL +10)" }),
     ).toBeUndefined();
     expect(
-      medicalPackageChoices([
-        { code: "PKG-INFOTUR", label: "PKG-INFOTUR — Infotur" },
-        { code: "PKG-STANDART", label: "PKG-STANDART — Standart" },
-        { code: "PKG-PREMIUM", label: "PKG-PREMIUM" },
-      ]).map((row) => row.value),
-    ).toEqual(["PKG-STANDART", "PKG-PREMIUM", "PKG-DERMA", "PKG-DETOKS"]);
+      medicalPackageChoices(
+        [
+          { code: "PKG-INFOTUR", label: "PKG-INFOTUR — Infotur" },
+          { code: "PKG-STANDART", label: "PKG-STANDART — Standart" },
+          { code: "PKG-PREMIUM", label: "PKG-PREMIUM" },
+        ],
+        ["PKG-STANDART", "PKG-PREMIUM"],
+      ).map((row) => row.value),
+    ).toEqual(["PKG-STANDART", "PKG-PREMIUM"]);
+    expect(medicalPackageChoices([], []).map((row) => row.value)).toEqual([]);
   });
 
   it("isLeisureAgency helper", async () => {
@@ -269,15 +271,16 @@ describe("medical-package-resolve", () => {
     expect(isLeisureAgency("Premium paket Walkin")).toBe(false);
   });
 
-  it("stored agency package wins over the name", () => {
+  it("agency package code and name are not package SoR", () => {
     const r = resolveMedicalSku({
       notes: [],
       agencyName: "Custom Corp Travel",
       guests: [{ fullName: "Guest" }],
       agencyPackageCode: "PKG-DERMA",
     });
-    expect(r.unanimousCode).toBe("PKG-DERMA");
-    expect(r.stayKind).toBe("medical");
+    expect(r.unanimousCode).toBeNull();
+    expect(r.stayKind).toBe("unresolved");
+    expect(resolveAgencyPackageCode("Premium paket Walkin")).toBeNull();
   });
 
   it("Walkin medical without prefix stays unresolved", () => {

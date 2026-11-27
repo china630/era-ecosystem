@@ -9,6 +9,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 **Overbook (2026-10-31):** type and house allowances default 0. HOT-FO-01/02 stay SHIPPED. AC-HOT-FO stays ✅. Does not change the rollup. `docs/editions/hotel.yaml` unchanged.
 **Opera inventory + Avl (2026-11-15):** unassigned=charged / assigned=door; matrix Avl may be negative vs base + Sold/Phys; last-slot assign OK; sell still base+overbook. HOT-FO-01/02 SHIPPED deepen. AC-HOT-FO stays ✅. Does not change the rollup. `hotel.yaml` untouched.
 **Night audit → finance (2026-10-31):** queue accepts the night-audit correlation id. HOT-NA-01 stays SHIPPED. Does not change the rollup.
+**Baku stay nights (2026-11-26):** card, group booking, tariff, guest total, contract consumption, booking report, analysis length of stay, plan daily split, legacy quote, and the commission fallback count Baku civil nights. Does not change the rollup. `hotel.yaml` untouched.
 **Nest query URL (2026-11-26):** reservation list and the other hotel handlers that read `requestUrl` build it from the Express URL. HOT-UI-01 stays SHIPPED. AC-HOT-FO stays ✅. Does not change the rollup. `hotel.yaml` untouched. Not on the droplet until the next hotel image.
 **FO business-day CI/CO (2026-11-14):** Stay stamps + realized queues / FO Status align (same status sets); Giriş/Çıxış on reservations + in-house + Status prefer stamps; FO Status + reservation-times default to open business day. HOT-UI-01 / HOT-NA-01 SHIPPED deepen. AC-HOT-FO stays ✅. Does not change the rollup. `hotel.yaml` untouched.
 
@@ -37,7 +38,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-8 | Agency portal P0–P1 | [~] | ADR hotel-agency-portal; AC-HOT-AGP 🟡; HOT-AGP-01/02/03 API |
 | S-9 | Early checkout unused-nights refund (HOT-CO-04) | [x] | ADR Accepted; preview+apply+UI; UAT §33; AC-HOT-CO-EARLY 🟡 |
 | S-10 | Nafta HK deepen (roster, floor sheet, `/hk/rooms`, laundry) | [~] | Engineering SCREEN — soft sort+room#; void IN_PLANT; laundry catalog + nullable/express unit prices + intake/due policy (`/settings/laundry-catalog`, policies#hk); FO amount; stay linen edit-only; maids edit/unlink; discrepancy create modal; playbook filter+one grid+one PRIMARY; kit `DATA_TABLE_SHELL` / `CARD_CONTAINER` on secondary HK (incl. consumption/minibar/mobile); i18n trio; [`HK-NAFTA-OPS.md`](../../era-hotel-pms/doc/HK-NAFTA-OPS.md); UAT-SMOKE §34 open; not SHIPPED. Does not move Gate, Pilot, or edition |
-| S-11 | Nafta medical SKU dual-run (Wave A) | [~] | HOT-PKG-02 API; AC-HOT-PKG-NAFTA 🟡; leisure gate + agency table + FO pax SKU; **2026-11-03** FO keeps medical package beside corp Infotur contract + meal-agnostic OTAXHP list (HOT-BOOK-02 deepen; does not lift PKG to SHIPPED); **pilot punch open** |
+| S-11 | Nafta medical SKU dual-run (Wave A) | [~] | HOT-PKG-02 API; AC-HOT-PKG-NAFTA 🟡; leisure gate + FO notes/explicit codes; agency-name / `Agency.medicalPackageCode` SoR retired (→ S-35 catalog); **2026-11-03** FO keeps medical package beside corp Infotur contract + meal-agnostic OTAXHP list (HOT-BOOK-02 deepen; does not lift PKG to SHIPPED); **pilot punch open** |
 | S-14 | Nafta composed package sell (Wave D) | [~] | HOT-PKG-03 API; AC-HOT-PKG-COMPOSE 🟡; save, night audit, and the open card share the compose; unfixed nights replaced; UAT §40 open |
 | S-15 | Nafta per-pax lifecycle (Wave E) | [~] | HOT-PKG-04 API; check-in fan-out; outbox retries until ack; companion MDM id stays on that row; **pilot punch open**. Gate/Pilot/edition unchanged |
 | S-16 | Reservation card IA D7 W1 | [~] | HOT-BOOK-04 API; ADR hotel-reservation-card-and-party-ops |
@@ -60,6 +61,7 @@ Current rollup: Gate ✅ · BE ✅ · UI ✅ · Demo ✅ · Sell: mvp showable �
 | S-32 | Guest phone product polish | [~] | 2026-11-11 — `apps/guest-app` screens/chrome/theme; trip-phase Today; auth/lists/i18n; HOT-GUEST-APP-01…10 SCREEN deepen; still AC 🟡; UAT unsigned; not SHIPPED/SHOW; hotel.yaml untouched |
 | S-33 | Guest phone exchange on the hotel image | [~] | 2026-11-13 — Nest tenancy import + public Location rewrite, image `dev-8ebca44`. Overlay chrome not in this image. HOT-GUEST-APP-01/09 stay API/SCREEN; AC 🟡; UAT unsigned; not SHIPPED/SHOW; hotel.yaml untouched; readiness-matrix N/A |
 | S-34 | Guest stay surface (laundry, tours, transfers) | [~] | 2026-11-13 — Today stay/board/folio/transfers; Trip laundry + tour seats on guest token. HOT-GUEST-APP-01/04/10 API/SCREEN; AC 🟡; not in image `dev-8ebca44`; not SHIPPED/SHOW; hotel.yaml untouched; readiness-matrix N/A |
+| S-35 | Hotel sellable package catalog + sanatorium gate + pricing hub | [~] | 2026-11-27 — HOT-PKG-05 API/SCREEN; AC-HOT-PKG-CATALOG 🟡 out of BE rollup; `HotelSellablePackage` + clinic sync; FO from catalog (no hardcode/agency-name SKU); Room no. = Given\|\|Room type; Infotur missing-grid explicit; policies#pricing hub (yield default off); **2026-11-28** second-pass: catalog compose + sole MEDICAL stamp + FO min/max nights; UAT open — not SHIPPED/SHOW; Gate/Pilot/edition/`hotel.yaml` untouched; `era-readiness-matrix` N/A |
 
 Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 
@@ -82,3 +84,7 @@ Markers: `[ ]` · `[~]` · `[x]` · `[blocked]` · Gate: `gate[x]`
 **2026-11-13 (hotel image exchange):** Nest imports tenancy from the kit root. The image front rewrites internal redirects to the public host (`dev-8ebca44`). Overlay chrome is not in this image. HOT-GUEST-APP-01/09 stay API/SCREEN; AC 🟡; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A.
 
 **2026-11-13 (guest stay surface):** Today shows stay, board, folio lines, and open transfers. Trip adds guest laundry and tour seats. HOT-GUEST-APP-01/04/10 stay API/SCREEN; AC 🟡; not SHIPPED/SHOW; Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A. Routes are not in image `dev-8ebca44`.
+
+**2026-11-27 (sanatorium catalog / door filter / pricing hub):** HOT-PKG-05 API/SCREEN; AC-HOT-PKG-CATALOG 🟡; S-35 [~]. Door filter deepen on HOT-FO-04 / HOT-BOOK-02 (stays API / SHIPPED). HOT-OCC-01 hub deepen stays SHIPPED. Gate/BE/UI/Demo/Pilot/Edition/Sell unchanged (`mvp`, `pilot_ready: false`); `hotel.yaml` untouched; `era-readiness-matrix` N/A.
+
+**2026-11-28 (HOT-PKG-05 second-pass):** catalog compose (no FO hardcode filter); sole MEDICAL auto-stamp; FO min/max nights; agency `medicalPackageCode` cleared on write. HOT-PKG-05 stays API/SCREEN; AC 🟡; S-35 [~]. Gate/Pilot/edition/Sell unchanged; `hotel.yaml` untouched; `era-readiness-matrix` N/A.

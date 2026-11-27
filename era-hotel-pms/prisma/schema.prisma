@@ -684,10 +684,38 @@ model RatePlan {
   addOns        RatePlanAddOn[]
   salesContracts SalesContract[]
   allotmentBlockLines AllotmentBlockLine[]
+  sellablePackages HotelSellablePackage[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   @@unique([organizationId, code])
   @@index([organizationId])
+}
+
+/// FO sanatorium sellable SKU snapshot (clinic ProgramTemplate sync). Gate: hotel_medical_sanatorium.
+enum HotelSellablePackageFamily {
+  MEDICAL
+  INFOTUR
+}
+
+model HotelSellablePackage {
+  id             String                      @id @default(uuid())
+  organizationId String
+  code           String
+  name           String
+  family         HotelSellablePackageFamily
+  active         Boolean                     @default(true)
+  ratePlanId     String?
+  ratePlan       RatePlan?                   @relation(fields: [ratePlanId], references: [id], onDelete: SetNull)
+  minNights      Int?
+  maxNights      Int?
+  durationDays   Int?
+  sortOrder      Int                         @default(0)
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId, family, active])
+  @@index([ratePlanId])
 }
 
 // Absolute price calendar — only for BASE (BAR) rate plans, per room type and date

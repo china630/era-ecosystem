@@ -22,6 +22,10 @@ type PricingPolicy = {
   occupancyPricingEnabled: boolean;
   loadBasedPricingEnabled: boolean;
   childAbsolutePricingEnabled: boolean;
+  yieldAppliesToPackages: boolean;
+  manualNightOverrideEnabled: boolean;
+  barPricingEnabled: boolean;
+  dailyRatesEnabled: boolean;
   agencyPortalAutoConfirm: boolean;
   stopIfZeroNightPrice: boolean;
   autoNoShow: boolean;
@@ -118,6 +122,10 @@ export default function PoliciesPage() {
           occupancyPricingEnabled: Boolean(data.occupancyPricingEnabled),
           loadBasedPricingEnabled: Boolean(data.loadBasedPricingEnabled),
           childAbsolutePricingEnabled: Boolean(data.childAbsolutePricingEnabled),
+          yieldAppliesToPackages: Boolean(data.yieldAppliesToPackages),
+          manualNightOverrideEnabled: data.manualNightOverrideEnabled !== false,
+          barPricingEnabled: data.barPricingEnabled !== false,
+          dailyRatesEnabled: data.dailyRatesEnabled !== false,
           agencyPortalAutoConfirm: Boolean(data.agencyPortalAutoConfirm),
           stopIfZeroNightPrice: data.stopIfZeroNightPrice !== false,
           autoNoShow: Boolean(data.autoNoShow),
@@ -203,6 +211,10 @@ export default function PoliciesPage() {
         occupancyPricingEnabled: Boolean(data.occupancyPricingEnabled),
         loadBasedPricingEnabled: Boolean(data.loadBasedPricingEnabled),
         childAbsolutePricingEnabled: Boolean(data.childAbsolutePricingEnabled),
+        yieldAppliesToPackages: Boolean(data.yieldAppliesToPackages),
+        manualNightOverrideEnabled: data.manualNightOverrideEnabled !== false,
+        barPricingEnabled: data.barPricingEnabled !== false,
+        dailyRatesEnabled: data.dailyRatesEnabled !== false,
         agencyPortalAutoConfirm: Boolean(data.agencyPortalAutoConfirm),
         stopIfZeroNightPrice: data.stopIfZeroNightPrice !== false,
         autoNoShow: Boolean(data.autoNoShow),
@@ -275,9 +287,13 @@ export default function PoliciesPage() {
 
   const priceRows: { key: keyof PricingPolicy; title: string; hint: string }[] = policy
     ? [
+        { key: 'barPricingEnabled', title: tp('barPricingEnabled'), hint: tp('barPricingEnabledHint') },
+        { key: 'dailyRatesEnabled', title: tp('dailyRatesEnabled'), hint: tp('dailyRatesEnabledHint') },
         { key: 'occupancyPricingEnabled', title: tp('occupancyPricing'), hint: tp('occupancyPricingHint') },
         { key: 'loadBasedPricingEnabled', title: tp('loadBasedPricing'), hint: tp('loadBasedPricingHint') },
+        { key: 'yieldAppliesToPackages', title: tp('yieldAppliesToPackages'), hint: tp('yieldAppliesToPackagesHint') },
         { key: 'childAbsolutePricingEnabled', title: tp('childAbsolute'), hint: tp('childAbsoluteHint') },
+        { key: 'manualNightOverrideEnabled', title: tp('manualNightOverrideEnabled'), hint: tp('manualNightOverrideEnabledHint') },
         { key: 'agencyPortalAutoConfirm', title: tp('agencyPortalAutoConfirm'), hint: tp('agencyPortalAutoConfirmHint') },
       ]
     : [];
@@ -529,6 +545,9 @@ export default function PoliciesPage() {
           </button>
           <ul className="m-0 list-disc space-y-1 pl-5 text-[13px]">
             <li><Link className="text-[#2980B9] hover:underline" href="/settings/bar-calendar">{tp('linkBarCalendar')}</Link></li>
+            <li><Link className="text-[#2980B9] hover:underline" href="/settings/daily-prices">{tp('linkDailyPrices')}</Link></li>
+            <li><Link className="text-[#2980B9] hover:underline" href="/settings/package-prices">{tp('linkPackagePrices')}</Link></li>
+            <li><Link className="text-[#2980B9] hover:underline" href="/settings/sanatorium-packages">{tp('linkSanatoriumPackages')}</Link></li>
             <li><Link className="text-[#2980B9] hover:underline" href="/settings/child-matrix">{tp('linkChildMatrix')}</Link></li>
             <li><Link className="text-[#2980B9] hover:underline" href="/settings/yield-rules">{tp('linkYieldRules')}</Link></li>
             <li><Link className="text-[#2980B9] hover:underline" href="/settings/pricing-components">{tp('linkComponents')}</Link></li>

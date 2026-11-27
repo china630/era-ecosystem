@@ -221,7 +221,7 @@ export async function createReservation(input: {
     const contract = await findActiveSalesContract(salesContractId, input.checkInDate);
     if (!contract) throw new Error('Sales contract is not active for check-in date');
     contractForDefaults = contract;
-    // Keep FO medical package (Volkin / Merikl / Standart…) when it differs from the
+    // Keep FO medical package from the hotel catalog when it differs from the
     // contract's Infotur/leisure tariff — company still tags allotment + payer.
     const { ratePlanRequiresGuestPackage } = await import(
       '@/lib/services/medical-package-resolve.service'
@@ -477,7 +477,7 @@ export async function createReservation(input: {
   if (manualNightly != null) {
     totalAmount = toDecimal(manualNightly * manualNights.length);
   } else {
-    const { usesMedicalPackageCompose, stayProductFamily, MEDICAL_PACKAGE_CODES } = await import(
+    const { usesMedicalPackageCompose, stayProductFamily, isMedicalGuestPackageCode } = await import(
       '@/lib/services/medical-package-resolve.service'
     );
     const stayNights = Array.from(
@@ -499,7 +499,7 @@ export async function createReservation(input: {
           : [];
       const codes = raw
         .map((c) => (c ?? '').trim().toUpperCase())
-        .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
+        .filter((c) => isMedicalGuestPackageCode(c));
       let sum = 0;
       for (const stayDate of stayNights) {
         const amount = await ownerPackageNightlySell(stayDate, codes, {
@@ -1008,16 +1008,19 @@ export async function checkInReservation(
   ) {
     const {
       ratePlanRequiresGuestPackage,
-      normalizeMedicalPackageCode,
-      MEDICAL_PACKAGE_CODES,
+      isMedicalGuestPackageCode,
       usesMedicalPackageCompose,
     } =
       await import('@/lib/services/medical-package-resolve.service');
     const { acceptGuestPackageCode } = await import('@/lib/integration/clinic-program-codes');
+    const { listActiveMedicalPackageChoices } = await import(
+      '@/lib/services/hotel-sellable-package.service'
+    );
     const party = await prisma.reservationGuest.findMany({
       where: { reservationId: id },
       orderBy: { sortOrder: 'asc' },
       select: {
+        id: true,
         medicalPackageCode: true,
         firstName: true,
         lastName: true,
@@ -1032,6 +1035,20 @@ export async function checkInReservation(
             )
           : party;
       const rows = named.length > 0 ? named : party;
+      const medicalChoices = await listActiveMedicalPackageChoices();
+      const sole =
+        medicalChoices.length === 1 ? medicalChoices[0]!.value : null;
+      if (sole) {
+        for (const row of rows) {
+          if (!(row.medicalPackageCode ?? '').trim()) {
+            await prisma.reservationGuest.update({
+              where: { id: row.id },
+              data: { medicalPackageCode: sole },
+            });
+            row.medicalPackageCode = sole;
+          }
+        }
+      }
       const accepted = await Promise.all(rows.map((p) => acceptGuestPackageCode(p.medicalPackageCode)));
       if (rows.length === 0 || accepted.some((code) => !code)) {
         throw new Error('Select a medical package for each guest');
@@ -1048,7 +1065,7 @@ export async function checkInReservation(
           : [reservation.medicalPackageCode];
       const codes = raw
         .map((c) => (c ?? '').trim().toUpperCase())
-        .filter((c) => (MEDICAL_PACKAGE_CODES as readonly string[]).includes(c));
+        .filter((c) => isMedicalGuestPackageCode(c));
       const stored = await prisma.reservationDailyRate.findMany({ where: { reservationId: id } });
       const rateArrival = nextCheckIn ?? reservation.checkInDate;
       const nightCount = countNights(rateArrival, reservation.checkOutDate);

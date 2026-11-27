@@ -140,13 +140,42 @@ export class GuestCareController {
       res.status(400).json({ error: "missing_params" });
       return;
     }
-    const codes = await runWithSatelliteTenant({ organizationId }, async () => {
+    const payload = await runWithSatelliteTenant({ organizationId }, async () => {
       const rows = await prisma.programTemplate.findMany({
         where: { organizationId, isCurrent: true },
-        select: { code: true },
+        select: {
+          code: true,
+          name: true,
+          minNights: true,
+          maxNights: true,
+          durationDays: true,
+        },
+        orderBy: { code: "asc" },
       });
-      return [...new Set(rows.map((row) => row.code.trim().toUpperCase()).filter(Boolean))];
+      const byCode = new Map<
+        string,
+        {
+          code: string;
+          name: string;
+          minNights: number | null;
+          maxNights: number | null;
+          durationDays: number;
+        }
+      >();
+      for (const row of rows) {
+        const code = row.code.trim().toUpperCase();
+        if (!code || byCode.has(code)) continue;
+        byCode.set(code, {
+          code,
+          name: row.name.trim() || code,
+          minNights: row.minNights,
+          maxNights: row.maxNights,
+          durationDays: row.durationDays,
+        });
+      }
+      const templates = [...byCode.values()];
+      return { codes: templates.map((t) => t.code), templates };
     });
-    res.json({ codes });
+    res.json(payload);
   }
 }

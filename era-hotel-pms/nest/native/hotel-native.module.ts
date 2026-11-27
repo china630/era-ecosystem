@@ -38,6 +38,8 @@ import { AdminUsersController } from "./controllers/admin_users";
 import { AdminUsersIdController } from "./controllers/admin_users__id";
 import { AdminYieldRulesController } from "./controllers/admin_yield-rules";
 import { AdminYieldRulesIdController } from "./controllers/admin_yield-rules__id";
+import { AdminSanatoriumPackagesController } from "./controllers/admin_sanatorium-packages";
+import { FoSellablePackagesController } from "./controllers/fo_sellable-packages";
 import { AgenciesController } from "./controllers/agencies";
 import { AgenciesIdCityLedgerSnapshotController } from "./controllers/agencies__id_city-ledger-snapshot";
 import { AgenciesIdLedgerController } from "./controllers/agencies__id_ledger";
@@ -436,6 +438,8 @@ import { StayMobilityRoutesController } from "./controllers/stay_mobility_routes
     AdminUsersIdController,
     AdminYieldRulesController,
     AdminYieldRulesIdController,
+    AdminSanatoriumPackagesController,
+    FoSellablePackagesController,
     AgenciesController,
     AgenciesIdCityLedgerSnapshotController,
     AgenciesIdLedgerController,
