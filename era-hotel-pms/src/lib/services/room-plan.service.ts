@@ -5,6 +5,7 @@ import {
   addHotelDays,
   hotelDateKey,
   parseHotelNoon,
+  stayNights,
 } from '@/lib/hotel-calendar';
 import { normalizeShareGender } from '@/lib/share-gender';
 import { roomPlanSpans } from '@/lib/services/room-plan-spans';
@@ -104,12 +105,7 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
   }
 
   function mapBar(r: (typeof reservations)[number]) {
-    const nights = Math.max(
-      1,
-      Math.round(
-        (r.checkOutDate.getTime() - r.checkInDate.getTime()) / (1000 * 60 * 60 * 24),
-      ),
-    );
+    const nights = Math.max(1, stayNights(r.checkInDate, r.checkOutDate));
     const total = decimalToNumber(r.totalAmount);
     const guestFolios = r.folios.filter((f) => f.type === 'GUEST');
     const agencyFolios = r.folios.filter((f) => f.type === 'AGENCY' || f.type === 'COMPANY');

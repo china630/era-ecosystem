@@ -60,6 +60,7 @@ export class AgencyReservationsController {
   @Post("api/agency/reservations")
   @HttpCode(200)
   async post_1(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
     try {
     if (rejectMissingAgency(httpReq, httpRes)) return;
       const web = await (async () => {

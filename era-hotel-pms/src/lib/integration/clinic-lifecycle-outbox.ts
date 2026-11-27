@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { PrismaClient } from "@prisma/client";
+import { runWithSatelliteTenant } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { enterRequestTenant, requestOrganizationId } from "@/lib/request-organization";
 import { publishLifecycle } from "@/lib/integration/guest-lifecycle-events";
@@ -8,6 +10,16 @@ import {
 } from "@/lib/integration/clinic-lifecycle-key";
 
 let draining = false;
+
+/** Bare client — no tenant extension — so due-org discovery does not unbound. */
+let discoverPrisma: PrismaClient | undefined;
+
+function outboxDiscoverPrisma(): PrismaClient {
+  if (!discoverPrisma) {
+    discoverPrisma = new PrismaClient({ log: ["error"] });
+  }
+  return discoverPrisma;
+}
 
 export async function rememberClinicLifecycle(input: {
   kind: string;
@@ -70,11 +82,12 @@ function nextDelayMs(attempts: number): number {
   return seconds * 1000;
 }
 
-export async function drainClinicLifecycleOutbox(limit = 20): Promise<number> {
-  if (draining) return 0;
-  draining = true;
-  let sent = 0;
-  try {
+async function drainDueForOrganization(
+  organizationId: string,
+  limit: number,
+): Promise<number> {
+  return runWithSatelliteTenant({ organizationId }, async () => {
+    let sent = 0;
     const due = await prisma.clinicLifecycleOutbox.findMany({
       where: { ackedAt: null, nextAttemptAt: { lte: new Date() } },
       orderBy: { nextAttemptAt: "asc" },
@@ -105,6 +118,42 @@ export async function drainClinicLifecycleOutbox(limit = 20): Promise<number> {
           },
         });
       }
+    }
+    return sent;
+  });
+}
+
+/**
+ * Orgs that actually have due outbox rows. Uses an unscoped Prisma client —
+ * the tenant extension would throw SatelliteOrganizationUnboundError on SHARED
+ * before Sync stamps topology, and orch pool lookup needs a matching baseUrl.
+ */
+export async function resolveLifecycleDrainOrgIds(): Promise<string[]> {
+  const rows = await outboxDiscoverPrisma().clinicLifecycleOutbox.findMany({
+    where: { ackedAt: null, nextAttemptAt: { lte: new Date() } },
+    select: { organizationId: true },
+    distinct: ["organizationId"],
+    take: 100,
+  });
+  return [
+    ...new Set(rows.map((r) => r.organizationId.trim()).filter(Boolean)),
+  ];
+}
+
+/**
+ * SHARED: poll each due org under tenant ALS. No due rows → quiet no-op
+ * (do not spam orch/unbound warnings every 15s).
+ */
+export async function drainClinicLifecycleOutbox(limit = 20): Promise<number> {
+  if (draining) return 0;
+  draining = true;
+  let sent = 0;
+  try {
+    const orgIds = await resolveLifecycleDrainOrgIds();
+    if (!orgIds.length) return 0;
+    const perOrg = Math.max(1, Math.ceil(limit / orgIds.length));
+    for (const organizationId of orgIds) {
+      sent += await drainDueForOrganization(organizationId, perOrg);
     }
     return sent;
   } finally {

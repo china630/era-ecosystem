@@ -72,7 +72,7 @@ const runtimeBodySchema = z.object({
   publicBaseUrl: z.string().url().optional(),
   /** Alias of self URL from orch Sync/desired-state. */
   satellitePublicBaseUrl: z.string().url().optional(),
-  /** Orchestrator public / launcher — not used for pool self-discovery. */
+  /** Browser app origin (ERA_APP_ORIGIN) — register/pricing/help; not API/event URL. */
   orchestratorPublicBaseUrl: z.string().url().optional(),
   platformSuperAdminEmails: z.array(z.string().email()).max(50).optional(),
   ssoSharedSecret: z.string().min(16).max(512).optional(),
@@ -261,6 +261,7 @@ export function createRuntimeConfigHandlers(opts: RuntimeConfigHandlerOptions = 
       // SHARED: do not stamp process-wide blob with last Sync org id.
       organizationId: isShared ? undefined : body.organizationId,
       orchestratorEventUrl: body.orchestratorEventUrl,
+      orchestratorPublicBaseUrl: body.orchestratorPublicBaseUrl?.trim() || undefined,
       publicBaseUrl: selfPublic,
       platformSuperAdminEmails: body.platformSuperAdminEmails,
       ssoSharedSecret: body.ssoSharedSecret,

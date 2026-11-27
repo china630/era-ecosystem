@@ -452,7 +452,21 @@ async function generateUniqueAccessCode(organizationId: string): Promise<string>
   throw new Error("Unable to generate unique procedure access code");
 }
 
-async function pickStaffForSeat(procedureTypeId: string): Promise<string | null> {
+async function pickStaffForSeat(
+  procedureTypeId: string,
+  preferredPractitionerId?: string | null,
+): Promise<string | null> {
+  if (preferredPractitionerId) {
+    const preferred = await prisma.practitionerSkill.findFirst({
+      where: {
+        procedureTypeId,
+        practitionerId: preferredPractitionerId,
+        practitioner: { active: true },
+      },
+      select: { practitionerId: true },
+    });
+    if (preferred) return preferred.practitionerId;
+  }
   const skill = await prisma.practitionerSkill.findFirst({
     where: { procedureTypeId, practitioner: { active: true } },
     select: { practitionerId: true },
@@ -461,33 +475,43 @@ async function pickStaffForSeat(procedureTypeId: string): Promise<string | null>
   return skill?.practitionerId ?? null;
 }
 
-async function applyOccupancyNow(input: {
+/**
+ * Stamp factual occupancy on check-in. Never rewrites plan scheduledAt/endsAt.
+ * Keeps plan STAFF / cabin from allocations when present; otherwise picks.
+ */
+async function applyActualOccupancyOnCheckIn(input: {
   orderId: string;
   resourceId: string;
   durationMin: number;
   physicalRole: "LOCATION" | "EQUIPMENT";
   procedureTypeId: string | null;
-  /** When true, also move scheduledAt (OPEN seat). FIXED SAME_DAY keeps plan clock. */
-  moveScheduledAt: boolean;
+  preferredPractitionerId?: string | null;
   now?: Date;
 }) {
   const now = input.now ?? new Date();
-  const endsAt = new Date(now.getTime() + input.durationMin * 60_000);
-  const staffId = input.procedureTypeId
-    ? await pickStaffForSeat(input.procedureTypeId)
-    : null;
+  const actualEndsAt = new Date(now.getTime() + input.durationMin * 60_000);
+
+  const existingStaff = await prisma.procedureAllocation.findFirst({
+    where: { procedureOrderId: input.orderId, role: "STAFF", practitionerId: { not: null } },
+    select: { practitionerId: true },
+  });
+  let staffId = existingStaff?.practitionerId ?? null;
+  if (!staffId && input.procedureTypeId) {
+    staffId = await pickStaffForSeat(input.procedureTypeId, input.preferredPractitionerId);
+  }
+
   const { updateProcedureOrderIfPresent } = await import(
     "@/domain/procedure/procedure-order-if-present"
   );
   const moved = await updateProcedureOrderIfPresent(
     input.orderId,
     {
-      ...(input.moveScheduledAt ? { scheduledAt: now } : {}),
-      endsAt,
       resourceId: input.resourceId,
+      actualStartsAt: now,
+      actualEndsAt,
       manuallyAdjusted: true,
     },
-    "applyOccupancyNow",
+    "applyActualOccupancyOnCheckIn",
   );
   if (!moved) return;
   await replaceProcedureAllocations(input.orderId, [
@@ -495,7 +519,7 @@ async function applyOccupancyNow(input: {
       role: input.physicalRole,
       resourceId: input.resourceId,
       startsAt: now,
-      endsAt,
+      endsAt: actualEndsAt,
     },
     ...(staffId
       ? [
@@ -503,16 +527,22 @@ async function applyOccupancyNow(input: {
             role: "STAFF" as const,
             practitionerId: staffId,
             startsAt: now,
-            endsAt,
+            endsAt: actualEndsAt,
           },
         ]
       : []),
   ]);
-  return { id: input.orderId, scheduledAt: now, endsAt, resourceId: input.resourceId };
+  return {
+    id: input.orderId,
+    actualStartsAt: now,
+    actualEndsAt,
+    resourceId: input.resourceId,
+  };
 }
 
 /**
- * Seat an OPEN unseated order onto a free matching cabin starting now.
+ * Seat an OPEN order onto its planned cabin (or a free matching cabin) starting now.
+ * Plan scheduledAt/endsAt stay; factual window goes to actualStartsAt/actualEndsAt.
  */
 export async function seatOpenAttendanceNow(orderId: string, now = new Date()) {
   const order = await prisma.procedureOrder.findUnique({
@@ -520,6 +550,10 @@ export async function seatOpenAttendanceNow(orderId: string, now = new Date()) {
     include: {
       procedureType: { include: { requirements: true } },
       patientRef: { select: { sex: true } },
+      allocations: {
+        where: { role: { in: ["LOCATION", "EQUIPMENT"] } },
+        select: { resourceId: true, role: true },
+      },
     },
   });
   if (!order) throw new Error("Procedure not found");
@@ -538,7 +572,52 @@ export async function seatOpenAttendanceNow(orderId: string, now = new Date()) {
           ? "LOCATION"
           : "EQUIPMENT";
 
-  let chosen = order.resourceId;
+  const plannedCabin =
+    order.resourceId ??
+    order.allocations.find((row) => row.resourceId)?.resourceId ??
+    null;
+
+  async function cabinFreeNow(resourceId: string, capacity: number): Promise<boolean> {
+    const busy = await prisma.procedureOrder.count({
+      where: {
+        resourceId,
+        id: { not: orderId },
+        OR: [
+          { status: "CHECKED_IN" },
+          {
+            status: "SCHEDULED",
+            actualStartsAt: { not: null },
+            OR: [{ actualEndsAt: null }, { actualEndsAt: { gt: now } }],
+          },
+        ],
+      },
+    });
+    if (busy >= capacity) return false;
+    const overlap = await prisma.resourceBooking.findFirst({
+      where: {
+        resourceId,
+        startsAt: { lt: new Date(now.getTime() + duration * 60_000) },
+        endsAt: { gt: now },
+        procedureOrder: {
+          status: { notIn: ["CANCELLED", "NO_SHOW", "UNPAID_MISSED", "PROPOSED"] },
+          id: { not: orderId },
+        },
+      },
+      select: { id: true },
+    });
+    return !overlap;
+  }
+
+  let chosen: string | null = null;
+  if (plannedCabin) {
+    const planned = await prisma.resource.findUnique({
+      where: { id: plannedCabin },
+      select: { id: true, capacity: true },
+    });
+    if (planned && (await cabinFreeNow(planned.id, planned.capacity ?? 1))) {
+      chosen = planned.id;
+    }
+  }
   if (!chosen) {
     const candidates = await listPhysicalRequirementResources(pt);
     const guestSex = order.patientRef?.sex ?? null;
@@ -549,41 +628,25 @@ export async function seatOpenAttendanceNow(orderId: string, now = new Date()) {
       throw new Error("No matching cabin for open attendance seat");
     }
     for (const resource of matching) {
-      const busy = await prisma.procedureOrder.count({
-        where: { resourceId: resource.id, status: "CHECKED_IN" },
-      });
-      if (busy >= (resource.capacity ?? 1)) continue;
-      const overlap = await prisma.resourceBooking.findFirst({
-        where: {
-          resourceId: resource.id,
-          startsAt: { lt: new Date(now.getTime() + duration * 60_000) },
-          endsAt: { gt: now },
-          procedureOrder: {
-            status: { notIn: ["CANCELLED", "NO_SHOW", "UNPAID_MISSED", "PROPOSED"] },
-            id: { not: orderId },
-          },
-        },
-        select: { id: true },
-      });
-      if (overlap) continue;
+      if (!(await cabinFreeNow(resource.id, resource.capacity ?? 1))) continue;
       chosen = resource.id;
       break;
     }
   }
   if (!chosen) throw new Error("All matching cabins are busy");
   void requestOrganizationId;
-  return applyOccupancyNow({
+  return applyActualOccupancyOnCheckIn({
     orderId,
     resourceId: chosen,
     durationMin: duration,
     physicalRole,
     procedureTypeId: pt.id,
-    moveScheduledAt: true,
+    preferredPractitionerId: order.preferredPractitionerId,
     now,
   });
 }
 
-/** Rebase FIXED occupancy to now on the same cabin; keep scheduledAt as plan clock. */
+/** Rebase FIXED occupancy to now on the same cabin; keep scheduledAt/endsAt as plan. */
 export async function rebaseFixedOccupancyToNow(
   orderId: string,
   resourceId: string,
@@ -614,13 +677,13 @@ export async function rebaseFixedOccupancyToNow(
         : pt?.resourceKind === "ROOM"
           ? "LOCATION"
           : "EQUIPMENT";
-  return applyOccupancyNow({
+  return applyActualOccupancyOnCheckIn({
     orderId,
     resourceId,
     durationMin: duration,
     physicalRole,
     procedureTypeId: pt?.id ?? null,
-    moveScheduledAt: false,
+    preferredPractitionerId: order.preferredPractitionerId,
     now,
   });
 }

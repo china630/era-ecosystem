@@ -28,7 +28,7 @@ Hotel lifecycle (`CHECKED_IN` / amend / checkout) remains SoT for **IN_HOUSE** g
 | Item | Opens |
 |------|--------|
 | Ambulatory | Modal → `POST /api/sanatorium/episodes` |
-| Group | `/sanatorium/walk-in-parties` (unchanged domain) |
+| Group | Modal create (+ detail CRUD) via shared `WalkInPartyWorkspace` — same domain as CLI-61; list stays at `/sanatorium/walk-in-parties` (sidebar) |
 | Staff | Modal → workforce picker → `POST /api/sanatorium/episodes/staff-course` |
 
 ### D2 — `PatientOrigin` stays two-valued

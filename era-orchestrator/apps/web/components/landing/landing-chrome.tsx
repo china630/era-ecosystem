@@ -1,50 +1,7 @@
-"use client";
-
-import Link from "next/link";
-import type { Locale } from "@era/i18n-common";
-import type { LandingMarketingCopy } from "../../lib/i18n/landing-marketing-copy";
-import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { calcNavLabel } from "../../lib/i18n/calc-copy";
-import { LandingLanguageToggle } from "./landing-language-toggle";
-
-export function LandingChrome({
-  hero,
-  loginLabel,
-  satellitesLabel,
-  locale,
-  onLocaleChange,
-}: {
-  hero: LandingMarketingCopy["hero"];
-  loginLabel: string;
-  satellitesLabel: string;
-  locale: Locale;
-  onLocaleChange?: (next: Locale) => void;
-}) {
-  return (
-    <header className="sticky top-0 z-20 border-b border-[#D5DADF]/80 bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <Link href="/" className="text-lg font-bold tracking-tight text-[#34495E] no-underline">
-          ERA 365
-        </Link>
-        <nav className="flex flex-wrap items-center gap-2 md:gap-3">
-          <LandingLanguageToggle locale={locale} onLocaleChange={onLocaleChange} />
-          <Link href="/satellites" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
-            {satellitesLabel}
-          </Link>
-          <Link href="/pricing" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
-            {hero.navPricing}
-          </Link>
-          <Link href="/calc" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
-            {calcNavLabel(locale)}
-          </Link>
-          <Link href="/login" className={`${SECONDARY_BUTTON_CLASS} text-xs no-underline`}>
-            {loginLabel}
-          </Link>
-          <Link href="/register-org" className={`${PRIMARY_BUTTON_CLASS} text-xs no-underline`}>
-            {hero.ctaPrimary}
-          </Link>
-        </nav>
-      </div>
-    </header>
-  );
+/**
+ * @deprecated Public site chrome is `SiteHeader` / `SitePublicShell` only.
+ * This stub remains so accidental imports fail loudly at type-check time if props are used.
+ */
+export function LandingChrome(_props: Record<string, never>): null {
+  return null;
 }

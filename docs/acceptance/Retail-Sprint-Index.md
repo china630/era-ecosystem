@@ -6,6 +6,7 @@
 
 Header honesty = **Product Readiness** rollup (not «all ✅»).  
 Current rollup: Gate ✅ (scaffold only) · BE ✅ · UI 🟡 · Sell: do not claim GA — fiscal/marketplace field open  
+**Nest query URL (2026-11-26):** product search, import, fiscal devices, offline sync, login journal, open shifts, prescription queue, and settlement confirmation build the request URL in the Nest handler. Does not change the rollup. `retail.yaml` untouched. Not on the droplet until the next retail image.
 **BE honesty (Wave 8):** Scaffold BE ✅ with AC-RET-FISCAL **excluded from rollup** (External ⏸ / STUB; stays Scaffold 🟡). TENANT still out.
 
 ---

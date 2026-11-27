@@ -248,15 +248,22 @@ export class SatelliteOrgBindSyncService {
   async buildRuntimeConfigPayload(
     organizationId: string,
   ): Promise<Record<string, unknown>> {
-    const orchPublic =
+    // API / event public host (S2S discovery hints) — never the browser app.
+    const orchApiPublic =
       this.config.get<string>("ERA_PUBLIC_ORCHESTRATOR_URL")?.trim() ||
       this.config.get<string>("ORCHESTRATOR_PUBLIC_URL")?.trim() ||
+      this.config.get<string>("ERA_API_ORIGIN")?.trim() ||
+      "";
+    // Browser cabinet origin for satellite login register/pricing/help links.
+    const orchAppPublic =
+      this.config.get<string>("ERA_APP_ORIGIN")?.trim() ||
+      this.config.get<string>("NEXT_PUBLIC_ORCH_WEB_URL")?.trim() ||
       "";
     const inDocker = process.env.ERA_IN_DOCKER === "1";
     const eventUrl = resolveSatelliteEventUrl({
       internalUrl: this.config.get<string>("ERA_ORCHESTRATOR_INTERNAL_URL"),
       eventPublicUrl: this.config.get<string>("ORCHESTRATOR_EVENT_PUBLIC_URL"),
-      orchPublic,
+      orchPublic: orchApiPublic,
       inDocker,
     });
     const psa =
@@ -271,9 +278,9 @@ export class SatelliteOrgBindSyncService {
       updatedBy: "orchestrator-sync",
     };
     if (eventUrl) body.orchestratorEventUrl = eventUrl.replace(/\/$/, "");
-    // Orch public is NOT the satellite self URL (pool members match SatelliteEndpoint.baseUrl).
-    if (orchPublic) {
-      body.orchestratorPublicBaseUrl = orchPublic.replace(/\/$/, "");
+    // Browser app only — not API, not satellite self URL.
+    if (orchAppPublic) {
+      body.orchestratorPublicBaseUrl = orchAppPublic.replace(/\/$/, "");
     }
     if (psa) {
       body.platformSuperAdminEmails = [

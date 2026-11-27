@@ -147,9 +147,17 @@ export function doorClashWindow(
   return { from, to: out };
 }
 
-/** Calendar nights between stay edges (minimum 1). */
-export function stayNights(checkIn: Date, checkOut: Date): number {
-  const a = parseHotelNoon(checkIn);
-  const b = parseHotelNoon(checkOut);
-  return Math.max(1, Math.round((b.getTime() - a.getTime()) / 86400000));
+/**
+ * Stay nights on the hotel calendar: Baku checkout date minus Baku arrival date.
+ * Arrival day counts, checkout morning does not. Same civil day is 0.
+ * Clock times (14:00 / 12:00) do not add or drop a night.
+ */
+export function stayNights(checkIn: string | Date, checkOut: string | Date): number {
+  const arrival = hotelDateKey(checkIn);
+  const departure = hotelDateKey(checkOut);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(arrival) || !/^\d{4}-\d{2}-\d{2}$/.test(departure)) return 0;
+  const [ay, am, ad] = arrival.split('-').map(Number);
+  const [by, bm, bd] = departure.split('-').map(Number);
+  const days = Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86400000);
+  return Math.max(0, days);
 }

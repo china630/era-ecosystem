@@ -1,5 +1,6 @@
 import type { Locale } from "@era/i18n-common";
 import type { PublicSatelliteSlug } from "../satellites/public-satellite-catalog";
+import { satelliteCopyEn } from "./satellite-page-copy-en";
 
 export type SatellitePageCopy = {
   kicker: string;
@@ -23,16 +24,16 @@ export type SatellitesIndexCopy = {
   platformLabel: string;
 };
 
-type SatelliteCopyPack = {
+export type SatelliteCopyPack = {
   index: SatellitesIndexCopy;
   pages: Record<PublicSatelliteSlug, SatellitePageCopy>;
 };
 
 const ru: SatelliteCopyPack = {
   index: {
-    title: "Спутники ERA 365",
+    title: "Продукты ERA 365",
     intro:
-      "Каждый спутник — рабочее место отрасли. Gate открывает приложение и базовую ёмкость; ядра и метры — в полном каталоге.",
+      "Каждый продукт — рабочее место отрасли. Gate открывает приложение и базовую ёмкость; ядра и метры — в полном каталоге.",
     coreLabel: "Учёт",
     industryLabel: "Отрасль",
     platformLabel: "Платформа",
@@ -58,7 +59,7 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     hotel: {
-      kicker: "Спутник",
+      kicker: "Продукт",
       title: "Hotel PMS",
       tagline: "Front office, HK, channel, SPA. Gate открывает приложение и 5 номеров.",
       gateTitle: "Gate vs ядро",
@@ -76,7 +77,7 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     clinic: {
-      kicker: "Спутник",
+      kicker: "Продукт",
       title: "Clinic",
       tagline: "Расписание, приёмы и касса в Gate. EMR, лаборатория и санаторий — отдельные SKU.",
       gateTitle: "Gate vs ядро",
@@ -93,7 +94,7 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     fnb: {
-      kicker: "Спутник",
+      kicker: "Продукт",
       title: "F&B POS",
       tagline: "Зал, кухня KDS и PIN официанта. Одна касса в Gate.",
       gateTitle: "Gate vs ёмкость",
@@ -110,7 +111,7 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     retail: {
-      kicker: "Спутник",
+      kicker: "Продукт",
       title: "Retail POS",
       tagline: "Касса магазина и omni. Одна касса в Gate.",
       gateTitle: "Gate vs ёмкость",
@@ -126,13 +127,13 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     auto: {
-      kicker: "Спутник",
-      title: "Auto STO",
+      kicker: "Продукт",
+      title: "Auto Service",
       tagline: "Посты, заказ-наряды, запчасти B2B.",
       gateTitle: "Gate vs ёмкость",
       gateBullets: [
         "Gate 29 AZN — приложение + 1 пост, далее 19 AZN / пост",
-        "B2B запчасти и нормы / TecDoc — модули спутника",
+        "B2B запчасти и нормы / TecDoc — модули продукта",
       ],
       catalogNote: "Ориентир. Канон — /pricing#auto.",
       pricingCta: "Цены Auto",
@@ -142,7 +143,7 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     logistics: {
-      kicker: "Спутник",
+      kicker: "Продукт",
       title: "Logistics",
       tagline: "Путевые, топливо, POD водителя.",
       gateTitle: "Gate vs ёмкость",
@@ -158,7 +159,7 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     construction: {
-      kicker: "Спутник",
+      kicker: "Продукт",
       title: "Construction",
       tagline: "Площадки, сметы, акты, субподряд.",
       gateTitle: "Gate vs ёмкость",
@@ -174,7 +175,7 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     wholesale: {
-      kicker: "Спутник",
+      kicker: "Продукт",
       title: "Wholesale",
       tagline: "Дистрибуция и опт на одном VÖEN.",
       gateTitle: "Gate vs ёмкость",
@@ -190,8 +191,8 @@ const ru: SatelliteCopyPack = {
       bankNote: null,
     },
     crm: {
-      kicker: "Спутник",
-      title: "CRM Field",
+      kicker: "Продукт",
+      title: "CRM",
       tagline: "Полевые продажи. Одно место в Gate, далее 5 AZN.",
       gateTitle: "Gate vs место",
       gateBullets: [
@@ -230,7 +231,7 @@ const ru: SatelliteCopyPack = {
       gateTitle: "Bronze / Silver / Gold",
       gateBullets: [
         "XOR: Bronze · Silver · Gold — одновременно один SKU",
-        "Не отраслевой спутник: живёт на полке platform add-ons",
+        "Не отраслевой продукт: живёт на полке platform add-ons",
       ],
       catalogNote: "Ориентир. Канон — /pricing#addons.",
       pricingCta: "Add-on в каталоге",
@@ -244,9 +245,9 @@ const ru: SatelliteCopyPack = {
 
 const az: SatelliteCopyPack = {
   index: {
-    title: "ERA 365 peykləri",
+    title: "ERA 365 məhsulları",
     intro:
-      "Hər peyk — sənaye iş yeri. Gate tətbiqi və baza tutumu açır; nüvə və metrlər tam kataloqdadır.",
+      "Hər məhsul — sənaye iş yeri. Gate tətbiqi və baza tutumu açır; nüvə və metrlər tam kataloqdadır.",
     coreLabel: "Uçot",
     industryLabel: "Sənaye",
     platformLabel: "Platforma",
@@ -272,7 +273,7 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     hotel: {
-      kicker: "Peyk",
+      kicker: "Məhsul",
       title: "Hotel PMS",
       tagline: "Front office, HK, channel, SPA. Gate tətbiqi və 5 otağı açır.",
       gateTitle: "Gate vs nüvə",
@@ -290,7 +291,7 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     clinic: {
-      kicker: "Peyk",
+      kicker: "Məhsul",
       title: "Clinic",
       tagline: "Cədvəl, qəbul və kassa Gate-də. EMR, laboratoriya və sanatoriya — ayrıca SKU.",
       gateTitle: "Gate vs nüvə",
@@ -307,7 +308,7 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     fnb: {
-      kicker: "Peyk",
+      kicker: "Məhsul",
       title: "F&B POS",
       tagline: "Zal, KDS mətbəx və ofisiant PIN. Gate-də 1 kassa.",
       gateTitle: "Gate vs tutum",
@@ -324,7 +325,7 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     retail: {
-      kicker: "Peyk",
+      kicker: "Məhsul",
       title: "Retail POS",
       tagline: "Mağaza kassası və omni. Gate-də 1 kassa.",
       gateTitle: "Gate vs tutum",
@@ -340,13 +341,13 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     auto: {
-      kicker: "Peyk",
-      title: "Auto STO",
+      kicker: "Məhsul",
+      title: "Auto Service",
       tagline: "Postlar, iş əmrləri, B2B ehtiyat hissələri.",
       gateTitle: "Gate vs tutum",
       gateBullets: [
         "Gate 29 AZN — tətbiq + 1 post, sonra 19 AZN / post",
-        "B2B ehtiyat və TecDoc normaları peyk modullarıdır",
+        "B2B ehtiyat və TecDoc normaları məhsul modullarıdır",
       ],
       catalogNote: "Oryantir. Kanon — /pricing#auto.",
       pricingCta: "Auto qiymətləri",
@@ -356,7 +357,7 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     logistics: {
-      kicker: "Peyk",
+      kicker: "Məhsul",
       title: "Logistics",
       tagline: "Yol vərəqəsi, yanacaq, sürücü POD.",
       gateTitle: "Gate vs tutum",
@@ -372,7 +373,7 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     construction: {
-      kicker: "Peyk",
+      kicker: "Məhsul",
       title: "Construction",
       tagline: "Obyektlər, smeta, aktlar, subpodrat.",
       gateTitle: "Gate vs tutum",
@@ -388,7 +389,7 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     wholesale: {
-      kicker: "Peyk",
+      kicker: "Məhsul",
       title: "Wholesale",
       tagline: "Distribusiya və eyni VÖEN üzrə topdan.",
       gateTitle: "Gate vs tutum",
@@ -404,8 +405,8 @@ const az: SatelliteCopyPack = {
       bankNote: null,
     },
     crm: {
-      kicker: "Peyk",
-      title: "CRM Field",
+      kicker: "Məhsul",
+      title: "CRM",
       tagline: "Sahə satışları. Gate-də 1 yer, sonra 5 AZN.",
       gateTitle: "Gate vs yer",
       gateBullets: [
@@ -444,7 +445,7 @@ const az: SatelliteCopyPack = {
       gateTitle: "Bronze / Silver / Gold",
       gateBullets: [
         "XOR: Bronze · Silver · Gold — eyni anda bir SKU",
-        "Sənaye peyki deyil: platform add-on rəfindədir",
+        "Sənaye məhsulu deyil: platform add-on rəfindədir",
       ],
       catalogNote: "Oryantir. Kanon — /pricing#addons.",
       pricingCta: "Add-on kataloqu",
@@ -457,9 +458,12 @@ const az: SatelliteCopyPack = {
 };
 
 export function getSatellitesIndexCopy(locale: Locale): SatellitesIndexCopy {
-  return locale === "ru" ? ru.index : az.index;
+  if (locale === "ru") return ru.index;
+  if (locale === "en") return satelliteCopyEn.index;
+  return az.index;
 }
 
 export function getSatellitePageCopy(locale: Locale, slug: PublicSatelliteSlug): SatellitePageCopy {
-  return (locale === "ru" ? ru : az).pages[slug];
+  const pack = locale === "ru" ? ru : locale === "en" ? satelliteCopyEn : az;
+  return pack.pages[slug];
 }

@@ -22,6 +22,7 @@ import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels"
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 import { paramsLabelFromPhysio } from "@/components/physio/physio-params-label";
 import { toastPackageAssignOutcome } from "@/lib/package-assign-toasts";
+import { packageAssignScopeOrGateText } from "@/lib/package-assign-block";
 
 type ProcOption = { value: string; label: string; name: string; amount?: number };
 
@@ -129,6 +130,7 @@ export function ExtrasAssignModal({
   const [programs, setPrograms] = useState<PhysioCatalogListItem[]>([]);
   const [substances, setSubstances] = useState<PhysioCatalogListItem[]>([]);
   const [busy, setBusy] = useState(false);
+  const saveLockRef = useRef(false);
   const load = useCallback(async () => {
     const [typesRes, pendRes, catRes] = await Promise.all([
       fetch(`/api/procedure-types?locale=${encodeURIComponent(locale)}`),
@@ -224,10 +226,11 @@ export function ExtrasAssignModal({
         qty: Math.max(1, qty),
         amountNet: unit,
         note: formPhysio.note ?? "",
-        physioFields: {
-          ...formPhysio.physioFields,
-          ...(qty <= 1 ? { bathSequence: null } : {}),
-        } as Record<string, unknown>,
+        physioFields: (() => {
+          const base = { ...(formPhysio.physioFields ?? {}) } as Record<string, unknown>;
+          if (qty <= 1) delete base.bathSequence;
+          return base;
+        })(),
         siteIds: occupancy,
         siteApplyMode: formPhysio.hideSitePicker ? "TOGETHER" : formPhysio.siteApplyMode,
         siteLaterality: formPhysio.siteLaterality,
@@ -250,6 +253,8 @@ export function ExtrasAssignModal({
       onClose();
       return;
     }
+    if (saveLockRef.current || busy) return;
+    saveLockRef.current = true;
     setBusy(true);
     try {
       const res = await fetch(
@@ -289,6 +294,8 @@ export function ExtrasAssignModal({
           typeof d?.error === "string"
             ? /remaining stay days \((\d+)\)/i.exec(d.error)
             : null;
+        const serverError = typeof d?.error === "string" ? d.error.trim() : "";
+        const scopeOrGate = packageAssignScopeOrGateText(tPhysio, code, serverError);
         const mapped =
           code === "CABIN_SEX"
             ? { ...d, error: tPhysio("packageAssignMissCabinSex") }
@@ -301,7 +308,9 @@ export function ExtrasAssignModal({
                       max: stayMaxMatch?.[1] ?? "0",
                     }),
                   }
-                : d;
+                : scopeOrGate
+                  ? { ...d, error: scopeOrGate }
+                  : d;
         showApiError(mapped, tc("saveFailed"));
         return;
       }
@@ -311,6 +320,7 @@ export function ExtrasAssignModal({
     } catch {
       showApiError({ error: tc("saveFailed") });
     } finally {
+      saveLockRef.current = false;
       setBusy(false);
     }
   }
@@ -403,10 +413,11 @@ export function ExtrasAssignModal({
                     const n = Number(e.target.value) || 1;
                     setQty(n);
                     if (n <= 1) {
-                      setFormPhysio((prev) => ({
-                        ...prev,
-                        physioFields: { ...prev.physioFields, bathSequence: null },
-                      }));
+                      setFormPhysio((prev) => {
+                        const physioFields = { ...(prev.physioFields ?? {}) };
+                        delete physioFields.bathSequence;
+                        return { ...prev, physioFields };
+                      });
                     }
                   }}
                 />

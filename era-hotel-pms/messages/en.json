@@ -221,7 +221,8 @@
     "schedulesHub": "All schedules",
     "scheduleReception": "Reception roster",
     "scheduleSecurity": "Security roster",
-    "scheduleEngineering": "Technical roster"
+    "scheduleEngineering": "Technical roster",
+    "sanatoriumPackages": "Sanatorium packages"
   },
   "foStatus": {
     "title": "Hotel status",
@@ -1693,6 +1694,8 @@
     "stayWindow": "Stay window",
     "roomTypeChargeHint": "Charged category — drives pricing and night audit",
     "givenRoomTypePhysicalHint": "Physical category for the room number list (empty = same as room type)",
+    "packageNightsTooShort": "{code}: stay is {nights} night(s), minimum is {min}",
+    "packageNightsTooLong": "{code}: stay is {nights} night(s), maximum is {max}",
     "complimentaryUpgradeChip": "Complimentary upgrade: charged {charge}, given {physical}",
     "classDiffers": "Charged {charge}, given {physical}.",
     "classSettlementLabel": "Who pays the class difference",
@@ -2012,7 +2015,8 @@
     "guestMsgBody": "Message",
     "guestMsgSend": "Send",
     "guestMsgSent": "Sent to guest inbox",
-    "guestMsgFail": "Could not send"
+    "guestMsgFail": "Could not send",
+    "nightlyPriceMissingHint": "Nightly price missing for this rate × room type × meal × occupancy — check package prices."
   },
   "guestCard": {
     "title": "Guest card",
@@ -4393,7 +4397,18 @@
     "linkYieldRules": "Yield rules",
     "linkComponents": "Pricing components",
     "agencyPortalAutoConfirm": "Agency portal auto-confirm",
-    "agencyPortalAutoConfirmHint": "When OFF (default), portal bookings stay OPTION until FO confirms. When ON, CONFIRMED if allotment allows."
+    "agencyPortalAutoConfirmHint": "When OFF (default), portal bookings stay OPTION until FO confirms. When ON, CONFIRMED if allotment allows.",
+    "linkSanatoriumPackages": "Sanatorium packages",
+    "yieldAppliesToPackages": "Yield applies to packages",
+    "yieldAppliesToPackagesHint": "When yield is on, also adjust package nightly sell (default off).",
+    "manualNightOverrideEnabled": "Allow manual night price on card",
+    "manualNightOverrideEnabledHint": "FO may lock nightly amounts on the Pricing tab.",
+    "barPricingEnabled": "BAR calendar pricing",
+    "barPricingEnabledHint": "Use BAR calendar for BASE / derived walk-in rates.",
+    "dailyRatesEnabled": "Daily / walk-in price table",
+    "dailyRatesEnabledHint": "Use /settings/daily-prices for walk-in tariffs.",
+    "linkDailyPrices": "Daily prices",
+    "linkPackagePrices": "Package prices"
   },
   "packagePrices": {
     "title": "Package sell & floor",
@@ -4877,7 +4892,7 @@
     "finance": "Finance",
     "financeHint": "Finance counterparty link",
     "medicalPackage": "Medical package",
-    "medicalPackageNone": "From the agency name",
+    "medicalPackageNone": "Not used — hotel catalog",
     "financeLinked": "Linked",
     "financeVoenOnly": "VÖEN only",
     "financeMissing": "Not linked",
@@ -5329,5 +5344,27 @@
     "addAssignment": "Assign",
     "emptyBindingHint": "Bind Workforce org units in Board settings so the picker shows the right people.",
     "emptyPeople": "No people in the bound units for this filter. Adjust binding or org unit filter."
+  },
+  "sanatoriumPackages": {
+    "title": "Sanatorium packages",
+    "subtitle": "Hotel sellable medical / Infotur catalog (synced from clinic). City hotels without the module do not see this screen.",
+    "syncFromClinic": "Sync from clinic",
+    "syncOk": "Synced {count} package(s) from clinic",
+    "clinicUnreachable": "Clinic did not answer — hotel catalog unchanged",
+    "linkPackagePrices": "Package prices",
+    "linkPricingHub": "Pricing hub",
+    "emptyMedicalWarn": "No active MEDICAL packages — Medical Rates blocked on FO until you enable or sync.",
+    "activeMedicalCount": "{count} active MEDICAL package(s)",
+    "colCode": "Code",
+    "colName": "Name",
+    "colFamily": "Family",
+    "colNights": "Min / max (duration)",
+    "colActive": "FO active",
+    "familyMedical": "Medical (per guest)",
+    "familyInfotur": "Infotur (stay tariff)",
+    "on": "On",
+    "off": "Off",
+    "empty": "Catalog empty — sync from clinic",
+    "moduleOff": "Medical & Sanatorium module is not active for this organization."
   }
 }

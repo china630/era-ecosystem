@@ -34,6 +34,7 @@ async function main() {
     "/api/integration/staff-provision",
     "/api/integration/settlement-confirmed",
     "/api/integration/prescription-queue",
+    "/api/public/platform-links",
   ];
   http.use((req: { originalUrl?: string; url?: string; headers: Record<string, unknown> }, res: { status: (code: number) => { json: (body: unknown) => void } }, next: () => void) => {
     const pathname = String(req.originalUrl ?? req.url ?? "").split("?")[0];

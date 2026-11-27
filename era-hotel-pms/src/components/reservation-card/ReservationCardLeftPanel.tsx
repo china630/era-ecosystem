@@ -26,8 +26,9 @@ import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/Res
 import { CommercialPartyStrip } from '@/components/reservation-card/CommercialPartyStrip';
 import { NightsCountField } from '@/components/reservation-card/NightsCountField';
 import { useHotelLookupOptions, withOrphanOption } from '@/lib/hotel-lookups';
-import { addHotelDays } from '@/lib/hotel-calendar';
+import { addHotelDays, stayNights } from '@/lib/hotel-calendar';
 import { resolveStayWindowPlane } from '@/lib/stay-window-plane';
+import { stayProductFamily } from '@/lib/services/medical-package-resolve.service';
 import type { AgencyOption, RatePlanOption, SelectOption, SourceOption } from './types';
 
 function cellCoversDate(
@@ -52,7 +53,7 @@ function ratePlanFitsRoomType(
     if (open.length === 0) return false;
     if (!roomTypeId) return true;
     // Room-type list ignores meal: a contract-applied meal must not hide types
-    // that are priced on this package (OTAXHP under Volkin/Merikl).
+    // that are priced on this package (OTAXHP under medical catalog tariffs).
     return open.some((c) => c.roomTypeId === roomTypeId);
   }
   if (!roomTypeId) return true;
@@ -163,7 +164,8 @@ function nightsBetween(checkIn: string, checkOut: string): number {
   if (!checkIn || !checkOut) return 0;
   const a = new Date(checkIn);
   const b = new Date(checkOut);
-  return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
+  return stayNights(a, b);
 }
 
 /** One plane under Gecələr. Same command as the footer stay button. */
@@ -304,6 +306,9 @@ export type ReservationCardLeftPanelProps = {
   preferredLocation: string;
   preferredBed: string;
   givenRoomTypeId: string;
+  /** Medical & Sanatorium entitlement + active MEDICAL catalog count (FO gate). */
+  sanatoriumModuleOn?: boolean;
+  activeMedicalCount?: number;
   /** Billing price note. A recorded class choice keeps the settlement modal closed. */
   priceNote?: string;
   /** Assigned door no longer matches Given / Room type physical category. */
@@ -450,14 +455,35 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   };
 
   const filteredRatePlans = useMemo(() => {
-    const list = ratePlans.filter(
-      (rp) =>
-        rp.id === props.ratePlanId ||
-        ratePlanFitsRoomType(rp, props.roomTypeId, props.checkIn, props.mealPlanId),
-    );
+    const list = ratePlans.filter((rp) => {
+      if (rp.id !== props.ratePlanId && !ratePlanFitsRoomType(rp, props.roomTypeId, props.checkIn, props.mealPlanId)) {
+        return false;
+      }
+      const family = stayProductFamily({ code: rp.code });
+      if (!props.sanatoriumModuleOn && (family === 'medical' || family === 'infotur' || rp.medicalFlag)) {
+        return rp.id === props.ratePlanId;
+      }
+      if (
+        props.sanatoriumModuleOn &&
+        family === 'medical' &&
+        (props.activeMedicalCount ?? 0) === 0 &&
+        rp.id !== props.ratePlanId
+      ) {
+        return false;
+      }
+      return true;
+    });
     list.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
     return list;
-  }, [ratePlans, props.roomTypeId, props.ratePlanId, props.checkIn, props.mealPlanId]);
+  }, [
+    ratePlans,
+    props.roomTypeId,
+    props.ratePlanId,
+    props.checkIn,
+    props.mealPlanId,
+    props.sanatoriumModuleOn,
+    props.activeMedicalCount,
+  ]);
 
   const chargedRoomTypes = useMemo(() => {
     const plan = ratePlans.find((rp) => rp.id === props.ratePlanId);

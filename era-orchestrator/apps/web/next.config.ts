@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
     return [
       { source: "/api/locale", destination: `${orchApi}/v1/locale` },
       { source: "/api/public/pricing", destination: `${orchApi}/v1/public/pricing` },
+      {
+        source: "/api/public/site-catalog",
+        destination: `${orchApi}/v1/public/site-catalog`,
+      },
+      {
+        source: "/api/public/site-catalog/:path*",
+        destination: `${orchApi}/v1/public/site-catalog/:path*`,
+      },
       { source: "/api/cp-admin", destination: `${orchApi}/v1/admin` },
       { source: "/api/cp-admin/:path*", destination: `${orchApi}/v1/admin/:path*` },
       { source: "/api/portal/mdm", destination: `${orchApi}/portal/v1/mdm/access` },

@@ -10,6 +10,8 @@ x-satellite-control-plane-env: &satellite-control-plane-env
   ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
   CONTROL_PLANE_URL: http://orchestrator:4000
   SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+  # Bootstrap until Sync pushes orchestratorPublicBaseUrl (browser app, not API).
+  ERA_APP_ORIGIN: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
 
 services:
   postgres:

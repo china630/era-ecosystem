@@ -243,6 +243,9 @@ Walk in Orchestrator web (`:3000`) without curl. Do **not** mark Product-Readine
 | Org catalog | `/super-admin/orgs` | search + open hub |
 | Referrals | `/super-admin/referrals` | list |
 | Landing | `/super-admin/landing` | list |
+| Site catalog | `platform…/site-catalog` | **Open** — Products/Modules list from deployed commercial keys only; configure profile (slug/visibility/Pilot/texts); Industries items Select-only; Site settings `site.*` (secrets masked). Invented key must be impossible. Not Demo/SHIPPED |
+| Public marketing site | `era-365.online/{az\|ru\|en}` (+ `/satellites`, `/industries`, `/pricing`, `/calc`, `/demo`, `/contact`) | **Open** — SiteHeader mega-menu (hover from trigger to any panel item, no Demo CTA in desktop header, lg single row); ArchitectureMap on home (live solid / planned dashed); EN copy; unique title/hreflang. Apex must **not** redirect to `app` (Traefik `site-apex`). Not Demo/SHIPPED |
+| Satellite login platform links | `clinic…/login` (any sat) | **Open** — «нет аккаунта» / register → `https://app.era-365.online/register` (via `GET /api/public/platform-links`, Sync `orchestratorPublicBaseUrl`). Never `127.0.0.1:3000` |
 | Owner billing | `/settings/subscription`, `/settings/invoices`, `/settings/orders` | pages load for owner |
 | Placement hop | `platform…/orgs/{id}/placement` (legacy `/super-admin/…/placement`) | Start batch (targetHost required) → PROVISION + recipe; after agent → CONFIGURE + process log; Start SHARED→ONPREM → REJECTED (Wave 2) |
 | Integration channels | `platform…/orgs/{id}` Channels + sat `/admin/links` | Resync; inbound disable; shared `SatelliteAdminLinksPage`. **Open** — harden lab partial; not Demo/SHIPPED |

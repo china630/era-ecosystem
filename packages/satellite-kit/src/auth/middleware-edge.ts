@@ -19,6 +19,7 @@ export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/locale",
   "/api/internal",
   "/api/integration/staff-provision",
+  "/api/public/platform-links",
 ];
 
 /**
@@ -354,6 +355,7 @@ export function redirectReferralToOrchestratorRegister(request: {
   const ref = searchParams?.get("ref")?.trim();
   if (!ref) return null;
   const orch = orchWebUrl();
+  if (!orch) return null;
   let orchOrigin = orch;
   try {
     orchOrigin = new URL(orch).origin;

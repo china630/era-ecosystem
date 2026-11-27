@@ -21,9 +21,11 @@ globs:
 | `/kafe` | `app/kafe/page.tsx` | ERA Kafe chromeless signup. `POST /v1/public/kafe/onboard` bills Gate always; Zal/KDS/QR default off. Provisions F&B owner password + KAFE outlet, then SSO (fallback `/login?org=`). Lab firm: VÖEN `0123456789`, ERA ID `100000`, `owner@demo.com` / `12345678` |
 | `/register` | `app/register/page.tsx` | User signup → `/organizations` |
 | `/register-org` | `app/register-org/page.tsx` | Fallback org registration (modal preferred) |
-| `/pricing` | `app/pricing/**` | Public catalog (TOC, meters, SKU constructor) |
-| `/calc` | `app/calc/**` | Public subscription calculator (same catalog rules: bundles, XOR, capacity, meters). Linked from landing, satellites, pricing, help, terms, Kafe |
-| `/satellites`, `/satellites/[slug]` | `app/satellites/**` | Public satellite pages (not `/industry/*` launcher) |
+| `/pricing` | `app/pricing/**` | Public catalog (TOC, meters, SKU constructor); prefer `/{locale}/pricing` |
+| `/calc` | `app/calc/**` | Public subscription calculator (unprefixed; owns `?q=`). Linked from SiteHeader, industries, pricing |
+| `/{az\|ru\|en}` | `app/[locale]/**` | Marketing IA: home, satellites, industries, pricing, demo, contact, calculator hub; SiteHeader/Footer from DB `site-catalog` |
+| `/satellites`, `/satellites/[slug]` | `app/satellites/**` | Legacy unprefixed → middleware 308 to `/{locale}/satellites…` |
+| `/demo`, `/contact`, `/api/demo-request` | `app/[locale]/demo`, `contact`, `app/api/demo-request` | Demo → CRM `form_generic`; contacts from `system_config` site.* |
 | `/help`, `/terms`, `/partner` | `app/help`, `app/terms`, `app/partner` | Public |
 | `/portal/person-access` | `app/portal/person-access/page.tsx` | MDM Phase 2 citizen consent (guest QR session) |
 | `/agency/login` | `app/agency/login/page.tsx` | Hotel agency portal login → pick property → HMAC SSO |
@@ -62,7 +64,7 @@ Canonical SuperAdmin UI. Session keys `era_platform_*` (not shared with `app`). 
 | `/billing/**` | `apps/platform-web/app/(console)/billing/**` | Pricing, addons, quotas, packages, trial-allowlist, settings |
 | `/orgs`, `/orgs/[orgId]`, `…/structure`, `…/subscription`, `…/modules`, `…/connections`, `…/payments`, `…/access`, `…/channels`, `…/cutover`, `…/placement` | `apps/platform-web/app/(console)/orgs/**` | Org shell: card (read-only), structure (mode/depts), license, modules, app URLs + Sync, payments/KKM, access keys (org id + secret; API URL stays in the catalog), channels, Elektraweb cutover (hotel/clinic), placement Start→DONE (banner + rollback + process log; field UAT open). Payment methods `GET/POST/PUT/DELETE /v1/admin/orgs/:orgId/payment-methods`. Access `GET/PUT/POST /v1/admin/orgs/:orgId/access` |
 | `/mdm`, `/mdm/companies`, `/mdm/persons`, `/mdm/persons/dedup` | `apps/platform-web/app/(console)/mdm/**` | MDM overview, directories, suspected-person queue |
-| `/reference`, `/early-access`, `/referrals`, `/landing`, `/security`, `/vendors/channex` | matching `app/(console)/*` | Same surfaces as former client super-admin |
+| `/reference`, `/early-access`, `/referrals`, `/landing`, `/site-catalog`, `/security`, `/vendors/channex` | matching `app/(console)/*` | Landing hub cards; **Site catalog** pick-from-system overlay on deployed `satellites`/`pricing_modules` + industries + `site.*` settings (no invent SKUs) |
 
 ## Shared web components
 

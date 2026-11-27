@@ -6,9 +6,18 @@ import {
   clinicBody,
 } from "../../bridge";
 import { z } from "zod";
-import { requireClinicPermission, sessionHasClinicPermission } from "@/lib/api-utils";
+import {
+  handleRouteError,
+  requireClinicPermission,
+  sessionHasClinicPermission,
+} from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
-import { checkInProcedureOrder, mapAttendanceHttpStatus, ProcedureAttendanceError } from "@/domain/procedure/procedure-attendance.service";
+import {
+  attendanceErrorBody,
+  checkInProcedureOrder,
+  mapAttendanceHttpStatus,
+  ProcedureAttendanceError,
+} from "@/domain/procedure/procedure-attendance.service";
 import { findScheduledProcedureByAccessCode } from "@/domain/procedure/procedure-order.service";
 import { requestOrganizationId } from "@/lib/request-organization";
 
@@ -62,7 +71,7 @@ export class ProceduresCheckInByCodeController {
   } catch (err) {
     if (err instanceof HttpException) throw err;
     if (err instanceof ProcedureAttendanceError) {
-      throw new HttpException({ error: err.message, ...{ code: err.code } }, mapAttendanceHttpStatus(err));
+      throw new HttpException(attendanceErrorBody(err), mapAttendanceHttpStatus(err));
     }
     return clinicBody(handleRouteError(err));
   }

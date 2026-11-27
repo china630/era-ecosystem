@@ -10,6 +10,7 @@ export const PUBLIC_API_ROUTES: readonly string[] = [
   "/api/auth/sso/exchange",
   "/api/internal/**",
   "/api/events/dispatch",
+  "/api/public/platform-links",
 ];
 
 /** Any signed-in session; no grant. */

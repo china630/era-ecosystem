@@ -2,19 +2,19 @@
 
 ## Status
 
-Accepted — 2026-11-24 (amended 2026-11-25: `MODAL_FULL_FILL` visual size; unpaid trash; unified stepper; four stay marks; locale-only params; dirty honesty)
+Accepted — 2026-11-24 (amended 2026-11-25: `MODAL_FULL_FILL` visual size; unpaid trash; unified stepper; four stay marks; locale-only params; dirty honesty; amended 2026-11-27: gray = seated total, blue Paketdən = package fact, no preserveGoals after Saxla)
 
 ## Decisions
 
 ### Card chrome
 
-Each procedure card keeps a fact circle on top (sessions already on the plan). Below:
+Each procedure card keeps a **gray seated** circle on top (package fact + unpaid + paid already on the plan). Below:
 
-1. **One** goal stepper (− N +) for the lane.
+1. **One** stepper (− N +) for the lane (working total before the next Saxla; after Saxla clears to seated — no `preserveGoals`).
 2. While package remaining for that SKU/pool > 0, +/− adjusts **package** qty (burns package quota).
 3. When package rem = 0, the **same** stepper adjusts **paid extras**.
-4. **Paketdən** — package count only (circle / number, no ±).
-5. **Əlavə** — unit and sum on **one** line + extra qty circle (no ±).
+4. **Paketdən** — package **fact** only (blue circle / number, no ±; not draft goal).
+5. **Əlavə** — unit and sum on **one** line + unpaid red circle (no ±).
 6. **Trash** — unlocked package **or** unpaid extras (draft/pending). Clears unpaid for the lane (Saxla removals) and/or package `pendingCancel`. Hidden only when unpaid qty = 0 and package is locked/absent (locked + unpaid still trashes unpaid). Stepper − remains for qty peel.
 
 Lane order is stable (first stay-plan mark day, then name). Do not hide a wiped card when kept/past sessions remain.

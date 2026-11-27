@@ -19,6 +19,9 @@ export type Copy = {
   neverSynced: string;
   checkIn: string;
   checkInFailed: string;
+  resourceBusy: string;
+  resourceBusyNoTime: string;
+  resourceBusyGeneric: string;
   checkInOk: string;
   unpaidBlock: string;
   mineUnlinked: string;
@@ -69,6 +72,9 @@ const az: Copy = {
   neverSynced: "Hələ yüklənməyib",
   checkIn: "Check-in",
   checkInFailed: "Check-in uğursuz",
+  resourceBusy: "Kabina {cabin} məşğuldur: {guest} — {time}-dək",
+  resourceBusyNoTime: "Kabina {cabin} məşğuldur: {guest}",
+  resourceBusyGeneric: "Bu kabinada artıq check-in olunmuş prosedur var",
   checkInOk: "Check-in — prosedur gedir",
   unpaidBlock: "Ödənilməyib",
   mineUnlinked:
@@ -127,6 +133,9 @@ const ru: Copy = {
   neverSynced: "Ещё не загружено",
   checkIn: "Check-in",
   checkInFailed: "Check-in не удался",
+  resourceBusy: "Кабина {cabin} занята: {guest} до {time}",
+  resourceBusyNoTime: "Кабина {cabin} занята: {guest}",
+  resourceBusyGeneric: "В этой кабине уже есть процедура с check-in",
   checkInOk: "Чек-ин — процедура идёт",
   unpaidBlock: "Не оплачено",
   mineUnlinked:
@@ -185,6 +194,9 @@ const en: Copy = {
   neverSynced: "Not loaded yet",
   checkIn: "Check-in",
   checkInFailed: "Check-in failed",
+  resourceBusy: "Cabin {cabin} is occupied: {guest} until {time}",
+  resourceBusyNoTime: "Cabin {cabin} is occupied: {guest}",
+  resourceBusyGeneric: "This cabin already has a checked-in procedure",
   checkInOk: "Checked in — procedure in progress",
   unpaidBlock: "Not paid",
   mineUnlinked:

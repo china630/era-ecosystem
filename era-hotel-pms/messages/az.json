@@ -221,7 +221,8 @@
     "schedulesHub": "Bütün qrafiklər",
     "scheduleReception": "Resepşn qrafiki",
     "scheduleSecurity": "Mühafizə qrafiki",
-    "scheduleEngineering": "Texniki qrafik"
+    "scheduleEngineering": "Texniki qrafik",
+    "sanatoriumPackages": "Sanatoriya paketləri"
   },
   "foStatus": {
     "title": "Otel statusu",
@@ -1694,6 +1695,8 @@
     "stayWindow": "Qalma dövrü",
     "roomTypeChargeHint": "Ödənişli kateqoriya — qiymət və gecə auditi buna görədir",
     "givenRoomTypePhysicalHint": "Otaq nömrəsi siyahısı üçün fiziki kateqoriya (boş = otaq tipi ilə eyni)",
+    "packageNightsTooShort": "{code}: qalma {nights} gecədir, minimum {min}",
+    "packageNightsTooLong": "{code}: qalma {nights} gecədir, maksimum {max}",
     "complimentaryUpgradeChip": "Pulsuz upgrade: ödənilib {charge}, verilib {physical}",
     "classDiffers": "Ödənilib {charge}, verilib {physical}.",
     "classSettlementLabel": "Sinif fərqini kim ödəyir",
@@ -2013,7 +2016,8 @@
     "guestMsgBody": "Mesaj",
     "guestMsgSend": "Gonder",
     "guestMsgSent": "Qonaq qutusuna gonderildi",
-    "guestMsgFail": "Gonderilemedi"
+    "guestMsgFail": "Gonderilemedi",
+    "nightlyPriceMissingHint": "Bu tarif × otaq tipi × yemək × occupancy üçün gecəlik qiymət yoxdur — paket qiymətlərinə baxın."
   },
   "guestCard": {
     "title": "Qonaq kartı",
@@ -4379,7 +4383,18 @@
     "linkYieldRules": "Yield qaydaları",
     "linkComponents": "Qiymət komponentləri",
     "agencyPortalAutoConfirm": "Agentlik portalı avto-təsdiq",
-    "agencyPortalAutoConfirmHint": "Söndürülüb (defolt): portal OPTION yaradır, FO təsdiq edir. Yanılıdırsa: kvotaya uyğun CONFIRMED."
+    "agencyPortalAutoConfirmHint": "Söndürülüb (defolt): portal OPTION yaradır, FO təsdiq edir. Yanılıdırsa: kvotaya uyğun CONFIRMED.",
+    "linkSanatoriumPackages": "Sanatoriya paketləri",
+    "yieldAppliesToPackages": "Yield paketlərə tətbiq",
+    "yieldAppliesToPackagesHint": "Yield açıq olanda paket gecəlik qiymətə də təsir (default bağlı).",
+    "manualNightOverrideEnabled": "Kartada əl ilə gecəlik qiymət",
+    "manualNightOverrideEnabledHint": "FO Pricing tab-da gecəlik məbləği kilidləyə bilər.",
+    "barPricingEnabled": "BAR təqvim qiymətləri",
+    "barPricingEnabledHint": "BASE / derived walk-in üçün BAR təqvim.",
+    "dailyRatesEnabled": "Daily / walk-in qiymət cədvəli",
+    "dailyRatesEnabledHint": "Walk-in üçün /settings/daily-prices.",
+    "linkDailyPrices": "Daily qiymətlər",
+    "linkPackagePrices": "Paket qiymətləri"
   },
   "packagePrices": {
     "title": "Paket sell və floor",
@@ -4863,7 +4878,7 @@
     "finance": "Maliyyə",
     "financeHint": "Maliyyə kontragent əlaqəsi",
     "medicalPackage": "Tibbi paket",
-    "medicalPackageNone": "Agentlik adından",
+    "medicalPackageNone": "İstifadə olunmur — otel kataloqu",
     "financeLinked": "Bağlıdır",
     "financeVoenOnly": "Yalnız VÖEN",
     "financeMissing": "Bağlı deyil",
@@ -5315,5 +5330,27 @@
     "addAssignment": "Təyin et",
     "emptyBindingHint": "Düzgün insanları görmək üçün Board settings-də Workforce şöbələrini bağlayın.",
     "emptyPeople": "Bağlı şöbələrdə insan yoxdur. Bağlama və ya filtrı dəyişin."
+  },
+  "sanatoriumPackages": {
+    "title": "Sanatoriya paketləri",
+    "subtitle": "Otel satılan tibbi / Infotur kataloqu (klinikadan sync). Modul olmadan şəhər oteli bu ekranı görmür.",
+    "syncFromClinic": "Klinikadan sync",
+    "syncOk": "Klinikadan {count} paket sync olundu",
+    "clinicUnreachable": "Klinika cavab vermədi — kataloq dəyişmədi",
+    "linkPackagePrices": "Paket qiymətləri",
+    "linkPricingHub": "Qiymət mərkəzi",
+    "emptyMedicalWarn": "Aktiv MEDICAL paket yoxdur — FO-da Medical Rates bloklanır.",
+    "activeMedicalCount": "{count} aktiv MEDICAL paket",
+    "colCode": "Kod",
+    "colName": "Ad",
+    "colFamily": "Ailə",
+    "colNights": "Min / max (müddət)",
+    "colActive": "FO aktiv",
+    "familyMedical": "Tibbi (qonaq üzrə)",
+    "familyInfotur": "Infotur (qalmaq tarif)",
+    "on": "Açıq",
+    "off": "Bağlı",
+    "empty": "Kataloq boş — klinikadan sync edin",
+    "moduleOff": "Medical & Sanatorium modulu bu təşkilat üçün aktiv deyil."
   }
 }

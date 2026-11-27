@@ -31,3 +31,15 @@ export function printsProcedureClock(
   if (status !== "PENDING_PAY") return true;
   return Boolean(resourceId);
 }
+
+/**
+ * PLAN_BEFORE_PAY Plan/print filter: FIXED unpaid needs a cabin; OPEN day-pin
+ * may have no cabin. Unseated FIXED placeholders stay off the Plan.
+ */
+export function unpaidExtraVisibleOnPlanWhere() {
+  return {
+    status: "PENDING_PAY" as const,
+    inPackage: false,
+    OR: [{ resourceId: { not: null } }, { schedulingMode: "OPEN" as const }],
+  };
+}

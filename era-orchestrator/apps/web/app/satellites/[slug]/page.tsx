@@ -1,5 +1,4 @@
-import { notFound } from "next/navigation";
-import { SatellitePageView } from "../../../components/satellites/satellite-page-view";
+import { redirect } from "next/navigation";
 import {
   PUBLIC_SATELLITE_SLUGS,
   isPublicSatelliteSlug,
@@ -12,13 +11,16 @@ export function generateStaticParams() {
   return PUBLIC_SATELLITE_SLUGS.map((slug) => ({ slug }));
 }
 
+/** Unprefixed marketing URLs redirect into locale shell (SiteHeader). */
 export default async function PublicSatellitePage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  if (!isPublicSatelliteSlug(slug)) notFound();
   const locale = await resolvePublicAzRuLocale();
-  return <SatellitePageView slug={slug} initialLocale={locale} />;
+  if (!isPublicSatelliteSlug(slug)) {
+    redirect(`/${locale}/satellites`);
+  }
+  redirect(`/${locale}/satellites/${slug}`);
 }

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERA 365 — архитектура платформы</title>
+  <style>
+    :root {
+      --ink: #34495E;
+      --blue: #2980B9;
+      --blue-dark: #2471A3;
+      --muted: #7F8C8D;
+      --line: #D5DADF;
+      --wash: #EBEDF0;
+      --tint: #EBF5FB;
+      --white: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+      background: var(--white);
+      color: var(--ink);
+    }
+    .page {
+      max-width: 1152px;
+      margin: 0 auto;
+      padding: 32px 24px 40px;
+    }
+    .hero-copy { max-width: 680px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .sub {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--muted);
+      max-width: 600px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 20px 0 0;
+    }
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--white);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font: 600 12px/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .chip:hover, .chip:focus-visible {
+      border-color: var(--blue);
+      outline: none;
+    }
+    .chip.is-on {
+      background: var(--tint);
+      border-color: var(--blue);
+      color: var(--blue-dark);
+    }
+    .stage {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f8fafb 0%, #ffffff 55%);
+      overflow: hidden;
+      position: relative;
+    }
+    svg { display: block; width: 100%; height: auto; }
+    .platform { fill: #EBF5FB; fill-opacity: 0.55; stroke: #D5DADF; stroke-width: 1; }
+    .platform-label {
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      fill: #7F8C8D;
+    }
+    .ring-crm { fill: none; stroke: #2980B9; stroke-opacity: 0.28; stroke-width: 1.15; }
+    .ring-hr { fill: none; stroke: #7F8C8D; stroke-opacity: 0.32; stroke-width: 1.15; }
+    .cluster-wash { fill: #2980B9; fill-opacity: 0.04; stroke: none; }
+    .cluster-wash.bank { fill: #2980B9; fill-opacity: 0.06; }
+    .cluster-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      fill: #7F8C8D;
+    }
+    .edge { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .edge.live.revenue { stroke: #a9c7db; stroke-width: 1.3; }
+    .edge.live.folio { stroke: #2980B9; stroke-width: 1.35; stroke-opacity: 0.55; }
+    .edge.live.life { stroke: #2980B9; stroke-width: 1.35; stroke-opacity: 0.7; }
+    .edge.live.gl { stroke: #a9c7db; stroke-width: 1.6; }
+    .edge.live.crm { stroke: #a9c7db; stroke-width: 1.3; }
+    .edge.live.hr { stroke: #7F8C8D; stroke-width: 1.2; stroke-opacity: 0.5; }
+    .edge.partial { stroke: #2980B9; stroke-width: 1.25; stroke-opacity: 0.5; stroke-dasharray: 8 4; }
+    .edge.partial.ref { stroke: #7F8C8D; }
+    .edge.planned { stroke: #7F8C8D; stroke-width: 1.15; stroke-opacity: 0.38; stroke-dasharray: 2 5; }
+    .edge-caption { font-size: 8.5px; font-weight: 600; fill: #7F8C8D; }
+    .pulse {
+      fill: none;
+      stroke: #2980B9;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 10 260;
+      animation: travel 5s linear infinite;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+    .pulse.p2 { animation-delay: -2.5s; stroke: #34495E; opacity: 0.4; }
+    @keyframes travel { to { stroke-dashoffset: -270; } }
+    .node { cursor: pointer; }
+    .node:focus { outline: none; }
+    .node:focus .sat, .node:focus .core-ring { stroke: #2471A3; }
+    .sat { fill: #fff; stroke: #D5DADF; stroke-width: 1.25; }
+    .icon-bg { fill: #EBF5FB; }
+    .name { font-size: 11.5px; font-weight: 650; fill: #34495E; }
+    .meta { font-size: 9.5px; fill: #7F8C8D; }
+    .core-ring {
+      fill: #EBF5FB;
+      stroke: #2980B9;
+      stroke-width: 1.6;
+      transform-origin: 0 0;
+      transform-box: fill-box;
+      animation: breathe 4.8s ease-in-out infinite;
+    }
+    .core-dot { fill: #2980B9; }
+    .core-name { font-size: 13px; font-weight: 700; fill: #34495E; }
+    .core-meta { font-size: 10px; fill: #7F8C8D; }
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.045); }
+    }
+    .badge-pill { fill: #fff; stroke: #2980B9; stroke-width: 1.2; stroke-opacity: 0.45; }
+    .badge-pill.hr { stroke: #7F8C8D; }
+    .pilot-bg { fill: #EBF5FB; stroke: rgba(41,128,185,.35); }
+    .pilot { font-size: 8px; font-weight: 700; fill: #2471A3; }
+    .spoke { fill: none; stroke: #7F8C8D; stroke-width: 1.1; stroke-opacity: 0.32; stroke-dasharray: 2 5; stroke-linecap: round; }
+    /* hover / filter */
+    .stage.is-hover .edge, .stage.is-hover .spoke { opacity: 0.14; }
+    .stage.is-hover .edge.is-on, .stage.is-hover .spoke.is-on { opacity: 1; }
+    .stage.is-hover .node { opacity: 0.28; }
+    .stage.is-hover .node.is-on { opacity: 1; }
+    .stage.is-filter .node { opacity: 0.22; }
+    .stage.is-filter .node.is-in { opacity: 1; }
+    .stage.is-filter .edge, .stage.is-filter .spoke { opacity: 0.1; }
+    .stage.is-filter .edge.is-in, .stage.is-filter .spoke.is-in { opacity: 1; }
+    .stage.is-hover.is-filter .node.is-in { opacity: 0.22; }
+    .stage.is-hover.is-filter .node.is-on { opacity: 1; }
+    .card {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      width: 260px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px 12px;
+      box-shadow: 0 8px 24px rgba(52, 73, 94, 0.08);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .card.is-open { opacity: 1; }
+    .card h2 {
+      margin: 0 0 2px;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+    .card .price { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
+    .card .tag { margin: 0 0 8px; font-size: 13px; line-height: 1.4; }
+    .card ul { margin: 0; padding: 0; list-style: none; }
+    .card li { font-size: 11px; color: var(--muted); line-height: 1.45; }
+    .card .st { font-weight: 650; color: var(--ink); }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .sw { width: 26px; height: 0; border-top: 2px solid #a9c7db; display: inline-block; }
+    .sw.partial { border-color: #2980B9; border-top-style: dashed; }
+    .sw.planned { border-color: #7F8C8D; border-top-style: dotted; }
+    .sw.folio { border-color: #2980B9; opacity: .7; }
+    @media (prefers-reduced-motion: reduce) {
+      .pulse, .core-ring { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero-copy">
+      <p class="eyebrow">Архитектура ERA 365</p>
+      <h1>Учёт и отраслевые продукты — одна платформа</h1>
+      <p class="sub">Два ядра на оркестраторе. Сплошная линия — связь уже есть в коде, пунктир — в разработке. Наведите на продукт, чтобы увидеть детали.</p>
+    </div>
+    <div class="toolbar" role="toolbar" aria-label="Фильтр отраслей">
+      <button type="button" class="chip is-on" data-filter="all">Все</button>
+      <button type="button" class="chip" data-filter="hotels">Отели</button>
+      <button type="button" class="chip" data-filter="sanatoriums">Санатории</button>
+      <button type="button" class="chip" data-filter="restaurants">Рестораны</button>
+      <button type="button" class="chip" data-filter="auto">Автосервис</button>
+      <button type="button" class="chip" data-filter="logistics">Логистика</button>
+      <button type="button" class="chip" data-filter="wholesale">Опт</button>
+      <button type="button" class="chip" data-filter="retail">Розница</button>
+      <button type="button" class="chip" data-filter="construction">Строительство</button>
+      <button type="button" class="chip" data-filter="clinic">Клиника</button>
+      <button type="button" class="chip" data-filter="banking">Банк</button>
+    </div>
+    <div class="stage" id="stage">
+      <svg viewBox="0 0 1152 700" role="img" aria-labelledby="map-title map-desc">
+        <title id="map-title">Схема архитектуры ERA 365</title>
+        <desc id="map-desc">Оркестратор как внешняя платформа. Два ядра — ERA Core и Bank CBS. Вокруг финансового ядра кластеры гостеприимства, торговли, стройки и авто. У банка своя орбита: ДБО и клиентские приложения. CRM и Workforce — общие кольца. Сплошные линии — реализованные связи, пунктир — в разработке.</desc>
+
+        <!-- Platform (orchestrator) -->
+        <ellipse class="platform" cx="576" cy="350" rx="538" ry="302" />
+        <text class="platform-label" text-anchor="middle" x="576" y="668">Оркестратор — платформа · идентичность · биллинг · каталог</text>
+
+        <!-- Shared rings -->
+        <ellipse class="ring-crm" cx="576" cy="350" rx="538" ry="302" />
+        <ellipse class="ring-hr" cx="576" cy="350" rx="492" ry="262" />
+
+        <!-- Soft cluster washes -->
+        <ellipse class="cluster-wash" cx="490" cy="210" rx="200" ry="95" />
+        <ellipse class="cluster-wash" cx="250" cy="420" rx="110" ry="130" />
+        <ellipse class="cluster-wash" cx="530" cy="555" rx="200" ry="80" />
+        <circle class="cluster-wash bank" cx="790" cy="345" r="175" />
+
+        <text class="cluster-label" x="360" y="108">Гостеприимство</text>
+        <text class="cluster-label" x="108" y="268">Стройка и авто</text>
+        <text class="cluster-label" x="318" y="500">Торговля</text>
+        <text class="cluster-label" x="900" y="188">Банковский кластер</text>
+
+        <!-- Edges -->
+        <g class="edges" fill="none">
+          <!-- revenue to ERA Core (live, grouped visually as mind-map spokes) -->
+          <path id="e-hotel-fin" class="edge live revenue" data-nodes="industry_hotel_pms finance_core" d="M490.0 200.0 C 490 234, 490 250, 490.0 281.0" />
+          <path id="e-fnb-fin" class="edge live revenue" data-nodes="industry_fnb_pos finance_core" d="M370.7 253.8 C 382 298, 393 306, 439.2 306.1" />
+          <path id="e-clinic-fin" class="edge live revenue" data-nodes="industry_clinic finance_core" d="M612.9 231.6 C 597 279, 585 290, 537.0 301.6" />
+          <path id="e-con-fin" class="edge live revenue" data-nodes="industry_construction finance_core" d="M246.0 345.0 C 322 327, 350 327, 426.0 345.0" />
+          <path id="e-auto-fin" class="edge live revenue" data-nodes="industry_auto_service finance_core" d="M299.7 470.7 C 374 458, 396 443, 436.6 380.3" />
+          <path id="e-wh-fin" class="edge live revenue" data-nodes="industry_wholesale finance_core" d="M410.5 524.2 C 457 484, 465 465, 464.1 403.5" />
+          <path id="e-log-fin" class="edge live revenue" data-nodes="industry_logistics finance_core" d="M530.1 554.5 C 538 489, 534 466, 502.0 407.9" />
+          <path id="e-retail-fin" class="edge live revenue" data-nodes="industry_retail finance_core" d="M644.7 518.6 C 600 490, 560 455, 532.6 392.8" />
+          <path id="e-crm-fin" class="edge live crm" data-nodes="industry_crm finance_core" d="M560 72 C 555 110, 548 150, 520 281" />
+          <path id="e-wf-fin" class="edge live hr" data-nodes="platform_workforce finance_core" d="M120 548 C 80 430, 120 300, 426 345" />
+          <path id="e-bank-fin" class="edge live gl" data-nodes="industry_banking finance_core" d="M736.0 345.0 C 660 305, 630 305, 554.0 345.0" />
+
+          <!-- folio + lifecycle (live) -->
+          <path id="e-fnb-hotel" class="edge live folio" data-nodes="industry_fnb_pos industry_hotel_pms" d="M373.5 226.9 C 402 189, 417 182, 464.7 183.9" />
+          <path id="e-clinic-hotel" class="edge live folio" data-nodes="industry_clinic industry_hotel_pms" d="M607.1 206.6 C 575 174, 561 170, 516.9 179.9" />
+          <path id="e-retail-hotel" class="edge live folio" data-nodes="industry_retail industry_hotel_pms" d="M680 512 C 730 420, 730 250, 518 180" />
+          <path id="e-hotel-clinic" class="edge live life" data-nodes="industry_hotel_pms industry_clinic" d="M516.9 175 C 550 145, 590 148, 616 192" />
+
+          <!-- partial -->
+          <path id="e-wh-retail" class="edge partial" data-nodes="industry_wholesale industry_retail" d="M426 547 C 500 568, 560 568, 636 539" />
+          <path id="e-bank-dbo" class="edge partial" data-nodes="industry_banking banking_dbo" d="M835.8 316.4 C 883 310, 897 302, 923.0 261.8" />
+          <path id="e-bank-apps" class="edge partial" data-nodes="industry_banking banking_apps" d="M838.5 368.7 C 888 373, 903 380, 936.6 416.6" />
+          <path id="e-hub-fin" class="edge partial ref" data-nodes="platform_datahub finance_core" d="M824 540 C 740 510, 620 450, 545 390" />
+
+          <!-- planned, grouped (not a full 48-edge mesh) -->
+          <path id="e-log-wh" class="edge planned" data-nodes="industry_logistics industry_wholesale" d="M509.7 574.0 C 471 581, 457 578, 425.3 554.0" />
+          <path id="e-log-retail" class="edge planned" data-nodes="industry_logistics industry_retail" d="M559.7 571.8 C 597 576, 610 572, 637.3 546.2" />
+          <path id="e-auto-retail" class="edge planned" data-nodes="industry_auto_service industry_retail" d="M304 459 C 420 500, 540 500, 640 520" />
+        </g>
+
+        <!-- Data HUB debt spokes: short rays, not a star across the map -->
+        <g class="hub-spokes" aria-hidden="true">
+          <path class="spoke" id="sp-hub-1" data-nodes="platform_datahub" d="M840 577 L 800 625" />
+          <path class="spoke" id="sp-hub-2" data-nodes="platform_datahub" d="M870 577 L 910 625" />
+          <path class="spoke" id="sp-hub-3" data-nodes="platform_datahub" d="M876 552 L 940 560" />
+        </g>
+        <text class="edge-caption" x="890" y="548">аналитика, в разработке</text>
+        <text class="edge-caption" x="690" y="318">GL-summary</text>
+        <text class="edge-caption" x="700" y="155">фолио в отель</text>
+        <text class="edge-caption" x="250" y="642">логистика ↔ опт / розница, в разработке</text>
+        <text class="edge-caption" x="188" y="448">запчасти, в разработке</text>
+        <text class="edge-caption" x="500" y="512">опт → розница, частично</text>
+
+        <use href="#e-hotel-fin" class="pulse" />
+        <use href="#e-bank-fin" class="pulse p2" />
+        <use href="#e-fnb-hotel" class="pulse" style="animation-delay:-1.4s" />
+
+        <!-- Cores -->
+        <g class="node node-core is-in" data-key="finance_core" tabindex="0" transform="translate(490,345)" role="button" aria-label="ERA Core, от 29 AZN в месяц">
+          <circle class="core-ring" r="64" />
+          <circle class="core-dot" r="8" />
+          <text class="core-name" text-anchor="middle" y="28">ERA Core</text>
+          <text class="core-meta" text-anchor="middle" y="43">от 29 AZN / мес</text>
+        </g>
+        <g class="node node-core is-in" data-key="industry_banking" tabindex="0" transform="translate(790,345)" role="button" aria-label="Bank CBS, Pilot, от 99 AZN в месяц">
+          <circle class="core-ring" r="54" />
+          <circle class="core-dot" r="7" />
+          <text class="core-name" text-anchor="middle" y="26">Bank CBS</text>
+          <text class="core-meta" text-anchor="middle" y="40">от 99 AZN / мес</text>
+          <g transform="translate(28,-46)">
+            <rect class="pilot-bg" x="0" y="0" width="36" height="14" rx="4" />
+            <text class="pilot" x="18" y="10.5" text-anchor="middle">Pilot</text>
+          </g>
+        </g>
+
+        <!-- Satellites -->
+        <g class="node" data-key="industry_hotel_pms" tabindex="0" transform="translate(490,172)" role="button" aria-label="Hotel PMS, от 29 AZN в месяц">
+          <circle class="sat" r="28" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="middle" y="-38">Hotel PMS</text>
+          <text class="meta" text-anchor="middle" y="-26">от 29 AZN</text>
+        </g>
+        <g class="node" data-key="industry_fnb_pos" tabindex="0" transform="translate(350,238)" role="button" aria-label="F and B POS, от 29 AZN в месяц">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="end" x="-32" y="4">F&amp;B POS</text>
+          <text class="meta" text-anchor="end" x="-32" y="16">от 29 AZN</text>
+        </g>
+        <g class="node" data-key="industry_clinic" tabindex="0" transform="translate(632,214)" role="button" aria-label="Clinic, Pilot, от 29 AZN в месяц">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="middle" y="-38">Clinic</text>
+          <text class="meta" text-anchor="middle" y="-26">от 29 AZN</text>
+          <g transform="translate(16,-18)">
+            <rect class="pilot-bg" x="0" y="0" width="32" height="12" rx="3" />
+            <text class="pilot" x="16" y="9" text-anchor="middle">Pilot</text>
+          </g>
+        </g>
+        <g class="node" data-key="industry_construction" tabindex="0" transform="translate(220,345)" role="button" aria-label="Construction, Pilot, от 29 AZN в месяц">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="end" x="-32" y="4">Construction</text>
+          <text class="meta" text-anchor="end" x="-32" y="16">от 29 AZN</text>
+          <g transform="translate(16,-30)">
+            <rect class="pilot-bg" x="0" y="0" width="32" height="12" rx="3" />
+            <text class="pilot" x="16" y="9" text-anchor="middle">Pilot</text>
+          </g>
+        </g>
+        <g class="node" data-key="industry_auto_service" tabindex="0" transform="translate(278,485)" role="button" aria-label="Auto Service, от 29 AZN в месяц">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="middle" y="44">Auto Service</text>
+          <text class="meta" text-anchor="middle" y="56">от 29 AZN</text>
+        </g>
+        <g class="node" data-key="industry_wholesale" tabindex="0" transform="translate(400,548)" role="button" aria-label="Wholesale, от 29 AZN в месяц">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="end" x="-32" y="4">Wholesale</text>
+          <text class="meta" text-anchor="end" x="-32" y="16">от 29 AZN</text>
+        </g>
+        <g class="node" data-key="industry_logistics" tabindex="0" transform="translate(535,580)" role="button" aria-label="Logistics, от 29 AZN в месяц">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="end" x="-32" y="4">Logistics</text>
+          <text class="meta" text-anchor="end" x="-32" y="16">от 29 AZN</text>
+        </g>
+        <g class="node" data-key="industry_retail" tabindex="0" transform="translate(662,538)" role="button" aria-label="Retail POS, Pilot, от 29 AZN в месяц">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="start" x="32" y="4">Retail POS</text>
+          <text class="meta" text-anchor="start" x="32" y="16">от 29 AZN</text>
+          <g transform="translate(16,-30)">
+            <rect class="pilot-bg" x="0" y="0" width="32" height="12" rx="3" />
+            <text class="pilot" x="16" y="9" text-anchor="middle">Pilot</text>
+          </g>
+        </g>
+        <g class="node" data-key="banking_dbo" tabindex="0" transform="translate(945,248)" role="button" aria-label="ДБО, Pilot">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="start" x="32" y="4">ДБО</text>
+          <text class="meta" text-anchor="start" x="32" y="16">модуль банка</text>
+          <g transform="translate(14,-30)">
+            <rect class="pilot-bg" x="0" y="0" width="32" height="12" rx="3" />
+            <text class="pilot" x="16" y="9" text-anchor="middle">Pilot</text>
+          </g>
+        </g>
+        <g class="node" data-key="banking_apps" tabindex="0" transform="translate(960,428)" role="button" aria-label="Клиентские приложения, Pilot">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="start" x="32" y="0">Клиентские</text>
+          <text class="name" text-anchor="start" x="32" y="14">приложения</text>
+          <text class="meta" text-anchor="start" x="32" y="26">Pilot</text>
+        </g>
+        <g class="node" data-key="platform_datahub" tabindex="0" transform="translate(850,552)" role="button" aria-label="Data HUB, Pilot, от 29 AZN в месяц">
+          <circle class="sat" r="26" /><circle class="icon-bg" r="11" />
+          <text class="name" text-anchor="middle" y="44">Data HUB</text>
+          <text class="meta" text-anchor="middle" y="56">от 29 AZN</text>
+          <g transform="translate(16,-30)">
+            <rect class="pilot-bg" x="0" y="0" width="32" height="12" rx="3" />
+            <text class="pilot" x="16" y="9" text-anchor="middle">Pilot</text>
+          </g>
+        </g>
+
+        <!-- Ring badges: CRM and Workforce -->
+        <g class="node" data-key="industry_crm" tabindex="0" transform="translate(476,26)" role="button" aria-label="CRM, от 29 AZN в месяц">
+          <rect class="badge-pill" x="0" y="0" width="200" height="46" rx="23" />
+          <text class="name" text-anchor="middle" x="100" y="20">CRM</text>
+          <text class="meta" text-anchor="middle" x="100" y="34">клиентский слой · от 29 AZN</text>
+        </g>
+        <g class="node" data-key="platform_workforce" tabindex="0" transform="translate(36,548)" role="button" aria-label="Workforce, от 2 AZN за человека">
+          <rect class="badge-pill hr" x="0" y="0" width="168" height="46" rx="23" />
+          <text class="name" text-anchor="middle" x="84" y="20">Workforce</text>
+          <text class="meta" text-anchor="middle" x="84" y="34">кадры · от 2 AZN / чел.</text>
+        </g>
+      </svg>
+      <aside class="card" id="card" aria-live="polite"></aside>
+    </div>
+    <div class="legend">
+      <span><i class="sw"></i> есть в коде</span>
+      <span><i class="sw partial"></i> частично</span>
+      <span><i class="sw planned"></i> в разработке</span>
+      <span><i class="sw folio"></i> фолио / жизненный цикл отеля</span>
+    </div>
+  </div>
+  <script>
+    const BUNDLES = {
+      all: null,
+      hotels: ['finance_core','industry_hotel_pms','industry_fnb_pos','industry_retail','industry_crm','platform_workforce'],
+      sanatoriums: ['finance_core','industry_hotel_pms','industry_clinic','industry_fnb_pos','industry_crm','platform_workforce'],
+      restaurants: ['finance_core','industry_fnb_pos','industry_hotel_pms','platform_workforce'],
+      auto: ['finance_core','industry_auto_service','industry_retail','industry_crm'],
+      logistics: ['finance_core','industry_logistics','industry_wholesale','industry_retail','industry_crm'],
+      wholesale: ['finance_core','industry_wholesale','industry_retail','industry_logistics','industry_crm'],
+      retail: ['finance_core','industry_retail','industry_wholesale','industry_hotel_pms','industry_crm'],
+      construction: ['finance_core','industry_construction','platform_workforce','industry_crm','platform_datahub'],
+      clinic: ['finance_core','industry_clinic','industry_hotel_pms','industry_crm','platform_workforce'],
+      banking: ['finance_core','industry_banking','banking_dbo','banking_apps','platform_workforce','industry_crm','platform_datahub']
+    };
+    const CARDS = {
+      finance_core: {
+        name: 'ERA Core', price: 'от 29 AZN / мес', tag: 'Финансовое ядро: учёт, проводки, склад и расчёты.',
+        edges: [['Выручка и проводки отраслей','есть'],['GL-summary банка','есть'],['Справочники Data HUB','частично'],['Счёт из строительного акта','в разработке']]
+      },
+      industry_banking: {
+        name: 'Bank CBS', price: 'от 99 AZN / мес · Pilot', tag: 'Банковское ядро: счета, платежи, кредиты.',
+        edges: [['Суточный GL в ERA Core','есть'],['ДБО и клиентские приложения','частично'],['Провижининг Workforce','частично'],['Клиенты в CRM / MDM','в разработке']]
+      },
+      industry_hotel_pms: {
+        name: 'Hotel PMS', price: 'от 29 AZN / мес', tag: 'Бронь, фолио и проживание.',
+        edges: [['Счета и аудит в ERA Core','есть'],['Фолио из F&B, клиники, розницы','есть'],['Заезд гостя в клинику','есть'],['Гость в CRM','в разработке']]
+      },
+      industry_fnb_pos: {
+        name: 'F&B POS', price: 'от 29 AZN / мес', tag: 'Касса ресторана и бара, списания стока.',
+        edges: [['Продажа и смена в учёт','есть'],['Постование в фолио отеля','есть'],['Штат из Workforce','есть']]
+      },
+      industry_clinic: {
+        name: 'Clinic', price: 'от 29 AZN / мес · Pilot', tag: 'Клиника и санаторное лечение.',
+        edges: [['Визиты и услуги в учёт','есть'],['Фолио в отель','есть'],['Заезд из Hotel PMS','есть'],['Пациент в CRM','в разработке']]
+      },
+      industry_construction: {
+        name: 'Construction', price: 'от 29 AZN / мес · Pilot', tag: 'Сметы, акты и проекты.',
+        edges: [['Проводки акта в ERA Core','есть'],['Табель в Workforce','есть'],['Заказчик в CRM','в разработке'],['Счёт из акта, материалы HUB','частично / долг']]
+      },
+      industry_auto_service: {
+        name: 'Auto Service', price: 'от 29 AZN / мес', tag: 'Наряды автосервиса.',
+        edges: [['Закрытый наряд в учёт','есть'],['Запчасти ↔ розница / склад','в разработке'],['Клиент в CRM','в разработке']]
+      },
+      industry_wholesale: {
+        name: 'Wholesale', price: 'от 29 AZN / мес', tag: 'Оптовые заказы и контрагенты.',
+        edges: [['Заказ в ERA Core','есть'],['OPS_HANDOFF в розницу','частично'],['Логистика, клиент в CRM','в разработке']]
+      },
+      industry_logistics: {
+        name: 'Logistics', price: 'от 29 AZN / мес', tag: 'Рейсы, доставка, POD.',
+        edges: [['Завершённый рейс в учёт','есть'],['Связь с оптом и розницей','в разработке']]
+      },
+      industry_retail: {
+        name: 'Retail POS', price: 'от 29 AZN / мес · Pilot', tag: 'Розничные продажи и склад ядра.',
+        edges: [['Продажа в учёт','есть'],['Фолио в отель','есть'],['Приём заказа из опта','частично'],['Доставка, запчасти, клиент в CRM','в разработке']]
+      },
+      industry_crm: {
+        name: 'CRM', price: 'от 29 AZN / мес', tag: 'Общий клиентский слой: лиды и партии.',
+        edges: [['Конвертация лида в ERA Core','есть'],['Намерение записи в клинику','частично'],['Гости, пациенты, заказчики из сателлитов','в разработке']]
+      },
+      platform_workforce: {
+        name: 'Workforce', price: 'от 2 AZN / чел.', tag: 'Кадровый слой: штат и табель.',
+        edges: [['Табель и HR-события в учёт','есть'],['Провижининг: отель, F&B, розница, клиника, стройка','есть'],['Провижининг банка','частично'],['Остальные сателлиты','в разработке']]
+      },
+      platform_datahub: {
+        name: 'Data HUB', price: 'от 29 AZN / мес · Pilot', tag: 'Справочники платформы и будущая аналитика.',
+        edges: [['Справочники в ERA Core','частично'],['Материалы для стройки','частично'],['Аналитика по всем сателлитам','в разработке']]
+      },
+      banking_dbo: {
+        name: 'ДБО', price: 'Модуль Bank CBS · Pilot', tag: 'Дистанционное банковское обслуживание.',
+        edges: [['Каналы к headless CBS','частично'],['Подключение к оркестратору','есть (платформа)']]
+      },
+      banking_apps: {
+        name: 'Клиентские приложения', price: 'Каналы Bank CBS · Pilot', tag: 'Клиентские каналы банковского кластера.',
+        edges: [['Связь с Bank CBS','частично'],['Живые интеграции по аудиту банка','в разработке']]
+      }
+    };
+
+    const stage = document.getElementById('stage');
+    const cardEl = document.getElementById('card');
+    const nodes = [...stage.querySelectorAll('.node')];
+    const edges = [...stage.querySelectorAll('.edge, .spoke')];
+
+    function renderCard(key) {
+      const c = CARDS[key];
+      if (!c) { cardEl.classList.remove('is-open'); cardEl.innerHTML = ''; return; }
+      cardEl.innerHTML = `<h2>${c.name}</h2><p class="price">${c.price}</p><p class="tag">${c.tag}</p><ul>${c.edges.map(([t,s]) => `<li><span class="st">${s}.</span> ${t}</li>`).join('')}</ul>`;
+      cardEl.classList.add('is-open');
+    }
+
+    function setHover(key) {
+      nodes.forEach(n => n.classList.toggle('is-on', n.dataset.key === key || incident(n.dataset.key, key)));
+      edges.forEach(e => {
+        const ks = (e.dataset.nodes || '').split(/\s+/);
+        e.classList.toggle('is-on', ks.includes(key) || (ks.length === 1 && ks[0] === key));
+      });
+      stage.classList.add('is-hover');
+      renderCard(key);
+    }
+    function incident(a, b) {
+      return edges.some(e => {
+        const ks = (e.dataset.nodes || '').split(/\s+/);
+        return ks.includes(a) && ks.includes(b);
+      });
+    }
+    function clearHover() {
+      stage.classList.remove('is-hover');
+      nodes.forEach(n => n.classList.remove('is-on'));
+      edges.forEach(e => e.classList.remove('is-on'));
+      cardEl.classList.remove('is-open');
+    }
+
+    nodes.forEach(n => {
+      n.addEventListener('mouseenter', () => setHover(n.dataset.key));
+      n.addEventListener('focus', () => setHover(n.dataset.key));
+      n.addEventListener('mouseleave', clearHover);
+      n.addEventListener('blur', clearHover);
+    });
+
+    document.querySelectorAll('.chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(b => b.classList.toggle('is-on', b === btn));
+        const keys = BUNDLES[btn.dataset.filter];
+        if (!keys) {
+          stage.classList.remove('is-filter');
+          nodes.forEach(n => n.classList.remove('is-in'));
+          edges.forEach(e => e.classList.remove('is-in'));
+          return;
+        }
+        stage.classList.add('is-filter');
+        nodes.forEach(n => n.classList.toggle('is-in', keys.includes(n.dataset.key)));
+        edges.forEach(e => {
+          const ks = (e.dataset.nodes || '').split(/\s+/).filter(Boolean);
+          const ok = ks.length === 0 ? false : ks.every(k => keys.includes(k) || k === 'platform_datahub' && keys.includes('platform_datahub'));
+          e.classList.toggle('is-in', ks.every(k => keys.includes(k)));
+        });
+      });
+    });
+  </script>
+</body>
+</html>

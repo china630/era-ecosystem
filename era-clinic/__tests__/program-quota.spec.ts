@@ -114,10 +114,16 @@ describe("program-quota quotaFor", () => {
     ).toBe(1);
   });
 
-  it("nightsBetween uses UTC date parts", () => {
+  it("nightsBetween uses Baku civil dates, not the UTC date of the clock", () => {
     expect(
       nightsBetween(new Date("2026-08-01T10:00:00Z"), new Date("2026-08-11T10:00:00Z")),
     ).toBe(10);
+    expect(
+      nightsBetween(new Date("2026-11-25T10:00:00Z"), new Date("2026-12-16T08:00:00Z")),
+    ).toBe(21);
+    expect(
+      nightsBetween(new Date("2026-11-25T10:00:00Z"), new Date("2026-12-15T22:00:00Z")),
+    ).toBe(21);
   });
 });
 

@@ -6,12 +6,13 @@ import { ControlPlanePrismaService } from "./control-plane-prisma.service";
 import { ControlPlaneOrganizationService } from "./control-plane-organization.service";
 import { OrganizationBindController } from "./organization-bind.controller";
 import { RuntimeConfigController } from "./runtime-config.controller";
+import { PlatformLinksController } from "./platform-links.controller";
 import { OrgAccessClient } from "./org-access.client";
 
 @Global()
 @Module({
   imports: [PrismaModule],
-  controllers: [RuntimeConfigController, OrganizationBindController],
+  controllers: [RuntimeConfigController, OrganizationBindController, PlatformLinksController],
   providers: [
     ControlPlaneClient,
     ControlPlaneEntitlementGuard,

@@ -22,7 +22,8 @@ async function main() {
     }, ["/api/auth/session/refresh-permissions"]),
   );
   const http = app.getHttpAdapter().getInstance();
-  http.use(express.json());
+  // Elektraweb bridge batches folio/guest envelopes; default 100kb yields 413.
+  http.use(express.json({ limit: "5mb" }));
   const port = Number(process.env.NEST_PORT ?? process.env.HOTEL_NEST_PORT ?? 13201);
   await app.listen(port, "127.0.0.1");
   console.log(`hotel guest nest http://127.0.0.1:${port}`);

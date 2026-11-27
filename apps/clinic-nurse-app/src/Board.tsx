@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { bakuTimeLabel } from "./baku";
+import { boardOccupancyDisplay } from "./board-display-time";
 import type { Copy } from "./copy";
 import { placeOrder, type Place } from "./place-order";
 import { parseBakuDateTime } from "./baku";
@@ -15,11 +16,20 @@ const CHIP: Record<string, { bg: string; fg: string }> = {
 };
 
 function timeRange(order: Proc, t: Copy): string {
-  const open = order.schedulingMode === "OPEN" && !order.resourceId && !order.resource;
-  if (open) return t.openAttendance;
-  const start = bakuTimeLabel(order.scheduledAt);
-  const endSrc = order.endsAt || order.effectiveEndsAt;
-  return endSrc ? `${start}–${bakuTimeLabel(endSrc)}` : start;
+  const view = boardOccupancyDisplay({
+    status: order.status,
+    schedulingMode: order.schedulingMode,
+    resourceId: order.resourceId,
+    hasResource: Boolean(order.resource),
+    scheduledAt: order.scheduledAt,
+    endsAt: order.endsAt,
+    actualStartsAt: order.actualStartsAt,
+    actualEndsAt: order.actualEndsAt,
+    effectiveEndsAt: order.effectiveEndsAt,
+  });
+  if (view.kind === "open") return t.openAttendance;
+  const start = bakuTimeLabel(view.startIso);
+  return view.endIso ? `${start}–${bakuTimeLabel(view.endIso)}` : start;
 }
 
 function cabinOf(order: Proc, t: Copy): string {

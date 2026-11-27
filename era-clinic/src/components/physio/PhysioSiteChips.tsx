@@ -241,8 +241,11 @@ export function PhysioSiteChips({
   }, [hideSites, editable, fillCode, catalog, value.siteIds.join("|")]);
 
   useEffect(() => {
-    if (!editable || sessionQty > 1 || !fields.bathSequence) return;
-    patchFields({ bathSequence: null });
+    if (!editable || sessionQty > 1 || fields.bathSequence == null) return;
+    // Omit the key — do not stamp bathSequence: null (splits regime cards).
+    const next = { ...fields };
+    delete next.bathSequence;
+    onFieldsChange(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editable, sessionQty, fields.bathSequence]);
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — 2026-10-28 (CLI-62; amended 2026-11-24: OPEN miss drops like FIXED; paid extras need paidAt)
+Accepted — 2026-10-28 (CLI-62; amended 2026-11-24: OPEN miss drops like FIXED; paid extras need paidAt; amended 2026-11-26: plan vs actual occupancy clocks)
 
 Related: [clinic-procedure-day-ops.md](./clinic-procedure-day-ops.md) · [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md) · [clinic-extra-procedure-route.md](./clinic-extra-procedure-route.md) · [clinic-hotel-capacity-foresight.md](./clinic-hotel-capacity-foresight.md)
 
@@ -24,7 +24,7 @@ We must not invent a new registration door. Package assign, extras/Pay, nurse ch
 | Quota | OPEN burns entitlement only on `CHECKED_IN` / `COMPLETED`. Day-bucket `SCHEDULED` does **not** burn. Auto `NO_SHOW` sweep **skips** OPEN. |
 | Plan / print | Sort OPEN unseated **first** within the civil day (before timed rows); time label = open-attendance (not wall clock) until seated. |
 | Matrix | No timed bar until seated. Unseated OPEN is a queue band on that procedure's cabins: morning and afternoon, waiting shared, arrivals split at lunch. The first cabin of the procedure shows the full counts; the other cabins show the procedure name, the half (before or after lunch), and the waiting count. Nurse board does not duplicate the bands. |
-| Nurse | Check-in window = clinic working hours that Baku day. Check-in **seats** a free matching cabin (`endsAt = now + duration`), then normal `CHECKED_IN` → auto-complete. Reception may use the same window from the resource matrix when `receptionProcedureCheckIn` is on. |
+| Nurse | Check-in window = clinic working hours that Baku day. Check-in **seats** the planned cabin when it is free **now** (else the next free matching cabin). Plan `scheduledAt`/`endsAt` stay; factual window is `actualStartsAt`/`actualEndsAt` = `[now, now+duration)`. Plan STAFF allocation is kept; otherwise preferred skilled staff, else first skill. Then `CHECKED_IN` → auto-complete when **`actualEndsAt`** passes (plan `endsAt` is fallback only). Reception may use the same window from the resource matrix when `receptionProcedureCheckIn` is on. Board / nurse-day print: queue shows plan; in-cabin/done shows actual. |
 | Canon seat door | Nurse check-in. Matrix may show the bar after seat; DnD of unseated OPEN is refused (or explicit “pin FIXED” later). |
 
 Not the same as `PatientOrigin.WALK_IN`, walk-in party (CLI-61), `PROPOSED`, or `HOLD_UNTIL_PAY` unseated extras.
@@ -39,9 +39,11 @@ Not the same as `PatientOrigin.WALK_IN`, walk-in party (CLI-61), `PROPOSED`, or 
 When SAME_DAY is active for today:
 
 - Timed (`FIXED`) `SCHEDULED` rows may check in any time during clinic open hours that day (not only `scheduledAt ± grace`).
-- On check-in: **rebase occupancy** to `[now, now+duration)` on the same cabin (keep `scheduledAt` as the plan clock; set `checkedInAt` / `endsAt` / bookings). Cabin must be free **now**.
-- Do not invent a second “actual check-in time” column — use existing `checkedInAt`.
+- On check-in: assert plan cabin free **now** (capacity vs `CHECKED_IN` / in-flight actual), **then** rebase occupancy to `[now, now+duration)` on that **same** cabin. Keep plan `scheduledAt`/`endsAt`. Write `actualStartsAt`/`actualEndsAt` and bookings/allocations on the factual window; keep plan STAFF when allocated. If busy → `RESOURCE_BUSY` with guest + end; **no** FIXED fallthrough to another cabin.
+- `checkedInAt` remains the attendance audit stamp; board / nurse-day print in-cabin time uses `actualStartsAt`/`actualEndsAt`.
+- Auto-complete of `CHECKED_IN` waits on `actualEndsAt` (not the plan `endsAt`), so a late same-day check-in is not closed immediately.
 - Mid-day `autoNoShowAfterMin` from the planned slot is skipped while SAME_DAY is active for that day; EOD sweep after `dayEndHour` still applies to FIXED.
+- Cutover end: `/admin/settings` — switch to `STRICT`, or set `procedureCheckInSameDayUntil` to the last free day (next Baku day behaves as STRICT).
 
 ### Open foresight (not CLI-27)
 

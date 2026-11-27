@@ -12,6 +12,7 @@ export const PUBLIC_API_ROUTES: readonly string[] = [
   "/api/events/dispatch",
   "/api/integrations/hooks/**",
   "/api/integrations/ics/**",
+  "/api/public/platform-links",
   // challenge is under hooks/* — covered by hooks/** above
 ];
 

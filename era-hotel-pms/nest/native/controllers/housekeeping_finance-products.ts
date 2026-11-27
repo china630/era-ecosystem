@@ -18,6 +18,7 @@ export class HousekeepingFinanceProductsController {
   @Get("api/housekeeping/finance-products")
   @HttpCode(200)
   async get_0(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
     if (!(await enterHotelStaff(httpReq, httpRes))) return;
     try {
       const session = await hotelNestSession(httpReq);

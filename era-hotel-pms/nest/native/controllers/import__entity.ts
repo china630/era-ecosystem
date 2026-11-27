@@ -15,6 +15,7 @@ export class ImportEntityController {
   @Post("api/import/:entity")
   @HttpCode(200)
   async post_0(@Req() httpReq: Request, @Res({ passthrough: false }) httpRes: Response) {
+    const requestUrl = new URL(httpReq.originalUrl ?? httpReq.url ?? "/", "http://127.0.0.1");
     try {
       const web = await (async () => {
         return runWithStaffTenantIfPresent(httpReq, async () => {

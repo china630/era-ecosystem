@@ -78,7 +78,10 @@ export async function assertEpisodeDataScope(
   );
   if (scope.mode === "ALL") return null;
   if (!scope.practitionerId) {
-    return new ClinicJson(404, { error: "Episode not found" });
+    return new ClinicJson(404, {
+      error: "Episode not found",
+      code: "EPISODE_SCOPE",
+    });
   }
   const hit = await prisma.clinicalEpisode.findFirst({
     where: {
@@ -90,7 +93,10 @@ export async function assertEpisodeDataScope(
     select: { id: true },
   });
   if (!hit) {
-    return new ClinicJson(404, { error: "Episode not found" });
+    return new ClinicJson(404, {
+      error: "Episode not found",
+      code: "EPISODE_SCOPE",
+    });
   }
   return null;
 }

@@ -240,6 +240,18 @@ export function inferSatelliteKeyFromModuleKey(key: string): string | null {
   for (const [prefix, gate] of Object.entries(INDUSTRY_SUBMODULE_PREFIX_TO_GATE)) {
     if (key.startsWith(prefix)) return gate;
   }
+  if (
+    key === "platform_workforce" ||
+    key.startsWith("platform_workforce_")
+  ) {
+    return "platform_workforce";
+  }
+  if (
+    key === "platform_reference_data" ||
+    key.startsWith("platform_datahub_")
+  ) {
+    return "platform_datahub";
+  }
   return null;
 }
 

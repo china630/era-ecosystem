@@ -28,14 +28,15 @@ const PRICING_LOGIN_BTN_CLASS =
 export function PricingPageView({
   initialLocale,
   snapshot,
+  hideChrome = false,
 }: {
-  initialLocale: "ru" | "az";
+  initialLocale: Locale;
   snapshot: PublicPricingResponse;
+  /** When true, omit local sticky header (parent renders SiteHeader). */
+  hideChrome?: boolean;
 }) {
-  const [locale, setLocale] = useState<"az" | "ru">(initialLocale);
-  const onLocaleChange = (next: Locale) => {
-    if (next === "az" || next === "ru") setLocale(next);
-  };
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const onLocaleChange = (next: Locale) => setLocale(next);
   const [selectedTierId, setSelectedTierId] =
     useState<"TIER_0" | "TIER_1" | "TIER_2" | "TIER_3">("TIER_0");
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(null);
@@ -73,36 +74,38 @@ export function PricingPageView({
     );
   };
 
-  return (
-    <PricingPageShell>
-      <header className="sticky top-0 z-20 border-b border-slate-300/80 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
-          <Link
-            href="/"
-            className="text-lg font-bold tracking-tight text-slate-800 no-underline"
-          >
-            ERA 365
-          </Link>
-          <div className="flex items-center gap-2">
+  const body = (
+    <>
+      {!hideChrome ? (
+        <header className="sticky top-0 z-20 border-b border-slate-300/80 bg-white/90 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
             <Link
-              href="/satellites"
-              className="hidden text-sm font-medium text-slate-600 no-underline hover:text-slate-900 sm:inline"
+              href="/"
+              className="text-lg font-bold tracking-tight text-slate-800 no-underline"
             >
-              {locale === "ru" ? "Спутники" : "Peyklər"}
+              ERA 365
             </Link>
-            <Link
-              href="/calc"
-              className="text-sm font-semibold text-[#2980B9] no-underline hover:text-[#216f9e]"
-            >
-              {calcNavLabel(locale)}
-            </Link>
-            <LandingLanguageToggle locale={locale} onChange={onLocaleChange} />
-            <Link href="/login" className={PRICING_LOGIN_BTN_CLASS}>
-              {view.hero.ctaLogin}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/satellites"
+                className="hidden text-sm font-medium text-slate-600 no-underline hover:text-slate-900 sm:inline"
+              >
+                {locale === "ru" ? "Продукты" : locale === "en" ? "Products" : "Məhsullar"}
+              </Link>
+              <Link
+                href="/calc"
+                className="text-sm font-semibold text-[#2980B9] no-underline hover:text-[#216f9e]"
+              >
+                {calcNavLabel(locale)}
+              </Link>
+              <LandingLanguageToggle locale={locale} onChange={onLocaleChange} />
+              <Link href="/login" className={PRICING_LOGIN_BTN_CLASS}>
+                {view.hero.ctaLogin}
+              </Link>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      ) : null}
 
       {view.unavailable ? (
         <p className="mx-auto max-w-6xl px-4 py-6 text-sm text-amber-800">
@@ -191,19 +194,36 @@ export function PricingPageView({
           />
         ) : null}
 
-        <div className="px-4 pb-8">
-          <PublicLegalFooter
-            locale={locale}
-            faqHref="/help"
-            labels={{
-              navAria: locale === "ru" ? "Юридические ссылки и справка" : "Hüquqi keçidlər və kömək",
-              faq: "FAQ",
-              terms: locale === "ru" ? "Условия использования" : "İstifadə şərtləri",
-              privacy: locale === "ru" ? "Конфиденциальность" : "Məxfilik",
-              status: "Status",
-            }}
-          />
-        </div>
+        {!hideChrome ? (
+          <div className="px-4 pb-8">
+            <PublicLegalFooter
+              locale={locale}
+              faqHref="/help"
+              labels={{
+                navAria:
+                  locale === "ru"
+                    ? "Юридические ссылки и справка"
+                    : locale === "en"
+                      ? "Legal links and help"
+                      : "Hüquqi keçidlər və kömək",
+                faq: "FAQ",
+                terms:
+                  locale === "ru"
+                    ? "Условия использования"
+                    : locale === "en"
+                      ? "Terms of use"
+                      : "İstifadə şərtləri",
+                privacy:
+                  locale === "ru"
+                    ? "Конфиденциальность"
+                    : locale === "en"
+                      ? "Privacy"
+                      : "Məxfilik",
+                status: "Status",
+              }}
+            />
+          </div>
+        ) : null}
       </main>
 
       <PricingCheckoutBar
@@ -211,6 +231,9 @@ export function PricingPageView({
         postpaidLabel={totals.postpaidLabel}
         bakuNotice={view.calculator.bakuNotice}
       />
-    </PricingPageShell>
+    </>
   );
+
+  if (hideChrome) return body;
+  return <PricingPageShell>{body}</PricingPageShell>;
 }

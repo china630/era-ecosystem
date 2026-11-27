@@ -27,7 +27,7 @@ Equal multi-resource search for procedures:
 5. `ResourceBooking` is write-through from the LOCATION/EQUIPMENT allocation for legacy queries.
 6. **Staff modes (enforced):**
    - **HARD** — practitioner exclusivity: overlapping STAFF allocation blocks the slot.
-   - **SOFT** — shared nurse pool: any skilled practitioner may be assigned; concurrency is allowed (load-balanced to least-busy). Physical `Resource.capacity` remains the scarce constraint (e.g. ozone cabin capacity=3).
+   - **SOFT** — shared nurse pool: any skilled practitioner may be assigned; concurrency is allowed (load-balanced to least-busy). **Ops model:** one nurse may cover several cabins in parallel; we do **not** model several nurses on one cabin. Physical `Resource.capacity` remains the scarce constraint (e.g. ozone cabin capacity=3; Halqa often 1).
 
 Availability = AND(physical free by capacity **and resource gap**, skilled staff available under the type's STAFF `staffMode`). Resource gap is a property of the **procedure type** (cabin/device idle after occupancy), not of the nurse. **SOFT** staff may be assigned to overlapping LOCATION slots (shared pool, load-balanced). **HARD** staff is exclusive on `[startsAt, endsAt)` only — `countStaffHardBusy` does not add the cabin turnover minutes. Do not copy `resourceGapMinutes` onto SOFT nurses. See [clinic-scheduling-time-layers.md](./clinic-scheduling-time-layers.md).
 

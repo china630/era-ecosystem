@@ -14,6 +14,7 @@ describe("clinic entity access matrix", () => {
       CLINIC_PERMISSION.API_PATIENTS,
       CLINIC_PERMISSION.API_CASHIER,
       CLINIC_PERMISSION.SCREEN_ADMIN_ACCESS,
+      CLINIC_PERMISSION.SCREEN_SANATORIUM,
     ]);
     expect(next).not.toContain("screen:admin.master_data" as never);
     expect(next).toContain(CLINIC_PERMISSION.SCREEN_ADMIN_PRACTITIONERS);
@@ -26,6 +27,7 @@ describe("clinic entity access matrix", () => {
     expect(next).toContain(CLINIC_PERMISSION.API_FISCAL);
     expect(next).toContain(CLINIC_PERMISSION.API_BILLING_READ);
     expect(next).toContain(CLINIC_PERMISSION.ADMIN_ACCESS_MANAGE);
+    expect(next).toContain(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ);
     expect(expandClinicCatalog(next)).toEqual(next);
   });
 

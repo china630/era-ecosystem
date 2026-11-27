@@ -6,7 +6,7 @@ import {
   clinicBody,
 } from "../../bridge";
 import { z } from "zod";
-import { requireClinicPermission } from "@/lib/api-utils";
+import { handleRouteError, requireClinicPermission } from "@/lib/api-utils";
 import { CLINIC_PERMISSION } from "@/lib/auth/clinic-permissions";
 import { cancelPaidExtraWithFolioReverse } from "@/domain/sanatorium/extras-assign.service";
 import { PackageAssignError } from "@/domain/sanatorium/package-assign.service";

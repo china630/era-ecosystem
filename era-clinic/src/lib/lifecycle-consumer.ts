@@ -149,7 +149,17 @@ export async function closeEpisodes(
       data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: reason },
     });
   }
-  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  const {
+    closeUnpaidExtras,
+    hardDeleteAbandonedExtraProposals,
+  } = await import("@/domain/sanatorium/extras-assign.service");
+  const now = new Date();
+  for (const episodeId of ids) {
+    await hardDeleteAbandonedExtraProposals({
+      episodeId,
+      createdBefore: now,
+    });
+  }
   await closeUnpaidExtras(
     {
       OR: [

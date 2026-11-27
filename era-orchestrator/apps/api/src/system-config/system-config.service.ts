@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { TariffTier } from "@era365/database";
+import { TariffTier, SITE_SYSTEM_CONFIG_DEFAULTS } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import type { TierQuotas } from "../constants/quotas";
 import { TIER_QUOTAS } from "../constants/quotas";
@@ -8,6 +8,7 @@ import {
   canonMeterUnitPricing,
   canonQuotaUnitPricing,
 } from "../billing/billing-meter-canon";
+import { decryptText, encryptText } from "../security/pii-crypto.util";
 
 const BILLING_PRICE_KEYS: Record<TariffTier, string> = {
   TIER_0: "billing.price.TIER_0",
@@ -58,8 +59,19 @@ export type SystemConfigAdminKeyMeta = {
     | "percent_0_100"
     | "tier_quotas"
     | "quota_unit_pricing"
-    | "positive_int";
+    | "positive_int"
+    | "url"
+    | "string"
+    | "secret"
+    | "boolean";
 };
+
+const SITE_SECRET_KEYS = new Set(["site.demo_form_webhook_secret"]);
+
+function maskSecret(stored: unknown): string {
+  if (typeof stored !== "string" || !stored.trim()) return "";
+  return "••••••••";
+}
 
 export type SystemConfigAdminRow = SystemConfigAdminKeyMeta & {
   storedValue: unknown | null;
@@ -501,6 +513,111 @@ export class SystemConfigService {
         allowPut: false,
         valueKind: "positive_int",
       },
+      {
+        key: "site.origin",
+        description: "Public marketing site origin (apex)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "url",
+      },
+      {
+        key: "site.app_origin",
+        description: "Control-plane app origin (login / workspace)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "url",
+      },
+      {
+        key: "site.crm_origin",
+        description: "Public CRM origin (form_generic webhook host)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "url",
+      },
+      {
+        key: "site.crm_internal_url",
+        description: "Internal CRM base URL for server-side demo form POST",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "url",
+      },
+      {
+        key: "site.demo_form_public_id",
+        description: "CRM form_generic publicId for site demo requests",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "string",
+      },
+      {
+        key: "site.demo_form_webhook_secret",
+        description: "CRM form_generic webhook secret (encrypted at rest)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "secret",
+      },
+      {
+        key: "site.crm_organization_id",
+        description: "CRM organization id for ERA public site demo connection",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "string",
+      },
+      {
+        key: "site.contact_phone",
+        description: "Public contact phone (display)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "string",
+      },
+      {
+        key: "site.contact_phone_e164",
+        description: "Public contact phone E.164 for tel: / wa.me",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "string",
+      },
+      {
+        key: "site.contact_email",
+        description: "Public corporate contact email",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "string",
+      },
+      {
+        key: "site.contact_address",
+        description: "Public address (empty hides address block)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "string",
+      },
+      {
+        key: "site.legal_name",
+        description: "Legal entity name (empty hides legal block)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "string",
+      },
+      {
+        key: "site.voen",
+        description: "VÖEN (empty hides legal block)",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "string",
+      },
+      {
+        key: "site.trust_blocks_enabled",
+        description: "Show trust / case / awards blocks on public site",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "boolean",
+      },
+      {
+        key: "site.catalog_cache_version",
+        description: "Public site catalog cache bump counter",
+        allowReset: true,
+        allowPut: true,
+        valueKind: "positive_int",
+      },
     ];
     return defs;
   }
@@ -527,6 +644,12 @@ export class SystemConfigService {
           if (def.key === TRIAL_PERIOD_DAYS_KEY) {
             defaultValue = 90;
             effectiveValue = await this.getTrialPeriodDays();
+          } else if (def.key === "site.catalog_cache_version") {
+            defaultValue = 0;
+            effectiveValue =
+              typeof stored === "number"
+                ? stored
+                : Number.parseInt(String(stored ?? "0"), 10) || 0;
           } else {
             defaultValue =
               def.key === OCR_JOBS_PER_ORG_MONTH_KEY ? 200 : 0;
@@ -536,6 +659,24 @@ export class SystemConfigService {
                 : await this.getTranslationCacheVersion();
           }
           break;
+        case "url":
+        case "string":
+        case "boolean": {
+          const siteDefault = SITE_SYSTEM_CONFIG_DEFAULTS.find(
+            (d) => d.key === def.key,
+          );
+          defaultValue = siteDefault?.value ?? (def.valueKind === "boolean" ? false : "");
+          effectiveValue = stored ?? defaultValue;
+          break;
+        }
+        case "secret": {
+          const siteDefault = SITE_SYSTEM_CONFIG_DEFAULTS.find(
+            (d) => d.key === def.key,
+          );
+          defaultValue = siteDefault?.value ?? "";
+          effectiveValue = maskSecret(stored);
+          break;
+        }
         case "positive_number":
           if (def.key === FOUNDATION_MONTHLY_KEY) {
             defaultValue = 29;
@@ -577,7 +718,8 @@ export class SystemConfigService {
       }
       rows.push({
         ...def,
-        storedValue: stored ?? null,
+        storedValue:
+          def.valueKind === "secret" ? maskSecret(stored) : (stored ?? null),
         effectiveValue,
         defaultValue,
       });
@@ -590,8 +732,30 @@ export class SystemConfigService {
     if (!def || !def.allowPut) {
       throw new BadRequestException(`Key not editable: ${key}`);
     }
+    if (def.valueKind === "secret") {
+      if (typeof value !== "string" || !value.trim()) {
+        throw new BadRequestException("Secret must be a non-empty string");
+      }
+      if (value === "••••••••") {
+        return;
+      }
+      await this.setJson(key, encryptText(value.trim()));
+      return;
+    }
     const normalized = this.normalizeAdminSystemConfigValue(def.valueKind, value);
     await this.setJson(key, normalized as object);
+  }
+
+  /** Decrypt a secret system_config value; returns null if missing/empty. */
+  async getSecretPlain(key: string): Promise<string | null> {
+    const stored = await this.getJson(key);
+    if (typeof stored !== "string" || !stored.trim()) return null;
+    try {
+      return decryptText(stored);
+    } catch {
+      // Legacy plaintext (pre-encrypt) — allow once.
+      return stored;
+    }
   }
 
   async resetAdminSystemConfig(key: string): Promise<void> {
@@ -620,7 +784,11 @@ export class SystemConfigService {
       }
       case "positive_int": {
         const n = Math.floor(toPositiveNum(value, NaN));
-        if (!Number.isFinite(n) || n < 1) {
+        // catalog_cache_version may be 0; other keys stay >= 1
+        if (!Number.isFinite(n) || n < 0) {
+          throw new BadRequestException("Expected non-negative integer");
+        }
+        if (n < 1 && value !== 0 && value !== "0") {
           throw new BadRequestException("Expected positive integer");
         }
         return n;
@@ -671,6 +839,31 @@ export class SystemConfigService {
           pricePerDocumentPackAzn: toPositiveNum(o.pricePerDocumentPackAzn, 5),
         });
       }
+      case "url": {
+        if (typeof value !== "string" || !value.trim()) {
+          throw new BadRequestException("Expected non-empty URL string");
+        }
+        const trimmed = value.trim().replace(/\/$/, "");
+        try {
+          // eslint-disable-next-line no-new
+          new URL(trimmed);
+        } catch {
+          throw new BadRequestException("Invalid URL");
+        }
+        return trimmed;
+      }
+      case "string":
+        if (typeof value !== "string") {
+          throw new BadRequestException("Expected string");
+        }
+        return value;
+      case "boolean":
+        if (typeof value === "boolean") return value;
+        if (value === "true" || value === 1 || value === "1") return true;
+        if (value === "false" || value === 0 || value === "0") return false;
+        throw new BadRequestException("Expected boolean");
+      case "secret":
+        throw new BadRequestException("Secret handled separately");
       default:
         throw new BadRequestException("Unsupported value kind");
     }

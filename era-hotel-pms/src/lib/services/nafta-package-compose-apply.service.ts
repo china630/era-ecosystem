@@ -18,8 +18,6 @@ import {
   type ComposeBreakdown,
   type PackageSellCell,
 } from "@/lib/services/nafta-package-compose.service";
-import { MEDICAL_PACKAGE_CODES } from "@/lib/services/medical-package-resolve.service";
-
 function stayDateUtc(asOf: Date): Date {
   return new Date(Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate()));
 }
@@ -39,9 +37,16 @@ export async function loadPackageSellCells(
   asOf: Date,
   mealPlanId?: string | null,
 ): Promise<PackageSellCell[]> {
+  const { listSellablePackages } = await import(
+    "@/lib/services/hotel-sellable-package.service"
+  );
+  const catalog = await listSellablePackages({ family: "MEDICAL", activeOnly: true });
+  const codes = catalog.map((row) => row.code).filter(Boolean);
+  // Empty MEDICAL catalog = misconfig: do not invent the legacy four SKUs.
+  if (codes.length === 0) return [];
   const on = stayDateUtc(asOf);
   const plans = await prisma.ratePlan.findMany({
-    where: { code: { in: [...MEDICAL_PACKAGE_CODES] } },
+    where: { code: { in: codes } },
     include: {
       sellVersions: {
         where: {

@@ -287,6 +287,79 @@ exports.Prisma.SatelliteScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SatellitePublicProfileScalarFieldEnum = {
+  satelliteKey: 'satelliteKey',
+  publicSlug: 'publicSlug',
+  visibility: 'visibility',
+  maturity: 'maturity',
+  sortOrder: 'sortOrder',
+  names: 'names',
+  descriptions: 'descriptions',
+  tagline: 'tagline',
+  body: 'body',
+  imageUrl: 'imageUrl',
+  showOnSite: 'showOnSite',
+  kind: 'kind',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PricingModulePublicProfileScalarFieldEnum = {
+  moduleKey: 'moduleKey',
+  visibility: 'visibility',
+  maturity: 'maturity',
+  sortOrder: 'sortOrder',
+  names: 'names',
+  descriptions: 'descriptions',
+  tagline: 'tagline',
+  body: 'body',
+  imageUrl: 'imageUrl',
+  showAsSubsection: 'showAsSubsection',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SiteIndustryScalarFieldEnum = {
+  slug: 'slug',
+  visibility: 'visibility',
+  maturityOverride: 'maturityOverride',
+  sortOrder: 'sortOrder',
+  names: 'names',
+  descriptions: 'descriptions',
+  tagline: 'tagline',
+  body: 'body',
+  imageUrl: 'imageUrl',
+  calcPrefill: 'calcPrefill',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SiteIndustryItemScalarFieldEnum = {
+  id: 'id',
+  industrySlug: 'industrySlug',
+  satelliteKey: 'satelliteKey',
+  moduleKey: 'moduleKey',
+  role: 'role',
+  assumed: 'assumed',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SiteArchitectureEdgeScalarFieldEnum = {
+  id: 'id',
+  fromKey: 'fromKey',
+  toKey: 'toKey',
+  kind: 'kind',
+  realizationStatus: 'realizationStatus',
+  labels: 'labels',
+  visibility: 'visibility',
+  sortOrder: 'sortOrder',
+  autoManaged: 'autoManaged',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.OrganizationSatelliteEntitlementScalarFieldEnum = {
   organizationId: 'organizationId',
   satelliteKey: 'satelliteKey',
@@ -1853,6 +1926,45 @@ exports.PricingCatalogKind = exports.$Enums.PricingCatalogKind = {
   ADDON: 'ADDON'
 };
 
+exports.SiteCatalogVisibility = exports.$Enums.SiteCatalogVisibility = {
+  VISIBLE: 'VISIBLE',
+  HIDDEN: 'HIDDEN',
+  DRAFT: 'DRAFT'
+};
+
+exports.SiteCatalogMaturity = exports.$Enums.SiteCatalogMaturity = {
+  prod: 'prod',
+  pilot: 'pilot',
+  in_development: 'in_development'
+};
+
+exports.SiteIndustryItemRole = exports.$Enums.SiteIndustryItemRole = {
+  C: 'C',
+  I: 'I',
+  O: 'O'
+};
+
+exports.SiteArchitectureEdgeKind = exports.$Enums.SiteArchitectureEdgeKind = {
+  REVENUE_EVENT: 'REVENUE_EVENT',
+  FOLIO_POST: 'FOLIO_POST',
+  SETTLEMENT: 'SETTLEMENT',
+  LIFECYCLE: 'LIFECYCLE',
+  OPS_HANDOFF: 'OPS_HANDOFF',
+  STAFF_PROVISION: 'STAFF_PROVISION',
+  CRM_PARTY: 'CRM_PARTY',
+  REFERENCE_DATA: 'REFERENCE_DATA',
+  ANALYTICS: 'ANALYTICS',
+  READ_STATUS: 'READ_STATUS',
+  PLATFORM_IDENTITY: 'PLATFORM_IDENTITY',
+  BANK_CHANNEL: 'BANK_CHANNEL'
+};
+
+exports.SiteArchitectureRealizationStatus = exports.$Enums.SiteArchitectureRealizationStatus = {
+  live: 'live',
+  partial: 'partial',
+  planned: 'planned'
+};
+
 exports.DeploymentTopology = exports.$Enums.DeploymentTopology = {
   SHARED: 'SHARED',
   DEDICATED: 'DEDICATED',
@@ -2360,6 +2472,11 @@ exports.Prisma.ModelName = {
   Pricing: 'Pricing',
   PricingModule: 'PricingModule',
   Satellite: 'Satellite',
+  SatellitePublicProfile: 'SatellitePublicProfile',
+  PricingModulePublicProfile: 'PricingModulePublicProfile',
+  SiteIndustry: 'SiteIndustry',
+  SiteIndustryItem: 'SiteIndustryItem',
+  SiteArchitectureEdge: 'SiteArchitectureEdge',
   OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
   SatelliteEndpoint: 'SatelliteEndpoint',
   PlacementBatch: 'PlacementBatch',

@@ -264,6 +264,24 @@ describe("CLI-57 package assign helpers", () => {
         },
       }),
     );
+    // Empty / bookkeeping-only physio must not split cards (null vs {} vs bathSequence:null).
+    expect(regimeFingerprint({ physioFields: null })).toBe("||");
+    expect(regimeFingerprint({ physioFields: {} })).toBe("||");
+    expect(regimeFingerprint({ physioFields: { bathSequence: null } })).toBe("||");
+    expect(regimeFingerprint({ physioFields: { dayBlock: "2", bathSequence: null } })).toBe("||");
+    expect(
+      regimeFingerprint({
+        siteIds: ["a"],
+        siteApplyMode: "TURN",
+        physioFields: { intensity: null, bathSequence: null },
+      }),
+    ).toBe(
+      regimeFingerprint({
+        siteIds: ["a"],
+        siteApplyMode: "TURN",
+        physioFields: null,
+      }),
+    );
     expect(mergeParamLines(["naftalanFill: TAM · dayBlock: 2", "naftalanFill: TAM · bathSequence: SITZ_THEN_FULL"])).toEqual([
       "naftalanFill: TAM",
       "dayBlock: 2",

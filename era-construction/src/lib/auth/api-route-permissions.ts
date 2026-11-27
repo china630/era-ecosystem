@@ -12,6 +12,7 @@ export const PUBLIC_API_ROUTES: readonly string[] = [
   "/api/events/dispatch",
   /** Orch fan-out; Nest + kit middleware treat as public (bridge secret inside handler). */
   "/api/integration/staff-provision",
+  "/api/public/platform-links",
 ];
 
 /** Any signed-in session; no grant. */

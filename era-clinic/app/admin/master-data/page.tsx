@@ -272,9 +272,16 @@ export default function MasterDataPage() {
       fetch("/api/admin/catalog?kind=PROCEDURE").then((x) => x.json()),
       fetch("/api/admin/physio-sites").then((x) => x.json()),
     ]);
-    setPractitioners((p.data ?? p) as Practitioner[]);
-    setRooms((r.data ?? r) as Room[]);
-    setResources((res.data ?? res) as Resource[]);
+    const asList = <T,>(payload: unknown): T[] => {
+      if (Array.isArray(payload)) return payload as T[];
+      if (payload && typeof payload === "object" && Array.isArray((payload as { data?: unknown }).data)) {
+        return (payload as { data: T[] }).data;
+      }
+      return [];
+    };
+    setPractitioners(asList<Practitioner>(p.data ?? p));
+    setRooms(asList<Room>(r.data ?? r));
+    setResources(asList<Resource>(res.data ?? res));
     const ptRaw = (pt.data ?? pt) as
       | ProcedureType[]
       | { items?: ProcedureType[]; blockedNonCabin?: Array<{ code: string; name: string }> };

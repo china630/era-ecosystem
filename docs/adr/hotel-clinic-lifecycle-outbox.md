@@ -6,6 +6,8 @@ Check-in, check-out, early depart, package change, room change, and a guest move
 
 The organization on the row is the stay's `organizationId`.
 
+The in-process drain (every 15s) must not use the tenant-extended Prisma client to discover due rows: on SHARED the fail-closed filter throws `SatelliteOrganizationUnboundError`. Drain uses a bare `PrismaClient` to `DISTINCT organizationId` from due outbox rows, then `runWithSatelliteTenant` per org for send/ack. Empty due set is a quiet no-op (no orch/unbound warn spam).
+
 ## Reconcile
 
 The clinic process calls the stay reconcile at 06:00 and 18:00 Asia/Baku, and once 20 seconds after boot. `POST /api/cron/episode-hotel-checkout` runs the same pass.

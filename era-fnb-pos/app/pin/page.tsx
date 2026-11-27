@@ -16,7 +16,7 @@ import {
   showApiError,
   StaffLoginOrgNoField,
   useStaffLoginOrgNo,
-  orchPublicHref,
+  usePlatformLinks,
   persistLoginOrgNo,
 } from "@era/satellite-kit/ui";
 
@@ -28,6 +28,7 @@ function PinForm() {
   const tAuth = useTranslations("auth");
   const tLogin = useTranslations("login");
   const t = useTranslations("pin");
+  const { links } = usePlatformLinks();
   const tOut = useTranslations("selectOutlet");
   const locale = useLocale() as Locale;
   const [phase, setPhase] = useState<"loading" | "pair" | "outlets" | "names">("loading");
@@ -158,7 +159,7 @@ function PinForm() {
           </p>
           <PublicLegalFooter
             locale={locale}
-            faqHref={orchPublicHref("/help")}
+            faqHref={links?.helpUrl || "/help"}
             showFaq={false}
             labels={{
               navAria: tAuth("footerLegalNavAria"),

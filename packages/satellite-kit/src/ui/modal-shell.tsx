@@ -82,9 +82,10 @@ export function ModalShell({
   const host = useDocumentBody();
   if (!open || !host) return null;
 
+  // items-center: content-sized dialogs hug body. Tall ops use MODAL_* min-h/h on maxWidthClass.
   return createPortal(
     <div
-      className={`fixed inset-0 ${overlayZClass} flex items-stretch justify-center overflow-hidden bg-black/40 ${overlayPaddingClass}`}
+      className={`fixed inset-0 ${overlayZClass} flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/40 ${overlayPaddingClass}`}
       style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
       role="presentation"
       aria-hidden="true"

@@ -3,6 +3,47 @@
     "title": "ERA 365 Orchestrator",
     "description": "Control plane — identity, billing, industry launcher"
   },
+  "site": {
+    "nav": {
+      "brand": "ERA 365"
+    },
+    "home": {
+      "seoTitle": "ERA 365 — business platform for Azerbaijan",
+      "seoDescription": "Accounting, industry products, and subscriptions on one platform."
+    },
+    "satellites": {
+      "seoTitle": "Solutions",
+      "seoDescription": "ERA 365 products — accounting and industry solutions on one platform."
+    },
+    "pricing": {
+      "seoTitle": "Pricing",
+      "seoDescription": "Subscription plans for Finance Core, industry satellites, and platform add-ons."
+    },
+    "industries": {
+      "title": "Industries",
+      "intro": "Ready-made product bundles for your sector.",
+      "kicker": "Industry solution",
+      "stubNote": "Full industry page content is coming next."
+    },
+    "demo": {
+      "title": "Request a demo",
+      "intro": "Tell us about your organization and we will schedule a walkthrough.",
+      "formStub": "Demo form wiring to era-crm is planned — use contacts meanwhile."
+    },
+    "contact": {
+      "title": "Contact",
+      "intro": "Reach the ERA 365 team.",
+      "stub": "Contact block will list phone, WhatsApp, and corporate email."
+    },
+    "calculator": {
+      "title": "Subscription calculator",
+      "intro": "Estimate your monthly subscription before you sign up.",
+      "step1": "Pick an industry or open the full calculator.",
+      "step2": "Adjust modules, capacity, and platform add-ons.",
+      "step3": "Share the link or start a free trial.",
+      "byIndustry": "Start from an industry"
+    }
+  },
   "login": {
     "title": "Sign in",
     "subtitle": "",

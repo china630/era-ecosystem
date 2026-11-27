@@ -221,7 +221,8 @@
     "schedulesHub": "Все графики",
     "scheduleReception": "График ресепшн",
     "scheduleSecurity": "График охраны",
-    "scheduleEngineering": "График техслужбы"
+    "scheduleEngineering": "График техслужбы",
+    "sanatoriumPackages": "Пакеты санатория"
   },
   "foStatus": {
     "title": "Статус отеля",
@@ -1694,6 +1695,8 @@
     "stayWindow": "Период проживания",
     "roomTypeChargeHint": "Тарифицируемая категория — по ней цена и ночной аудит",
     "givenRoomTypePhysicalHint": "Физическая категория для списка номеров (пусто = как тип номера)",
+    "packageNightsTooShort": "{code}: проживание {nights} ноч., минимум {min}",
+    "packageNightsTooLong": "{code}: проживание {nights} ноч., максимум {max}",
     "complimentaryUpgradeChip": "Бесплатный апгрейд: оплачен {charge}, выдан {physical}",
     "classDiffers": "Оплачен {charge}, выдан {physical}.",
     "classSettlementLabel": "Кто оплачивает разницу класса",
@@ -2013,7 +2016,8 @@
     "guestMsgBody": "Сообщение",
     "guestMsgSend": "Отправить",
     "guestMsgSent": "Отправлено во входящие гостя",
-    "guestMsgFail": "Не удалось отправить"
+    "guestMsgFail": "Не удалось отправить",
+    "nightlyPriceMissingHint": "Нет цены ночи для тарифа × типа номера × питания × occupancy — проверьте цены пакетов."
   },
   "guestCard": {
     "title": "Карточка гостя",
@@ -4379,7 +4383,18 @@
     "linkYieldRules": "Yield rules",
     "linkComponents": "Ценовые компоненты",
     "agencyPortalAutoConfirm": "Автоподтверждение агентского портала",
-    "agencyPortalAutoConfirmHint": "Выкл (по умолчанию): портал создаёт OPTION, FO подтверждает. Вкл: CONFIRMED при наличии квоты."
+    "agencyPortalAutoConfirmHint": "Выкл (по умолчанию): портал создаёт OPTION, FO подтверждает. Вкл: CONFIRMED при наличии квоты.",
+    "linkSanatoriumPackages": "Пакеты санатория",
+    "yieldAppliesToPackages": "Yield на пакеты",
+    "yieldAppliesToPackagesHint": "Когда yield включён — также двигать пакетную ночь (по умолчанию выкл).",
+    "manualNightOverrideEnabled": "Ручная цена ночи на карточке",
+    "manualNightOverrideEnabledHint": "FO может фиксировать ночи на вкладке Pricing.",
+    "barPricingEnabled": "Цены BAR-календаря",
+    "barPricingEnabledHint": "BAR-календарь для BASE / derived walk-in.",
+    "dailyRatesEnabled": "Таблица daily / walk-in",
+    "dailyRatesEnabledHint": "Использовать /settings/daily-prices для walk-in.",
+    "linkDailyPrices": "Daily prices",
+    "linkPackagePrices": "Цены пакетов"
   },
   "packagePrices": {
     "title": "Пакеты: sell и floor",
@@ -4863,7 +4878,7 @@
     "finance": "Финансы",
     "financeHint": "Связь с контрагентом финансов",
     "medicalPackage": "Медицинский пакет",
-    "medicalPackageNone": "Из названия агентства",
+    "medicalPackageNone": "Не используется — каталог отеля",
     "financeLinked": "Связан",
     "financeVoenOnly": "Только VÖEN",
     "financeMissing": "Нет связи",
@@ -5315,5 +5330,27 @@
     "addAssignment": "Назначить",
     "emptyBindingHint": "Привяжите подразделения Workforce в настройках доски, чтобы picker показал нужных людей.",
     "emptyPeople": "В привязанных подразделениях никого нет. Измените binding или фильтр."
+  },
+  "sanatoriumPackages": {
+    "title": "Пакеты санатория",
+    "subtitle": "Каталог продаваемых medical / Infotur пакетов отеля (sync из клиники). Без модуля городской отель экран не видит.",
+    "syncFromClinic": "Sync из клиники",
+    "syncOk": "Синхронизировано пакетов: {count}",
+    "clinicUnreachable": "Клиника не ответила — каталог не изменён",
+    "linkPackagePrices": "Цены пакетов",
+    "linkPricingHub": "Центр цен",
+    "emptyMedicalWarn": "Нет активных MEDICAL — Medical Rates на FO заблокированы.",
+    "activeMedicalCount": "Активных MEDICAL: {count}",
+    "colCode": "Код",
+    "colName": "Название",
+    "colFamily": "Семейство",
+    "colNights": "Min / max (длительность)",
+    "colActive": "FO активен",
+    "familyMedical": "Medical (на гостя)",
+    "familyInfotur": "Infotur (тариф проживания)",
+    "on": "Вкл",
+    "off": "Выкл",
+    "empty": "Каталог пуст — sync из клиники",
+    "moduleOff": "Модуль Medical & Sanatorium для организации не активен."
   }
 }

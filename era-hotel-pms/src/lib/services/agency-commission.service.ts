@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { bakuCivilUtcDate, todayBakuYmd } from '@era/satellite-kit/time';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { hotelDateKey } from '@/lib/hotel-calendar';
+import { hotelDateKey, stayNights } from '@/lib/hotel-calendar';
 import { requestOrganizationId } from '@/lib/request-organization';
 import { isRoomAndTaxRevenueCode } from '@/lib/services/booking-folio.service';
 import {
@@ -637,7 +637,7 @@ export async function forecastAgencyCommission(fromYmd: string, toYmd: string) {
           (stay.dailyRates.length > 0
             ? 0
             : decimalToNumber(stay.totalAmount) /
-              Math.max(1, Math.ceil((stay.checkOutDate.getTime() - stay.checkInDate.getTime()) / 86400000)));
+              Math.max(1, stayNights(stay.checkInDate, stay.checkOutDate)));
         revenue += nightly;
       }
       const next = new Date(noon);

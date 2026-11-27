@@ -65,9 +65,13 @@ jest.mock("@/domain/sanatorium/stay-seat-cap", () => ({
     checkoutYmd: "2026-12-06",
   }),
   countRemainingStayWorkingDays: jest.fn().mockResolvedValue(14),
+  remainingUnifiedStayQty: jest.fn().mockResolvedValue(14),
 }));
 
+import { remainingUnifiedStayQty } from "@/domain/sanatorium/stay-seat-cap";
 import { prisma } from "@/lib/prisma";
+
+const mockRemainingUnified = remainingUnifiedStayQty as jest.Mock;
 
 const mocked = prisma as unknown as {
   programInstance: { findFirst: jest.Mock };
@@ -94,6 +98,8 @@ function stubEpisodeMocks() {
   mocked.procedureType.findMany.mockResolvedValue([
     { id: "pt-1", code: "SVC-MASSAGE", name: "Massage", durationMin: 30, openAttendance: false, bodyPart: null },
   ]);
+  // purgeAbandonedExtraProposals before create/seat
+  mocked.procedureOrder.findMany.mockResolvedValue([]);
 }
 
 describe("remainingPackageQuotaCode", () => {
@@ -156,5 +162,23 @@ describe("prescribeExtras package-first gate", () => {
     await expect(
       prescribeExtras("ep-1", [{ procedureCode: "SVC-MASSAGE", qty: 1 }]),
     ).resolves.toBeDefined();
+  });
+
+  it("STAY_QTY_EXCEEDED when same-code lines in one request exceed remaining room", async () => {
+    mocked.programInstance.findFirst.mockResolvedValue({
+      templateId: "tpl-1",
+      procedureLines: [{ procedureCode: "SVC-MASSAGE", quotaTotal: 2 }],
+    });
+    mocked.procedureOrder.count.mockResolvedValue(2);
+    mockRemainingUnified.mockResolvedValue(3);
+    mocked.procedureOrder.create.mockResolvedValue({ id: "ord-new", schedulingMode: "FIXED" });
+    mocked.procedureOrder.findMany.mockResolvedValue([]);
+    await expect(
+      prescribeExtras("ep-1", [
+        { procedureCode: "SVC-MASSAGE", qty: 2 },
+        { procedureCode: "SVC-MASSAGE", qty: 2 },
+      ]),
+    ).rejects.toMatchObject({ code: "STAY_QTY_EXCEEDED" });
+    expect(mocked.procedureOrder.create).not.toHaveBeenCalled();
   });
 });

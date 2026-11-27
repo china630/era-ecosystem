@@ -1,5 +1,5 @@
 import { expressKitHeaders } from "../../express-kit-headers";
-import { Controller, Get, HttpCode, Post, Req } from "@nestjs/common";
+import { Controller, Get, HttpCode, HttpException, Post, Req } from "@nestjs/common";
 import type { Request } from "express";
 import {
   withClinicHttp,
@@ -19,6 +19,7 @@ const createSchema = z.object({
 });
 
 function fail(err: unknown) {
+  if (err instanceof HttpException) throw err;
   if (err instanceof WalkInPartyError) return clinicBody(jsonError(err.message, err.status, { code: err.code }));
   return clinicBody(handleRouteError(err));
 }

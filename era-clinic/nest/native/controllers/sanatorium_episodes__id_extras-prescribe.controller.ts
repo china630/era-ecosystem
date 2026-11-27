@@ -118,6 +118,12 @@ export class SanatoriumEpisodesIdExtrasPrescribeController {
         procedureName: catalogNames.get(r.procedureCode) || r.procedureName,
         amountNet: Number(r.amountNet),
         regimeKey: regimeFromOrderSites(r),
+        physioFields: r.physioFields,
+        siteIds: r.sites.map((site) => site.siteId),
+        siteApplyMode: r.siteApplyMode,
+        siteLaterality: Object.fromEntries(
+          r.sites.map((site) => [site.siteId, site.laterality]),
+        ),
       })),
       diagnostics,
     };

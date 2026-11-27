@@ -1,5 +1,9 @@
 import type { Express, Request as ExpressRequest, Response as ExpressResponse } from "express";
-import { createOrganizationBindHandlers, createRuntimeConfigHandlers } from "@era/satellite-kit";
+import {
+  createOrganizationBindHandlers,
+  createRuntimeConfigHandlers,
+  platformLinksGet,
+} from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { runWithNestHttp, runWithStaffTenantIfPresent, sendRouteError, sendWebResponse } from "./bridge";
 
@@ -47,6 +51,7 @@ function mount(
 
 /** Kit re-exports the generator skips. Same handlers as the Next route files. */
 export function registerKitRoutes(http: Express) {
+  mount(http, "get", "/api/public/platform-links", platformLinksGet);
   mount(http, "get", "/api/internal/v1/runtime-config", runtimeConfig.GET);
   mount(http, "post", "/api/internal/v1/runtime-config", runtimeConfig.POST);
   mount(http, "get", "/api/internal/v1/organization/bind", organizationBind.GET);

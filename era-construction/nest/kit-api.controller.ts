@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { readBillingStatusFrom } from "@era/satellite-kit/billing/status-route";
-import { expressKitHeaders, type KitHttpResult } from "@era/satellite-kit";
+import { expressKitHeaders, readPlatformLinks, type KitHttpResult } from "@era/satellite-kit";
 import { runWithStaffTenantIfPresent, sendRouteError } from "./bridge";
 import { organizationBind, runtimeConfig } from "./kit-routes";
 
@@ -11,6 +11,12 @@ import { organizationBind, runtimeConfig } from "./kit-routes";
  */
 @Controller()
 export class KitApiController {
+  @Get("api/public/platform-links")
+  @HttpCode(200)
+  platformLinks(@Req() req: Request, @Res({ passthrough: false }) res: Response) {
+    return send(req, res, async () => readPlatformLinks());
+  }
+
   @Get("api/platform/billing-status")
   @HttpCode(200)
   billing(@Req() req: Request, @Res({ passthrough: false }) res: Response) {

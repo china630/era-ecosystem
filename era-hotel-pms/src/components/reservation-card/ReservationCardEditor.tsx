@@ -22,7 +22,7 @@ import {
   operationalGapLabelKey,
   operationalGaps,
 } from '@/lib/guest-stay-requirements';
-import { addHotelDays, hotelDateKey } from '@/lib/hotel-calendar';
+import { addHotelDays, hotelDateKey, stayNights } from '@/lib/hotel-calendar';
 import { revenueRoleIn, STAY_NIGHT_ROLES } from '@/lib/revenue-code-match';
 import { parsePackageNight, parseRoomChargeNote } from '@/lib/folio-charge-note';
 import { CatalogField, FieldTextarea } from '@era/satellite-kit/ui';
@@ -474,21 +474,63 @@ export function ReservationCardEditor({
   const [pax, setPax] = useState<PaxRow[]>([]);
   const [ratePlanId, setRatePlanId] = useState('');
   const [ratePlans, setRatePlans] = useState<RatePlanOption[]>([]);
-  const [clinicProgramCodes, setClinicProgramCodes] = useState<string[]>([]);
+  const [medicalCatalogCodes, setMedicalCatalogCodes] = useState<string[]>([]);
+  const [medicalCatalogBounds, setMedicalCatalogBounds] = useState<
+    Array<{ value: string; minNights: number | null; maxNights: number | null }>
+  >([]);
+  const [sanatoriumModuleOn, setSanatoriumModuleOn] = useState(false);
+  const [activeMedicalCount, setActiveMedicalCount] = useState(0);
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    void fetch('/api/clinic-program-codes')
+    void fetch('/api/fo/sellable-packages')
       .then((res) => (res.ok ? res.json() : null))
-      .then((body: { codes?: string[] } | null) => {
-        if (cancelled || !body?.codes) return;
-        setClinicProgramCodes(body.codes);
-      })
+      .then(
+        (body: {
+          sanatorium?: boolean;
+          activeMedical?: number;
+          medicalChoices?: Array<{
+            value: string;
+            minNights?: number | null;
+            maxNights?: number | null;
+          }>;
+        } | null) => {
+          if (cancelled || !body) return;
+          setSanatoriumModuleOn(Boolean(body.sanatorium));
+          setActiveMedicalCount(Number(body.activeMedical ?? 0));
+          const choices = body.medicalChoices ?? [];
+          setMedicalCatalogCodes(choices.map((c) => c.value).filter(Boolean));
+          setMedicalCatalogBounds(
+            choices
+              .filter((c) => c.value)
+              .map((c) => ({
+                value: c.value,
+                minNights: typeof c.minNights === 'number' ? c.minNights : null,
+                maxNights: typeof c.maxNights === 'number' ? c.maxNights : null,
+              })),
+          );
+        },
+      )
       .catch(() => undefined);
     return () => {
       cancelled = true;
     };
   }, [open]);
+  // ADR D3: one active MEDICAL → auto-stamp all pax (no Guests column).
+  useEffect(() => {
+    if (!open || !sanatoriumModuleOn || activeMedicalCount !== 1) return;
+    const sole = medicalCatalogCodes[0]?.trim().toUpperCase();
+    if (!sole) return;
+    setPax((rows) => {
+      let changed = false;
+      const next = rows.map((row) => {
+        if (row.medicalPackageCode?.trim()) return row;
+        changed = true;
+        return { ...row, medicalPackageCode: sole };
+      });
+      return changed ? next : rows;
+    });
+  }, [open, sanatoriumModuleOn, activeMedicalCount, medicalCatalogCodes]);
   const [guestId, setGuestId] = useState('');
   /** Latest party for async guest-card create/save (avoid stale closure). */
   const paxRef = useRef<PaxRow[]>(pax);
@@ -1386,11 +1428,19 @@ export function ReservationCardEditor({
     }
     const qs = new URLSearchParams({ ratePlanId, checkInDate: checkIn, checkOutDate: checkOut });
     if (agencyId) qs.set('agencyId', agencyId);
+    if (roomTypeId) qs.set('roomTypeId', roomTypeId);
+    if (mealPlanId) qs.set('mealPlanId', mealPlanId);
+    const guests = Math.max(1, Number(adults) || 1);
+    qs.set('guests', String(guests));
     fetch(`/api/bookings/quote?${qs}`)
       .then((r) => r.json())
       .then((q) => {
         if (q.error) {
-          setQuoteText(null);
+          setQuoteText(
+            typeof q.error === 'string' && q.error.trim()
+              ? q.error
+              : t('nightlyPriceMissingHint'),
+          );
           return;
         }
         const suffix = q.contractRuleName
@@ -1399,7 +1449,7 @@ export function ReservationCardEditor({
         setQuoteText(`${q.totalAmount.toFixed(2)} AZN · ${q.nights} nights${suffix}`);
       })
       .catch(() => setQuoteText(null));
-  }, [isCreate, ratePlanId, agencyId, checkIn, checkOut]);
+  }, [isCreate, ratePlanId, agencyId, checkIn, checkOut, roomTypeId, mealPlanId, adults, t]);
 
   useEffect(() => {
     if (!isCreate || !roomTypeId || !checkIn || !checkOut) {
@@ -2072,7 +2122,7 @@ export function ReservationCardEditor({
           if (defaults.companyId !== undefined) setCompanyId(defaults.companyId ?? '');
           if (defaults.commissionBasis) setCommissionBasis(defaults.commissionBasis);
           if (defaults.roomPayer) setRoomPayer(defaults.roomPayer);
-          // Keep FO medical package (Volkin / Merikl…) when it differs from the
+          // Keep FO medical package from the hotel catalog when it differs from the
           // contract Infotur tariff — same rule as reservation.service create.
           const foRp = ratePlans.find((r) => r.id === ratePlanId);
           const keepFoMedical =
@@ -2232,7 +2282,6 @@ export function ReservationCardEditor({
       walkInProfileCode: setWalkInProfileCode,
       companyId: setCompanyId,
       sourceId: setSourceId,
-      roomTypeId: setRoomTypeId,
       roomId: setPendingRoomId,
       roomCount: setRoomCount,
       rateType: setRateType,
@@ -2267,7 +2316,28 @@ export function ReservationCardEditor({
       colorCode: setColorCode,
       preferredLocation: setPreferredLocation,
       preferredBed: setPreferredBed,
-      givenRoomTypeId: setGivenRoomTypeId,
+      givenRoomTypeId: (v) => {
+        setGivenRoomTypeId(v);
+        const physical = (v || roomTypeId).trim();
+        if (physical && roomId) {
+          const door = rooms.find((r) => r.id === roomId);
+          if (door?.roomTypeId && door.roomTypeId !== physical) {
+            setRoomId('');
+            setPendingRoomId('');
+          }
+        }
+      },
+      roomTypeId: (v) => {
+        setRoomTypeId(v);
+        const physical = (givenRoomTypeId || v).trim();
+        if (physical && roomId) {
+          const door = rooms.find((r) => r.id === roomId);
+          if (door?.roomTypeId && door.roomTypeId !== physical) {
+            setRoomId('');
+            setPendingRoomId('');
+          }
+        }
+      },
       salesContractId: setSalesContractId,
       roomPayer: (v) => {
         if (v === 'GUEST' || v === 'AGENCY' || v === 'COMPANY') setRoomPayer(v);
@@ -2335,8 +2405,38 @@ export function ReservationCardEditor({
     scanPaxIndexRef.current = index;
   }
 
+  function stampSoleMedicalPackage(rows: PaxRow[]): PaxRow[] {
+    if (!sanatoriumModuleOn || activeMedicalCount !== 1) return rows;
+    const sole = medicalCatalogCodes[0]?.trim().toUpperCase();
+    if (!sole) return rows;
+    return rows.map((row) =>
+      row.medicalPackageCode?.trim() ? row : { ...row, medicalPackageCode: sole },
+    );
+  }
+
+  function medicalNightsViolation(rows: PaxRow[]): string | null {
+    if (!sanatoriumModuleOn || !checkIn || !checkOut) return null;
+    const plan = ratePlans.find((r) => r.id === ratePlanId);
+    if (!plan || stayProductFamily(plan) !== 'medical') return null;
+    const nights = stayNights(checkIn, checkOut);
+    if (nights <= 0) return null;
+    for (const row of stampSoleMedicalPackage(rows)) {
+      const code = row.medicalPackageCode?.trim().toUpperCase();
+      if (!code) continue;
+      const bound = medicalCatalogBounds.find((b) => b.value === code);
+      if (!bound) continue;
+      if (bound.minNights != null && nights < bound.minNights) {
+        return t('packageNightsTooShort', { code, nights, min: bound.minNights });
+      }
+      if (bound.maxNights != null && nights > bound.maxNights) {
+        return t('packageNightsTooLong', { code, nights, max: bound.maxNights });
+      }
+    }
+    return null;
+  }
+
   function paxGuestsPatchBody(rows: PaxRow[]) {
-    return rows
+    return stampSoleMedicalPackage(rows)
       .filter((p) => Boolean(p.guestId) || Boolean(p.firstName.trim()) || Boolean(p.lastName.trim()))
       .map((p) => ({
         id: p.id,
@@ -2454,6 +2554,15 @@ export function ReservationCardEditor({
       return;
     }
     if (!(await warnGuestOverlaps())) return;
+    const nightsErr = medicalNightsViolation(pax);
+    if (nightsErr) {
+      reportApiError({ error: nightsErr }, tc('failed'));
+      return;
+    }
+    if (sanatoriumModuleOn && activeMedicalCount === 1) {
+      const stamped = stampSoleMedicalPackage(pax);
+      if (stamped !== pax) setPax(stamped);
+    }
     setBusy(true);
     try {
       const sourceKind = bookingSourceKind(sources.find((s) => s.id === sourceId)?.code);
@@ -2590,31 +2699,7 @@ export function ReservationCardEditor({
             discountPercent: discountPercent === '' ? null : Number(discountPercent),
             discountActive: Number(discountPercent) > 0,
             notes,
-            paxGuests: pax
-              .filter(
-                (p) =>
-                  Boolean(p.guestId) ||
-                  Boolean(p.firstName.trim()) ||
-                  Boolean(p.lastName.trim()),
-              )
-              .map((p) => ({
-                id: p.id,
-                guestId: p.guestId || null,
-                firstName: p.firstName || null,
-                lastName: p.lastName || null,
-                middleName: p.middleName || null,
-                sex: p.sex || null,
-                nationality: p.nationality || null,
-                birthDate: p.birthDate || null,
-                age: p.age ? Number(p.age) : null,
-                idCardNo: p.idCardNo || null,
-                passportNo: p.passportNo || null,
-                isPrimary: p.isPrimary,
-                ownsFolio: p.ownsFolio ?? false,
-                medicalPackageCode: p.medicalPackageCode?.trim()
-                  ? p.medicalPackageCode.trim().toUpperCase()
-                  : null,
-              })),
+            paxGuests: paxGuestsPatchBody(pax),
           }),
         });
         const json = await res.json();
@@ -2656,14 +2741,14 @@ export function ReservationCardEditor({
           body: JSON.stringify({ sex: guestGender }),
         }).catch(() => undefined);
       }
-      let party = pax;
+      let party = stampSoleMedicalPackage(pax);
       let partyAdults = Math.max(0, Number(adults) || 0);
       let partyC11 = Number(children11_6) || 0;
       let partyC5 = Number(children5_2) || 0;
       let partyC1 = Number(children1_0) || 0;
       if (status === 'IN_HOUSE') {
-        const kept = pax.filter((row) => Boolean(row.guestId) || paxHasRealName(row));
-        if (kept.length !== pax.length) {
+        const kept = party.filter((row) => Boolean(row.guestId) || paxHasRealName(row));
+        if (kept.length !== party.length) {
           party = kept;
           const counts = countsFromPax(kept);
           partyAdults = counts.adults;
@@ -2880,7 +2965,10 @@ export function ReservationCardEditor({
     const today = todayBakuYmd();
     const ci = status === 'IN_HOUSE' && checkIn && checkIn < today ? today : checkIn;
     const co = checkOut;
-    return rooms.map((r) => {
+    const typedRooms = typeId
+      ? rooms.filter((r) => !r.roomTypeId || r.roomTypeId === typeId || r.id === roomId)
+      : rooms;
+    return typedRooms.map((r) => {
       const overlapping = (r.reservations ?? []).filter((res) => {
         if (reservationId && res.id === reservationId) return false;
         if (!['CONFIRMED', 'IN_HOUSE', 'OPTION'].includes(res.status)) return false;
@@ -3508,6 +3596,8 @@ export function ReservationCardEditor({
             }
             breakShareBusy={busy}
             {...leftPatch}
+            sanatoriumModuleOn={sanatoriumModuleOn}
+            activeMedicalCount={activeMedicalCount}
             priceNote={notes.PRICE_NOTE ?? ''}
           />
 
@@ -3584,11 +3674,15 @@ export function ReservationCardEditor({
                     setGuestCardOpenIdReader(false);
                     setGuestCardOpen(true);
                   }}
-                  packageOptions={medicalPackageChoices(ratePlans, clinicProgramCodes)}
-                  showMedicalPackages={ratePlanRequiresGuestPackage({
-                    code: ratePlans.find((row) => row.id === ratePlanId)?.code,
-                    medicalFlag: ratePlans.find((row) => row.id === ratePlanId)?.medicalFlag,
-                  })}
+                  packageOptions={medicalPackageChoices(ratePlans, medicalCatalogCodes)}
+                  showMedicalPackages={
+                    sanatoriumModuleOn &&
+                    activeMedicalCount >= 2 &&
+                    ratePlanRequiresGuestPackage({
+                      code: ratePlans.find((row) => row.id === ratePlanId)?.code,
+                      medicalFlag: ratePlans.find((row) => row.id === ratePlanId)?.medicalFlag,
+                    })
+                  }
                 />
               )}
 

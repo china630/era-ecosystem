@@ -5,6 +5,7 @@ import {
   createOrganizationBindHandlers,
   createRuntimeConfigHandlers,
   expressKitHeaders,
+  readPlatformLinks,
   type KitHttpResult,
 } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +21,12 @@ const organizationBind = createOrganizationBindHandlers({
 
 @Controller()
 export class KitApiController {
+  @Get("api/public/platform-links")
+  @HttpCode(200)
+  platformLinks(@Req() req: Request, @Res({ passthrough: false }) res: Response) {
+    return send(req, res, async () => readPlatformLinks());
+  }
+
   @Get("api/platform/billing-status")
   @HttpCode(200)
   billing(@Req() req: Request, @Res({ passthrough: false }) res: Response) {

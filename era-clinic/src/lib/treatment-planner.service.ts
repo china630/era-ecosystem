@@ -22,6 +22,7 @@ import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { replaceProcedureAllocations } from "@/domain/procedure/procedure-allocation.service";
 import { updateProcedureOrderIfPresent } from "@/domain/procedure/procedure-order-if-present";
 import { orderCountsForWallClockRest } from "@/domain/procedure/open-attendance";
+import { guestDayOccupancyStatusOr } from "@/domain/planning/guest-day-occupancy";
 import { isAbsentOnYmd, resolveDutyCandidates } from "@/domain/staff/staff-kind";
 import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
 import {
@@ -144,11 +145,7 @@ export async function hasProcedureSameDay(
       patientRefId,
       procedureCode,
       scheduledAt: { gte: start, lt: end },
-      OR: [
-        { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
-        { status: "PENDING_PAY", resourceId: { not: null } },
-        { status: "PROPOSED", inPackage: true },
-      ],
+      OR: guestDayOccupancyStatusOr(),
       ...(excludeOrderId ? { id: { not: excludeOrderId } } : {}),
     },
   });
@@ -446,11 +443,7 @@ export async function placeConfirmedProcedures(
     where: {
       patientRefId,
       id: { notIn: orderIds },
-      OR: [
-        { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
-        { status: "PENDING_PAY", resourceId: { not: null } },
-        { status: "PROPOSED", inPackage: true },
-      ],
+      OR: guestDayOccupancyStatusOr(),
     },
     select: {
       status: true,

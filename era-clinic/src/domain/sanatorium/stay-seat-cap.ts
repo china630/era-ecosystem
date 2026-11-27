@@ -70,3 +70,35 @@ export async function countRemainingStayWorkingDays(episodeId: string): Promise<
   const cap = await countRemainingOpenSeatDays(episodeId, null);
   return cap.remainingSeatDays;
 }
+
+/** Live non-cancelled orders for a procedure code on the episode (package + paid). */
+export async function countLiveProcedureOrders(
+  episodeId: string,
+  procedureCode: string,
+): Promise<number> {
+  return prisma.procedureOrder.count({
+    where: {
+      clinicalEpisodeId: episodeId,
+      procedureCode,
+      status: { notIn: ["CANCELLED", "UNPAID_MISSED"] },
+    },
+  });
+}
+
+/**
+ * How many more seats of this code may be added before hitting stay working days.
+ * OPEN attendance uses free day-buckets; FIXED uses softMax − live headcount
+ * (package blue + extras share one ceiling).
+ */
+export async function remainingUnifiedStayQty(
+  episodeId: string,
+  procedureCode: string,
+  openAttendance: boolean,
+): Promise<number> {
+  if (openAttendance) {
+    return (await countRemainingOpenSeatDays(episodeId, procedureCode)).remainingSeatDays;
+  }
+  const softMax = await countRemainingStayWorkingDays(episodeId);
+  const live = await countLiveProcedureOrders(episodeId, procedureCode);
+  return Math.max(0, softMax - live);
+}

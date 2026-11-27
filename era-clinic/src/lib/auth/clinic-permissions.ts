@@ -392,7 +392,8 @@ export function isClinicPermission(value: string): value is ClinicPermission {
 /** Stored JSON from before the entity split. Expanded once, then dropped. */
 const LEGACY_SCREEN_ADMIN_MASTER_DATA = "screen:admin.master_data";
 
-export const CLINIC_PERMISSION_CATALOG_VERSION = 3;
+/** Bump when expandClinicCatalog gains new implications (roles re-expand on boot). */
+export const CLINIC_PERMISSION_CATALOG_VERSION = 4;
 
 /** GET/HEAD uses the read key. The original key stays on writes. */
 export const READ_OF_WRITE: Readonly<Partial<Record<ClinicPermission, ClinicPermission>>> = {
@@ -446,6 +447,10 @@ export function expandClinicCatalog(keys: readonly string[]): ClinicPermission[]
   if (out.has(CLINIC_PERMISSION.API_CASHIER)) {
     out.add(CLINIC_PERMISSION.API_FISCAL);
     out.add(CLINIC_PERMISSION.API_BILLING_READ);
+  }
+  // Sanatorium nav (incl. walk-in parties) needs episodes.read for list GET.
+  if (out.has(CLINIC_PERMISSION.SCREEN_SANATORIUM)) {
+    out.add(CLINIC_PERMISSION.API_SANATORIUM_EPISODES_READ);
   }
   if (out.has(CLINIC_PERMISSION.API_LAB_ORDERS)) {
     out.add(CLINIC_PERMISSION.API_LAB_ORDERS_COLLECT);

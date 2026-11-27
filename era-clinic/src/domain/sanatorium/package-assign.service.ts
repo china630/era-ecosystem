@@ -650,6 +650,12 @@ export async function getPackageAssignSnapshot(
   /** Working days left for OPEN pin (today…checkout−1). Caps Miqdar / Say / stepper. */
   staySeatMax: number;
 }> {
+  // Heal leaked unpaid SCHEDULED extras before board/stay marks (dynamic import: avoid cycle).
+  const { repairUnpaidScheduledExtras } = await import(
+    "@/domain/sanatorium/extras-assign.service"
+  );
+  await repairUnpaidScheduledExtras(episodeId);
+
   let episode = await loadEpisodeForAssign(episodeId, {
     requireClinicalGates: false,
     requireProgram: false,
@@ -2001,36 +2007,25 @@ export async function assignPackageProcedures(
   }
 
   {
-    const { countRemainingOpenSeatDays, countRemainingStayWorkingDays } = await import(
-      "@/domain/sanatorium/stay-seat-cap"
-    );
-    const openUsed = new Map<string, number>();
-    const softMax = await countRemainingStayWorkingDays(episodeId);
+    const { remainingUnifiedStayQty } = await import("@/domain/sanatorium/stay-seat-cap");
+    const usedInRequest = new Map<string, number>();
     for (const line of resolved) {
       const pt = typeByCode.get(line.procedureCode);
       if (!pt) continue;
-      if (pt.openAttendance === true) {
-        const used = openUsed.get(line.procedureCode) ?? 0;
-        const remaining = Math.max(
-          0,
-          (await countRemainingOpenSeatDays(episodeId, line.procedureCode)).remainingSeatDays -
-            used,
-        );
-        if (line.qty > remaining) {
-          throw new PackageAssignError(
-            `Quantity exceeds remaining stay days (${remaining})`,
-            "STAY_QTY_EXCEEDED",
-            409,
-          );
-        }
-        openUsed.set(line.procedureCode, used + line.qty);
-      } else if (line.qty > softMax) {
+      const open = pt.openAttendance === true;
+      const already = usedInRequest.get(line.procedureCode) ?? 0;
+      const remaining = Math.max(
+        0,
+        (await remainingUnifiedStayQty(episodeId, line.procedureCode, open)) - already,
+      );
+      if (line.qty > remaining) {
         throw new PackageAssignError(
-          `Quantity exceeds remaining stay days (${softMax})`,
+          `Quantity exceeds remaining stay days (${remaining})`,
           "STAY_QTY_EXCEEDED",
           409,
         );
       }
+      usedInRequest.set(line.procedureCode, already + line.qty);
     }
   }
 
@@ -2559,9 +2554,7 @@ export async function replacePackageProcedures(
   const episode = await loadEpisodeForAssign(episodeId);
   const instance = episode.programInstance!;
   {
-    const { countRemainingOpenSeatDays, countRemainingStayWorkingDays } = await import(
-      "@/domain/sanatorium/stay-seat-cap"
-    );
+    const { remainingUnifiedStayQty } = await import("@/domain/sanatorium/stay-seat-cap");
     const toType = await prisma.procedureType.findUnique({
       where: {
         organizationId_code: {
@@ -2571,10 +2564,11 @@ export async function replacePackageProcedures(
       },
       select: { openAttendance: true },
     });
-    const stayMax =
-      toType?.openAttendance === true
-        ? (await countRemainingOpenSeatDays(episodeId, input.toCode)).remainingSeatDays
-        : await countRemainingStayWorkingDays(episodeId);
+    const stayMax = await remainingUnifiedStayQty(
+      episodeId,
+      input.toCode,
+      toType?.openAttendance === true,
+    );
     if (stayMax < 1 || input.qty > stayMax) {
       throw new PackageAssignError(
         `Quantity exceeds remaining stay days (${stayMax})`,

@@ -36,6 +36,7 @@ import {
 } from "@/components/sanatorium/ResourceDayMatrix";
 import { bakuDateTimeDisplay, bakuTimeLabel } from "@/lib/baku-day";
 import { localizeSlotDecision } from "@/lib/slot-decision-ui";
+import { formatCheckInBusyMessage } from "@/lib/check-in-busy-ui";
 
 function bakuYmd(d = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -218,7 +219,8 @@ export default function SanatoriumResourcesPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showApiError(data, t("checkInFailed"));
+        const busyMsg = formatCheckInBusyMessage(data, t);
+        showApiError(busyMsg ? { ...data, error: busyMsg } : data, t("checkInFailed"));
         return;
       }
       showSuccess(t("checkInOk"));

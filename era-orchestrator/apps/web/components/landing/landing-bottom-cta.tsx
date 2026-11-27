@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LANDING_CARD_HOVER_CLASS } from "../../lib/landing-motion";
 import type { LandingMarketingCopy } from "../../lib/i18n/landing-marketing-copy";
 import { PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { appUrl } from "../../lib/site/site-origins";
 
 const BOTTOM_CTA_SECONDARY_CLASS =
   "inline-flex h-11 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-900 px-6 text-sm font-semibold text-slate-100 shadow-sm no-underline transition-all duration-200 hover:bg-slate-800/80 hover:text-white";
@@ -32,12 +33,12 @@ export function LandingBottomCta({
           <p className="mx-auto mt-3 max-w-2xl text-[14px] leading-snug text-slate-300">{copy.subtext}</p>
           <div className="mt-7 flex flex-col items-center gap-3">
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link href="/register-org" className={`${PRIMARY_BUTTON_CLASS} h-11 px-6 text-sm no-underline`}>
+              <a href={appUrl("/register-org")} className={`${PRIMARY_BUTTON_CLASS} h-11 px-6 text-sm no-underline`}>
                 {copy.primary}
-              </Link>
-              <Link href="/login" className={BOTTOM_CTA_SECONDARY_CLASS}>
+              </a>
+              <a href={appUrl("/login")} className={BOTTOM_CTA_SECONDARY_CLASS}>
                 {copy.secondary}
-              </Link>
+              </a>
               {calcLabel ? (
                 <Link href="/calc" className={BOTTOM_CTA_SECONDARY_CLASS}>
                   {calcLabel}

@@ -34,6 +34,7 @@ async function main() {
     "/api/locale",
     "/api/internal",
     "/api/integration/staff-provision",
+    "/api/public/platform-links",
   ];
   http.use(
     (

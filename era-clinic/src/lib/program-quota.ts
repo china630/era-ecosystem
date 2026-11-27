@@ -3,6 +3,8 @@
  * W2: optional `quotaBasis` — PER_STAY picks a single knot qty (no interpolation).
  */
 
+import { bakuDateKey } from "@/lib/baku-day";
+
 export type QuotaKnot = {
   nights: number;
   procedureCode: string;
@@ -109,19 +111,18 @@ export type QuotaMode = "FIXED" | "DAILY_RATE";
 /** Per-block mode when template quotaMode is DAILY_RATE. */
 export type BlockQuotaMode = "DAILY_RATE" | "WEEKLY" | "PER_STAY";
 
-/** Stay nights from hotel check-in / check-out (UTC date parts). */
+/**
+ * Stay nights on the hotel calendar: Baku checkout date minus Baku arrival date.
+ * Arrival day counts, checkout morning does not. Not the UTC date parts of the timestamps.
+ */
 export function nightsBetween(checkIn: Date, checkOut: Date): number {
-  const a = Date.UTC(
-    checkIn.getUTCFullYear(),
-    checkIn.getUTCMonth(),
-    checkIn.getUTCDate(),
-  );
-  const b = Date.UTC(
-    checkOut.getUTCFullYear(),
-    checkOut.getUTCMonth(),
-    checkOut.getUTCDate(),
-  );
-  return Math.max(0, Math.round((b - a) / 86_400_000));
+  const arrival = bakuDateKey(checkIn);
+  const departure = bakuDateKey(checkOut);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(arrival) || !/^\d{4}-\d{2}-\d{2}$/.test(departure)) return 0;
+  const [ay, am, ad] = arrival.split("-").map(Number);
+  const [by, bm, bd] = departure.split("-").map(Number);
+  const days = Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86_400_000);
+  return Math.max(0, days);
 }
 
 /**

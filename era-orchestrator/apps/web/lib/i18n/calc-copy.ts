@@ -122,7 +122,7 @@ const ru: CalcCopy = {
   bundleNone: "Без пакета",
   includedInBundle: "В пакете",
   premium: "Premium",
-  satellitesTitle: "Спутники",
+  satellitesTitle: "Продукты",
   satellitesIntro: "Gate открывает приложение и включённую ёмкость. Модули сверх пакета добавляются отдельно.",
   gate: "Gate",
   capacity: "Ёмкость",
@@ -213,7 +213,7 @@ const az: CalcCopy = {
   nav: "Kalkulyator",
   title: "Abunə kalkulyatoru",
   subtitle:
-    "ERA Core, peyklər, modullar və kvotaları yığın. Məbləğ kataloqla eyni qaydadır: paketlər, XOR, tutum və metrlər.",
+    "ERA Core, məhsullar, modullar və kvotaları yığın. Məbləğ kataloqla eyni qaydadır: paketlər, XOR, tutum və metrlər.",
   presets: "Ssenarilər",
   preset: {
     core: "Yalnız uçot",
@@ -236,7 +236,7 @@ const az: CalcCopy = {
   bundleNone: "Paketsiz",
   includedInBundle: "Paketdə",
   premium: "Premium",
-  satellitesTitle: "Peyklər",
+  satellitesTitle: "Məhsullar",
   satellitesIntro: "Gate tətbiqi və daxil tutumu açır. Paketdən kənar modullar ayrıca əlavə olunur.",
   gate: "Gate",
   capacity: "Tutum",
@@ -290,7 +290,7 @@ const az: CalcCopy = {
   register: "3 ay pulsuz başla",
   catalog: "Tam kataloq",
   unavailable: "Canlı kataloq müvəqqəti əlçatan deyil. SKU siyahısı açılan kimi smeta görünəcək.",
-  empty: "Foundation, peyk və ya modul seçin — məbləğ burada yenilənəcək.",
+  empty: "Foundation, məhsul və ya modul seçin — məbləğ burada yenilənəcək.",
   listPrice: "endirimsiz",
   warnings: {
     banking_sandbox: "Bank CBS smetada Sandbox / Pilot-dur. İstehsal konturu (AzeriCard / AZIPS) ayrıca Custom Quote-dur, setup 25 000 AZN-dən.",
@@ -327,7 +327,7 @@ const en: CalcCopy = {
   nav: "Calculator",
   title: "Subscription calculator",
   subtitle:
-    "Assemble ERA Core, satellites, modules, and quotas. The total uses the same rules as the catalog: bundles, XOR, capacity, and meters.",
+    "Assemble ERA Core, products, modules, and quotas. The total uses the same rules as the catalog: bundles, XOR, capacity, and meters.",
   presets: "Scenarios",
   preset: {
     core: "Accounting only",
@@ -350,7 +350,7 @@ const en: CalcCopy = {
   bundleNone: "No bundle",
   includedInBundle: "In the bundle",
   premium: "Premium",
-  satellitesTitle: "Satellites",
+  satellitesTitle: "Products",
   satellitesIntro: "The gate opens the app and the included capacity. Modules outside a bundle are added on their own.",
   gate: "Gate",
   capacity: "Capacity",

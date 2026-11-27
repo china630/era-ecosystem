@@ -11,7 +11,7 @@ Canonical reference for domains, ports, repo folders, billing slugs, and environ
 
 | # | Display | Repo folder | Docker service | Subdomain | Port | Public URL |
 |---|---------|-------------|----------------|-----------|------|------------|
-| 0 | ERA (apex) | — | traefik | `era-365.online` | 80/443 | redirect → `app` |
+| 0 | ERA (apex) | — | traefik + orchestrator-web | `era-365.online` | 80/443 | public marketing site; `www` → apex; cabinet on `app` |
 | 1 | ERA Platform | `era-orchestrator` | `orchestrator` | `app` | 3000 (web), 4000 (api) | `https://app.era-365.online/` |
 | — | ERA Platform Console | `era-orchestrator` (`apps/platform-web`) | `orchestrator` | `platform` | 3001 | `https://platform.era-365.online/` |
 | 2 | Finance ERP | `era-finance-core` | `finance-web` | `finance-core` | 3100 | `https://finance-core.era-365.online/` |
@@ -199,9 +199,9 @@ Inside a container that has `nest/main.ts`, the public port stays **3201–3211*
 
 | Role | Variable | Example (prod) |
 |------|----------|----------------|
-| Orch Web | `ERA_APP_ORIGIN` | `https://app.era-365.online` |
+| Orch Web (cabinet / register) | `ERA_APP_ORIGIN` | `https://app.era-365.online` — Sync → satellite `orchestratorPublicBaseUrl` → `GET /api/public/platform-links` |
+| Orch API | `ERA_API_ORIGIN` / `ERA_PUBLIC_ORCHESTRATOR_URL` | `https://api.era-365.online` — S2S / events only; never login register links |
 | Platform Console | `ERA_PLATFORM_ORIGIN` | `https://platform.era-365.online` |
-| Orch API | `ERA_API_ORIGIN` | `https://api.era-365.online` |
 | Finance Web | `ERA_FINANCE_ORIGIN` | `https://finance-core.era-365.online` |
 | Finance API (public) | `ERA_FINANCE_API_ORIGIN` | `https://finance-api.era-365.online` |
 | Finance API (internal) | `ERA_FINANCE_API_INTERNAL_URL` | `http://finance-core:4100` |
