@@ -29,7 +29,7 @@ async function main() {
   );
   const http = app.getHttpAdapter().getInstance();
   http.use(express.json({ limit: "2mb" }));
-  const publicApi = ["/api/health", "/api/auth"];
+  const publicApi = ["/api/health", "/api/auth", "/api/public/platform-links"];
   http.use((req: { originalUrl?: string; url?: string; headers: Record<string, unknown> }, res: { status: (code: number) => { json: (body: unknown) => void } }, next: () => void) => {
     const pathname = String(req.originalUrl ?? req.url ?? "").split("?")[0];
     if (!pathname.startsWith("/api")) return next();

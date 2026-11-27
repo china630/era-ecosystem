@@ -10,7 +10,7 @@ import {
 import { SatelliteLocaleToggle } from "./satellite-locale-toggle";
 import { AuthPageHeader } from "./auth-page-header";
 import { PublicLegalFooter } from "./legal-footer";
-import { orchPublicHref } from "../platform/orch-web-url";
+import { usePlatformLinks } from "./use-platform-links";
 import {
   AUTH_FORM_STACK_CLASS,
 } from "./auth-login-card";
@@ -112,7 +112,8 @@ export function AuthRegisterCard({
   legalAppPrefix = "ERA",
   faqHref,
 }: AuthRegisterCardProps) {
-  const faqUrl = faqHref ?? orchPublicHref("/help");
+  const { links } = usePlatformLinks();
+  const faqUrl = faqHref ?? links?.helpUrl ?? "";
   return (
     <AuthPublicShell
       locale={locale}
@@ -123,7 +124,7 @@ export function AuthRegisterCard({
           {legalLabels ? (
             <PublicLegalFooter
               locale={locale}
-              faqHref={faqUrl}
+              faqHref={faqUrl || "/help"}
               appPrefix={legalAppPrefix}
               showFaq={false}
               labels={legalLabels}

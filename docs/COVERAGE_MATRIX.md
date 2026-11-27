@@ -1187,3 +1187,4 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-11-27 | CP-SITE-01/02 public marketing site catalog + demo→CRM (API); AC-CP-SITE 🟡 out of BE rollup; UI SCREEN; not SHIPPED / sell unchanged |
 | 2026-11-27 | CP-SITE tails A→F: Site catalog admin pick-from-system, unified SiteHeader/mobile, EN, SEO, polish; still API/SCREEN, not SHIPPED / sell unchanged |
 | 2026-11-27 | CP-SITE second-pass: admin tagline/body/image + unprefixed `/calc` + apex `/` locale split; statuses unchanged (API/SCREEN, not SHIPPED) |
+| 2026-11-27 | CP-SITE ship PR #484 → `dev` + staging smoke; CP-SITE-01/02 stay **API** / SCREEN; AC-CP-SITE 🟡; sell/`ga` unchanged |

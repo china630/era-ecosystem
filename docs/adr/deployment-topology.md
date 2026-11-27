@@ -93,7 +93,7 @@ Everything else comes from orchestrator → satellite **runtime-config** Sync pa
 | `orchestratorEventUrl` | Live orch base for events / S2S |
 | `publicBaseUrl` | **This satellite process** public URL (`SatelliteEndpoint.baseUrl`) — SHARED pool membership (`satellite-pool/members`) matches on it |
 | `satellitePublicBaseUrl` | Alias of self URL (same as `publicBaseUrl`) |
-| `orchestratorPublicBaseUrl` | Public orch / launcher base (optional; **not** used for pool self-discovery) |
+| `orchestratorPublicBaseUrl` | **Browser app** origin (`https://app.era-365.online`) for satellite login register/pricing/help — from orch `ERA_APP_ORIGIN`; **not** API (`orchestratorEventUrl`); **not** pool self-discovery. Consumed via `GET /api/public/platform-links` |
 | `platformSuperAdminEmails` | PSA list |
 | `ssoSharedSecret` | SSO HMAC material |
 | `satelliteEventServiceToken` | Event / internal Bearer — **one non-folklore** shared secret on orch + SHARED sats (never `change-me` / empty); folklore values are omitted from Sync/desired-state |

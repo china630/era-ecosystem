@@ -70,6 +70,7 @@ async function main() {
     "/api/integration/staff-provision",
     "/api/integrations/hooks",
     "/api/integrations/ics",
+    "/api/public/platform-links",
   ];
   http.use(
     (

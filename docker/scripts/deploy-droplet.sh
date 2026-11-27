@@ -179,6 +179,13 @@ if [ -z "$services" ]; then
     dump_critical_logs
     exit 1
   fi
+  # Traefik file provider bind-mount: git/rsync can replace dynamic.yml inode while
+  # the container still holds the old file — restart remounts (apex≠app redirect loop).
+  if docker ps --format '{{.Names}}' | grep -qx era-traefik; then
+    echo "==> remount Traefik dynamic.yml (restart era-traefik)"
+    docker restart era-traefik
+    sleep 2
+  fi
   echo "==> critical smoke (blocking)"
   if ! node scripts/ecosystem-smoke-critical.mjs; then
     echo "ERROR: critical smoke failed — deploy not green" >&2
@@ -204,6 +211,13 @@ else
   if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 180 --no-deps $services; then
     dump_critical_logs
     exit 1
+  fi
+  if echo " $services " | grep -q " traefik " || [ -z "${services:-}" ]; then
+    if docker ps --format '{{.Names}}' | grep -qx era-traefik; then
+      echo "==> remount Traefik dynamic.yml (restart era-traefik)"
+      docker restart era-traefik
+      sleep 2
+    fi
   fi
   echo "==> scope smoke (blocking, only deployed services)"
   # shellcheck disable=SC2086

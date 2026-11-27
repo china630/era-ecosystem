@@ -198,6 +198,7 @@ export function publicRuntimeConfigView(cfg: SatelliteRuntimeConfig): Record<str
   return {
     organizationId: cfg.organizationId ?? null,
     orchestratorEventUrl: cfg.orchestratorEventUrl ?? null,
+    orchestratorPublicBaseUrl: cfg.orchestratorPublicBaseUrl ?? null,
     publicBaseUrl: cfg.publicBaseUrl ?? null,
     platformSuperAdminEmails: cfg.platformSuperAdminEmails ?? null,
     activeModules: Array.isArray(cfg.activeModules) ? cfg.activeModules : [],

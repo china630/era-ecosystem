@@ -14,6 +14,7 @@ export const PUBLIC_API_ROUTES: readonly string[] = [
   "/api/integration/staff-provision",
   "/api/integration/settlement-confirmed",
   "/api/integration/prescription-queue",
+  "/api/public/platform-links",
 ];
 
 /** Any signed-in session; no grant. */
