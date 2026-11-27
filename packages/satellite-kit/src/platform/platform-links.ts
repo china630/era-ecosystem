@@ -1,9 +1,9 @@
 import { kitJson, kitResultToNext, type KitHttpResult } from "../tenancy/organization-bind";
 import { getRuntimeConfigMemory } from "../tenancy/runtime-config-memory";
 import { resolveOrchestratorPublicBaseUrl } from "./orch-web-url";
-import type { PlatformLinksBody } from "../ui/use-platform-links";
+import type { PlatformLinksBody } from "./platform-links-types";
 
-export type { PlatformLinksBody };
+export type { PlatformLinksBody } from "./platform-links-types";
 
 function resolveAppOrigin(): string {
   const fromMem = getRuntimeConfigMemory().orchestratorPublicBaseUrl?.trim();

@@ -9,11 +9,8 @@ export {
   resolveOrchestratorPublicBaseUrl,
 } from "../platform/orch-web-url";
 /** Client-safe only — server handlers import platform-links from `@era/satellite-kit` root. */
-export {
-  usePlatformLinks,
-  type PlatformLinksState,
-  type PlatformLinksBody,
-} from "./use-platform-links";
+export { usePlatformLinks, type PlatformLinksState } from "./use-platform-links";
+export type { PlatformLinksBody } from "../platform/platform-links-types";
 export * from "./design-system";
 export { FIELD_WIDTH, fieldWidthClass, type FieldWidthPreset } from "./field-presets";
 export { Field, FieldSelect, FieldTextarea, FieldRow, type FieldProps, type FieldSelectProps, type FieldTextareaProps } from "./field";
