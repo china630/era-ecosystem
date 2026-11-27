@@ -155,12 +155,19 @@ export async function sweepUnpaidMissed(now = new Date()): Promise<{
   const passes = unpaidMissedSweepPasses(now, start, end, dayEndHourBoundary);
   if (passes.length === 0) return { marked: 0, byPass: {} };
 
-  const { closeUnpaidExtras } = await import("@/domain/sanatorium/extras-assign.service");
+  const {
+    closeUnpaidExtras,
+    hardDeleteAbandonedExtraProposals,
+  } = await import("@/domain/sanatorium/extras-assign.service");
   const { closeUnpaidDiagnostics } = await import(
     "@/domain/sanatorium/diagnostics-extras.service"
   );
   const byPass: Record<string, number> = {};
   let marked = 0;
+  // Stuck mid-seat PROPOSED (created before today) never become PENDING_PAY.
+  const abandoned = await hardDeleteAbandonedExtraProposals({ createdBefore: start });
+  byPass.unpaid_abandoned_proposed = abandoned;
+  marked += abandoned;
   for (const pass of passes) {
     const n = await closeUnpaidExtras(pass.where, pass.reason);
     byPass[pass.reason] = n;

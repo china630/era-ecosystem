@@ -1,5 +1,6 @@
 /**
- * CLI-57 — paid extras: prescribe → PENDING_PAY → Pay → place + ticket ×3.
+ * CLI-57 — paid extras: prescribe → (PLAN_BEFORE_PAY: PROPOSED → seat/pin →
+ * PENDING_PAY) → Pay → ticket ×3. HOLD_UNTIL_PAY stays PENDING_PAY until pay.
  */
 import { catalogUnitPrice } from "@/domain/catalog/catalog-price.service";
 import { prisma } from "@/lib/prisma";
@@ -37,7 +38,10 @@ import {
 import { enterSatelliteTenant } from "@era/satellite-kit";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
 import { procedureFitsGuestSex } from "@/domain/procedure/procedure-sex-gate";
-import { plansExtraBeforePay } from "@/domain/sanatorium/extra-procedure-route";
+import {
+  plansExtraBeforePay,
+  unpaidExtraVisibleOnPlanWhere,
+} from "@/domain/sanatorium/extra-procedure-route";
 import { getClinicSettings } from "@/domain/settings/settings.service";
 import { resolveExtraPrescriber } from "@/lib/extra-prescriber";
 
@@ -176,6 +180,7 @@ export async function prescribeExtras(
 }> {
   const episode = await loadEpisode(episodeId);
   const planFirst = plansExtraBeforePay((await getClinicSettings()).extraProcedureRoute);
+  await purgeAbandonedExtraProposals(episodeId);
   const types = await prisma.procedureType.findMany();
   const typeByCode = new Map(types.map((t) => [t.code, t]));
   const orgId = requestOrganizationId();
@@ -194,26 +199,31 @@ export async function prescribeExtras(
   const prescribedByPractitionerId = await resolvePrescriberForExtra(episodeId, actorUserId);
   let seq = 0;
 
-  for (const line of lines) {
-    if (line.qty < 1) continue;
-    const openQuota = await remainingPackageQuotaCode(episodeId, line.procedureCode);
-    if (openQuota) {
-      throw new PackageAssignError(
-        "Use package remaining before a paid extra",
-        "QUOTA_REMAINING",
-        409,
+  // Preflight stay/quota before any creates — multi-line same code must not partial-write.
+  {
+    const { remainingUnifiedStayQty } = await import("@/domain/sanatorium/stay-seat-cap");
+    const stayUsedInRequest = new Map<string, number>();
+    for (const line of lines) {
+      if (line.qty < 1) continue;
+      const openQuota = await remainingPackageQuotaCode(episodeId, line.procedureCode);
+      if (openQuota) {
+        throw new PackageAssignError(
+          "Use package remaining before a paid extra",
+          "QUOTA_REMAINING",
+          409,
+        );
+      }
+      const pt = typeByCode.get(line.procedureCode);
+      if (!pt) continue;
+      const already = stayUsedInRequest.get(line.procedureCode) ?? 0;
+      const stayMax = Math.max(
+        0,
+        (await remainingUnifiedStayQty(
+          episodeId,
+          line.procedureCode,
+          pt.openAttendance === true,
+        )) - already,
       );
-    }
-    // Overflow past package quota is a paid extra. Quota no longer blocks the write.
-    const pt = typeByCode.get(line.procedureCode);
-    if (pt) {
-      const { countRemainingOpenSeatDays, countRemainingStayWorkingDays } = await import(
-        "@/domain/sanatorium/stay-seat-cap"
-      );
-      const stayMax =
-        pt.openAttendance === true
-          ? (await countRemainingOpenSeatDays(episodeId, line.procedureCode)).remainingSeatDays
-          : await countRemainingStayWorkingDays(episodeId);
       if (stayMax < 1 || line.qty > stayMax) {
         throw new PackageAssignError(
           `Quantity exceeds remaining stay days (${stayMax})`,
@@ -221,7 +231,13 @@ export async function prescribeExtras(
           409,
         );
       }
+      stayUsedInRequest.set(line.procedureCode, already + line.qty);
     }
+  }
+
+  for (const line of lines) {
+    if (line.qty < 1) continue;
+    const pt = typeByCode.get(line.procedureCode);
     if (!pt) {
       const { prescribeDiagnosticsExtras } = await import(
         "@/domain/sanatorium/diagnostics-extras.service"
@@ -246,6 +262,9 @@ export async function prescribeExtras(
     const preferredPractitionerId = await resolveMasseurId(pt.id, line.preferredPractitionerId);
     const unitPrice = await listPriceForCode(line.procedureCode);
     const duration = pt.durationMin ?? 30;
+    // PLAN_BEFORE_PAY: create as PROPOSED so Plan does not show today's placeholder
+    // until seat/pin succeeds. HOLD_UNTIL_PAY stays PENDING_PAY without a cabin.
+    const createStatus = planFirst ? "PROPOSED" : "PENDING_PAY";
     for (let i = 0; i < line.qty; i++) {
       const scheduledAt = new Date(now.getTime() + seq * 60_000);
       const order = await prisma.procedureOrder.create({
@@ -260,7 +279,7 @@ export async function prescribeExtras(
           endsAt: new Date(scheduledAt.getTime() + duration * 60_000),
           sequenceIndex: seq++,
           bodyPart: line.bodyPart ?? pt.bodyPart ?? undefined,
-          status: "PENDING_PAY",
+          status: createStatus,
           note: line.note ?? undefined,
           physioFields: line.physioFields ?? undefined,
           siteApplyMode: line.siteApplyMode ?? undefined,
@@ -336,10 +355,57 @@ export async function prescribeExtras(
 
 const CHECKOUT_HOLD = "await_checkout_morning";
 
+/** Mid-seat PROPOSED extras older than this are abandoned (crash / aborted HTTP). */
+const ABANDONED_EXTRA_PROPOSAL_MS = 90_000;
+
 function isCheckoutHoldReason(reason: string, hitAttemptCap?: boolean): boolean {
   // Cap/budget stop can look like no_slot with empty blocks — not a stay-horizon miss.
   if (hitAttemptCap) return false;
   return reason === "no_slot" || reason === "no_day";
+}
+
+/**
+ * Hard-delete unpaid PLAN_BEFORE_PAY extras stuck as PROPOSED without a cabin
+ * (not checkout-morning hold). They burn stay headcount and same_day while
+ * staying off Plan and the cheque desk.
+ */
+export async function hardDeleteAbandonedExtraProposals(opts?: {
+  episodeId?: string;
+  /** Absolute createdAt upper bound (day-end / checkout). */
+  createdBefore?: Date;
+  /** Relative age gate; ignored when createdBefore is set. Default: 90s. */
+  olderThanMs?: number;
+}): Promise<number> {
+  const createdAt =
+    opts?.createdBefore != null
+      ? { lt: opts.createdBefore }
+      : {
+          lt: new Date(
+            Date.now() - (opts?.olderThanMs ?? ABANDONED_EXTRA_PROPOSAL_MS),
+          ),
+        };
+  const rows = await prisma.procedureOrder.findMany({
+    where: {
+      ...(opts?.episodeId ? { clinicalEpisodeId: opts.episodeId } : {}),
+      inPackage: false,
+      status: "PROPOSED",
+      resourceId: null,
+      createdAt,
+      OR: [{ cancelReason: null }, { cancelReason: { not: CHECKOUT_HOLD } }],
+    },
+    select: { id: true },
+  });
+  if (rows.length === 0) return 0;
+  const ids = rows.map((row) => row.id);
+  await releaseProcedureOccupancy(ids);
+  await prisma.procedureOrderSite.deleteMany({ where: { procedureOrderId: { in: ids } } });
+  const result = await prisma.procedureOrder.deleteMany({ where: { id: { in: ids } } });
+  return result.count;
+}
+
+/** Age-gated mid-seat crash leftovers (prescribe / pending list / cheque desk). */
+export async function purgeAbandonedExtraProposals(episodeId?: string): Promise<number> {
+  return hardDeleteAbandonedExtraProposals({ episodeId });
 }
 
 /** Earliest course end among these orders. Cabin extras must not walk past it. */
@@ -381,7 +447,7 @@ async function seatUnpaidExtras(
   }>
 > {
   await prisma.procedureOrder.updateMany({
-    where: { id: { in: ids }, status: "PENDING_PAY" },
+    where: { id: { in: ids }, status: { in: ["PENDING_PAY", "PROPOSED"] } },
     data: { status: "PROPOSED" },
   });
   let failedIds: string[] = [];
@@ -431,9 +497,40 @@ async function seatUnpaidExtras(
       where: {
         id: { in: ids.filter((id) => !heldIds.includes(id)) },
         status: { in: ["PROPOSED", "SCHEDULED"] },
+        resourceId: { not: null },
       },
       data: { status: "PENDING_PAY" },
     });
+    // Sweep: anything still without a cabin (not a checkout-morning hold) must not
+    // linger as today's placeholder on Plan — same discipline as package Saxla.
+    const leftovers = await prisma.procedureOrder.findMany({
+      where: {
+        id: { in: ids },
+        inPackage: false,
+        resourceId: null,
+        status: { in: ["PROPOSED", "PENDING_PAY"] },
+        OR: [{ cancelReason: null }, { cancelReason: { not: CHECKOUT_HOLD } }],
+      },
+      select: { id: true, procedureCode: true, procedureName: true },
+    });
+    if (leftovers.length > 0) {
+      const leftoverIds = leftovers.map((row) => row.id);
+      await releaseProcedureOccupancy(leftoverIds);
+      await prisma.procedureOrderSite.deleteMany({
+        where: { procedureOrderId: { in: leftoverIds } },
+      });
+      await prisma.procedureOrder.deleteMany({ where: { id: { in: leftoverIds } } });
+      for (const row of leftovers) {
+        if (!reported.some((r) => r.orderId === row.id)) {
+          reported.push({
+            orderId: row.id,
+            procedureCode: row.procedureCode,
+            procedureName: row.procedureName,
+            reason: "no_slot",
+          });
+        }
+      }
+    }
   }
   return reported;
 }
@@ -451,7 +548,7 @@ async function pinUnpaidOpenExtras(
   Array<{ orderId: string; procedureCode: string; procedureName: string; reason: string; ymd?: string }>
 > {
   await prisma.procedureOrder.updateMany({
-    where: { id: { in: ids }, status: "PENDING_PAY" },
+    where: { id: { in: ids }, status: { in: ["PENDING_PAY", "PROPOSED"] } },
     data: { status: "PROPOSED" },
   });
   const episode = await prisma.clinicalEpisode.findUnique({
@@ -500,7 +597,12 @@ async function pinUnpaidOpenExtras(
     });
     if (pinThrew) {
       await prisma.procedureOrder.deleteMany({
-        where: { id: { in: ids }, status: "PENDING_PAY", resourceId: null },
+        where: {
+          id: { in: ids },
+          status: { in: ["PENDING_PAY", "PROPOSED"] },
+          resourceId: null,
+          inPackage: false,
+        },
       });
     }
   }
@@ -508,7 +610,11 @@ async function pinUnpaidOpenExtras(
   if (dropIds.length > 0) {
     await releaseProcedureOccupancy(dropIds);
     await prisma.procedureOrder.deleteMany({
-      where: { id: { in: dropIds }, status: "PENDING_PAY", inPackage: false },
+      where: {
+        id: { in: dropIds },
+        status: { in: ["PENDING_PAY", "PROPOSED"] },
+        inPackage: false,
+      },
     });
   }
   // Money invariant: unpaid extras must not sit as SCHEDULED without paidAt.
@@ -677,8 +783,15 @@ export async function repairUnpaidScheduledExtras(episodeId?: string): Promise<n
 
 export async function listPendingExtras(episodeId: string) {
   await repairUnpaidScheduledExtras(episodeId);
+  await purgeAbandonedExtraProposals(episodeId);
+  const planFirst = plansExtraBeforePay((await getClinicSettings()).extraProcedureRoute);
   return prisma.procedureOrder.findMany({
-    where: { clinicalEpisodeId: episodeId, status: "PENDING_PAY" },
+    where: {
+      clinicalEpisodeId: episodeId,
+      ...(planFirst
+        ? unpaidExtraVisibleOnPlanWhere()
+        : { status: "PENDING_PAY" as const, inPackage: false }),
+    },
     orderBy: { createdAt: "asc" },
     include: extraRegimeInclude,
   });
@@ -719,10 +832,16 @@ export async function listPaidExtras(episodeId: string) {
 export async function deletePendingExtra(orderId: string): Promise<void> {
   const order = await prisma.procedureOrder.findUnique({ where: { id: orderId } });
   if (!order) throw new PackageAssignError("Not found", "NOT_FOUND", 404);
-  if (order.status !== "PENDING_PAY") {
-    throw new PackageAssignError("Only PENDING_PAY can be deleted here", "INVALID_STATUS", 400);
+  const abandonedProposed = order.status === "PROPOSED" && order.inPackage === false;
+  if (order.status !== "PENDING_PAY" && !abandonedProposed) {
+    throw new PackageAssignError(
+      "Only PENDING_PAY or abandoned unpaid PROPOSED can be deleted here",
+      "INVALID_STATUS",
+      400,
+    );
   }
   await releaseProcedureOccupancy([orderId]);
+  await prisma.procedureOrderSite.deleteMany({ where: { procedureOrderId: orderId } });
   await prisma.procedureOrder.delete({ where: { id: orderId } });
 }
 
@@ -1234,6 +1353,20 @@ export async function cancelUnpaidExtra(orderId: string, actorUserId: string): P
     throw new PackageAssignError("Only an unpaid extra can be cancelled here", "INVALID_STATUS", 400);
   }
   await releaseProcedureOccupancy([order.id]);
+  // Never-seated FIXED (no cabin): hard delete — no CANCELLED ghost on the episode.
+  // OPEN day-pins also have no cabin; hard delete the unpaid pin the same way.
+  if (!order.resourceId) {
+    await recordClinicAudit(
+      { userId: actorUserId },
+      "ProcedureOrder",
+      order.id,
+      "EXTRA_UNPAID_CANCEL",
+      { before: { status: "PENDING_PAY", resourceId: null }, after: { deleted: true } },
+    );
+    await prisma.procedureOrderSite.deleteMany({ where: { procedureOrderId: order.id } });
+    await prisma.procedureOrder.delete({ where: { id: order.id } });
+    return;
+  }
   await prisma.procedureOrder.update({
     where: { id: order.id },
     data: {
@@ -1255,5 +1388,14 @@ export async function cancelUnpaidExtra(orderId: string, actorUserId: string): P
 
 /** Checkout: remaining unpaid extras become missed-unpaid and free their cabins. */
 export async function purgePendingExtrasForEpisode(episodeId: string): Promise<number> {
-  return closeUnpaidExtras({ clinicalEpisodeId: episodeId }, "unpaid_checkout");
+  // Mid-seat PROPOSED leftovers are not PENDING_PAY — hard-delete before soft-close.
+  const abandoned = await hardDeleteAbandonedExtraProposals({
+    episodeId,
+    createdBefore: new Date(),
+  });
+  const closed = await closeUnpaidExtras(
+    { clinicalEpisodeId: episodeId },
+    "unpaid_checkout",
+  );
+  return abandoned + closed;
 }

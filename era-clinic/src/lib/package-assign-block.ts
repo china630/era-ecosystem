@@ -6,6 +6,7 @@ type BlockTranslator = (
     | "packageAssignNoComplaint"
     | "packageAssignNoDiagnosis"
     | "packageAssignNoCareTeam"
+    | "packageAssignEpisodeScope"
     | "packageAssignInstantiateFailed"
     | "packageAssignTemplateNotFound"
     | "packageAssignNightsBelowMin",
@@ -18,6 +19,41 @@ export type PackageAssignBlockDetail = {
   /** Original instantiate error. Shown instead of the generic template hint. */
   message?: string | null;
 };
+
+/** Map API mutation gate codes onto soft blockReason used by the assign modal. */
+export function normalizeAssignGateBlock(
+  code: string | null | undefined,
+):
+  | "NO_ANAMNESIS"
+  | "NO_COMPLAINT"
+  | "NO_DIAGNOSIS"
+  | "NO_CARE_TEAM"
+  | null {
+  if (!code) return null;
+  if (code === "ANAMNESIS_REQUIRED" || code === "NO_ANAMNESIS") return "NO_ANAMNESIS";
+  if (code === "COMPLAINT_REQUIRED" || code === "NO_COMPLAINT") return "NO_COMPLAINT";
+  if (code === "DIAGNOSIS_REQUIRED" || code === "NO_DIAGNOSIS") return "NO_DIAGNOSIS";
+  if (code === "CARE_TEAM_REQUIRED" || code === "NO_CARE_TEAM") return "NO_CARE_TEAM";
+  return null;
+}
+
+/**
+ * Care-team scope 404 and clinical lane gates → localized copy.
+ * Returns null when the code is unrelated (caller keeps its own mapping).
+ */
+export function packageAssignScopeOrGateText(
+  t: BlockTranslator,
+  code: string | null | undefined,
+  serverError?: string | null,
+): string | null {
+  const err = (serverError ?? "").trim();
+  if (code === "EPISODE_SCOPE" || err === "Episode not found") {
+    return t("packageAssignEpisodeScope");
+  }
+  const gate = normalizeAssignGateBlock(code);
+  if (!gate) return null;
+  return packageAssignBlockText(t, gate);
+}
 
 /** Localized reason when package balances cannot open. */
 export function packageAssignBlockText(

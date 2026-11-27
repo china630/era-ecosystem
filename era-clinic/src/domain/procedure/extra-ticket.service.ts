@@ -24,6 +24,12 @@ import {
 } from "@/domain/procedure/extra-ticket";
 import { enterRequestTenant } from "@/lib/request-organization";
 import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name.service";
+import {
+  plansExtraBeforePay,
+  unpaidExtraVisibleOnPlanWhere,
+} from "@/domain/sanatorium/extra-procedure-route";
+import { getClinicSettings } from "@/domain/settings/settings.service";
+import { purgeAbandonedExtraProposals } from "@/domain/sanatorium/extras-assign.service";
 
 /** Unfiltered due desk. Hit this and the page says the list is cut. */
 const EXTRA_DESK_TAKE = 2000;
@@ -113,6 +119,10 @@ export async function listExtrasAwaitingTicket(
   }
   const start = todayStart;
   const history = scope !== "due";
+  if (!history) {
+    await purgeAbandonedExtraProposals();
+  }
+  const planFirst = plansExtraBeforePay((await getClinicSettings()).extraProcedureRoute);
   /** Desk is for guests still on an open course (in-house or walk-in). Checkout → CLOSED → hidden in every scope. */
   const openEpisode = { status: "OPEN" as const };
   const roomFilter = room
@@ -166,15 +176,23 @@ export async function listExtrasAwaitingTicket(
           : {
               OR: [
                 {
+                  // Mid-seat PROPOSED stays off the cheque desk until seat/pin → PENDING_PAY.
                   extraTicketIssuedAt: null,
                   scheduledAt: { gte: start },
-                  OR: [
-                    { status: "PENDING_PAY" },
-                    {
-                      status: { in: ["PROPOSED", "SCHEDULED"] },
-                      amountNet: { gt: 0 },
-                    },
-                  ],
+                  inPackage: false,
+                  ...(planFirst
+                    ? unpaidExtraVisibleOnPlanWhere()
+                    : { status: "PENDING_PAY" as const }),
+                },
+                {
+                  // Repair residual: unpaid SCHEDULED with a cabin (pre-PENDING_PAY drift).
+                  extraTicketIssuedAt: null,
+                  scheduledAt: { gte: start },
+                  inPackage: false,
+                  status: "SCHEDULED" as const,
+                  paidAt: null,
+                  amountNet: { gt: 0 },
+                  resourceId: { not: null },
                 },
                 {
                   extraTicketIssuedAt: { not: null },
