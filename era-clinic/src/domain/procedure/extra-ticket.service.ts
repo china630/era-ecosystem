@@ -179,10 +179,10 @@ export async function listExtrasAwaitingTicket(
                   // Mid-seat PROPOSED stays off the cheque desk until seat/pin → PENDING_PAY.
                   extraTicketIssuedAt: null,
                   scheduledAt: { gte: start },
-                  inPackage: false,
                   ...(planFirst
                     ? unpaidExtraVisibleOnPlanWhere()
                     : { status: "PENDING_PAY" as const }),
+                  inPackage: false,
                 },
                 {
                   // Repair residual: unpaid SCHEDULED with a cabin (pre-PENDING_PAY drift).
