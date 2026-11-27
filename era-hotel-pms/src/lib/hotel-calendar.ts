@@ -152,7 +152,7 @@ export function doorClashWindow(
  * Arrival day counts, checkout morning does not. Same civil day is 0.
  * Clock times (14:00 / 12:00) do not add or drop a night.
  */
-export function stayNights(checkIn: Date, checkOut: Date): number {
+export function stayNights(checkIn: string | Date, checkOut: string | Date): number {
   const arrival = hotelDateKey(checkIn);
   const departure = hotelDateKey(checkOut);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(arrival) || !/^\d{4}-\d{2}-\d{2}$/.test(departure)) return 0;
