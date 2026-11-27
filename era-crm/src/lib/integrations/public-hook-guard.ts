@@ -14,7 +14,10 @@ function isProduction(): boolean {
 
 /** Fail-closed in production without CRM_INTEGRATIONS_KEK (no JWT / hardcoded). */
 export function hookGuardSecret(): string {
-  const kek = process.env.CRM_INTEGRATIONS_KEK?.trim();
+  const kek =
+    process.env.CRM_INTEGRATIONS_KEK?.trim() ||
+    // Populated after ensureCrmIntegrationsKek() on boot / first enable.
+    undefined;
   if (kek) return kek;
   if (isProduction()) {
     throw new Error(

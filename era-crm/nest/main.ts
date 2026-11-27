@@ -27,6 +27,18 @@ const CrmApiController = createSatelliteApiController(router);
 class CrmNestModule {}
 
 async function main() {
+  try {
+    const { ensureCrmIntegrationsKek } = await import(
+      "@/lib/integrations/crm-kek"
+    );
+    await ensureCrmIntegrationsKek();
+  } catch (e) {
+    // Non-fatal in dev; production enable paths still fail-closed.
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[crm] KEK bootstrap: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
   const app = await NestFactory.create(CrmNestModule, { logger: ["error", "warn"] });
   app.useGlobalInterceptors(
     new SatelliteMutationAuditInterceptor(async (row) => {
