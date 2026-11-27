@@ -349,7 +349,7 @@ D8 “card only” is superseded for visibility. `Tenant.extraProcedureRoute` de
 
 ## Amendment 2026-11-24 — card layers, package-first, holes ask, load heat
 
-See [clinic-package-assign-holes-and-card.md](./clinic-package-assign-holes-and-card.md) and [clinic-procedure-load-matrix.md](./clinic-procedure-load-matrix.md). Paid extras require zero package rem. Pre-Saxla holes dialog (continue/fresh). Card: goal / Paketdən / Əlavə. Procedure load heat on empty plan and flush under stay grid (`MODAL_FULL_FILL` visual near-fullscreen; heat cells `%`; four stay marks package / unpaid extra / paid extra / done; legends below).
+See [clinic-package-assign-holes-and-card.md](./clinic-package-assign-holes-and-card.md) and [clinic-procedure-load-matrix.md](./clinic-procedure-load-matrix.md). Paid extras require zero package rem. Pre-Saxla holes dialog (continue/fresh). Card: stepper + gray seated total / blue Paketdən fact / red Əlavə (after Saxla = seated only). Procedure load heat on empty plan and flush under stay grid (`MODAL_FULL_FILL` visual near-fullscreen; heat cells `%`; four stay marks package / unpaid extra / paid extra / done; legends below).
 
 ## Amendment 2026-11-24 — Saxla outcome panel (misses + advice)
 
@@ -380,6 +380,20 @@ Unified PackageAssign card:
 
 1. **Regime fingerprint:** after dropping seating-only keys (`dayBlock`, `seatMiss`, `restYmds`, `bathSequence`) and null values, an empty physio object equals missing physio (`null` / `{}` / `{bathSequence:null}` → one card). Do not stamp `bathSequence: null` on write — omit the key.
 2. **Cancel / discard:** gray close on the save-ask dialog **clears** `sessionStorage` package-assign draft (matches D2 Cancel discards). Do not persist draft on abandon. Draft key is `…:v2:…` (legacy `…:draft:` ignored/cleared so empty-physio sticky keys do not resurface).
-3. **Card (one ±):** stepper always shown; `N` is editable only (package goal + unpaid). Static amber disc = paid qty (same color as stay «paid extra»); no duplicate «Ödənilib: N» text. Paketdən / unpaid qty discs use package blue / unpaid red (legend sync).
+3. **Card (one ±):** stepper always shown; `N` is the editable working total before Saxla. Gray disc = seated total; blue Paketdən = package **fact** (not draft goal); red = unpaid; static amber = paid. No duplicate «Ödənilib: N» text.
 4. **Stay marks:** money fill stays (package / unpaid / paid); **done** is a green ring overlay, not a green replace. Same-day package+extra: strongest money tone + tooltip lists both lanes.
 5. **Money invariant:** unpaid extras must not remain `SCHEDULED` without `paidAt`. `repairUnpaidScheduledExtras` runs on package-assign snapshot and pending-extras list (flip to `PENDING_PAY`).
+
+## Amendment 2026-11-26 — unified stay headcount (package + extras)
+
+1. **One ceiling:** for each procedure code, package fact + package draft + unpaid extras + paid extras share `staySeatMax` (working days today…checkout−1). Stepper total must not exceed that number. Extras must not use a separate “another full stayMax” budget on top of package seats already on the plan.
+2. **First paid +:** when package rem for the lane is exhausted, the next unified `+` asks confirm (“add as paid extra?”) once per code:regime for the modal session; Cancel leaves headcount unchanged. After OK, further `+` still obeys the shared stay ceiling.
+3. **Server:** package Saxla, paid extras prescribe, and replace use `remainingUnifiedStayQty` (OPEN = free day-buckets; FIXED = softMax − live orders for that code). Multi-line extras in one request accumulate against that remaining (same as package Saxla `usedInRequest`).
+4. Units: `stay-seat-usage`, `stay-seat-cap-and-paid-extras` FIXED remaining case, `extras-assign-quota` multi-line STAY_QTY.
+
+## Amendment 2026-11-27 — after Saxla board = seated only; full miss audit
+
+1. **No `preserveGoals`:** after Saxla (including partial misses), clear draft / laneTarget / session draft. Unseated qty must not reappear on the stepper or Paketdən disc. Outcome panel / toasts still list misses.
+2. **Card discs:** gray = seated total (package fact + unpaid + paid); blue Paketdən = package **fact** only (not draft goal); red = unpaid extras. Stepper `−/+` remains the editable working total before the next Saxla and stays capped by stay days.
+3. **Audit `package_assign`:** persist full `misses[]` (`procedureCode`, `procedureName`, `ymd`, `reason`, optional staff / hitAttemptCap) plus `missCount`. Bath-only `seatMisses` is not enough for ops forensics.
+4. **Doctor feedback:** map `ANAMNESIS_REQUIRED` / complaint / diagnosis / care-team and `EPISODE_SCOPE` (care-team data scope 404) to clear i18n — not a bare “Episode not found”.

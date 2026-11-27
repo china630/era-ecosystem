@@ -3,6 +3,7 @@ import { getClinicSettings } from "@/domain/settings/settings.service";
 import {
   printsProcedureClock,
   showsUnpaidExtraOnPlan,
+  unpaidExtraVisibleOnPlanWhere,
 } from "@/domain/sanatorium/extra-procedure-route";
 import { getPrintBranding } from "@/domain/print/print-branding.service";
 import { printLabel } from "@/domain/print/print-labels";
@@ -214,7 +215,7 @@ export async function buildProceduresPrint(
       ? {
           OR: [
             { status: { in: [...PRINT_PROCEDURE_STATUSES] } },
-            { status: "PENDING_PAY" as const, inPackage: false },
+            unpaidExtraVisibleOnPlanWhere(),
           ],
         }
       : { status: { in: [...PRINT_PROCEDURE_STATUSES] } };

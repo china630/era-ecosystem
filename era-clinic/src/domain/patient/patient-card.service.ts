@@ -4,7 +4,10 @@ import { loadCatalogDisplayNameMap } from "@/domain/catalog/catalog-display-name
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 import { getClinicSettings } from "@/domain/settings/settings.service";
-import { showsUnpaidExtraOnPlan } from "@/domain/sanatorium/extra-procedure-route";
+import {
+  showsUnpaidExtraOnPlan,
+  unpaidExtraVisibleOnPlanWhere,
+} from "@/domain/sanatorium/extra-procedure-route";
 import {
   bakuDateKey,
   mergeAppointmentVisitEvents,
@@ -822,17 +825,19 @@ export async function getPatientPlanPage(
   const episodeFilter = opts.episodeId ? { clinicalEpisodeId: opts.episodeId } : {};
 
   const showUnpaid = showsUnpaidExtraOnPlan(settings.extraProcedureRoute);
-  const unseatedPackage = {
-    status: "PROPOSED" as const,
-    inPackage: true,
-    resourceId: null,
+  // Hide unseated package drafts and mid-seat extras PROPOSED (placeholders).
+  const hideUnseatedDrafts = {
+    OR: [
+      { status: "PROPOSED" as const, inPackage: true, resourceId: null },
+      { status: "PROPOSED" as const, inPackage: false },
+    ],
   };
   const where = {
     patientRefId,
     ...episodeFilter,
-    NOT: unseatedPackage,
+    NOT: hideUnseatedDrafts,
     OR: [
-      { status: "PROPOSED" as const },
+      { status: "PROPOSED" as const, inPackage: true },
       {
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
         ...(opts.from || opts.to
@@ -844,9 +849,7 @@ export async function getPatientPlanPage(
             }
           : {}),
       },
-      ...(showUnpaid
-        ? [{ status: "PENDING_PAY" as const, inPackage: false }]
-        : []),
+      ...(showUnpaid ? [unpaidExtraVisibleOnPlanWhere()] : []),
     ],
   };
 

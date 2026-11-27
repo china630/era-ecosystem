@@ -3,6 +3,7 @@ import {
   plansExtraBeforePay,
   printsProcedureClock,
   showsUnpaidExtraOnPlan,
+  unpaidExtraVisibleOnPlanWhere,
 } from "@/domain/sanatorium/extra-procedure-route";
 
 describe("extra procedure route", () => {
@@ -22,5 +23,13 @@ describe("extra procedure route", () => {
     expect(printsProcedureClock("PENDING_PAY", null)).toBe(false);
     expect(printsProcedureClock("PENDING_PAY", "cabin-1")).toBe(true);
     expect(printsProcedureClock("SCHEDULED")).toBe(true);
+  });
+
+  it("Plan filter requires a cabin for FIXED unpaid or OPEN day-pin", () => {
+    const where = unpaidExtraVisibleOnPlanWhere();
+    expect(where.OR).toEqual([
+      { resourceId: { not: null } },
+      { schedulingMode: "OPEN" },
+    ]);
   });
 });

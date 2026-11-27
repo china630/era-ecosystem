@@ -35,7 +35,11 @@ import { buildPhysioChipsLabels } from "@/components/physio/physio-chips-labels"
 import { inferPhysioTypeGate, siteCodeForNaftalanFill } from "@/domain/physio/physio-type-gate";
 import { paramsLabelFromPhysio, stripLatinParamEcho } from "@/components/physio/physio-params-label";
 import { regimeFingerprint } from "@/domain/sanatorium/regime-key";
-import { packageAssignBlockText } from "@/lib/package-assign-block";
+import {
+  normalizeAssignGateBlock,
+  packageAssignBlockText,
+  packageAssignScopeOrGateText,
+} from "@/lib/package-assign-block";
 import {
   buildPackageAssignPlacedLines,
   formatPackageAssignMissLines,
@@ -367,6 +371,8 @@ export function PackageAssignModal({
   const [formPhysio, setFormPhysio] = useState<PhysioChipsValue>(EMPTY_PHYSIO);
   const [sexBlockedCodes, setSexBlockedCodes] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  /** Sync lock — React busy state alone can miss a double-click before re-render. */
+  const saveLockRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [startOpen, setStartOpen] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -459,20 +465,23 @@ export function PackageAssignModal({
     const d = await res.json().catch(() => ({}));
     if (!res.ok) {
       const code = typeof d?.code === "string" ? d.code : null;
+      const serverError = typeof d?.error === "string" ? d.error.trim() : "";
+      const gateBlock = normalizeAssignGateBlock(code);
+      const scopeOrGate = packageAssignScopeOrGateText(tPhysio, code, serverError);
       const msg =
         code === "NO_PROGRAM_CODE"
           ? tPhysio("packageAssignNoProgramCode")
           : code === "NO_PROGRAM"
             ? tPhysio("packageAssignNoProgram")
-            : typeof d?.error === "string" && d.error.trim()
-              ? d.error
-              : tPhysio("packageAssignLoadFailed");
+            : scopeOrGate
+              ? scopeOrGate
+              : serverError || tPhysio("packageAssignLoadFailed");
       setBlockReason(
-        code === "NO_PROGRAM" || code === "NO_PROGRAM_CODE" ? code : null,
+        gateBlock ??
+          (code === "NO_PROGRAM" || code === "NO_PROGRAM_CODE" ? code : null),
       );
-      const text = code && !msg.includes(code) ? `${msg} (${code})` : msg;
-      setError(text);
-      showApiError({ error: text });
+      setError(msg);
+      showApiError({ error: msg });
       return null;
     }
     const payload = d.data ?? d;
@@ -854,7 +863,7 @@ export function PackageAssignModal({
   }, [busy, open, episodeId, draft, extraDraft, pendingCut, pendingCancel, extraPendingCut, masseurByCode]);
 
   function requestClose() {
-    if (busy) return;
+    if (busy || saveLockRef.current) return;
     if (replaceOpen) clearReplaceState();
     if (unsaved) {
       setDiscardOpen(true);
@@ -1392,7 +1401,10 @@ export function PackageAssignModal({
     }
     if (code === "NOT_IN_PROCEDURES") return tPhysio("packageAssignNotInProcedures");
     if (code === "NO_SERVICE") return tPhysio("packageAssignNoService");
-    if (code === "NO_CARE_TEAM") return tPhysio("packageAssignNoCareTeam");
+    {
+      const scopeOrGate = packageAssignScopeOrGateText(tPhysio, code, serverError);
+      if (scopeOrGate) return scopeOrGate;
+    }
     if (code === "LAB_ALREADY_OPEN") return tPhysio("packageAssignLabOpen");
     if (code === "LAB_UNPAID_EXISTS") return tPhysio("labUnpaidCheque");
     if (code === "LAB_BROUGHT_IN_COVERS" || code === "BROUGHT_IN_ACCEPTED") {
@@ -1468,6 +1480,7 @@ export function PackageAssignModal({
     bathLayout: "continue" | "fresh",
     holesResolved: boolean,
   ) {
+    if (saveLockRef.current || busy) return;
     let extras = extraDraft;
     let lines = draft;
     if (formLane === "extra" && formCode) {
@@ -1561,6 +1574,7 @@ export function PackageAssignModal({
       setHolesAskOpen(true);
       return;
     }
+    saveLockRef.current = true;
     setBusy(true);
     setError(null);
     writePackageAssignDraft(episodeId, snapshotDraft());
@@ -1713,9 +1727,7 @@ export function PackageAssignModal({
                     ? tPhysio("packageAssignMissCabinSex")
                   : code === "MASSEUR_NOT_SKILLED"
                     ? tPhysio("masseurNotSkilled")
-                  : typeof extraBody?.error === "string"
-                    ? extraBody.error
-                    : tc("saveFailed"),
+                  : assignSaveMessage(extraBody),
             },
           );
           return;
@@ -1724,64 +1736,18 @@ export function PackageAssignModal({
       if (outcomeRequested.length > 0) {
         publishAssignOutcome(outcomeRequested, outcomeMisses);
       }
-      const missQtyByCode = new Map<string, number>();
-      for (const miss of outcomeMisses) {
-        const code = typeof miss.procedureCode === "string" ? miss.procedureCode : "";
-        if (!code) continue;
-        missQtyByCode.set(code, (missQtyByCode.get(code) ?? 0) + 1);
-      }
-      const preserveGoals: Record<string, number> = {};
-      for (const line of lines) {
-        const missed = missQtyByCode.get(line.procedureCode) ?? 0;
-        if (missed < 1) continue;
-        const row = assigned.find((a) =>
-          draftMatchesAssigned(line, a, menuQuotaForAssigned(a)),
-        );
-        const key = row ? assignedKey(row) : line.key;
-        const factBefore = row?.qty ?? 0;
-        preserveGoals[key] = laneTarget[key] ?? factBefore + line.qty;
-      }
+      // After Saxla: board only — do not re-inflate goals/draft for unseated misses.
       setStartOpen(false);
       setDraft([]);
       setExtraDraft([]);
       setExtraPendingCut({});
       setPendingCancel(new Set());
       setPendingCut({});
+      setLaneTarget({});
       clearPackageAssignDraft(episodeId);
       closeForm();
       onSaved();
-      const nextAssigned = (await load()) ?? [];
-      if (Object.keys(preserveGoals).length > 0) {
-        const nextTargets: Record<string, number> = {};
-        const nextDraft: DraftLine[] = [];
-        for (const [key, goal] of Object.entries(preserveGoals)) {
-          const row = nextAssigned.find((a) => assignedKey(a) === key);
-          const fact = row?.qty ?? 0;
-          if (goal <= fact || !row) continue;
-          nextTargets[key] = goal;
-          nextDraft.push({
-            key: `${row.procedureCode}-${Date.now()}-${key}`,
-            procedureCode: row.procedureCode,
-            procedureName: row.procedureName,
-            qty: goal - fact,
-            note: row.note ?? "",
-            physioFields: row.physioFields ?? null,
-            siteIds: row.siteIds ?? [],
-            siteApplyMode: row.siteApplyMode ?? null,
-            siteLaterality: row.siteLaterality,
-            paramsLabel: row.paramsLabel ?? "",
-            fingerprint: regimeOf(row),
-            burnPoolCode:
-              row.packageQuotaCode && row.packageQuotaCode !== row.procedureCode
-                ? row.packageQuotaCode
-                : null,
-          });
-        }
-        setLaneTarget(nextTargets);
-        setDraft(nextDraft);
-      } else {
-        setLaneTarget({});
-      }
+      await load();
       if (pendingCheckout) {
         setCheckoutAsk(pendingCheckout);
       }
@@ -1789,6 +1755,7 @@ export function PackageAssignModal({
       persistDraftIfAny();
       showApiError({ error: tc("saveFailed") });
     } finally {
+      saveLockRef.current = false;
       setBusy(false);
     }
   }
@@ -2671,6 +2638,8 @@ export function PackageAssignModal({
                     : undefined;
                   const kept = lane.assigned ? keptOfAssigned(lane.assigned) : 0;
                   const totalGoal = lane.targetQty + lane.extraQty;
+                  /** Seated on board: package fact + unpaid extras + paid extras. */
+                  const seatedTotal = lane.factQty + lane.extraQty + lane.paidQty;
                   const minusFloor = lane.assigned ? kept : 0;
                   const targetMinusDisabled =
                     lane.pkgLocked || totalGoal <= minusFloor;
@@ -2711,9 +2680,9 @@ export function PackageAssignModal({
                           <span
                             className={`inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#E8EEF4] px-1.5 text-[11px] font-semibold tabular-nums ${TEXT_MUTED_CLASS}`}
                             title={tPhysio("packageAssignOnPlan")}
-                            aria-label={tPhysio("packageAssignFactAria", { count: lane.factQty })}
+                            aria-label={tPhysio("packageAssignFactAria", { count: seatedTotal })}
                           >
-                            {lane.factQty}
+                            {seatedTotal}
                           </span>
                           {canTrashAssignLane({
                             hasUnlockedPackage: Boolean(lane.assigned && !lane.pkgLocked),
@@ -2754,9 +2723,9 @@ export function PackageAssignModal({
                         <span
                           className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-[#1F4E79] px-1.5 text-[11px] font-semibold tabular-nums text-white ring-1 ring-white"
                           title={tPhysio("stayPlanPackage")}
-                          aria-label={`${tPhysio("fromPackage")}: ${lane.targetQty}`}
+                          aria-label={`${tPhysio("fromPackage")}: ${lane.factQty}`}
                         >
-                          {lane.targetQty}
+                          {lane.factQty}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2 py-1">

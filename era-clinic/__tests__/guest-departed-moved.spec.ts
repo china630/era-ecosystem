@@ -9,6 +9,9 @@ jest.mock("@/lib/prisma", () => ({
       updateMany: jest.fn(),
       deleteMany: jest.fn(),
     },
+    procedureOrderSite: {
+      deleteMany: jest.fn(),
+    },
     resourceBooking: {
       deleteMany: jest.fn(),
     },

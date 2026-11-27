@@ -26,6 +26,7 @@ import {
 import { cabinMatchesGuest } from "@/domain/procedure/resource-sex";
 import { replaceProcedureAllocations } from "@/domain/procedure/procedure-allocation.service";
 import { orderCountsForWallClockRest } from "@/domain/procedure/open-attendance";
+import { guestDayOccupancyStatusOr } from "@/domain/planning/guest-day-occupancy";
 import type { RotationContextSlot } from "@/lib/procedure-rotation.service";
 import {
   evaluateCandidateSlot,
@@ -269,11 +270,7 @@ export async function placeManualProcedureSlot(input: {
     where: {
       patientRefId: order.patientRefId,
       id: { not: order.id },
-      OR: [
-        { status: { notIn: ["CANCELLED", "PROPOSED", "PENDING_PAY", "UNPAID_MISSED"] } },
-        { status: "PENDING_PAY", resourceId: { not: null } },
-        { status: "PROPOSED", inPackage: true },
-      ],
+      OR: guestDayOccupancyStatusOr(),
     },
     select: {
       status: true,

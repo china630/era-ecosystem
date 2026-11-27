@@ -1,4 +1,7 @@
-import { countRemainingOpenSeatDays } from "@/domain/sanatorium/stay-seat-cap";
+import {
+  countRemainingOpenSeatDays,
+  remainingUnifiedStayQty,
+} from "@/domain/sanatorium/stay-seat-cap";
 import { listPaidExtras } from "@/domain/sanatorium/extras-assign.service";
 
 jest.mock("@/lib/prisma", () => ({
@@ -27,7 +30,7 @@ import { listClinicDays } from "@/domain/planning/clinic-day";
 const mocked = prisma as unknown as {
   programInstance: { findFirst: jest.Mock };
   clinicalEpisode: { findUnique: jest.Mock };
-  procedureOrder: { findMany: jest.Mock };
+  procedureOrder: { findMany: jest.Mock; count: jest.Mock };
 };
 const mockDays = listClinicDays as jest.Mock;
 
@@ -64,6 +67,39 @@ describe("stay seat cap", () => {
     // 11 working days in range minus 2 occupied
     expect(cap.remainingSeatDays).toBe(9);
     expect(cap.horizonEndYmd).toBe("2026-12-05");
+  });
+
+  it("FIXED remainingUnifiedStayQty = softMax − live (package + extras share ceiling)", async () => {
+    mocked.clinicalEpisode.findUnique.mockResolvedValue({
+      plannedEndsOn: new Date("2026-12-06T00:00:00.000Z"),
+      programInstance: { endsOn: new Date("2026-12-06T00:00:00.000Z") },
+    });
+    mockDays.mockResolvedValue([
+      { ymd: "2026-11-24", working: true },
+      { ymd: "2026-11-25", working: true },
+      { ymd: "2026-11-26", working: true },
+      { ymd: "2026-11-27", working: true },
+      { ymd: "2026-11-28", working: true },
+      { ymd: "2026-11-29", working: false },
+      { ymd: "2026-11-30", working: true },
+      { ymd: "2026-12-01", working: true },
+      { ymd: "2026-12-02", working: true },
+      { ymd: "2026-12-03", working: true },
+      { ymd: "2026-12-04", working: true },
+      { ymd: "2026-12-05", working: true },
+    ]);
+    mocked.procedureOrder.count.mockResolvedValue(7);
+    const rem = await remainingUnifiedStayQty("ep-1", "SVC-NAFTALAN-VANNASI-QADIN", false);
+    // 11 working days − 7 live → 4 room (not a fresh softMax of 11 for extras alone)
+    expect(rem).toBe(4);
+    expect(mocked.procedureOrder.count).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          clinicalEpisodeId: "ep-1",
+          procedureCode: "SVC-NAFTALAN-VANNASI-QADIN",
+        }),
+      }),
+    );
   });
 });
 

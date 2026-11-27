@@ -159,6 +159,15 @@ export class SanatoriumEpisodesIdPackageAssignController {
           placed: result.placed,
           missCount: result.misses?.length ?? 0,
           staffPrefCount: body.staffPrefs?.length ?? 0,
+          /** Full miss list (code / day / reason) — seatMisses alone is bath-only and incomplete. */
+          misses: (result.misses ?? []).map((row) => ({
+            ymd: row.ymd ?? "",
+            procedureCode: row.procedureCode,
+            procedureName: row.procedureName,
+            reason: row.reason,
+            ...(row.staffName ? { staffName: row.staffName } : {}),
+            ...(row.hitAttemptCap ? { hitAttemptCap: true } : {}),
+          })),
           seatMisses: result.seatMisses ?? [],
         },
       );
