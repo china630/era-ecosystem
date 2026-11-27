@@ -143,6 +143,7 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
           return "change-me-satellite-event-token_!@";
         }
         if (key === "ERA_PUBLIC_ORCHESTRATOR_URL") return "https://api.era-365.online";
+        if (key === "ERA_APP_ORIGIN") return "https://app.era-365.online";
         if (key === "ERA_ORCHESTRATOR_INTERNAL_URL") return "http://orchestrator:4000";
         return undefined;
       },
@@ -157,7 +158,7 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
     expect(body.ssoSharedSecret).toBeUndefined();
     expect(body.satelliteEventServiceToken).toBeUndefined();
     expect(body.orchestratorEventUrl).toBe("http://orchestrator:4000");
-    expect(body.orchestratorPublicBaseUrl).toBe("https://api.era-365.online");
+    expect(body.orchestratorPublicBaseUrl).toBe("https://app.era-365.online");
     expect(body.publicBaseUrl).toBeUndefined();
   });
 
@@ -320,6 +321,9 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
         if (key === "ERA_PUBLIC_ORCHESTRATOR_URL") {
           return "https://api.era-365.online";
         }
+        if (key === "ERA_APP_ORIGIN") {
+          return "https://app.era-365.online";
+        }
         if (key === "ERA_ORCHESTRATOR_INTERNAL_URL") {
           return "http://orchestrator:4000";
         }
@@ -338,7 +342,7 @@ describe("Platform CFG negative paths (AC-CP-CFG)", () => {
     });
     expect(res.config.publicBaseUrl).toBe("https://clinic.era-365.online");
     expect(res.config.orchestratorPublicBaseUrl).toBe(
-      "https://api.era-365.online",
+      "https://app.era-365.online",
     );
   });
 });
